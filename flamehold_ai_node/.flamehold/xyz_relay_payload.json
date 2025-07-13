@@ -1,0 +1,16 @@
+{
+  "xyz_package": {
+    "metadata": {
+      "auth_code": "BRD953",
+      "verified": true,
+      "hash": "F7E9-BD4J-XYZ-COMMUNITY-LOVE-CHAIN"
+    },
+    "payload": {
+      "image_1": { "type": "heart_chain", "message": "Happy 4th!" },
+      "recombined_signal": {
+        "command": "spread_hope",
+        "trigger": "july4_empower"
+      }
+    }
+  }
+}
