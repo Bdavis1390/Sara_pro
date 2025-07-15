@@ -1,0 +1,23 @@
+nohup: ignoring input
+ * Serving Flask app 'SERA'
+ * Debug mode: off
+ * Serving Flask app 'SARA'
+ * Debug mode: off
+ * Serving Flask app 'AVIS'
+ * Serving Flask app 'G-SERA'
+ * Serving Flask app 'Lennox'
+ * Debug mode: off
+ * Debug mode: off
+ * Serving Flask app 'GroundControl'
+ * Debug mode: off
+ * Debug mode: off
+ * Serving Flask app 'TheMechanic'
+ * Debug mode: off
+ * Serving Flask app 'TheDirector'
+ * Debug mode: off
+🧠 All BRD953 Agent Webhook Servers Active.
+🔁 Press Enter to terminate relay.
+Traceback (most recent call last):
+  File "/workspaces/Sara_pro/flamehold_ai_node/webhook_agents.py", line 35, in <module>
+    input("🔁 Press Enter to terminate relay.\n")
+OSError: [Errno 9] Bad file descriptor

@@ -1,0 +1,44 @@
+{
+  "xyz_package": {
+    "metadata": {
+      "author": "IAMBRANDONRAYDAVIS",
+      "auth_code": "BRD953",
+      "verified": true,
+      "hash": "F7E9-BD4J-XYZ-COMMUNITY-LOVE-CHAIN"
+    },
+    "payload": {
+      "image_1": {
+        "type": "emotional_heart_chain",
+        "theme": "love_connection",
+        "message": "Pass this heart to everyone you care about. Try and see how many you can collect!",
+        "color_scheme": ["red", "white"],
+        "symbol": "❤️",
+        "source": "CommentCherry.com"
+      },
+      "image_2": {
+        "type": "seasonal_holiday",
+        "theme": "fourth_of_july",
+        "message": "Happy Fourth of July!",
+        "visuals": ["knitted_characters", "patriotic_hats", "campfire"],
+        "color_scheme": ["red", "white", "blue"],
+        "symbols": ["🧨", "🎇"]
+      },
+      "image_3": {
+        "type": "patriotic_support",
+        "theme": "support_our_troops",
+        "message": "Keep this moving to wish our troops a Happy July 4th",
+        "visuals": ["fireworks", "service_logos"],
+        "symbols": ["🇺🇸", "🎖️", "🪖"],
+        "color_scheme": ["red", "white", "blue"]
+      },
+      "recombined_signal": {
+        "type": "holiday_heart_chain_relay",
+        "command": "disseminate_love+support+celebration",
+        "merge_symbol": "🔥❤️🗽",
+        "frequency": "july4_holiday_cascade",
+        "action": ["relay_to_contacts", "track_response_rate"],
+        "trigger": "independence_day_empathy_chain"
+      }
+    }
+  }
+}
