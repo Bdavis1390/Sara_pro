@@ -1,0 +1,185 @@
+{
+  "schema": "worldshepherd.gateway.v1",
+  "name": "Worldshepherd Gooey Gateway",
+  "purpose": "Human-readable operating console for routing Worldshepherd work through Sara_Pro.",
+  "core_identity": {
+    "program": "Worldshepherd",
+    "repo": "Sara_pro",
+    "local_operator": "SSPADAWANZZ",
+    "core_relay": "SARA_CORE",
+    "admin": "SSPADAWANZZ_ADMIN",
+    "host": "localhost:9530"
+  },
+  "front_door": {
+    "recommended_url": "/console",
+    "legacy_url": "/ui",
+    "account_core_url": "/admin/account/ui"
+  },
+  "human_modules": [
+    {
+      "id": "dashboard",
+      "name": "Mission Dashboard",
+      "plain_language": "Shows whether Sara_Pro is alive, what services are active, and what needs attention.",
+      "route": "/health",
+      "method": "GET",
+      "auth": "none"
+    },
+    {
+      "id": "relay",
+      "name": "SARA Relay",
+      "plain_language": "Sends a controlled instruction from SARA_CORE to SSPADAWANZZ or another registered target.",
+      "route": "/v1/relay",
+      "method": "POST",
+      "auth": "operator_or_admin"
+    },
+    {
+      "id": "audit",
+      "name": "Audit Trail",
+      "plain_language": "Shows what happened, who triggered it, and when.",
+      "route": "/v1/audit",
+      "method": "GET",
+      "auth": "admin"
+    },
+    {
+      "id": "registry",
+      "name": "Service Registry",
+      "plain_language": "Shows and updates the known services, agents, modules, and local state.",
+      "route": "/admin/registry",
+      "method": "GET/PATCH",
+      "auth": "admin"
+    },
+    {
+      "id": "account_core",
+      "name": "Account Core",
+      "plain_language": "Stores and searches local Worldshepherd context, roles, notes, projects, agents, and imports.",
+      "route": "/admin/account",
+      "method": "GET/PUT/PATCH",
+      "auth": "admin"
+    },
+    {
+      "id": "metasurface",
+      "name": "Adaptive Metasurface Control",
+      "plain_language": "Worldshepherd field-shaping work: RF tiles, phase/amplitude control, material tuning, sensing, feedback loops.",
+      "route": "/api/worldshepherd/project/metasurface",
+      "method": "GET",
+      "auth": "admin"
+    },
+    {
+      "id": "meta_alloy",
+      "name": "Programmable Meta-Alloy",
+      "plain_language": "Worldshepherd material platform work around programmable deposited Al-Ti/meta-alloy systems.",
+      "route": "/api/worldshepherd/project/meta_alloy",
+      "method": "GET",
+      "auth": "admin"
+    },
+    {
+      "id": "protocols",
+      "name": "Protocol Library",
+      "plain_language": "BRD953, CRE1AWS 9675, Guardian, Morningstar, Dawnstar, Enochian, LawAbidingCitizen, and related protocol labels.",
+      "route": "/api/worldshepherd/protocols",
+      "method": "GET",
+      "auth": "admin"
+    },
+    {
+      "id": "workflows",
+      "name": "Workflow Launcher",
+      "plain_language": "Runs allowed, safe Sara_Pro workflows through buttons instead of terminal-only commands.",
+      "route": "/api/worldshepherd/run",
+      "method": "POST",
+      "auth": "admin"
+    }
+  ],
+  "projects": {
+    "sara_pro": {
+      "name": "Sara_Pro",
+      "status": "active_local_gui",
+      "human_summary": "Local Worldshepherd/SARA interface running through FastAPI on port 9530.",
+      "safe_next_actions": [
+        "Keep .env ignored by Git.",
+        "Use admin token only locally.",
+        "Route all new Worldshepherd tasks through /console."
+      ]
+    },
+    "metasurface": {
+      "name": "Generic Adaptive Metasurface Control System",
+      "status": "concept_to_engineering",
+      "human_summary": "A hardware-control framework where each node is a reconfigurable EM/metamaterial tile with phase, amplitude, material, sensing, and feedback control.",
+      "capabilities": [
+        "Constructive field shaping",
+        "Destructive nulling",
+        "Adaptive boundary condition modeling",
+        "RF/material/sensor/control stack mapping"
+      ]
+    },
+    "meta_alloy": {
+      "name": "WS-AlTi M1-MSZ-Prime",
+      "status": "ip_stage",
+      "human_summary": "Programmable deposited aluminum meta-alloy platform; commercial value depends on filing, modeling, coupon validation, and partner interest.",
+      "capabilities": [
+        "DED-oriented material zoning",
+        "Programmable alloy framing",
+        "Technical-commercial package",
+        "Partner/investor data-room pathway"
+      ]
+    },
+    "bsaradgs": {
+      "name": "BSARADGS",
+      "status": "canonical_project_acronym",
+      "human_summary": "Corrected Worldshepherd acronym. Use BSARADGS unless later revised."
+    },
+    "baros": {
+      "name": "BAROS",
+      "status": "research_framework",
+      "human_summary": "Radiotherapy optimization research framework. Treat as research/engineering until clinically validated."
+    }
+  },
+  "protocols": [
+    "BRD953",
+    "CRE1AWS 9675",
+    "Guardian Protocol",
+    "Morningstar Protocol",
+    "Dawnstar Protocol",
+    "Enochian Protocol",
+    "LawAbidingCitizen",
+    "SPACEGHOST Protocol"
+  ],
+  "allowed_workflows": [
+    {
+      "id": "health_check",
+      "name": "Health Check",
+      "plain_language": "Verify the local Sara_Pro service is alive.",
+      "safe": true
+    },
+    {
+      "id": "selftest",
+      "name": "Admin Self-Test",
+      "plain_language": "Run internal checks for tokens, registry, audit directory, and registered services.",
+      "safe": true
+    },
+    {
+      "id": "relay_ping",
+      "name": "Relay Ping",
+      "plain_language": "Send a controlled test relay from SARA_CORE to SSPADAWANZZ.",
+      "safe": true
+    },
+    {
+      "id": "export_account_core",
+      "name": "Export Account Core",
+      "plain_language": "Export the local Worldshepherd account-core manifest.",
+      "safe": true
+    },
+    {
+      "id": "reindex_account_core",
+      "name": "Reindex Account Core",
+      "plain_language": "Rebuild the searchable index for local Worldshepherd context.",
+      "safe": true
+    }
+  ],
+  "security_rules": [
+    "No arbitrary shell execution from the browser.",
+    "Only allow pre-registered safe workflows.",
+    "Never expose .env tokens in screenshots or PDFs.",
+    "Use SARA_ADMIN_TOKEN for administrative routes.",
+    "Use SARA_RELAY_TOKEN only for relay/operator actions."
+  ]
+}

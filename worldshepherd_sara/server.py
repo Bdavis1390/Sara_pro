@@ -8,6 +8,8 @@ from typing import Any, Dict, List
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from worldshepherd_sara.worldshepherd_gateway import router as worldshepherd_gateway_router
+from worldshepherd_sara.account_core import router as account_core_router
 
 APP_NAME = "Worldshepherd SARA / SSPADAWANZZ Admin Interface"
 DATA_DIR = Path(os.getenv("SARA_DATA_DIR", "data"))
@@ -50,6 +52,8 @@ if not REGISTRY_FILE.exists():
     REGISTRY_FILE.write_text(json.dumps(DEFAULT_REGISTRY, indent=2), encoding="utf-8")
 
 app = FastAPI(title=APP_NAME)
+app.include_router(worldshepherd_gateway_router)
+app.include_router(account_core_router)
 
 
 def now() -> float:
@@ -129,7 +133,7 @@ def read_audit_records(limit: int = 100) -> List[Dict[str, Any]]:
 
 @app.get("/", response_class=HTMLResponse)
 def root():
-    return HTMLResponse('<meta http-equiv="refresh" content="0; url=/ui">')
+    return HTMLResponse('<meta http-equiv="refresh" content="0; url=/console">')
 
 
 @app.get("/health")
@@ -514,6 +518,7 @@ def ui():
     <button class="tab" onclick="showView('selftest', this)">Self-Test</button>
     <button class="tab" onclick="showView('logs', this)">Logs</button>
     <button class="tab" onclick="showView('endpoints', this)">Endpoints</button>
+    <button class="tab" onclick="showView('accountcore', this)">Account Core</button>
   </div>
 
   <section id="dashboard" class="view active">
@@ -675,7 +680,28 @@ def ui():
     </div>
   </section>
 
-  <section id="endpoints" class="view">
+  
+  <section id="accountcore" class="view">
+    <div class="grid">
+      <div class="card span12">
+        <div class="card-head">
+          <h2>Worldshepherd Account Core</h2>
+          <button onclick="window.open('/admin/account/ui','_blank')">Open Full Account Core</button>
+        </div>
+        <div class="card-body">
+          <p class="muted">
+            Integrated local manifest for Worldshepherd, Sara_Pro, CRE1AWS, SSPADAWANZZ, SARA, protocols, agents, project notes, imports, search, and export.
+          </p>
+          <iframe
+            src="/admin/account/ui"
+            style="width:100%; height:820px; border:1px solid rgba(255,255,255,0.16); border-radius:18px; background:#050816;">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+<section id="endpoints" class="view">
     <div class="grid">
       <div class="card span12">
         <div class="card-head"><h2>Endpoint Reference</h2></div>
