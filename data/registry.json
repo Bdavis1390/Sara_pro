@@ -1,0 +1,14 @@
+{
+  "services": {
+    "SARA_CORE": {
+      "role": "core",
+      "status": "online"
+    },
+    "SSPADAWANZZ": {
+      "role": "admin_operator",
+      "status": "online"
+    }
+  },
+  "protocol": "Worldshepherd-SARA-local",
+  "port": 9530
+}

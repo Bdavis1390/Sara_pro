@@ -1,0 +1,166 @@
+{
+  "schema": "worldshepherd.account_core.v1",
+  "generated_for": "Sara_Pro local GUI",
+  "root_context": {
+    "primary_program": "Worldshepherd",
+    "local_repo": "Sara_pro",
+    "repo_hint": "Bdavis1390/Sara_pro",
+    "local_host": "localhost:9530",
+    "ui": "/ui",
+    "operator": "SSPADAWANZZ",
+    "admin_role": "SSPADAWANZZ_ADMIN",
+    "core_relay": "SARA_CORE",
+    "main_integration_label": "SARA_CORE → SSPADAWANZZ"
+  },
+  "identity_and_roles": {
+    "CRE1AWS": {
+      "role": "primary project/account authority label",
+      "notes": [
+        "Use CRE1AWS / 9675 / BRD953 as project-context identifiers where relevant.",
+        "Do not collapse CRE1AWS and SSPADAWANZZ unless explicitly instructed."
+      ]
+    },
+    "SSPADAWANZZ": {
+      "role": "local Sara_Pro GUI operator/admin interface",
+      "notes": [
+        "Represents local machine/operator execution context.",
+        "Receives Sara_Pro relay commands from SARA_CORE."
+      ]
+    },
+    "SARA": {
+      "role": "primary visible repo/project relay intelligence"
+    },
+    "SORA": {
+      "role": "upstream activator concept in prior project architecture"
+    },
+    "Prime Sentinel": {
+      "role": "master orchestrator / oversight concept"
+    }
+  },
+  "canonical_projects": {
+    "Worldshepherd": {
+      "type": "program",
+      "status": "active",
+      "description": "Primary umbrella program for Sara_Pro, SARA, BSARADGS, CRE1AWS, SSPADAWANZZ, protocol and interface work."
+    },
+    "Sara_pro": {
+      "type": "repo",
+      "status": "active local GUI target",
+      "description": "Local FastAPI GUI and relay console running on port 9530."
+    },
+    "BSARADGS": {
+      "type": "architecture acronym",
+      "status": "canonical corrected form",
+      "description": "Corrected project acronym. Use BSARADGS rather than BDSARAGS unless later revised."
+    },
+    "BAROS": {
+      "type": "research/engineering framework",
+      "status": "separate project context",
+      "description": "Biologically Adaptive Radiotherapy Optimization System; framed as research/engineering, not clinically validated."
+    },
+    "WS-AlTi M1-MSZ-Prime": {
+      "type": "materials platform",
+      "status": "IP-stage concept",
+      "description": "Programmable deposited aluminum meta-alloy platform."
+    },
+    "SPACEGHOST Protocol": {
+      "type": "architecture/protocol",
+      "description": "Stealth/distributed routing fabric layered into Worldshepherd/SARA-style orchestration."
+    }
+  },
+  "protocols": {
+    "BRD953": {
+      "type": "authorization / project identifier"
+    },
+    "CRE1AWS 9675": {
+      "type": "authority / project identifier"
+    },
+    "Guardian Protocol": {
+      "type": "named protocol"
+    },
+    "Morningstar Protocol": {
+      "type": "named protocol"
+    },
+    "Dawnstar Protocol": {
+      "type": "named protocol"
+    },
+    "Enochian Protocol": {
+      "type": "named protocol"
+    },
+    "LawAbidingCitizen": {
+      "type": "named protocol"
+    }
+  },
+  "agents_and_modules": {
+    "SARA_CORE": {
+      "status": "online",
+      "role": "local core relay"
+    },
+    "SSPADAWANZZ": {
+      "status": "online",
+      "role": "admin-capable local operator"
+    },
+    "Guardian": {
+      "role": "named local/protocol agent"
+    },
+    "Watcher": {
+      "role": "named local/protocol agent"
+    },
+    "SERA": {
+      "role": "named AI/module"
+    },
+    "AVIS": {
+      "role": "named AI/module"
+    },
+    "GroundControl": {
+      "role": "named AI/module"
+    },
+    "TheMechanic": {
+      "role": "named AI/module"
+    },
+    "Brandon Rain Davis AI": {
+      "role": "AI executor delegate label"
+    }
+  },
+  "local_gui_capabilities": {
+    "dashboard": true,
+    "health": true,
+    "relay": true,
+    "audit": true,
+    "registry": true,
+    "selftest": true,
+    "logs": true,
+    "account_core": true,
+    "search": true,
+    "export": true,
+    "import": true
+  },
+  "known_endpoints": {
+    "ui": "/ui",
+    "health": "/health",
+    "capabilities": "/v1/capabilities",
+    "audit": "/v1/audit?limit=50",
+    "audit_export": "/v1/audit/export",
+    "registry": "/admin/registry",
+    "relay": "/v1/relay",
+    "selftest": "/admin/selftest",
+    "logs": "/admin/logs?lines=120",
+    "account_core": "/admin/account",
+    "account_ui": "/admin/account/ui",
+    "account_search": "/admin/account/search?q=Sara"
+  },
+  "operational_notes": [
+    "Keep .env out of git.",
+    "Rotate tokens after screenshots or PDFs expose them.",
+    "Treat Sara_Pro as a local controlled interface unless explicitly hardened for network deployment.",
+    "Do not commit live SARA_ADMIN_TOKEN or SARA_RELAY_TOKEN.",
+    "Commit code, schemas, and docs; exclude private runtime data unless intentionally sanitized."
+  ],
+  "import_slots": {
+    "chat_exports": [],
+    "uploaded_files": [],
+    "gmail_project_notes": [],
+    "repo_notes": [],
+    "manual_notes": []
+  }
+}

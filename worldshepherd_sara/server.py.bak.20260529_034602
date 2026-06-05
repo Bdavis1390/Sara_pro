@@ -1,0 +1,193 @@
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any, Dict
+
+from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+
+APP_NAME = "Worldshepherd SARA / SSPADAWANZZ Admin Interface"
+DATA_DIR = Path(os.getenv("SARA_DATA_DIR", "data"))
+AUDIT_FILE = DATA_DIR / "audit.jsonl"
+REGISTRY_FILE = DATA_DIR / "registry.json"
+
+ADMIN_TOKEN = os.getenv("SARA_ADMIN_TOKEN", "change-me-admin")
+RELAY_TOKEN = os.getenv("SARA_RELAY_TOKEN", "change-me-relay")
+
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+if not REGISTRY_FILE.exists():
+    REGISTRY_FILE.write_text(json.dumps({
+        "services": {
+            "SARA_CORE": {"role": "core", "status": "online"},
+            "SSPADAWANZZ": {"role": "admin_operator", "status": "online"}
+        },
+        "protocol": "Worldshepherd-SARA-local",
+        "port": 9530
+    }, indent=2))
+
+app = FastAPI(title=APP_NAME)
+
+
+def now() -> float:
+    return time.time()
+
+
+def audit(event: str, actor: str, payload: Dict[str, Any] | None = None) -> None:
+    record = {
+        "ts": now(),
+        "event": event,
+        "actor": actor,
+        "payload": payload or {}
+    }
+    with AUDIT_FILE.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record) + "\n")
+
+
+def resolve_actor(authorization: str | None) -> str:
+    if not authorization:
+        return "anonymous"
+
+    prefix = "Bearer "
+    if not authorization.startswith(prefix):
+        return "anonymous"
+
+    token = authorization[len(prefix):].strip()
+
+    if token == ADMIN_TOKEN:
+        return "admin"
+    if token == RELAY_TOKEN:
+        return "operator"
+
+    return "anonymous"
+
+
+def require_admin(authorization: str | None) -> str:
+    actor = resolve_actor(authorization)
+    if actor != "admin":
+        audit("admin_denied", actor)
+        raise HTTPException(status_code=403, detail="admin token required")
+    return actor
+
+
+def require_operator_or_admin(authorization: str | None) -> str:
+    actor = resolve_actor(authorization)
+    if actor not in {"admin", "operator"}:
+        audit("relay_denied", actor)
+        raise HTTPException(status_code=403, detail="operator or admin token required")
+    return actor
+
+
+@app.get("/", response_class=HTMLResponse)
+def root():
+    return HTMLResponse('<meta http-equiv="refresh" content="0; url=/ui">')
+
+
+@app.get("/health")
+def health():
+    return {
+        "ok": True,
+        "service": APP_NAME,
+        "ui": "/ui",
+        "audit": "/v1/audit?limit=50",
+        "registry": "/admin/registry"
+    }
+
+
+@app.get("/ui", response_class=HTMLResponse)
+def ui():
+    return HTMLResponse("""
+<!doctype html>
+<html>
+<head>
+  <title>Worldshepherd SARA</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 980px; margin: 40px auto; line-height: 1.45; }
+    code, pre { background: #f4f4f4; padding: 2px 5px; border-radius: 5px; }
+    .card { border: 1px solid #ddd; padding: 18px; border-radius: 12px; margin: 16px 0; }
+    button { padding: 9px 14px; border-radius: 8px; border: 1px solid #999; cursor: pointer; }
+    input { width: 75%; padding: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Worldshepherd SARA Interface</h1>
+  <div class="card">
+    <h2>Status</h2>
+    <p><strong>SARA_CORE → SSPADAWANZZ</strong></p>
+    <p>Local admin console is running on <code>localhost:9530</code>.</p>
+  </div>
+
+  <div class="card">
+    <h2>Token Test</h2>
+    <p>Paste your admin token from <code>.env</code>.</p>
+    <input id="token" placeholder="SARA_ADMIN_TOKEN">
+    <button onclick="loadAudit()">Load Audit</button>
+    <pre id="out"></pre>
+  </div>
+
+  <script>
+    async function loadAudit() {
+      const token = document.getElementById("token").value.trim();
+      const res = await fetch("/v1/audit?limit=50", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      document.getElementById("out").textContent = await res.text();
+    }
+  </script>
+</body>
+</html>
+""")
+
+
+@app.get("/v1/audit")
+def read_audit(limit: int = 50, authorization: str | None = Header(default=None)):
+    actor = require_admin(authorization)
+    audit("audit_read", actor, {"limit": limit})
+
+    if not AUDIT_FILE.exists():
+        return {"records": []}
+
+    lines = AUDIT_FILE.read_text(encoding="utf-8").splitlines()
+    records = [json.loads(line) for line in lines[-limit:] if line.strip()]
+    return {"records": records}
+
+
+@app.get("/admin/registry")
+def get_registry(authorization: str | None = Header(default=None)):
+    actor = require_admin(authorization)
+    audit("registry_read", actor)
+    return JSONResponse(json.loads(REGISTRY_FILE.read_text(encoding="utf-8")))
+
+
+@app.patch("/admin/registry")
+async def patch_registry(request: Request, authorization: str | None = Header(default=None)):
+    actor = require_admin(authorization)
+    patch = await request.json()
+
+    current = json.loads(REGISTRY_FILE.read_text(encoding="utf-8"))
+    current.update(patch)
+
+    REGISTRY_FILE.write_text(json.dumps(current, indent=2), encoding="utf-8")
+    audit("registry_patch", actor, patch)
+    return current
+
+
+@app.post("/v1/relay")
+async def relay(request: Request, authorization: str | None = Header(default=None)):
+    actor = require_operator_or_admin(authorization)
+    payload = await request.json()
+
+    target = payload.get("target", "SSPADAWANZZ")
+    message = payload.get("message", "ping")
+
+    result = {
+        "ok": True,
+        "from": "SARA_CORE",
+        "to": target,
+        "message": message,
+        "result": "integration_ok"
+    }
+
+    audit("relay", actor, result)
+    return result

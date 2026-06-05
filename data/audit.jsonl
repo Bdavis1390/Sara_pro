@@ -1,0 +1,32 @@
+{"ts": 1780038914.7814162, "event": "audit_read", "actor": "admin", "payload": {"limit": 50}}
+{"ts": 1780038914.81127, "event": "admin_denied", "actor": "operator", "payload": {}}
+{"ts": 1780038914.862686, "event": "relay", "actor": "operator", "payload": {"ok": true, "from": "SARA_CORE", "to": "SSPADAWANZZ", "message": "ACCESS Sara_Pro", "result": "integration_ok"}}
+{"ts": 1780039440.835646, "event": "audit_read", "actor": "admin", "payload": {"limit": 50}}
+{"ts": 1780039440.8758628, "event": "admin_denied", "actor": "operator", "payload": {}}
+{"ts": 1780039440.9197273, "event": "relay", "actor": "operator", "payload": {"ok": true, "from": "SARA_CORE", "to": "SSPADAWANZZ", "message": "ACCESS Sara_Pro", "result": "integration_ok"}}
+{"ts": 1780039493.2508848, "event": "audit_read", "actor": "admin", "payload": {"limit": 50}}
+{"ts": 1780039493.2853813, "event": "admin_denied", "actor": "operator", "payload": {}}
+{"ts": 1780039493.3416374, "event": "relay", "actor": "operator", "payload": {"ok": true, "from": "SARA_CORE", "to": "SSPADAWANZZ", "message": "ACCESS Sara_Pro", "result": "integration_ok"}}
+{"ts": 1780039990.7345908, "event": "audit_read", "actor": "admin", "payload": {"limit": 50}}
+{"ts": 1780041017.9168534, "event": "audit_read", "actor": "admin", "payload": {"limit": 50}}
+{"ts": 1780041017.9541976, "event": "admin_denied", "actor": "operator", "payload": {}}
+{"ts": 1780041018.0004897, "event": "relay", "actor": "operator", "payload": {"ok": true, "from": "SARA_CORE", "to": "SSPADAWANZZ", "message": "ACCESS Sara_Pro", "result": "integration_ok", "actor": "operator", "time": 1780041018.000483}}
+{"ts": 1780041060.830532, "event": "registry_read", "actor": "admin", "payload": {}}
+{"ts": 1780041060.882559, "event": "selftest", "actor": "admin", "payload": {"ok": true}}
+{"ts": 1780041060.9058168, "event": "logs_read", "actor": "admin", "payload": {"lines": 80}}
+{"ts": 1780041942.7400281, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780041965.9768786, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780041996.1623979, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780041996.2131894, "event": "account_core_search", "actor": "admin", "payload": {"q": "SSPADAWANZZ", "hits": 16}}
+{"ts": 1780041996.2407231, "event": "account_core_reindex", "actor": "admin", "payload": {"items": 200}}
+{"ts": 1780043085.1044962, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
+{"ts": 1780043085.1136162, "event": "gateway_projects_read", "actor": "admin", "payload": {}}
+{"ts": 1780043085.1176484, "event": "gateway_workflows_read", "actor": "admin", "payload": {}}
+{"ts": 1780043191.8085163, "event": "gateway_manifest_read", "actor": "admin", "payload": {}}
+{"ts": 1780043191.8682523, "event": "gateway_projects_read", "actor": "admin", "payload": {}}
+{"ts": 1780043191.9021206, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
+{"ts": 1780043191.9514287, "event": "gateway_workflows_read", "actor": "admin", "payload": {}}
+{"ts": 1780043192.0239747, "event": "gateway_search", "actor": "admin", "payload": {"q": "metasurface", "hits": 11}}
+{"ts": 1780043192.110162, "event": "gateway_workflow_run", "actor": "admin", "payload": {"workflow": "relay_ping", "ok": true}}
+{"ts": 1780043922.662026, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
+{"ts": 1780043925.6619904, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
