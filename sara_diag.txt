@@ -1,0 +1,39 @@
+=== LAST LOG ===
+nohup: ignoring input
+Requirement already satisfied: fastapi in ./.venv/lib/python3.10/site-packages (from -r requirements-worldshepherd.txt (line 1)) (0.136.3)
+Requirement already satisfied: uvicorn[standard] in ./.venv/lib/python3.10/site-packages (from -r requirements-worldshepherd.txt (line 2)) (0.48.0)
+Requirement already satisfied: starlette>=0.46.0 in ./.venv/lib/python3.10/site-packages (from fastapi->-r requirements-worldshepherd.txt (line 1)) (1.2.0)
+Requirement already satisfied: pydantic>=2.9.0 in ./.venv/lib/python3.10/site-packages (from fastapi->-r requirements-worldshepherd.txt (line 1)) (2.13.4)
+Requirement already satisfied: typing-extensions>=4.8.0 in ./.venv/lib/python3.10/site-packages (from fastapi->-r requirements-worldshepherd.txt (line 1)) (4.15.0)
+Requirement already satisfied: typing-inspection>=0.4.2 in ./.venv/lib/python3.10/site-packages (from fastapi->-r requirements-worldshepherd.txt (line 1)) (0.4.2)
+Requirement already satisfied: annotated-doc>=0.0.2 in ./.venv/lib/python3.10/site-packages (from fastapi->-r requirements-worldshepherd.txt (line 1)) (0.0.4)
+Requirement already satisfied: click>=7.0 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (8.4.1)
+Requirement already satisfied: h11>=0.8 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (0.16.0)
+Requirement already satisfied: httptools>=0.6.3 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (0.8.0)
+Requirement already satisfied: python-dotenv>=0.13 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (1.2.2)
+Requirement already satisfied: pyyaml>=5.1 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (6.0.3)
+Requirement already satisfied: uvloop>=0.15.1 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (0.22.1)
+Requirement already satisfied: watchfiles>=0.20 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (1.2.0)
+Requirement already satisfied: websockets>=10.4 in ./.venv/lib/python3.10/site-packages (from uvicorn[standard]->-r requirements-worldshepherd.txt (line 2)) (16.0)
+Requirement already satisfied: annotated-types>=0.6.0 in ./.venv/lib/python3.10/site-packages (from pydantic>=2.9.0->fastapi->-r requirements-worldshepherd.txt (line 1)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.46.4 in ./.venv/lib/python3.10/site-packages (from pydantic>=2.9.0->fastapi->-r requirements-worldshepherd.txt (line 1)) (2.46.4)
+Requirement already satisfied: anyio<5,>=3.6.2 in ./.venv/lib/python3.10/site-packages (from starlette>=0.46.0->fastapi->-r requirements-worldshepherd.txt (line 1)) (4.13.0)
+Requirement already satisfied: exceptiongroup>=1.0.2 in ./.venv/lib/python3.10/site-packages (from anyio<5,>=3.6.2->starlette>=0.46.0->fastapi->-r requirements-worldshepherd.txt (line 1)) (1.3.1)
+Requirement already satisfied: idna>=2.8 in ./.venv/lib/python3.10/site-packages (from anyio<5,>=3.6.2->starlette>=0.46.0->fastapi->-r requirements-worldshepherd.txt (line 1)) (3.17)
+Starting Worldshepherd SARA interface:
+  UI:     http://localhost:9530/ui
+  Health: http://localhost:9530/health
+
+Use SARA_ADMIN_TOKEN from .env for admin access.
+INFO:     Started server process [2534]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:9530 (Press CTRL+C to quit)
+
+=== COMPILE CHECK ===
+
+=== PROCESS CHECK ===
+2534 /home/sspadawanzz/Sara_pro/.venv/bin/python /home/sspadawanzz/Sara_pro/.venv/bin/uvicorn worldshepherd_sara.server:app --host 127.0.0.1 --port 9530
+
+=== PORT CHECK ===
+LISTEN 0      2048       127.0.0.1:9530      0.0.0.0:*    users:(("uvicorn",pid=2534,fd=11))

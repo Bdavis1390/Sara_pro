@@ -8,6 +8,8 @@ from typing import Any, Dict, List
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from worldshepherd_sara.gpt_assistant import router as gpt_assistant_router
+from worldshepherd_sara.blockchain_console import router as blockchain_console_router
 from worldshepherd_sara.worldshepherd_gateway import router as worldshepherd_gateway_router
 from worldshepherd_sara.account_core import router as account_core_router
 
@@ -52,6 +54,8 @@ if not REGISTRY_FILE.exists():
     REGISTRY_FILE.write_text(json.dumps(DEFAULT_REGISTRY, indent=2), encoding="utf-8")
 
 app = FastAPI(title=APP_NAME)
+app.include_router(gpt_assistant_router)
+app.include_router(blockchain_console_router)
 app.include_router(worldshepherd_gateway_router)
 app.include_router(account_core_router)
 

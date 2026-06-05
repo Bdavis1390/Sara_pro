@@ -30,3 +30,44 @@
 {"ts": 1780043192.110162, "event": "gateway_workflow_run", "actor": "admin", "payload": {"workflow": "relay_ping", "ok": true}}
 {"ts": 1780043922.662026, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
 {"ts": 1780043925.6619904, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
+{"ts": 1780680664.9364002, "event": "gateway_admin_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780680664.939105, "event": "gateway_admin_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780680664.941329, "event": "gateway_admin_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780681432.1591735, "event": "gateway_admin_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780681566.8463578, "event": "gateway_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780681566.8654182, "event": "gateway_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780681566.8796947, "event": "gateway_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780681610.9157274, "event": "gateway_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780681613.275033, "event": "gateway_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780681832.669015, "event": "gateway_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780681837.856949, "event": "gateway_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780682271.2756226, "event": "account_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780682335.0452144, "event": "admin_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780682375.7076774, "event": "relay_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780682378.7032819, "event": "relay_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780682431.1613202, "event": "account_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780682433.5694718, "event": "account_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780682442.24453, "event": "account_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780682483.2777772, "event": "account_admin_denied", "actor": "bad_token", "payload": {}}
+{"ts": 1780682491.555539, "event": "admin_denied", "actor": "anonymous", "payload": {}}
+{"ts": 1780684867.9858925, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780686810.1140962, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780687217.193685, "event": "chain_read", "actor": "admin", "payload": {"blocks": 1}}
+{"ts": 1780687242.850332, "event": "chain_demo_seeded", "actor": "admin", "payload": {"count": 3}}
+{"ts": 1780687242.870201, "event": "chain_read", "actor": "admin", "payload": {"blocks": 1}}
+{"ts": 1780687419.3380442, "event": "chain_demo_seeded", "actor": "admin", "payload": {"count": 3}}
+{"ts": 1780687419.3580327, "event": "chain_block_mined", "actor": "admin", "payload": {"index": 1, "hash": "b32a8fc9c5b5935dfa8ef444dba8a487d902115b46cc408ed48129d34610537a"}}
+{"ts": 1780687432.1789713, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780687560.9136527, "event": "chain_read", "actor": "admin", "payload": {"blocks": 2}}
+{"ts": 1780687563.2249312, "event": "chain_read", "actor": "admin", "payload": {"blocks": 2}}
+{"ts": 1780687755.5114899, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780687797.2728584, "event": "chain_read", "actor": "admin", "payload": {"blocks": 2}}
+{"ts": 1780687807.2366836, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780688438.7272365, "event": "assistant_status", "actor": "admin", "payload": {"files": 5, "chars": 60000}}
+{"ts": 1780688472.5517166, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 11, "context_chars": 60000, "files": 5}}
+{"ts": 1780688507.1974864, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 12, "context_chars": 60000, "files": 5}}
+{"ts": 1780688536.526036, "event": "assistant_status", "actor": "admin", "payload": {"files": 5, "chars": 60000}}
+{"ts": 1780688711.2790518, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 52, "context_chars": 60000, "files": 5}}
+{"ts": 1780689316.0485816, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 40, "context_chars": 60000, "files": 5}}
+{"ts": 1780689452.1547074, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 40, "context_chars": 60000, "files": 5}}
+{"ts": 1780689481.8328722, "event": "selftest", "actor": "admin", "payload": {"ok": true}}

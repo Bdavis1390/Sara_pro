@@ -1,0 +1,125 @@
+{
+  "schema": "worldshepherd.local_chain.v1",
+  "network": "Worldshepherd Sara_Pro Local Chain",
+  "consensus": "local-admin-append-only",
+  "validators": [
+    {
+      "id": "SARA_CORE",
+      "role": "genesis/core relay",
+      "status": "online"
+    },
+    {
+      "id": "SSPADAWANZZ",
+      "role": "local operator validator",
+      "status": "online"
+    },
+    {
+      "id": "ACCOUNT_CORE",
+      "role": "context validator",
+      "status": "online"
+    },
+    {
+      "id": "GOOEY_GATEWAY",
+      "role": "human interface validator",
+      "status": "online"
+    }
+  ],
+  "mempool": [],
+  "blocks": [
+    {
+      "index": 0,
+      "timestamp": 1780687180.152931,
+      "type": "GENESIS",
+      "actor": "SARA_CORE",
+      "summary": "Worldshepherd Sara_Pro genesis block",
+      "payload": {
+        "network": "Worldshepherd",
+        "core": "SARA_CORE",
+        "operator": "SSPADAWANZZ",
+        "console": "/chain"
+      },
+      "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "nonce": 0,
+      "hash": "bb781bce1ae0ea7f74cfa03a3a53142d3a4d42f6dfded511342071a6a12564dd"
+    },
+    {
+      "index": 1,
+      "timestamp": 1780687419.354355,
+      "type": "WORLD_SHEPHERD_BLOCK",
+      "actor": "admin",
+      "summary": "First mined Worldshepherd chain block",
+      "payload": {
+        "transactions": [
+          {
+            "id": "64b250965c722d23",
+            "timestamp": 1780687242.8496504,
+            "actor": "admin",
+            "type": "ROUTE",
+            "summary": "Route Worldshepherd through Sara_Pro",
+            "payload": {
+              "from": "Worldshepherd",
+              "to": "Sara_Pro",
+              "route": "/console"
+            }
+          },
+          {
+            "id": "0cff095f639daebc",
+            "timestamp": 1780687242.849664,
+            "actor": "admin",
+            "type": "ASSISTANT",
+            "summary": "Attach GPT assistant to Gooey",
+            "payload": {
+              "route": "/assistant"
+            }
+          },
+          {
+            "id": "98bf8e390c410495",
+            "timestamp": 1780687242.8496747,
+            "actor": "admin",
+            "type": "CHAIN",
+            "summary": "Activate blockchain-structured console",
+            "payload": {
+              "route": "/chain"
+            }
+          },
+          {
+            "id": "0d2724741b868e3f",
+            "timestamp": 1780687419.337109,
+            "actor": "admin",
+            "type": "ROUTE",
+            "summary": "Route Worldshepherd through Sara_Pro",
+            "payload": {
+              "from": "Worldshepherd",
+              "to": "Sara_Pro",
+              "route": "/console"
+            }
+          },
+          {
+            "id": "5005fe02a33a4eec",
+            "timestamp": 1780687419.3371239,
+            "actor": "admin",
+            "type": "ASSISTANT",
+            "summary": "Attach GPT assistant to Gooey",
+            "payload": {
+              "route": "/assistant"
+            }
+          },
+          {
+            "id": "8d510cfd17a53a7d",
+            "timestamp": 1780687419.3371353,
+            "actor": "admin",
+            "type": "CHAIN",
+            "summary": "Activate blockchain-structured console",
+            "payload": {
+              "route": "/chain"
+            }
+          }
+        ],
+        "transaction_count": 6
+      },
+      "previous_hash": "bb781bce1ae0ea7f74cfa03a3a53142d3a4d42f6dfded511342071a6a12564dd",
+      "nonce": 0,
+      "hash": "b32a8fc9c5b5935dfa8ef444dba8a487d902115b46cc408ed48129d34610537a"
+    }
+  ]
+}
