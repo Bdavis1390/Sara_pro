@@ -1,0 +1,92 @@
+{
+  "label": "command_gate",
+  "payload": {
+    "command": {
+      "action": "registry",
+      "execute_confirm": false,
+      "intent": "SIMULATE",
+      "mode": "DRY_RUN",
+      "payload": {},
+      "reason": "SIMULATE REGISTRY PATCH SARA_CORE DRY_RUN ADMIN",
+      "scope": "local",
+      "target": "SARA_CORE"
+    },
+    "risk": "GREEN"
+  },
+  "registry": {
+    "ARK_STORE": {
+      "capabilities": [
+        "snapshot",
+        "restore_point",
+        "checksum"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "continuity",
+      "status": "ready"
+    },
+    "GUARDIAN_POLICY": {
+      "capabilities": [
+        "classify",
+        "deny",
+        "require_approval"
+      ],
+      "guardian_policy": "RED",
+      "role": "safety_gate",
+      "status": "enforced"
+    },
+    "ORACLE_ENGINE": {
+      "capabilities": [
+        "dry_run",
+        "impact_estimate",
+        "rollback_estimate"
+      ],
+      "guardian_policy": "BLUE",
+      "last_action": {
+        "action": "set_mode",
+        "intent": "CONFIGURE",
+        "scope": "local",
+        "ts": 1782317455.126395
+      },
+      "last_seen": 1782317455.126391,
+      "role": "simulator",
+      "status": "simulate_first"
+    },
+    "SARA_CORE": {
+      "capabilities": [
+        "relay",
+        "audit",
+        "registry"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "core",
+      "status": "online"
+    },
+    "SSPADAWANZZ": {
+      "capabilities": [
+        "observe",
+        "simulate",
+        "relay",
+        "audit_read",
+        "registry_patch"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "admin_operator",
+      "status": "online"
+    },
+    "WATCHER_GRID": {
+      "capabilities": [
+        "observe",
+        "health",
+        "heartbeat"
+      ],
+      "guardian_policy": "GREEN",
+      "last_seen": 1782317455.300488,
+      "note": "full smoke test",
+      "role": "telemetry",
+      "status": "online"
+    }
+  },
+  "sha256": "048dfe352becae5f0b3c58766d03e852a34a382a1e34957303fbbf5efe01cbaf",
+  "snapshot_id": "ARK-RP-1782320639-0538ebad",
+  "ts": 1782320639.8749168
+}

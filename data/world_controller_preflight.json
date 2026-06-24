@@ -1,0 +1,43 @@
+{
+  "last_ark_snapshot_id": "ARK-RP-1782321633-c7a67cb0",
+  "last_command_text": "SIMULATE REGISTRY PATCH SARA_CORE DRY_RUN ADMIN",
+  "last_guardian_class": "GREEN",
+  "last_oracle_result": "read_or_simulation_only_low_risk",
+  "last_registry_hash": "8feb881ae8b3ce9f269b50dff36476773f8c8e15c79526143f4c0de189ec7746",
+  "status": "ready_for_bounded_registry_or_relay_change",
+  "steps": {
+    "ark": {
+      "ark_snapshot_id": "ARK-RP-1782319050-5f31a17f",
+      "complete": true,
+      "summary": "Ark snapshot created before registry or relay change: ARK-RP-1782319050-5f31a17f.",
+      "ts": 1782319050.0979269
+    },
+    "guardians": {
+      "ark_snapshot_id": "ARK-RP-1782321633-c7a67cb0",
+      "complete": true,
+      "guardian_allowed": true,
+      "guardian_class": "GREEN",
+      "summary": "Command classified as GREEN; allowed in requested mode: True.",
+      "ts": 1782321633.143189
+    },
+    "oracle": {
+      "ark_snapshot_id": "ARK-RP-1782319050-a534828d",
+      "complete": true,
+      "guardian_class": "GREEN",
+      "oracle_result": "read_or_simulation_only_low_risk",
+      "summary": "Oracle dry-run complete: read_or_simulation_only_low_risk.",
+      "ts": 1782319050.0596907
+    },
+    "watchers": {
+      "complete": true,
+      "stale_nodes": [
+        "ORACLE_ENGINE",
+        "WATCHER_GRID"
+      ],
+      "summary": "Heartbeat inspection complete: 6 nodes checked, 2 stale heartbeat(s).",
+      "ts": 1782320603.131598
+    }
+  },
+  "updated_at": 1782321633.1432033,
+  "workflow_id": "WC-PREFLIGHT-LOCAL"
+}

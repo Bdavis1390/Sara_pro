@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO="${1:-$HOME/Sara_pro}"
+PKG_DIR="/tmp/world_controller_build/world_controller_build_package"
+PKG_ZIP="$HOME/Downloads/world_controller_build_package.zip"
+
+echo "[WORLD] Repo: $REPO"
+cd "$REPO"
+
+echo "[WORLD] Checking package..."
+
+if [ ! -d "$PKG_DIR" ] && [ -f "$PKG_ZIP" ]; then
+  echo "[WORLD] Extracting package from Downloads..."
+  mkdir -p /tmp/world_controller_build
+  unzip -o "$PKG_ZIP" -d /tmp/world_controller_build >/dev/null
+fi
+
+if [ -x "$PKG_DIR/scripts/install_world_controller.sh" ]; then
+  echo "[WORLD] Installing WORLD CONTROLLER..."
+  bash "$PKG_DIR/scripts/install_world_controller.sh" "$REPO"
+else
+  echo "[WORLD] Package installer not found."
+  echo "[WORLD] Continuing with existing Sara_pro files only."
+fi
+
+echo "[WORLD] Patching WORLD CONTROLLER mount if patch exists..."
+
+if [ -f "$REPO/scripts/patch_world_controller_mount.py" ]; then
+  python3 "$REPO/scripts/patch_world_controller_mount.py" || true
+else
+  echo "[WORLD] No patch script found yet."
+fi
+
+echo "[WORLD] Ensuring .env exists..."
+
+if [ ! -f "$REPO/.env" ] && [ -f "$REPO/.env.example" ]; then
+  cp "$REPO/.env.example" "$REPO/.env"
+  echo "[WORLD] Created .env from .env.example"
+elif [ ! -f "$REPO/.env" ]; then
+  touch "$REPO/.env"
+  echo "[WORLD] Created blank .env"
+fi
+
+if ! grep -q '^SARA_ADMIN_TOKEN=' "$REPO/.env"; then
+  echo "SARA_ADMIN_TOKEN=change-me-admin-token" >> "$REPO/.env"
+  echo "[WORLD] Added placeholder SARA_ADMIN_TOKEN"
+fi
+
+echo "[WORLD] Compiling Python..."
+python3 -m compileall worldshepherd_sara >/dev/null || {
+  echo "[WORLD] Compile warning or failure. Continuing to launcher attempt."
+}
+
+echo
+echo "[WORLD] Boot targets:"
+echo "  Legacy UI: http://127.0.0.1:9530/ui"
+echo "  WORLD UI:  http://127.0.0.1:9530/world/ui"
+echo
+
+if [ -x "$REPO/scripts/start_interface.sh" ]; then
+  exec "$REPO/scripts/start_interface.sh"
+else
+  echo "[WORLD] ERROR: scripts/start_interface.sh not found or not executable."
+  echo "[WORLD] Try:"
+  echo "  ls -la scripts"
+  exit 1
+fi

@@ -1,0 +1,131 @@
+Done — I packaged it as an **SSPADAWANZZ admin-ready Worldshepherd SARA interface bundle**.
+
+## Downloads
+
+- [Download SSPADAWANZZ admin package ZIP](sandbox:/mnt/data/Sara_pro_worldshepherd_sspadawanzz_admin_package.zip)
+- [Download SHA-256 checksum](sandbox:/mnt/data/Sara_pro_worldshepherd_sspadawanzz_admin_package.sha256)
+
+Checksum:
+
+```text id="7y9fvy"
+a1c0160219af56335463989377520bbd5620c316994188db41ff71e3984113b7
+```
+
+## What was added
+
+I normalized the service/operator identity to:
+
+```text id="ga0stj"
+SSPADAWANZZ
+```
+
+The package now includes:
+
+- `SSPADAWANZZ` as a first-class local agent/service.
+- Browser admin console at:
+
+```text id="2qqoaa"
+http://localhost:9530/ui
+```
+
+- Separate tokens:
+  - `SARA_RELAY_TOKEN` — normal relay/operator actions.
+  - `SARA_ADMIN_TOKEN` — admin actions.
+- Admin privileges for `SSPADAWANZZ_ADMIN`.
+- Admin-only audit viewer:
+
+```text id="huch2d"
+/v1/audit?limit=50
+```
+
+- Admin-only registry patch endpoint:
+
+```text id="w79dwi"
+/admin/registry
+```
+
+- Interface launcher:
+
+```bash id="4jcbeo"
+./scripts/start_interface.sh
+```
+
+- Admin verification script:
+
+```bash id="lqxz7m"
+./scripts/admin_smoke_test.sh
+```
+
+- New docs:
+  - `docs/SSPADAWANZZ_ADMIN_HANDOFF.md`
+  - `docs/INTERFACE_GUIDE.md`
+  - updated `docs/Worldshepherd_Integration.md`
+
+## Validation completed
+
+I ran:
+
+```bash id="uqae9x"
+python -m compileall worldshepherd_sara
+PYTHONPATH=. python -m worldshepherd_sara.validate_payload payloads/xyz_relay_payload.valid.json
+PYTHONPATH=. python -m worldshepherd_sara.validate_payload payloads/sspadawanzz_admin_handoff.valid.json
+PYTHONPATH=. pytest -q
+```
+
+Result:
+
+```text id="rgj7zq"
+6 passed
+```
+
+I also ran a live local integration test:
+
+```text id="azt2io"
+SARA_CORE → SSPADAWANZZ
+```
+
+Confirmed:
+
+```text id="kgr3nf"
+integration_ok
+```
+
+That verified:
+
+- `/ui` loads.
+- admin token resolves as `admin`.
+- operator token is blocked from admin audit access.
+- admin registry patch works.
+- relay to `SSPADAWANZZ` works.
+- audit records are written and readable by admin.
+
+## Apply to the GitHub repo
+
+From your local `Sara_pro` clone:
+
+```bash id="r9prbr"
+unzip Sara_pro_worldshepherd_sspadawanzz_admin_package.zip
+cp -a Sara_pro_worldshepherd_sspadawanzz_admin_package/. .
+git checkout -b worldshepherd-sspadawanzz-admin
+git add .
+git commit -m "Add SSPADAWANZZ admin console to Worldshepherd SARA lab"
+git push -u origin worldshepherd-sspadawanzz-admin
+```
+
+Then run:
+
+```bash id="fki4id"
+cp .env.example .env
+nano .env
+./scripts/start_interface.sh
+```
+
+Open:
+
+```text id="5loiqn"
+http://localhost:9530/ui
+```
+
+Use `SARA_ADMIN_TOKEN` from `.env`.
+
+This is now usable as a controlled local interface package instead of a symbolic-only scaffold.

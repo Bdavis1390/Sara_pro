@@ -1,0 +1,83 @@
+{
+  "label": "command_gate",
+  "payload": {
+    "command": {
+      "action": "registry",
+      "execute_confirm": false,
+      "intent": "SIMULATE",
+      "mode": "DRY_RUN",
+      "payload": {},
+      "reason": "SIMULATE REGISTRY PATCH SARA_CORE DRY_RUN ADMIN",
+      "scope": "local",
+      "target": "SARA_CORE"
+    },
+    "risk": "GREEN"
+  },
+  "registry": {
+    "ARK_STORE": {
+      "capabilities": [
+        "snapshot",
+        "restore_point",
+        "checksum"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "continuity",
+      "status": "ready"
+    },
+    "GUARDIAN_POLICY": {
+      "capabilities": [
+        "classify",
+        "deny",
+        "require_approval"
+      ],
+      "guardian_policy": "RED",
+      "role": "safety_gate",
+      "status": "enforced"
+    },
+    "ORACLE_ENGINE": {
+      "capabilities": [
+        "dry_run",
+        "impact_estimate",
+        "rollback_estimate"
+      ],
+      "guardian_policy": "BLUE",
+      "role": "simulator",
+      "status": "simulate_first"
+    },
+    "SARA_CORE": {
+      "capabilities": [
+        "relay",
+        "audit",
+        "registry"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "core",
+      "status": "online"
+    },
+    "SSPADAWANZZ": {
+      "capabilities": [
+        "observe",
+        "simulate",
+        "relay",
+        "audit_read",
+        "registry_patch"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "admin_operator",
+      "status": "online"
+    },
+    "WATCHER_GRID": {
+      "capabilities": [
+        "observe",
+        "health",
+        "heartbeat"
+      ],
+      "guardian_policy": "GREEN",
+      "role": "telemetry",
+      "status": "standby"
+    }
+  },
+  "sha256": "32f206503545e3e5486abec83c30cb037c01871ffb881be984c47cb91b5a226f",
+  "snapshot_id": "ARK-RP-1782317397-9a1634e8",
+  "ts": 1782317397.8624852
+}

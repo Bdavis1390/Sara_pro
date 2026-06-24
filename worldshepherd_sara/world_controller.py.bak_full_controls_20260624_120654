@@ -1,0 +1,307 @@
+"""
+WORLD CONTROLLER router for Worldshepherd SARA / SSPADAWANZZ.
+
+Local-first, simulate-first command interface.
+Mount into your existing FastAPI app with:
+
+    from worldshepherd_sara.world_controller import router as world_controller_router
+    app.include_router(world_controller_router)
+
+Environment:
+    SARA_ADMIN_TOKEN=...
+    SARA_RELAY_TOKEN=...
+    WORLD_ALLOW_AMBER_EXECUTE=0|1
+    WORLD_DATA_DIR=data
+"""
+from __future__ import annotations
+
+import json
+import os
+import time
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Literal, Optional
+
+try:
+    from fastapi import APIRouter, Header, HTTPException
+    from fastapi.responses import HTMLResponse, JSONResponse
+    from pydantic import BaseModel, Field
+except Exception as exc:  # pragma: no cover
+    raise RuntimeError(
+        "WORLD CONTROLLER requires FastAPI and Pydantic in the Sara_pro environment."
+    ) from exc
+
+router = APIRouter(prefix="/world", tags=["WORLD CONTROLLER"])
+
+RiskClass = Literal["GREEN", "BLUE", "AMBER", "RED", "BLACK"]
+Intent = Literal[
+    "OBSERVE",
+    "SIMULATE",
+    "CONFIGURE",
+    "RELAY",
+    "PATCH",
+    "DEPLOY",
+    "ROLLBACK",
+    "ARCHIVE",
+    "EXECUTE",
+]
+Mode = Literal["DRY_RUN", "EXECUTE", "QUEUE", "REQUIRE_APPROVAL"]
+
+
+class WorldCommand(BaseModel):
+    intent: Intent = Field(..., description="Command intent")
+    target: str = Field(..., min_length=1, description="Target node/service/module")
+    action: str = Field(..., min_length=1, description="Action verb")
+    scope: str = Field("local", description="Scope of action")
+    mode: Mode = Field("DRY_RUN", description="Execution mode")
+    reason: str = Field("", description="Human reason / mission note")
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    execute_confirm: bool = Field(False, description="Second-key confirmation for execution")
+
+
+class NaturalCommand(BaseModel):
+    text: str = Field(..., min_length=1)
+
+
+@dataclass
+class GateResult:
+    guardian_class: RiskClass
+    guardian_allowed: bool
+    oracle_result: str
+    sentinel_result: str
+    ark_snapshot_id: str
+    messages: List[str] = field(default_factory=list)
+
+
+def _dump_model(model: BaseModel) -> Dict[str, Any]:
+    if hasattr(model, "model_dump"):
+        return model.model_dump()  # pydantic v2
+    return model.dict()  # pydantic v1
+
+
+def _data_dir() -> Path:
+    root = Path(os.getenv("WORLD_DATA_DIR", "data"))
+    root.mkdir(parents=True, exist_ok=True)
+    return root
+
+
+def _audit_path() -> Path:
+    return _data_dir() / "world_controller_audit.jsonl"
+
+
+def _registry_path() -> Path:
+    return _data_dir() / "world_controller_registry.json"
+
+
+def _now() -> float:
+    return time.time()
+
+
+def _token_from_header(authorization: Optional[str], x_sara_admin_token: Optional[str]) -> Optional[str]:
+    if x_sara_admin_token:
+        return x_sara_admin_token.strip()
+    if authorization and authorization.lower().startswith("bearer "):
+        return authorization.split(" ", 1)[1].strip()
+    return None
+
+
+def _require_admin(authorization: Optional[str], x_sara_admin_token: Optional[str]) -> str:
+    expected = os.getenv("SARA_ADMIN_TOKEN", "")
+    supplied = _token_from_header(authorization, x_sara_admin_token)
+    if not expected:
+        raise HTTPException(status_code=500, detail="SARA_ADMIN_TOKEN is not set")
+    if supplied != expected:
+        raise HTTPException(status_code=403, detail="WORLD CONTROLLER admin token required")
+    return "SSPADAWANZZ_ADMIN"
+
+
+def _append_audit(record: Dict[str, Any]) -> Dict[str, Any]:
+    record = {"ts": _now(), **record}
+    with _audit_path().open("a", encoding="utf-8") as f:
+        f.write(json.dumps(record, sort_keys=True) + "\n")
+    return record
+
+
+def _read_audit(limit: int = 50) -> List[Dict[str, Any]]:
+    path = _audit_path()
+    if not path.exists():
+        return []
+    lines = path.read_text(encoding="utf-8").splitlines()[-max(1, min(limit, 500)) :]
+    out: List[Dict[str, Any]] = []
+    for line in lines:
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return list(reversed(out))
+
+
+def _default_registry() -> Dict[str, Any]:
+    return {
+        "SARA_CORE": {"role": "core", "status": "online", "capabilities": ["relay", "audit", "registry"], "guardian_policy": "AMBER"},
+        "SSPADAWANZZ": {"role": "admin_operator", "status": "online", "capabilities": ["observe", "simulate", "relay", "audit_read", "registry_patch"], "guardian_policy": "AMBER"},
+        "WATCHER_GRID": {"role": "telemetry", "status": "standby", "capabilities": ["observe", "health", "heartbeat"], "guardian_policy": "GREEN"},
+        "GUARDIAN_POLICY": {"role": "safety_gate", "status": "enforced", "capabilities": ["classify", "deny", "require_approval"], "guardian_policy": "RED"},
+        "ORACLE_ENGINE": {"role": "simulator", "status": "simulate_first", "capabilities": ["dry_run", "impact_estimate", "rollback_estimate"], "guardian_policy": "BLUE"},
+        "ARK_STORE": {"role": "continuity", "status": "ready", "capabilities": ["snapshot", "restore_point", "checksum"], "guardian_policy": "AMBER"},
+    }
+
+
+def _load_registry() -> Dict[str, Any]:
+    path = _registry_path()
+    if not path.exists():
+        registry = _default_registry()
+        path.write_text(json.dumps(registry, indent=2, sort_keys=True), encoding="utf-8")
+        return registry
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        path.replace(path.with_suffix(".corrupt.json"))
+        registry = _default_registry()
+        path.write_text(json.dumps(registry, indent=2, sort_keys=True), encoding="utf-8")
+        return registry
+
+
+def _risk_for(cmd: WorldCommand) -> RiskClass:
+    target = cmd.target.upper()
+    action = cmd.action.lower()
+    intent = cmd.intent.upper()
+    text = f"{target} {action} {cmd.scope}".lower()
+    if any(term in text for term in ["weapon", "harm", "exfiltrate", "steal", "bypass", "disable_audit", "delete_audit"]):
+        return "BLACK"
+    if any(term in text for term in ["rf", "metasurface", "actuator", "thermal", "voltage", "phase_shifter", "material_state"]):
+        return "RED"
+    if intent in {"DEPLOY", "EXECUTE"}:
+        return "RED"
+    if intent in {"PATCH", "RELAY", "ROLLBACK"}:
+        return "AMBER"
+    if intent in {"CONFIGURE", "ARCHIVE"}:
+        return "BLUE"
+    return "GREEN"
+
+
+def _oracle(cmd: WorldCommand, risk: RiskClass) -> str:
+    if risk == "BLACK":
+        return "unsafe_or_forbidden_path_detected"
+    if risk == "RED":
+        return "requires_offline_review_or_hardware_safety_case"
+    if risk == "AMBER":
+        return "reversible_if_ark_snapshot_exists_admin_approval_required"
+    if risk == "BLUE":
+        return "local_reversible_change_expected"
+    return "read_or_simulation_only_low_risk"
+
+
+def _gate(cmd: WorldCommand) -> GateResult:
+    risk = _risk_for(cmd)
+    messages: List[str] = []
+    allow_amber = os.getenv("WORLD_ALLOW_AMBER_EXECUTE", "0") == "1"
+    if cmd.mode != "EXECUTE":
+        allowed = risk != "BLACK"
+        messages.append("dry_run_or_queue_mode_no_real_action_taken")
+    elif risk in {"GREEN", "BLUE"}:
+        allowed = cmd.execute_confirm
+        if not cmd.execute_confirm:
+            messages.append("execute_confirm_required")
+    elif risk == "AMBER":
+        allowed = allow_amber and cmd.execute_confirm
+        messages.append("amber_execution_requires_WORLD_ALLOW_AMBER_EXECUTE=1_and_execute_confirm=true")
+    else:
+        allowed = False
+        messages.append("red_or_black_execution_denied_by_default")
+    return GateResult(
+        guardian_class=risk,
+        guardian_allowed=allowed,
+        oracle_result=_oracle(cmd, risk),
+        sentinel_result="identity_and_doctrine_gate_checked",
+        ark_snapshot_id=f"ARK-RP-{int(_now())}",
+        messages=messages,
+    )
+
+
+def _parse_natural(text: str) -> WorldCommand:
+    raw = text.strip()
+    upper = raw.upper()
+    intent: Intent = "OBSERVE"
+    mode: Mode = "DRY_RUN"
+    for candidate in ["SIMULATE", "CONFIGURE", "RELAY", "PATCH", "DEPLOY", "ROLLBACK", "ARCHIVE", "EXECUTE", "OBSERVE"]:
+        if upper.startswith(candidate):
+            intent = candidate  # type: ignore[assignment]
+            break
+    if " EXECUTE" in upper or upper.startswith("EXECUTE"):
+        mode = "EXECUTE"
+    elif "QUEUE" in upper:
+        mode = "QUEUE"
+    elif "APPROVAL" in upper:
+        mode = "REQUIRE_APPROVAL"
+    known_targets = ["SARA_CORE", "SSPADAWANZZ", "WATCHER_GRID", "GUARDIAN_POLICY", "ORACLE_ENGINE", "ARK_STORE", "REGISTRY"]
+    target = "SARA_CORE"
+    for candidate in known_targets:
+        if candidate in upper:
+            target = candidate
+            break
+    words = raw.split()
+    action = "review" if len(words) < 2 else words[1].lower().replace("/", "_")[:48]
+    return WorldCommand(intent=intent, target=target, action=action, scope="local", mode=mode, reason=raw)
+
+
+@router.get("/ui", response_class=HTMLResponse)
+def world_ui() -> HTMLResponse:
+    html_path = Path(__file__).with_name("world_controller_static") / "index.html"
+    if html_path.exists():
+        return HTMLResponse(html_path.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>WORLD CONTROLLER</h1><p>Static UI missing, API is mounted.</p>")
+
+
+@router.get("/status")
+def world_status(authorization: Optional[str] = Header(default=None), x_sara_admin_token: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    actor = _require_admin(authorization, x_sara_admin_token)
+    registry = _load_registry()
+    record = _append_audit({"actor": actor, "event": "world_status_read", "payload": {}})
+    return {"ok": True, "service": "WORLD CONTROLLER", "mode": "simulate_first", "actor": actor, "registry_nodes": len(registry), "routes": ["/world/ui", "/world/status", "/world/registry", "/world/command/simulate", "/world/command/execute", "/world/audit"], "audit_recorded": record["ts"]}
+
+
+@router.get("/registry")
+def world_registry(authorization: Optional[str] = Header(default=None), x_sara_admin_token: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    actor = _require_admin(authorization, x_sara_admin_token)
+    registry = _load_registry()
+    _append_audit({"actor": actor, "event": "world_registry_read", "payload": {"nodes": list(registry.keys())}})
+    return {"ok": True, "registry": registry}
+
+
+@router.post("/command/parse")
+def world_command_parse(body: NaturalCommand, authorization: Optional[str] = Header(default=None), x_sara_admin_token: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    actor = _require_admin(authorization, x_sara_admin_token)
+    cmd = _parse_natural(body.text)
+    gate = _gate(cmd)
+    _append_audit({"actor": actor, "event": "world_command_parse", "payload": {"text": body.text, "command": _dump_model(cmd), "gate": asdict(gate)}})
+    return {"ok": True, "command": _dump_model(cmd), "gate": asdict(gate)}
+
+
+@router.post("/command/simulate")
+def world_command_simulate(cmd: WorldCommand, authorization: Optional[str] = Header(default=None), x_sara_admin_token: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    actor = _require_admin(authorization, x_sara_admin_token)
+    cmd.mode = "DRY_RUN"
+    gate = _gate(cmd)
+    _append_audit({"actor": actor, "event": "world_command_simulate", "payload": {"command": _dump_model(cmd), "gate": asdict(gate)}})
+    return {"ok": gate.guardian_class != "BLACK", "executed": False, "command": _dump_model(cmd), "gate": asdict(gate)}
+
+
+@router.post("/command/execute")
+def world_command_execute(cmd: WorldCommand, authorization: Optional[str] = Header(default=None), x_sara_admin_token: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    actor = _require_admin(authorization, x_sara_admin_token)
+    cmd.mode = "EXECUTE"
+    gate = _gate(cmd)
+    event = "world_command_execute_allowed" if gate.guardian_allowed else "world_command_execute_denied"
+    _append_audit({"actor": actor, "event": event, "payload": {"command": _dump_model(cmd), "gate": asdict(gate)}})
+    if not gate.guardian_allowed:
+        return JSONResponse(status_code=403, content={"ok": False, "executed": False, "command": _dump_model(cmd), "gate": asdict(gate)})
+    return {"ok": True, "executed": True, "note": "safe_local_execution_recorded_no_external_side_effect", "command": _dump_model(cmd), "gate": asdict(gate)}
+
+
+@router.get("/audit")
+def world_audit(limit: int = 50, authorization: Optional[str] = Header(default=None), x_sara_admin_token: Optional[str] = Header(default=None)) -> Dict[str, Any]:
+    actor = _require_admin(authorization, x_sara_admin_token)
+    rows = _read_audit(limit=limit)
+    _append_audit({"actor": actor, "event": "world_audit_read", "payload": {"limit": limit, "returned": len(rows)}})
+    return {"ok": True, "records": rows}

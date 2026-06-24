@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WORLD CONTROLLER</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #080b11; --panel: #0d1119; --card: #0b0f17; --line: #263244;
+      --text: #e8eef8; --muted: #aab8cd; --btn: #111827; --btn-hover: #182235;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    header { padding: 16px 22px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    h1 { margin: 0; font-size: 20px; letter-spacing: .08em; }
+    h2, h3 { margin-top: 0; }
+    .badge { border: 1px solid #40506a; padding: 6px 10px; border-radius: 999px; color: #b9c8de; white-space: nowrap; }
+    main { display: grid; grid-template-columns: 240px minmax(420px, 1fr) 360px; min-height: calc(100vh - 65px); }
+    nav, aside { border-right: 1px solid var(--line); padding: 16px; background: var(--panel); }
+    aside { border-right: 0; border-left: 1px solid var(--line); }
+    section { padding: 18px; }
+    button, input, textarea, select { background: var(--btn); color: var(--text); border: 1px solid #344158; border-radius: 8px; padding: 10px; }
+    button { cursor: pointer; margin: 4px 4px 4px 0; }
+    button:hover { background: var(--btn-hover); }
+    button.active { border-color: #78e08f; box-shadow: 0 0 0 1px #78e08f33 inset; }
+    textarea { width: 100%; min-height: 110px; box-sizing: border-box; }
+    input, select { width: 100%; box-sizing: border-box; margin: 6px 0 14px; }
+    pre { background: #05070b; border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow: auto; max-height: 460px; white-space: pre-wrap; }
+    .card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px; background: var(--card); }
+    .rail-item { display: block; width: 100%; text-align: left; padding: 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; color: #c9d6e8; background: #101622; }
+    .rail-item:hover, .rail-item.active { background: #182235; border-color: #547099; }
+    .green { color: #78e08f; } .blue { color: #8ab4ff; } .amber { color: #f8c471; } .red { color: #ff7675; }
+    label { color: var(--muted); font-size: 13px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .mini { font-size: 12px; color: var(--muted); }
+    .statusline { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    @media (max-width: 1000px) { main { grid-template-columns: 1fr; } nav, aside { border: 0; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WORLD CONTROLLER</h1>
+    <span class="badge">SIMULATE-FIRST / LOCAL ADMIN</span>
+  </header>
+  <main>
+    <nav>
+      <button class="rail-item active" data-panel="dashboard" onclick="loadPanel('dashboard')">Dashboard</button>
+      <button class="rail-item" data-panel="watchers" onclick="loadPanel('watchers')">Watchers</button>
+      <button class="rail-item" data-panel="guardians" onclick="loadPanel('guardians')">Guardians</button>
+      <button class="rail-item" data-panel="oracle" onclick="loadPanel('oracle')">Oracle</button>
+      <button class="rail-item" data-panel="ark" onclick="loadPanel('ark')">Ark</button>
+      <button class="rail-item" data-panel="registry" onclick="loadPanel('registry')">Registry</button>
+      <button class="rail-item" data-panel="audit" onclick="loadPanel('audit')">Audit</button>
+      <button class="rail-item" data-panel="admin" onclick="loadPanel('admin')">Admin</button>
+    </nav>
+    <section>
+      <div class="card">
+        <label>Admin Token</label>
+        <input id="token" type="password" placeholder="Paste SARA_ADMIN_TOKEN here" />
+        <button onclick="saveToken()">Save Token</button>
+        <button onclick="clearToken()">Clear</button>
+        <button onclick="statusCheck()">Status</button>
+        <button onclick="loadRegistry()">Registry</button>
+        <button onclick="loadAudit()">Audit</button>
+        <button onclick="refreshCurrent()">Refresh Current</button>
+        <div id="statusline" class="statusline">Ready.</div>
+      </div>
+
+      <div class="card">
+        <h2>Command Builder</h2>
+        <textarea id="cmdText">SIMULATE REGISTRY PATCH SARA_CORE DRY_RUN ADMIN</textarea>
+        <br />
+        <button onclick="parseCommand()">Parse</button>
+        <button onclick="guardianClassify()">Guardian Classify</button>
+        <button onclick="oracleSimulate()">Oracle Simulate</button>
+        <button onclick="simulateStructured()">Simulate Structured</button>
+        <button onclick="executeBlue()">Execute Safe BLUE Test</button>
+      </div>
+
+      <div class="card">
+        <h2>Registry Quick Patch</h2>
+        <div class="grid2">
+          <div><label>Node ID</label><input id="patchNode" value="WATCHER_GRID" /></div>
+          <div><label>Status</label><input id="patchStatus" value="online" /></div>
+          <div><label>Role</label><input id="patchRole" value="telemetry" /></div>
+          <div><label>Guardian Policy</label><select id="patchPolicy"><option>GREEN</option><option>BLUE</option><option selected>AMBER</option><option>RED</option><option>BLACK</option></select></div>
+        </div>
+        <label>Capabilities, comma separated</label>
+        <input id="patchCaps" value="observe,health,heartbeat" />
+        <button onclick="patchRegistry()">Patch Registry Node</button>
+        <button onclick="arkSnapshot()">Create Ark Snapshot</button>
+      </div>
+
+      <div class="card">
+        <h2>Output</h2>
+        <button onclick="copyOutput()">Copy Output</button>
+        <pre id="out">Ready.</pre>
+      </div>
+    </section>
+    <aside>
+      <div class="card">
+        <h3>Guardian</h3>
+        <p><span class="green">GREEN</span>/<span class="blue">BLUE</span> may execute with confirmation. <span class="amber">AMBER</span> requires explicit env unlock. <span class="red">RED/BLACK</span> deny by default.</p>
+      </div>
+      <div class="card">
+        <h3>Oracle</h3>
+        <p>Every command can be simulated before execution. This panel is wired to <code>/world/oracle</code> and <code>/world/oracle/simulate</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Ark</h3>
+        <p>Every command receives an Ark restore-point identifier. Manual snapshots are wired to <code>/world/ark/snapshot</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Current Panel</h3>
+        <p id="currentPanel" class="mini">dashboard</p>
+      </div>
+    </aside>
+  </main>
+<script>
+let currentPanel = 'dashboard';
+const out = document.getElementById('out');
+const statusline = document.getElementById('statusline');
+
+function setStatus(msg) { statusline.textContent = msg; }
+function token() { return document.getElementById('token').value.trim(); }
+function saveToken() { localStorage.setItem('SARA_ADMIN_TOKEN', token()); setStatus('Token saved locally in this browser.'); }
+function clearToken() { localStorage.removeItem('SARA_ADMIN_TOKEN'); document.getElementById('token').value = ''; setStatus('Token cleared.'); }
+function show(x) { out.textContent = JSON.stringify(x, null, 2); }
+function showError(e) { show({ok:false, error:String(e)}); setStatus('Error: ' + String(e)); }
+function setActive(panel) {
+  currentPanel = panel;
+  document.getElementById('currentPanel').textContent = panel;
+  document.querySelectorAll('.rail-item').forEach(b => b.classList.toggle('active', b.dataset.panel === panel));
+}
+async function api(path, opts={}) {
+  opts.headers = Object.assign({'Content-Type': 'application/json', 'X-SARA-ADMIN-TOKEN': token()}, opts.headers || {});
+  const res = await fetch(path, opts);
+  const text = await res.text();
+  let parsed;
+  try { parsed = JSON.parse(text); } catch { parsed = {raw: text}; }
+  if (!res.ok) parsed.http_status = res.status;
+  return parsed;
+}
+async function loadPanel(panel) {
+  try {
+    setActive(panel); setStatus('Loading ' + panel + '...');
+    const path = '/world/' + panel;
+    const data = await api(path);
+    show(data); setStatus('Loaded ' + panel + '.');
+  } catch (e) { showError(e); }
+}
+async function refreshCurrent(){ return loadPanel(currentPanel); }
+async function statusCheck(){ try { setActive('status'); show(await api('/world/status')); setStatus('Status loaded.'); } catch(e){ showError(e); } }
+async function loadRegistry(){ try { setActive('registry'); show(await api('/world/registry')); setStatus('Registry loaded.'); } catch(e){ showError(e); } }
+async function loadAudit(){ try { setActive('audit'); show(await api('/world/audit?limit=50')); setStatus('Audit loaded.'); } catch(e){ showError(e); } }
+async function parseCommand(){
+  try { setStatus('Parsing command...'); show(await api('/world/command/parse', {method:'POST', body: JSON.stringify({text: document.getElementById('cmdText').value})})); setStatus('Command parsed.'); }
+  catch(e){ showError(e); }
+}
+async function guardianClassify(){
+  try { setActive('guardians'); setStatus('Classifying command...'); show(await api('/world/guardians/classify', {method:'POST', body: JSON.stringify({text: document.getElementById('cmdText').value})})); setStatus('Guardian classification complete.'); }
+  catch(e){ showError(e); }
+}
+async function oracleSimulate(){
+  try { setActive('oracle'); setStatus('Oracle simulation running...'); show(await api('/world/oracle/simulate', {method:'POST', body: JSON.stringify({text: document.getElementById('cmdText').value})})); setStatus('Oracle simulation complete.'); }
+  catch(e){ showError(e); }
+}
+async function simulateStructured(){
+  const body = {intent:'PATCH', target:'REGISTRY', action:'patch', scope:'SARA_CORE', mode:'DRY_RUN', reason:document.getElementById('cmdText').value, payload:{demo:true}};
+  try { setStatus('Structured simulation running...'); show(await api('/world/command/simulate', {method:'POST', body: JSON.stringify(body)})); setStatus('Structured simulation complete.'); }
+  catch(e){ showError(e); }
+}
+async function executeBlue(){
+  const body = {intent:'CONFIGURE', target:'ORACLE_ENGINE', action:'set_mode', scope:'local', mode:'EXECUTE', reason:'safe local execution smoke test', payload:{mode:'simulate_first'}, execute_confirm:true};
+  try { setStatus('Executing safe BLUE local test...'); show(await api('/world/command/execute', {method:'POST', body: JSON.stringify(body)})); setStatus('Safe BLUE local execution test complete.'); }
+  catch(e){ showError(e); }
+}
+async function patchRegistry(){
+  const body = {
+    node_id: document.getElementById('patchNode').value,
+    status: document.getElementById('patchStatus').value,
+    role: document.getElementById('patchRole').value,
+    guardian_policy: document.getElementById('patchPolicy').value,
+    capabilities: document.getElementById('patchCaps').value.split(',').map(x => x.trim()).filter(Boolean),
+    note: 'patched from WORLD CONTROLLER UI'
+  };
+  try { setActive('registry'); setStatus('Patching registry...'); show(await api('/world/registry/patch', {method:'POST', body: JSON.stringify(body)})); setStatus('Registry patch complete.'); }
+  catch(e){ showError(e); }
+}
+async function arkSnapshot(){
+  try { setActive('ark'); setStatus('Creating Ark snapshot...'); show(await api('/world/ark/snapshot', {method:'POST', body: JSON.stringify({})})); setStatus('Ark snapshot created.'); }
+  catch(e){ showError(e); }
+}
+async function copyOutput(){ await navigator.clipboard.writeText(out.textContent); setStatus('Output copied.'); }
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('SARA_ADMIN_TOKEN');
+  if (saved) document.getElementById('token').value = saved;
+  if (saved) loadPanel('dashboard');
+});
+</script>
+</body>
+</html>

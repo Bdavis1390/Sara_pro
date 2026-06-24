@@ -1,0 +1,114 @@
+{
+  "generated_at": 1782320297.28765,
+  "source": "current ChatGPT session /mnt/data files",
+  "records": [
+    {
+      "filename": "Branch \u00b7 Branch \u00b7 Branch \u00b7 Branch \u00b7 Active Secure Access Protocols.txt",
+      "bytes": 5353,
+      "sha256": "e85ac4be1a98b7ad194d0fd2cc9e8f6cfe145feb3c642a964227c99f19947c76",
+      "kind": "document"
+    },
+    {
+      "filename": "Branch \u00b7 Generic adaptive metasurface control system under multi-physics constra.txt",
+      "bytes": 3828,
+      "sha256": "177448916e023af31ea1c7b0a8baed59a936767afd0d52c36f696fec146de7bd",
+      "kind": "document"
+    },
+    {
+      "filename": "Meta-Alloy Design for Al-Ti.txt",
+      "bytes": 979,
+      "sha256": "e504b6f366c5574f4da724dac3c03b305e17cff1b0b441f83d205b13db1a955c",
+      "kind": "document"
+    },
+    {
+      "filename": "Repo Review Summary.txt",
+      "bytes": 2721,
+      "sha256": "22501b5f01fed3a436c3a567d60ad9b47e047c3bb5204fbd255126d540ee642a",
+      "kind": "document"
+    },
+    {
+      "filename": "WORLD CONTROLLER DOSSIER.pdf",
+      "bytes": 445976,
+      "sha256": "e618cc75ab421bbe5de3de31345fc88deae29292728d0769ffd6dc193ffe1dbb",
+      "kind": "document"
+    },
+    {
+      "filename": "WORLD CONTROLLER.pdf",
+      "bytes": 70193,
+      "sha256": "448759d83155df636eca960f9fdafeb26a1413d249cd54200a4d46a04b61285f",
+      "kind": "document"
+    },
+    {
+      "filename": "world_controller_build_package.sha256",
+      "bytes": 101,
+      "sha256": "3e8a09131a1b450f6a59faee86733294a70f20cbc4c2a2835fce7681df02ff1a",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_build_package.zip",
+      "bytes": 15758,
+      "sha256": "3e96334eb75050989c60d8ebfc221a378feb72c4602dc7aea3f77ec769088347",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_dossier_ui_patch.sha256",
+      "bytes": 104,
+      "sha256": "1418abbfb922489544c130e4ccfed3278657fdee9e3f3aef28032b460a243785",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_dossier_ui_patch.zip",
+      "bytes": 17442,
+      "sha256": "fb2e462cdc1cd059243c60c142b676587969cdaac15a777251e4d7335cabb2ba",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_evidence_links_patch.sha256",
+      "bytes": 108,
+      "sha256": "781c3c1acf58d5d0018385aef22c0b1d187adeecef4ad8b44cea1be4537755db",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_evidence_links_patch.zip",
+      "bytes": 20869,
+      "sha256": "d5d83badcd0209d99abfb859e03fefe3558a13f52e5c7388bb1756f77962181d",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_full_controls_patch.sha256",
+      "bytes": 107,
+      "sha256": "68b04fe42a1ac995d12413e96709b4c46f607bdb7e8ec33a23833dbac0b36d0c",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_full_controls_patch.zip",
+      "bytes": 29967,
+      "sha256": "55b1012f6c606e6fa7a6228eed828147432ea50fc1de6a8c13c1e48d959223c3",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_next_actions_patch.sha256",
+      "bytes": 106,
+      "sha256": "cd81b208ff46f4dcbaf643513ca91952e74dec8a249342265030a4b9321bb23b",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_next_actions_patch.zip",
+      "bytes": 54420,
+      "sha256": "79c898881284b55706477efa629a4e841898bb67a5b2711529a62923948ca9a1",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_realtime_projects_patch.sha256",
+      "bytes": 111,
+      "sha256": "dd85a6c2d056c5c8033af64d9f30003668d40ca9abec984e1447c90ccc78e612",
+      "kind": "package_artifact"
+    },
+    {
+      "filename": "world_controller_realtime_projects_patch.zip",
+      "bytes": 243342,
+      "sha256": "21f804fb89b28156cc9f899da2ecb589fdba809e8952008e0bf445ef4ba49a43",
+      "kind": "package_artifact"
+    }
+  ]
+}

@@ -1,0 +1,512 @@
+{
+  "generated_at": 1782320519.1127715,
+  "repo": "/home/sspadawanzz/Sara_pro",
+  "sources": [
+    "/home/sspadawanzz/Downloads",
+    "/home/sspadawanzz/Documents",
+    "/home/sspadawanzz/ChatGPT_Exports",
+    "/home/sspadawanzz/GPT_Exports",
+    "/home/sspadawanzz/Worldshepherd",
+    "/home/sspadawanzz/worldshepherd"
+  ],
+  "records": [
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch",
+      "source_type": "zip",
+      "status": "opening"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/README.md",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/README.md",
+      "bytes": 148,
+      "sha256": "64b6d62eeddf20ad9bee0cf6852b3106ff77cce0c1e866271cbc47f1553722a2",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/seed_documents/Branch · Branch · Branch · Branch · Active Secure Access Protocols.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/Branch · Branch · Branch · Branch · Active Secure Access Protocols.txt",
+      "bytes": 5353,
+      "sha256": "e85ac4be1a98b7ad194d0fd2cc9e8f6cfe145feb3c642a964227c99f19947c76",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/seed_documents/Branch · Generic adaptive metasurface control system under multi-physics constra.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/Branch · Generic adaptive metasurface control system under multi-physics constra.txt",
+      "bytes": 3828,
+      "sha256": "177448916e023af31ea1c7b0a8baed59a936767afd0d52c36f696fec146de7bd",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/seed_documents/Meta-Alloy Design for Al-Ti.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/Meta-Alloy Design for Al-Ti.txt",
+      "bytes": 979,
+      "sha256": "e504b6f366c5574f4da724dac3c03b305e17cff1b0b441f83d205b13db1a955c",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/seed_documents/Repo Review Summary.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/Repo Review Summary.txt",
+      "bytes": 2721,
+      "sha256": "22501b5f01fed3a436c3a567d60ad9b47e047c3bb5204fbd255126d540ee642a",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/seed_documents/WORLD CONTROLLER.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/WORLD CONTROLLER.pdf",
+      "bytes": 70193,
+      "sha256": "448759d83155df636eca960f9fdafeb26a1413d249cd54200a4d46a04b61285f",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/seed_documents/WORLD CONTROLLER DOSSIER.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/WORLD CONTROLLER DOSSIER.pdf",
+      "bytes": 445976,
+      "sha256": "e618cc75ab421bbe5de3de31345fc88deae29292728d0769ffd6dc193ffe1dbb",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_realtime_projects_patch.zip",
+      "member": "world_controller_realtime_projects_patch/world_controller_files/world_controller_static/index.html",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_realtime_projects_patch/raw/index.html",
+      "bytes": 12596,
+      "sha256": "b9cc642c8509b2f2f89c2776c5b9f95acba274f510c82c5f78f8a0a14938007b",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/overleaf_project.zip",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/overleaf_project",
+      "source_type": "zip",
+      "status": "opening"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch",
+      "source_type": "zip",
+      "status": "opening"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/session_documents/Branch ┬╖ Generic adaptive metasurface control system under multi-physics constra.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/Branch ┬╖ Generic adaptive metasurface control system under multi-physics constra.txt",
+      "bytes": 3828,
+      "sha256": "177448916e023af31ea1c7b0a8baed59a936767afd0d52c36f696fec146de7bd",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/session_documents/Meta-Alloy Design for Al-Ti.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/Meta-Alloy Design for Al-Ti.txt",
+      "bytes": 979,
+      "sha256": "e504b6f366c5574f4da724dac3c03b305e17cff1b0b441f83d205b13db1a955c",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/session_documents/Repo Review Summary.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/Repo Review Summary.txt",
+      "bytes": 2721,
+      "sha256": "22501b5f01fed3a436c3a567d60ad9b47e047c3bb5204fbd255126d540ee642a",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/session_documents/Branch ┬╖ Branch ┬╖ Branch ┬╖ Branch ┬╖ Active Secure Access Protocols.txt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/Branch ┬╖ Branch ┬╖ Branch ┬╖ Branch ┬╖ Active Secure Access Protocols.txt",
+      "bytes": 5353,
+      "sha256": "e85ac4be1a98b7ad194d0fd2cc9e8f6cfe145feb3c642a964227c99f19947c76",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/session_documents/WORLD CONTROLLER.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/WORLD CONTROLLER.pdf",
+      "bytes": 70193,
+      "sha256": "448759d83155df636eca960f9fdafeb26a1413d249cd54200a4d46a04b61285f",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/session_documents/WORLD CONTROLLER DOSSIER.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/WORLD CONTROLLER DOSSIER.pdf",
+      "bytes": 445976,
+      "sha256": "e618cc75ab421bbe5de3de31345fc88deae29292728d0769ffd6dc193ffe1dbb",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/session_documents/CURRENT_GPT_SESSION_MANIFEST.md",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/CURRENT_GPT_SESSION_MANIFEST.md",
+      "bytes": 2680,
+      "sha256": "16ffeca0018d997e18e4171cb646359dfc0984d76d3322cb455a9e8b89ed0d9d",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/docs/GPT_ACCOUNT_PROJECT_IMPORT_GUIDE.md",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/GPT_ACCOUNT_PROJECT_IMPORT_GUIDE.md",
+      "bytes": 1289,
+      "sha256": "83d715ec0aa4f6512b73dc1ed88c52dcc4e113fac4c7f161a8da3729df371487",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/world_controller_gpt_account_import_patch.zip",
+      "member": "world_controller_gpt_account_import_patch/CURRENT_GPT_SESSION_MANIFEST.json",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/gpt_exports/world_controller_gpt_account_import_patch/raw/CURRENT_GPT_SESSION_MANIFEST.json",
+      "bytes": 3950,
+      "sha256": "9a2fdb088b280030c43bb6f5dbcb3cc3b734f553e9c1744978a42cff23d03352",
+      "status": "extracted"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd SARA.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd SARA_a90b31a9.pdf",
+      "bytes": 48928,
+      "sha256": "a90b31a97543a1127adfdada70768965f33eb8b8ced521616994404cea9499bc",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/WORLD CONTROLLER DOSSIER.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/WORLD CONTROLLER DOSSIER_e618cc75.pdf",
+      "bytes": 445976,
+      "sha256": "e618cc75ab421bbe5de3de31345fc88deae29292728d0769ffd6dc193ffe1dbb",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/50x.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/50x_47b29003.pdf",
+      "bytes": 17827,
+      "sha256": "47b29003da78e6cd5bc4951c9f70f5788e41d4b1f1de77e225e9b89255f33d78",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/localhost.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/localhost_e26e2c92.pdf",
+      "bytes": 41642,
+      "sha256": "e26e2c9240efa0bdd21ed8f75f029af7ea610099dd46a3e4ddae1f234739e3af",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Brandon_Ray_Davis_Combined_Counsel_Packet.docx",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Brandon_Ray_Davis_Combined_Counsel_Packet_7803902d.docx",
+      "bytes": 39285,
+      "sha256": "7803902d4171719bee6de6adee0806cd4a8e4de150b0d3891e54e47a3c93c41c",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/gao-11-590t.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/gao-11-590t_b1c97d6a.pdf",
+      "bytes": 522628,
+      "sha256": "b1c97d6a86896bdf7ce69436b92457385c06fd19fafd93b4c2b81e6d6b4ce390",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/Worldshepherd_Master_Book_Full_Bloom_v0_2.docx",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/Worldshepherd_Master_Book_Full_Bloom_v0_2_eca8abe1.docx",
+      "bytes": 62886,
+      "sha256": "eca8abe169ef73c23711b0c65fbd93bdbbad153c332ba80377b37214856e0369",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/Worldshepherd_Master_Book_Full_Bloom_v0_2.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/Worldshepherd_Master_Book_Full_Bloom_v0_2_960792c7.pdf",
+      "bytes": 1147003,
+      "sha256": "960792c7751c6689291c388a6f147b4e676be96c0466335602e3d302c9dfcc28",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/WS-AlTi-M1-MSZ-Prime_White_Pages_Full_Bloom_EXPANDED_UNIFORM_BLACK.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/WS-AlTi-M1-MSZ-Prime_White_Pages_Full_Bloom_EXPANDED_UNIFORM_BLACK_c6bf185a.pdf",
+      "bytes": 784077,
+      "sha256": "c6bf185a6032da0c1bec5094eafebbb4c47658adf6e961dacb81ab850a3ab6a9",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/WS-AlTi-M1-MSZ-Prime_White_Pages_Full_Bloom_EXPANDED_UNIFORM_BLACK.docx",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/WS-AlTi-M1-MSZ-Prime_White_Pages_Full_Bloom_EXPANDED_UNIFORM_BLACK_b2b9d1e3.docx",
+      "bytes": 80834,
+      "sha256": "b2b9d1e3182067a9788803e323a3300c053ad0356ab8f101acab76f01a457fad",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/Worldshepherd_Master_Book_Full_Bloom_Proofread_Categorized_v0_3.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/Worldshepherd_Master_Book_Full_Bloom_Proofread_Categorized_v0_3_8e3a0e25.pdf",
+      "bytes": 1201488,
+      "sha256": "8e3a0e2593bf9280783e36d4528314170888cd26bd6a7020fa09208a3deb90df",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/Worldshepherd_Portfolio_Valuation_Addendum_v0_4.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/Worldshepherd_Portfolio_Valuation_Addendum_v0_4_939e27c8.pdf",
+      "bytes": 126534,
+      "sha256": "939e27c8911b6f859d64fb376e6a7e64321f18701be8c430f154c0eb6d339991",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/Ws-al Ti-m1-msz-prime White Paper And Valuation Brief.docx",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/Ws-al Ti-m1-msz-prime White Paper And Valuation Brief_0d6694a4.docx",
+      "bytes": 37172,
+      "sha256": "0d6694a45623fa1956aad2b3d84d78f579f9f4e619de703918577841d8d4568a",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/Worldshepherd_Master_Book_Valuation_Edition_v0_4.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/Worldshepherd_Master_Book_Valuation_Edition_v0_4_4ba728ff.pdf",
+      "bytes": 1300464,
+      "sha256": "4ba728fff6d5e33fb94b9b165940d2583050255cf4ad34b5ff9b7a9390220635",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/worldshepherd_gpt_prompt.md",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/worldshepherd_gpt_prompt_bc29cccf.md",
+      "bytes": 7725,
+      "sha256": "bc29cccf3988aa2c9d4d65f931971703cd25454414b9730d3b08735aa7a184d9",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Worldshepherd/WS-AlTi-M1-MSZ-Prime_White_Pages_Full_Bloom.docx",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Worldshepherd/WS-AlTi-M1-MSZ-Prime_White_Pages_Full_Bloom_5060d60d.docx",
+      "bytes": 64826,
+      "sha256": "5060d60d2ae673524637bf4bcf6ed9962c330234cbc08b61c8dca2d40cdb8dd0",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/ED After Visit Summary BRD May 23, 2026.PDF",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/ED After Visit Summary BRD May 23, 2026_f9b4948d.PDF",
+      "bytes": 525685,
+      "sha256": "f9b4948d2a45dfc3d8be618b90cc95dc5af883fa76035835b6d7026c2a2c311d",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/Brandon_Ray_Davis_Combined_Counsel_Packet_Black_Text.docx",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/Brandon_Ray_Davis_Combined_Counsel_Packet_Black_Text_9d31743f.docx",
+      "bytes": 39140,
+      "sha256": "9d31743f947218ea24736848fc3431d7726fb08755fc48b1e49fc9e6e34f17e2",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/MyChart - Past Visit Details for celo.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/MyChart - Past Visit Details for celo_b0ab490e.pdf",
+      "bytes": 62609,
+      "sha256": "b0ab490ef6b3c3fa91dc21634795d4d9e47355f9190f503a7dae8f388e1a17ec",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/MyChart - Test DetailsBRD2.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/MyChart - Test DetailsBRD2_673b29cc.pdf",
+      "bytes": 108445,
+      "sha256": "673b29cc5b4630baf1fff22e6159b4dd55fa8a93d8720c9c70a97d1d7a86f73e",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/download.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/download_4930da37.pdf",
+      "bytes": 394151,
+      "sha256": "4930da37105bf10193da52b08bf7c649ceb8fab94d680da6a1b594d64b89ea73",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/MyChart - Past Visit Details clinical notes for celo.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/MyChart - Past Visit Details clinical notes for celo_ee83da41.pdf",
+      "bytes": 414225,
+      "sha256": "ee83da41cb7e28276dd6a9da0ebde838b81f897415274028f38d4219d93df2f7",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/BRD proton-recovery-kit.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/BRD proton-recovery-kit_d1883b78.pdf",
+      "bytes": 487869,
+      "sha256": "d1883b781b494a0d5ba068a148a02f16ed69ecfbed6bae3d8833b62a14f70854",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BRD/MyChart - Test DetailsBRD.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BRD/MyChart - Test DetailsBRD_5919471b.pdf",
+      "bytes": 113216,
+      "sha256": "5919471ba9c3c1b2f1dd7429864805c57a6a3ddf18c268f6ce17fde27e300f12",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/WORLD CONTROLLER/WORLD CONTROLLER.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/WORLD CONTROLLER/WORLD CONTROLLER_448759d8.pdf",
+      "bytes": 70193,
+      "sha256": "448759d83155df636eca960f9fdafeb26a1413d249cd54200a4d46a04b61285f",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_No_Half_Blank_Pages_Final (1).odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_No_Half_Blank_Pages_Final (1)_b69fbf7e.odt",
+      "bytes": 255815,
+      "sha256": "b69fbf7ef4d9dde21ffc6a92df1f2ebc6e60a3fb5cad91fb4731579bc0896127",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/biological_radiotherapy_manuscript.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/biological_radiotherapy_manuscript_ba29dca7.pdf",
+      "bytes": 141146,
+      "sha256": "ba29dca7de5757c406b9f2649bdb5682ccf4aca3556e6e3a49fc3a1dcb288a69",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition.without coverpages for index.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition.without coverpages for index_33d4c4ea.odt",
+      "bytes": 294584,
+      "sha256": "33d4c4ead88c076748b576638d93f4be60c07262f8ab9cbbbb4fa8bbc467373b",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_v1_5_Final_Clinical_Math_Audit.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_v1_5_Final_Clinical_Math_Audit_35233421.odt",
+      "bytes": 254907,
+      "sha256": "35233421ffe3032b16d83c01705441ef17303c2e766f89e86bb9af4feeeb37d8",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/biological_radiotherapy_manuscript_v3.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/biological_radiotherapy_manuscript_v3_7919564e.pdf",
+      "bytes": 176283,
+      "sha256": "7919564ec3ce459896df52738da8b877894d604ac0a279b2bc2bed6867d5ec29",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Master_Manuscript_V1_0.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Master_Manuscript_V1_0_f2209cff.odt",
+      "bytes": 263405,
+      "sha256": "f2209cffbfe5d85f48b353b150b2625ea385a47e5a3668d03da7d48c0669e8ce",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Fully_Expanded_Section_Page_Manuscript.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Fully_Expanded_Section_Page_Manuscript_127cc06e.odt",
+      "bytes": 209971,
+      "sha256": "127cc06e03e1a465309306247a525dd2b5bd773c6a903f350a17fe6178d9c2e2",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_No_Half_Blank_Pages_Final.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_No_Half_Blank_Pages_Final_b69fbf7e.odt",
+      "bytes": 255815,
+      "sha256": "b69fbf7ef4d9dde21ffc6a92df1f2ebc6e60a3fb5cad91fb4731579bc0896127",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_39ab6a85.odt",
+      "bytes": 256043,
+      "sha256": "39ab6a850477622aa271a3d304c704a527064d7f926cb58c1fa82bd3850b45d2",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_iPhone_Compatible.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/BAROS/BAROS_Master_Manuscript_Submission_Edition_iPhone_Compatible_f896cf8e.pdf",
+      "bytes": 6046080,
+      "sha256": "f896cf8e76bd9dc426fd3595a00726f53dc999917b7b3f0ecbceaeb6f5712b06",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Sara_pro/localhost.pdf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Sara_pro/localhost_3c7048cd.pdf",
+      "bytes": 40293,
+      "sha256": "3c7048cd12422f9ba50f99e644ced61175aef250db0fa8ea7adf6f9ffb58df1c",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Downloads/Girl_Talk_-_All_Day_(IA123)_mp3_seamless/Girl Talk - All Day (IA123)/Info.rtf",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Downloads/Girl_Talk_-_All_Day_(IA123)_mp3_seamless/Girl Talk - All Day (IA123)/Info_a71f88b9.rtf",
+      "bytes": 625,
+      "sha256": "a71f88b93ccebc0a485df0362154951d94412bc37780a087fc208ab7d08da444",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Documents/brd.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Documents/brd_c496fde2.odt",
+      "bytes": 93118,
+      "sha256": "c496fde2d936cb864fe7baa6aa8ff4c6796f224e0027a831552752ae35d60a1d",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Documents/Biologically Adaptive Radiotherapy Optimization System (BAROS): A Multi-Scale, Phase-Coupled Framework for Precision Radiation Oncology.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Documents/Biologically Adaptive Radiotherapy Optimization System (BAROS): A Multi-Scale, Phase-Coupled Framework for Precision Radiation Oncology_465e6093.odt",
+      "bytes": 195276,
+      "sha256": "465e6093d88c534dcb1d1b1923d240b9de30c7a894a0c6c9a14e91160fc72dc1",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Documents/Untitled 1.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Documents/Untitled 1_2ea6693a.odt",
+      "bytes": 18066,
+      "sha256": "2ea6693a20b95311ada1a3b7b3873ee2893c0b44ebe7d9cc470bcd7caf1a985a",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Documents/pubkeys.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Documents/pubkeys_3cbfc749.odt",
+      "bytes": 25124,
+      "sha256": "3cbfc749e7c342baf8e776f3de2bf926a4541cbf5d58ae2580f53d7fd8f2a3cd",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Documents/Biologically Adaptive Radiotherapy Optimization System (BAROS): A Multi-Scale, Phase-Coupled Framework for Precision Radiation Oncology parent document.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Documents/Biologically Adaptive Radiotherapy Optimization System (BAROS): A Multi-Scale, Phase-Coupled Framework for Precision Radiation Oncology parent document_f0f4804e.odt",
+      "bytes": 150410,
+      "sha256": "f0f4804ec363c4845a7869ecc93b3bbfd3be0bd595ee27651793d31a3106a240",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    },
+    {
+      "source": "/home/sspadawanzz/Documents/DOE proposal for sspadawanzz to expand and review.odt",
+      "dest": "/home/sspadawanzz/Sara_pro/world_documents/account_projects_loose/Documents/DOE proposal for sspadawanzz to expand and review_301a26e8.odt",
+      "bytes": 125696,
+      "sha256": "301a26e8a1404e64234070db5e3cf64bfba9cef262fd1a430d6be88db23b5700",
+      "source_type": "loose_project_file",
+      "status": "copied"
+    }
+  ]
+}

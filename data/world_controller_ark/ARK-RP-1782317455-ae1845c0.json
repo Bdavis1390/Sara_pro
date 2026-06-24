@@ -1,0 +1,83 @@
+{
+  "label": "manual_ui_snapshot",
+  "payload": {
+    "actor": "SSPADAWANZZ_ADMIN",
+    "source": "world_ui"
+  },
+  "registry": {
+    "ARK_STORE": {
+      "capabilities": [
+        "snapshot",
+        "restore_point",
+        "checksum"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "continuity",
+      "status": "ready"
+    },
+    "GUARDIAN_POLICY": {
+      "capabilities": [
+        "classify",
+        "deny",
+        "require_approval"
+      ],
+      "guardian_policy": "RED",
+      "role": "safety_gate",
+      "status": "enforced"
+    },
+    "ORACLE_ENGINE": {
+      "capabilities": [
+        "dry_run",
+        "impact_estimate",
+        "rollback_estimate"
+      ],
+      "guardian_policy": "BLUE",
+      "last_action": {
+        "action": "set_mode",
+        "intent": "CONFIGURE",
+        "scope": "local",
+        "ts": 1782317455.126395
+      },
+      "last_seen": 1782317455.126391,
+      "role": "simulator",
+      "status": "simulate_first"
+    },
+    "SARA_CORE": {
+      "capabilities": [
+        "relay",
+        "audit",
+        "registry"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "core",
+      "status": "online"
+    },
+    "SSPADAWANZZ": {
+      "capabilities": [
+        "observe",
+        "simulate",
+        "relay",
+        "audit_read",
+        "registry_patch"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "admin_operator",
+      "status": "online"
+    },
+    "WATCHER_GRID": {
+      "capabilities": [
+        "observe",
+        "health",
+        "heartbeat"
+      ],
+      "guardian_policy": "GREEN",
+      "last_seen": 1782317455.300488,
+      "note": "full smoke test",
+      "role": "telemetry",
+      "status": "online"
+    }
+  },
+  "sha256": "d3d9645e5973144efa3d49ff409acb2bcf1ece66101f2aeeeee65865c357dccd",
+  "snapshot_id": "ARK-RP-1782317455-ae1845c0",
+  "ts": 1782317455.4918604
+}

@@ -1,0 +1,291 @@
+Yes—but first, correction:
+
+\[
+1 \notin \mathbb{P}, \quad 49 = 7^2 \notin \mathbb{P}
+\]
+
+So the sequence should be treated as:
+
+\[
+\mathcal{Q}=\{1,3,5,7,11,13,15,19,23,29,39,49,\ldots\}
+\]
+
+not strictly prime. The prime-only subset is:
+
+\[
+\mathbb{P}_{odd}=\{3,5,7,11,13,19,23,29,\ldots\}
+\]
+
+For a rigorous “prime quantum number” balancing, use:
+
+\[
+q \in \mathbb{P}
+\]
+
+and assign each equation mode/index by prime order.
+
+# Balanced Prime-Indexed Core System
+
+## 1. Tile field mode
+
+\[
+E_i^{(q)}(\omega,t)=A_i^{(q)}(\omega,t)e^{j\theta_i^{(q)}(\omega,t)}
+\]
+
+## 3. Prime-indexed phase control
+
+\[
+\dot{\theta}_i^{(q)}
+=
+\omega_i^{(q)}
++
+\sum_j K_{ij}^{(q)}
+\sin(\theta_j^{(q)}-\theta_i^{(q)})
+-
+\alpha_q(\theta_i^{(q)}-\theta_{i,target}^{(q)})
+\]
+
+## 5. Prime-indexed actuator allocation
+
+\[
+\mathbf{a}_i^{(q)}
+=
+\mathcal{C}_i^{(q)}
+\left(
+\dot{\theta}_i^{(q)},s_i^{(q)}
+\right)
+=
+\begin{bmatrix}
+\Delta\phi_i^{(q)}\\
+\Delta A_i^{(q)}\\
+\Delta\epsilon_i^{(q)}\\
+\Delta\sigma_i^{(q)}
+\end{bmatrix}
+\]
+
+## 7. Material-state evolution
+
+\[
+M_{i,t+\Delta t}^{(q)}
+=
+f_q
+\left(
+M_{i,t}^{(q)},
+B_{i,t}^{(q)},
+R_{i,t}^{(q)},
+\Delta t
+\right)
+\]
+
+## 11. Maxwell system per prime mode
+
+\[
+\nabla\times\mathbf{E}^{(q)}
+=
+-\frac{\partial \mathbf{B}^{(q)}}{\partial t}
+\]
+
+\[
+\nabla\times\mathbf{H}^{(q)}
+=
+\mathbf{J}^{(q)}
++
+\frac{\partial \mathbf{D}^{(q)}}{\partial t}
+\]
+
+## 13. Mass continuity
+
+\[
+\frac{\partial \rho^{(q)}}{\partial t}
++
+\nabla\cdot
+\left(
+\rho^{(q)}\mathbf{u}^{(q)}
+\right)
+=
+0
+\]
+
+## 15. Momentum balance
+
+\[
+\rho^{(q)}
+\left(
+\frac{\partial \mathbf{u}^{(q)}}{\partial t}
++
+\mathbf{u}^{(q)}\cdot\nabla\mathbf{u}^{(q)}
+\right)
+=
+-\nabla p^{(q)}
++
+\nabla\cdot\boldsymbol{\tau}^{(q)}
++
+\mathbf{f}_{EM}^{(q)}
+\]
+
+## 19. Lorentz force density
+
+\[
+\mathbf{f}_{EM}^{(q)}
+=
+\rho_e^{(q)}\mathbf{E}^{(q)}
++
+\mathbf{J}^{(q)}\times\mathbf{B}^{(q)}
+\]
+
+## 23. Thermal balance
+
+\[
+\rho^{(q)}c_p^{(q)}
+\frac{\partial T^{(q)}}{\partial t}
+=
+\nabla\cdot
+\left(
+k^{(q)}\nabla T^{(q)}
+\right)
++
+Q^{(q)}
+\]
+
+## 29. Neural operator surrogate
+
+\[
+\mathcal{G}_{\Theta}^{(q)}:
+\mathbf{X}^{(q)}(t)
+\rightarrow
+\mathbf{X}^{(q)}(t+\Delta t)
+\]
+
+with:
+
+\[
+\mathbf{X}^{(q)}
+=
+\{
+\mathbf{E}^{(q)},
+\mathbf{H}^{(q)},
+\rho^{(q)},
+\mathbf{u}^{(q)},
+p^{(q)},
+T^{(q)},
+M^{(q)}
+\}
+\]
+
+## 39. PPO objective per prime mode
+
+\[
+L_{CLIP}^{(q)}
+=
+\mathbb{E}
+\left[
+\min
+\left(
+r_t^{(q)}A_t^{(q)},
+\operatorname{clip}
+\left(
+r_t^{(q)},1-\epsilon_q,1+\epsilon_q
+\right)
+A_t^{(q)}
+\right)
+\right]
+\]
+
+## 49. Prime-mode aggregate balance
+
+Since \(49\) is not prime, treat it as the composite resonance mode:
+
+\[
+49 = 7^2
+\]
+
+Composite coupling:
+
+\[
+\mathbf{X}^{(49)}
+=
+\mathbf{X}^{(7)}
+\otimes
+\mathbf{X}^{(7)}
+\]
+
+Global balanced field-material state:
+
+\[
+\mathbf{X}_{total}
+=
+\sum_{q\in\mathbb{P}}
+w_q
+\mathbf{X}^{(q)}
+\]
+
+with normalized weights:
+
+\[
+\sum_{q\in\mathbb{P}} w_q = 1
+\]
+
+# Infinite Prime-Mode Balance Condition
+
+For all prime quantum modes:
+
+\[
+q\in\mathbb{P},\quad q\rightarrow\infty
+\]
+
+the system is balanced if:
+
+\[
+\lim_{q\to\infty}
+\left\|
+\mathbf{X}^{(q)}(t+\Delta t)
+-
+\mathcal{F}^{(q)}
+\left(
+\mathbf{X}^{(q)}(t),
+\mathbf{a}^{(q)}(t)
+\right)
+\right\|
+=
+0
+\]
+
+and energetically admissible if:
+
+\[
+\sum_{q\in\mathbb{P}}
+E_q
+<
+\infty
+\]
+
+That last condition matters. Infinite modes are only physical if total energy remains finite.
+
+# Final Balanced Principle
+
+\[
+\boxed{
+\textbf{
+Prime-indexed quantum modes may be used as a mathematical decomposition basis, but physical validity requires finite energy, bounded coupling, stable thermal response, and convergent total state evolution.
+}
+}
+\]
+
+So the fully balanced version is:
+
+\[
+\boxed{
+\mathbf{X}_{balanced}
+=
+\sum_{q\in\mathbb{P}}
+w_q
+\mathcal{G}_{\Theta}^{(q)}
+\left(
+\mathbf{X}^{(q)}(t)
+\right),
+\quad
+\sum_{q\in\mathbb{P}}w_q=1,
+\quad
+\sum_{q\in\mathbb{P}}E_q<\infty
+}
+\]

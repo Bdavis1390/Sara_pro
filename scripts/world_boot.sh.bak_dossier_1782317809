@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO="${1:-$HOME/Sara_pro}"
+FULL_ZIP="$(ls -t "$HOME"/Downloads/world_controller_full_controls_patch*.zip 2>/dev/null | head -n1 || true)"
+BASE_ZIP="$(ls -t "$HOME"/Downloads/world_controller_build_package*.zip 2>/dev/null | head -n1 || true)"
+
+echo "[WORLD] Repo: $REPO"
+cd "$REPO"
+
+echo "[WORLD] Checking WORLD CONTROLLER route level..."
+
+install_full_controls() {
+  local zip="$1"
+  echo "[WORLD] Installing FULL CONTROLS from: $zip"
+  rm -rf /tmp/world_controller_full_controls_patch
+  mkdir -p /tmp/world_controller_full_controls_patch
+  unzip -o "$zip" -d /tmp/world_controller_full_controls_patch >/dev/null
+  bash /tmp/world_controller_full_controls_patch/world_controller_full_controls_patch/scripts/install_world_controller_full_controls.sh "$REPO"
+}
+
+install_base_controls() {
+  local zip="$1"
+  echo "[WORLD] Installing BASE CONTROLS from: $zip"
+  rm -rf /tmp/world_controller_build
+  mkdir -p /tmp/world_controller_build
+  unzip -o "$zip" -d /tmp/world_controller_build >/dev/null
+  bash /tmp/world_controller_build/world_controller_build_package/scripts/install_world_controller.sh "$REPO"
+}
+
+if [ -n "$FULL_ZIP" ]; then
+  install_full_controls "$FULL_ZIP"
+elif grep -q '@router.get("/dashboard")' "$REPO/worldshepherd_sara/world_controller.py" 2>/dev/null; then
+  echo "[WORLD] Full controls already present."
+elif [ -n "$BASE_ZIP" ]; then
+  install_base_controls "$BASE_ZIP"
+else
+  echo "[WORLD] WARNING: no WORLD CONTROLLER package zip found in ~/Downloads."
+  echo "[WORLD] Continuing with existing repo files."
+fi
+
+echo "[WORLD] Ensuring .env exists..."
+
+if [ ! -f "$REPO/.env" ] && [ -f "$REPO/.env.example" ]; then
+  cp "$REPO/.env.example" "$REPO/.env"
+  echo "[WORLD] Created .env from .env.example"
+elif [ ! -f "$REPO/.env" ]; then
+  touch "$REPO/.env"
+  echo "[WORLD] Created blank .env"
+fi
+
+if ! grep -q '^SARA_ADMIN_TOKEN=' "$REPO/.env"; then
+  echo "SARA_ADMIN_TOKEN=change-me-admin-token" >> "$REPO/.env"
+  echo "[WORLD] Added placeholder SARA_ADMIN_TOKEN"
+fi
+
+echo "[WORLD] Verifying full-control routes..."
+grep -n '@router.get("/dashboard")' "$REPO/worldshepherd_sara/world_controller.py" >/dev/null || {
+  echo "[WORLD] ERROR: /world/dashboard route is still missing."
+  echo "[WORLD] Make sure world_controller_full_controls_patch.zip is in ~/Downloads."
+  exit 1
+}
+
+echo "[WORLD] Compiling Python..."
+python3 -m compileall worldshepherd_sara >/dev/null
+
+echo
+echo "[WORLD] Boot targets:"
+echo "  Legacy UI: http://127.0.0.1:9530/ui"
+echo "  WORLD UI:  http://127.0.0.1:9530/world/ui"
+echo
+
+if [ -x "$REPO/scripts/start_interface.sh" ]; then
+  exec "$REPO/scripts/start_interface.sh"
+else
+  echo "[WORLD] ERROR: scripts/start_interface.sh not found or not executable."
+  exit 1
+fi

@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WORLD CONTROLLER DOSSIER</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --bg: #070a10;
+      --panel: #0d121d;
+      --panel2: #101827;
+      --card: #0a0f18;
+      --line: #29364c;
+      --text: #edf4ff;
+      --muted: #aab8cd;
+      --btn: #111827;
+      --btn-hover: #1b2940;
+      --green: #78e08f;
+      --blue: #8ab4ff;
+      --amber: #f8c471;
+      --red: #ff7675;
+      --violet: #c7a0ff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: radial-gradient(circle at top, #101827 0, var(--bg) 48%); color: var(--text); }
+    header { padding: 16px 22px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; background: rgba(8, 11, 17, .9); position: sticky; top: 0; z-index: 2; }
+    h1 { margin: 0; font-size: 20px; letter-spacing: .08em; }
+    h2, h3, h4 { margin-top: 0; }
+    h2 { font-size: 18px; letter-spacing: .03em; }
+    h3 { font-size: 14px; color: #d9e6fa; letter-spacing: .07em; text-transform: uppercase; }
+    h4 { font-size: 13px; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 6px; }
+    .badge { border: 1px solid #40506a; padding: 6px 10px; border-radius: 999px; color: #b9c8de; white-space: nowrap; background: #0a0f18; }
+    main { display: grid; grid-template-columns: 250px minmax(520px, 1fr) 390px; min-height: calc(100vh - 65px); }
+    nav, aside { border-right: 1px solid var(--line); padding: 16px; background: linear-gradient(180deg, var(--panel), #080c13); }
+    aside { border-right: 0; border-left: 1px solid var(--line); }
+    section { padding: 18px; }
+    button, input, textarea, select { background: var(--btn); color: var(--text); border: 1px solid #344158; border-radius: 8px; padding: 10px; }
+    button { cursor: pointer; margin: 4px 4px 4px 0; }
+    button:hover { background: var(--btn-hover); }
+    button.active { border-color: var(--green); box-shadow: 0 0 0 1px #78e08f33 inset; }
+    textarea { width: 100%; min-height: 110px; box-sizing: border-box; }
+    input, select { width: 100%; box-sizing: border-box; margin: 6px 0 14px; }
+    pre { background: #05070b; border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow: auto; max-height: 420px; white-space: pre-wrap; color: #d7e7fb; }
+    code { color: #b8ccff; }
+    .card { border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 14px; background: rgba(10, 15, 24, .92); box-shadow: 0 12px 26px rgba(0,0,0,.12); }
+    .rail-item { display: block; width: 100%; text-align: left; padding: 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; color: #c9d6e8; background: #101622; }
+    .rail-item:hover, .rail-item.active { background: #182235; border-color: #547099; }
+    .green { color: var(--green); } .blue { color: var(--blue); } .amber { color: var(--amber); } .red { color: var(--red); } .violet { color: var(--violet); }
+    label { color: var(--muted); font-size: 13px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .mini { font-size: 12px; color: var(--muted); }
+    .statusline { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .dossier { display: grid; gap: 14px; }
+    .dossier-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; border: 1px solid #41506b; background: linear-gradient(135deg, #101827, #0b111c); border-radius: 16px; padding: 16px; }
+    .dossier-title { font-size: 22px; letter-spacing: .06em; margin: 0; }
+    .dossier-subtitle { color: var(--muted); margin-top: 5px; font-size: 13px; }
+    .dossier-section { border: 1px solid var(--line); border-radius: 14px; background: #090e16; padding: 14px; }
+    .dossier-section ul { margin: 8px 0 0 18px; padding: 0; }
+    .dossier-section li { margin: 5px 0; }
+    .kv { display: grid; grid-template-columns: 210px 1fr; gap: 7px 12px; font-size: 14px; }
+    .kv div:nth-child(odd) { color: var(--muted); }
+    .pill { display: inline-block; border: 1px solid #40506a; padding: 4px 8px; border-radius: 999px; margin: 2px; color: #d8e6fa; background: #101827; font-size: 12px; }
+    .risk-GREEN { border-color: var(--green); color: var(--green); }
+    .risk-BLUE { border-color: var(--blue); color: var(--blue); }
+    .risk-AMBER { border-color: var(--amber); color: var(--amber); }
+    .risk-RED, .risk-BLACK { border-color: var(--red); color: var(--red); }
+    .node-card { border: 1px solid #27344a; background: #0c1320; border-radius: 12px; padding: 11px; margin: 8px 0; }
+    .node-head { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; }
+    .toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .raw-toggle { margin-top: 10px; }
+    .hidden { display: none; }
+    .evidence-link { color: #9ecbff; text-decoration: underline; cursor: pointer; background: transparent; border: 0; padding: 0; margin: 0; font: inherit; }
+    .evidence-link:hover { color: #d7ecff; }
+    .evidence-list { display: grid; gap: 8px; }
+    .evidence-list button { text-align: left; width: 100%; }
+    .narrative-block { line-height: 1.55; color: #dce8f8; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border-bottom: 1px solid #27344a; padding: 8px; text-align: left; vertical-align: top; }
+    th { color: #bed0e8; }
+    @media (max-width: 1100px) { main { grid-template-columns: 1fr; } nav, aside { border: 0; } .grid2, .grid3 { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>WORLD CONTROLLER</h1>
+      <div class="mini">Dossier Console / SARA / SSPADAWANZZ Local Admin</div>
+    </div>
+    <span class="badge">SIMULATE-FIRST / LOCAL ADMIN / DOSSIER MODE</span>
+  </header>
+  <main>
+    <nav>
+      <button class="rail-item active" data-panel="dashboard" onclick="loadPanel('dashboard')">Dashboard Dossier</button>
+      <button class="rail-item" data-panel="watchers" onclick="loadPanel('watchers')">Watchers Dossier</button>
+      <button class="rail-item" data-panel="guardians" onclick="loadPanel('guardians')">Guardians Dossier</button>
+      <button class="rail-item" data-panel="oracle" onclick="loadPanel('oracle')">Oracle Dossier</button>
+      <button class="rail-item" data-panel="ark" onclick="loadPanel('ark')">Ark Dossier</button>
+      <button class="rail-item" data-panel="registry" onclick="loadPanel('registry')">Registry Dossier</button>
+      <button class="rail-item" data-panel="audit" onclick="loadPanel('audit')">Audit Dossier</button>
+      <button class="rail-item" data-panel="admin" onclick="loadPanel('admin')">Admin Dossier</button>
+      <button class="rail-item" data-panel="evidence" onclick="loadPanel('evidence')">Evidence Index</button>
+    </nav>
+    <section>
+      <div class="card">
+        <label>Admin Token</label>
+        <input id="token" type="password" placeholder="Paste SARA_ADMIN_TOKEN here" />
+        <div class="toolbar">
+          <button onclick="saveToken()">Save Token</button>
+          <button onclick="clearToken()">Clear</button>
+          <button onclick="statusCheck()">Status Dossier</button>
+          <button onclick="loadRegistry()">Registry Dossier</button>
+          <button onclick="loadAudit()">Audit Dossier</button>
+          <button onclick="refreshCurrent()">Refresh Current</button>
+          <button onclick="loadEvidence('/world/evidence', 'Evidence Index')">Evidence Index</button>
+          <button onclick="printDossier()">Print / Save PDF</button>
+        </div>
+        <div id="statusline" class="statusline">Ready.</div>
+      </div>
+
+      <div class="card">
+        <h2>Command Builder</h2>
+        <textarea id="cmdText">SIMULATE REGISTRY PATCH SARA_CORE DRY_RUN ADMIN</textarea>
+        <div class="toolbar">
+          <button onclick="parseCommand()">Parse Dossier</button>
+          <button onclick="guardianClassify()">Guardian Classification Dossier</button>
+          <button onclick="oracleSimulate()">Oracle Simulation Dossier</button>
+          <button onclick="simulateStructured()">Structured Simulation Dossier</button>
+          <button onclick="executeBlue()">Execute Safe BLUE Test Dossier</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Registry Quick Patch</h2>
+        <div class="grid2">
+          <div><label>Node ID</label><input id="patchNode" value="WATCHER_GRID" /></div>
+          <div><label>Status</label><input id="patchStatus" value="online" /></div>
+          <div><label>Role</label><input id="patchRole" value="telemetry" /></div>
+          <div><label>Guardian Policy</label><select id="patchPolicy"><option>GREEN</option><option>BLUE</option><option selected>AMBER</option><option>RED</option><option>BLACK</option></select></div>
+        </div>
+        <label>Capabilities, comma separated</label>
+        <input id="patchCaps" value="observe,health,heartbeat" />
+        <div class="toolbar">
+          <button onclick="patchRegistry()">Patch Registry Node Dossier</button>
+          <button onclick="arkSnapshot()">Create Ark Snapshot Dossier</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between">
+          <h2 style="margin:0">Dossier Output</h2>
+          <div>
+            <button onclick="copyOutput()">Copy Dossier Text</button>
+            <button onclick="copyRaw()">Copy Raw JSON</button>
+          </div>
+        </div>
+        <div id="dossier" class="dossier">Ready.</div>
+        <pre id="out" class="hidden">Ready.</pre>
+      </div>
+    </section>
+    <aside>
+      <div class="card">
+        <h3>Dossier Rule</h3>
+        <p>Every button renders: summary, operational status, evidence, risk, continuity, next actions, and raw JSON.</p>
+      </div>
+      <div class="card">
+        <h3>Guardian</h3>
+        <p><span class="green">GREEN</span>/<span class="blue">BLUE</span> may execute with confirmation. <span class="amber">AMBER</span> requires explicit env unlock. <span class="red">RED/BLACK</span> deny by default.</p>
+      </div>
+      <div class="card">
+        <h3>Oracle</h3>
+        <p>Every command can be simulated before execution. Results are shown as decision dossiers.</p>
+      </div>
+      <div class="card">
+        <h3>Ark</h3>
+        <p>Commands and registry changes receive Ark restore-point identifiers where applicable.</p>
+      </div>
+      <div class="card">
+        <h3>Current Panel</h3>
+        <p id="currentPanel" class="mini">dashboard</p>
+      </div>
+    </aside>
+  </main>
+<script>
+let currentPanel = 'dashboard';
+let lastRaw = null;
+const out = document.getElementById('out');
+const dossier = document.getElementById('dossier');
+const statusline = document.getElementById('statusline');
+
+function esc(x) {
+  return String(x ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function setStatus(msg) { statusline.textContent = msg; }
+function token() { return document.getElementById('token').value.trim(); }
+function saveToken() { localStorage.setItem('SARA_ADMIN_TOKEN', token()); setStatus('Token saved locally in this browser.'); }
+function clearToken() { localStorage.removeItem('SARA_ADMIN_TOKEN'); document.getElementById('token').value = ''; setStatus('Token cleared.'); }
+function setRaw(x) { lastRaw = x; out.textContent = JSON.stringify(x, null, 2); }
+function showError(e) { const data = {ok:false, error:String(e)}; setRaw(data); renderDossier('Error Dossier', data); setStatus('Error: ' + String(e)); }
+function setActive(panel) {
+  currentPanel = panel;
+  document.getElementById('currentPanel').textContent = panel;
+  document.querySelectorAll('.rail-item').forEach(b => b.classList.toggle('active', b.dataset.panel === panel));
+}
+async function api(path, opts={}) {
+  opts.headers = Object.assign({'Content-Type': 'application/json', 'X-SARA-ADMIN-TOKEN': token()}, opts.headers || {});
+  const res = await fetch(path, opts);
+  const text = await res.text();
+  let parsed;
+  try { parsed = JSON.parse(text); } catch { parsed = {raw: text}; }
+  if (!res.ok) parsed.http_status = res.status;
+  return parsed;
+}
+function titleCase(s) {
+  return String(s || '').replace(/[_-]/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+function riskClass(data) {
+  return data?.guardian_policy || data?.gate?.guardian_class || data?.risk || data?.sample_gate?.guardian_class || data?.policy?.guardian_policy || 'GREEN';
+}
+function list(items) {
+  if (!items || !items.length) return '<p class="mini">No entries reported.</p>';
+  return '<ul>' + items.map(x => '<li>' + esc(typeof x === 'string' ? x : JSON.stringify(x)) + '</li>').join('') + '</ul>';
+}
+function evidenceLink(label, path) {
+  return '<button class="evidence-link" onclick="loadEvidence(\'' + esc(path) + '\', \'' + esc(label) + '\')">' + esc(label) + '</button>';
+}
+function evidenceList(items) {
+  if (!items || !items.length) return '<p class="mini">No linked evidence reported.</p>';
+  return '<div class="evidence-list">' + items.map(x => '<div>' + evidenceLink(x.label || x.path, x.path) + '</div>').join('') + '</div>';
+}
+function paragraphList(items) {
+  if (!items) return '<p class="mini">No narrative reported.</p>';
+  if (Array.isArray(items)) return '<ul>' + items.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+  if (typeof items === 'object') return '<div class="narrative-block">' + Object.entries(items).map(([k,v]) => '<h4>' + esc(titleCase(k)) + '</h4><p>' + esc(v) + '</p>').join('') + '</div>';
+  return '<p>' + esc(items) + '</p>';
+}
+function kv(obj) {
+  if (!obj || typeof obj !== 'object') return '<p class="mini">No keyed facts reported.</p>';
+  return '<div class="kv">' + Object.entries(obj).map(([k,v]) => '<div>' + esc(titleCase(k)) + '</div><div>' + esc(typeof v === 'object' ? JSON.stringify(v) : v) + '</div>').join('') + '</div>';
+}
+function nodeCards(registryOrWatchers) {
+  let entries = [];
+  if (Array.isArray(registryOrWatchers)) {
+    entries = registryOrWatchers.map(x => [x.node_id || x.id || 'node', x]);
+  } else if (registryOrWatchers && typeof registryOrWatchers === 'object') {
+    entries = Object.entries(registryOrWatchers);
+  }
+  if (!entries.length) return '<p class="mini">No nodes reported.</p>';
+  return entries.map(([id,node]) => {
+    const pol = node.guardian_policy || node.risk || 'GREEN';
+    const caps = (node.capabilities || []).map(c => '<span class="pill">' + esc(c) + '</span>').join(' ');
+    const nodeId = String(id || node.node_id || 'node').toUpperCase();
+    return '<div class="node-card"><div class="node-head"><span>' + esc(nodeId) + '</span><span class="pill risk-' + esc(pol) + '">' + esc(pol) + '</span></div>' +
+      '<div class="mini">Role: ' + esc(node.role || 'unknown') + ' | Status: ' + esc(node.status || node.heartbeat || 'unknown') + '</div>' +
+      '<div class="mini">Last Seen: ' + esc(node.last_seen || 'n/a') + '</div><div style="margin-top:7px">' + caps + '</div>' +
+      '<div style="margin-top:10px">' + evidenceLink('Open Node Evidence Dossier', '/world/evidence/node/' + encodeURIComponent(nodeId)) + '</div></div>';
+  }).join('');
+}
+function auditTable(records) {
+  if (!records || !records.length) return '<p class="mini">No audit records returned.</p>';
+  return '<table><thead><tr><th>Time</th><th>Audit ID</th><th>Actor</th><th>Event</th><th>Evidence</th></tr></thead><tbody>' + records.slice(0, 50).map(r => {
+    const id = r.audit_id || '';
+    return '<tr><td>' + esc(r.ts || '') + '</td><td>' + esc(id) + '</td><td>' + esc(r.actor || '') + '</td><td>' + esc(r.event || '') + '</td><td>' + (id ? evidenceLink('Open Audit Evidence', '/world/evidence/audit/' + encodeURIComponent(id)) : '') + '</td></tr>';
+  }).join('') + '</tbody></table>';
+}
+function snapshotTable(snapshots) {
+  if (!snapshots || !snapshots.length) return '<p class="mini">No Ark snapshots returned yet.</p>';
+  return '<table><thead><tr><th>Snapshot</th><th>Label</th><th>SHA-256</th><th>Evidence</th></tr></thead><tbody>' + snapshots.slice(0, 50).map(s => {
+    const sid = s.snapshot_id || s.file || '';
+    return '<tr><td>' + esc(sid) + '</td><td>' + esc(s.label || '') + '</td><td>' + esc(s.sha256 || '') + '</td><td>' + (sid ? evidenceLink('Open Ark Evidence', '/world/evidence/ark/' + encodeURIComponent(sid)) : '') + '</td></tr>';
+  }).join('') + '</tbody></table>';
+}
+function buildDossierSections(data) {
+  const sections = [];
+  const statusFacts = {
+    ok: data.ok,
+    service: data.service || data.panel || 'WORLD CONTROLLER',
+    actor: data.actor || 'SSPADAWANZZ_ADMIN',
+    mode: data.mode || data?.command?.mode || 'simulate_first',
+    evidence_type: data.evidence_type || 'panel',
+    http_status: data.http_status || '200/OK expected'
+  };
+  sections.push(['Operational Status', kv(statusFacts)]);
+
+  if (data.title) sections.push(['Dossier Title', '<p><strong>' + esc(data.title) + '</strong></p>']);
+  if (data.executive_summary) sections.push(['Executive Summary', paragraphList(data.executive_summary)]);
+  else if (data.summary) sections.push(['Executive Summary', kv(data.summary)]);
+  if (data.facts) sections.push(['Key Facts', kv(data.facts)]);
+  if (data.narrative) sections.push(['Full-Bloom Human Narrative', paragraphList(data.narrative)]);
+  if (data.components) sections.push(['Component Readout', kv(data.components)]);
+  if (data.registry) sections.push(['Registry Evidence', nodeCards(data.registry)]);
+  if (data.watchers) sections.push(['Watcher Evidence', nodeCards(data.watchers)]);
+  if (data.policy) sections.push(['Guardian Policy', kv(data.policy)]);
+  if (data.gate || data.sample_gate) {
+    const g = data.gate || data.sample_gate;
+    sections.push(['Guardian Gate', kv(g)]);
+    if (g.ark_snapshot_id) sections.push(['Linked Ark Evidence', evidenceLink('Open Guardian Ark Restore Point', '/world/evidence/ark/' + encodeURIComponent(g.ark_snapshot_id))]);
+  }
+  if (data.forecast) sections.push(['Oracle Forecast', kv(data.forecast)]);
+  if (data.oracle_result) sections.push(['Oracle Result', '<p>' + esc(data.oracle_result) + '</p>']);
+  if (data.snapshots) sections.push(['Ark Continuity', snapshotTable(data.snapshots)]);
+  if (data.snapshot_id) sections.push(['Ark Restore Point', '<p>' + esc(data.snapshot_id) + '</p>' + evidenceLink('Open Ark Evidence Dossier', '/world/evidence/ark/' + encodeURIComponent(data.snapshot_id))]);
+  if (data.records) sections.push(['Audit Evidence', auditTable(data.records)]);
+  if (data.command) sections.push(['Parsed / Structured Command', kv(data.command)]);
+  if (data.node) sections.push(['Registry Patch Result', nodeCards({[data.node_id || 'patched_node']: data.node})]);
+  if (data.capabilities) sections.push(['Capability Evidence', list(data.capabilities)]);
+  if (data.routes) sections.push(['Available Routes', list(data.routes)]);
+  if (data.evidence_links) sections.push(['Linked Evidence Dossiers', evidenceList(data.evidence_links)]);
+  if (data.next_actions) sections.push(['Recommended Next Actions', list(data.next_actions)]);
+
+  const evidence = [];
+  if (data.registry_hash) evidence.push('Registry hash: ' + data.registry_hash + ' ' + evidenceLink('Open Registry Hash Evidence', '/world/evidence/registry/hash/' + encodeURIComponent(data.registry_hash)));
+  if (data.audit_recorded) evidence.push('Audit recorded at: ' + data.audit_recorded);
+  if (data.executed !== undefined) evidence.push('Executed: ' + data.executed);
+  if (data.note) evidence.push('Note: ' + data.note);
+  if (data.guardian_policy) evidence.push('Guardian policy: ' + data.guardian_policy);
+  if (evidence.length) sections.push(['Evidence Markers', '<ul>' + evidence.map(x => '<li>' + x + '</li>').join('') + '</ul>']);
+
+  if (data.raw_evidence) sections.push(['Raw Evidence Object', '<button class="raw-toggle" onclick="toggleRawEvidence()">Show / Hide Raw Evidence</button><pre id="rawEvidenceBlock" class="hidden">' + esc(JSON.stringify(data.raw_evidence, null, 2)) + '</pre>']);
+  sections.push(['Raw JSON', '<button class="raw-toggle" onclick="toggleRaw()">Show / Hide Raw JSON</button><pre id="rawBlock" class="hidden">' + esc(JSON.stringify(data, null, 2)) + '</pre>']);
+  return sections;
+}
+function toggleRawEvidence() { const el = document.getElementById('rawEvidenceBlock'); if (el) el.classList.toggle('hidden'); }
+function renderDossier(title, data) {
+  setRaw(data);
+  if (data && data.title) title = data.title;
+  const risk = riskClass(data);
+  const sections = buildDossierSections(data);
+  dossier.innerHTML = '<div class="dossier-header"><div><h2 class="dossier-title">' + esc(title) + '</h2><div class="dossier-subtitle">Generated: ' + new Date().toLocaleString() + ' | Panel: ' + esc(currentPanel) + '</div></div><div><span class="pill risk-' + esc(risk) + '">Guardian: ' + esc(risk) + '</span><span class="pill">Dossier Mode</span></div></div>' +
+    sections.map(([name,body]) => '<div class="dossier-section"><h3>' + esc(name) + '</h3>' + body + '</div>').join('');
+}
+function toggleRaw() { const el = document.getElementById('rawBlock'); if (el) el.classList.toggle('hidden'); }
+function printDossier() { window.print(); }
+async function copyOutput() { await navigator.clipboard.writeText(dossier.innerText); setStatus('Dossier text copied.'); }
+async function copyRaw() { await navigator.clipboard.writeText(JSON.stringify(lastRaw, null, 2)); setStatus('Raw JSON copied.'); }
+async function loadPanel(panel) {
+  try {
+    setActive(panel); setStatus('Loading ' + panel + ' dossier...');
+    const path = panel === 'audit' ? '/world/audit?limit=50' : '/world/' + panel;
+    const data = await api(path);
+    renderDossier(titleCase(panel) + ' Dossier', data); setStatus('Loaded ' + panel + ' dossier.');
+  } catch (e) { showError(e); }
+}
+async function refreshCurrent(){ return loadPanel(currentPanel); }
+async function loadEvidence(path, label='Evidence Dossier') {
+  try { setActive('evidence'); setStatus('Loading linked evidence dossier...'); const data = await api(path); renderDossier(label, data); setStatus('Linked evidence dossier loaded.'); }
+  catch(e){ showError(e); }
+}
+async function statusCheck(){ try { setActive('status'); const data = await api('/world/status'); renderDossier('Status Dossier', data); setStatus('Status dossier loaded.'); } catch(e){ showError(e); } }
+async function loadRegistry(){ try { setActive('registry'); const data = await api('/world/registry'); renderDossier('Registry Dossier', data); setStatus('Registry dossier loaded.'); } catch(e){ showError(e); } }
+async function loadAudit(){ try { setActive('audit'); const data = await api('/world/audit?limit=50'); renderDossier('Audit Dossier', data); setStatus('Audit dossier loaded.'); } catch(e){ showError(e); } }
+async function parseCommand(){
+  try { setStatus('Parsing command dossier...'); const data = await api('/world/command/parse', {method:'POST', body: JSON.stringify({text: document.getElementById('cmdText').value})}); renderDossier('Command Parse Dossier', data); setStatus('Command parse dossier complete.'); }
+  catch(e){ showError(e); }
+}
+async function guardianClassify(){
+  try { setActive('guardians'); setStatus('Classifying command dossier...'); const data = await api('/world/guardians/classify', {method:'POST', body: JSON.stringify({text: document.getElementById('cmdText').value})}); renderDossier('Guardian Classification Dossier', data); setStatus('Guardian classification dossier complete.'); }
+  catch(e){ showError(e); }
+}
+async function oracleSimulate(){
+  try { setActive('oracle'); setStatus('Oracle dossier running...'); const data = await api('/world/oracle/simulate', {method:'POST', body: JSON.stringify({text: document.getElementById('cmdText').value})}); renderDossier('Oracle Simulation Dossier', data); setStatus('Oracle simulation dossier complete.'); }
+  catch(e){ showError(e); }
+}
+async function simulateStructured(){
+  const body = {intent:'PATCH', target:'REGISTRY', action:'patch', scope:'SARA_CORE', mode:'DRY_RUN', reason:document.getElementById('cmdText').value, payload:{demo:true}};
+  try { setStatus('Structured simulation dossier running...'); const data = await api('/world/command/simulate', {method:'POST', body: JSON.stringify(body)}); renderDossier('Structured Simulation Dossier', data); setStatus('Structured simulation dossier complete.'); }
+  catch(e){ showError(e); }
+}
+async function executeBlue(){
+  const body = {intent:'CONFIGURE', target:'ORACLE_ENGINE', action:'set_mode', scope:'local', mode:'EXECUTE', reason:'safe local execution smoke test', payload:{mode:'simulate_first'}, execute_confirm:true};
+  try { setStatus('Executing safe BLUE local test dossier...'); const data = await api('/world/command/execute', {method:'POST', body: JSON.stringify(body)}); renderDossier('Safe BLUE Execution Dossier', data); setStatus('Safe BLUE local execution dossier complete.'); }
+  catch(e){ showError(e); }
+}
+async function patchRegistry(){
+  const body = {
+    node_id: document.getElementById('patchNode').value,
+    status: document.getElementById('patchStatus').value,
+    role: document.getElementById('patchRole').value,
+    guardian_policy: document.getElementById('patchPolicy').value,
+    capabilities: document.getElementById('patchCaps').value.split(',').map(x => x.trim()).filter(Boolean),
+    note: 'patched from WORLD CONTROLLER dossier UI'
+  };
+  try { setActive('registry'); setStatus('Patching registry dossier...'); const data = await api('/world/registry/patch', {method:'POST', body: JSON.stringify(body)}); renderDossier('Registry Patch Dossier', data); setStatus('Registry patch dossier complete.'); }
+  catch(e){ showError(e); }
+}
+async function arkSnapshot(){
+  try { setActive('ark'); setStatus('Creating Ark snapshot dossier...'); const data = await api('/world/ark/snapshot', {method:'POST', body: JSON.stringify({})}); renderDossier('Ark Snapshot Dossier', data); setStatus('Ark snapshot dossier created.'); }
+  catch(e){ showError(e); }
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('SARA_ADMIN_TOKEN');
+  if (saved) document.getElementById('token').value = saved;
+  dossier.innerHTML = '<div class="dossier-section"><h3>Ready</h3><p>Paste/save the admin token, then select a dossier panel. Evidence links inside each dossier open human-readable full-bloom records in this same console.</p></div>';
+  if (saved) loadPanel('dashboard');
+});
+</script>
+</body>
+</html>

@@ -71,3 +71,31 @@
 {"ts": 1780689316.0485816, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 40, "context_chars": 60000, "files": 5}}
 {"ts": 1780689452.1547074, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 40, "context_chars": 60000, "files": 5}}
 {"ts": 1780689481.8328722, "event": "selftest", "actor": "admin", "payload": {"ok": true}}
+{"ts": 1780692403.8251257, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780692884.4677691, "event": "audit_read", "actor": "admin", "payload": {"limit": 10}}
+{"ts": 1780692909.6826632, "event": "audit_read", "actor": "admin", "payload": {"limit": 50}}
+{"ts": 1780692909.7172084, "event": "admin_denied", "actor": "operator", "payload": {}}
+{"ts": 1780692909.7556827, "event": "relay", "actor": "operator", "payload": {"ok": true, "from": "SARA_CORE", "to": "SSPADAWANZZ", "message": "ACCESS Sara_Pro", "result": "integration_ok", "actor": "operator", "time": 1780692909.755675}}
+{"ts": 1780693142.1813946, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780693164.495891, "event": "selftest", "actor": "admin", "payload": {"ok": true}}
+{"ts": 1780693178.7062185, "event": "account_core_replace", "actor": "admin", "payload": {"keys": ["schema", "generated_for", "root_context", "identity_and_roles", "canonical_projects", "protocols", "agents_and_modules", "local_gui_capabilities", "known_endpoints", "operational_notes", "import_slots"]}}
+{"ts": 1780712583.7006903, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780712593.8457646, "event": "selftest", "actor": "admin", "payload": {"ok": true}}
+{"ts": 1780713501.2049935, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780713501.7016044, "event": "gateway_projects_read", "actor": "admin", "payload": {}}
+{"ts": 1780713501.7140808, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
+{"ts": 1780713501.7177343, "event": "gateway_workflows_read", "actor": "admin", "payload": {}}
+{"ts": 1780713502.659104, "event": "chain_read", "actor": "admin", "payload": {"blocks": 2}}
+{"ts": 1780713502.8729162, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780713503.1476557, "event": "assistant_status", "actor": "admin", "payload": {"files": 5, "chars": 60000}}
+{"ts": 1780713580.6968796, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 40, "context_chars": 60000, "files": 5}}
+{"ts": 1780760388.7034624, "event": "gateway_modules_read", "actor": "admin", "payload": {}}
+{"ts": 1780760388.716693, "event": "gateway_projects_read", "actor": "admin", "payload": {}}
+{"ts": 1780760388.720105, "event": "gateway_workflows_read", "actor": "admin", "payload": {}}
+{"ts": 1780760475.9383125, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780760476.361847, "event": "account_core_read", "actor": "admin", "payload": {}}
+{"ts": 1780760476.4165933, "event": "chain_read", "actor": "admin", "payload": {"blocks": 2}}
+{"ts": 1780760476.7580798, "event": "assistant_status", "actor": "admin", "payload": {"files": 5, "chars": 60000}}
+{"ts": 1780760489.814825, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 40, "context_chars": 60000, "files": 5}}
+{"ts": 1780760538.7722125, "event": "assistant_chat", "actor": "admin", "payload": {"message_chars": 18, "context_chars": 60000, "files": 5}}
+{"ts": 1782316657.9244618, "event": "account_core_read", "actor": "admin", "payload": {}}

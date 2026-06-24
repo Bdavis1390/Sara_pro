@@ -14,7 +14,6 @@ from worldshepherd_sara.blockchain_console import router as blockchain_console_r
 from worldshepherd_sara.worldshepherd_gateway import router as worldshepherd_gateway_router
 from worldshepherd_sara.account_core import router as account_core_router
 from worldshepherd_sara.world_controller import router as world_controller_router
-from worldshepherd_sara.world_project_data import router as world_project_data_router
 
 APP_NAME = "Worldshepherd SARA / SSPADAWANZZ Admin Interface"
 DATA_DIR = Path(os.getenv("SARA_DATA_DIR", "data"))
@@ -58,7 +57,6 @@ if not REGISTRY_FILE.exists():
 
 app = FastAPI(title=APP_NAME)
 app.include_router(world_controller_router)
-app.include_router(world_project_data_router)
 app.include_router(framework_multiplier_router)
 app.include_router(gpt_assistant_router)
 app.include_router(blockchain_console_router)

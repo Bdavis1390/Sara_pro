@@ -1,0 +1,124 @@
+{
+  "label": "preflight_before_registry_or_relay_change",
+  "payload": {
+    "actor": "SSPADAWANZZ_ADMIN",
+    "preflight_state": {
+      "last_ark_snapshot_id": "ARK-RP-1782319049-32eb7813",
+      "last_command_text": "SIMULATE REGISTRY PATCH SARA_CORE DRY_RUN ADMIN",
+      "last_guardian_class": "GREEN",
+      "last_oracle_result": "read_or_simulation_only_low_risk",
+      "last_registry_hash": "8feb881ae8b3ce9f269b50dff36476773f8c8e15c79526143f4c0de189ec7746",
+      "status": "incomplete",
+      "steps": {
+        "ark": {
+          "complete": false,
+          "summary": "Pre-change Ark snapshot has not been created yet.",
+          "ts": null
+        },
+        "guardians": {
+          "ark_snapshot_id": "ARK-RP-1782319049-3e73829c",
+          "complete": true,
+          "guardian_allowed": true,
+          "guardian_class": "GREEN",
+          "summary": "Command classified as GREEN; allowed in requested mode: True.",
+          "ts": 1782319049.4586074
+        },
+        "oracle": {
+          "ark_snapshot_id": "ARK-RP-1782319049-32eb7813",
+          "complete": true,
+          "guardian_class": "GREEN",
+          "oracle_result": "read_or_simulation_only_low_risk",
+          "summary": "Oracle dry-run complete: read_or_simulation_only_low_risk.",
+          "ts": 1782319049.679348
+        },
+        "watchers": {
+          "complete": true,
+          "stale_nodes": [
+            "ORACLE_ENGINE",
+            "WATCHER_GRID"
+          ],
+          "summary": "Heartbeat inspection complete: 6 nodes checked, 2 stale heartbeat(s).",
+          "ts": 1782319049.2565255
+        }
+      },
+      "updated_at": 1782319049.6793587,
+      "workflow_id": "WC-PREFLIGHT-LOCAL"
+    }
+  },
+  "registry": {
+    "ARK_STORE": {
+      "capabilities": [
+        "snapshot",
+        "restore_point",
+        "checksum"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "continuity",
+      "status": "ready"
+    },
+    "GUARDIAN_POLICY": {
+      "capabilities": [
+        "classify",
+        "deny",
+        "require_approval"
+      ],
+      "guardian_policy": "RED",
+      "role": "safety_gate",
+      "status": "enforced"
+    },
+    "ORACLE_ENGINE": {
+      "capabilities": [
+        "dry_run",
+        "impact_estimate",
+        "rollback_estimate"
+      ],
+      "guardian_policy": "BLUE",
+      "last_action": {
+        "action": "set_mode",
+        "intent": "CONFIGURE",
+        "scope": "local",
+        "ts": 1782317455.126395
+      },
+      "last_seen": 1782317455.126391,
+      "role": "simulator",
+      "status": "simulate_first"
+    },
+    "SARA_CORE": {
+      "capabilities": [
+        "relay",
+        "audit",
+        "registry"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "core",
+      "status": "online"
+    },
+    "SSPADAWANZZ": {
+      "capabilities": [
+        "observe",
+        "simulate",
+        "relay",
+        "audit_read",
+        "registry_patch"
+      ],
+      "guardian_policy": "AMBER",
+      "role": "admin_operator",
+      "status": "online"
+    },
+    "WATCHER_GRID": {
+      "capabilities": [
+        "observe",
+        "health",
+        "heartbeat"
+      ],
+      "guardian_policy": "GREEN",
+      "last_seen": 1782317455.300488,
+      "note": "full smoke test",
+      "role": "telemetry",
+      "status": "online"
+    }
+  },
+  "sha256": "729af5712f6d68349ed0e943a5b377e5d327d4725ee216207aef219a214d41a6",
+  "snapshot_id": "ARK-RP-1782319049-a739bed9",
+  "ts": 1782319049.8586283
+}
