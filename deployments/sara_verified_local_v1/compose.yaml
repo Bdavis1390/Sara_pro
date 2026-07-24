@@ -1,0 +1,31 @@
+services:
+  sara:
+    build:
+      context: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SARA_BIND_HOST: 0.0.0.0
+      SARA_DATA_DIR: /var/lib/sara
+      SARA_MODE: docker-local-verified
+    ports:
+      - "127.0.0.1:${SARA_HOST_PORT:-9530}:9530"
+    volumes:
+      - sara_data:/var/lib/sara
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9530/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  sara_data:
