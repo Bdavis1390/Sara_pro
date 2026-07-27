@@ -1,0 +1,175 @@
+{
+  "artifact": "Worldshepherd SARA / SSPADAWANZZ namespaced repository promotion candidate",
+  "version": "v1-repository-promotion",
+  "generated_utc": "2026-07-24T20:18:05.971394+00:00",
+  "derived_from": {
+    "artifact": "Worldshepherd SARA / SSPADAWANZZ verified local deployment candidate",
+    "source_manifest_sha256": "c201426d441ddaea908f99e755fbfc43de4767749d5e68dc28d44bebf1210275"
+  },
+  "security_boundary": [
+    "localhost-only port binding",
+    "separate host and container ports",
+    "separate operator and administrator bearer tokens",
+    "no external scanning",
+    "no broadcasting",
+    "no arbitrary command execution",
+    "no self-expanding network behavior"
+  ],
+  "port_model": {
+    "container_port": 9530,
+    "default_host_port": 9530,
+    "parallel_validation_host_port": 19530,
+    "host_binding": "127.0.0.1 only"
+  },
+  "source_validation": {
+    "pytest": "6 passed",
+    "compileall": "passed",
+    "shell_syntax": "passed",
+    "patched_runtime_verifier": "passed before repository adaptation"
+  },
+  "repository_promotion_validation": {
+    "status": "passed_local_parallel_validation",
+    "required_checks": [
+      "manifest digest verification",
+      "shell syntax validation",
+      "Python compilation",
+      "unit and API tests",
+      "Compose rendering",
+      "parallel-port deployment verification"
+    ],
+    "completed_utc": "2026-07-24T21:11:25.417557+00:00",
+    "evidence_directory": ".deployment-evidence/20260724T205745Z",
+    "completed_checks": [
+      "manifest digest verification",
+      "shell syntax validation",
+      "Python 3.12 compilation",
+      "six unit and API tests",
+      "Compose rendering",
+      "localhost-only parallel deployment on host port 19530",
+      "initial smoke test",
+      "restart readiness and post-restart smoke test",
+      "temporary runtime cleanup",
+      "established service unaffected",
+      "evidence digest verification"
+    ],
+    "claims_boundary": [
+      "local parallel validation only",
+      "CI execution remains pending",
+      "remote branch publication remains pending",
+      "rollback exercise remains pending",
+      "operational readiness remains pending"
+    ]
+  },
+  "repository_integration": {
+    "workflow_path": ".github/workflows/sara-verified-local-v1.yml",
+    "workflow_sha256": "4402aa4eb5e15a8c3d76850c0606dea0acd2a4fa8e7df8a8a095e773206a32cc",
+    "workflow_location": "repository root; outside namespaced artifact directory"
+  },
+  "files": [
+    {
+      "path": ".dockerignore",
+      "sha256": "1c4c38fccd94b5e0fc6ba515dd8f73b01e43bdb2aa40d83b0d45cc1b31ca6a5b",
+      "size_bytes": 68
+    },
+    {
+      "path": ".env.example",
+      "sha256": "7f6aba4bf3e0f036dd93c8ef5669fe9ba848ff0189428ccf7a58334a1347c357",
+      "size_bytes": 398
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "fc89910178057d6906682425fda8bd638fdd66930a8662f9f4975c1f066dd880",
+      "size_bytes": 78
+    },
+    {
+      "path": "Dockerfile",
+      "sha256": "1c0834fdce7881b7c17a4f7d0217bffce9e36357c5b7a48b8882d4e3c82a80a1",
+      "size_bytes": 653
+    },
+    {
+      "path": "README.md",
+      "sha256": "ca531dd1c1f092376f9780d67fa7a8776ce5bd9934689d56dee3c93ce8bda0ab",
+      "size_bytes": 1005
+    },
+    {
+      "path": "SECURITY.md",
+      "sha256": "b043a790d467df2f6ccbeeb05322681123b5991e8a0d6e6e457f20842ba4374b",
+      "size_bytes": 790
+    },
+    {
+      "path": "compose.yaml",
+      "sha256": "b9e71e5cc63095662dbd4e639271bbf7e9cd0ab1db19c660519d0f8df0727663",
+      "size_bytes": 712
+    },
+    {
+      "path": "docs/QUARANTINED_LEGACY.md",
+      "sha256": "b9254518953105211f07b0416f039b62e2b36c67958b9e6d8c0712e2e39203d9",
+      "size_bytes": 783
+    },
+    {
+      "path": "docs/VERIFIED_DEPLOYMENT.md",
+      "sha256": "046d691c823efefab3f027c7f9f1a287807968b059444479fbcc305dec7081bb",
+      "size_bytes": 1770
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "fa9485131a1b58a16d72c2ea7c4a0dfa86a47337304c657fb88178cbde6aa5ee",
+      "size_bytes": 533
+    },
+    {
+      "path": "scripts/admin_smoke_test.sh",
+      "sha256": "ddd36cb996a003a0283f18f4bb5a6f0258a645fb45d88a4557d795bb1b6cd0be",
+      "size_bytes": 1622
+    },
+    {
+      "path": "scripts/start_interface.sh",
+      "sha256": "264fa5c88e22b34a527eb98843c4eaf88337160def3d4528121a8101d733b535",
+      "size_bytes": 438
+    },
+    {
+      "path": "scripts/verify_deployment.sh",
+      "sha256": "8deab25393feb84286c19431e7508b1bf1ca5d21b6e186e7628787b0d74ce98c",
+      "size_bytes": 2139
+    },
+    {
+      "path": "tests/conftest.py",
+      "sha256": "9ad6f28c00775584d23bc2d0c19d68b4c41a70819698ebd7885cb78d9a2ee5ca",
+      "size_bytes": 600
+    },
+    {
+      "path": "tests/test_api.py",
+      "sha256": "2cecbe559d8bfd3cf3e3fcad0ec8624ea8f0072b861a5565318d953105607e79",
+      "size_bytes": 1872
+    },
+    {
+      "path": "worldshepherd_sara/__init__.py",
+      "sha256": "bf9af3222f06eb997a73c4b8b55f26cf33be438d3415c5d7e327a4363b5fd231",
+      "size_bytes": 78
+    },
+    {
+      "path": "worldshepherd_sara/__main__.py",
+      "sha256": "7ff2433ba736e2d7c20e0bf98209296911f8bfe7b4019792616c9ed17d846c17",
+      "size_bytes": 312
+    },
+    {
+      "path": "worldshepherd_sara/app.py",
+      "sha256": "b814ba7188f1d6bfa60fa964bf6f97486c03c0708dd146204aad6736866e826d",
+      "size_bytes": 5684
+    },
+    {
+      "path": "worldshepherd_sara/auth.py",
+      "sha256": "53c91c40a428fdbad63a921e8ffd14c048afc3c9ae111cd0f0f25ee197ef0de6",
+      "size_bytes": 2102
+    },
+    {
+      "path": "worldshepherd_sara/models.py",
+      "sha256": "5b36e21ae45c20c6d092af59e2fb539e2c47d660a2f2c068bd4b060fb4113880",
+      "size_bytes": 980
+    },
+    {
+      "path": "worldshepherd_sara/storage.py",
+      "sha256": "f73a818257292cd3218403bed7747dd6e2debdcf21f84ad6f47192f585dc7a1b",
+      "size_bytes": 2294
+    }
+  ]
+}
