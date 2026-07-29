@@ -21,7 +21,7 @@ services:
     cap_drop:
       - ALL
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9530/health', timeout=2)"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9530/readyz', timeout=2)"]
       interval: 10s
       timeout: 3s
       retries: 5

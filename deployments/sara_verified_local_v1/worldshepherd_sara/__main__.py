@@ -6,6 +6,7 @@ import uvicorn
 
 
 if __name__ == "__main__":
+    os.umask(0o077)
     uvicorn.run(
         "worldshepherd_sara.app:app",
         host=os.getenv("SARA_BIND_HOST", "127.0.0.1"),

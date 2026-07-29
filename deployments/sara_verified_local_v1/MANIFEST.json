@@ -1,7 +1,7 @@
 {
   "artifact": "Worldshepherd SARA / SSPADAWANZZ namespaced repository promotion candidate",
   "version": "v1-repository-promotion",
-  "generated_utc": "2026-07-24T20:18:05.971394+00:00",
+  "generated_utc": "2026-07-29T00:53:10Z",
   "derived_from": {
     "artifact": "Worldshepherd SARA / SSPADAWANZZ verified local deployment candidate",
     "source_manifest_sha256": "c201426d441ddaea908f99e755fbfc43de4767749d5e68dc28d44bebf1210275"
@@ -22,13 +22,13 @@
     "host_binding": "127.0.0.1 only"
   },
   "source_validation": {
-    "pytest": "6 passed",
-    "compileall": "passed",
-    "shell_syntax": "passed",
-    "patched_runtime_verifier": "passed before repository adaptation"
+    "pytest": "29 passed with 0 failures, 0 errors, and 0 skips under Python 3.12 in a disposable isolated container after the self-test RuntimeError correction",
+    "compileall": "passed under Python 3.12 after the self-test RuntimeError correction",
+    "shell_syntax": "passed after final self-test correction",
+    "runtime_verifier": "passed in isolated Docker Compose project sara_orl4_hardening_20260728 on localhost port 19532 with independently verified evidence at .deployment-evidence/20260729T004839Z"
   },
   "repository_promotion_validation": {
-    "status": "passed_local_parallel_validation",
+    "status": "passed_local_isolated_orl4_validation",
     "required_checks": [
       "manifest digest verification",
       "shell syntax validation",
@@ -37,28 +37,35 @@
       "Compose rendering",
       "parallel-port deployment verification"
     ],
-    "completed_utc": "2026-07-24T21:11:25.417557+00:00",
-    "evidence_directory": ".deployment-evidence/20260724T205745Z",
+    "completed_utc": "2026-07-29T00:53:10Z",
+    "evidence_directory": ".deployment-evidence/20260729T004839Z",
     "completed_checks": [
-      "manifest digest verification",
-      "shell syntax validation",
-      "Python 3.12 compilation",
-      "six unit and API tests",
-      "Compose rendering",
-      "localhost-only parallel deployment on host port 19530",
-      "initial smoke test",
-      "restart readiness and post-restart smoke test",
-      "temporary runtime cleanup",
-      "established service unaffected",
-      "evidence digest verification"
+      "Python 3.12 execution of the 29-test unit and API suite with 0 failures, 0 errors, and 0 skips",
+      "isolated self-test RuntimeError failure-path regression with check_storage forced successful and get_registry forced to raise RuntimeError",
+      "all 22 manifest file hashes and sizes, JSON validity, and canonical manifest inventory digest verification",
+      "Python 3.12 compilation and final local Python AST parsing",
+      "final shell syntax validation",
+      "isolated localhost runtime build, startup, health, liveness, readiness, UI, relay, registry, self-test, and audit verification",
+      "relay and administrator role-separation verification across every administrator endpoint",
+      "Docker readiness and application persistent-storage readiness verification",
+      "container restart and registry and audit persistence verification",
+      "evidence permissions, SHA256SUMS integrity, valid rendered Compose YAML, and retained-environment-file absence verification",
+      "redacted Compose credential fields and evidence redaction verification",
+      "Git branch, HEAD, dirty pre-commit worktree state, authorized-package scope, and canonical manifest provenance verification",
+      "documentation review confirming isolated-localhost claims and explicit production, public-network, immutable-audit, rollback, recovery, and retention limitations",
+      "final Codex static audit and git diff --check"
     ],
     "claims_boundary": [
-      "local parallel validation only",
-      "CI execution remains pending",
-      "remote branch publication remains pending",
-      "rollback exercise remains pending",
-      "operational readiness remains pending"
-    ]
+      "isolated localhost validation only",
+      "CI execution and remote branch publication remain pending",
+      "rollback and replacement-host recovery remain pending",
+      "off-host evidence retention remains pending",
+      "immutable audit is not provided by the application-appended local audit log",
+      "production and public-network readiness remain pending"
+    ],
+    "validated_git_head": "36508ca38e86649e4a786d34762150fbc2356cc8",
+    "validated_git_worktree_state": "dirty_precommit_hardening_revision",
+    "manifest_files_sha256": "dce43e8adbc1b11a408529c677f2b18631464c56513cabfa370b91b95294c6ee"
   },
   "repository_integration": {
     "workflow_path": ".github/workflows/sara-verified-local-v1.yml",
@@ -83,22 +90,22 @@
     },
     {
       "path": "Dockerfile",
-      "sha256": "1c0834fdce7881b7c17a4f7d0217bffce9e36357c5b7a48b8882d4e3c82a80a1",
-      "size_bytes": 653
+      "sha256": "c04967cbc183459fc72c8e5cfd10db9de2de87a4e777b150ff72462cb43ac0ea",
+      "size_bytes": 681
     },
     {
       "path": "README.md",
-      "sha256": "ca531dd1c1f092376f9780d67fa7a8776ce5bd9934689d56dee3c93ce8bda0ab",
-      "size_bytes": 1005
+      "sha256": "aaf8fa97286d743af29433caf893698c0059cbfb82423fb9e0aac111663a2275",
+      "size_bytes": 1289
     },
     {
       "path": "SECURITY.md",
-      "sha256": "b043a790d467df2f6ccbeeb05322681123b5991e8a0d6e6e457f20842ba4374b",
-      "size_bytes": 790
+      "sha256": "38b0ed3f90107a36908d6d7a5bb1e8b35b673cb1eee097c4dca360cb0fd5a5b6",
+      "size_bytes": 1186
     },
     {
       "path": "compose.yaml",
-      "sha256": "b9e71e5cc63095662dbd4e639271bbf7e9cd0ab1db19c660519d0f8df0727663",
+      "sha256": "972a3eced169a3423a1f9d55b87cf0c5bb07772edaa3b4041b2619f55eeb9ec6",
       "size_bytes": 712
     },
     {
@@ -108,8 +115,8 @@
     },
     {
       "path": "docs/VERIFIED_DEPLOYMENT.md",
-      "sha256": "046d691c823efefab3f027c7f9f1a287807968b059444479fbcc305dec7081bb",
-      "size_bytes": 1770
+      "sha256": "58c4a354a67c1ead29485ac37215b5c6a9ce5dadda5865d102dbe8792b293cc2",
+      "size_bytes": 2873
     },
     {
       "path": "pyproject.toml",
@@ -118,18 +125,18 @@
     },
     {
       "path": "scripts/admin_smoke_test.sh",
-      "sha256": "ddd36cb996a003a0283f18f4bb5a6f0258a645fb45d88a4557d795bb1b6cd0be",
-      "size_bytes": 1622
+      "sha256": "a1ac8ce42bac7a897d6957651322dd863efefa33417fffb58d5a68c4504b97eb",
+      "size_bytes": 2181
     },
     {
       "path": "scripts/start_interface.sh",
-      "sha256": "264fa5c88e22b34a527eb98843c4eaf88337160def3d4528121a8101d733b535",
-      "size_bytes": 438
+      "sha256": "52f0c160682e25483296a46dac4cabd0fdb9988678b40eb32e18baf4f5bf3b7c",
+      "size_bytes": 448
     },
     {
       "path": "scripts/verify_deployment.sh",
-      "sha256": "8deab25393feb84286c19431e7508b1bf1ca5d21b6e186e7628787b0d74ce98c",
-      "size_bytes": 2139
+      "sha256": "171289edd93874f6292f2c4f60b24c7e8f3fac61d9bb05541dfb0eef66472b79",
+      "size_bytes": 4302
     },
     {
       "path": "tests/conftest.py",
@@ -138,8 +145,8 @@
     },
     {
       "path": "tests/test_api.py",
-      "sha256": "2cecbe559d8bfd3cf3e3fcad0ec8624ea8f0072b861a5565318d953105607e79",
-      "size_bytes": 1872
+      "sha256": "b2715bc2510128c32be96b7cf85b8aa63545e8fcf13996b0376bd4a28b1477ce",
+      "size_bytes": 11603
     },
     {
       "path": "worldshepherd_sara/__init__.py",
@@ -148,13 +155,13 @@
     },
     {
       "path": "worldshepherd_sara/__main__.py",
-      "sha256": "7ff2433ba736e2d7c20e0bf98209296911f8bfe7b4019792616c9ed17d846c17",
-      "size_bytes": 312
+      "sha256": "1372ecb7d44cc521e33f21f9eadbe093558b3e10d2b0283f78ab155c206552af",
+      "size_bytes": 332
     },
     {
       "path": "worldshepherd_sara/app.py",
-      "sha256": "b814ba7188f1d6bfa60fa964bf6f97486c03c0708dd146204aad6736866e826d",
-      "size_bytes": 5684
+      "sha256": "b4fc951c3e6c9d2df85b8a89a3a9af305a0583cc5764a0c3c48117b3b1558ae0",
+      "size_bytes": 9410
     },
     {
       "path": "worldshepherd_sara/auth.py",
@@ -163,13 +170,18 @@
     },
     {
       "path": "worldshepherd_sara/models.py",
-      "sha256": "5b36e21ae45c20c6d092af59e2fb539e2c47d660a2f2c068bd4b060fb4113880",
-      "size_bytes": 980
+      "sha256": "105f82c252a1206a0145d3bf0f797c2f1938cf751096adce8199284c11561823",
+      "size_bytes": 1383
+    },
+    {
+      "path": "worldshepherd_sara/limits.py",
+      "sha256": "db24ac92005c081f61f0c81dfb34a3a9b536cce667f680f29a2875def9251f4f",
+      "size_bytes": 1889
     },
     {
       "path": "worldshepherd_sara/storage.py",
-      "sha256": "f73a818257292cd3218403bed7747dd6e2debdcf21f84ad6f47192f585dc7a1b",
-      "size_bytes": 2294
+      "sha256": "0e8be29217099bfe8dd69d282a2d0bf97ce9cb4aa1d514d0c76ec6f2421c5e84",
+      "size_bytes": 10032
     }
   ]
 }
