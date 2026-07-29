@@ -20,20 +20,31 @@ Open `http://127.0.0.1:<SARA_HOST_PORT>/ui` after the verification script passes
 
 ## Required acceptance evidence
 
-A deployment is verified only when all of the following exist for the same Git commit:
+A promoted deployment is verified only when all of the following are bound to the same committed revision. Pre-commit local validation may instead be bound to a recorded Git HEAD, dirty-worktree state, and canonical manifest file-inventory digest:
 
-1. CI unit and API tests pass.
+1. Local unit and API tests pass; CI must also pass for the committed revision before promotion.
 2. The container image builds.
-3. Health and UI checks pass.
+3. Compatibility health, liveness, persistent-storage readiness, and UI checks pass.
 4. Relay authorization works.
 5. Relay credentials are denied administrator access.
 6. Registry changes persist.
 7. Audit records persist after restart.
 8. The administrator self-test passes.
 9. Deployment logs and evidence checksums are retained.
-10. CRE1AWS reviews and approves the evidence package.
+10. An authorized reviewer reviews and approves the evidence package before promotion.
+
+The rendered Compose evidence replaces the resolved `SARA_ADMIN_TOKEN` and
+`SARA_RELAY_TOKEN` values with `<REDACTED>` while preserving valid YAML.
+Evidence checksums are generated only after that redacted file is in place.
+
+The audit is an application-appended local log. The service account can write
+it, so this deployment does not claim immutability, tamper-proof retention, or
+independent verification of the log or of external dispatch controls.
 
 ## Rollback
+
+Rollback validation remains pending. The commands below are an operator
+procedure, not evidence that rollback has been exercised.
 
 ```bash
 docker compose down
@@ -42,3 +53,7 @@ docker compose up -d --build
 ```
 
 The named Docker volume is not deleted by `docker compose down`. Do not use `-v` during an operational rollback unless destruction of local evidence is explicitly approved.
+
+Replacement-host recovery and production readiness also remain pending and
+require separately retained backups, a tested restore exercise, operational
+monitoring, and an approved production threat model.

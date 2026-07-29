@@ -1,21 +1,85 @@
 from __future__ import annotations
 
+import json
 import os
 import secrets
 from contextlib import asynccontextmanager
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import Depends, FastAPI, Query, Request
-from fastapi.responses import HTMLResponse
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from . import __version__
 from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
+from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
 from .storage import DurableStore
 
 
+class RequestTooLarge(Exception):
+    pass
+
+
+class RequestSizeLimitMiddleware:
+    def __init__(self, app: ASGIApp, max_bytes: int = MAX_REQUEST_BYTES) -> None:
+        self.app = app
+        self.max_bytes = max_bytes
+
+    async def __call__(
+        self, scope: Scope, receive: Receive, send: Send
+    ) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        headers = dict(scope.get("headers", []))
+        raw_length = headers.get(b"content-length")
+        if raw_length is not None:
+            try:
+                content_length = int(raw_length)
+            except ValueError:
+                await JSONResponse(
+                    {"detail": "Malformed Content-Length header"}, status_code=400
+                )(scope, receive, send)
+                return
+            if content_length < 0:
+                await JSONResponse(
+                    {"detail": "Malformed Content-Length header"}, status_code=400
+                )(scope, receive, send)
+                return
+            if content_length > self.max_bytes:
+                await self._reject(scope, receive, send)
+                return
+
+        received = 0
+
+        async def limited_receive() -> Message:
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > self.max_bytes:
+                    raise RequestTooLarge
+            return message
+
+        try:
+            await self.app(scope, limited_receive, send)
+        except RequestTooLarge:
+            await self._reject(scope, receive, send)
+
+    async def _reject(
+        self, scope: Scope, receive: Receive, send: Send
+    ) -> None:
+        await JSONResponse(
+            {"detail": f"Request body exceeds {self.max_bytes} bytes"},
+            status_code=413,
+        )(scope, receive, send)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    os.umask(0o077)
     validate_runtime_secrets()
     app.state.store = DurableStore()
     app.state.store.append_audit(
@@ -38,6 +102,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.add_middleware(RequestSizeLimitMiddleware)
 
 
 @app.middleware("http")
@@ -64,12 +129,28 @@ def health() -> dict[str, object]:
         "mode": os.getenv("SARA_MODE", "local"),
         "endpoints": {
             "ui": "/ui",
+            "liveness": "/livez",
+            "readiness": "/readyz",
             "audit": "/v1/audit?limit=50",
             "registry": "/admin/registry",
             "relay": "/v1/relay",
             "selftest": "/admin/selftest",
         },
     }
+
+
+@app.get("/livez")
+def liveness() -> dict[str, object]:
+    return {"ok": True, "status": "alive"}
+
+
+@app.get("/readyz")
+def readiness(request: Request) -> JSONResponse:
+    ready, detail = store(request).check_storage()
+    return JSONResponse(
+        {"ok": ready, "status": "ready" if ready else "not_ready", "storage": detail},
+        status_code=200 if ready else 503,
+    )
 
 
 @app.get("/ui", response_class=HTMLResponse)
@@ -143,7 +224,10 @@ def registry_patch(
     role: Annotated[Role, Depends(resolve_role)],
 ) -> dict[str, object]:
     require_admin(role)
-    updated = store(request).patch_registry(body.values)
+    try:
+        updated = store(request).patch_registry(body.values)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     store(request).append_audit(
         AuditRecord.create(
             event="registry_patched",
@@ -160,15 +244,41 @@ def selftest(
     role: Annotated[Role, Depends(resolve_role)],
 ) -> dict[str, object]:
     require_admin(role)
-    registry = store(request).get_registry()
-    checks = {
-        "storage_directory": store(request).root.exists(),
-        "registry_readable": isinstance(registry, dict),
-        "audit_writable": True,
-        "authority_separation": True,
-        "external_dispatch_disabled": True,
-    }
-    store(request).append_audit(
-        AuditRecord.create(event="selftest_run", actor=role.value, payload=checks)
+    durable_store = store(request)
+    storage_ok, storage_detail = durable_store.check_storage()
+    try:
+        registry_ok = isinstance(durable_store.get_registry(), dict)
+        registry_detail = "registry parsed as a JSON object"
+    except (OSError, RuntimeError, json.JSONDecodeError, ValueError) as exc:
+        registry_ok = False
+        registry_detail = f"registry read failed: {exc}"
+    audit_probe = AuditRecord.create(
+        event="selftest_audit_probe", actor=role.value, payload={}
     )
-    return {"ok": all(checks.values()), "checks": checks}
+    try:
+        durable_store.append_audit(audit_probe)
+        audit_ok = True
+        audit_detail = "application audit append and fsync completed"
+    except (OSError, RuntimeError) as exc:
+        audit_ok = False
+        audit_detail = f"audit append failed: {exc}"
+    checks: dict[str, dict[str, Any]] = {
+        "persistent_storage": {"ok": storage_ok, "detail": storage_detail},
+        "registry_read": {
+            "ok": registry_ok,
+            "detail": registry_detail,
+        },
+        "audit_append": {
+            "ok": audit_ok,
+            "detail": audit_detail,
+        },
+    }
+    if audit_ok:
+        durable_store.append_audit(
+            AuditRecord.create(
+                event="selftest_run",
+                actor=role.value,
+                payload={name: check["ok"] for name, check in checks.items()},
+            )
+        )
+    return {"ok": all(check["ok"] for check in checks.values()), "checks": checks}

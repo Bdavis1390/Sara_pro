@@ -3,7 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from .limits import validate_json_resource
 
 
 class RelayRequest(BaseModel):
@@ -11,6 +13,11 @@ class RelayRequest(BaseModel):
     action: str = Field(min_length=1, max_length=128)
     payload: dict[str, Any] = Field(default_factory=dict)
     correlation_id: str | None = Field(default=None, max_length=128)
+
+    @field_validator("payload")
+    @classmethod
+    def payload_within_limits(cls, value: dict[str, Any]) -> dict[str, Any]:
+        return validate_json_resource(value)
 
 
 class RelayResponse(BaseModel):
@@ -23,6 +30,11 @@ class RelayResponse(BaseModel):
 
 class RegistryPatch(BaseModel):
     values: dict[str, Any]
+
+    @field_validator("values")
+    @classmethod
+    def values_within_limits(cls, value: dict[str, Any]) -> dict[str, Any]:
+        return validate_json_resource(value)
 
 
 class AuditRecord(BaseModel):
