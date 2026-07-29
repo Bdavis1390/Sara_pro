@@ -19,10 +19,28 @@ base_url="${SARA_BASE_URL:-http://127.0.0.1:${host_port}}"
 export SARA_BASE_URL="${base_url}"
 
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-evidence_dir=".deployment-evidence/${stamp}"
+evidence_root=".deployment-evidence"
+evidence_dir="${evidence_root}/${stamp}"
 
-if ! mkdir "$evidence_dir"; then
-  echo "ERROR: Evidence directory already exists: ${evidence_dir}" >&2
+if [[ -e "$evidence_root" ]]; then
+  if [[ ! -d "$evidence_root" ]]; then
+    echo "ERROR: Evidence root exists but is not a directory: ${evidence_root}" >&2
+    exit 1
+  fi
+  chmod 0700 "$evidence_root"
+else
+  if ! mkdir -m 0700 "$evidence_root"; then
+    echo "ERROR: Could not create evidence root: ${evidence_root}" >&2
+    exit 1
+  fi
+fi
+
+if ! mkdir -m 0700 "$evidence_dir"; then
+  if [[ -e "$evidence_dir" ]]; then
+    echo "ERROR: Evidence directory already exists: ${evidence_dir}" >&2
+  else
+    echo "ERROR: Could not create evidence directory: ${evidence_dir}" >&2
+  fi
   exit 1
 fi
 

@@ -1,7 +1,7 @@
 {
   "artifact": "Worldshepherd SARA / SSPADAWANZZ namespaced repository promotion candidate",
   "version": "v1-repository-promotion",
-  "generated_utc": "2026-07-29T00:53:10Z",
+  "generated_utc": "2026-07-29T01:42:26Z",
   "derived_from": {
     "artifact": "Worldshepherd SARA / SSPADAWANZZ verified local deployment candidate",
     "source_manifest_sha256": "c201426d441ddaea908f99e755fbfc43de4767749d5e68dc28d44bebf1210275"
@@ -22,10 +22,10 @@
     "host_binding": "127.0.0.1 only"
   },
   "source_validation": {
-    "pytest": "29 passed with 0 failures, 0 errors, and 0 skips under Python 3.12 in a disposable isolated container after the self-test RuntimeError correction",
-    "compileall": "passed under Python 3.12 after the self-test RuntimeError correction",
-    "shell_syntax": "passed after final self-test correction",
-    "runtime_verifier": "passed in isolated Docker Compose project sara_orl4_hardening_20260728 on localhost port 19532 with independently verified evidence at .deployment-evidence/20260729T004839Z"
+    "pytest": "29 passed with 0 failures, 0 errors, and 0 skips under Python 3.12; application and test code unchanged by the CI evidence-root correction",
+    "compileall": "passed; Python source unchanged by the CI evidence-root correction",
+    "shell_syntax": "passed after CI clean-checkout evidence-root correction",
+    "runtime_verifier": "passed after CI clean-checkout evidence-root correction in isolated Docker Compose project sara_orl4_hardening_20260728 on localhost port 19532 with independently verified evidence at .deployment-evidence/20260729T014206Z"
   },
   "repository_promotion_validation": {
     "status": "passed_local_isolated_orl4_validation",
@@ -37,35 +37,32 @@
       "Compose rendering",
       "parallel-port deployment verification"
     ],
-    "completed_utc": "2026-07-29T00:53:10Z",
-    "evidence_directory": ".deployment-evidence/20260729T004839Z",
+    "completed_utc": "2026-07-29T01:42:26Z",
+    "evidence_directory": ".deployment-evidence/20260729T014206Z",
     "completed_checks": [
-      "Python 3.12 execution of the 29-test unit and API suite with 0 failures, 0 errors, and 0 skips",
-      "isolated self-test RuntimeError failure-path regression with check_storage forced successful and get_registry forced to raise RuntimeError",
-      "all 22 manifest file hashes and sizes, JSON validity, and canonical manifest inventory digest verification",
-      "Python 3.12 compilation and final local Python AST parsing",
-      "final shell syntax validation",
-      "isolated localhost runtime build, startup, health, liveness, readiness, UI, relay, registry, self-test, and audit verification",
-      "relay and administrator role-separation verification across every administrator endpoint",
-      "Docker readiness and application persistent-storage readiness verification",
-      "container restart and registry and audit persistence verification",
-      "evidence permissions, SHA256SUMS integrity, valid rendered Compose YAML, and retained-environment-file absence verification",
-      "redacted Compose credential fields and evidence redaction verification",
-      "Git branch, HEAD, dirty pre-commit worktree state, authorized-package scope, and canonical manifest provenance verification",
-      "documentation review confirming isolated-localhost claims and explicit production, public-network, immutable-audit, rollback, recovery, and retention limitations",
-      "final Codex static audit and git diff --check"
+      "29-test Python 3.12 unit and API suite retained; application and test code unchanged",
+      "all 22 manifest hashes, sizes, JSON validity, and canonical inventory verification",
+      "final shell syntax and git diff validation",
+      "clean-checkout verification with an initially absent .deployment-evidence parent",
+      "fail-closed evidence-root type and permission validation",
+      "isolated localhost build, startup, health, readiness, role separation, self-test, restart, and persistence verification",
+      "evidence directory and file permission validation",
+      "SHA256SUMS, redacted Compose YAML, and baseline provenance validation",
+      "Git HEAD, dirty precommit state, and canonical manifest inventory binding",
+      "CI failure analysis and evidence-root initialization correction"
     ],
     "claims_boundary": [
       "isolated localhost validation only",
-      "CI execution and remote branch publication remain pending",
+      "committed-revision CI and remote publication are tracked outside this precommit evidence record",
+      "merge approval remains pending",
       "rollback and replacement-host recovery remain pending",
       "off-host evidence retention remains pending",
       "immutable audit is not provided by the application-appended local audit log",
       "production and public-network readiness remain pending"
     ],
-    "validated_git_head": "36508ca38e86649e4a786d34762150fbc2356cc8",
-    "validated_git_worktree_state": "dirty_precommit_hardening_revision",
-    "manifest_files_sha256": "dce43e8adbc1b11a408529c677f2b18631464c56513cabfa370b91b95294c6ee"
+    "validated_git_head": "b683a6470358e15f0480bef851db8a97bc47d2c6",
+    "validated_git_worktree_state": "dirty_precommit_ci_evidence_root_correction",
+    "manifest_files_sha256": "a3b62edb85877d99474c7601a3cbebb99f287100090bf0740a2887c875744bbb"
   },
   "repository_integration": {
     "workflow_path": ".github/workflows/sara-verified-local-v1.yml",
@@ -135,8 +132,8 @@
     },
     {
       "path": "scripts/verify_deployment.sh",
-      "sha256": "171289edd93874f6292f2c4f60b24c7e8f3fac61d9bb05541dfb0eef66472b79",
-      "size_bytes": 4302
+      "sha256": "05719fe88628e76cf9ac333aab8a729756964cc0c0c5e54f514c2ccd7bf740b1",
+      "size_bytes": 4812
     },
     {
       "path": "tests/conftest.py",
