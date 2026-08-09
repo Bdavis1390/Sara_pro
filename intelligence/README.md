@@ -6,6 +6,19 @@ This directory establishes a governed source layer for Worldshepherd/SARA.
 
 The photographed research-reference page supplied on 2026-08-09 has been normalized into `research_source_registry_v1.json`. The registry does not treat all sources as equal. Each source is assigned a trust tier, access mode, collector policy, TTL, intended use, and default validation label before data enters SARA/ECHO SENTINEL LINK.
 
+## Load into SARA
+
+`load_source_registry.py` patches the full governed registry into SARA under the top-level key `research_source_registry` using the existing authenticated `/admin/registry` endpoint. SARA's current implementation records a `registry_patched` audit event after a successful patch.
+
+Example from the repository root:
+
+```bash
+export SARA_ADMIN_TOKEN='use-your-existing-admin-token'
+python3 intelligence/load_source_registry.py
+```
+
+The loader defaults to `http://127.0.0.1:9530`. Override with `SARA_BASE_URL` if the verified deployment is bound elsewhere. The script reads the admin token from the environment, does not write it to disk, validates duplicate source IDs, verifies the returned source count, and exits nonzero on an HTTP or validation failure.
+
 ## Ingestion order
 
 ### Tier 1 — machine-readable / primary
