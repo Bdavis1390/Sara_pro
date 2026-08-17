@@ -4,6 +4,11 @@
   "inquiry":"Glob 99073",
   "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_04.json",
   "purpose":"Continue raw-hit accumulation through 13524-family states and route technically useful publications without physical-evidence promotion.",
+  "policy":{
+    "rule":"Raw number occurrences are retained for collision statistics and have zero automatic physical-evidence weight.",
+    "promotion":"Only separately verified physical quantities and relations can promote to P1/P2.",
+    "namespace_control":"DOI/PII/article/repository identifiers remain metadata controls even when the underlying publication is physical science."
+  },
   "records":[
     {"target":"90397","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0166-1280(97)90397-3","context":"Ab initio study of ground and first excited singlet states of aniline","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
     {"target":"90397","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/0304-3991(88)90397-X","context":"Delocalization corrections for electron channeling analysis","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
