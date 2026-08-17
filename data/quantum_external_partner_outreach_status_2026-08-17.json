@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "updated_utc": "2026-08-17T19:25:00Z",
+  "system": "Worldshepherd QRF External Partner Outreach Execution Ledger",
+  "authorization": {
+    "authorized_by": "CRE1AWS/user",
+    "scope": "Previously reviewed APNT quantum-sensing evidence-acquisition outreach",
+    "readiness_promotion_authorized": false,
+    "credential_use_authorized": false
+  },
+  "targets": [
+    {
+      "organization": "SandboxAQ",
+      "capability": "AQNav magnetic navigation",
+      "primary_gate": "WS-APNT-EXT-02",
+      "channel": "email",
+      "destination": "AQnav@sandboxaq.com",
+      "authoritative_subject": "APNT Technical Evaluation Collaboration — Calibrated AQNav Evidence & Integration Path",
+      "status": "SENT_AWAITING_RESPONSE",
+      "authoritative_message_rule": "Only the original reviewed outreach is authoritative; duplicate/test-style verification messages were explicitly disclaimed by corrective clarification.",
+      "evidence_effect": "none_until_actual_partner_artifacts_pass_governed_intake_and_human_review"
+    },
+    {
+      "organization": "IonQ / Vector Atomic",
+      "capability": "precision atomic clocks, inertial sensors, gravimetry and PNT",
+      "primary_gate": "WS-APNT-EXT-02",
+      "channel": "email",
+      "destination": "info@ionq.com",
+      "authoritative_subject": "Quantum PNT / Vector Atomic Technical Evaluation — Worldshepherd APNT Integration",
+      "status": "SENT_AWAITING_RESPONSE",
+      "authoritative_message_rule": "Only the original reviewed outreach is authoritative; duplicate/test-style verification messages were explicitly disclaimed by corrective clarification.",
+      "evidence_effect": "none_until_actual_partner_artifacts_pass_governed_intake_and_human_review"
+    },
+    {
+      "organization": "Q-CTRL",
+      "capability": "Ironstone Opal quantum-assured navigation",
+      "primary_gate": "WS-APNT-EXT-02",
+      "channel": "official_contact_or_sales_web_form",
+      "status": "AUTHORIZED_FORM_SUBMISSION_BLOCKED_BY_AVAILABLE_TOOLING",
+      "verified_route": "https://q-ctrl.com/contact",
+      "alternate_verified_route": "https://q-ctrl.com/events/farnborough-international-airshow-2026",
+      "reason_not_sent": "No verified direct partnership/sales email in current evidence set and available browser tooling cannot fill or submit web forms.",
+      "evidence_effect": "none"
+    },
+    {
+      "organization": "Infleqtion",
+      "capability": "quantum inertial sensing and resilient timing",
+      "primary_gate": "WS-APNT-EXT-02",
+      "channel": "official_partnership_and_sales_web_form",
+      "status": "AUTHORIZED_FORM_SUBMISSION_BLOCKED_BY_AVAILABLE_TOOLING",
+      "verified_route": "https://infleqtion.com/contact-sales/",
+      "reason_not_sent": "No verified direct partnership/sales email in current evidence set and available browser tooling cannot fill or submit web forms.",
+      "evidence_effect": "none"
+    }
+  ],
+  "communications_incident": {
+    "occurred": true,
+    "classification": "outbound_verification_used_write_action_instead_of_read_only_action",
+    "affected_targets": ["SandboxAQ", "IonQ / Vector Atomic"],
+    "mitigation": "Corrective clarification sent to each affected recipient; only original reviewed outreach designated authoritative.",
+    "process_control": "Future outbound verification must use read/search actions only; send actions are prohibited for verification."
+  },
+  "next_actions": [
+    "Await substantive replies from SandboxAQ and IonQ / Vector Atomic.",
+    "Treat replies as partner intelligence until actual technical artifacts are supplied.",
+    "Bind any supplied APNT evidence to WS-APNT-EXT-02 and run structural ingest, local re-hash, and identified-human technical review before any promotion recommendation.",
+    "Submit the authorized Q-CTRL and Infleqtion form copy through their official forms when a form-capable interaction path is available."
+  ],
+  "claim_control": "Outreach transmission, acknowledgement, willingness to discuss, product literature, demonstrations, or partner statements are not Worldshepherd evidence and do not change mission readiness."
+}
