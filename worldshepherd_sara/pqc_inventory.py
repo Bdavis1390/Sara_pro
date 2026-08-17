@@ -56,7 +56,10 @@ _PATTERNS: tuple[tuple[str, re.Pattern[str], str, str], ...] = (
     ),
     (
         "credential_surface",
-        re.compile(r"\b(api[_-]?key|access[_-]?token|bearer|client[_-]?secret|private[_-]?key)\b", re.IGNORECASE),
+        re.compile(
+            r"\b(api[_-]?key|access[_-]?token|bearer|client[_-]?secret|(?<!fail-on-)private[_-]?key)\b",
+            re.IGNORECASE,
+        ),
         "secrets_review",
         "Credential-handling reference detected; verify secret-store injection and non-persistence in evidence/logs.",
     ),
