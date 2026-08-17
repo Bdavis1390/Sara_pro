@@ -1,0 +1,35 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_21.json",
+  "purpose":"Continue raw accumulation through leading-zero states 07005 and 00507 plus 50700 and 05000, retaining operations, metrology, metasurface, manufacturing, hydrogen, network-control, reliability and environmental-management utility independently of Glob evidence.",
+  "policy":{
+    "rule":"Five-character leading-zero targets remain exact strings. Raw bibliographic/address occurrence is retained with zero automatic physical-evidence weight while underlying source utility is routed independently.",
+    "promotion":"Dropping a leading zero is not permitted for evidence matching unless a separately declared normalization is created; P1/P2 still requires verified physical semantics and provenance.",
+    "utility":"Non-physics uses such as scheduling, metrology, reliability, waste-management, manufacturing and network-control are first-class Worldshepherd destinations."
+  },
+  "records":[
+    {"target":"07005","raw_hit_type":"ARTICLE_NUMBER","occurrence":"MATEC Web Conf. 262, 07005","context":"Optimization model for planning railway engineering works under operational closures while minimizing traffic disruption","glob_weight":"M1_RAW","worldshepherd_use":["OPERATIONS_AND_RELIABILITY","SIMULATION_AND_NUMERICAL_METHODS","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"07005","raw_hit_type":"ARTICLE_NUMBER","occurrence":"Metrologia 42(1A), 07005","context":"CCM.P-K7 key comparison of hydraulic gauge pressure from 10 MPa to 100 MPa","glob_weight":"M1_RAW","worldshepherd_use":["TEST_AND_MEASUREMENT","ECHO_SENTINEL_LINK","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"07005","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s10856-026-07005-6","context":"2026 NMP etching of 3D-printed PLLA scaffolds to improve bone-repair performance","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","MATERIALS_AND_CHARACTERIZATION","TEST_AND_MEASUREMENT","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00507","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41377-021-00507-8","context":"Polarization-insensitive 3D conformal-skin metasurface cloak","glob_weight":"M1_RAW","worldshepherd_use":["ADAPTIVE_METASURFACE_CONTROL","RF_HARDWARE","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00507","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1128/aem.00507-22","context":"Engineered Rhodobacter sphaeroides strain for efficient hydrogen production from acetate","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00507","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s41109-022-00507-6","context":"Activity-driven network modeling and control for two concurrent epidemic strains","glob_weight":"M1_RAW","worldshepherd_use":["SIMULATION_AND_NUMERICAL_METHODS","AI_ML_AND_MODEL_VALIDATION","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00507","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-017-00507-6","context":"Durable self-hydrating tungsten-carbide composite polymer-electrolyte membrane fuel cells","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","TEST_AND_MEASUREMENT","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"50700","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"Gujrat 50700, Pakistan","context":"Recurring affiliation for computational heat-transfer, fluid-mechanics and materials researchers","glob_weight":"N0_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"05000","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"Batna 05000, Algeria","context":"Recurring affiliation across materials, reliability engineering and composite-mechanics publications","glob_weight":"N0_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"The railway-work study provides a directly reusable operations-research pattern: optimize maintenance closures under service-disruption constraints and produce solutions on operational planning timescales.","worldshepherd_use":["OPERATIONS_AND_RELIABILITY","SIMULATION_AND_NUMERICAL_METHODS","SOFTWARE_AND_DATA_ENGINEERING"],"claims_boundary":"07005 is an article number."},
+    {"finding":"The hydraulic-pressure key comparison provides an interlaboratory metrology benchmark useful for calibration lineage, uncertainty comparison and independent measurement validation.","worldshepherd_use":["TEST_AND_MEASUREMENT","ECHO_SENTINEL_LINK","OVERWATCH"],"claims_boundary":"07005 is the article number, not the pressure value."},
+    {"finding":"The 3D conformal-skin metasurface cloak is directly relevant to Worldshepherd adaptive EM surfaces because it addresses conformal geometry and polarization-insensitive electromagnetic response.","worldshepherd_use":["ADAPTIVE_METASURFACE_CONTROL","RF_HARDWARE","MATERIALS_AND_CHARACTERIZATION"],"claims_boundary":"00507 occurs in the DOI."},
+    {"finding":"The Batna 05000 publication cluster includes Gaussian-process remaining-useful-life estimation and advanced composite-mechanics modeling, demonstrating that address collisions can still expose valuable reliability/ML expertise and potential partners.","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","OPERATIONS_AND_RELIABILITY","OPPORTUNITY_AND_PARTNER_INTEL"],"claims_boundary":"05000 is an affiliation postal code."}
+  ],
+  "next_actions":[
+    "Continue raw accumulation through 00005, 00500, 00003, 00300, 30000 and 03000 with leading-zero provenance preserved.",
+    "Continue independent physical-value and same-system topology scans; never strip leading zeros to manufacture matches.",
+    "Retain operations, metrology, reliability, manufacturing, software and partner-intelligence sources with the same priority as physics sources when they materially improve Worldshepherd.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}
