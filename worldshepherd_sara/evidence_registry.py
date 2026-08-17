@@ -31,7 +31,7 @@ class EvidenceNotFound(EvidenceRegistryError):
 
 
 class EvidenceReferenceError(EvidenceRegistryError):
-    """Raised when a claim references missing, ambiguous, or incompatible evidence."""
+    """Raised when a record references missing, ambiguous, or incompatible evidence."""
 
 
 class EvidenceSupersessionError(EvidenceRegistryError):
@@ -64,8 +64,6 @@ def _normalize_sha256(value: str) -> str | None:
 
 
 def verify_local_raw_digest(payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Verify a local raw-data object when it is addressable on this host."""
-
     raw = payload.get("raw_data") or {}
     location = raw.get("location")
     digest_text = raw.get("digest")
@@ -163,6 +161,36 @@ class EvidenceRegistry:
         values = record.get(key, [])
         return {str(value) for value in values if isinstance(value, str)}
 
+    def _validate_experiment_references(self, payload: Dict[str, Any]) -> None:
+        if "MEASURED" not in payload.get("evidence_class", []):
+            return
+
+        calibration_ids = payload.get("calibration_ids", [])
+        if not calibration_ids:
+            raise EvidenceReferenceError(
+                "MEASURED experiment requires at least one registered calibration_id"
+            )
+
+        calibration_set = set(calibration_ids)
+        for calibration_id in calibration_ids:
+            kind, _ = self._resolve_record(calibration_id)
+            if kind != "calibration":
+                raise EvidenceReferenceError(
+                    f"experiment calibration_id must resolve to calibration record: {calibration_id}"
+                )
+
+        for sensor in payload.get("sensor_manifest", []):
+            sensor_calibration = sensor.get("calibration_id")
+            if sensor_calibration not in calibration_set:
+                raise EvidenceReferenceError(
+                    f"sensor calibration_id is not declared in experiment calibration_ids: {sensor_calibration}"
+                )
+            kind, _ = self._resolve_record(sensor_calibration)
+            if kind != "calibration":
+                raise EvidenceReferenceError(
+                    f"sensor calibration_id must resolve to calibration record: {sensor_calibration}"
+                )
+
     def _validate_claim_references(self, payload: Dict[str, Any]) -> None:
         supporting_ids = payload.get("supporting_record_ids", [])
         contradicting_ids = payload.get("contradicting_record_ids", [])
@@ -175,7 +203,6 @@ class EvidenceRegistry:
 
         for record_id in contradicting_ids:
             self._resolve_record(record_id)
-
         for record_id in replication_ids:
             self._resolve_record(record_id)
 
@@ -238,7 +265,9 @@ class EvidenceRegistry:
                         f"supersession target already has a successor: {supersedes_record_id}"
                     )
 
-            if kind == "claim":
+            if kind == "experiment":
+                self._validate_experiment_references(validated)
+            elif kind == "claim":
                 self._validate_claim_references(validated)
 
             digest_verification = (
