@@ -64,7 +64,7 @@ jobs:
       - name: Compile QRF modules and CLIs
         run: |
           python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
-          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py
+          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/generate_quantum_external_review_template.py
 
       - name: Run complete QRF test suite
         env:
@@ -81,6 +81,8 @@ jobs:
             --output .qrf-artifacts/quantum_external_campaign.json
           python scripts/generate_quantum_acquisition_requests.py \
             --output .qrf-artifacts/quantum_acquisition_requests.json
+          python scripts/generate_quantum_external_review_template.py \
+            --output .qrf-artifacts/quantum_external_review_template.json
           python scripts/generate_quantum_apnt_benchmark.py \
             --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
           python scripts/generate_quantum_alti_structure_template.py \
@@ -112,6 +114,7 @@ jobs:
       - name: Verify governed source artifacts
         run: |
           test -s scripts/ingest_quantum_external_evidence.py
+          test -s scripts/generate_quantum_external_review_template.py
           test -s benchmarks/quantum/bell_qasm3.qasm
           test -s benchmarks/quantum/qrf_resource_smoke.qasm
           test -s benchmarks/quantum/qrf_bell_001.json
