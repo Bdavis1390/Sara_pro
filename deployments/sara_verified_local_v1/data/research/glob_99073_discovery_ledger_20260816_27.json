@@ -7,7 +7,7 @@
   "source_ingestion_policy":{
     "rule":"Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
     "duplicates":"Publisher and PubMed records of the same apatite article are provenance aliases and are not independent evidence.",
-    "search_noise":"Cross-system numerical equality is not same-system physical relation. A physical value in a different unit/system may be P1 but cannot become P2 without a documented within-system relation."
+    "search_noise":"Cross-system numerical equality does not by itself increase Glob evidence. A physical value in a different unit/system may be P1 but cannot become P2 without a documented within-system relation."
   },
   "sources":[
     {
