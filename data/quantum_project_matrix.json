@@ -1,6 +1,6 @@
 {
-  "schema_version": "2.1",
-  "updated_utc": "2026-08-17T17:44:00Z",
+  "schema_version": "2.2",
+  "updated_utc": "2026-08-17T17:56:00Z",
   "policy": {
     "default_rule": "classical baseline before quantum attribution",
     "simulator_is_not_qpu": true,
@@ -26,6 +26,9 @@
     "braket_simulator_jobs_are_not_provider_parity_hardware_evidence": true,
     "provider_neutral_gate_model_normalization_does_not_create_hardware_evidence": true,
     "ionq_simulator_or_dry_run_is_not_qpu_evidence": true,
+    "controlled_classical_comparator_fixture_is_not_mission_evidence": true,
+    "valid_quantum_mapping_does_not_imply_qpu_execution_is_justified": true,
+    "classically_dominated_glob_mappings_remain_classical_controls": true,
     "ddil_local_evidence_identity_must_survive_delayed_provider_sync": true,
     "provider_sync_conflicts_must_not_rewrite_local_evidence_identity": true,
     "quantum_mission_evidence_profile_is_internal_draft_not_external_standard": true,
@@ -36,13 +39,14 @@
     "internally_controllable_quantum_closure": {
       "score": 100,
       "target": 97,
-      "controls_complete": 32,
-      "controls_total": 32,
-      "decision": "PASS_INTERNAL_CLOSURE",
-      "generated_ci_artifacts_expected": 18,
+      "controls_complete": 33,
+      "controls_total": 33,
+      "decision": "PASS_INTERNAL_CLOSURE_PENDING_EXACT_HEAD_CI",
+      "generated_ci_artifacts_expected": 19,
+      "auxiliary_logistics_comparator_artifacts_expected": 1,
       "profile_conformance_cases_passed": 10,
       "profile_conformance_cases_total": 10,
-      "claim_control": "Internal software, provider adapters, evidence contracts, DDIL custody and profile conformance do not upgrade physical mission evidence."
+      "claim_control": "Internal software, provider adapters, comparator capability, evidence contracts, DDIL custody and profile conformance do not upgrade physical mission evidence."
     },
     "provider_neutrality": {
       "gate_model_execution_schema": "implemented_common_normalization_for_real_qpu_records",
@@ -54,6 +58,22 @@
       "statistical_cross_backend_reproduction": "implemented_requires_real_distinct_qpu_runs",
       "qdk_resource_sensitivity": "implemented_three_scenario_envelope",
       "claim_control": "Provider breadth is an integration capability until actual provider runs and evidence packages exist."
+    },
+    "classical_comparator_capability": {
+      "logistics_cp_sat": "implemented_google_or_tools_9_15_6755",
+      "controlled_fixture_instances": 3,
+      "controlled_fixture_optimal_instances": 3,
+      "degraded_fixture_supported": true,
+      "mission_instance_family_acquired": false,
+      "claim_control": "The controlled fixture proves solver capability only; it cannot satisfy WS-AUTONOMOUS-LOGISTICS-EXT-01."
+    },
+    "glob_quantum_mapping": {
+      "established_operator_mappings": ["PA", "PB", "PC"],
+      "operator_orders": {"PA": 4, "PB": 4, "PC": 2},
+      "mapping_structurally_valid": true,
+      "qpu_execution_justified_for_established_operators": false,
+      "reason": "direct exact classical permutation/orbit traversal dominates the tiny fixed operators",
+      "claim_control": "A legitimate reversible mapping exists, but no QPU run is recommended for PA/PB/PC absent a larger nontrivial mission problem."
     },
     "evidence_governance_differentiation": {
       "quantum_mission_evidence_profile": "internal_draft_0.1",
@@ -78,7 +98,7 @@
       "first_qpu_runbook": "docs/QUANTUM_SARA_QPU_FIRST_RUN_2026-08-17.md",
       "apnt_partner_evaluation_package": "docs/QUANTUM_APNT_PARTNER_EVALUATION_2026-08-17.md"
     },
-    "mission_release_rule": "Every project remains NO_GO until evidence-capped mission readiness is >=97 and separate deployment authorization is obtained."
+    "mission_release_rule": "Every project remains NO_GO until evidence-capped mission readiness is >=97 and separate deployment authorization is obtained; a quantum lane may also be closed as not justified when the classical baseline dominates."
   },
   "mission_readiness_calibration": {
     "system": "Worldshepherd Mission Readiness Calibration",
@@ -134,8 +154,9 @@
     "WS-AlTi periodic-structure freeze validator",
     "metasurface full-wave calibration validator",
     "logistics mission-instance-family validator",
+    "OR-Tools CP-SAT strong classical logistics comparator capability",
     "EM materials/metrology null-matrix validator",
-    "GLOB quantum-mapping admissibility",
+    "GLOB reversible mapping plus classical-dominance execution gate",
     "stage-locked external evidence campaigns",
     "evidence-complete acquisition-request generation",
     "cross-version CI and retained evidence artifacts"
@@ -160,7 +181,7 @@
       "remaining_external_gates": ["calibrated quantum sensor/device/dataset", "truth reference and uncertainty", "denied/degraded replay", "live hardware", "repeatability", "HIL", "relevant-environment operational demonstration"],
       "completed_historical_gate": "WS-APNT-EXT-01",
       "campaign_first_active_gate": "WS-APNT-EXT-02",
-      "next_gate": "ingest a calibrated partner sensor evidence package"
+      "next_gate": "send reviewed evidence-specific outreach after user authorization, then ingest a calibrated partner sensor evidence package if offered"
     },
     {
       "project_id": "WS-ALTI",
@@ -176,8 +197,8 @@
       "priority": 4,
       "quantum_fit": "medium",
       "mission_readiness": {"score": 30, "target": 97, "gap": 67, "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter available as distinct modality", "full-wave calibration contract"],
-      "remaining_external_gates": ["retained Maxwell/FEM/FDTD calibration dataset", "calibrated reduced objective", "strong classical comparator", "justified hardware optimization trials", "RF HIL", "relevant-environment demonstration"],
+      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter available as distinct modality", "strong exact classical toy comparator", "full-wave calibration contract"],
+      "remaining_external_gates": ["retained Maxwell/FEM/FDTD calibration dataset", "calibrated reduced objective", "strong classical comparator on calibrated family", "justified hardware optimization trials", "RF HIL", "relevant-environment demonstration"],
       "campaign_first_active_gate": "WS-METASURFACE-EXT-01",
       "next_gate": "calibrate reduced-order objective to full-wave evidence"
     },
@@ -186,10 +207,10 @@
       "priority": 5,
       "quantum_fit": "medium",
       "mission_readiness": {"score": 30, "target": 97, "gap": 67, "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter with typed optimization evidence conversion", "mission-instance-family validator"],
-      "remaining_external_gates": ["mission-relevant retained instance family", "CP-SAT/MILP/strong heuristic", "actual annealing/gate-model runs only after family freeze", "provider queue/cost/latency", "degraded HIL", "relevant-environment demonstration"],
+      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter with typed optimization evidence conversion", "mission-instance-family validator", "OR-Tools 9.15 CP-SAT strong comparator", "3-instance controlled comparator fixture including degraded vehicle case"],
+      "remaining_external_gates": ["mission-relevant retained instance family", "execute CP-SAT over the full real family and retain baseline artifact", "actual annealing/gate-model runs only after family freeze", "provider queue/cost/latency", "degraded HIL", "relevant-environment demonstration"],
       "campaign_first_active_gate": "WS-AUTONOMOUS-LOGISTICS-EXT-01",
-      "next_gate": "freeze mission instance family and full-family classical baseline"
+      "next_gate": "freeze mission-relevant instance family; solver capability itself is no longer a blocker"
     },
     {
       "project_id": "WS-EM-PROPULSION",
@@ -204,10 +225,11 @@
       "project_id": "WS-GLOB",
       "priority": 7,
       "quantum_fit": "conditional",
-      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_BELOW_97"},
-      "remaining_external_gates": ["legitimate measurable quantum problem mapping", "classical/null complexity baseline", "resource estimate", "justified QPU execution", "reproduction if pursued"],
-      "campaign_first_active_gate": "WS-GLOB-EXT-01",
-      "next_gate": "formalize a measurable mapping that survives null and classical-complexity controls"
+      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_QUANTUM_EXECUTION_CLASSICAL_DOMINATES"},
+      "internally_closed": ["PA/PB/PC exact classical orbit controls", "explicit reversible position-permutation mappings", "deterministic null operator", "separate mapping-validity versus QPU-justification gate"],
+      "remaining_external_gates": ["none for the established fixed PA/PB/PC operators because QPU execution is not justified", "if a larger mission-scale GLOB problem emerges, freeze its measurable objective and classical/null complexity baseline before reconsidering resource estimation or QPU use"],
+      "campaign_first_active_gate": "WS-GLOB-EXT-01-HELD_CLASSICAL_DOMINANCE",
+      "next_gate": "keep established operators in the classical numerical lane; reopen quantum execution only for a materially different nontrivial problem"
     }
   ]
 }
