@@ -37,6 +37,8 @@ class IBMQPUResult:
     backend_num_qubits: int | None
     native_operations: tuple[str, ...]
     executed_at_utc: str
+    instance: str | None = None
+    instance_plan: str | None = None
     backend_properties_digest: str | None = None
     job_metrics: dict[str, Any] | None = None
     job_metrics_digest: str | None = None
@@ -89,6 +91,41 @@ def _elapsed_seconds(start: Any, end: Any) -> float | None:
         return None
     seconds = (right - left).total_seconds()
     return max(0.0, seconds)
+
+
+def _normalize_plan(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip().lower().replace("_", "-")
+    if normalized.endswith(" plan"):
+        normalized = normalized[:-5].strip()
+    return normalized or None
+
+
+def _active_instance_identity(service: QiskitRuntimeService) -> tuple[str | None, str | None]:
+    """Resolve the active IBM instance and its advertised plan without guessing."""
+    try:
+        active_raw = service.active_instance()
+    except Exception:
+        active_raw = None
+    active = str(active_raw).strip() if active_raw is not None else None
+    if not active:
+        return None, None
+
+    try:
+        instances = service.instances()
+    except Exception:
+        return active, None
+
+    for row in instances:
+        if not isinstance(row, dict):
+            continue
+        crn = str(row.get("crn") or "").strip()
+        name = str(row.get("name") or "").strip()
+        if active in {crn, name}:
+            plan = row.get("plan")
+            return active, str(plan).strip() if plan is not None else None
+    return active, None
 
 
 def _build_hardware_bell_circuit() -> QuantumCircuit:
@@ -154,6 +191,7 @@ def run_bell_on_ibm_hardware(
     backend_name: str | None = None,
     shots: int = 4096,
     optimization_level: int = 1,
+    expected_plan: str | None = None,
 ) -> IBMQPUResult:
     if not token or not token.strip():
         raise ValueError("IBM Quantum API token must be injected at runtime")
@@ -162,12 +200,17 @@ def run_bell_on_ibm_hardware(
     if optimization_level not in {0, 1, 2, 3}:
         raise ValueError("optimization_level must be one of 0, 1, 2, 3")
 
-    service_kwargs: dict[str, str] = {
+    normalized_expected_plan = _normalize_plan(expected_plan)
+    service_kwargs: dict[str, Any] = {
         "channel": "ibm_quantum_platform",
         "token": token.strip(),
     }
     if instance:
         service_kwargs["instance"] = instance
+    elif normalized_expected_plan:
+        # Current IBM Runtime supports plan-constrained automatic instance selection.
+        # This prevents an Open-Plan run from silently consuming another account plan.
+        service_kwargs["plans_preference"] = [normalized_expected_plan]
     service = QiskitRuntimeService(**service_kwargs)
 
     if backend_name:
@@ -184,6 +227,18 @@ def run_bell_on_ibm_hardware(
             min_num_qubits=2,
         )
 
+    # Resolve and verify the active billing/access instance before submitting any QPU job.
+    active_instance, actual_plan = _active_instance_identity(service)
+    if active_instance is None:
+        raise RuntimeError("unable to verify the active IBM Quantum instance before hardware submission")
+    if actual_plan is None:
+        raise RuntimeError("unable to verify the active IBM Quantum instance plan before hardware submission")
+    normalized_actual_plan = _normalize_plan(actual_plan)
+    if normalized_expected_plan and normalized_actual_plan != normalized_expected_plan:
+        raise RuntimeError(
+            f"active IBM plan {actual_plan!r} does not match expected plan {expected_plan!r}; refusing QPU submission"
+        )
+
     circuit = _build_hardware_bell_circuit()
     source_qasm = qasm3.dumps(circuit)
     pass_manager = generate_preset_pass_manager(
@@ -193,6 +248,7 @@ def run_bell_on_ibm_hardware(
     isa_circuit = pass_manager.run(circuit)
     isa_qasm = qasm3.dumps(isa_circuit)
 
+    # A Backend passed as SamplerV2 mode is IBM Runtime job mode, which is valid for Open Plan.
     sampler = SamplerV2(mode=backend)
     wall_start = perf_counter()
     job = sampler.run([isa_circuit], shots=shots)
@@ -205,6 +261,8 @@ def run_bell_on_ibm_hardware(
 
     result_payload = {
         "provider": "IBM Quantum Platform",
+        "instance": active_instance,
+        "instance_plan": actual_plan,
         "backend": str(getattr(backend, "name", backend_name or "unknown")),
         "job_id": str(job.job_id()),
         "shots": shots,
@@ -230,6 +288,8 @@ def run_bell_on_ibm_hardware(
         backend_num_qubits=int(num_qubits) if num_qubits is not None else None,
         native_operations=operations,
         executed_at_utc=finished_z or _utc_now_z(),
+        instance=active_instance,
+        instance_plan=actual_plan,
         backend_properties_digest=properties_digest,
         job_metrics=metrics,
         job_metrics_digest=metrics_digest,
@@ -244,17 +304,27 @@ def run_bell_on_ibm_hardware(
 def build_sara_qpu_external_evidence(
     result: IBMQPUResult,
     *,
-    plan_name: str,
+    plan_name: str | None,
     cost_usd: float,
     campaign_gate_id: str = "SARA-QRF-EXT-01",
 ) -> ExternalEvidenceRecord:
     """Convert a successful IBM hardware result into a gate-bound SARA intake record.
 
-    Cost must be explicitly known. For an IBM Open Plan execution this can be 0.0;
-    paid-plan executions should pass the actual recorded/allocated execution cost.
+    The execution plan and instance must be verified by the service before submission.
+    ``plan_name`` is treated only as the caller's expected plan and must match the
+    service-resolved plan. For an IBM Open Plan execution, cost can be 0.0; paid-plan
+    executions should pass the actual recorded/allocated execution cost.
     """
-    if not plan_name.strip():
-        raise ValueError("plan_name is required for external QPU evidence")
+    if not result.instance:
+        raise ValueError("verified IBM instance identity is required for external QPU evidence")
+    if not result.instance_plan:
+        raise ValueError("verified IBM instance plan is required for external QPU evidence")
+    actual_plan = _normalize_plan(result.instance_plan)
+    expected_plan = _normalize_plan(plan_name)
+    if expected_plan and actual_plan != expected_plan:
+        raise ValueError(
+            f"recorded IBM plan {result.instance_plan!r} does not match expected plan {plan_name!r}"
+        )
     if cost_usd < 0:
         raise ValueError("cost_usd must be non-negative")
     if not result.backend_properties_digest:
@@ -270,16 +340,18 @@ def build_sara_qpu_external_evidence(
     raw_payload = result.to_dict()
     raw_artifact_digest = _digest_json(raw_payload)
     configuration_digest = _digest_json({
+        "instance": result.instance,
+        "instance_plan": result.instance_plan,
         "backend": result.backend,
         "shots": result.shots,
         "circuit_digest": result.circuit_digest,
         "transpiled_circuit_digest": result.transpiled_circuit_digest,
         "runtime_version": result.runtime_version,
-        "plan_name": plan_name,
     })
     protocol_digest = _digest_text(
-        "QRF-BELL-001 IBM hardware protocol v1: transpile to named backend; execute measured Bell circuit; "
-        "retain backend properties, runtime metrics, result counts, latency, queue, cost, and immutable digests."
+        "QRF-BELL-001 IBM hardware protocol v1.1: resolve and verify active instance/plan before submission; "
+        "transpile to named backend; execute measured Bell circuit in job mode; retain backend properties, runtime metrics, "
+        "result counts, latency, queue, cost, instance identity, plan identity, and immutable digests."
     )
 
     return ExternalEvidenceRecord(
@@ -306,7 +378,9 @@ def build_sara_qpu_external_evidence(
             "backend_properties_digest": result.backend_properties_digest,
             "queue_seconds": str(result.queue_seconds),
             "failure_mode": "none_observed",
-            "plan_name": plan_name,
+            "instance": result.instance,
+            "plan_name": result.instance_plan,
+            "plan_verification": "service_resolved_before_submission",
             "job_metrics_digest": result.job_metrics_digest or "unavailable",
             "qpu_charge_time_seconds": "unavailable" if result.qpu_charge_time_seconds is None else str(result.qpu_charge_time_seconds),
             "runtime_version": result.runtime_version or "unknown",
