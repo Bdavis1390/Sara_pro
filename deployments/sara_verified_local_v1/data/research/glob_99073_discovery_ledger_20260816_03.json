@@ -1,0 +1,109 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 3,
+  "purpose": "Br I same-orbit relational control and current NIST ASD transition screening.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NIST-ASD-BRI-LINES-2026",
+      "title": "NIST Atomic Spectra Database Lines Data — Br I",
+      "authority": "NIST Physical Measurement Laboratory",
+      "observed_access_state": "170 Br I lines in the current ASD selection; NIST states this set contains the strongest lines from the Reader et al. compilation plus selected additional lines.",
+      "url": "https://physics.nist.gov/cgi-bin/ASD/lines1.pl?A_out=0&J_out=1&allowed_out=1&bibrefs=1&conf_out=1&enrg_out=1&forbid_out=1&g_out=0&holdings_defaults=1&intens_out=1&line_out=0&show_calc_wl=1&show_obs_wl=1&spectra=Br+I&term_out=1&unit=1",
+      "use": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "OVERWATCH"],
+      "note": "Use as current Br I transition-screening dataset. Absence from this selected ASD set is a bounded negative result, not proof that no weak historical line exists."
+    },
+    {
+      "source_id": "SRC-NIST-ASD-LINES-WAVENUMBER-METHOD",
+      "title": "NIST ASD Spectral Lines Help — Wavenumbers",
+      "authority": "NIST Physical Measurement Laboratory",
+      "url": "https://www.physics.nist.gov/PhysRefData/ASD/Html/lineshelp.html",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL"],
+      "note": "Defines stored versus calculated observed wavenumbers and Ritz wavenumbers from evaluated levels; use as the canonical conversion/reconciliation rule for transition matching."
+    }
+  ],
+  "referenced_sources": ["SRC-BRI-NIST"],
+  "relational_tests": [
+    {
+      "test_id": "REL-BRI-ORBIT-57796-75697-67795-76597",
+      "species": "Br I",
+      "orbit": ["57796", "75697", "67795", "76597"],
+      "screening_threshold_cm-1": 1.0,
+      "threshold_scope": "Deliberately strict screening threshold for this test; it is not asserted as a universal spectroscopy tolerance.",
+      "level_results": [
+        {
+          "target": 57796,
+          "result": "no_tight_level_match_in_compact_nist_handbook",
+          "context": "Compact NIST Br I level table jumps from the ground-term 3685.24 cm^-1 level to 63436.45 cm^-1; no level lies within +/-1 cm^-1 of 57796."
+        },
+        {
+          "target": 75697,
+          "observed": 75697.05,
+          "abs_delta_cm-1": 0.05,
+          "result": "tight_level_match",
+          "context": "Br I 4p^4(3P)5p 4D°, J=5/2."
+        },
+        {
+          "target": 67795,
+          "nearest_compact_levels_cm-1": [67183.58, 68970.21],
+          "nearest_abs_delta_cm-1": 611.42,
+          "result": "no_tight_level_match"
+        },
+        {
+          "target": 76597,
+          "nearest_compact_level_cm-1": 76743.08,
+          "nearest_abs_delta_cm-1": 146.08,
+          "result": "no_tight_level_match"
+        }
+      ],
+      "transition_results": [
+        {
+          "target": 57796,
+          "corresponding_vacuum_wavelength_nm": 173.0223544882,
+          "result": "no_tight_current_asd_line_match_found"
+        },
+        {
+          "target": 75697,
+          "corresponding_vacuum_wavelength_nm": 132.1056316631,
+          "result": "no_claim_promoted_from_transition_screen",
+          "note": "The established 75697.05 result is an energy level, not being reclassified as a transition merely from wavelength conversion."
+        },
+        {
+          "target": 67795,
+          "corresponding_vacuum_wavelength_nm": 147.5035032082,
+          "result": "no_tight_current_asd_line_match_found"
+        },
+        {
+          "target": 76597,
+          "corresponding_vacuum_wavelength_nm": 130.5534159301,
+          "result": "no_tight_current_asd_line_match_found"
+        }
+      ],
+      "conclusion": "No second tight same-orbit Br I level or selected-ASD transition counterpart was found. The 75697.05 level remains a single P1 near-match rather than a Br I P2 same-orbit closure.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "This negative result is bounded to the authoritative compact level table and current ASD selected-line set searched; NIST notes weaker lines exist in primary references beyond the selected current line set."
+    },
+    {
+      "test_id": "CTRL-BRI-79675-VS-79695",
+      "species": "Br I",
+      "target": 79675,
+      "observed_level_cm-1": 79695.89,
+      "abs_delta_cm-1": 20.89,
+      "result": "near_miss_control_not_promoted",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL"],
+      "claims_boundary": "Outside the +/-1 cm^-1 screening threshold; retained specifically to prevent tolerance creep."
+    }
+  ],
+  "next_actions": [
+    "Repeat same-orbit level and transition screening for current Yb II using authoritative NIST data.",
+    "Where a same-system closure appears, preserve topology and run a matched null rather than widening tolerances post hoc.",
+    "Apply multiple-testing correction across all orbit/species/dataset screens.",
+    "Retain failed closures and near misses as negative controls for OVERWATCH false-positive monitoring."
+  ]
+}
