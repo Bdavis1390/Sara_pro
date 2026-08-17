@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Compute raw-search coverage over the complete active Glob permutation union.
+"""Compute raw-search coverage and collision multiplicity over the active Glob union.
 
-The analyzer treats permutation membership and raw-search observation as separate
-facts. It does not score physical evidence. Leading-zero five-character states
-remain strings throughout.
+Permutation membership, raw-search observation density, and physical evidence are
+kept as separate facts. Leading-zero five-character states remain strings.
 """
 
 from __future__ import annotations
@@ -12,6 +11,7 @@ import argparse
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
+from statistics import median
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,10 +53,12 @@ def build_report() -> dict:
     observed: set[str] = set()
     namespace_counts: Counter[str] = Counter()
     weight_counts: Counter[str] = Counter()
-    per_target: dict[str, dict] = defaultdict(lambda: {"records": 0, "namespaces": set(), "weights": set()})
+    per_target: dict[str, dict] = defaultdict(
+        lambda: {"records": 0, "namespaces": set(), "weights": set(), "files": [], "saw_no_hit": False, "saw_later_hit": False}
+    )
     out_of_union: set[str] = set()
 
-    for _, record in records:
+    for path, record in records:
         target = record["target"]
         if target not in union:
             out_of_union.add(target)
@@ -67,21 +69,43 @@ def build_report() -> dict:
         row["records"] += 1
         row["namespaces"].add(record["raw_hit_type"])
         row["weights"].add(record["glob_weight"])
+        row["files"].append(path.name)
+        if record["glob_weight"] == "NO_HIT":
+            row["saw_no_hit"] = True
+        elif row["saw_no_hit"]:
+            row["saw_later_hit"] = True
 
     covered = union & observed
     gaps = sorted(union - observed)
     normalized_per_target = {
         target: {
             "records": row["records"],
+            "namespace_count": len(row["namespaces"]),
             "namespaces": sorted(row["namespaces"]),
             "weights": sorted(row["weights"]),
+            "files": row["files"],
+            "no_hit_revised_by_later_occurrence": row["saw_later_hit"],
         }
         for target, row in sorted(per_target.items())
         if target in union
     }
 
+    record_depths = [normalized_per_target[state]["records"] for state in sorted(covered)]
+    namespace_depths = [normalized_per_target[state]["namespace_count"] for state in sorted(covered)]
+    dense_targets = sorted(
+        (
+            {"target": target, **row}
+            for target, row in normalized_per_target.items()
+        ),
+        key=lambda item: (-item["records"], -item["namespace_count"], item["target"]),
+    )
+    revised_no_hits = sorted(
+        target for target, row in normalized_per_target.items() if row["no_hit_revised_by_later_occurrence"]
+    )
+    sparse_targets = sorted(target for target, row in normalized_per_target.items() if row["records"] == 1)
+
     return {
-        "schema_version": "ws-glob-raw-coverage-report-1.0",
+        "schema_version": "ws-glob-raw-coverage-report-1.1",
         "union_unique_states": len(union),
         "covered_unique_states": len(covered),
         "coverage_fraction": round(len(covered) / len(union), 6),
@@ -91,8 +115,20 @@ def build_report() -> dict:
         "raw_record_count": len(records),
         "glob_weight_counts": dict(sorted(weight_counts.items())),
         "raw_namespace_counts": dict(sorted(namespace_counts.items())),
+        "multiplicity": {
+            "mean_records_per_covered_state": round(sum(record_depths) / len(record_depths), 6) if record_depths else 0.0,
+            "median_records_per_covered_state": median(record_depths) if record_depths else 0,
+            "max_records_for_single_state": max(record_depths) if record_depths else 0,
+            "mean_namespaces_per_covered_state": round(sum(namespace_depths) / len(namespace_depths), 6) if namespace_depths else 0.0,
+            "max_namespaces_for_single_state": max(namespace_depths) if namespace_depths else 0,
+            "single_record_state_count": len(sparse_targets),
+            "revised_no_hit_count": len(revised_no_hits),
+        },
+        "sparse_targets": sparse_targets,
+        "revised_no_hit_targets": revised_no_hits,
+        "densest_targets": dense_targets[:25],
         "per_target": normalized_per_target,
-        "claims_boundary": "Coverage means a state has at least one explicit raw-search observation; it does not mean the state has physical evidence or statistical significance.",
+        "claims_boundary": "Coverage and collision multiplicity measure search-observation behavior only; neither implies physical evidence, causal relation, or statistical significance for the Glob hypothesis.",
     }
 
 
