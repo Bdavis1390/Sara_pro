@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 
@@ -13,6 +14,9 @@ def load_module():
     spec = importlib.util.spec_from_file_location("nist_graph", SCRIPT)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
+    # Python 3.12 dataclasses resolve postponed string annotations through
+    # sys.modules.  Mirror normal import semantics before executing the module.
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -73,7 +77,7 @@ def test_parse_tsv_separate_energy_columns() -> None:
     )
     transitions = module.parse_nist_export(sample, "tsv")
     assert len(transitions) == 2
-    assert transitions[0].ritz_wavenumber_cm1 == 39699.869
+    assert abs(transitions[0].ritz_wavenumber_cm1 - 39699.869) < 1e-9
 
 
 def test_registry_targets_preserve_zero_padded_states(tmp_path: Path) -> None:
