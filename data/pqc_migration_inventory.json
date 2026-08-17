@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "status": "DISCOVERY_REQUIRED",
+  "standards_baseline": {
+    "key_establishment": "ML-KEM (FIPS 203)",
+    "primary_signature": "ML-DSA (FIPS 204)",
+    "hash_based_signature": "SLH-DSA (FIPS 205)"
+  },
+  "rules": [
+    "Do not implement cryptographic primitives inside Worldshepherd application code.",
+    "Prefer maintained protocol/library implementations with explicit interoperability tests.",
+    "Do not remove classical algorithms until the relevant protocol and counterparties support the migration path.",
+    "Treat long-retention confidentiality as higher priority because harvest-now-decrypt-later risk precedes cryptographically relevant quantum computers."
+  ],
+  "surfaces": [
+    {
+      "surface": "external TLS termination",
+      "current_algorithm": "UNKNOWN",
+      "state": "DISCOVERY_REQUIRED",
+      "quantum_exposure": "key establishment and authentication depend on deployed TLS suite",
+      "target": "crypto-agile TLS stack with standards-supported PQ/hybrid migration when ecosystem-ready"
+    },
+    {
+      "surface": "SSH operator/admin access",
+      "current_algorithm": "UNKNOWN",
+      "state": "DISCOVERY_REQUIRED",
+      "quantum_exposure": "public-key authentication and key exchange",
+      "target": "supported PQ/hybrid SSH path; preserve break-glass interoperability"
+    },
+    {
+      "surface": "OIDC/JWT and service identity signatures",
+      "current_algorithm": "UNKNOWN",
+      "state": "DISCOVERY_REQUIRED",
+      "quantum_exposure": "public-key signatures if asymmetric JWT/OIDC signing is used",
+      "target": "crypto-agile issuer/verifier interfaces and PQ-capable standards as ecosystem support matures"
+    },
+    {
+      "surface": "artifact/evidence signatures",
+      "current_algorithm": "UNKNOWN",
+      "state": "DISCOVERY_REQUIRED",
+      "quantum_exposure": "long-lived authenticity and provenance",
+      "target": "ML-DSA or SLH-DSA where tooling and verifier support permit; retain algorithm identifiers"
+    },
+    {
+      "surface": "Git/release signing",
+      "current_algorithm": "UNKNOWN",
+      "state": "DISCOVERY_REQUIRED",
+      "quantum_exposure": "long-lived software provenance",
+      "target": "dual/hybrid provenance strategy once repository/tooling support is available"
+    },
+    {
+      "surface": "backup/archive encryption",
+      "current_algorithm": "UNKNOWN",
+      "state": "DISCOVERY_REQUIRED",
+      "quantum_exposure": "key wrapping/establishment may be vulnerable even when bulk symmetric encryption remains adequate",
+      "target": "inventory retention horizon and migrate vulnerable public-key wrapping mechanisms"
+    },
+    {
+      "surface": "QPU/provider credentials",
+      "current_algorithm": "bearer/API credentials; transport stack UNKNOWN",
+      "state": "SECRETS_ISOLATION_REQUIRED",
+      "quantum_exposure": "credential custody is primarily an operational secret-management problem; transport still requires inventory",
+      "target": "environment/secret-store injection only; never persist provider tokens in evidence records"
+    }
+  ]
+}
