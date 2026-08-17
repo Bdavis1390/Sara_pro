@@ -71,6 +71,23 @@ def test_referenced_sources_and_evidence_updates_are_resolvable_and_routed() -> 
             assert record.get("claims_boundary"), record["record_id"]
 
 
+def test_source_corrections_are_resolvable_routed_and_explicit() -> None:
+    registry = load_json(REGISTRY_PATH)
+    allowed_routes = set(registry["worldshepherd_routing"])
+    source_ids = all_source_ids()
+
+    for path, ledger in ledgers():
+        for correction in ledger.get("source_corrections", []):
+            source_id = correction.get("source_id")
+            assert source_id in source_ids, f"unresolved correction source {source_id} in {path.name}"
+            assert correction.get("field"), f"missing corrected field for {source_id} in {path.name}"
+            assert "corrected_value" in correction, f"missing corrected value for {source_id} in {path.name}"
+            assert correction.get("reason"), f"missing correction reason for {source_id} in {path.name}"
+            uses = correction.get("worldshepherd_uses", [])
+            assert uses, f"unrouted correction {source_id} in {path.name}"
+            assert set(uses) <= allowed_routes, f"invalid correction route for {source_id} in {path.name}"
+
+
 def test_relational_tests_are_routed_and_claim_bounded() -> None:
     registry = load_json(REGISTRY_PATH)
     allowed_routes = set(registry["worldshepherd_routing"])
