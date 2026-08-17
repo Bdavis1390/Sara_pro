@@ -5,6 +5,8 @@ def test_evidence_routes_are_registered_before_legacy_mount():
     paths = [getattr(route, "path", None) for route in app.routes]
     assert "/v1/evidence/experiments" in paths
     assert "/v1/evidence/claims" in paths
+    assert "/v1/evidence/calibrations" in paths
+    assert "/v1/evidence/calibrations/{calibration_id}" in paths
     assert "/v1/evidence/export" in paths
     assert "/v1/evidence/metrics" in paths
 
