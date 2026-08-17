@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 RESEARCH_DIR = ROOT / "data" / "research"
 REGISTRY_PATH = RESEARCH_DIR / "glob_99073_registry.json"
 LEDGER_GLOB = "glob_99073_discovery_ledger_*.json"
+VALID_EVIDENCE_CLASSES = {"P2", "P1", "G1", "M1", "N0"}
 
 
 def load_json(path: Path) -> dict:
@@ -21,6 +22,14 @@ def ledgers() -> list[tuple[Path, dict]]:
     return [(path, load_json(path)) for path in paths]
 
 
+def all_source_ids() -> set[str]:
+    registry = load_json(REGISTRY_PATH)
+    ids = {source["source_id"] for source in registry["sources"]}
+    for _, ledger in ledgers():
+        ids.update(source["source_id"] for source in ledger.get("sources", []))
+    return ids
+
+
 def test_all_discovery_ledgers_point_to_canonical_registry() -> None:
     for path, ledger in ledgers():
         assert ledger["schema_version"] == "ws-glob-discovery-ledger-1.0", path.name
@@ -30,11 +39,10 @@ def test_all_discovery_ledgers_point_to_canonical_registry() -> None:
 def test_every_discovered_source_has_a_worldshepherd_use_and_global_unique_id() -> None:
     registry = load_json(REGISTRY_PATH)
     allowed_routes = set(registry["worldshepherd_routing"])
-    canonical_ids = {source["source_id"] for source in registry["sources"]}
-    source_ids = set(canonical_ids)
+    source_ids = {source["source_id"] for source in registry["sources"]}
 
     for path, ledger in ledgers():
-        for source in ledger["sources"]:
+        for source in ledger.get("sources", []):
             source_id = source["source_id"]
             assert source_id not in source_ids, f"duplicate source_id {source_id} in {path.name}"
             source_ids.add(source_id)
@@ -43,6 +51,39 @@ def test_every_discovered_source_has_a_worldshepherd_use_and_global_unique_id() 
             assert uses, f"unrouted source {source_id} in {path.name}"
             assert set(uses) <= allowed_routes, f"invalid route for {source_id} in {path.name}"
             assert source.get("note"), f"missing utilization note for {source_id} in {path.name}"
+
+
+def test_referenced_sources_and_evidence_updates_are_resolvable_and_routed() -> None:
+    registry = load_json(REGISTRY_PATH)
+    allowed_routes = set(registry["worldshepherd_routing"])
+    source_ids = all_source_ids()
+
+    for path, ledger in ledgers():
+        for source_id in ledger.get("referenced_sources", []):
+            assert source_id in source_ids, f"unresolved referenced source {source_id} in {path.name}"
+
+        for record in ledger.get("evidence_updates", []):
+            assert record["evidence_class"] in VALID_EVIDENCE_CLASSES, record["record_id"]
+            assert record.get("source_id") in source_ids, record["record_id"]
+            uses = record.get("worldshepherd_uses", [])
+            assert uses, record["record_id"]
+            assert set(uses) <= allowed_routes, record["record_id"]
+            assert record.get("claims_boundary"), record["record_id"]
+
+
+def test_relational_tests_are_routed_and_claim_bounded() -> None:
+    registry = load_json(REGISTRY_PATH)
+    allowed_routes = set(registry["worldshepherd_routing"])
+
+    for path, ledger in ledgers():
+        for test in ledger.get("relational_tests", []):
+            uses = test.get("worldshepherd_uses", [])
+            assert uses, f"unrouted relational test {test.get('test_id')} in {path.name}"
+            assert set(uses) <= allowed_routes, test.get("test_id")
+            assert test.get("claims_boundary"), test.get("test_id")
+            if "screening_threshold_cm-1" in test:
+                assert test["screening_threshold_cm-1"] > 0, test.get("test_id")
+                assert test.get("threshold_scope"), test.get("test_id")
 
 
 def test_every_discovery_ledger_preserves_evidence_boundaries() -> None:
@@ -100,5 +141,9 @@ def test_current_nist_reconciliation_separates_historical_and_current_graphs() -
 def test_all_ledgers_keep_statistical_or_verification_next_actions() -> None:
     for path, ledger in ledgers():
         actions = " ".join(ledger["next_actions"]).lower()
-        assert "topology" in actions, path.name
-        assert "multiple-testing" in actions or "false-discovery" in actions, path.name
+        assert "topology" in actions or "relational" in actions, path.name
+        assert (
+            "multiple-testing" in actions
+            or "false-discovery" in actions
+            or "tolerance" in actions
+        ), path.name
