@@ -1,0 +1,102 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 8,
+  "purpose": "Operationalize CI/dependency maintenance signals and route additional authoritative tungsten/publication-discovery sources surfaced while resolving the W II graph-ingestion path.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-GITHUB-CHECKOUT-V6",
+      "title": "actions/checkout v6 documentation and release history",
+      "authority": "GitHub Actions official repository",
+      "url": "https://github.com/actions/checkout",
+      "use": ["SARA", "SECURITY_HARDENING"],
+      "note": "Official Node 24-compatible checkout action guidance. Used to move SARA CI from checkout@v4 to checkout@v6 after GitHub-hosted-runner deprecation warnings."
+    },
+    {
+      "source_id": "SRC-GITHUB-SETUP-PYTHON-V6",
+      "title": "actions/setup-python v6 documentation and release history",
+      "authority": "GitHub Actions official repository",
+      "url": "https://github.com/actions/setup-python",
+      "use": ["SARA", "SECURITY_HARDENING"],
+      "note": "Official Node 24-compatible Python setup action guidance. Used to move SARA CI from setup-python@v5 to setup-python@v6; the active GitHub-hosted runner version exceeded the documented minimum."
+    },
+    {
+      "source_id": "SRC-STARLETTE-TESTCLIENT-HTTPX2-2026",
+      "title": "Starlette TestClient documentation and 1.2.x release notes",
+      "authority": "Starlette official documentation/source repository",
+      "url": "https://www.starlette.io/testclient/",
+      "use": ["SARA", "SECURITY_HARDENING"],
+      "note": "Current Starlette documentation identifies httpx2 as the TestClient backend and marks plain httpx support deprecated. Used to migrate SARA test extras to httpx2 rather than suppressing the warning."
+    },
+    {
+      "source_id": "SRC-HTTPX2-PYDANTIC-2026",
+      "title": "HTTPX2 — next-generation HTTP client for Python",
+      "authority": "Pydantic HTTPX2 official repository",
+      "url": "https://github.com/pydantic/httpx2",
+      "use": ["SARA", "SECURITY_HARDENING"],
+      "note": "Primary implementation/source reference for the test-client dependency adopted by current Starlette. Pinning remains bounded to major version 2 for the SARA test extra."
+    },
+    {
+      "source_id": "SRC-NIST-JPCRD-REPRINT-INDEX",
+      "title": "NIST Standard Reference Database — Journal of Physical and Chemical Reference Data Reprints",
+      "authority": "National Institute of Standards and Technology",
+      "url": "https://www.nist.gov/srd/nist-standard-reference-database-journal-physical-and-chemical-reference-data-reprints",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL"],
+      "note": "Authoritative publication-discovery and full-text-reprint index. Use as a source-acquisition route for NIST critical compilations while preserving DOI and publication provenance."
+    },
+    {
+      "source_id": "SRC-W-SE-KILONOVA-2022",
+      "title": "Tungsten vs Selenium as a potential source of kilonova nebular emission observed by Spitzer",
+      "authors": "Kenta Hotokezaka; Masaomi Tanaka; Daiji Kato; Gediminas Gaigalas",
+      "year": 2022,
+      "identifier": "arXiv:2204.00737",
+      "url": "https://arxiv.org/abs/2204.00737",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Route to heavy-element spectral-synthesis/line-identification knowledge. The work constructs line lists from experimentally calibrated NIST energy levels; useful as an independent methodology example for turning level graphs into synthetic spectra, not as Glob-number evidence."
+    },
+    {
+      "source_id": "SRC-WLVII-WLXII-BENCHMARK-2021",
+      "title": "Benchmarking calculations with spectroscopic accuracy of level energies and wavelengths in W LVII-W LXII tungsten ions",
+      "authors": "Chun Yu Zhang; Kai Wang; Ran Si; Michel Godefroid; Per Jonsson; Jun Xiao; Ming Feng Gu; Chong Yang Chen",
+      "year": 2021,
+      "identifier": "arXiv:2103.08891",
+      "url": "https://arxiv.org/abs/2103.08891",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Route as a higher-charge tungsten benchmark for cross-method agreement, relativistic/QED correction accounting, and spectroscopic-accuracy validation. Keep ionization stages distinct from W II hypothesis testing."
+    }
+  ],
+  "maintenance_actions": [
+    {
+      "action_id": "MAINT-SARA-GHA-NODE24",
+      "trigger": "GitHub Actions warning that Node 20-based action majors are deprecated on the hosted runner",
+      "change": ["actions/checkout@v4 -> actions/checkout@v6", "actions/setup-python@v5 -> actions/setup-python@v6"],
+      "status": "implemented_on_research_branch_pending_ci_confirmation",
+      "worldshepherd_uses": ["SARA", "SECURITY_HARDENING"],
+      "claims_boundary": "Major-version migration is based on official action documentation; CI must remain green before merge."
+    },
+    {
+      "action_id": "MAINT-SARA-STARLETTE-HTTPX2",
+      "trigger": "StarletteDeprecationWarning emitted by TestClient when plain httpx was installed",
+      "change": "test extra httpx>=0.27,<1 -> httpx2>=2,<3",
+      "status": "implemented_on_research_branch_pending_ci_confirmation",
+      "worldshepherd_uses": ["SARA", "SECURITY_HARDENING"],
+      "claims_boundary": "No direct application imports of httpx were found in repository search before changing the test-only dependency; CI confirmation remains mandatory."
+    }
+  ],
+  "acquisition_boundary": {
+    "nist_wii_full_graph": "NIST documents CSV and tab-delimited ASCII output for ASD line queries, but the browsing interface used in this inquiry has not yet yielded a directly downloadable complete 2838-line W II table. Do not infer empirical degrees from the 263-level table alone.",
+    "worldshepherd_use": "SARA should treat authoritative machine-readable acquisition as a separate source-ingestion task and preserve the 2838-line holdings count, level identities, observed/Ritz values, and source references when acquired."
+  },
+  "next_actions": [
+    "Confirm the Node 24 action and httpx2 dependency migrations through the full SARA CI gate and retain any new warnings as maintenance evidence.",
+    "Continue the topology-preserving W II graph acquisition using NIST-authoritative line data rather than reconstructing missing empirical degrees from assumptions.",
+    "Apply multiple-testing correction across every predeclared species, dataset, target state, tolerance, and relational motif.",
+    "Index the kilonova line-list and W LVII-W LXII benchmark methodologies in Worldshepherd materials/model-validation knowledge with ionization-stage boundaries intact."
+  ]
+}
