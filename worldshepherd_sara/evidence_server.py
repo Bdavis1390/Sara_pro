@@ -9,6 +9,7 @@ from worldshepherd_sara.evidence_registry import (
     DuplicateEvidenceId,
     EvidenceDigestMismatch,
     EvidenceNotFound,
+    EvidenceReferenceError,
     EvidenceRegistry,
     EvidenceRegistryError,
     EvidenceSupersessionError,
@@ -28,7 +29,15 @@ def _translate_error(exc: Exception) -> HTTPException:
         return HTTPException(status_code=409, detail=str(exc))
     if isinstance(exc, EvidenceNotFound):
         return HTTPException(status_code=404, detail=str(exc))
-    if isinstance(exc, (EvidenceValidationError, EvidenceSupersessionError, EvidenceDigestMismatch)):
+    if isinstance(
+        exc,
+        (
+            EvidenceValidationError,
+            EvidenceReferenceError,
+            EvidenceSupersessionError,
+            EvidenceDigestMismatch,
+        ),
+    ):
         return HTTPException(status_code=400, detail=str(exc))
     if isinstance(exc, EvidenceRegistryError):
         return HTTPException(status_code=500, detail=str(exc))
