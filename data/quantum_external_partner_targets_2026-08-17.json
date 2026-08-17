@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "snapshot_utc": "2026-08-17T15:55:00Z",
+  "schema_version": "1.1",
+  "snapshot_utc": "2026-08-17T16:33:00Z",
   "system": "Worldshepherd QRF External Evidence Partner Target Matrix",
   "volatility": "current-access and product claims must be re-verified before outreach, purchase, or test execution",
   "selection_policy": "Rank by shortest defensible path to a specific QRF campaign gate, evidence quality, integration relevance, and current access/partner signal. Scores are internal fit scores, not probabilities of agreement.",
@@ -14,62 +14,71 @@
       "later_gate_roles": ["SARA-QRF-EXT-02", "WS-ALTI-EXT-04", "WS-METASURFACE-EXT-03", "WS-AUTONOMOUS-LOGISTICS-EXT-03", "WS-GLOB-EXT-04"],
       "evidence_type": "qpu_execution",
       "access_mode": "self_service_platform",
+      "contact_channel": "IBM Quantum Platform account / Open Plan instance",
       "current_use": "first real-QPU evidence path for QRF-BELL-001",
       "facts": [
-        "IBM Quantum Platform documents an Open Plan with free QPU access up to 10 minutes per rolling 28-day window.",
-        "Current Qiskit Runtime service authentication uses the ibm_quantum_platform path and an API key; an instance is recommended but not always required by current clients.",
-        "RuntimeJobV2 metrics expose created/running/finished timestamps and QPU usage details suitable for retained queue/latency provenance."
+        "IBM Quantum Platform currently documents an Open Plan with free QPU access up to 10 minutes per rolling 28-day window.",
+        "IBM documents a limited-time 2026 Open Plan promotion, available to active users from March 16, 2026, for an additional 180 minutes over 12 months subject to opt-in terms.",
+        "Open Plan workloads run in job or batch mode rather than Session mode.",
+        "Current Qiskit Runtime service authentication uses the ibm_quantum_platform path and an API key; an instance should be explicitly identified for evidence provenance.",
+        "Runtime job metadata can retain created/running/finished timing and QPU usage suitable for queue/latency provenance."
       ],
-      "next_action": "Use an actual IBM Quantum account/instance, inject IBM_QUANTUM_TOKEN at runtime, declare the real plan name and recorded job cost, then execute scripts/run_ibm_qpu_bell.py. Never commit the token.",
+      "next_action": "Create or identify an actual Open Plan instance, inject IBM_QUANTUM_TOKEN only at runtime, declare the real plan/instance, execute scripts/run_ibm_qpu_bell.py in job mode, and retain the resulting SARA-QRF-EXT-01 package. Never commit the token.",
       "sources": [
         "https://quantum.cloud.ibm.com/docs/en/guides/plans-overview",
-        "https://quantum.cloud.ibm.com/docs/en/api/qiskit-ibm-runtime/qiskit-runtime-service",
-        "https://quantum.cloud.ibm.com/docs/en/api/qiskit-ibm-runtime/runtime-job-v2"
+        "https://quantum.cloud.ibm.com/docs/en/guides/instances",
+        "https://quantum.cloud.ibm.com/docs/en/guides/run-jobs-session",
+        "https://quantum.cloud.ibm.com/docs/en/guides/view-cost"
       ]
     },
     {
       "rank": 2,
       "organization": "Q-CTRL",
       "product_or_capability": "Ironstone Opal quantum-assured navigation",
-      "fit_score": 96,
+      "fit_score": 97,
       "projects": ["WS-APNT"],
       "primary_gate": "WS-APNT-EXT-02",
       "later_gate_roles": ["WS-APNT-EXT-04", "WS-APNT-EXT-06", "WS-APNT-EXT-07", "WS-APNT-EXT-08"],
       "evidence_type": "quantum_sensor",
       "access_mode": "select_partner_system_integration_and_field_trial",
+      "contact_channel": "Q-CTRL Ironstone Opal contact/request-a-meeting form; evaluation-kit request is explicitly supported",
       "current_use": "highest-priority APNT integration/field-evidence partner candidate",
       "facts": [
-        "Q-CTRL states that Ironstone Opal has been validated in airborne, ground, and maritime trials.",
-        "Q-CTRL states that Ironstone Opal has achieved DO-160 safety-of-flight qualification.",
-        "Q-CTRL explicitly states it is engaging select partners for additional field trials and system-integration demonstrations."
+        "Q-CTRL states Ironstone Opal has been validated in airborne, ground, and maritime trials.",
+        "Q-CTRL states Ironstone Opal has achieved DO-160 safety-of-flight qualification.",
+        "Q-CTRL explicitly states it is engaging select partners for additional field trials and system-integration demonstrations.",
+        "Q-CTRL currently offers an evaluation-kit path for organizations assessing Ironstone Opal integration."
       ],
-      "next_action": "Prepare a bounded APNT evaluation request centered on calibrated device/dataset access, truth-reference uncertainty, interface data, and a path to live integration under denied/degraded GNSS conditions.",
+      "next_action": "Submit a bounded APNT evaluation request centered on calibrated device/dataset access, truth-reference uncertainty, interface data, and a path to live integration under denied/degraded GNSS conditions. Request the evaluation kit only if the evidence package can satisfy WS-APNT-EXT-02 without proprietary-data ambiguity.",
       "sources": [
         "https://q-ctrl.com/our-work/positioning-navigation-and-timing",
         "https://q-ctrl.com/ironstone-opal",
-        "https://q-ctrl.com/blog/q-ctrl-to-showcase-worlds-first-airworthiness-qualified-quantum-navigation-gps-backup-at-the-farnborough-international-airshow"
+        "https://q-ctrl.com/our-work/defense",
+        "https://q-ctrl.com/events/farnborough-international-airshow-2026"
       ]
     },
     {
       "rank": 3,
       "organization": "SandboxAQ",
       "product_or_capability": "AQNav magnetic navigation",
-      "fit_score": 94,
+      "fit_score": 95,
       "projects": ["WS-APNT"],
       "primary_gate": "WS-APNT-EXT-02",
       "later_gate_roles": ["WS-APNT-EXT-04", "WS-APNT-EXT-07", "WS-APNT-EXT-08"],
       "evidence_type": "quantum_sensor",
       "access_mode": "commercial_or_program_partner_evaluation",
+      "contact_channel": "AQnav@sandboxAQ.com and AQNav collaboration form",
       "current_use": "parallel APNT magnetic-navigation partner and comparator path",
       "facts": [
-        "SandboxAQ describes AQNav as an APNT magnetic navigation system using high-sensitivity quantum sensors, AI, and Earth's magnetic field.",
-        "Its current AQNav product page reports testing across more than 200 sorties and more than 500 flight hours.",
-        "SandboxAQ announced participation in DIU's Transition of Quantum Sensing program for magnetic navigation defense use cases."
+        "SandboxAQ describes AQNav as an APNT magnetic-navigation system using high-sensitivity quantum sensors, AI, and Earth's magnetic field.",
+        "SandboxAQ explicitly invites collaboration on AQNav.",
+        "SandboxAQ publishes AQnav@sandboxAQ.com as a collaboration contact.",
+        "SandboxAQ reports partnership flight-test work with Acubed including flight planning, calibration, hardware refinement, sensor placement, denoising, and aircraft EMI characterization."
       ],
-      "next_action": "Request a technical evaluation path that can produce a calibration identity, truth-reference dataset, uncertainty characterization, interface definition, and repeatable denied-GNSS test evidence compatible with WS-APNT campaign records.",
+      "next_action": "Send the WS-APNT-EXT-02 technical collaboration request to AQnav@sandboxAQ.com. Ask for a calibrated device or evaluation dataset, truth-reference identity, uncertainty characterization, interface definition, and repeatable denied-GNSS test evidence rather than a marketing briefing.",
       "sources": [
-        "https://www.sandboxaq.com/solutions/aqnav",
-        "https://www.sandboxaq.com/press/sandboxaq-partners-with-dows-defense-innovation-unit-to-advance-development-of-magnetic-navigation-systems"
+        "https://go.sandboxaq.com/AQNavTalktoExpert.html",
+        "https://www.sandboxaq.com/post/sandboxaq-and-acubed-achieve-remarkable-progress-in-magnetic-navigation"
       ]
     },
     {
@@ -82,38 +91,44 @@
       "later_gate_roles": ["WS-APNT-EXT-04", "WS-APNT-EXT-06", "WS-APNT-EXT-07"],
       "evidence_type": "quantum_sensor",
       "access_mode": "commercial_or_government_partner_evaluation",
+      "contact_channel": "IonQ commercial/federal inquiry path; do not use press or investor addresses as technical-sales contacts",
       "current_use": "field-validated atomic sensing/timing alternative for APNT",
       "facts": [
         "IonQ completed its acquisition of Vector Atomic on October 7, 2025.",
-        "IonQ states that the acquired portfolio includes precision atomic clocks, inertial sensors and synchronization hardware for space, submarine and airborne applications.",
-        "IonQ describes Vector Atomic sensing systems as field-deployed or field-validated across demanding environments."
+        "IonQ states the acquired portfolio includes precision atomic clocks, inertial sensors and synchronization hardware for space, submarine and airborne applications.",
+        "IonQ describes Vector Atomic sensing systems as deployable and field-validated in demanding environments.",
+        "IonQ currently positions Vector Atomic inside its government/defense quantum sensing portfolio."
       ],
-      "next_action": "Route APNT outreach through IonQ/Vector Atomic as a precision timing/inertial sensing integration request with calibration, truth-reference and denied-GNSS test requirements defined up front.",
+      "next_action": "Route APNT outreach through IonQ's commercial/federal inquiry channel as a precision timing/inertial sensing integration request with calibration, truth-reference and denied-GNSS test requirements defined up front.",
       "sources": [
-        "https://www.ionq.com/news/ionq-completes-acquisition-of-vector-atomic-the-global-leader-in-advanced"
+        "https://www.ionq.com/news/ionq-completes-acquisition-of-vector-atomic-the-global-leader-in-advanced",
+        "https://www.ionq.com/news/ionq-selected-to-support-missile-defense-agency-shield-idiq-contract"
       ]
     },
     {
       "rank": 5,
       "organization": "Infleqtion",
       "product_or_capability": "quantum inertial sensing, quantum clocks and navigation solutions",
-      "fit_score": 89,
+      "fit_score": 90,
       "projects": ["WS-APNT"],
       "primary_gate": "WS-APNT-EXT-02",
       "later_gate_roles": ["WS-APNT-EXT-04", "WS-APNT-EXT-06"],
       "evidence_type": "quantum_sensor",
       "access_mode": "commercial_or_research_partner_evaluation",
+      "contact_channel": "Infleqtion Contact Sales form with Inertial Sensing or Atomic Clock product interest",
       "current_use": "parallel inertial-sensing and timing path for APNT",
       "facts": [
-        "Infleqtion describes quantum inertial sensing for long-duration GPS-independent navigation and other PNT-relevant use cases.",
-        "Infleqtion's current corporate materials list quantum clocks and inertial navigation solutions in its commercial portfolio."
+        "Infleqtion currently lists quantum clocks, inertial navigation solutions and precision sensors in its commercial portfolio.",
+        "Infleqtion's current Contact Sales form explicitly includes Inertial Sensing and Atomic Clock product-interest selections.",
+        "Infleqtion describes ruggedized inertial sensors for assured navigation where GPS is unavailable."
       ],
-      "next_action": "Request a bounded evaluation focused on calibrated inertial/timing outputs, uncertainty, interface data and availability of a test dataset or live-device integration path.",
+      "next_action": "Submit a bounded sales/partnership inquiry focused on calibrated inertial/timing outputs, uncertainty, interface data and availability of a test dataset or live-device integration path.",
       "sources": [
-        "https://infleqtion.com/inertial-sensing/",
-        "https://ir.infleqtion.com/"
+        "https://infleqtion.com/contact-sales/",
+        "https://infleqtion.com/integrated-photonics/",
+        "https://infleqtion.com/"
       ]
     }
   ],
-  "claim_control": "This matrix is current partner/access intelligence, not proof of availability to Worldshepherd, not an endorsement, and not evidence that any campaign gate has been satisfied. Every external fact must be re-verified at execution time and every resulting artifact must pass QRF structural and technical evidence review."
+  "claim_control": "This matrix is current partner/access intelligence, not proof of availability to Worldshepherd, not an endorsement, and not evidence that any campaign gate has been satisfied. Vendor statements remain vendor-attributed until artifacts pass QRF structural intake and identified-human technical review. Every volatile external fact must be re-verified at execution time."
 }
