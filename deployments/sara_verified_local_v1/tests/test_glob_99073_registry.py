@@ -75,12 +75,13 @@ def test_evidence_records_are_routed_and_referentially_sound() -> None:
                 assert record.get("units"), record["record_id"]
 
 
-def test_metadata_and_incidental_collisions_never_gain_physical_weight() -> None:
+def test_metadata_and_incidental_collisions_are_structured_negative_controls() -> None:
     registry = load_registry()
     for record in registry["evidence_records"]:
         if record["evidence_class"] in {"M1", "N0"}:
-            boundary = record.get("claims_boundary", "").lower()
-            assert "evidence" in boundary or "support" in boundary or "collision" in boundary
+            assert record.get("verification_status") == "negative_control", record["record_id"]
+            assert "NEGATIVE_CONTROL_CORPUS" in record.get("worldshepherd_uses", []), record["record_id"]
+            assert record.get("claims_boundary"), record["record_id"]
 
 
 def test_9675_is_not_silently_zero_padded() -> None:
