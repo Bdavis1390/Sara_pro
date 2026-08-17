@@ -37,8 +37,14 @@ CONTROLS: tuple[InternalControl, ...] = (
     InternalControl("QRF-MISSION", ("worldshepherd_sara/quantum_mission_readiness.py",), ("tests/test_quantum_mission_readiness.py",), "97/100 evidence-capped mission gate"),
     InternalControl("QRF-CLOSURE", ("worldshepherd_sara/quantum_closure.py",), ("tests/test_quantum_closure.py",), "per-project closure packages"),
     InternalControl("QRF-EXT-INTAKE", ("worldshepherd_sara/quantum_external_evidence.py",), ("tests/test_quantum_external_evidence.py",), "typed external evidence intake"),
-    InternalControl("QRF-APNT", ("worldshepherd_sara/quantum_apnt.py",), ("tests/test_quantum_apnt.py",), "truth-referenced sensor metrics"),
+    InternalControl("QRF-APNT", ("worldshepherd_sara/quantum_apnt.py",), ("tests/test_quantum_apnt.py",), "truth-referenced sensor metrics and synthetic prerequisite"),
     InternalControl("QRF-MATERIALS", ("worldshepherd_sara/quantum_materials.py",), ("tests/test_quantum_materials.py",), "exact-vs-variational materials harness"),
+    InternalControl(
+        "QRF-ALTI-STRUCTURE",
+        ("worldshepherd_sara/quantum_alti_structure.py", "scripts/generate_quantum_alti_structure_template.py", "docs/QUANTUM_ALTI_STRUCTURE_FREEZE_2026-08-17.md"),
+        ("tests/test_quantum_alti_structure.py",),
+        "fail-closed WS-AlTi physical structure freeze and structure-bound reference-computation gate",
+    ),
     InternalControl("QRF-GLOB", ("worldshepherd_sara/quantum_glob_mapping.py",), ("tests/test_quantum_glob_mapping.py",), "formal GLOB quantum mapping admissibility"),
     InternalControl(
         "QRF-EXT-CAMPAIGN",
