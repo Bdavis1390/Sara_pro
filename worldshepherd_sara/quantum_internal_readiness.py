@@ -43,6 +43,12 @@ CONTROLS: tuple[InternalControl, ...] = (
         ("tests/test_quantum_external_ingest.py",),
         "local artifact re-hash, current-gate enforcement, and fail-closed external evidence batch intake",
     ),
+    InternalControl(
+        "QRF-EXT-REVIEW",
+        ("worldshepherd_sara/quantum_external_review.py", "scripts/generate_quantum_external_review_template.py"),
+        ("tests/test_quantum_external_review.py",),
+        "identified-human technical review bound to the exact ingest decision before any promotion recommendation",
+    ),
     InternalControl("QRF-APNT", ("worldshepherd_sara/quantum_apnt.py", "scripts/generate_quantum_apnt_benchmark.py"), ("tests/test_quantum_apnt.py",), "truth-referenced sensor metrics and synthetic prerequisite"),
     InternalControl("QRF-MATERIALS", ("worldshepherd_sara/quantum_materials.py",), ("tests/test_quantum_materials.py",), "exact-vs-variational materials harness"),
     InternalControl(
