@@ -10,6 +10,7 @@ on:
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
       - "scripts/run_dwave_qubo.py"
+      - "scripts/run_cudaq_bell.py"
       - "tests/test_quantum_*.py"
       - "tests/test_pqc_inventory.py"
       - "requirements-quantum*.txt"
@@ -29,6 +30,7 @@ on:
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
       - "scripts/run_dwave_qubo.py"
+      - "scripts/run_cudaq_bell.py"
       - "tests/test_quantum_*.py"
       - "tests/test_pqc_inventory.py"
       - "requirements-quantum*.txt"
@@ -66,7 +68,7 @@ jobs:
       - name: Compile QRF modules and CLIs
         run: |
           python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
-          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_dwave_qubo.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py
+          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py
 
       - name: Run complete QRF test suite
         env:
@@ -77,42 +79,23 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
-          python scripts/generate_quantum_internal_readiness.py \
-            --output .qrf-artifacts/quantum_internal_readiness.json
-          python scripts/generate_quantum_external_campaign.py \
-            --output .qrf-artifacts/quantum_external_campaign.json
-          python scripts/generate_quantum_acquisition_requests.py \
-            --output .qrf-artifacts/quantum_acquisition_requests.json
-          python scripts/generate_quantum_external_review_template.py \
-            --output .qrf-artifacts/quantum_external_review_template.json
-          python scripts/generate_quantum_apnt_benchmark.py \
-            --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
-          python scripts/generate_quantum_alti_structure_template.py \
-            --output .qrf-artifacts/quantum_alti_structure_template.json
-          python scripts/generate_quantum_metasurface_calibration_template.py \
-            --output .qrf-artifacts/quantum_metasurface_calibration_template.json
-          python scripts/generate_quantum_logistics_instance_template.py \
-            --output .qrf-artifacts/quantum_logistics_instance_template.json
-          python scripts/generate_quantum_em_metrology_template.py \
-            --output .qrf-artifacts/quantum_em_metrology_template.json
-          python scripts/generate_quantum_evidence.py \
-            --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
-          python scripts/generate_quantum_application_benchmarks.py \
-            --output .qrf-artifacts/quantum_application_benchmarks.json
-          python scripts/generate_quantum_robustness.py \
-            --output .qrf-artifacts/quantum_robustness_sweeps.json
-          python scripts/generate_quantum_resource_estimate.py \
-            --output .qrf-artifacts/quantum_resource_estimate.json
-          python scripts/generate_quantum_resource_sensitivity.py \
-            --output .qrf-artifacts/quantum_resource_sensitivity.json
-          python scripts/generate_quantum_mission_readiness.py \
-            --output .qrf-artifacts/quantum_mission_readiness.json
-          python scripts/generate_quantum_97_closure.py \
-            --output .qrf-artifacts/quantum_97_closure.json
-          python scripts/scan_pqc_inventory.py \
-            --root . \
-            --output .qrf-artifacts/pqc_inventory_scan.json \
-            --fail-on-private-key
+          python scripts/generate_quantum_internal_readiness.py --output .qrf-artifacts/quantum_internal_readiness.json
+          python scripts/generate_quantum_external_campaign.py --output .qrf-artifacts/quantum_external_campaign.json
+          python scripts/generate_quantum_acquisition_requests.py --output .qrf-artifacts/quantum_acquisition_requests.json
+          python scripts/generate_quantum_external_review_template.py --output .qrf-artifacts/quantum_external_review_template.json
+          python scripts/generate_quantum_apnt_benchmark.py --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
+          python scripts/generate_quantum_alti_structure_template.py --output .qrf-artifacts/quantum_alti_structure_template.json
+          python scripts/generate_quantum_metasurface_calibration_template.py --output .qrf-artifacts/quantum_metasurface_calibration_template.json
+          python scripts/generate_quantum_logistics_instance_template.py --output .qrf-artifacts/quantum_logistics_instance_template.json
+          python scripts/generate_quantum_em_metrology_template.py --output .qrf-artifacts/quantum_em_metrology_template.json
+          python scripts/generate_quantum_evidence.py --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
+          python scripts/generate_quantum_application_benchmarks.py --output .qrf-artifacts/quantum_application_benchmarks.json
+          python scripts/generate_quantum_robustness.py --output .qrf-artifacts/quantum_robustness_sweeps.json
+          python scripts/generate_quantum_resource_estimate.py --output .qrf-artifacts/quantum_resource_estimate.json
+          python scripts/generate_quantum_resource_sensitivity.py --output .qrf-artifacts/quantum_resource_sensitivity.json
+          python scripts/generate_quantum_mission_readiness.py --output .qrf-artifacts/quantum_mission_readiness.json
+          python scripts/generate_quantum_97_closure.py --output .qrf-artifacts/quantum_97_closure.json
+          python scripts/scan_pqc_inventory.py --root . --output .qrf-artifacts/pqc_inventory_scan.json --fail-on-private-key
           for artifact in .qrf-artifacts/*.json; do python -m json.tool "$artifact" >/dev/null; done
 
       - name: Verify governed source artifacts
@@ -121,7 +104,9 @@ jobs:
           test -s scripts/generate_quantum_external_review_template.py
           test -s scripts/generate_quantum_resource_sensitivity.py
           test -s scripts/run_dwave_qubo.py
+          test -s scripts/run_cudaq_bell.py
           test -s requirements-quantum-dwave.txt
+          test -s requirements-quantum-cudaq.txt
           test -s benchmarks/quantum/bell_qasm3.qasm
           test -s benchmarks/quantum/qrf_resource_smoke.qasm
           test -s benchmarks/quantum/qrf_bell_001.json
