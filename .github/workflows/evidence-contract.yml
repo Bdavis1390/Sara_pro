@@ -26,6 +26,7 @@ jobs:
   evidence-contract:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.12"]
     steps:
@@ -47,6 +48,7 @@ jobs:
 
       - name: Run evidence tests
         env:
+          PYTHONPATH: .
           SARA_ADMIN_TOKEN: ci-admin-token
           SARA_RELAY_TOKEN: ci-relay-token
           SARA_DATA_DIR: ${{ runner.temp }}/sara-data
