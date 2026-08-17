@@ -81,6 +81,12 @@ jobs:
             --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
           python scripts/generate_quantum_alti_structure_template.py \
             --output .qrf-artifacts/quantum_alti_structure_template.json
+          python scripts/generate_quantum_metasurface_calibration_template.py \
+            --output .qrf-artifacts/quantum_metasurface_calibration_template.json
+          python scripts/generate_quantum_logistics_instance_template.py \
+            --output .qrf-artifacts/quantum_logistics_instance_template.json
+          python scripts/generate_quantum_em_metrology_template.py \
+            --output .qrf-artifacts/quantum_em_metrology_template.json
           python scripts/generate_quantum_evidence.py \
             --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
           python scripts/generate_quantum_application_benchmarks.py \
