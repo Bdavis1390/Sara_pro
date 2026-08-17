@@ -9,6 +9,7 @@ on:
       - "scripts/ingest_quantum_external_evidence.py"
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
+      - "scripts/run_ionq_qpu_bell.py"
       - "scripts/run_dwave_qubo.py"
       - "scripts/run_cudaq_bell.py"
       - "tests/test_quantum_*.py"
@@ -29,6 +30,7 @@ on:
       - "scripts/ingest_quantum_external_evidence.py"
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
+      - "scripts/run_ionq_qpu_bell.py"
       - "scripts/run_dwave_qubo.py"
       - "scripts/run_cudaq_bell.py"
       - "tests/test_quantum_*.py"
@@ -68,7 +70,7 @@ jobs:
       - name: Compile QRF modules and CLIs
         run: |
           python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
-          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py scripts/generate_quantum_evidence_profile_conformance.py
+          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_ionq_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py scripts/generate_quantum_evidence_profile_conformance.py
 
       - name: Run complete QRF test suite
         env:
@@ -105,6 +107,7 @@ jobs:
           test -s scripts/generate_quantum_external_review_template.py
           test -s scripts/generate_quantum_resource_sensitivity.py
           test -s scripts/generate_quantum_evidence_profile_conformance.py
+          test -s scripts/run_ionq_qpu_bell.py
           test -s scripts/run_dwave_qubo.py
           test -s scripts/run_cudaq_bell.py
           test -s requirements-quantum-dwave.txt
