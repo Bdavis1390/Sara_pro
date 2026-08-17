@@ -79,6 +79,8 @@ jobs:
             --output .qrf-artifacts/quantum_acquisition_requests.json
           python scripts/generate_quantum_apnt_benchmark.py \
             --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
+          python scripts/generate_quantum_alti_structure_template.py \
+            --output .qrf-artifacts/quantum_alti_structure_template.json
           python scripts/generate_quantum_evidence.py \
             --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
           python scripts/generate_quantum_application_benchmarks.py \
@@ -106,6 +108,7 @@ jobs:
           test -s data/pqc_migration_inventory.json
           test -s data/quantum_application_benchmarks.json
           test -s data/quantum_external_partner_targets_2026-08-17.json
+          test -s docs/QUANTUM_ALTI_STRUCTURE_FREEZE_2026-08-17.md
           python -m json.tool data/quantum_project_matrix.json >/dev/null
           python -m json.tool data/pqc_migration_inventory.json >/dev/null
           python -m json.tool data/quantum_application_benchmarks.json >/dev/null
