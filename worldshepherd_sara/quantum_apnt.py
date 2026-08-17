@@ -122,7 +122,7 @@ def run_synthetic_apnt_benchmark(*, sample_count: int = 128) -> APNTSyntheticBen
         2.0 * sin(i / 13.0) + 0.65 * cos(i / 29.0) + 0.003 * i
         for i in range(sample_count)
     ]
-    dropout_indices = tuple(i for i in range(sample_count) if i % 37 == 11 or i % 53 == 19)
+    dropout_indices = tuple(i for i in range(sample_count) if i % 61 == 11 or i % 83 == 19)
     dropout_set = set(dropout_indices)
     measured: list[float | None] = []
     for i, reference in enumerate(truth):
