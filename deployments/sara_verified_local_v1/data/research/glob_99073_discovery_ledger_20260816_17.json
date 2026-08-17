@@ -1,0 +1,157 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 17,
+  "purpose": "Promote the experimentally reported 25243 cm^-1 Eu2+ absorption maximum, route SERS/perovskite/oxygen-fiber/thermoelectric sources surfaced by the concurrent internet scan, and harden unit-family and metadata-collision controls.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, author copies, repository copies, publisher copies, and repeated bibliographic records are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence, article numbers, page numbers, postal codes, DOI suffixes, catalog numbers, and unrelated unit families are not Glob evidence unless the predeclared physical relationship and unit family are independently satisfied."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-EU2-SR6BP5O20-25243-R17",
+      "title": "Electron-Vibrational Interaction in the 5d States of Eu2+ Ions in Sr6-xEuxBP5O20",
+      "authors": "Dejian Hou; Chong-Geng Ma; Hongbin Liang; Mikhail G. Brik",
+      "year": 2014,
+      "identifier": "doi:10.1149/2.007404jss; arXiv:1309.6285",
+      "authority": "ECS Journal of Solid State Science and Technology / author manuscript",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Use the combined experimental/theoretical Eu2+ phosphor study as an electron-phonon/spectral-band validation case. The experimental table reports a first absorption maximum of exactly 25243 cm^-1 for x=0.11, matching the predeclared 25243 orbit state in the same wavenumber unit family."
+    },
+    {
+      "source_id": "SRC-SCIREP-AUAG-SERS-25243-R17",
+      "title": "Gold@silver bimetal nanoparticles/pyramidal silicon 3D substrate with high reproducibility for high-performance SERS",
+      "authors": "Chao Zhang et al.",
+      "year": 2016,
+      "identifier": "doi:10.1038/srep25243; Scientific Reports 6:25243",
+      "authority": "Scientific Reports",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://www.nature.com/articles/srep25243",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use its Au@Ag/pyramidal-Si SERS fabrication, SEM/AFM/TEM characterization, experimental reproducibility/stability measurements and COMSOL local-field modeling as an EM-sensing/materials validation benchmark. Exact 25243 is the Scientific Reports article number, not a physical-value result."
+    },
+    {
+      "source_id": "SRC-MAPBBR3-INS-32542-R17",
+      "title": "Inelastic Neutron Scattering Study of the Optically Excited State of MAPbBr3",
+      "authors": "Kanming Shi; Hamish Cavaye; Rasmus Laven; Maths Karlsson",
+      "year": 2026,
+      "identifier": "doi:10.1021/acsomega.6c01172; ACS Omega 11:32542-32547",
+      "authority": "ACS Omega / ISIS Pulsed Neutron and Muon Source collaboration",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_PUBLICATION",
+      "url": "https://pubs.acs.org/doi/10.1021/acsomega.6c01172",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a 2026 optically excited halide-perovskite inelastic-neutron-scattering validation case, linking optical excitation to lattice/vibrational response. Exact 32542 is the first page of the article and is an incidental publication-location collision."
+    },
+    {
+      "source_id": "SRC-O2-NARF-SRS-2026-R17",
+      "title": "Exploration of rotational and vibrational stimulated Raman scattering in oxygen-filled fiber",
+      "authors": "Trevor L. Courtney; Cesar Lopez-Zelaya; Rodrigo Amezcua-Correa; Christian K. Keyser",
+      "year": 2026,
+      "identifier": "doi:10.1063/5.0329966; J. Chem. Phys. 164, 224202",
+      "authority": "The Journal of Chemical Physics / AFRL-linked experimental work",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_PUBLICATION",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "OPPORTUNITY_AND_PARTNER_INTEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a current nonlinear-photonics benchmark: pressurized O2 in nested antiresonant fiber, 500-ps 1.064-um pumping to 60 kW peak power, cascaded vibrational shifts near 1550 cm^-1 plus rotational Stokes/anti-Stokes structure, pressure/polarization/power dependence, and a multispectral source extending beyond 2.1 um. AFRL's 32542 postal code is location metadata only."
+    },
+    {
+      "source_id": "SRC-O2-FIBER-LIDAR-2024-R17",
+      "title": "Wavelength conversion through stimulated Raman scattering in an oxygen-filled fiber for multi-band LiDAR",
+      "authors": "Micah Raab; Daniel Leaird; Trevor L. Courtney; Christian Keyser; Rodrigo Amezcua Correa",
+      "year": 2024,
+      "identifier": "doi:10.1364/OL.513743",
+      "authority": "Optics Letters / Optica Publishing Group",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://opg.optica.org/ol/abstract.cfm?uri=ol-49-6-1496",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "OPPORTUNITY_AND_PARTNER_INTEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as the predecessor multi-band LiDAR demonstration: oxygen-filled antiresonant fiber, approximately 1550 cm^-1 vibrational shift, approximately 12 cm^-1 rotational line spacing, atmospheric-window wavelength conversion and time-separable Raman orders. The nearby Florida postal codes 32547/32579 are location controls, not spectral evidence."
+    },
+    {
+      "source_id": "SRC-GRAPHENE-PEDOT-THERMOELECTRIC-25243-R17",
+      "title": "Large-scalable RTCVD Graphene/PEDOT:PSS hybrid conductive film for application in transparent and flexible thermoelectric nanogenerators",
+      "year": 2017,
+      "identifier": "doi:10.1039/c7ra02980b; RSC Advances 7:25237-25243",
+      "authority": "RSC Advances / institutional bibliographic record",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a flexible conductive/thermoelectric composite reference: the reported graphene/PEDOT:PSS hybrid reaches 1096 S cm^-1 conductivity and 57.9 uW m^-1 K^-2 power factor with mechanical flexibility. Exact 25243 is the terminal page number, not a target physical result."
+    }
+  ],
+  "evidence_updates": [
+    {
+      "record_id": "EV-R17-EU2-25243-ABS",
+      "source_id": "SRC-EU2-SR6BP5O20-25243-R17",
+      "target": "25243",
+      "observed_value_cm-1": 25243.0,
+      "delta_cm-1": 0.0,
+      "evidence_class": "P1",
+      "physical_value_subtype": "EXPERIMENTAL_ABSORPTION_MAXIMUM",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "The source reports exactly 25243 cm^-1 as the first experimental absorption maximum for the x=0.11 Eu2+ sample. This is a same-unit exact P1 physical-value hit, not evidence that the permutation caused the spectrum; species/dataset multiplicity and global null correction remain mandatory."
+    },
+    {
+      "record_id": "EV-R17-25243-SCIREP-ID",
+      "source_id": "SRC-SCIREP-AUAG-SERS-25243-R17",
+      "target": "25243",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "25243 is the Scientific Reports article number. It is a clean metadata collision even though the underlying paper is spectroscopically relevant."
+    },
+    {
+      "record_id": "EV-R17-32542-MAPBBR3-PAGE",
+      "source_id": "SRC-MAPBBR3-INS-32542-R17",
+      "target": "32542",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "32542 is the first page of the article and has no physical-target weight."
+    },
+    {
+      "record_id": "EV-R17-32542-AFRL-ZIP",
+      "source_id": "SRC-O2-NARF-SRS-2026-R17",
+      "target": "32542",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "32542 is the Eglin AFB postal code in the author affiliation. It carries zero physical-target evidence weight."
+    },
+    {
+      "record_id": "EV-R17-25243-RSC-PAGE",
+      "source_id": "SRC-GRAPHENE-PEDOT-THERMOELECTRIC-25243-R17",
+      "target": "25243",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "25243 is the terminal page number, not conductivity, power factor, Raman shift, energy, or another predeclared physical quantity."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R17-UNIT-FAMILY-GATE",
+      "discovery_status": "NEWLY_FORMALIZED",
+      "finding": "Direct P1 statistical comparisons must preserve the predeclared physical unit family. A target being numerically equal to a value in conductivity, extinction coefficient, page count, wavelength, pressure, frequency or another unrelated unit is not interchangeable with a cm^-1 spectroscopy target.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "OVERWATCH"],
+      "claims_boundary": "Cross-unit numerical coincidences may be retained for exploratory engineering use or negative controls, but they cannot enter the same P1 significance pool without a separately predeclared, physically justified transformation."
+    },
+    {
+      "update_id": "INFO-R17-25243-SAME-NUMBER-DIVERGENT-CONTEXTS",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "The same target 25243 now has a directly experimental cm^-1 absorption hit plus unrelated Scientific Reports article-number and journal-page collisions. This creates a strong within-target control demonstrating why context, unit and provenance must dominate string equality.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "Only the Eu2+ experimental absorption maximum enters the P1 physical-value pool; the article and page occurrences remain M1/N0 controls."
+    },
+    {
+      "update_id": "INFO-R17-O2-RAMAN-LINEAGE",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "The 2024 oxygen-filled-fiber LiDAR demonstration and 2026 nested-antiresonant-fiber study form a coherent experimental lineage from atmospheric-window Raman wavelength conversion to wider rotational/vibrational cascade and pressure/polarization/power characterization.",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "claims_boundary": "This lineage upgrades Worldshepherd nonlinear-photonics and multispectral-source modeling; it contributes no Glob-number evidence through author postal codes."
+    }
+  ],
+  "next_actions": [
+    "Search the same Sr6-xEuxBP5O20 experimental dataset and related Eu2+ orthophosphate spectra for additional predeclared Glob targets and any same-system relational/topology motifs, without post-selecting tolerances.",
+    "Acquire complete N I and W II ASD machine-readable line graphs for authoritative same-species topology/relational testing of 96750 and the 39699/41494 family.",
+    "Apply the unit-family gate to all historical and future P1 exports and separately label theoretical/calculated versus evaluated/observed/experimental physical values.",
+    "Continue scanning current spectroscopy, plasma, photonics, materials and diagnostic literature and route substantive discoveries into Worldshepherd even when the numeric occurrence is M1/N0 only.",
+    "Run topology-preserving null models and global multiple-testing/false-discovery correction across targets, species, datasets, tolerances, unit families, evidence subtypes and motif searches before statistical promotion."
+  ]
+}
