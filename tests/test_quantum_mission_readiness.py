@@ -109,7 +109,33 @@ def test_invalid_dimension_is_rejected():
         calibrate_mission_readiness(row)
 
 
-def test_current_quantum_calibration_is_hard_no_go_until_closed():
+def test_classically_dominated_lane_can_be_explicitly_held_without_promotion():
+    row = MissionReadinessInputs(
+        project_id="TEST-GLOB",
+        mission_lane="classical dominance test",
+        evidence_stage=MissionEvidenceStage.CONCEPT,
+        mission_fidelity=5,
+        classical_comparator=15,
+        quantum_evidence_reproducibility=0,
+        integration_interoperability=1,
+        security_provenance=5,
+        degraded_latency_cost=1,
+        physical_environment_validation=0,
+        mission_use_override="NO_GO_QUANTUM_EXECUTION_CLASSICAL_DOMINATES",
+        closure_status_override="QUANTUM_EXECUTION_NOT_JUSTIFIED",
+        next_gate_override="remain classical",
+        closure_sequence_override=(),
+    )
+    decision = calibrate_mission_readiness(row)
+    assert decision.mission_readiness_score == 15
+    assert not decision.meets_target
+    assert decision.mission_use_decision == "NO_GO_QUANTUM_EXECUTION_CLASSICAL_DOMINATES"
+    assert decision.closure_status == "QUANTUM_EXECUTION_NOT_JUSTIFIED"
+    assert decision.next_gate == "remain classical"
+    assert decision.closure_sequence == ()
+
+
+def test_current_quantum_calibration_is_hard_no_go_until_closed_or_held():
     results = current_quantum_mission_calibration()
     assert len(results) == len(CURRENT_QUANTUM_MISSION_INPUTS)
     by_project = {row.project_id: row for row in results}
@@ -124,5 +150,12 @@ def test_current_quantum_calibration_is_hard_no_go_until_closed():
     assert by_project["WS-ALTI"].mission_readiness_score == 15
     assert by_project["WS-EM-PROPULSION"].mission_readiness_score == 15
     assert by_project["WS-GLOB"].mission_readiness_score == 15
+    assert by_project["WS-GLOB"].mission_use_decision == "NO_GO_QUANTUM_EXECUTION_CLASSICAL_DOMINATES"
+    assert by_project["WS-GLOB"].closure_status == "QUANTUM_EXECUTION_NOT_JUSTIFIED"
+    assert by_project["WS-GLOB"].closure_sequence == ()
     assert all(not row.meets_target for row in results)
-    assert all(row.mission_use_decision == "NO_GO_BELOW_97" for row in results)
+    for project_id, row in by_project.items():
+        if project_id == "WS-GLOB":
+            assert row.mission_use_decision == "NO_GO_QUANTUM_EXECUTION_CLASSICAL_DOMINATES"
+        else:
+            assert row.mission_use_decision == "NO_GO_BELOW_97"
