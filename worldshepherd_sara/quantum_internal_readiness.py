@@ -5,15 +5,11 @@ software, governance, test, evidence, and intake mechanisms that Worldshepherd c
 implement without external hardware/data are complete. It cannot raise a mission
 readiness score past its external-evidence cap.
 """
-
 from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 
-
 INTERNAL_TARGET = 97
-
 
 @dataclass(frozen=True)
 class InternalControl:
@@ -22,13 +18,14 @@ class InternalControl:
     test_paths: tuple[str, ...]
     purpose: str
 
-
 CONTROLS: tuple[InternalControl, ...] = (
     InternalControl("QRF-GOV", ("worldshepherd_sara/quantum_readiness.py",), ("tests/test_quantum_readiness.py",), "claim/evidence governance"),
     InternalControl("QRF-SIM", ("worldshepherd_sara/quantum_qiskit.py", "benchmarks/quantum/bell_qasm3.qasm"), ("tests/test_quantum_qiskit.py",), "ideal/noisy circuit execution"),
     InternalControl("QRF-EVID", ("worldshepherd_sara/quantum_evidence.py",), ("tests/test_quantum_evidence.py",), "machine-readable evidence and digests"),
     InternalControl("QRF-SARA", ("worldshepherd_sara/quantum_sara_bridge.py",), ("tests/test_quantum_sara_bridge.py",), "SARA evidence-registry integration"),
-    InternalControl("QRF-QPU-ADAPTER", ("worldshepherd_sara/quantum_ibm.py", "scripts/run_ibm_qpu_bell.py"), ("tests/test_quantum_ibm.py",), "credential-gated gate-model real-QPU path"),
+    InternalControl("QRF-QPU-IBM", ("worldshepherd_sara/quantum_ibm.py", "scripts/run_ibm_qpu_bell.py"), ("tests/test_quantum_ibm.py",), "credential-gated IBM gate-model real-QPU path"),
+    InternalControl("QRF-QPU-PROVIDER-SCHEMA", ("worldshepherd_sara/quantum_provider.py",), ("tests/test_quantum_provider.py",), "provider-neutral gate-model hardware execution normalization for cross-provider reproduction"),
+    InternalControl("QRF-QPU-IONQ", ("worldshepherd_sara/quantum_ionq.py", "scripts/run_ionq_qpu_bell.py"), ("tests/test_quantum_ionq.py",), "credential-gated IonQ v0.4 trapped-ion gate-model path normalized to the provider-neutral evidence schema"),
     InternalControl("QRF-DWAVE", ("worldshepherd_sara/quantum_dwave.py", "scripts/run_dwave_qubo.py", "requirements-quantum-dwave.txt"), ("tests/test_quantum_dwave.py",), "credential-gated D-Wave quantum-annealing backend with solver/working-graph, embedding, timing and mission-baseline provenance"),
     InternalControl("QRF-BRAKET", ("worldshepherd_sara/quantum_braket.py",), ("tests/test_quantum_braket.py",), "Amazon Braket Hybrid Job evidence contract retaining device/provider, container/source/result/program identities, queue/runtime/cost and sampled distributions"),
     InternalControl("QRF-CUDAQ", ("worldshepherd_sara/quantum_cudaq.py", "scripts/run_cudaq_bell.py", "requirements-quantum-cudaq.txt"), ("tests/test_quantum_cudaq.py",), "CUDA-Q provider-neutral portable execution layer that cannot self-promote hardware-capable targets to external-QPU evidence"),
@@ -56,7 +53,6 @@ CONTROLS: tuple[InternalControl, ...] = (
     InternalControl("QRF-CI", (".github/workflows/quantum-readiness.yml", "requirements-quantum.txt"), (), "cross-version CI and retained evidence artifacts"),
 )
 
-
 def audit_internal_closure(root: str | Path) -> dict[str, object]:
     base = Path(root)
     rows = []
@@ -66,15 +62,7 @@ def audit_internal_closure(root: str | Path) -> dict[str, object]:
         test_missing = [path for path in control.test_paths if not (base / path).is_file()]
         implemented = not source_missing and not test_missing
         complete += int(implemented)
-        rows.append({
-            "control_id": control.control_id,
-            "purpose": control.purpose,
-            "implemented": implemented,
-            "source_paths": list(control.source_paths),
-            "test_paths": list(control.test_paths),
-            "missing": source_missing + test_missing,
-        })
-
+        rows.append({"control_id": control.control_id, "purpose": control.purpose, "implemented": implemented, "source_paths": list(control.source_paths), "test_paths": list(control.test_paths), "missing": source_missing + test_missing})
     score = round(100.0 * complete / len(CONTROLS), 2)
     return {
         "schema_version": "1.0",
@@ -85,9 +73,5 @@ def audit_internal_closure(root: str | Path) -> dict[str, object]:
         "controls_total": len(CONTROLS),
         "controls_complete": complete,
         "controls": rows,
-        "claim_control": (
-            "This score measures implementation presence for internally controllable software/governance/test controls. "
-            "CI passing is separately required. It is not mission readiness and cannot substitute for QPU, sensor, lab, "
-            "hardware-in-loop, relevant-environment, or operational evidence."
-        ),
+        "claim_control": "This score measures implementation presence for internally controllable software/governance/test controls. CI passing is separately required. It is not mission readiness and cannot substitute for QPU, sensor, lab, hardware-in-loop, relevant-environment, or operational evidence.",
     }
