@@ -2,6 +2,7 @@ import pytest
 
 from worldshepherd_sara.quantum_mission_readiness import (
     CURRENT_QUANTUM_MISSION_INPUTS,
+    MISSION_READY_TARGET,
     MissionEvidenceStage,
     MissionReadinessInputs,
     calibrate_mission_readiness,
@@ -9,11 +10,11 @@ from worldshepherd_sara.quantum_mission_readiness import (
 )
 
 
-def test_synthetic_surrogate_cannot_score_above_30():
-    row = MissionReadinessInputs(
+def _maxed(stage: MissionEvidenceStage) -> MissionReadinessInputs:
+    return MissionReadinessInputs(
         project_id="TEST",
-        mission_lane="synthetic",
-        evidence_stage=MissionEvidenceStage.SYNTHETIC_SURROGATE,
+        mission_lane="threshold-test",
+        evidence_stage=stage,
         mission_fidelity=20,
         classical_comparator=15,
         quantum_evidence_reproducibility=15,
@@ -22,49 +23,73 @@ def test_synthetic_surrogate_cannot_score_above_30():
         degraded_latency_cost=15,
         physical_environment_validation=10,
     )
-    decision = calibrate_mission_readiness(row)
+
+
+def test_target_is_97():
+    assert MISSION_READY_TARGET == 97
+
+
+def test_every_pre_operational_stage_is_hard_capped_below_97():
+    for stage in MissionEvidenceStage:
+        decision = calibrate_mission_readiness(_maxed(stage))
+        if stage is MissionEvidenceStage.OPERATIONAL_DEMONSTRATION:
+            assert decision.mission_readiness_score == 100
+            assert decision.meets_target
+            assert decision.mission_use_decision == "CANDIDATE_FOR_SEPARATE_OPERATIONAL_APPROVAL"
+        else:
+            assert decision.mission_readiness_score < MISSION_READY_TARGET
+            assert not decision.meets_target
+            assert decision.mission_use_decision == "NO_GO_BELOW_97"
+            assert decision.closure_status == "CLOSURE_REQUIRED"
+            assert decision.required_target_stage == "operational_demonstration"
+            assert decision.closure_sequence
+
+
+def test_synthetic_surrogate_cannot_score_above_30():
+    decision = calibrate_mission_readiness(_maxed(MissionEvidenceStage.SYNTHETIC_SURROGATE))
     assert decision.raw_score == 100
     assert decision.evidence_cap == 30
     assert decision.mission_readiness_score == 30
+    assert decision.gap_to_target == 67
     assert decision.readiness_band == "MISSION_SURROGATE"
-    assert decision.mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
+    assert decision.mission_use_decision == "NO_GO_BELOW_97"
 
 
-def test_integrated_simulation_is_capped_below_hardware_backed():
-    row = MissionReadinessInputs(
-        project_id="TEST",
-        mission_lane="integrated simulator",
-        evidence_stage=MissionEvidenceStage.INTEGRATED_SIMULATION,
-        mission_fidelity=20,
-        classical_comparator=15,
-        quantum_evidence_reproducibility=15,
-        integration_interoperability=15,
-        security_provenance=10,
-        degraded_latency_cost=15,
-        physical_environment_validation=10,
-    )
-    decision = calibrate_mission_readiness(row)
+def test_integrated_simulation_is_capped_at_55():
+    decision = calibrate_mission_readiness(_maxed(MissionEvidenceStage.INTEGRATED_SIMULATION))
     assert decision.mission_readiness_score == 55
+    assert decision.gap_to_target == 42
     assert decision.readiness_band == "INTEGRATED_LAB"
-    assert decision.mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
+    assert decision.mission_use_decision == "NO_GO_BELOW_97"
 
 
-def test_hardware_backed_is_still_not_operational_go():
+def test_relevant_environment_is_still_below_97():
+    decision = calibrate_mission_readiness(_maxed(MissionEvidenceStage.RELEVANT_ENVIRONMENT))
+    assert decision.mission_readiness_score == 92
+    assert decision.gap_to_target == 5
+    assert decision.readiness_band == "PRE_MISSION_CLOSURE"
+    assert decision.mission_use_decision == "NO_GO_BELOW_97"
+
+
+def test_dimension_headroom_is_explicit():
     row = MissionReadinessInputs(
         project_id="TEST",
-        mission_lane="hardware",
-        evidence_stage=MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
-        mission_fidelity=20,
+        mission_lane="headroom",
+        evidence_stage=MissionEvidenceStage.OPERATIONAL_DEMONSTRATION,
+        mission_fidelity=19,
         classical_comparator=15,
         quantum_evidence_reproducibility=15,
         integration_interoperability=15,
         security_provenance=10,
-        degraded_latency_cost=15,
-        physical_environment_validation=10,
+        degraded_latency_cost=14,
+        physical_environment_validation=9,
     )
     decision = calibrate_mission_readiness(row)
-    assert decision.mission_readiness_score == 65
-    assert decision.mission_use_decision == "NO_GO_OPERATIONAL_USE_HARDWARE_EVALUATION_ONLY"
+    assert decision.raw_score == 97
+    assert decision.meets_target
+    assert decision.dimension_headroom["mission_fidelity"] == 1
+    assert decision.dimension_headroom["degraded_latency_cost"] == 1
+    assert decision.dimension_headroom["physical_environment_validation"] == 1
 
 
 def test_invalid_dimension_is_rejected():
@@ -84,18 +109,17 @@ def test_invalid_dimension_is_rejected():
         calibrate_mission_readiness(row)
 
 
-def test_current_quantum_calibration_covers_all_project_inputs():
+def test_current_quantum_calibration_is_hard_no_go_until_closed():
     results = current_quantum_mission_calibration()
     assert len(results) == len(CURRENT_QUANTUM_MISSION_INPUTS)
     by_project = {row.project_id: row for row in results}
 
     assert by_project["SARA-QRF"].mission_readiness_score == 55
-    assert by_project["SARA-QRF"].readiness_band == "INTEGRATED_LAB"
-    assert by_project["SARA-QRF"].mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
     assert by_project["WS-METASURFACE"].mission_readiness_score == 30
     assert by_project["WS-AUTONOMOUS-LOGISTICS"].mission_readiness_score == 30
     assert by_project["WS-APNT"].mission_readiness_score == 15
     assert by_project["WS-ALTI"].mission_readiness_score == 15
     assert by_project["WS-EM-PROPULSION"].mission_readiness_score == 15
     assert by_project["WS-GLOB"].mission_readiness_score == 15
-    assert all(row.mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY" for row in results)
+    assert all(not row.meets_target for row in results)
+    assert all(row.mission_use_decision == "NO_GO_BELOW_97" for row in results)
