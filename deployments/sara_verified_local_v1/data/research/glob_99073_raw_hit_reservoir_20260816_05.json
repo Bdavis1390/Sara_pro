@@ -1,0 +1,22 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_04.json",
+  "purpose":"Continue raw-hit accumulation through 13524-family states and route technically useful publications without physical-evidence promotion.",
+  "records":[
+    {"target":"90397","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0166-1280(97)90397-3","context":"Ab initio study of ground and first excited singlet states of aniline","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"90397","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/0304-3991(88)90397-X","context":"Delocalization corrections for electron channeling analysis","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"90397","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/0040-6090(87)90397-X","context":"Plasma-polymerized electron-beam resists from methyl methacrylate","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"97930","raw_hit_type":"REPOSITORY_ID","occurrence":"DiVA id 97930","context":"High-density ordered nanoarrays in silicon dioxide by MeV ion-track lithography","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"87369","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0020-1693(00)87369-7","context":"Spectroscopy and nonradiative phenomena of rare earths in glasses","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"87369","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/0009-2614(83)87369-2","context":"Photochemical singlet-quenching kinetics in anionic micelles","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"83976","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.7554/eLife.83976","context":"ABCG2 conformational transitions studied with fluorescence-based methods","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"83976","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0021-9673(01)83976-5","context":"Semipermeable-surface reversed-phase HPLC media","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "next_actions":[
+    "Continue 13524-only state coverage and track physical-value search failures as explicit no-hit records.",
+    "Route rare-earth glass spectroscopy and ion-track lithography into characterization/manufacturing references independently of Glob evidence.",
+    "Maintain namespace-aware collision counts so multiple PII/DOI occurrences do not inflate physical significance."
+  ]
+}
