@@ -67,3 +67,23 @@ def test_generated_qrf_artifacts_are_excluded_from_scan(tmp_path):
 
     assert report["finding_count"] == 0
     assert report["critical_count"] == 0
+
+
+def test_fail_on_private_key_control_flag_is_not_a_credential_finding(tmp_path):
+    (tmp_path / "workflow.yml").write_text(
+        "run: python scanner.py --fail-on-private-key\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "service.py").write_text(
+        "private_key = load_secret()\n",
+        encoding="utf-8",
+    )
+
+    report = scan_repository(tmp_path)
+    tokens = [
+        row["token"].lower()
+        for row in report["findings"]
+        if row["category"] == "credential_surface"
+    ]
+
+    assert tokens == ["private_key"]
