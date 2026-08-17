@@ -1,6 +1,6 @@
 {
-  "schema_version": "2.2",
-  "updated_utc": "2026-08-17T17:56:00Z",
+  "schema_version": "2.3",
+  "updated_utc": "2026-08-17T18:14:00Z",
   "policy": {
     "default_rule": "classical baseline before quantum attribution",
     "simulator_is_not_qpu": true,
@@ -29,6 +29,7 @@
     "controlled_classical_comparator_fixture_is_not_mission_evidence": true,
     "valid_quantum_mapping_does_not_imply_qpu_execution_is_justified": true,
     "classically_dominated_glob_mappings_remain_classical_controls": true,
+    "retained_solver_status_is_not_raw_solver_custody_or_calibration": true,
     "ddil_local_evidence_identity_must_survive_delayed_provider_sync": true,
     "provider_sync_conflicts_must_not_rewrite_local_evidence_identity": true,
     "quantum_mission_evidence_profile_is_internal_draft_not_external_standard": true,
@@ -41,12 +42,19 @@
       "target": 97,
       "controls_complete": 33,
       "controls_total": 33,
-      "decision": "PASS_INTERNAL_CLOSURE_PENDING_EXACT_HEAD_CI",
-      "generated_ci_artifacts_expected": 19,
-      "auxiliary_logistics_comparator_artifacts_expected": 1,
+      "decision": "PASS_INTERNAL_CLOSURE",
+      "validated_head": "0829b8f0b16bf32e85fbf72bd158fb66973c42e2",
+      "quantum_readiness_ci_run": 32053663719,
+      "python_3_10": "PASS",
+      "python_3_12": "PASS",
+      "generated_ci_artifacts": 19,
+      "py312_artifact_id": 9295614479,
+      "py312_artifact_digest": "sha256:caa27036b332ceee832c891bd81b7c03fa3287e5fbfb28e2ac9e53be5b269fd6",
+      "auxiliary_logistics_comparator_artifacts": 1,
+      "auxiliary_metasurface_uc06_artifacts": 1,
       "profile_conformance_cases_passed": 10,
       "profile_conformance_cases_total": 10,
-      "claim_control": "Internal software, provider adapters, comparator capability, evidence contracts, DDIL custody and profile conformance do not upgrade physical mission evidence."
+      "claim_control": "Internal software, provider adapters, comparator capability, retained pre-calibration status, evidence contracts, DDIL custody and profile conformance do not upgrade physical mission evidence."
     },
     "provider_neutrality": {
       "gate_model_execution_schema": "implemented_common_normalization_for_real_qpu_records",
@@ -57,6 +65,7 @@
       "cudaq_portable_execution": "implemented_optional_runtime_hardware_provenance_requires_provider_specific_evidence",
       "statistical_cross_backend_reproduction": "implemented_requires_real_distinct_qpu_runs",
       "qdk_resource_sensitivity": "implemented_three_scenario_envelope",
+      "mailbox_provider_access_check": "no_ibm_quantum_or_ionq_provisioning_notice_found",
       "claim_control": "Provider breadth is an integration capability until actual provider runs and evidence packages exist."
     },
     "classical_comparator_capability": {
@@ -66,6 +75,27 @@
       "degraded_fixture_supported": true,
       "mission_instance_family_acquired": false,
       "claim_control": "The controlled fixture proves solver capability only; it cannot satisfy WS-AUTONOMOUS-LOGISTICS-EXT-01."
+    },
+    "metasurface_precalibration": {
+      "campaign_id": "UC06-P1-R1",
+      "solver": "Palace 0.17.0 reconstruction campaign",
+      "source_class": "retained_project_transcript_and_reconstruction_audit_not_raw_solver_artifact",
+      "six_smoke_runtime_matrix_complete": true,
+      "historical_points_compared": 18,
+      "historical_points_total": 18,
+      "parameter_tuning_applied": false,
+      "post_hoc_threshold_applied": false,
+      "frozen_convergence_gate_passed": false,
+      "semantic_equivalence_established": false,
+      "numerical_equivalence_established": false,
+      "vna_correlation_executed": false,
+      "full_campaign_authorized": false,
+      "raw_solver_artifacts_in_qrf_custody": false,
+      "status": "PRECALIBRATION_EVIDENCE_PRESENT_GATE_NOT_SATISFIED",
+      "workflow_run": 32053663617,
+      "artifact_id": 9295596198,
+      "artifact_digest": "sha256:4812becfeef692f04f3971c907aa6b4c82f7494c09d28462a1774bc8b0f3bd44",
+      "claim_control": "Retained UC06 status narrows the blocker but is not raw full-wave calibration evidence and cannot satisfy WS-METASURFACE-EXT-01."
     },
     "glob_quantum_mapping": {
       "established_operator_mappings": ["PA", "PB", "PC"],
@@ -98,7 +128,7 @@
       "first_qpu_runbook": "docs/QUANTUM_SARA_QPU_FIRST_RUN_2026-08-17.md",
       "apnt_partner_evaluation_package": "docs/QUANTUM_APNT_PARTNER_EVALUATION_2026-08-17.md"
     },
-    "mission_release_rule": "Every project remains NO_GO until evidence-capped mission readiness is >=97 and separate deployment authorization is obtained; a quantum lane may also be closed as not justified when the classical baseline dominates."
+    "mission_release_rule": "Every active project remains NO_GO until evidence-capped mission readiness is >=97 and separate deployment authorization is obtained; a quantum lane may instead be explicitly held when QPU execution is scientifically unjustified by a dominating classical baseline."
   },
   "mission_readiness_calibration": {
     "system": "Worldshepherd Mission Readiness Calibration",
@@ -197,10 +227,11 @@
       "priority": 4,
       "quantum_fit": "medium",
       "mission_readiness": {"score": 30, "target": 97, "gap": 67, "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter available as distinct modality", "strong exact classical toy comparator", "full-wave calibration contract"],
-      "remaining_external_gates": ["retained Maxwell/FEM/FDTD calibration dataset", "calibrated reduced objective", "strong classical comparator on calibrated family", "justified hardware optimization trials", "RF HIL", "relevant-environment demonstration"],
+      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter available as distinct modality", "strong exact classical toy comparator", "full-wave calibration contract", "UC06 pre-calibration status bridge"],
+      "retained_precalibration_status": "six-smoke Palace runtime complete and 18/18 historical points compared without tuning, but frozen convergence failed and calibration is not established",
+      "remaining_external_gates": ["ingest retained raw Palace/full-wave artifacts into QRF custody", "resolve the frozen UC06 convergence failure", "establish numerical and semantic equivalence under the frozen protocol", "complete required VNA correlation", "authorize and complete the full frozen campaign", "calibrate reduced objective to accepted full-wave evidence", "benchmark strong classical and quantum challengers on the same calibrated family", "RF HIL and relevant-environment demonstration"],
       "campaign_first_active_gate": "WS-METASURFACE-EXT-01",
-      "next_gate": "calibrate reduced-order objective to full-wave evidence"
+      "next_gate": "ingest raw UC06 Palace artifacts into QRF custody and resolve convergence/equivalence/VNA/full-campaign gates before reduced-objective calibration"
     },
     {
       "project_id": "WS-AUTONOMOUS-LOGISTICS",
@@ -227,9 +258,9 @@
       "quantum_fit": "conditional",
       "mission_readiness": {"score": 15, "target": 97, "gap": 82, "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_QUANTUM_EXECUTION_CLASSICAL_DOMINATES"},
       "internally_closed": ["PA/PB/PC exact classical orbit controls", "explicit reversible position-permutation mappings", "deterministic null operator", "separate mapping-validity versus QPU-justification gate"],
-      "remaining_external_gates": ["none for the established fixed PA/PB/PC operators because QPU execution is not justified", "if a larger mission-scale GLOB problem emerges, freeze its measurable objective and classical/null complexity baseline before reconsidering resource estimation or QPU use"],
-      "campaign_first_active_gate": "WS-GLOB-EXT-01-HELD_CLASSICAL_DOMINANCE",
-      "next_gate": "keep established operators in the classical numerical lane; reopen quantum execution only for a materially different nontrivial problem"
+      "remaining_external_gates": [],
+      "quantum_execution_status": "HELD_CLASSICAL_DOMINANCE",
+      "next_gate": "keep established PA/PB/PC operators in the classical numerical lane; reopen quantum execution only for a materially different nontrivial problem"
     }
   ]
 }
