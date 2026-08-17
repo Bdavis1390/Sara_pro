@@ -40,6 +40,12 @@ CONTROLS: tuple[InternalControl, ...] = (
     InternalControl("QRF-APNT", ("worldshepherd_sara/quantum_apnt.py",), ("tests/test_quantum_apnt.py",), "truth-referenced sensor metrics"),
     InternalControl("QRF-MATERIALS", ("worldshepherd_sara/quantum_materials.py",), ("tests/test_quantum_materials.py",), "exact-vs-variational materials harness"),
     InternalControl("QRF-GLOB", ("worldshepherd_sara/quantum_glob_mapping.py",), ("tests/test_quantum_glob_mapping.py",), "formal GLOB quantum mapping admissibility"),
+    InternalControl(
+        "QRF-EXT-CAMPAIGN",
+        ("worldshepherd_sara/quantum_external_campaign.py", "scripts/generate_quantum_external_campaign.py"),
+        ("tests/test_quantum_external_campaign.py",),
+        "stage-locked external evidence acquisition and no-skip progression",
+    ),
     InternalControl("QRF-CI", (".github/workflows/quantum-readiness.yml", "requirements-quantum.txt"), (), "cross-version CI and retained evidence artifacts"),
 )
 
