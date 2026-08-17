@@ -26,8 +26,6 @@ def _sha256_text(text: str) -> str:
 
 
 def _records_from_frame(frame: Any) -> list[dict[str, Any]]:
-    # Pandas DataFrame is the documented QRE presentation path. Normalize to
-    # JSON-safe records without making pandas a direct Worldshepherd dependency.
     return json.loads(frame.to_json(orient="records"))
 
 
@@ -39,19 +37,21 @@ def estimate_openqasm(
     logical_gate_count: int,
     max_error: float = 0.01,
     physical_error_rate: float = 1e-4,
-    gate_time_ns: float = 100.0,
-    measurement_time_ns: float = 500.0,
+    gate_time_ns: int = 100,
+    measurement_time_ns: int = 500,
 ) -> dict[str, Any]:
     if logical_qubits <= 0 or logical_gate_count <= 0:
         raise ValueError("logical qubits and logical gate count must be positive")
     if not 0 < max_error < 1:
         raise ValueError("max_error must be in (0, 1)")
+    if gate_time_ns <= 0 or measurement_time_ns <= 0:
+        raise ValueError("QDK timing parameters must be positive integer nanoseconds")
 
     app = OpenQASMApplication(program)
     architecture = GateBased(
         error_rate=physical_error_rate,
-        gate_time=gate_time_ns,
-        measurement_time=measurement_time_ns,
+        gate_time=int(gate_time_ns),
+        measurement_time=int(measurement_time_ns),
     )
     results = estimate(
         app,
@@ -63,8 +63,6 @@ def estimate_openqasm(
     if not records:
         raise RuntimeError("Microsoft QDK returned no Pareto-optimal resource estimates")
 
-    # QRE documents `qubits`, `runtime` (nanoseconds), and `error` for each
-    # Pareto-optimal point. Choose minimum physical qubits, then runtime.
     candidates = [row for row in records if row.get("qubits") is not None and row.get("runtime") is not None]
     if not candidates:
         raise RuntimeError(f"QDK result lacks documented qubits/runtime fields: {records!r}")
@@ -84,8 +82,8 @@ def estimate_openqasm(
         estimated_runtime_seconds=float(selected["runtime"]) * 1e-9,
         assumptions={
             "physical_error_rate": str(physical_error_rate),
-            "gate_time_ns": str(gate_time_ns),
-            "measurement_time_ns": str(measurement_time_ns),
+            "gate_time_ns": str(int(gate_time_ns)),
+            "measurement_time_ns": str(int(measurement_time_ns)),
             "max_error": str(max_error),
             "selection_rule": "minimum physical qubits, then runtime from Pareto frontier",
         },
