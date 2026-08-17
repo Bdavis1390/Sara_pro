@@ -1,0 +1,26 @@
+{
+  "schema_version":"ws-glob-discovery-ledger-1.0",
+  "parent_registry":"glob_99073_registry.json",
+  "as_of":"2026-08-17",
+  "ledger_sequence":31,
+  "purpose":"Checkpoint the retrospective Worldshepherd utility audit covering all Glob discovery work accumulated so far and formalize the governed routing extension for non-physics as well as physics utility.",
+  "source_ingestion_policy":{
+    "rule":"Every substantive unique publication, dataset, advisory, standard, method, software resource, operational precedent, commercial signal or information item receives a Worldshepherd use when it can materially improve any project capability, or an explicit negative-control role when that is its only current value.",
+    "duplicates":"Mirrors, alternate landing pages, repeated database records and derivative copies of the same underlying source are provenance aliases and are not independent evidence.",
+    "search_noise":"A source may be highly useful to Worldshepherd while its matched number has zero Glob evidence; metadata or incidental numeric recurrence is not promoted unless it independently clears the declared evidence gates."
+  },
+  "referenced_artifacts":[
+    "glob_99073_worldshepherd_utility_coverage_audit_20260817.json",
+    "glob_99073_worldshepherd_routing_extension_20260817.json"
+  ],
+  "information_updates":[
+    {"update_id":"INFO-R31-RETROACTIVE-COVERAGE","discovery_status":"NEWLY_IMPLEMENTED","finding":"Everything covered so far in the Glob inquiry is now explicitly subject to retroactive utility review across scientific, engineering, software, security, manufacturing, operations, governance, commercial, partner, supply-chain, environmental and negative-control domains.","worldshepherd_uses":["SARA","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"],"claims_boundary":"Retroactive utility enrichment does not alter historical Glob evidence classifications."},
+    {"update_id":"INFO-R31-ROUTING-EXTENSION","discovery_status":"NEWLY_IMPLEMENTED","finding":"A governed routing extension now supplements the historical canonical route vocabulary without rewriting the registry, and CI validates the extension against the coverage audit.","worldshepherd_uses":["SARA","PRIME_SENTINEL","OVERWATCH"],"claims_boundary":"Route vocabulary expresses capability use only, not evidence strength."}
+  ],
+  "next_actions":[
+    "Continue source-by-source retroactive utility backfill for previously accumulated publications and technical records whenever additional software, security, manufacturing, operations, business, supply-chain or partner uses are identified.",
+    "Continue the internet/raw-hit scan across all 208 union states while preserving domain-agnostic usefulness routing.",
+    "Continue same-system topology and relational verification independently for physical evidence candidates.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for all numerical-evidence promotion."
+  ]
+}
