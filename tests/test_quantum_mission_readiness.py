@@ -27,6 +27,7 @@ def test_synthetic_surrogate_cannot_score_above_30():
     assert decision.evidence_cap == 30
     assert decision.mission_readiness_score == 30
     assert decision.readiness_band == "MISSION_SURROGATE"
+    assert decision.mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
 
 
 def test_integrated_simulation_is_capped_below_hardware_backed():
@@ -45,6 +46,25 @@ def test_integrated_simulation_is_capped_below_hardware_backed():
     decision = calibrate_mission_readiness(row)
     assert decision.mission_readiness_score == 55
     assert decision.readiness_band == "INTEGRATED_LAB"
+    assert decision.mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
+
+
+def test_hardware_backed_is_still_not_operational_go():
+    row = MissionReadinessInputs(
+        project_id="TEST",
+        mission_lane="hardware",
+        evidence_stage=MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
+        mission_fidelity=20,
+        classical_comparator=15,
+        quantum_evidence_reproducibility=15,
+        integration_interoperability=15,
+        security_provenance=10,
+        degraded_latency_cost=15,
+        physical_environment_validation=10,
+    )
+    decision = calibrate_mission_readiness(row)
+    assert decision.mission_readiness_score == 65
+    assert decision.mission_use_decision == "NO_GO_OPERATIONAL_USE_HARDWARE_EVALUATION_ONLY"
 
 
 def test_invalid_dimension_is_rejected():
@@ -71,9 +91,11 @@ def test_current_quantum_calibration_covers_all_project_inputs():
 
     assert by_project["SARA-QRF"].mission_readiness_score == 55
     assert by_project["SARA-QRF"].readiness_band == "INTEGRATED_LAB"
+    assert by_project["SARA-QRF"].mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
     assert by_project["WS-METASURFACE"].mission_readiness_score == 30
     assert by_project["WS-AUTONOMOUS-LOGISTICS"].mission_readiness_score == 30
     assert by_project["WS-APNT"].mission_readiness_score == 15
     assert by_project["WS-ALTI"].mission_readiness_score == 15
     assert by_project["WS-EM-PROPULSION"].mission_readiness_score == 15
     assert by_project["WS-GLOB"].mission_readiness_score == 15
+    assert all(row.mission_use_decision == "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY" for row in results)
