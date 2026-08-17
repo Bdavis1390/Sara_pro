@@ -27,7 +27,7 @@ class MissionEvidenceStage(str, Enum):
     CALIBRATED_MODEL = "calibrated_model"
     INTEGRATED_SIMULATION = "integrated_simulation"
     SINGLE_EXTERNAL_HARDWARE = "single_external_hardware"
-    REPRODUED_HARDWARE = "reproduced_hardware"
+    REPRODUCED_HARDWARE = "reproduced_hardware"
     HARDWARE_IN_LOOP = "hardware_in_loop"
     RELEVANT_ENVIRONMENT = "relevant_environment"
     OPERATIONAL_DEMONSTRATION = "operational_demonstration"
@@ -39,7 +39,7 @@ _STAGE_CAP = {
     MissionEvidenceStage.CALIBRATED_MODEL: 45,
     MissionEvidenceStage.INTEGRATED_SIMULATION: 55,
     MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE: 65,
-    MissionEvidenceStage.REPRODUED_HARDWARE: 75,
+    MissionEvidenceStage.REPRODUCED_HARDWARE: 75,
     MissionEvidenceStage.HARDWARE_IN_LOOP: 85,
     MissionEvidenceStage.RELEVANT_ENVIRONMENT: 92,
     MissionEvidenceStage.OPERATIONAL_DEMONSTRATION: 100,
