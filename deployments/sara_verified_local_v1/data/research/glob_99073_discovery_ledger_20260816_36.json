@@ -1,0 +1,30 @@
+{
+  "schema_version":"ws-glob-discovery-ledger-1.0",
+  "parent_registry":"glob_99073_registry.json",
+  "as_of":"2026-08-17",
+  "ledger_sequence":36,
+  "purpose":"Ingest authoritative cross-domain sources surfaced by raw states 99396, 99936 and 39599, emphasizing biological asset custody, firmware security maintenance, stormwater/civil terminology and enterprise security-enforcement failures.",
+  "source_ingestion_policy":{
+    "rule":"Every substantive unique publication, dataset, advisory, standard, method, software resource, operational precedent, commercial signal or information item receives a Worldshepherd use when it materially improves any capability, or an explicit negative-control role.",
+    "duplicates":"Regional Lenovo support mirrors, duplicate NVD records and alternate biological-catalog pages for the same underlying item are provenance aliases and are not independent evidence.",
+    "search_noise":"Catalogue IDs, PSIRT identifiers, CVE numbers, standard numbers, job codes and page numbers may be operationally useful but are not Glob evidence unless the digits independently encode a verified physical quantity."
+  },
+  "sources":[
+    {"source_id":"SRC-LENOVO-LEN-99936-XCC-R36","title":"Lenovo XClarity Controller firmware releases addressing LEN-99936","identifier":"LEN-99936","authority":"Lenovo Data Center Support","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_99936","use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION"],"note":"Use as a firmware-security lifecycle reference: XCC/BMC release notes explicitly mark LEN-99936 as a PSIRT/security fix and document firmware/UEFI update sequencing. 99936 is the PSIRT identifier."},
+    {"source_id":"SRC-NVD-CVE-2024-39599-R36","title":"CVE-2024-39599 — SAP NetWeaver malware scanner API bypass","year":2024,"identifier":"CVE-2024-39599","authority":"NIST National Vulnerability Database / SAP","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_39599","use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY","PRIME_SENTINEL"],"note":"Use as a control-enforcement failure case: configured malware-scanning protection can be bypassed through application logic. 39599 is the CVE identifier."},
+    {"source_id":"SRC-GBT-39599-STORMWATER-R36","title":"GB/T 39599-2020 — Low impact development stormwater management and harvest—Basic terminology","year":2020,"identifier":"GB/T 39599-2020","authority":"State Administration for Market Regulation / Standardization Administration of China","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_39599","use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],"note":"Current national standard. Use to normalize terminology for low-impact-development stormwater management/harvesting within future civil/environmental modeling. 39599 is the standard number."},
+    {"source_id":"SRC-ATCC-99396-R36","title":"ATCC 99396 — human YAC clone yWXD6466 [I164A2]","identifier":"ATCC 99396","authority":"ATCC","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_99396","use":["CHEMISTRY_AND_CHEMICAL_DATA","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION"],"note":"Use custody, contamination, storage, biosafety and licensing metadata as a governed biological-research-asset reference. 99396 is a catalogue identifier."},
+    {"source_id":"SRC-ADDGENE-99936-R36","title":"Addgene plasmid 99936 — pcDNA3-HA-REDD1 N179-193","identifier":"Addgene 99936","authority":"Addgene","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_99936","use":["CHEMISTRY_AND_CHEMICAL_DATA","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION"],"note":"Use distribution eligibility, sequence/map metadata and material-transfer constraints as a research-asset governance pattern. 99936 is the plasmid catalogue identifier."}
+  ],
+  "information_updates":[
+    {"update_id":"INFO-R36-FIRMWARE-SBOM-CLASS","discovery_status":"NEWLY_FORMALIZED","finding":"Worldshepherd infrastructure inventory should distinguish firmware/BMC/UEFI security lineage from OS/application dependency lineage, because management-controller fixes can require ordered updates and reboots outside ordinary package management.","worldshepherd_uses":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION"],"claims_boundary":"Derived from Lenovo's firmware-maintenance pattern; it does not imply the user's current hardware is affected."},
+    {"update_id":"INFO-R36-SECURITY-CONTROL-EFFECTIVENESS","discovery_status":"NEWLY_DISCOVERED","finding":"CVE-2024-39599 reinforces a governance distinction between security-control presence and security-control effectiveness: configured malware scanning is insufficient if executable code paths can bypass the enforcement hook.","worldshepherd_uses":["SECURITY_HARDENING","PRIME_SENTINEL","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],"claims_boundary":"39599 remains an identifier collision."},
+    {"update_id":"INFO-R36-RESEARCH-ASSET-CUSTODY","discovery_status":"NEWLY_FORMALIZED","finding":"ATCC/Addgene records show a reusable research-asset schema: identity, provenance/depositor, storage/handling, contamination/quality status, legal-use constraints, sequence/material metadata and distribution eligibility.","worldshepherd_uses":["SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION","SOFTWARE_AND_DATA_ENGINEERING"],"claims_boundary":"Catalogue IDs are not Glob evidence."}
+  ],
+  "next_actions":[
+    "Continue raw scanning through 95993, 99353, 39359, 33959, 53239, 25933 and 92335 with domain-agnostic source utility routing.",
+    "Extend the retroactive utility audit with firmware/BMC security lineage and governed research-asset custody as explicit implementation candidates.",
+    "Continue same-system topology and relational verification independently for physical P1/P2 candidates.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}
