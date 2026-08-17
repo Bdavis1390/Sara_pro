@@ -1,0 +1,128 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 23,
+  "purpose": "Continue the internet scan of the 18 states newly introduced by 12345->14523, promote an exact theoretical Rh III physical-value intersection with subtype preserved, and route scientifically useful identifier collisions into Worldshepherd rather than discarding them.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, repeated records, and alternate landing pages are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence, DOI suffixes, repository identifiers, file-bin boundaries, product numbers, catalog records, and similar collisions are not Glob evidence unless an independently verified physical quantity in a declared unit family is established."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NBS-PALLADIUM-GROUP-LEVELS-1966-R23",
+      "title": "The Configurations 4dn + 4dn-1 5s in Doubly-Ionized Atoms of the Palladium Group",
+      "author": "Yehuda Shadmi",
+      "year": 1966,
+      "identifier": "doi:10.6028/jres.070A.036",
+      "authority": "National Bureau of Standards / Journal of Research",
+      "discovery_status": "NEWLY_DISCOVERED_FOR_14523_FAMILY",
+      "url": "https://nvlpubs.nist.gov/nistpubs/jres/070/5/cnt070-5.htm",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Use as a historical theoretical atomic-structure benchmark across the third spectra of the palladium group. The paper explicitly predicts hundreds of energy levels by interpolation of interaction parameters and distinguishes observed from calculated levels."
+    },
+    {
+      "source_id": "SRC-GAGES-RAMAN-PHOTOCHANGE-2001-R23",
+      "title": "Raman investigation of structural photoinduced irreversible changes of Ga10Ge25S65 chalcogenide glasses",
+      "authors": "S. H. Messaddeq et al.",
+      "year": 2001,
+      "authority": "Journal of Optoelectronics and Advanced Materials / UNESP repository record",
+      "discovery_status": "NEWLY_DISCOVERED_FOR_14523_FAMILY",
+      "url": "https://repositorio.unesp.br/entities/publication/bba548bd-5fef-418b-84ca-b41a7fe91b78",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK"],
+      "note": "Use the before/after Raman and infrared characterization of above-band-gap-light-induced bonding changes in Ga-Ge-S glass as a photoresponsive-material validation precedent. The generated 33295 state is the repository handle identifier, not a Raman shift or other physical quantity."
+    },
+    {
+      "source_id": "SRC-RUSTICYANIN-FOLDING-2007-R23",
+      "title": "Folding and Unfolding in the Blue Copper Protein Rusticyanin: Role of the Oxidation State",
+      "authors": "Luis A. Alcaraz; Javier Gomez; Pablo Ramirez",
+      "year": 2007,
+      "identifier": "doi:10.1155/2007/54232",
+      "authority": "International Journal of Molecular Sciences / PubMed Central",
+      "discovery_status": "NEWLY_DISCOVERED_FOR_14523_FAMILY",
+      "use": ["NEGATIVE_CONTROL_CORPUS", "ECHO_SENTINEL_LINK"],
+      "note": "Retain as a hard scientific-metadata negative control: 54232 is the article identifier, not a physical-value match. The source itself is legitimate science, which makes it useful for testing that scientific context alone cannot promote identifier collisions."
+    },
+    {
+      "source_id": "SRC-HYDROFULLERITE-NEUTRON-1999-R23",
+      "title": "Neutron spectroscopy of fullerite hydrogenated under high pressures",
+      "year": 1999,
+      "identifier": "doi:10.1016/S0921-4526(98)01403-3",
+      "authority": "Physica B / Elsevier",
+      "discovery_status": "NEWLY_DISCOVERED_FOR_14523_FAMILY",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "ECHO_SENTINEL_LINK"],
+      "note": "Use high-pressure hydrogenation plus inelastic-neutron-scattering methodology as a materials-characterization precedent. The 01403 target occurs only inside the DOI/PII identifier and carries M1 metadata weight, not physical Glob evidence."
+    }
+  ],
+  "evidence_updates": [
+    {
+      "record_id": "EV-R23-RHIII-77596",
+      "source_id": "SRC-NBS-PALLADIUM-GROUP-LEVELS-1966-R23",
+      "permutation_family": "12345->14523",
+      "seed": "245779675000031449401",
+      "source_window": "79675",
+      "orbit": ["79675", "77596"],
+      "target": "77596",
+      "observed_value_cm-1": 77596.0,
+      "delta_cm-1": 0.0,
+      "evidence_class": "P1",
+      "physical_value_subtype": "THEORETICAL_GLS_PREDICTED_RH_III_ENERGY_LEVEL",
+      "verification_status": "verified_primary",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "Table 13 lists Rh III d6s (3D)2D J=3/2 with no observed value and G.L.S. calculated energy 77596 cm^-1. Count only as a theoretical/calculated physical-value intersection; it is not an experimental measurement and does not prove predictive significance of the permutation."
+    },
+    {
+      "record_id": "EV-R23-33295-REPOSITORY-CONTROL",
+      "source_id": "SRC-GAGES-RAMAN-PHOTOCHANGE-2001-R23",
+      "permutation_family": "12345->14523",
+      "target": "33295",
+      "evidence_class": "M1",
+      "verification_status": "negative_control",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
+      "claims_boundary": "33295 is the repository handle and not a reported Raman/IR physical value."
+    },
+    {
+      "record_id": "EV-R23-54232-ARTICLE-CONTROL",
+      "source_id": "SRC-RUSTICYANIN-FOLDING-2007-R23",
+      "permutation_family": "12345->14523",
+      "target": "54232",
+      "evidence_class": "M1",
+      "verification_status": "negative_control",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "54232 is an article identifier, not a physical measurement."
+    },
+    {
+      "record_id": "EV-R23-01403-DOI-CONTROL",
+      "source_id": "SRC-HYDROFULLERITE-NEUTRON-1999-R23",
+      "permutation_family": "12345->14523",
+      "target": "01403",
+      "evidence_class": "M1",
+      "verification_status": "negative_control",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
+      "claims_boundary": "01403 occurs in the DOI/PII identifier; the actual neutron-spectroscopy features are at different energies."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R23-03100-BIN-BOUNDARY-CONTROL",
+      "discovery_status": "NEWLY_CLASSIFIED_FROM_EXISTING_EXOMOL_LANE",
+      "finding": "ExoMol/line-list infrastructures use 03100 as a frequency-bin boundary in filenames such as 03000-03100 and 03100-03200 cm^-1. A bin boundary is not an exact molecular transition and must remain a control unless an actual line at the target value is separately identified.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "SARA", "PRIME_SENTINEL"],
+      "claims_boundary": "Do not promote file-range endpoints to P1."
+    },
+    {
+      "update_id": "INFO-R23-RHIII-THEORY-EXPERIMENT-SEPARATION",
+      "discovery_status": "NEWLY_FORMALIZED_FOR_14523_FAMILY",
+      "finding": "The exact 77596 intersection reinforces the need to retain theoretical and experimental P1 subtypes: the NBS table has a blank observed column and 77596 in the G.L.S. calculated column for that Rh III level.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "A calculated value can be a legitimate physical-model quantity while carrying less empirical weight than an observed or evaluated experimental level."
+    }
+  ],
+  "next_actions": [
+    "Search modern/current Rh III compilations for experimental confirmation or revision of the theoretical 77596-cm^-1 level without retroactively converting the historical prediction into an experimental result.",
+    "Continue the remaining 14523-only state scan and test any physical candidates against same-species transition/level topology before P2 promotion.",
+    "Use the Ga-Ge-S Raman source as a materials/photoresponse validation precedent while keeping its 33295 repository identifier in the negative-control corpus.",
+    "Recompute topology-preserving null and experiment-wide multiple-testing/false-discovery correction over the complete 208-state three-family union."
+  ]
+}
