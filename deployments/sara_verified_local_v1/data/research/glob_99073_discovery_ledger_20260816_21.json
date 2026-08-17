@@ -7,7 +7,7 @@
   "source_ingestion_policy": {
     "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
     "duplicates": "Duplicate mirrors, derivative snapshots, repeated records, and alternate landing pages are provenance aliases and are not independent evidence.",
-    "search_noise": "A derivative database snapshot may identify a candidate and its provenance lineage, but it may not independently promote a physical-value claim when an authoritative primary/current record has not been directly retrieved."
+    "search_noise": "A derivative database snapshot may identify a candidate and its provenance lineage, but it is not Glob evidence and may not independently promote a physical-value claim when an authoritative primary/current record has not been directly retrieved."
   },
   "sources": [
     {
