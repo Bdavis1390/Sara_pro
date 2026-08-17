@@ -20,6 +20,9 @@ test = [
   "httpx>=0.27,<1",
 ]
 
+[tool.setuptools.packages.find]
+include = ["worldshepherd_sara*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
