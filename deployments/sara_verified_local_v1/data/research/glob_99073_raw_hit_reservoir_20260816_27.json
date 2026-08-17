@@ -1,0 +1,35 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_26.json",
+  "purpose":"Continue raw coverage through 99396, 96939, 99936 and 39599 while retaining biological custody, firmware/security, civil stormwater terminology, enterprise malware-scanner risk and trade/supply intelligence independently of Glob evidence.",
+  "policy":{
+    "rule":"Raw catalogue, advisory, page, trade-notice and standard-number occurrences are retained with zero automatic physical-evidence weight while substantive sources are routed independently by utility.",
+    "promotion":"A firmware advisory, CVE, catalogue ID or standard number does not become P1/P2 merely because it matches a generated state; physical evidence still requires unit-bearing verified semantics.",
+    "source_quality":"Official/primary sources are preferred for substantive utility; lower-authority mirrors may be retained as raw collision observations but not as load-bearing technical authority."
+  },
+  "records":[
+    {"target":"99396","raw_hit_type":"ATCC_CATALOG_ID","occurrence":"ATCC 99396","context":"Human YAC clone yWXD6466 [I164A2], chromosome X, with handling/custody/licensing metadata","glob_weight":"M1_RAW","worldshepherd_use":["CHEMISTRY_AND_CHEMICAL_DATA","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99396","raw_hit_type":"CAGE_CODE","occurrence":"CAGE 99396","context":"Manufacturer/supplier code occurrence in derivative NSN record","glob_weight":"M1_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"96939","raw_hit_type":"FEDERAL_REGISTER_PAGE","occurrence":"Federal Register page 96939","context":"2024 preliminary antidumping determination concerning high-chrome cast-iron grinding media from India, surfaced via derivative Federal Register mirror","glob_weight":"N0_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","IP_AND_COMMERCIALIZATION","OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"96939","raw_hit_type":"PRODUCT_SKU","occurrence":"SKU 96939","context":"Industrial safety-footwear product identifier surfaced in supply search","glob_weight":"M1_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99936","raw_hit_type":"LENOVO_PSIRT_IDENTIFIER","occurrence":"LEN-99936","context":"Lenovo XClarity Controller firmware security-fix identifier carried in official firmware release notes","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99936","raw_hit_type":"ADDGENE_CATALOG_ID","occurrence":"Addgene plasmid #99936","context":"REDD1 mammalian-expression plasmid with academic/nonprofit distribution constraints","glob_weight":"M1_RAW","worldshepherd_use":["CHEMISTRY_AND_CHEMICAL_DATA","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"39599","raw_hit_type":"NATIONAL_STANDARD_NUMBER","occurrence":"GB/T 39599-2020","context":"Current Chinese national standard: Low impact development stormwater management and harvest—Basic terminology","glob_weight":"M1_RAW","worldshepherd_use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"39599","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2024-39599","context":"SAP NetWeaver ABAP malware-scanner API bypass/protection-mechanism failure","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"39599","raw_hit_type":"JOB_CODE","occurrence":"Hardware Engineering Tactical Data Links job code 39599","context":"Current defense RF/digital/mixed-signal circuit-card engineering role surfaced in market scan","glob_weight":"M1_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","RF_HARDWARE","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"LEN-99936 shows that server-management-controller firmware release notes should be ingested as a distinct security-maintenance feed; firmware provenance and minimum safe versions belong in Worldshepherd asset inventory, not only OS/package vulnerability tracking.","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION"],"claims_boundary":"99936 is Lenovo's security-issue identifier."},
+    {"finding":"CVE-2024-39599 demonstrates a protection-mechanism failure where a configured malware-scanning control can be bypassed by application logic, reinforcing the need to test enforcement paths rather than merely verify that a security feature is configured.","worldshepherd_use":["SECURITY_HARDENING","PRIME_SENTINEL","SOFTWARE_AND_DATA_ENGINEERING"],"claims_boundary":"39599 is the CVE identifier."},
+    {"finding":"GB/T 39599-2020 provides a civil/environmental terminology reference for low-impact-development stormwater management and harvesting, expanding Worldshepherd's built-environment/environmental systems vocabulary.","worldshepherd_use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],"claims_boundary":"39599 is the standard number."},
+    {"finding":"ATCC 99396 and Addgene 99936 provide chain-of-custody/licensing controls for biological research materials, useful as examples of how physical research assets require identity, handling, distribution and permitted-use metadata.","worldshepherd_use":["SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION","CHEMISTRY_AND_CHEMICAL_DATA"],"claims_boundary":"Catalogue numbers remain M1 controls."}
+  ],
+  "next_actions":[
+    "Continue raw coverage through 95993, 99353, 39359, 33959, 53239, 25933 and 92335 and route useful sources across all Worldshepherd domains.",
+    "Add firmware/management-controller security provenance to the retrospective infrastructure-hardening crosswalk where applicable.",
+    "Continue same-system topology and relational verification independently for physical P1/P2 candidates and preserve unit-bearing semantics.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}
