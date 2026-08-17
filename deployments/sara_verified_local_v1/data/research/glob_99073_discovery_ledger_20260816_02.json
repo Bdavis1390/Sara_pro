@@ -1,0 +1,179 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 2,
+  "purpose": "Current-NIST reconciliation and routing of additional tungsten spectroscopy/information sources discovered during Glob 99073 follow-up.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NIST-ASD-W-HOLDINGS-2026",
+      "title": "NIST Atomic Spectra Database Holdings — Tungsten",
+      "authority": "NIST Physical Measurement Laboratory",
+      "observed_access_state": "W II: 2838 lines, all 2838 with level designations; 211 with transition probabilities.",
+      "url": "https://physics.nist.gov/cgi-bin/ASD/lines_hold.pl?el=W",
+      "use": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Current-authority scope control. Supersedes use of the 1964 line count for any claim about the present ASD holdings."
+    },
+    {
+      "source_id": "SRC-NIST-ASD-WII-LEVELS-2026",
+      "title": "NIST Atomic Spectra Database Levels Data — W II",
+      "authority": "NIST Physical Measurement Laboratory",
+      "observed_access_state": "264 W II levels; current evaluated level values include 10592.485, 50292.354, and 52087.110 cm^-1.",
+      "url": "https://physics.nist.gov/cgi-bin/ASD/energy1.pl?biblio=1&conf_out=1&j_out=1&lande_out=1&level_out=1&perc_out=1&spectrum=W+II&term_out=1",
+      "use": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Current-authority level graph for W II. Use for current Ritz relations and reconciliation against historical Laun values."
+    },
+    {
+      "source_id": "SRC-KRAMIDA-SHIRAI-WI-WII-2006",
+      "title": "Compilation of wavelengths, energy levels, and transition probabilities for W I and W II",
+      "authors": "Alexander Kramida; Toshizo Shirai",
+      "year": 2006,
+      "identifier": "doi:10.1063/1.1836763",
+      "authority": "Journal of Physical and Chemical Reference Data / NIST critical compilation",
+      "use": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Critical evaluation underlying modern W I/W II reference data; use as source-quality authority rather than treating the 1964 analysis as the final state."
+    },
+    {
+      "source_id": "SRC-NIST-ASD-LINES-HELP",
+      "title": "NIST Atomic Spectra Database — Spectral Lines Help / ASCII Output Guidance",
+      "authority": "NIST Physical Measurement Laboratory",
+      "url": "https://pml.nist.gov/PhysRefData/ASD/Html/lineshelp.html",
+      "use": ["SARA", "ECHO_SENTINEL_LINK"],
+      "note": "Defines tabular/ASCII line output and machine-readable acquisition path. Use to build deterministic ASD ingestion rather than scraping visual tables."
+    },
+    {
+      "source_id": "SRC-NIST-WII-HANDBOOK-LEVELS",
+      "title": "Energy Levels of Singly Ionized Tungsten (W II)",
+      "authority": "NIST Handbook of Basic Atomic Spectroscopic Data",
+      "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/tungstentable6.htm",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK"],
+      "note": "Compact handbook cross-check for persistent/current W II level data."
+    },
+    {
+      "source_id": "SRC-NIST-WII-HANDBOOK-PERSISTENT",
+      "title": "Persistent Lines of Singly Ionized Tungsten (W II)",
+      "authority": "NIST Handbook of Basic Atomic Spectroscopic Data",
+      "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/tungstentable4.htm",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "OVERWATCH"],
+      "note": "Use as compact benchmark set for high-observability W II lines and future spectrometer validation."
+    },
+    {
+      "source_id": "SRC-NIST-W-STRONG-LINES",
+      "title": "Strong Lines of Tungsten (W)",
+      "authority": "NIST Handbook of Basic Atomic Spectroscopic Data",
+      "url": "https://www.physics.nist.gov/PhysRefData/Handbook/Tables/tungstentable2_a.htm",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Use as line-selection reference for practical tungsten spectroscopy/diagnostic design."
+    },
+    {
+      "source_id": "SRC-WIII-IGLESIAS-1989",
+      "title": "The Spectrum of Doubly Ionized Tungsten (W III)",
+      "year": 1989,
+      "authority": "Journal of Research of NIST",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "W III establishes a neighboring ionization-stage comparison/control and supplies transition-network methodology; keep W III separate from W II target evidence."
+    },
+    {
+      "source_id": "SRC-W39-W47-EBIT-2008",
+      "title": "Spectra of W39+-W47+ in the 12 nm to 20 nm region observed with an EBIT light source",
+      "year": 2008,
+      "identifier": "arXiv:0801.2817",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Use for highly ionized tungsten EUV spectroscopy, EBIT calibration, and collisional-radiative-model validation."
+    },
+    {
+      "source_id": "SRC-W54-W63-ITER-2008",
+      "title": "EUV spectra of highly-charged ions W54+-W63+ relevant to ITER diagnostics",
+      "year": 2008,
+      "identifier": "arXiv:0801.2816",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Use for fusion-plasma tungsten impurity diagnostics and collisional-radiative modeling benchmarks."
+    },
+    {
+      "source_id": "SRC-W-M-SHELL-DIELECTRONIC-2020",
+      "title": "Dielectronic resonances of LMn and LNn series in highly-charged M-shell tungsten ions",
+      "year": 2020,
+      "identifier": "arXiv:2003.02310",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Use for inner-shell resonance characterization and large-scale collisional-radiative modeling."
+    },
+    {
+      "source_id": "SRC-W-VISIBLE-LHD-2020",
+      "title": "Visible emission spectroscopy of highly charged tungsten ions in LHD: I. Survey of new visible emission lines",
+      "year": 2020,
+      "identifier": "arXiv:2007.03342",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Use for visible tungsten-ion line discovery, echelle-spectrometer design considerations, and plasma-state diagnostics."
+    },
+    {
+      "source_id": "SRC-W-RADIATIVE-RATES-2011",
+      "title": "Radiative decay rates for W I, W II and W III allowed and forbidden transitions of interest for spectroscopic diagnostics in fusion plasmas",
+      "year": 2011,
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Use as transition-probability/radiative-rate reference for tungsten spectroscopic diagnostics."
+    },
+    {
+      "source_id": "SRC-NIST-ATOMIC-DATA-CRITICAL-EVAL-2013",
+      "title": "Critical Evaluation of Data on Atomic Energy Levels, Wavelengths, and Transition Probabilities",
+      "year": 2013,
+      "identifier": "doi:10.13182/FST13-A16437",
+      "use": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK"],
+      "note": "Use as methodology for source ranking, Ritz/observed reconciliation, uncertainty handling, and critical-evaluation gates."
+    }
+  ],
+  "current_authority_reconciliation": {
+    "historical_dataset": {
+      "source_id": "SRC-WII-LAUN-1964",
+      "classified_lines": 2173,
+      "levels": 194,
+      "even_levels": 62,
+      "odd_levels": 132,
+      "scope": "Historical 1964 graph only."
+    },
+    "current_asd": {
+      "source_id": "SRC-NIST-ASD-W-HOLDINGS-2026",
+      "classified_lines_with_level_designations": 2838,
+      "levels": 264,
+      "scope": "Current NIST ASD holdings as accessed 2026-08-16.",
+      "parity_counts_status": "not_yet_extracted",
+      "action": "Do not reuse 62/132 parity counts for current-ASD topology statistics."
+    },
+    "shared_level_relation": {
+      "lower_level_cm-1": 10592.485,
+      "lower_level_identity": "W II 5d^4(3P2)6s a^4P, J=3/2",
+      "upper_1_cm-1": 50292.354,
+      "upper_2_cm-1": 52087.110,
+      "ritz_1_cm-1": 39699.869,
+      "ritz_2_cm-1": 41494.625,
+      "target_1": 39699,
+      "target_2": 41494,
+      "target_delta_1_cm-1": 0.869,
+      "target_delta_2_cm-1": 0.625,
+      "ritz_separation_cm-1": 1794.756,
+      "status": "current_authority_relational_confirmation",
+      "interpretation": "The common-lower-level topology survives current NIST level evaluation. Numerical proximity remains a candidate feature only and requires current-ASD topology-preserving null testing and global multiple-testing correction."
+    }
+  },
+  "corrections": [
+    {
+      "superseded_statement": "The 62-even/132-odd level counts describe the current W II graph.",
+      "replacement": "Those counts describe Laun's 1964 194-level graph. Current NIST ASD reports 264 W II levels; current parity counts must be extracted separately."
+    },
+    {
+      "superseded_statement": "The preliminary 1.61% same-even and 2.36% same-endpoint probabilities characterize current W II.",
+      "replacement": "They are only a historical-graph uniform-endpoint approximation. They must not be applied to the current ASD graph."
+    }
+  ],
+  "next_actions": [
+    "Use NIST ASD ASCII output to acquire the current 2838-line W II transition table with level identities.",
+    "Extract current 264-level parity counts and empirical transition degree distribution.",
+    "Compute exact current Ritz-vs-observed residuals for all generated target matches.",
+    "Run topology-preserving null tests on both historical-Laun and current-ASD graphs as separate datasets.",
+    "Apply family-wise or false-discovery-rate correction across all species, datasets, target states, tolerances, and motif searches."
+  ]
+}
