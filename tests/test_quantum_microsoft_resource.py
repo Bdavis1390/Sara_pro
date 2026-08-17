@@ -3,12 +3,12 @@ from pathlib import Path
 from worldshepherd_sara.quantum_microsoft_resource import estimate_file
 
 
-def test_bell_resource_estimate_is_estimator_backed_and_governed():
+def test_non_clifford_resource_estimate_is_estimator_backed_and_governed():
     payload = estimate_file(
-        Path("benchmarks/quantum/bell_qasm3.qasm"),
-        benchmark_id="QRF-BELL-001",
+        Path("benchmarks/quantum/qrf_resource_smoke.qasm"),
+        benchmark_id="QRF-RESOURCE-001",
         logical_qubits=2,
-        logical_gate_count=2,
+        logical_gate_count=3,
     )
 
     record = payload["record"]
