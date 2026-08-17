@@ -77,6 +77,8 @@ jobs:
             --output .qrf-artifacts/quantum_external_campaign.json
           python scripts/generate_quantum_acquisition_requests.py \
             --output .qrf-artifacts/quantum_acquisition_requests.json
+          python scripts/generate_quantum_apnt_benchmark.py \
+            --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
           python scripts/generate_quantum_evidence.py \
             --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
           python scripts/generate_quantum_application_benchmarks.py \
