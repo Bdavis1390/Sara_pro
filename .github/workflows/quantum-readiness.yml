@@ -6,6 +6,7 @@ on:
       - "worldshepherd_sara/quantum_*.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_*.py"
+      - "scripts/ingest_quantum_external_evidence.py"
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
       - "tests/test_quantum_*.py"
@@ -23,6 +24,7 @@ on:
       - "worldshepherd_sara/quantum_*.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_*.py"
+      - "scripts/ingest_quantum_external_evidence.py"
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
       - "tests/test_quantum_*.py"
@@ -107,6 +109,7 @@ jobs:
 
       - name: Verify governed source artifacts
         run: |
+          test -s scripts/ingest_quantum_external_evidence.py
           test -s benchmarks/quantum/bell_qasm3.qasm
           test -s benchmarks/quantum/qrf_resource_smoke.qasm
           test -s benchmarks/quantum/qrf_bell_001.json
