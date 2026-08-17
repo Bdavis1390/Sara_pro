@@ -1,0 +1,57 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 12,
+  "purpose": "Route the newly surfaced ExoAtom atomic-data publication and the current NIST W II holdings reconciliation into Worldshepherd as a machine-readable cross-validation path without confusing a derived subset with the authoritative full W II transition graph.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, and repeated records are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence or a numeric collision is not Glob evidence; it receives zero evidence weight unless the underlying physical relationship is independently verified."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-EXOATOM-NI-2026",
+      "title": "ExoAtom: a database of atomic spectra in ExoMol format",
+      "authors": "Q.-H. Ni et al.",
+      "year": 2026,
+      "identifier": "doi:10.1093/rasti/rzaf065",
+      "authority": "RAS Techniques and Instruments / ExoMol",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Use ExoAtom as a machine-readable interoperability and parser-validation layer for atomic states/transitions. Its NIST-derived W II subset is useful for reproducible ingestion and cross-checks, but it does not replace the current NIST ASD W II holdings or establish independent physical evidence because it is derived from NIST source material."
+    },
+    {
+      "source_id": "SRC-NIST-ASD-WII-HOLDINGS-R12",
+      "title": "NIST Atomic Spectra Database W II holdings and levels output",
+      "authority": "National Institute of Standards and Technology",
+      "discovery_status": "REVERIFIED_EXISTING_INFORMATION_NEW_HOLDINGS_SNAPSHOT",
+      "use": ["ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Current ASD holdings report 2838 W II lines, all 2838 with level designations, while the levels output reports 264 entries. Preserve this current-authority snapshot as the denominator for coverage and completeness tests."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-EXOATOM-WII-COVERAGE",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "The ExoAtom NIST-derived W II dataset reports 58 states and 71 transitions, whereas current NIST ASD exposes 264 W II level entries and 2838 W II lines with level designations.",
+      "derived_metrics": {
+        "exoatom_states_vs_asd_entries_fraction": 0.2196969696969697,
+        "exoatom_transitions_vs_asd_lines_fraction": 0.025017618040873854
+      },
+      "worldshepherd_uses": ["SARA", "OVERWATCH", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "The fractions are coverage diagnostics only. ExoAtom is a NIST-derived subset and therefore cannot be counted as independent confirmation of a Glob match or relational motif."
+    }
+  ],
+  "new_capability_plan": {
+    "capability": "EXOATOM_TO_TRANSITION_GRAPH_ADAPTER",
+    "purpose": "Convert ExoAtom .states/.trans files into lower/upper energy transition rows accepted by the existing Worldshepherd NIST ASD transition-graph analyzer, while retaining source-reported wavenumbers for discrepancy checks.",
+    "worldshepherd_uses": ["SARA", "ECHO_SENTINEL_LINK", "OVERWATCH", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+    "claims_boundary": "Adapter output is an interoperability/cross-validation artifact. The authoritative full-graph gate remains the current NIST ASD line export."
+  },
+  "next_actions": [
+    "Implement and test the ExoAtom-to-transition-graph adapter so the NIST-derived W II subset can be replayed through the existing topology analyzer.",
+    "Acquire the complete current NIST ASD W II line export and compare full-graph topology against the ExoAtom subset without treating the subset as independent evidence.",
+    "Apply multiple-testing or false-discovery correction across all predeclared Glob targets, species, tolerances, and relational motifs before any statistical promotion."
+  ]
+}
