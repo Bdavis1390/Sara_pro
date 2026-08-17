@@ -7,9 +7,11 @@ on:
       - "worldshepherd_sara/quantum_qiskit.py"
       - "worldshepherd_sara/quantum_evidence.py"
       - "worldshepherd_sara/quantum_resource.py"
+      - "worldshepherd_sara/quantum_ibm.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_evidence.py"
       - "scripts/scan_pqc_inventory.py"
+      - "scripts/run_ibm_qpu_bell.py"
       - "tests/test_quantum_*.py"
       - "tests/test_pqc_inventory.py"
       - "requirements-quantum.txt"
@@ -27,9 +29,11 @@ on:
       - "worldshepherd_sara/quantum_qiskit.py"
       - "worldshepherd_sara/quantum_evidence.py"
       - "worldshepherd_sara/quantum_resource.py"
+      - "worldshepherd_sara/quantum_ibm.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_evidence.py"
       - "scripts/scan_pqc_inventory.py"
+      - "scripts/run_ibm_qpu_bell.py"
       - "tests/test_quantum_*.py"
       - "tests/test_pqc_inventory.py"
       - "requirements-quantum.txt"
@@ -70,6 +74,7 @@ jobs:
             worldshepherd_sara/quantum_qiskit.py \
             worldshepherd_sara/quantum_evidence.py \
             worldshepherd_sara/quantum_resource.py \
+            worldshepherd_sara/quantum_ibm.py \
             worldshepherd_sara/pqc_inventory.py
 
       - name: Run QRF governance tests
@@ -80,7 +85,7 @@ jobs:
       - name: Run quantum execution and evidence tests
         env:
           PYTHONPATH: .
-        run: pytest -q tests/test_quantum_qiskit.py tests/test_quantum_evidence.py
+        run: pytest -q tests/test_quantum_qiskit.py tests/test_quantum_evidence.py tests/test_quantum_ibm.py
 
       - name: Generate governed CI evidence
         env:
