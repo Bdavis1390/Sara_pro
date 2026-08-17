@@ -1,0 +1,43 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_07.json",
+  "purpose":"Continue raw-hit accumulation for 49775, 47597, 57679, 59767, 79776 and 77697 while routing newly surfaced materials, atmospheric, solver and confidence-scoring information into Worldshepherd.",
+  "policy":{
+    "rule":"Raw page, repository, DOI, PMID, LOINC and article identifiers remain nonphysical collision records unless a physical quantity is separately verified.",
+    "promotion":"P1/P2 remains a separate physical-evidence workflow with fixed tolerance and provenance requirements.",
+    "worldshepherd_use":"Technically useful publications are retained and routed even when their five-digit occurrence has zero Glob evidence weight."
+  },
+  "records":[
+    {"target":"49775","raw_hit_type":"NOAA_REPOSITORY_ID","occurrence":"NOAA repository noaa:49775","context":"Marine aerosols produced by ocean internal waves; remote-sensing measurements and a simple interaction model","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"49775","raw_hit_type":"GSI_REPOSITORY_ID","occurrence":"GSI repository record 49775","context":"Delayed neutron emission from neutron-rich Rb and Cs isotopes","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"49775","raw_hit_type":"UNIVERSITY_REPOSITORY_ID","occurrence":"University of Vienna thesis ID 49775","context":"SModelS development toward non-MET signatures in beyond-Standard-Model searches","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"49775","raw_hit_type":"DIVA_ID","occurrence":"LiU DiVA id 49775","context":"Electronic structure of conjugated polymers; electron-electron/electron-lattice coupling, optical absorption and photoelectron spectroscopy","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"47597","raw_hit_type":"LOINC_CODE","occurrence":"LOINC 47597-0","context":"Calcium corrected for total protein in blood","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"47597","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Omega 2024, 9, 47597-47612","context":"Hybrid Zn compound characterized by X-ray structure, Hirshfeld surface, vibrational spectroscopy, thermal stability, dielectric relaxation and conductivity","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"47597","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/app.47597","context":"PVA resins for Cu-catalyzed N-arylation and solid-support synthesis","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"57679","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Appl. Mater. Interfaces 15:57679-57686","context":"Self-cleaning, spectrally selective PVDF-HFP/BNNS/SiO2 membrane for passive radiative cooling","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"57679","raw_hit_type":"REPOSITORY_ID","occurrence":"JuSER/PreJuSER 57679","context":"Spontaneous two-dimensional accumulation of charged Be dopants in GaAs p-n superlattices","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"57679","raw_hit_type":"RESOURCE_ID","occurrence":"SERC resource 57679","context":"Review of ultrafine particulate matter from mobile sources, measurement and formation/evolution modeling","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"59767","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-025-59767-2","context":"2025 temperature-scanning X-ray photon correlation spectroscopy of liquid-like versus stress-driven dynamics in a metallic-glass former","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"59767","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.7759/cureus.59767","context":"medical case-report article identifier","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"79776","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.5269/bspm.79776","context":"2026 multi-model and assertion-based confidence scoring for noisy AI training data","glob_weight":"M1_RAW","worldshepherd_use":["SARA","PRIME_SENTINEL","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"79776","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0006-3495(96)79776-X","context":"Thermodynamic constraints on adaptive behavior of ligand-gated ion channels","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"79776","raw_hit_type":"REPOSITORY_ID","occurrence":"Erasmus repository 79776","context":"Triple Aim framework for performance assessment using multi-criteria decision analysis","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","PRIME_SENTINEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77697","raw_hit_type":"PUBMED_ID","occurrence":"PMID 77697","context":"1978 perioperative bleomycin morbidity/mortality paper","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77697","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.7759/cureus.77697","context":"2025 CPAP hygiene and Pseudomonas pneumonia case report","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"The radiative-cooling membrane combines PVDF-HFP, boron nitride nanosheets and hydrophobic SiO2 in a lotus-like microstructure to pursue spectral selectivity plus self-cleaning; use as a passive thermal-management/material-architecture reference.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH"],"claims_boundary":"57679 is the article start page."},
+    {"finding":"The metallic-glass paper uses temperature-scanning XPCS to distinguish liquid-like from stress-driven dynamics, providing a strong methodology reference for time-resolved structural relaxation and model validation.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH"],"claims_boundary":"59767 is a DOI component."},
+    {"finding":"The 2026 confidence-scoring paper combines predictions from multiple models with normalized assertion/prompt-based confidence scoring and filters low-confidence data; use as a candidate precedent for PRIME/SARA evidence-quality triage.","worldshepherd_use":["SARA","PRIME_SENTINEL","OVERWATCH"],"claims_boundary":"79776 is the article identifier; methodology requires independent evaluation before adoption."},
+    {"finding":"The NOAA internal-wave/aerosol study compares lidar observations with a simple interaction model and reports agreement for two of three flights, making it useful as an environmental sensor-model reconciliation case.","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"49775 is the NOAA repository ID."}
+  ],
+  "next_actions":[
+    "Continue raw scans through the remaining 13524-only and overlap states.",
+    "Tag each occurrence with source namespace and preserve no-hit scans to estimate target-specific collision propensity.",
+    "Evaluate the 2026 confidence-scoring method as an optional PRIME/SARA evidence-triage reference, not an automatically adopted algorithm.",
+    "Maintain fixed-tolerance physical scans and global multiple-testing correction independently from raw-hit accumulation."
+  ]
+}
