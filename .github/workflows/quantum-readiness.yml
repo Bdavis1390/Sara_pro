@@ -71,6 +71,8 @@ jobs:
         env:
           PYTHONPATH: .
         run: |
+          python scripts/generate_quantum_internal_readiness.py \
+            --output .qrf-artifacts/quantum_internal_readiness.json
           python scripts/generate_quantum_evidence.py \
             --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
           python scripts/generate_quantum_application_benchmarks.py \
@@ -92,6 +94,7 @@ jobs:
       - name: Verify governed source artifacts
         run: |
           test -s benchmarks/quantum/bell_qasm3.qasm
+          test -s benchmarks/quantum/qrf_resource_smoke.qasm
           test -s benchmarks/quantum/qrf_bell_001.json
           test -s data/quantum_project_matrix.json
           test -s data/pqc_migration_inventory.json
