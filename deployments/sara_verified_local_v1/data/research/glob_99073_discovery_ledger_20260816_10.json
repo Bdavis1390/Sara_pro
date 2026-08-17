@@ -7,7 +7,8 @@
   "source_ingestion_policy": {
     "rule": "Every substantive unique publication, authoritative dataset, technical manual, internal project input, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
     "discovery_status": "Use NEWLY_DISCOVERED only when the item was not already represented in the recovered registry/ledger set inspected in this pass; use REVERIFIED_EXISTING for already represented evidence that was independently rechecked.",
-    "duplicates": "Duplicate mirrors, aggregator records, search-result copies, navigation pages, and repeated publications are provenance aliases rather than independent evidence.",
+    "duplicates": "Duplicate mirrors, aggregator records, search-result copies, navigation pages, and repeated publications are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence alone is not Glob evidence and receives zero evidence weight unless an independently verified physical or relational criterion is met.",
     "claims_boundary": "A number match does not become physical evidence merely because the surrounding source is scientific. Physical-value, relational, metadata, and incidental-control classes remain separate."
   },
   "sources": [
@@ -65,7 +66,7 @@
       "title": "Large Helical Device Fusion Diagnostic Data Repository / LHD Open Data",
       "authority": "National Institute for Fusion Science (NIFS)",
       "discovery_status": "NEWLY_DISCOVERED",
-      "use": ["OVERWATCH", "SARA", "ECHO_SENTINEL_LINK", "MULTIPHYSICS_VALIDATION", "NEGATIVE_CONTROL_CORPUS"],
+      "use": ["OVERWATCH", "SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS"],
       "note": "Use as an external real-world multichannel plasma-diagnostics corpus for time-series ingestion, sensor synchronization, anomaly detection, and solver/diagnostic replay. Shot identifiers that numerically resemble Glob states are metadata controls unless a separate physical relation is demonstrated."
     },
     {
@@ -81,7 +82,7 @@
       "title": "LHD diagnostics and analyzed-data descriptions",
       "authority": "National Institute for Fusion Science (NIFS)",
       "discovery_status": "NEWLY_DISCOVERED",
-      "use": ["OVERWATCH", "MULTIPHYSICS_VALIDATION", "MATERIALS_AND_CHARACTERIZATION"],
+      "use": ["OVERWATCH", "SARA", "MATERIALS_AND_CHARACTERIZATION"],
       "note": "Use diagnostic definitions such as resistive bolometry/radiated-power profiles, pellet injection, soft-X-ray channels, magnetic probes, interferometry, and other synchronized diagnostics to construct sensor-to-physics mappings for Worldshepherd replay and cross-modal validation."
     }
   ],
@@ -89,19 +90,19 @@
     {
       "artifact": "Branch · Branch · Branch · Branch · Active Secure Access Protocols.txt",
       "status": "CURRENT_PROJECT_INPUT",
-      "use": ["ADAPTIVE_METASURFACE_CONTROL", "MULTIPHYSICS_VALIDATION", "MATERIALS_AND_CHARACTERIZATION"],
+      "use": ["SARA", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
       "integration": "Route validated spectroscopy/polarizability information into frequency-dependent material/EM response models and use the document's constructive/destructive coupling hardware interpretation only as an engineering control model, not as evidence for Glob-number causation."
     },
     {
       "artifact": "Meta-Alloy Design for Al-Ti.txt",
       "status": "CURRENT_PROJECT_INPUT",
-      "use": ["MATERIALS_AND_MANUFACTURING", "IP_AND_COMMERCIALIZATION", "MATERIALS_AND_CHARACTERIZATION"],
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OPPORTUNITY_AND_PARTNER_INTEL"],
       "integration": "Use spectroscopy and diagnostics sources as characterization-method precedents and validation architecture inputs for WS-AlTi; do not treat W/Br/Yb numerical matches as evidence for the Al-Ti composition itself."
     },
     {
       "artifact": "Branch · Generic adaptive metasurface control system under multi-physics constra.txt",
       "status": "CURRENT_PROJECT_INPUT",
-      "use": ["MULTIPHYSICS_SOLVER", "ADAPTIVE_METASURFACE_CONTROL", "PRIME_SENTINEL"],
+      "use": ["SARA", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
       "integration": "Use MQDT, atomic-level, microwave, and plasma-diagnostic sources as empirical/model-validation datasets. Preserve the prime-indexed decomposition as a mathematical organization layer unless separately given physical justification."
     },
     {
@@ -121,7 +122,7 @@
     {
       "action_id": "INT-R10-LHD-MULTICHANNEL-REPLAY",
       "status": "ROUTED",
-      "worldshepherd_uses": ["SARA", "OVERWATCH", "MULTIPHYSICS_VALIDATION"],
+      "worldshepherd_uses": ["SARA", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
       "action": "Treat LHD as a candidate multichannel replay corpus for synchronization, anomaly detection, cross-diagnostic inference, and solver-observation comparison. Keep shot numbers as identifiers and test them as negative controls for Glob-number matching."
     },
     {
