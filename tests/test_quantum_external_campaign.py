@@ -58,6 +58,15 @@ def test_all_current_projects_have_contiguous_campaigns_to_operational_demo():
             assert right.ordinal == left.ordinal + 1
 
 
+def test_apnt_promotion_preserves_stable_gate_ids_and_starts_at_ext02():
+    apnt = next(row for row in build_external_campaigns() if row.project_id == "WS-APNT")
+
+    assert apnt.current_stage == MissionEvidenceStage.SYNTHETIC_SURROGATE
+    assert apnt.gates[0].gate_id == "WS-APNT-EXT-02"
+    assert apnt.gates[0].from_stage == MissionEvidenceStage.SYNTHETIC_SURROGATE
+    assert apnt.gates[0].to_stage == MissionEvidenceStage.CALIBRATED_MODEL
+
+
 def test_later_stage_evidence_cannot_skip_first_unsatisfied_gate():
     sara = next(row for row in build_external_campaigns() if row.project_id == "SARA-QRF")
     later_record = _sara_qpu_record("SARA-QRF-EXT-02")
@@ -108,6 +117,7 @@ def test_campaign_artifact_contains_no_evidence_claims():
 
     assert payload["mission_readiness_target"] == 97
     assert payload["stage_skipping_prohibited"] is True
+    assert payload["stable_gate_ids_preserved_after_promotion"] is True
     assert payload["gate_binding_field"] == "metadata.campaign_gate_id"
     assert len(payload["campaigns"]) == 7
     assert "contains no fabricated external evidence" in payload["claim_control"]
