@@ -1,0 +1,30 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_01.json",
+  "purpose":"Append raw-hit observations from the broader three-family scan without changing physical-evidence classes.",
+  "policy":{
+    "rule":"Every raw occurrence is retained for collision/source-frequency analysis but has zero automatic physical-evidence weight.",
+    "promotion":"Only independently verified physical quantities can promote to P1/P2.",
+    "no_hit":"A defined search with no relevant exact occurrence is retained as a no-hit observation."
+  },
+  "records":[
+    {"target":"93970","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_PASS","query_context":"spectroscopy OR physics OR chemistry","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"target":"37698","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1002/jbm.a.37698","context":"3D printing of gellan-dextran methacrylate IPNs and RGD bioadhesion","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"37698","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"J. Biol. Chem. 278:37698-37704","context":"Matrilin/biglycan/decorin complexes connecting collagen VI microfibrils","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"63897","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.7759/cureus.63897","context":"PalMuSIC frailty/infection intensive-care study","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"63897","raw_hit_type":"PII_DOI_COMPONENT","occurrence":"10.1016/S1003-6326(15)63897-3","context":"Chalcopyrite surface species during bioleaching; XRD/XPS characterization","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"63897","raw_hit_type":"BOOK_ISBN_OR_PII_COMPONENT","occurrence":"B978-0-444-63897-7","context":"UV Spectra Library for water and wastewater quality monitoring","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70639","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.1002/asia.70639","context":"Chalcone photophysical/DFT study with absorption and emission spectroscopy","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70639","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.1002/smtd.70639","context":"AF4 coupled online to SAXS/SANS for sub-10-nm lipid nanoparticle structural profiling","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70639","raw_hit_type":"REPOSITORY_ID","occurrence":"repository record 70639","context":"Review of intrinsic FAD fluorescence and analytical-chemistry applications","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70639","raw_hit_type":"PUBCHEM_CID","occurrence":"CID 70639","context":"3-Methylxanthine chemical record with IR and Raman spectral information","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "next_actions":[
+    "Continue sequential raw-reservoir append files until all 208 states have at least one defined search observation.",
+    "Distinguish raw occurrence count from unique source count and duplicate/mirror count.",
+    "Retain no-hit outcomes so source-class hit-rate denominators are not biased upward.",
+    "Promote nothing from this reservoir without the separate physical-evidence workflow."
+  ]
+}
