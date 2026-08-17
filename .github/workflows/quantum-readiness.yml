@@ -4,7 +4,10 @@ on:
   pull_request:
     paths:
       - "worldshepherd_sara/quantum_readiness.py"
+      - "worldshepherd_sara/quantum_qiskit.py"
       - "tests/test_quantum_readiness.py"
+      - "tests/test_quantum_qiskit.py"
+      - "requirements-quantum.txt"
       - "benchmarks/quantum/**"
       - "data/quantum_project_matrix.json"
       - "docs/QUANTUM_READINESS_FABRIC.md"
@@ -14,7 +17,10 @@ on:
       - "agent/quantum-readiness-fabric"
     paths:
       - "worldshepherd_sara/quantum_readiness.py"
+      - "worldshepherd_sara/quantum_qiskit.py"
       - "tests/test_quantum_readiness.py"
+      - "tests/test_quantum_qiskit.py"
+      - "requirements-quantum.txt"
       - "benchmarks/quantum/**"
       - "data/quantum_project_matrix.json"
       - "docs/QUANTUM_READINESS_FABRIC.md"
@@ -35,17 +41,26 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-quantum.txt
 
-      - name: Install test runner
-        run: python -m pip install pytest
+      - name: Install quantum test dependencies
+        run: |
+          python -m pip install pytest
+          python -m pip install -r requirements-quantum.txt
 
-      - name: Compile QRF module
-        run: python -m compileall worldshepherd_sara/quantum_readiness.py
+      - name: Compile QRF modules
+        run: python -m compileall worldshepherd_sara/quantum_readiness.py worldshepherd_sara/quantum_qiskit.py
 
       - name: Run QRF governance tests
         env:
           PYTHONPATH: .
         run: pytest -q tests/test_quantum_readiness.py
+
+      - name: Run ideal and noisy Bell simulations
+        env:
+          PYTHONPATH: .
+        run: pytest -q tests/test_quantum_qiskit.py
 
       - name: Verify benchmark artifacts exist
         run: |
