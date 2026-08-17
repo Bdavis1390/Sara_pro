@@ -1,0 +1,47 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_06.json",
+  "purpose":"Preserve the collision-dense raw neighborhoods for 73590, 75039, 70953, 25747, 27754 and 27475 and route all substantive publications into Worldshepherd without converting identifiers into physical evidence.",
+  "policy":{
+    "rule":"Raw exact-number accumulation records corpus behavior; it does not establish physical correspondence.",
+    "promotion":"P1/P2 promotion requires a separately verified physical quantity and declared tolerance/provenance.",
+    "namespace_control":"DOI suffixes, repository IDs, postal codes, EMDB IDs and report IDs are classified by namespace before independence is assessed."
+  },
+  "records":[
+    {"target":"73590","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/smll.73590","context":"2026 Fe-N4/Co-N4 single atoms plus FeCo nanoparticles for bifunctional oxygen electrocatalysis and zinc-air batteries","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"73590","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/adma.73590","context":"2026 cerebral-cortex-inspired bio-interface engineering for fast Zn-ion low-temperature energy storage","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"73590","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/slct.73590","context":"2026 solar-salts-catalyzed oxidation; supporting information includes NMR, HRMS, IR, single-crystal XRD and DFT","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"73590","raw_hit_type":"CAS_PREFIX","occurrence":"CAS 73590-96-2","context":"PubChem chemical identifier for 1-(4,5-diamino-2-methylphenyl)ethanone","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"73590","raw_hit_type":"GATED_PHYSICAL_CARRY_FORWARD","occurrence":"73590 cm^-1 candidate","context":"Mn XVIII exact-value candidate remains species-resolved but official-current exact-row confirmation is still pending; derivative NIST snapshot alone is insufficient","glob_weight":"P1_CARRY_FORWARD","worldshepherd_use":["ECHO_SENTINEL_LINK","PRIME_SENTINEL","MATERIALS_AND_CHARACTERIZATION"]},
+    {"target":"75039","raw_hit_type":"POSTAL_CODE","occurrence":"Fort Worth, Texas 75039","context":"author-affiliation postal code in ACS strongly-correlated-state DFT paper","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"75039","raw_hit_type":"POSTAL_ADDRESS","occurrence":"Irving TX 75039","context":"publisher/business address surfaced in nuclear-medicine search","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70953","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/chem.70953","context":"2026 transition-metal-catalyzed asymmetric synthesis of bicyclo[3.3.1]nonane frameworks","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70953","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/adem.70953","context":"2026 review of polymer nanocomposites for X-ray shielding, linking filler chemistry, dispersion and architecture to attenuation performance","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70953","raw_hit_type":"REPOSITORY_HANDLE","occurrence":"hdl.handle.net/2027.42/70953","context":"Experimental/theoretical motion of a sphere in a rotating viscous fluid at small Reynolds number","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70953","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0021-9258(18)70953-8","context":"The biosynthesis of sucrose","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70953","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"70953 Stuttgart","context":"institutional postal code in analytical-chemistry publication metadata","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"25747","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/jcc.25747","context":"Martini coarse-grained model for polyethylenimine","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"25747","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/prot.25747","context":"Sequence-specific dynamic information in proteins","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"25747","raw_hit_type":"REPORT_DOI","occurrence":"10.17226/25747","context":"National Academies report on feeding guidance from birth to 24 months","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27754","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/lary.27754","context":"Response on pH-neutralizing esophageal irrigations","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27754","raw_hit_type":"REPORT_DOI","occurrence":"10.17226/27754","context":"National Academies Transformational Technologies and Mobility Inclusion Playbook","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27754","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-025-27754-8","context":"2025 stroke/diabetes comorbidity mortality trend analysis","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27475","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/app.27475","context":"Thermosensitive cationic hydroxypropylcellulose graft polyelectrolyte; light scattering and fluorescence spectroscopy of surfactant association","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27475","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-018-27475-1","context":"Focus-induced photoresponse distance measurement using photodetectors","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27475","raw_hit_type":"EMDB_ACCESSION","occurrence":"EMD-27475","context":"3.6-Angstrom single-particle cryo-EM map of the HMGCR-UBIAD1-BRIL-Fab-Nb complex","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27475","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/jcp.27475","context":"Review of exogenous nanoparticles/endogenous crystals as NLRP3 inflammasome danger signals","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"70953 provides a useful solver-validation source through controlled low-Reynolds-number sphere motion in a rotating fluid, where terminal velocity changes with angular speed due to Coriolis effects.","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"70953 is the repository identifier, not a measured fluid quantity."},
+    {"finding":"The 2026 X-ray-shielding review links nanocomposite attenuation performance to high-Z filler chemistry, particle size, dispersion and composite architecture and should inform Worldshepherd radiation-protection materials screening.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION"],"claims_boundary":"70953 is the article identifier."},
+    {"finding":"The focus-induced photoresponse paper supplies a ranging/sensor principle in which detector response varies with focus and can encode object distance.","worldshepherd_use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION"],"claims_boundary":"27475 occurs in the DOI, not as the measured distance."}
+  ],
+  "next_actions":[
+    "Continue raw accumulation across 13524 states 49775, 47597, 57679, 59767, 79776, 77697 and beyond.",
+    "Retain 73590 as a gated Mn XVIII physical candidate while separately counting its dense 2026 DOI/CAS collision neighborhood.",
+    "Use the fixed physical-value tolerance and global multiple-testing controls for all promotion scans.",
+    "Stratify raw collision density by DOI/article, chemical registry, repository/accession, address and physical-quantity namespaces."
+  ]
+}
