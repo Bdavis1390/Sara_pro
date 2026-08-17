@@ -9,11 +9,12 @@ ALLOWED_WEIGHTS = {
     "M1_RAW",
     "N0_RAW",
     "NO_HIT",
+    "GATED_PHYSICAL",
     "P1_THEORY",
     "P1_COMPILED",
     "P1_CARRY_FORWARD",
 }
-NONPHYSICAL_WEIGHTS = {"M1_RAW", "N0_RAW", "NO_HIT"}
+NONPHYSICAL_WEIGHTS = {"M1_RAW", "N0_RAW", "NO_HIT", "GATED_PHYSICAL"}
 
 
 def reservoirs():
@@ -49,26 +50,31 @@ def test_every_raw_record_is_auditable_and_routed():
             assert record["raw_hit_type"], (path.name, record)
 
 
-def test_identifier_and_no_hit_records_cannot_masquerade_as_physical_hits():
-    nonphysical = []
+def test_nonpromoted_records_cannot_masquerade_as_p1():
+    nonpromoted = []
     for path, data in reservoirs():
         for record in data["records"]:
             if record["glob_weight"] in NONPHYSICAL_WEIGHTS:
-                nonphysical.append((path, record))
+                nonpromoted.append((path, record))
                 assert not record["glob_weight"].startswith("P1_"), (path.name, record)
-    assert nonphysical
+    assert nonpromoted
 
 
 def test_physical_raw_records_remain_explicitly_subtyped():
     physical = {}
+    gated = {}
     for _, data in reservoirs():
         for record in data["records"]:
             if record["glob_weight"].startswith("P1_"):
                 physical.setdefault(record["target"], set()).add(record["glob_weight"])
+            if record["glob_weight"] == "GATED_PHYSICAL":
+                gated.setdefault(record["target"], []).append(record)
 
     assert "P1_THEORY" in physical["77596"]
     assert "P1_COMPILED" in physical["44049"]
     assert "P1_CARRY_FORWARD" in physical["60397"]
+    assert "73590" in gated
+    assert "P1" not in gated["73590"][0]["raw_hit_type"]
 
 
 def test_append_files_preserve_raw_vs_evidence_boundary_language():
