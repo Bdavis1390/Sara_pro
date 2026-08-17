@@ -1,0 +1,31 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_37.json",
+  "purpose":"Deepen leading-zero state multiplicity across supply-chain modeling, multimodal ML data, combustion datasets, software-security advisories, multi-omics datasets and environmental radiosonde records while preserving five-character targets exactly.",
+  "policy":{
+    "rule":"Leading-zero targets remain exact five-character strings and raw occurrences are retained across all useful domains with zero automatic physical-evidence weight.",
+    "promotion":"DOI components, advisory IDs, release-version URL components, funding IDs and event IDs remain metadata/control observations unless the digits independently encode a verified physical quantity.",
+    "no_hit":"Later exact occurrences append to earlier observations without normalizing away leading zeros or rewriting search history."
+  },
+  "records":[
+    {"target":"03401","raw_hit_type":"DOI_COMPONENT","occurrence":"doi:10.1038/s41598-025-03401-0","context":"Scientific Reports supply-chain management framework combining cluster-based blockchain and intelligent industrial automation","glob_weight":"M1_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","SOFTWARE_AND_DATA_ENGINEERING","AI_ML_AND_MODEL_VALIDATION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"04130","raw_hit_type":"DOI_COMPONENT","occurrence":"doi:10.1038/s41597-024-04130-1","context":"Scientific Data multimodal dental dataset supporting machine-learning and clinical-service research","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","SENSING_AND_SENSOR_FUSION","ECHO_SENTINEL_LINK"]},
+    {"target":"01043","raw_hit_type":"DATASET_DOI_COMPONENT","occurrence":"doi:10.18154/RWTH-2025-01043","context":"2026 dataset for laser-absorption shock-tube study of C1-C4 n-alkyl formate pyrolysis","glob_weight":"M1_RAW","worldshepherd_use":["SIMULATION_AND_NUMERICAL_METHODS","TEST_AND_MEASUREMENT","MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK"]},
+    {"target":"01043","raw_hit_type":"SOFTWARE_RELEASE_URL_COMPONENT","occurrence":"ClamAV 0.1050/0.1043/0.1036 release URL component 01043","context":"Vendor release-notes lineage cited by NVD for ClamAV out-of-bounds and double-free vulnerabilities","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"01434","raw_hit_type":"SECURITY_ADVISORY_ID","occurrence":"INTEL-SA-01434","context":"2026 Intel Endpoint Management Assistant improper-input-validation vulnerability enabling privilege escalation before version 1.14.5","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"01434","raw_hit_type":"DOI_COMPONENT","occurrence":"doi:10.1038/s42255-025-01434-3","context":"2026 Nature Metabolism multi-omics profiling of cachexia-targeted tissues with an associated Zenodo dataset","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"04413","raw_hit_type":"ENVIRONMENTAL_EVENT_ID","occurrence":"POLARSTERN event PS14/04413","context":"PANGAEA radiosonde dataset from ANT-VII/1 with altitude, pressure, temperature, humidity, wind direction and wind speed","glob_weight":"M1_RAW","worldshepherd_use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SENSING_AND_SENSOR_FUSION","TEST_AND_MEASUREMENT","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"04413","raw_hit_type":"FUNDING_ORG_ID","occurrence":"FCT UID/04413/2025","context":"Portuguese Global Health and Tropical Medicine research-unit funding identifier appearing in current datasets/publications","glob_weight":"M1_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"04341","raw_hit_type":"ENVIRONMENTAL_EVENT_ID","occurrence":"POLARSTERN event PS16/04341","context":"PANGAEA radiosonde dataset from ANT-VIII/1 with 2,327 points across altitude, pressure, temperature, humidity and wind variables","glob_weight":"M1_RAW","worldshepherd_use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SENSING_AND_SENSOR_FUSION","TEST_AND_MEASUREMENT","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"04341","raw_hit_type":"DOI_COMPONENT","occurrence":"doi:10.1038/s41597-024-04341-6","context":"2025 Scientific Data electronic-news dataset for native-advertisement detection","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"04341","raw_hit_type":"DOI_COMPONENT","occurrence":"doi:10.1038/s41598-017-04341-0","context":"Kalahari Desert climate/land-use response modeling with published Python ViSTA model code","glob_weight":"M1_RAW","worldshepherd_use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SIMULATION_AND_NUMERICAL_METHODS","SOFTWARE_AND_DATA_ENGINEERING","ECHO_SENTINEL_LINK"]}
+  ],
+  "next_actions":[
+    "Continue exact-string leading-zero scans and compare their namespace density with non-leading-zero targets.",
+    "Route radiosonde and shock-tube datasets into environmental and physical-model validation corpora while keeping event/DOI numbers metadata-only.",
+    "Use current security advisories and reproducible-code/data sources as design/test inputs after local applicability checks.",
+    "Continue same-system topology/relational analysis with fixed tolerance and experiment-wide multiple-testing/false-discovery controls."
+  ]
+}
