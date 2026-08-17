@@ -1,0 +1,119 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 19,
+  "purpose": "Introduce the parallel 12345->13524 permutation family, preserve its provenance independently from 12345->31542, and ingest the first authoritative physical-value hits surfaced by scanning its newly generated states.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, repeated records, and complementary views of the same authority are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence, identifiers, page numbers and other numeric collisions are not Glob evidence unless an independently verified physical quantity in the declared unit family is established."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-MOIII-IGLESIAS-CABEZA-KAUFMAN-1990-R19",
+      "title": "Analysis of the Spectrum of Doubly Ionized Molybdenum (Mo III)",
+      "authors": "L. Iglesias; M. I. Cabeza; V. Kaufman",
+      "year": 1990,
+      "identifier": "doi:10.6028/jres.095.052",
+      "authority": "Journal of Research of the National Institute of Standards and Technology",
+      "discovery_status": "NEWLY_DISCOVERED_FOR_13524_FAMILY",
+      "url": "https://www.nist.gov/nist-research-library/journal-research-volume-95",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Use as a primary experimental/analysis source for Mo III level and transition topology. The paper reports the 4d3(2D2)5p 1P1 level at 93709.46 cm^-1 and classifies multiple observed lines involving that level."
+    },
+    {
+      "source_id": "SRC-NIST-PBIII-ASD-R19",
+      "title": "NIST Atomic Spectra Database — Pb III energy levels",
+      "authority": "National Institute of Standards and Technology",
+      "discovery_status": "NEWLY_DISCOVERED_FOR_13524_FAMILY",
+      "url": "https://physics.nist.gov/cgi-bin/ASD/energy1.pl?biblio=1&conf_out=1&j_out=1&lande_out=1&level_out=1&perc_out=1&spectrum=Pb+III&term_out=1",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Current ASD lists the Pb III 5d10 6s6p 3P0 level at exactly 60397 cm^-1. NIST notes uncertainty in classifications for some highly mixed configurations and states that these levels need further confirmation; retain that caution with the physical-value hit."
+    }
+  ],
+  "permutation_update": {
+    "artifact": "glob_99073_permutation_13524_registry.json",
+    "mapping": "12345->13524",
+    "index_order_1_based": [1, 3, 5, 2, 4],
+    "generic_position_orbit": ["12345", "13524", "15432", "14253"],
+    "status": "PARALLEL_ACTIVE_PERMUTATION_FAMILY",
+    "claims_boundary": "This family supplements rather than replaces 12345->31542. All generated states retain permutation-family provenance and add to the experiment-wide search multiplicity.",
+    "summary": {
+      "window_orbit_records": 29,
+      "unique_states": 113,
+      "overlap_with_31542_unique_states": 35,
+      "new_unique_states_vs_31542": 78
+    },
+    "exact_9675_policy": {
+      "exact_seed": "9675",
+      "status": "UNCHANGED_EXACT_4_DIGIT_SEED",
+      "derived_normalization": "09675",
+      "derived_09675_orbit": ["09675", "06597", "05769", "07956"],
+      "rule": "09675 and its orbit are derived five-position data and must never replace or be silently conflated with exact seed 9675."
+    }
+  },
+  "evidence_updates": [
+    {
+      "record_id": "EV-R19-MOIII-93709-46",
+      "source_id": "SRC-MOIII-IGLESIAS-CABEZA-KAUFMAN-1990-R19",
+      "permutation_family": "12345->13524",
+      "seed": "99073",
+      "source_window": "99073",
+      "orbit": ["99073", "90397", "93709", "97930"],
+      "target": "93709",
+      "observed_value_cm-1": 93709.46,
+      "delta_cm-1": 0.46,
+      "evidence_class": "P1",
+      "physical_value_subtype": "EXPERIMENTALLY_DERIVED_ATOMIC_ENERGY_LEVEL",
+      "verification_status": "verified_primary",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "The value is within the existing 1 cm^-1 screening tolerance and participates in multiple classified Mo III lines. This is a physical-value hit only; it does not establish causal significance of the 13524 permutation and must enter global null/multiple-testing correction."
+    },
+    {
+      "record_id": "EV-R19-PBIII-60397",
+      "source_id": "SRC-NIST-PBIII-ASD-R19",
+      "permutation_family": "12345->13524",
+      "seed": "8679305",
+      "source_window": "67930",
+      "orbit": ["67930", "69073", "60397", "63709"],
+      "target": "60397",
+      "observed_value_cm-1": 60397.0,
+      "delta_cm-1": 0.0,
+      "evidence_class": "P1",
+      "physical_value_subtype": "CURRENT_ASD_ATOMIC_ENERGY_LEVEL_WITH_CLASSIFICATION_CAUTION",
+      "verification_status": "verified_current_authority",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "Exact numerical equality occurs in current NIST ASD, but NIST's own Pb III notes require retaining level/classification caution. Count as a current-authority physical-value hit, not as independent proof of the permutation."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R19-MULTIPLE-PERMUTATION-DENOMINATOR",
+      "discovery_status": "NEWLY_FORMALIZED",
+      "finding": "Adding 12345->13524 introduces 78 unique target states not present in the original 12345->31542 state reservoir, while 35 states overlap. Statistical correction must therefore operate on the union of predeclared targets and retain family membership rather than treating the new family as a free exploratory follow-up.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "The larger state reservoir increases the expected number of accidental matches. Any apparent gain in hit count must be compared against the correspondingly larger null search space."
+    },
+    {
+      "update_id": "INFO-R19-99073-NEW-ORBIT",
+      "discovery_status": "NEWLY_GENERATED",
+      "finding": "Under 12345->13524 the core 99073 orbit is 99073 -> 90397 -> 93709 -> 97930 -> 99073. The 93709 state immediately intersects a documented Mo III energy level at 93709.46 cm^-1.",
+      "worldshepherd_uses": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "90397 and 97930 remain unpromoted unless authoritative physical-value evidence is independently verified."
+    },
+    {
+      "update_id": "INFO-R19-8679305-60397-ORBIT",
+      "discovery_status": "NEWLY_GENERATED",
+      "finding": "The 8679305 window 67930 produces 67930 -> 69073 -> 60397 -> 63709 under 12345->13524; current NIST Pb III contains an exact 60397 cm^-1 level.",
+      "worldshepherd_uses": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "The hit is in a different atomic system from the Mo III 93709 hit. It is P1, not P2; no cross-species relational claim is made."
+    }
+  ],
+  "next_actions": [
+    "Continue same-unit physical-value scans across all 78 states newly introduced by 12345->13524, prioritizing authoritative NIST/primary spectroscopy sources over identifiers and search mirrors.",
+    "Acquire full Mo III and Pb III transition data around 93709.46 and 60397 cm^-1 and test for same-species topology/relational motifs involving any other predeclared states.",
+    "Acquire complete N I and W II machine-readable line graphs and retain permutation-family labels in all topology/relational analyses.",
+    "Update global null and false-discovery calculations to use the union of both permutation families, deduplicating the 35 overlapping states and preserving the 78 newly added states as additional tests."
+  ]
+}

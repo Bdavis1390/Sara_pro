@@ -1,0 +1,34 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_38.json",
+  "purpose":"Deepen sparse states 39441, 34194, 14449 and 14944 across security, GPU memory, TLS trust, CI/plugin, package-registry, CMS and dispatch-optimization namespaces.",
+  "policy":{
+    "rule":"Exact raw occurrences are retained across security, software, operations and research domains with zero automatic physical-evidence weight.",
+    "promotion":"CVE and article identifiers remain M1/N0 regardless of frequency; physical promotion requires independent quantity/relationship evidence.",
+    "no_hit":"Multiplicity additions are append-only and preserve earlier observations."
+  },
+  "records":[
+    {"target":"39441","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2024-39441","context":"Unisoc/Android Wi-Fi display missing permission check permitting local privilege escalation","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SENSING_AND_SENSOR_FUSION"]},
+    {"target":"39441","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2023-39441","context":"Apache Airflow SMTP/IMAP providers and core accepted unvalidated server certificates in affected versions","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"39441","raw_hit_type":"ARTICLE_NUMBER","occurrence":"Scientific Reports article 39441 (2025)","context":"Ant-colony and dynamic-weight strategy for comprehensive power dispatch scheduling optimization","glob_weight":"N0_RAW","worldshepherd_use":["SIMULATION_AND_NUMERICAL_METHODS","OPERATIONS_AND_RELIABILITY","AI_ML_AND_MODEL_VALIDATION"]},
+    {"target":"34194","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-34194","context":"Imagination Technologies GPU DDK sparse-memory mapping state mismanagement caused by scaled address arithmetic","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SIMULATION_AND_NUMERICAL_METHODS"]},
+    {"target":"34194","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-34194","context":"Vasion/PrinterLogic privileged temporary-file/symlink handling permits arbitrary SYSTEM writes","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"34194","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2023-34194","context":"TinyXML crafted XML can trigger reachable assertion/application exit","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","TEST_AND_MEASUREMENT"]},
+    {"target":"34194","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2022-34194","context":"Jenkins Readonly Parameter Plugin stored XSS via unescaped parameter name/description","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY"]},
+    {"target":"14449","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-14449","context":"u5CMS reflected XSS through thanks parameter before v12.8.9","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"14449","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-14449","context":"WordPress Backup Migration missing authorization/capability checks could trigger cloud backup processing","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY"]},
+    {"target":"14449","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2019-14449","context":"Cloudera Manager malicious Impala query XSS when rendered","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","AI_ML_AND_MODEL_VALIDATION"]},
+    {"target":"14449","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2017-14449","context":"SDL2_image crafted XCF image double-free","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","TEST_AND_MEASUREMENT"]},
+    {"target":"14944","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2019-14944","context":"GitLab/Gitaly command-line flag injection can lead to privilege escalation or RCE","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION"]},
+    {"target":"14944","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2017-14944","context":"Inedo ProGet unsafe package-ID handling during package addition","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SUPPLY_CHAIN_AND_PRODUCTION","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"14944","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2020-14944","context":"Global RADAR BSA Radar missing authorization controls across user-management functions","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SOFTWARE_AND_DATA_ENGINEERING"]}
+  ],
+  "next_actions":[
+    "Continue analyzer-driven sparse-state scans and namespace diversification.",
+    "Cross-reference Airflow, Jenkins, GitLab/Gitaly, ProGet, TinyXML and affected GPU/endpoint components against actual Worldshepherd dependencies before asserting exposure.",
+    "Use dispatch-optimization methods as algorithmic/operations references independent of the article-number collision.",
+    "Continue physical topology/relational analysis with fixed tolerance and experiment-wide multiple-testing/false-discovery controls."
+  ]
+}

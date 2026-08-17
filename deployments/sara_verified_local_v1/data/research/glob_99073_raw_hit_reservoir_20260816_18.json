@@ -1,0 +1,37 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_17.json",
+  "purpose":"Continue raw-hit accumulation through 99953, 99335, 52774 and 75472, preserving collision-dense identifier/page/database neighborhoods and a non-unit Raman intensity occurrence without physical-evidence promotion.",
+  "policy":{
+    "rule":"Raw exact-number recurrence is retained for collision statistics with zero automatic physical-evidence weight.",
+    "promotion":"A measured table value without a declared unit or interpretable physical quantity is not promoted to P1 merely because its digits match; P1/P2 still requires verified physical semantics and provenance.",
+    "namespace_control":"Database IDs, DOI/article IDs, repository handles, page numbers and instrument-output values are stratified separately."
+  },
+  "records":[
+    {"target":"99953","raw_hit_type":"PUBCHEM_CID","occurrence":"PubChem CID 99953","context":"((Nonyloxy)methyl)oxirane with linked NMR/IR spectral records","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99335","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-021-99335-4","context":"Scientific Reports hemp distillation/volatile and cannabinoid profile study","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99335","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0040-4020(01)99335-4","context":"1963 tetrahydroquinoline structural chemistry paper","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99335","raw_hit_type":"BIOREPOSITORY_ID","occurrence":"Addgene plasmid #99335","context":"Bacterial coexpression plasmid for CBP NCBD and NCoA3 binding domains","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52774","raw_hit_type":"NOAA_REPOSITORY_ID","occurrence":"NOAA repository record 52774","context":"NO3 oxidation of isoprene chamber experiments comparing chemical mechanisms and mass-spectrometric product observations","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52774","raw_hit_type":"CHEBI_IDENTIFIER","occurrence":"CHEBI:52774","context":"pentane-2,3-dione chemical ontology identifier","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52774","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"eLife 9:e52774 / 10.7554/eLife.52774","context":"Cryo-EM structures of the ATP-fueled ClpXP proteolytic machine bound to substrate","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52774","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-024-52774-9","context":"Two-color non-collinear wave mixing for enhanced high-order harmonics in silica","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","ADAPTIVE_METASURFACE_CONTROL","RF_HARDWARE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52774","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"Environmental Science and Pollution Research 2024, 31, 52774-52783","context":"Biochar-mediated bioremediation of crude-oil contaminated soil","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52774","raw_hit_type":"INSTRUMENTAL_INTENSITY_AREA","occurrence":"Si Raman intensity area = 52774 for spot D in SnS2 supporting table","context":"Measured Raman-peak area/intensity entry lacking a declared physical unit suitable for the Glob physical-value gate","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"75472","raw_hit_type":"PUBCHEM_CID","occurrence":"PubChem CID 75472","context":"4-Piperidinol, 1,2,2,6,6-pentamethyl-, with mass/IR/Raman spectral records","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"75472","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-026-75472-0","context":"2026 phase engineering of atomically thin magnetic chromium tellurides by molecular beam epitaxy","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"52774 exhibits broad cross-namespace multiplicity spanning government repository, chemical ontology, article identifier, DOI component, pagination and instrumental table output.","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH","PRIME_SENTINEL"],"claims_boundary":"The multiplicity characterizes technical-corpus collision propensity; it is not a physical relation."},
+    {"finding":"A raw numerical table entry can be experimentally measured yet still fail the P1 gate when the quantity lacks an interpretable declared unit/semantic family; the 52774 Raman intensity-area entry is retained as that control case.","worldshepherd_use":["PRIME_SENTINEL","OVERWATCH","MATERIALS_AND_CHARACTERIZATION"],"claims_boundary":"Measured does not automatically mean admissible physical Glob evidence."},
+    {"finding":"The 2026 chromium-telluride study provides a phase-engineering benchmark combining controlled MBE growth with structural, electronic, chemical and magnetic characterization.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","OVERWATCH"],"claims_boundary":"75472 is DOI metadata."}
+  ],
+  "next_actions":[
+    "Backfill 31542-family states beginning with 97574, 59477, 67795, 97767, 79767 and 77769 while preserving raw namespace counts.",
+    "Continue authoritative physical-value and same-system topology scans independently of raw collision accumulation.",
+    "Keep experimentally measured but unitless/instrumental outputs in a separate raw stratum unless a declared physical interpretation supports P1.",
+    "Apply fixed tolerance and experiment-wide multiple-testing/false-discovery correction before aggregate interpretation."
+  ]
+}

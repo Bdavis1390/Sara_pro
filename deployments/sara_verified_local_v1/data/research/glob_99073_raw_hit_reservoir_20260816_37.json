@@ -1,0 +1,26 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_36.json",
+  "purpose":"Continue sparse-state multiplicity with methodological-review, physical-entropy, biological-material, vulnerability-scanner, public-demographic and numismatic namespaces while keeping every identifier occurrence separate from physical evidence.",
+  "policy":{
+    "rule":"Raw exact-number occurrences are retained across all useful and control domains with zero automatic physical-evidence weight.",
+    "promotion":"Article IDs, plasmid IDs, scanner plugin IDs, ZIP/geographic IDs and catalog numbers remain M1/N0 raw observations unless the digits themselves are independently verified physical quantities.",
+    "no_hit":"Post-coverage multiplicity remains append-only and does not erase earlier sparse/no-hit observations."
+  },
+  "records":[
+    {"target":"75769","raw_hit_type":"ARTICLE_IDENTIFIER","occurrence":"JMIR Public Health and Surveillance e75769","context":"2026 umbrella review of digital physical-activity interventions in youth using PRIOR/PRISMA-S, AMSTAR 2 and Risk of Bias 2; reports substantial heterogeneity and methodological limitations","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OVERWATCH"]},
+    {"target":"77956","raw_hit_type":"DOI_COMPONENT","occurrence":"doi:10.1038/s41598-020-77956-5","context":"Scientific Reports experiment uses atmospheric-pressure air microplasma current time series as a physical entropy source for true random bit generation and reports NIST SP 800-22 testing","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","TEST_AND_MEASUREMENT","RF_HARDWARE","SIMULATION_AND_NUMERICAL_METHODS"]},
+    {"target":"77956","raw_hit_type":"BIOLOGICAL_MATERIAL_CATALOG_ID","occurrence":"Addgene plasmid #77956","context":"Third-generation lentiviral gRNA plasmid targeting human ZAP70 with sequence, depositor, publication and ordering metadata","glob_weight":"N0_RAW","worldshepherd_use":["ECHO_SENTINEL_LINK","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"77956","raw_hit_type":"SECURITY_SCANNER_PLUGIN_ID","occurrence":"Tenable/Nessus plugin ID 77956","context":"Security-scanner plugin namespace associated with Shellshock-era vulnerability checks in prior scan results; plugin IDs are detector metadata rather than CVE identity","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95607","raw_hit_type":"GEOGRAPHIC_ID","occurrence":"Data Commons zip/95607","context":"Yolo County California census ZIP code tabulation area with demographic, economic, housing and health series sourced from Census/CDC data","glob_weight":"N0_RAW","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","ENVIRONMENTAL_AND_CIVIL_SYSTEMS","AI_ML_AND_MODEL_VALIDATION"]},
+    {"target":"75039","raw_hit_type":"NUMISMATIC_CATALOG_ID","occurrence":"Numista N#75039","context":"Catalog record for Guatemala Ferdinand VI 8 Escudos coin including composition, weight, minting and catalog cross-references","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","ECHO_SENTINEL_LINK"]}
+  ],
+  "next_actions":[
+    "Continue analyzer-driven sparse-state multiplicity sampling and reduce single-record/single-namespace counts.",
+    "Use umbrella-review rigor, entropy-source testing and governed-material metadata as transferable methods without treating their identifiers as physical evidence.",
+    "Retain low-value catalog/geographic hits as empirical negative-control namespace data.",
+    "Continue same-system physical topology with fixed tolerance and experiment-wide multiple-testing/false-discovery controls."
+  ]
+}

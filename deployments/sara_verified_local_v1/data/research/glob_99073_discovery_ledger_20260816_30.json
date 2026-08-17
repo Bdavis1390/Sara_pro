@@ -1,0 +1,50 @@
+{
+  "schema_version":"ws-glob-discovery-ledger-1.0",
+  "parent_registry":"glob_99073_registry.json",
+  "as_of":"2026-08-17",
+  "ledger_sequence":30,
+  "purpose":"Formalize domain-agnostic Worldshepherd usefulness routing so internet discoveries are retained for any material capability improvement, while keeping Glob-number evidentiary weight as an independent classification axis.",
+  "source_ingestion_policy":{
+    "rule":"Every substantive unique publication, dataset, advisory, technical record, standard, method, software resource, operational precedent, commercial signal or other information item receives a Worldshepherd use when it can materially improve any project capability, even when it contributes zero physics evidence and zero Glob evidence.",
+    "duplicates":"Mirrors, alternate landing pages and derivative summaries of the same underlying item are provenance aliases and are not independent evidence.",
+    "search_noise":"A raw number occurrence may still be useful as metadata, security intelligence, a partner lead, a validation method, a manufacturing precedent, a software/data-engineering pattern or a negative control; those uses do not convert the matched digits into Glob evidence."
+  },
+  "utility_routing_policy":{
+    "principle":"Worldshepherd usefulness and Glob evidentiary weight are orthogonal axes.",
+    "utility_domains":[
+      "PHYSICS_AND_SPECTROSCOPY",
+      "CHEMISTRY_AND_CHEMICAL_DATA",
+      "MATERIALS_AND_CHARACTERIZATION",
+      "MATERIALS_AND_MANUFACTURING",
+      "RF_HARDWARE",
+      "ADAPTIVE_METASURFACE_CONTROL",
+      "PLASMA_AND_FUSION_DATA",
+      "QUANTUM_DEVICE_CHARACTERIZATION",
+      "ATOMIC_AND_MOLECULAR_MODELS",
+      "SENSING_AND_SENSOR_FUSION",
+      "SOFTWARE_AND_DATA_ENGINEERING",
+      "AI_ML_AND_MODEL_VALIDATION",
+      "SECURITY_HARDENING",
+      "SYSTEMS_ENGINEERING_AND_GOVERNANCE",
+      "OPERATIONS_AND_RELIABILITY",
+      "SIMULATION_AND_NUMERICAL_METHODS",
+      "TEST_AND_MEASUREMENT",
+      "IP_AND_COMMERCIALIZATION",
+      "OPPORTUNITY_AND_PARTNER_INTEL",
+      "SUPPLY_CHAIN_AND_PRODUCTION",
+      "NEGATIVE_CONTROL_CORPUS"
+    ],
+    "retention_rule":"Retain a substantive source when it provides a reusable method, dataset, architecture, failure mode, benchmark, manufacturing process, security signal, business/partner signal, validation pattern, operational precedent or other concrete capability input in any listed domain.",
+    "evidence_independence":"Glob evidence continues to use P2/P1/G1/M1/N0 or gated status independently of utility routing. A source may be highly valuable to Worldshepherd and still have zero Glob evidentiary weight."
+  },
+  "information_updates":[
+    {"update_id":"INFO-R30-DOMAIN-AGNOSTIC-UTILITY","discovery_status":"NEWLY_FORMALIZED","finding":"Useful discoveries are no longer implicitly physics-centric. The research pipeline now evaluates technical, operational, computational, security, manufacturing, commercial and organizational utility on equal footing with physics utility.","worldshepherd_uses":["SARA","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"],"claims_boundary":"Utility routing does not imply scientific validation or Glob evidence."},
+    {"update_id":"INFO-R30-TWO-AXIS-CLASSIFICATION","discovery_status":"NEWLY_FORMALIZED","finding":"Each substantive source should carry two independent labels: a Worldshepherd utility destination and a Glob evidence class/status. This prevents valuable non-physics sources from being discarded and prevents useful engineering/business material from being misread as numerical evidence.","worldshepherd_uses":["SARA","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"],"claims_boundary":"The two axes must remain independently auditable."}
+  ],
+  "next_actions":[
+    "Continue internet scanning across the full 208-state union while retaining any substantive source with reusable Worldshepherd value, not only physics sources.",
+    "Expand source routing to software, cybersecurity, AI/ML, manufacturing, operations, commercialization, partner intelligence, supply chain and governance whenever the discovered item materially supports those areas.",
+    "Continue independent same-system topology and relational scans for physical P1/P2 candidates without allowing non-physics utility to inflate Glob evidence.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for all numerical-evidence promotion."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_31.json",
+  "purpose":"Continue post-coverage multiplicity sampling across 67500, 67930, 76597, 77967 and 95324 with privacy/security, civil standards, dependency hygiene, software-security research, AI workflow, filesystem-boundary and connector-standard sources.",
+  "policy":{
+    "rule":"After 208/208 baseline coverage, additional occurrences are accumulated by independent namespace and utility domain with zero automatic physical-evidence weight.",
+    "promotion":"New CVEs, issue numbers, theses, article IDs, bug numbers and standards remain M1/N0 unless the digits independently encode a verified physical quantity; physical promotion is unchanged.",
+    "historical":"Prior NO_HIT observations remain valid descriptions of earlier search passes and are not deleted when later sources are found."
+  },
+  "records":[
+    {"target":"67500","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-67500","context":"Mastodon response-discrepancy flaw can reveal whether an otherwise inaccessible status ID exists when a non-English Accept-Language header is used; fixed in stated later releases","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"67500","raw_hit_type":"DIN_STANDARD_NUMBER","occurrence":"DIN 67500:2025-08 draft","context":"Illumination of lock areas — requirements, design and measurement; replaces/updates a long-running civil/maritime lighting standard lineage","glob_weight":"M1_RAW","worldshepherd_use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","TEST_AND_MEASUREMENT","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"67930","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-67930","context":"eHive Search reflected XSS through version 2.5.0; fixed at 2.5.1","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"67930","raw_hit_type":"GITHUB_ISSUE_NUMBER","occurrence":"dotnet/aspnetcore issue #67930","context":"2026 issue concerning Microsoft.AspNetCore.OpenApi 10.0.x dependency constraints around Microsoft.OpenApi 2.0.0 versus breaking newer versions","glob_weight":"M1_RAW","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"76597","raw_hit_type":"UNIVERSITY_THESIS_ID","occurrence":"University of Vienna thesis ID 76597","context":"2025 modular compile-time obfuscation with sequential LLVM transform passes, semantics checks, performance and complexity evaluation","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","AI_ML_AND_MODEL_VALIDATION","SIMULATION_AND_NUMERICAL_METHODS","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77967","raw_hit_type":"PHP_SECURITY_BUG_ID","occurrence":"PHP bug #77967","context":"SQLite file: URI path could bypass open_basedir restrictions; fixed in PHP source after discussion of boundary semantics","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77967","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"JMIR 2026 article e77967 / DOI 10.2196/77967","context":"Multi-hospital retrospective analysis of AI-assisted chest-CT report-drafting efficiency showing an initial adaptation cost followed by later efficiency gains at one site","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","OPERATIONS_AND_RELIABILITY","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95324","raw_hit_type":"TECHNICAL_STANDARD_FAMILY_NUMBER","occurrence":"VG 95324-10:2018-03 and VG 95324-11:2024-01","context":"Current German defense/technical standards for printed-board electrical connectors, including pin/socket and 9-contact rectangular connector details","glob_weight":"M1_RAW","worldshepherd_use":["RF_HARDWARE","MATERIALS_AND_MANUFACTURING","SUPPLY_CHAIN_AND_PRODUCTION","TEST_AND_MEASUREMENT","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95324","raw_hit_type":"LEGACY_VULNERABILITY_DATABASE_ID","occurrence":"OSVDB 95324 referenced from CVE-2013-3795","context":"Legacy vulnerability-database identifier in Oracle/Solaris security-reference chain","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"CVE-2025-67500 adds an information-leakage class based on response-shape discrepancies rather than content disclosure, useful for testing whether authorization failures reveal object existence through localization/status-code/error differences.","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],"claims_boundary":"67500 is the CVE identifier and DIN standard number in separate namespaces."},
+    {"finding":"DIN 67500 expands maritime/civil test coverage to engineered illumination of lock areas, bringing lighting requirements, calculations and measurement into the environmental/civil corpus.","worldshepherd_use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","TEST_AND_MEASUREMENT","OPERATIONS_AND_RELIABILITY"],"claims_boundary":"The shared digits with CVE-2025-67500 are an unrelated namespace collision."},
+    {"finding":"The AI-reporting study demonstrates a deployment lesson important beyond medicine: an AI tool can initially increase task time during adaptation and show delayed productivity benefit, so Worldshepherd AI evaluations should model learning curves rather than measuring only immediate post-deployment throughput.","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","OPERATIONS_AND_RELIABILITY","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],"claims_boundary":"77967 is article metadata."},
+    {"finding":"VG 95324 provides current connector-design standards relevant to printed-board hardware qualification and supply-chain part/specification mapping.","worldshepherd_use":["RF_HARDWARE","MATERIALS_AND_MANUFACTURING","SUPPLY_CHAIN_AND_PRODUCTION","TEST_AND_MEASUREMENT"],"claims_boundary":"95324 is a standard-family identifier."}
+  ],
+  "next_actions":[
+    "Continue post-coverage multiplicity sampling and identify states with only one namespace so collision-frequency estimates become less dominated by densely indexed identifiers.",
+    "Use the accumulated AI deployment/adaptation literature to add learning-curve and operator-adoption metrics to future Worldshepherd AI validation plans.",
+    "Continue same-system topology and relational verification independently for physical P1/P2 candidates.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for physical evidence promotion."
+  ]
+}

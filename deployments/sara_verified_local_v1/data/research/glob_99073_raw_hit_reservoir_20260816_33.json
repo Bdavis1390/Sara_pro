@@ -1,0 +1,32 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_32.json",
+  "purpose":"Continue post-coverage multiplicity sampling for known physical targets and capture independent security, logistics, sensing, biological-custody and vulnerability-scanner namespaces without changing physical evidence classes.",
+  "policy":{
+    "rule":"Raw occurrences are retained across all useful domains with zero automatic physical-evidence weight.",
+    "promotion":"Identifier, catalog, article, dataset and security-scanner matches remain M1/N0 raw observations; P1/P2 status is inherited only from separately verified physical evidence.",
+    "no_hit":"Earlier defined-pass no-hits remain historically valid observations and may be superseded by later discoveries without rewriting prior append files."
+  },
+  "records":[
+    {"target":"25243","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-25243","context":"Redis RESTORE serialized-value validation flaw permitting crafted payload invalid memory access and possible RCE before fixed version 8.6.3","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY"]},
+    {"target":"25243","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2022-25243","context":"HashiCorp Vault PKI policy weakness could issue wildcard certificates despite allow_subdomains=false under affected configurations","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"25243","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2020-25243","context":"Siemens LOGO! Soft Comfort project import zip-slip/path-traversal vulnerability","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","MATERIALS_AND_MANUFACTURING","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"39699","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2023-39699","context":"IceWarp Mail Server local-file-inclusion/path traversal vulnerability","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"39699","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-39699","context":"Linux RISC-V IOMMU null dereference in iova_to_phys error handling","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY"]},
+    {"target":"39699","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-39699","context":"AI Workflow Automation missing-authorization vulnerability through version 1.4.2","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"75697","raw_hit_type":"PUBLIC_DATASET_API_ID","occurrence":"Spain INE rail-transport dataset API identifier 75697","context":"Quarterly national goods-transported rail statistics distributed through the Spanish open-data portal","glob_weight":"N0_RAW","worldshepherd_use":["OPERATIONS_AND_RELIABILITY","SUPPLY_CHAIN_AND_PRODUCTION","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"75697","raw_hit_type":"ARTICLE_IDENTIFIER","occurrence":"JMIR Formative Research e75697","context":"Real-time-location-system observational study quantifying spatial shadow zones and association with hospital falls","glob_weight":"M1_RAW","worldshepherd_use":["SENSING_AND_SENSOR_FUSION","OPERATIONS_AND_RELIABILITY","AI_ML_AND_MODEL_VALIDATION","TEST_AND_MEASUREMENT"]},
+    {"target":"75697","raw_hit_type":"BIOLOGICAL_MATERIAL_CATALOG_ID","occurrence":"Addgene plasmid #75697","context":"STYK1 gRNA lentiviral plasmid deposited for research use","glob_weight":"N0_RAW","worldshepherd_use":["ECHO_SENTINEL_LINK","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"96750","raw_hit_type":"BIOLOGICAL_STRAIN_CATALOG_ID","occurrence":"ATCC 96750","context":"Malassezia pachydermatis research strain with strain/isolation and sequence cross-reference metadata","glob_weight":"N0_RAW","worldshepherd_use":["ECHO_SENTINEL_LINK","SARA","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"56977","raw_hit_type":"VULNERABILITY_DATABASE_ID","occurrence":"Safety vulnerability ID 56977 for CVE-2021-29534","context":"Intel-TensorFlow vulnerability index in a third-party software-safety database; underlying CVE has separate canonical identity","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","AI_ML_AND_MODEL_VALIDATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99639","raw_hit_type":"SECURITY_SCANNER_PLUGIN_ID","occurrence":"Tenable Nessus Plugin ID 99639","context":"Debian DLA-914-1 minicom security-update check referencing CVE-2017-7467","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "next_actions":[
+    "Continue namespace-diversity sampling for all 208 states instead of stopping after baseline coverage.",
+    "Use multiplicity statistics to identify unusually collision-dense targets while keeping physical-evidence promotion independent.",
+    "Cross-reference new security lessons against the actual Worldshepherd runtime/dependency inventory before opening remediation work.",
+    "Continue fixed-tolerance same-system topology and experiment-wide multiple-testing/false-discovery controls for P1/P2 evaluation."
+  ]
+}

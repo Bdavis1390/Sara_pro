@@ -1,0 +1,31 @@
+{
+  "schema_version":"ws-glob-discovery-ledger-1.0",
+  "parent_registry":"glob_99073_registry.json",
+  "as_of":"2026-08-17",
+  "ledger_sequence":29,
+  "purpose":"Route substantive sources discovered while completing the 13524-tail raw scan for 99953, 99335, 52774 and 75472, including current 2026 chromium-telluride phase engineering and high-order-harmonic generation methodology, without promoting their identifiers as Glob evidence.",
+  "source_ingestion_policy":{
+    "rule":"Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates":"Mirrors, repository copies and alternate bibliographic pages for the same publication are provenance aliases and are not independent evidence.",
+    "search_noise":"Repository IDs, chemical ontology IDs, article IDs, DOI components, page numbers and unitless instrumental table values are not Glob evidence unless the matched digits independently encode a verified physical quantity under the declared gate."
+  },
+  "sources":[
+    {"source_id":"SRC-HHG-SILICA-TWOCOLOR-2024-R29","title":"Enhancing the efficiency of high-order harmonics with two-color non-collinear wave mixing in silica","year":2024,"identifier":"doi:10.1038/s41467-024-52774-9","authority":"Nature Communications","discovery_status":"NEWLY_DISCOVERED","use":["QUANTUM_DEVICE_CHARACTERIZATION","ADAPTIVE_METASURFACE_CONTROL","OVERWATCH"],"note":"Use two-color non-collinear wave mixing and high-order-harmonic generation in a solid as a strong-field/ultrafast optical-control validation reference. 52774 is DOI metadata."},
+    {"source_id":"SRC-ISOPRENE-NO3-SAPHIR-2023-R29","title":"Comparison of isoprene chemical mechanisms under atmospheric night-time conditions in chamber experiments","year":2023,"identifier":"doi:10.5194/acp-23-3147-2023; NOAA repository 52774","authority":"Atmospheric Chemistry and Physics / NOAA repository","discovery_status":"NEWLY_DISCOVERED","use":["OVERWATCH","ECHO_SENTINEL_LINK","ATOMIC_AND_MOLECULAR_MODELS"],"note":"Use chamber-measurement versus mechanism-comparison workflow and mass-spectrometric product-trace validation as a model/data reconciliation benchmark. 52774 is the repository identifier."},
+    {"source_id":"SRC-CLPXP-CRYOEM-2020-R29","title":"Structures of the ATP-fueled ClpXP proteolytic machine bound to protein substrate","year":2020,"identifier":"doi:10.7554/eLife.52774","authority":"eLife","discovery_status":"NEWLY_DISCOVERED","use":["QUANTUM_DEVICE_CHARACTERIZATION","OVERWATCH"],"note":"Use conformational-state structural reconstruction as an imaging/structure-validation precedent. 52774 is the article identifier."},
+    {"source_id":"SRC-CRTE-PHASE-MBE-2026-R29","title":"Phase engineering of atomically thin magnetic chromium tellurides via molecular beam epitaxy","year":2026,"identifier":"doi:10.1038/s41467-026-75472-0","authority":"Nature Communications","discovery_status":"NEWLY_DISCOVERED","use":["MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","OVERWATCH"],"note":"Use phase-controlled MBE synthesis plus STM/STS, STEM, DFT, XPS/XAS and magnetic imaging as a high-value programmable-material phase-engineering benchmark. 75472 is DOI metadata."},
+    {"source_id":"SRC-PUBCHEM-75472-R29","title":"PubChem CID 75472 — 4-Piperidinol, 1,2,2,6,6-pentamethyl-","authority":"NIH PubChem","discovery_status":"NEWLY_DISCOVERED","use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],"note":"Use linked MS/IR/Raman records as a spectral-data pointer; 75472 itself is a compound identifier."},
+    {"source_id":"SRC-PUBCHEM-99953-R29","title":"PubChem CID 99953 — ((Nonyloxy)methyl)oxirane","authority":"NIH PubChem","discovery_status":"NEWLY_DISCOVERED","use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],"note":"Use linked NMR/IR records as spectral-data context; 99953 itself is a compound identifier."}
+  ],
+  "information_updates":[
+    {"update_id":"INFO-R29-MEASURED-VS-ADMISSIBLE","discovery_status":"NEWLY_FORMALIZED","finding":"The raw scan exposed a measured Raman intensity-area entry equal to 52774, but without a declared physical unit/semantic family suitable for the Glob P1 gate. Worldshepherd therefore separates measured instrumental numerics from admissible physical-value evidence.","worldshepherd_uses":["PRIME_SENTINEL","OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"Experimental origin alone is insufficient for P1 when the quantity semantics/unit family are undefined."},
+    {"update_id":"INFO-R29-CRTE-PHASE-ENGINEERING","discovery_status":"NEWLY_DISCOVERED","finding":"The 2026 chromium-telluride work demonstrates phase-controlled synthesis of several atomically thin Cr-Te phases on graphene/SiC and validates them with complementary structural, electronic, chemical and magnetic techniques.","worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","OVERWATCH"],"claims_boundary":"This improves Worldshepherd materials methodology but contributes zero Glob evidence through the 75472 identifier."},
+    {"update_id":"INFO-R29-HHG-SOLID-CONTROL","discovery_status":"NEWLY_DISCOVERED","finding":"The 2024 silica HHG study provides a solid-state strong-field control reference using two-color non-collinear wave mixing to enhance high-order harmonic generation.","worldshepherd_uses":["QUANTUM_DEVICE_CHARACTERIZATION","ADAPTIVE_METASURFACE_CONTROL","OVERWATCH"],"claims_boundary":"52774 is DOI metadata and is not the harmonic order or field parameter."}
+  ],
+  "next_actions":[
+    "Backfill unscreened 31542-family states beginning with 97574, 59477, 67795, 97767, 79767 and 77769 and record raw collision namespaces without pruning.",
+    "Continue same-species topology and relational searches only in primary/authoritative physical datasets for promoted or gated P1 states.",
+    "Preserve fixed tolerance and explicit unit semantics before any measured numerical entry is admitted to P1.",
+    "Apply experiment-wide multiple-testing and false-discovery correction across all target states, unit families, datasets and relational motifs before interpreting aggregate results."
+  ]
+}

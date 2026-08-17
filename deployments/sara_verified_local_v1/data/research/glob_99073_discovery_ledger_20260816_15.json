@@ -1,0 +1,196 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 15,
+  "purpose": "Ingest substantive sources surfaced by the continuing internet scan, preserve exact-number collision classes, and route newly discovered spectroscopy/data-infrastructure/materials information into Worldshepherd without inflating Glob evidence weight.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, standards resource, meeting notice, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, repeated records, and search-engine echoes are provenance aliases and are not independent evidence.",
+    "search_noise": "Pure page numbers, document IDs, DOI suffixes, report identifiers, ordinary IDs, and other numeric collisions are not Glob evidence unless an independently verified physical relationship is established."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-VAMDC-XSAMS-STANDARD-R15",
+      "title": "VAMDC XSAMS structure and atomic-state standards",
+      "authority": "Virtual Atomic and Molecular Data Centre (VAMDC)",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://vamdc.org/documents/standards-11.05/dataModel/vamdcxsams/structure.html",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Use XSAMS concepts for species/state/process/source/method provenance, atomic-state identifiers, units, uncertainties, and source links when normalizing heterogeneous atomic/molecular data into Worldshepherd."
+    },
+    {
+      "source_id": "SRC-VAMDC-PORTAL-R15",
+      "title": "VAMDC research portal and registered spectroscopy databases",
+      "authority": "Virtual Atomic and Molecular Data Centre (VAMDC)",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://vamdc.org/activities/research/access-to-data/",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as a federated acquisition path for VALD, CHIANTI, JPL, CDMS, HITRAN, STARK-B, BASECOL and related resources; preserve each upstream database as a distinct evidence source rather than treating VAMDC aggregation as independent confirmation."
+    },
+    {
+      "source_id": "SRC-OPEN-ADAS-W-R15",
+      "title": "OPEN-ADAS tungsten atomic-data holdings",
+      "authority": "ADAS Project / University of Strathclyde / IAEA-linked atomic-data infrastructure",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://open.adas.ac.uk/element/w",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Use the large tungsten ionization/recombination/excitation/radiation dataset as a collisional-radiative validation corpus. Keep charge state, ADF class, temperature/density domain, provenance comments, and data-version lineage explicit."
+    },
+    {
+      "source_id": "SRC-IAEA-TUNGSTEN-CRP-R15",
+      "title": "Properties of Tungsten Ions in Fusion Plasmas coordinated research project",
+      "authority": "International Atomic Energy Agency Atomic and Molecular Data Unit",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://amdis.iaea.org/CRP/tungsten-ions",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "OVERWATCH", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use the explicitly documented tungsten data gaps—metastable ionization, neutral/proton charge exchange, missing W IX-W XXVII line assignments, and theory/experiment disagreement—as priority validation targets rather than assuming current databases are complete."
+    },
+    {
+      "source_id": "SRC-IAEA-WMO-EBIT-2025-R15",
+      "title": "Benchmarking Fusion Plasma Diagnostics: Analysis of Experimental W and Mo X-ray Data from EBIT Resolves Plasma Speed Contradiction",
+      "authority": "IAEA Sixth Technical Meeting on Fusion Data Processing, Validation and Analysis / Fudan University",
+      "year": 2025,
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://conferences.iaea.org/event/393/contributions/36715/",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as a model-to-measurement reconciliation precedent: high-resolution EBIT wavelengths for W45+/W46+ and Mo32+ were compared with JET and multiple theoretical methods, including correlation-corrected MCDF, to resolve a plasma-transport contradiction."
+    },
+    {
+      "source_id": "SRC-IAEA-W-H-EDGE-2026-R15",
+      "title": "3rd IAEA Technical Meeting on the Collisional-Radiative Properties of Tungsten and Hydrogen in Edge Plasmas of Fusion Devices",
+      "authority": "International Atomic Energy Agency / ITER Organization",
+      "year": 2026,
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_OPPORTUNITY",
+      "url": "https://conferences.iaea.org/event/471/",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OPPORTUNITY_AND_PARTNER_INTEL", "PRIME_SENTINEL"],
+      "note": "Use as current domain-intelligence and potential validation-networking lead. The meeting explicitly targets missing/recommended W and H data, uncertainties, metastables, charge exchange, photon opacity, W0 through at least W64+ spectral lines, and ITER edge-plasma data needs. Participation eligibility and submission requirements remain external constraints to verify before outreach."
+    },
+    {
+      "source_id": "SRC-EXOMOLHR-2026-R15",
+      "title": "ExoMolHR empirical high-resolution molecular spectrum database and calculator",
+      "authority": "ExoMol / University College London",
+      "year": 2026,
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://www.exomol.com/exomolhr/about/",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Use its uncertainty-filtered high-resolution line selection (DeltaE <= 0.05 cm^-1, resolving power >100000), MARVEL-derived empirical energies, CSV generation, and live spectrum calculations as a high-quality molecular control/validation corpus."
+    },
+    {
+      "source_id": "SRC-PYEXOCROSS-R15",
+      "title": "PyExoCross line-list processing software",
+      "authority": "ExoMol / University College London",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://www.exomol.com/software/",
+      "use": ["SARA", "MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Use as a reference implementation for partition functions, lifetimes, oscillator strengths, LTE/non-LTE spectra, cross sections, and ExoMol/ExoAtom-HITRAN/HITEMP format conversion. Prefer interoperating with validated outputs rather than reimplementing mature spectroscopy utilities without need."
+    },
+    {
+      "source_id": "SRC-LHD-W-DENSITY-UTA-2026-R15",
+      "title": "Evaluation of spatiotemporal tungsten density profiles using Unresolved Transition Arrays in the Large Helical Device",
+      "authors": "R. Nishimura et al.",
+      "year": 2026,
+      "identifier": "arXiv:2606.22789",
+      "authority": "arXiv preprint / NIFS-led LHD tungsten spectroscopy",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as a recent LHD replay/validation case: reconstruct tungsten emissivity/density from a 191.7-A line within the 90-250-A UTA, combine W17+-W27+ photon-emission coefficients with transport evolution, and compare inferred radiation power with bolometry."
+    },
+    {
+      "source_id": "SRC-N2-PREDISSOCIATION-2025-R15",
+      "title": "Energy Shifts in Predissociating Levels of Diatomic Molecules: The Case of N2 interacting bound and repulsive states",
+      "authors": "Laiz R. Ventura et al.",
+      "year": 2025,
+      "identifier": "doi:10.1021/acsomega.5c03821",
+      "authority": "ACS Omega",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use its Fano-based perturbative treatment of bound-continuum coupling, level shifts, broadening, and validation against coupled-equation/direct-rate calculations as a resonance-model validation precedent. The page range 30979-30984 is an incidental numeric collision only."
+    },
+    {
+      "source_id": "SRC-JOSAB-ATTOSECOND-99073-R15",
+      "title": "Control of quantum paths in the multicycle regime and efficient broadband attosecond pulse generation",
+      "authors": "Weiyi Hong et al.",
+      "year": 2008,
+      "identifier": "doi:10.1364/JOSAB.25.001684; Optica Doc. ID 99073",
+      "authority": "Journal of the Optical Society of America B / Optica",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use the two-color multicycle HHG quantum-path selection and UV-assisted isolated-attosecond-pulse methodology as a strong-field/EM modeling reference. Exact 99073 is the publisher document ID and therefore metadata, not a measured physical value."
+    },
+    {
+      "source_id": "SRC-BCY-PROTON-CONDUCTOR-93970-R15",
+      "title": "Analysis of the Electrochemical Transport Properties of Doped Barium Cerate for Proton Conductivity in Low Humidity Conditions",
+      "authors": "Laura I. V. Holz et al.",
+      "year": 2020,
+      "identifier": "doi:10.5772/intechopen.93970",
+      "authority": "IntechOpen peer-reviewed chapter",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a proton-conducting perovskite operating-envelope reference, especially hydration/defect-chemistry and low-humidity stability constraints for BaCe0.9Y0.1O3-delta. Exact 93970 is a DOI suffix and carries metadata-only Glob weight."
+    }
+  ],
+  "evidence_updates": [
+    {
+      "record_id": "EV-R15-99073-JOSAB-DOCID",
+      "source_id": "SRC-JOSAB-ATTOSECOND-99073-R15",
+      "target": "99073",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "Optica identifies 99073 as a document ID for the publication. This is a verified technical metadata collision and must not be promoted to a physical-value hit."
+    },
+    {
+      "record_id": "EV-R15-93970-BCY-DOI",
+      "source_id": "SRC-BCY-PROTON-CONDUCTOR-93970-R15",
+      "target": "93970",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "93970 is present as the DOI suffix in a substantive materials publication; it is not the reported conductivity, energy, frequency, or other physical quantity."
+    },
+    {
+      "record_id": "EV-R15-30979-N2-PAGERANGE",
+      "source_id": "SRC-N2-PREDISSOCIATION-2025-R15",
+      "target": "30979",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "30979 is the first page of the ACS Omega article, not a physical result. The paper's spectroscopy methodology remains useful independently of the collision."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R15-VAMDC-INTEROP",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "VAMDC XSAMS provides explicit species, states, processes, sources, methods, units and state identifiers suitable for provenance-preserving normalization across heterogeneous atomic and molecular databases.",
+      "worldshepherd_uses": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL"],
+      "claims_boundary": "A federated or normalized record must retain its upstream source; aggregation or schema conversion is not independent scientific confirmation."
+    },
+    {
+      "update_id": "INFO-R15-ADAS-W-SCALE",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "OPEN-ADAS exposes 1472 tungsten-related result sets spanning fundamental and derived collisional-radiative data classes, providing a substantially broader plasma-physics validation reservoir than line-position matching alone.",
+      "worldshepherd_uses": ["SARA", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
+      "claims_boundary": "ADAS datasets have heterogeneous dates, models and provenance; select current/recommended files by physics domain rather than treating all 1472 records as equally authoritative."
+    },
+    {
+      "update_id": "INFO-R15-IAEA-DATA-GAPS",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_INFORMATION",
+      "finding": "IAEA tungsten work explicitly identifies unresolved data needs and disagreement in metastable ionization, low-charge-state charge exchange, excitation rates, W IX-W XXVII line assignments, photon opacity and edge-plasma collisional-radiative modeling.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "claims_boundary": "Documented uncertainty and missing data are research targets, not license to fill gaps by extrapolating Glob-number relationships."
+    },
+    {
+      "update_id": "INFO-R15-LHD-UTA-VALIDATION",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_INFORMATION",
+      "finding": "A June-2026 LHD study uses UTA-resolved spectroscopy, collisional-radiative photon-emission coefficients, spatial emissivity reconstruction and bolometer comparison to evaluate tungsten density and explicitly frames the sequence as useful for atomic-data validation.",
+      "worldshepherd_uses": ["OVERWATCH", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
+      "claims_boundary": "This provides a physically grounded validation workflow; it does not independently support any five-digit permutation claim unless predeclared target relationships survive the same-system statistical gates."
+    }
+  ],
+  "next_actions": [
+    "Acquire the complete current NIST ASD W II machine-readable transition export and run the predeclared target topology/relational analysis on the full graph.",
+    "Prototype an XSAMS-compatible normalization layer so NIST, VAMDC/VALD/CHIANTI, OPEN-ADAS, ExoAtom/ExoMolHR and LHD-derived records can retain source, species, state, process, unit and uncertainty provenance.",
+    "Use OPEN-ADAS and the 2026 LHD UTA study to build collisional-radiative and diagnostic replay benchmarks that are independent of numeric target matching.",
+    "Screen the October 2026 IAEA/ITER tungsten-hydrogen meeting as an opportunity/partner-intelligence lead without assuming eligibility; preserve current call/registration status and participation constraints.",
+    "Continue exact-target and same-system relational web scans, but apply multiple-testing or false-discovery correction across all targets, species, databases, tolerances and motif searches before any statistical promotion."
+  ]
+}

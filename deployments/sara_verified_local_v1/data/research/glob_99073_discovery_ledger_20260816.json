@@ -1,0 +1,139 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "purpose": "Append-only routing of substantive unique sources and calibration results discovered after the canonical snapshot was created.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NCBI-BIOC-PMC-API",
+      "title": "BioC API for PMC Open Access",
+      "authority": "NCBI / National Library of Medicine",
+      "url": "https://www.ncbi.nlm.nih.gov/research/bionlp/APIs/BioC-PMC/",
+      "use": ["SARA", "ECHO_SENTINEL_LINK"],
+      "note": "Machine-readable full-text ingestion option for open-access PMC literature; retain PMCID/source lineage."
+    },
+    {
+      "source_id": "SRC-BIOC-TEXT-MINING-2019",
+      "title": "PMC text mining subset in BioC: about 3 million full text articles and growing",
+      "year": 2019,
+      "identifier": "Bioinformatics / arXiv:1804.05957",
+      "authority": "NCBI-associated literature-mining publication",
+      "url": "https://arxiv.org/abs/1804.05957",
+      "use": ["SARA", "ECHO_SENTINEL_LINK"],
+      "note": "Methodological reference for machine-readable scientific full-text mining."
+    },
+    {
+      "source_id": "SRC-W-TUNGSTEN-CALORIMETER-2009",
+      "title": "A Tungsten / Scintillating Fiber Electromagnetic Calorimeter Prototype for a High-Rate Muon g-2 Experiment",
+      "year": 2009,
+      "identifier": "arXiv:0910.0818",
+      "authority": "arXiv / experimental particle-detector literature",
+      "url": "https://arxiv.org/abs/0910.0818",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Reusable tungsten detector/shielding geometry, construction, and GEANT4 comparison reference."
+    },
+    {
+      "source_id": "SRC-W-DIELECTRONIC-RECOMBINATION-2017",
+      "title": "Dielectronic recombination of the open 4d-shell of Tungsten: W37+ - W28+",
+      "year": 2017,
+      "identifier": "arXiv:1712.04233",
+      "authority": "arXiv / atomic-plasma physics literature",
+      "url": "https://arxiv.org/abs/1712.04233",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Atomic-plasma modeling reference for tungsten ionization/recombination and relativistic configuration mixing."
+    },
+    {
+      "source_id": "SRC-W-NEUTRON-CAPTURE-2013",
+      "title": "A structural evaluation of the tungsten isotopes via thermal neutron capture",
+      "year": 2013,
+      "identifier": "arXiv:1311.1482",
+      "authority": "arXiv / nuclear spectroscopy literature",
+      "url": "https://arxiv.org/abs/1311.1482",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Tungsten isotope neutron-capture cross-section and decay-scheme reference for radiation/material modeling."
+    },
+    {
+      "source_id": "SRC-W-RADIOPURE-2022",
+      "title": "Identification of radiopure tungsten for low background applications",
+      "year": 2022,
+      "identifier": "arXiv:2204.03540",
+      "authority": "arXiv / low-background detector materials literature",
+      "url": "https://arxiv.org/abs/2204.03540",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Tungsten purity, shielding, cosmogenic-background and prototype-design reference."
+    },
+    {
+      "source_id": "SRC-DEEPLIFT-2016",
+      "title": "Not Just a Black Box: Learning Important Features Through Propagating Activation Differences",
+      "year": 2016,
+      "identifier": "arXiv:1605.01713",
+      "authority": "arXiv / machine-learning interpretability literature",
+      "url": "https://arxiv.org/abs/1605.01713",
+      "use": ["SARA", "PRIME_SENTINEL"],
+      "note": "Interpretability-method reference; useful to claims and explainability gates, not number-pattern evidence."
+    },
+    {
+      "source_id": "SRC-STOCHASTIC-CONTROL-DNN-2018",
+      "title": "Deep neural networks algorithms for stochastic control problems on finite horizon: convergence analysis",
+      "year": 2018,
+      "identifier": "arXiv:1812.04300",
+      "authority": "arXiv / stochastic-control literature",
+      "url": "https://arxiv.org/abs/1812.04300",
+      "use": ["SARA"],
+      "note": "Control/optimization methodology reference with convergence framing."
+    },
+    {
+      "source_id": "SRC-PREPRINT-REACTION-2012",
+      "title": "How the Scientific Community Reacts to Newly Submitted Preprints: Article Downloads, Twitter Mentions, and Citations",
+      "year": 2012,
+      "identifier": "arXiv:1202.2461",
+      "authority": "arXiv / scholarly-communication research",
+      "url": "https://arxiv.org/abs/1202.2461",
+      "use": ["OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Reference for measuring publication/outreach attention; not scientific evidence for Glob."
+    },
+    {
+      "source_id": "SRC-REVENUE-WELFARE-2013",
+      "title": "Reducing Revenue to Welfare Maximization: Approximation Algorithms and other Generalizations",
+      "year": 2013,
+      "identifier": "arXiv:1305.4000",
+      "authority": "arXiv / algorithmic mechanism-design literature",
+      "url": "https://arxiv.org/abs/1305.4000",
+      "use": ["SARA"],
+      "note": "Reusable approximation/optimization methodology; retained as search-discovered domain intelligence, not Glob evidence."
+    },
+    {
+      "source_id": "SRC-FR-TUNGSTEN-SHOT-2025",
+      "title": "Certain Tungsten Shot From the People's Republic of China: Antidumping Duty and Countervailing Duty Orders",
+      "year": 2025,
+      "identifier": "90 FR 41811; 2025-16422",
+      "authority": "U.S. Federal Register / GovInfo",
+      "url": "https://www.govinfo.gov/app/details/FR-2025-08-27/2025-16422",
+      "use": ["OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Tungsten supply-chain/trade-policy intelligence; not number-pattern evidence."
+    }
+  ],
+  "calibration_updates": {
+    "wii_uniform_endpoint_topology_approximation": {
+      "even_levels": 62,
+      "odd_levels": 132,
+      "assumption": "Each classified transition independently selects one even and one odd level uniformly. This is not the final topology-preserving null because actual transition degrees are heterogeneous.",
+      "pair_probability_same_even_endpoint": 0.016129032258064516,
+      "pair_probability_same_odd_endpoint": 0.007575757575757576,
+      "pair_probability_share_either_endpoint": 0.02358260019550342,
+      "interpretation": "The observed 39699.84/41494.48 pair shares an even a^4P_(3/2) endpoint. Under this simplified model such a shared even endpoint is about a 1.61% pair event; shared either endpoint about 2.36%. Global multiple testing and real degree heterogeneity must be included before significance is claimed."
+    }
+  },
+  "next_actions": [
+    "Acquire a machine-readable full W II transition table and calculate the empirical even/odd degree distribution.",
+    "Run a topology-preserving Monte Carlo/permutation null using the 41 generated targets in the W II wavenumber range.",
+    "Apply global multiple-testing correction across all tested species, datasets, target states, tolerances, and relational motifs.",
+    "Reconcile historical Yb II 56977 against current NIST ASD/Handbook values.",
+    "Re-verify carried-forward 79305 MHz, 79675.1 cm^-1, 96750, 79056, 60957, 99639, 99395, and historical 99073 claims at source level."
+  ]
+}

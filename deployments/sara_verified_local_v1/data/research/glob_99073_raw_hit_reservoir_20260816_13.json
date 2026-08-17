@@ -1,0 +1,35 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_12.json",
+  "purpose":"Continue raw coverage around the 13524 orbit 31449->34914->39441->34194 and preserve an additional independent physical 31449 occurrence in apatite lattice-energy modeling without conflating systems or units.",
+  "policy":{
+    "rule":"Independent physical quantities sharing the same five digits are retained with quantity type, unit and system provenance; cross-system equality alone is not P2.",
+    "promotion":"Theoretical/estimated physical quantities remain P1_THEORY and do not inherit experimental status from another target occurrence.",
+    "no_hit":"No-hit observations apply only to the defined query pass and may be superseded by later searches."
+  },
+  "records":[
+    {"target":"31449","raw_hit_type":"P1_CARRY_FORWARD","occurrence":"31449(2) cm^-1","context":"Previously established experimental H2S threshold ion-pair production spectroscopy result","glob_weight":"P1_CARRY_FORWARD","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"]},
+    {"target":"31449","raw_hit_type":"PHYSICAL_THEORY_VALUE","occurrence":"estimated U_POT=31449 kJ mol^-1","context":"Glasser-Jenkins lattice-energy estimate for Sr10(PO4)6I2 in ACS apatite thermochemistry study","glob_weight":"P1_THEORY","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"]},
+    {"target":"31449","raw_hit_type":"REPOSITORY_HANDLE","occurrence":"UCD handle 10197/31449","context":"2026 thesis combining MIR, NIR, fluorescence and Raman spectroscopy with chemometrics, imaging and deep learning to predict bovine-milk functional properties","glob_weight":"M1_RAW","worldshepherd_use":["SARA","OVERWATCH","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"31449","raw_hit_type":"PUBMED_ID","occurrence":"PMID 31449","context":"Autoxidation of polysorbates","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"31449","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Appl. Mater. Interfaces 2016, 8, 31449-31459","context":"Multilayer ceramic capacitors using Li2CO3-coated Ni particles and fast firing to preserve electrode conductivity while reducing oxygen vacancies","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"31449","raw_hit_type":"DATABASE_COMPOUND_ID","occurrence":"CSDB compound ID 31449","context":"carbohydrate structure database identifier","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"34194","raw_hit_type":"UNIVERSITY_REPOSITORY_ID","occurrence":"Regensburg document ID 34194","context":"Vibrations and hydrogen bonding in porphycene using IR, Raman, neutron scattering, fluorescence and ab-initio molecular dynamics","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"34194","raw_hit_type":"TRANSITION_COUNT","occurrence":"34194 transitions","context":"ExoMol CH+ rovibronic line list contains 1505 states and 34194 transitions over 0-33010 cm^-1","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"34914","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 34914 spectroscopy cm-1","context":"No sufficiently relevant exact physical or metadata occurrence surfaced in this defined pass","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"target":"39441","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 39441 spectroscopy cm-1","context":"No sufficiently relevant exact physical or metadata occurrence surfaced in this defined pass","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]}
+  ],
+  "information_updates":[
+    {"finding":"The same target 31449 independently maps to an experimental molecular spectroscopic quantity in H2S and an estimated ionic-solid lattice energy in an apatite system, with entirely different units and physics.","worldshepherd_use":["PRIME_SENTINEL","OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"This is cross-system P1 multiplicity, not a P2 physical relation and not evidence of causal linkage."},
+    {"finding":"The apatite study supplies a reusable thermochemical/structural validation framework: lattice energies derived from thermodynamic cycles are compared with a volume/ionic-strength estimator and errors are explicitly quantified.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK"]},
+    {"finding":"The 2026 multi-spectroscopy/chemometrics thesis provides a useful model for combining MIR, NIR, fluorescence and Raman inputs with linear/nonlinear predictive models and reference methods.","worldshepherd_use":["SARA","OVERWATCH","MATERIALS_AND_CHARACTERIZATION"],"claims_boundary":"31449 is the repository handle."}
+  ],
+  "next_actions":[
+    "Record the second 31449 physical-system occurrence in the evidence ledger as P1_THEORY without changing the existing H2S experimental P1.",
+    "Continue raw scans into 44940->49044->40494->44409 and 49401->44190->41049->40914.",
+    "Track targets with multiple independent physical-system hits separately from same-system P2 closures.",
+    "Apply unit-aware and subtype-aware multiple-testing controls before aggregate interpretation."
+  ]
+}

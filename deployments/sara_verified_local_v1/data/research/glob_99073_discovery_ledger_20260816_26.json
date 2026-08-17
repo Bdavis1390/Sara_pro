@@ -1,0 +1,66 @@
+{
+  "schema_version":"ws-glob-discovery-ledger-1.0",
+  "parent_registry":"glob_99073_registry.json",
+  "as_of":"2026-08-16",
+  "ledger_sequence":26,
+  "purpose":"Promote the newly resolved 13524-family 19444-cm^-1 LiCa result as theoretical P1, ingest the associated ultracold-molecule spectroscopy methodology, and preserve the distinction between theoretical term energies, measured molecular parameters and raw page/identifier collisions.",
+  "source_ingestion_policy":{
+    "rule":"Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates":"Publisher, PubMed and PMC records for the same LiCa article are provenance aliases and are not independent evidence.",
+    "search_noise":"Article pages, DOI components and chemical identifiers are not Glob evidence; only the explicitly calculated 19444-cm^-1 LiCa term value is promoted here, and only as P1_THEORY."
+  },
+  "sources":[
+    {
+      "source_id":"SRC-LICA-KROIS-2013-R26",
+      "title":"Spectroscopy of Cold LiCa Molecules Formed on Helium Nanodroplets",
+      "authors":"Günter Krois; Johann V. Pototschnig; Florian Lackner; Wolfgang E. Ernst",
+      "year":2013,
+      "identifier":"doi:10.1021/jp407818k; PMCID:PMC3871282",
+      "authority":"The Journal of Physical Chemistry A / ACS",
+      "discovery_status":"NEWLY_DISCOVERED_FOR_GLOB_19444",
+      "use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"],
+      "note":"Experimental REMPI-TOF and LIF spectroscopy of LiCa on helium nanodroplets from 15000 to 25500 cm^-1 is combined with high-level ab-initio/MRCI calculations of the 19 lowest potential-energy curves. The theoretical molecular-parameter comparison gives Te=19444 cm^-1 for the 3^2Pi state in the authors' calculation, whereas experimentally derived 3^2Pi term energies in the same paper are near 19330 cm^-1."
+    }
+  ],
+  "evidence_updates":[
+    {
+      "record_id":"EV-R26-LICA-19444",
+      "source_id":"SRC-LICA-KROIS-2013-R26",
+      "permutation_family":"12345->13524",
+      "seed":"245779675000031449401",
+      "source_window":"14494",
+      "orbit":["14494","14449","14944","19444"],
+      "target":"19444",
+      "physical_value_cm-1":19444,
+      "quantity_type":"electronic-state term energy Te",
+      "species_system":"LiCa molecule, 3^2Pi state",
+      "evidence_class":"P1",
+      "physical_value_subtype":"THEORETICAL_MOLECULAR_TERM_ENERGY",
+      "verification_status":"verified_primary_publisher_and_open_full_text",
+      "worldshepherd_uses":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"],
+      "claims_boundary":"The exact 19444 cm^-1 value is theoretical, not the experimentally derived Te. Do not call it an observed spectral line or an experimental term energy. No P2 relation is assigned."
+    }
+  ],
+  "information_updates":[
+    {
+      "update_id":"INFO-R26-LICA-MULTIMODAL-VALIDATION",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "finding":"LiCa provides a reusable Worldshepherd validation pattern in which REMPI-TOF and LIF measurements are reconciled against MRCI potential-energy curves, transition dipole moments and Franck-Condon factors, with explicit comparison to earlier gas-phase work.",
+      "worldshepherd_uses":["QUANTUM_DEVICE_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK"],
+      "claims_boundary":"Use as a model/measurement reconciliation precedent; it does not validate Glob permutations."
+    },
+    {
+      "update_id":"INFO-R26-THEORY-VS-EXPERIMENT-GATE",
+      "discovery_status":"NEWLY_FORMALIZED_FROM_SOURCE",
+      "finding":"A generated target can exactly equal a calculated physical parameter while differing from the experimentally derived value in the same publication. Worldshepherd must therefore retain theory/evaluated/experimental P1 subtypes in all aggregate analyses.",
+      "worldshepherd_uses":["PRIME_SENTINEL","OVERWATCH","ECHO_SENTINEL_LINK"],
+      "claims_boundary":"Theoretical P1 counts must not be pooled uncritically with experimental/evaluated P1 hits."
+    }
+  ],
+  "next_actions":[
+    "Screen the complete LiCa physical parameter tables and spectra against all 208 predeclared union states and perform same-system topology and relational checks before considering any P2 relationship.",
+    "Continue raw-hit accumulation independently, including the dense 14449/14944/19444 page and identifier neighborhoods.",
+    "Preserve the fixed 1 cm^-1 empirical screening tolerance where applicable and keep calculated exact-value matches in a separate P1_THEORY stratum.",
+    "Apply experiment-wide multiple-testing and false-discovery correction across all 208 target states and all screened physical systems before interpreting aggregate P1/P2 rates."
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 24,
+  "purpose": "Continue the 12345->14523 internet scan, record current NIST Rh III topology limitations around the theoretical 77596-cm^-1 candidate, evaluate the NS 44049 same-system neighborhood, and preserve authoritative technical identifier collisions as Worldshepherd controls.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, repeated records, and alternate landing pages are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence, CVE numbers, CAS numbers, advisory IDs, serial numbers, file boundaries, and similar identifiers are not Glob evidence unless an independently verified physical quantity in a declared unit family is established."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NIST-ASD-RH-HOLDINGS-R24",
+      "title": "NIST Atomic Spectra Database holdings — rhodium levels and lines",
+      "authority": "National Institute of Standards and Technology",
+      "discovery_status": "NEWLY_DISCOVERED_INFORMATION",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Current NIST ASD holdings report 196 Rh III energy levels and 73 Rh III spectral lines; the 73 Rh III line records presently have zero level designations and zero transition-probability entries. Use this as a topology-coverage limitation when evaluating the historical theoretical 77596-cm^-1 Rh III candidate."
+    },
+    {
+      "source_id": "SRC-NVD-CVE-2025-60075-R24",
+      "title": "CVE-2025-60075",
+      "authority": "NIST National Vulnerability Database",
+      "year": 2025,
+      "discovery_status": "NEWLY_DISCOVERED_FOR_14523_FAMILY",
+      "use": ["SECURITY_HARDENING", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "note": "Use as a security-feed/identifier negative-control exemplar. The 60075 equality is a CVE identifier and carries zero physical Glob evidence weight. It is not evidence that Worldshepherd uses or is affected by the named WordPress plugin."
+    },
+    {
+      "source_id": "SRC-NIST-WEBBOOK-CAS-60075-23-2-R24",
+      "title": "NIST Chemistry WebBook — 3,4-Dimethoxyphenylacethydrazide",
+      "authority": "National Institute of Standards and Technology",
+      "discovery_status": "NEWLY_DISCOVERED_FOR_14523_FAMILY",
+      "use": ["NEGATIVE_CONTROL_CORPUS", "MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
+      "note": "The compound carries CAS Registry Number 60075-23-2. Use this as an authoritative chemical-identifier control demonstrating that the target digits can occur in scientific databases without representing a measured energy or frequency."
+    }
+  ],
+  "referenced_sources": [
+    "SRC-NIST-WEBBOOK-NS-H-44049-R22",
+    "SRC-NBS-PALLADIUM-GROUP-LEVELS-1966-R23"
+  ],
+  "evidence_updates": [
+    {
+      "record_id": "EV-R24-60075-CVE-CONTROL",
+      "source_id": "SRC-NVD-CVE-2025-60075-R24",
+      "permutation_family": "12345->14523",
+      "seed": "245779675000031449401",
+      "source_window": "67500",
+      "orbit": ["67500", "60075"],
+      "target": "60075",
+      "evidence_class": "M1",
+      "verification_status": "negative_control",
+      "worldshepherd_uses": ["SECURITY_HARDENING", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "60075 is the numeric component of a CVE identifier; it is not a physical quantity."
+    },
+    {
+      "record_id": "EV-R24-60075-CAS-CONTROL",
+      "source_id": "SRC-NIST-WEBBOOK-CAS-60075-23-2-R24",
+      "permutation_family": "12345->14523",
+      "target": "60075",
+      "evidence_class": "M1",
+      "verification_status": "negative_control",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
+      "claims_boundary": "60075 is embedded in CAS 60075-23-2; it is not a spectroscopy value."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R24-RHIII-CURRENT-TOPOLOGY-LIMIT",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "Current NIST ASD holds 196 Rh III levels and 73 Rh III lines, but the Rh III line holdings currently contain no level designations. The historical 77596-cm^-1 theoretical Rh III level therefore cannot be converted into a current-NIST same-endpoint or Ritz P2 claim using the present line-designation holdings alone.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "Absence of current level-designated line topology is a data-coverage limitation, not evidence against the historical calculated level itself."
+    },
+    {
+      "update_id": "INFO-R24-NS-44049-NEIGHBORHOOD",
+      "discovery_status": "NEWLY_SCREENED_FROM_EXISTING_SOURCE",
+      "finding": "The NIST NS diatomic-constants table lists H 2Pi_i Te=(44049) cm^-1 and multiple neighboring electronic states/band origins. Screening the immediate 44940->44049 orbit against that same NS table did not identify 44940 as a same-system term or band-origin match within the predeclared 1 cm^-1 tolerance; no P2 upgrade is made.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "44049 remains P1. The nearby I->X band origin 44050.1 cm^-1 is 1.1 cm^-1 from 44049 and lies just outside the current 1 cm^-1 screening tolerance; tolerance is not widened post hoc."
+    },
+    {
+      "update_id": "INFO-R24-60075-DUAL-IDENTIFIER-CONTROL",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "The same generated target 60075 independently occurs in two authoritative NIST contexts as unrelated identifiers: CVE-2025-60075 and CAS 60075-23-2. This is a useful empirical demonstration of collision multiplicity in technical corpora.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "OVERWATCH", "SECURITY_HARDENING"],
+      "claims_boundary": "Repeated authoritative-database occurrence does not increase physical evidence when all occurrences are identifiers rather than measured quantities."
+    }
+  ],
+  "next_actions": [
+    "Continue topology and relational scans for the remaining 14523-only states using primary spectroscopy sources and preserve the 1 cm^-1 tolerance without post-hoc widening.",
+    "Seek modern Rh III experimental/evaluated level analyses or line classifications that can independently test the historical theoretical 77596-cm^-1 prediction.",
+    "Continue full NS-system screening for other predeclared three-family targets before any P2 relational promotion of 44049.",
+    "Recompute topology-preserving null models and experiment-wide multiple-testing/false-discovery correction over the 208-state three-family union before interpreting aggregate P1/P2 hit counts."
+  ]
+}

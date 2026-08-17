@@ -1,0 +1,39 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_14.json",
+  "purpose":"Continue raw coverage through 99369, 93996, 69993, 69399, 93599, 95939, 99953 and 99335 while routing relativistic-plasma, microwave-heating and spectroscopy-related sources into Worldshepherd.",
+  "policy":{
+    "rule":"Raw repository, CID, CAS, PII, affiliation and count occurrences have zero automatic physical-evidence weight.",
+    "promotion":"Counts, identifiers and addresses are not P1 even when they occur inside experimental physics papers; P1 requires the five digits to encode the verified physical quantity itself.",
+    "source_quality":"Derivative snippets may seed a raw candidate, but primary or authoritative source resolution is required before evidence promotion."
+  },
+  "records":[
+    {"target":"99369","raw_hit_type":"UNIVERSITY_REPOSITORY_ID","occurrence":"ITS repository 99369","context":"Optical-fluorescence early dental-caries detection with ANN, KNN and SVM classification","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","SARA","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99369","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"10.1016/S0040-4020(01)99369-X","context":"Enumeration of resonance structures using molecular-orbital techniques","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93996","raw_hit_type":"UNIVERSITY_REPOSITORY_ID","occurrence":"Cardiff ORCA eprint 93996","context":"Microwave absorption in powders of small conducting particles; electric versus magnetic dipole heating and skin-depth optimization","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93996","raw_hit_type":"NIST_SYNONYM_OR_COMPOUND_CODE","occurrence":"NSC 93996","context":"NIST Chemistry WebBook synonym/identifier for epiandrosterone","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"69993","raw_hit_type":"UNIVERSITY_REPOSITORY_HANDLE","occurrence":"Deep Blue handle 2027.42/69993","context":"Representation of fields in a relativistic plasma by a surface integral under linearized Maxwell-Boltzmann dynamics","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"69993","raw_hit_type":"REPOSITORY_ID","occurrence":"SONAR document 69993","context":"Mechanosensitivity of phosphocholine-headgroup polydiacetylene using UV/VIS, fluorescence and dynamic-light-scattering measurements","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"69399","raw_hit_type":"PUBCHEM_CID","occurrence":"PubChem CID 69399","context":"Carbonochloridic acid, 3-chloropropyl ester with NMR, GC-MS, IR and Raman spectral records","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"69399","raw_hit_type":"CAS_PREFIX","occurrence":"CAS 69399-54-8 / 69399-53-7 / 69399-52-6","context":"Multiple NIST Chemistry WebBook ion records sharing the 69399 prefix and offering vibrational/electronic energy-level data","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93599","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"10.1016/S0021-9673(00)93599-4","context":"Surface-layer sorbents for group analysis of aromatic hydrocarbons in petroleum distillates","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93599","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"Palmdale, California 93599","context":"author affiliation in continuous-wave cavity ring-down spectroscopy plasma diagnostic literature","glob_weight":"N0_RAW","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95939","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"10.1016/S0020-1693(00)95939-5","context":"Preparation and physical properties of copper(I)-triphenyl complexes","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99335","raw_hit_type":"EXPERIMENTAL_DATA_COUNT_DERIVATIVE_LEAD","occurrence":"99335 reflections used in refinement","context":"Crystallographic refinement count in SARS-CoV-2 nsp3 Mac1 structural study surfaced through derivative full-text indexing","glob_weight":"N0_RAW","worldshepherd_use":["OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99953","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 99953 cm-1 spectroscopy","context":"No sufficiently relevant exact physical or authoritative metadata occurrence identified in this defined pass; not a claim of global absence","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]}
+  ],
+  "information_updates":[
+    {"finding":"The microwave-powder paper provides a quantitative EM-heating design rule: highly conducting particles are dominated by magnetic-induction absorption, with optimum particle radius tied to skin depth, whereas weak conductors can be electric-dipole dominated.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"93996 is a repository ID, not a measured absorption value."},
+    {"finding":"The relativistic-plasma paper derives a surface-integral representation for electric intensity when tangential electromagnetic fields and the electronic distribution function are specified on the enclosing surface; use as an EM/plasma boundary-formulation reference.","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK","QUANTUM_DEVICE_CHARACTERIZATION"],"claims_boundary":"69993 is the repository handle."},
+    {"finding":"The 69399 cluster demonstrates high within-prefix collision multiplicity in chemical registries: one target can match a PubChem CID and several distinct CAS prefixes while remaining entirely metadata-level.","worldshepherd_use":["PRIME_SENTINEL","NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"finding":"Experimental data counts such as 99335 crystallographic reflections must remain distinct from measured physical quantities; they can characterize dataset scale but do not satisfy P1.","worldshepherd_use":["PRIME_SENTINEL","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "next_actions":[
+    "Continue raw coverage through 93593, 95339, 35293, 32359, 33925, 93452, 94235, 92543, 52234, 52423 and 54322.",
+    "Run physical-value searches independently and do not promote experimental data counts, addresses or identifiers.",
+    "Use source-namespace and leading-zero strata in collision-density/null modeling.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery correction for physical evidence."
+  ]
+}

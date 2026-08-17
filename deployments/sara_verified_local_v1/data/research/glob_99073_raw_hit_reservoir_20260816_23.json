@@ -1,0 +1,36 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_22.json",
+  "purpose":"Continue leading-zero raw accumulation through 00005, 00500, 00003, 00300, 30000 and 03000 while retaining cybersecurity, CMMC governance, sensing hardware, product-support and manufacturing intelligence independently of Glob evidence.",
+  "policy":{
+    "rule":"Leading-zero targets are preserved as exact five-character strings. Document IDs, advisory IDs, part numbers, postal codes and catalog identifiers are raw controls with zero automatic physical-evidence weight.",
+    "promotion":"A useful security/governance/hardware source remains M1/N0 for Glob unless the digits independently encode a verified physical quantity; utility and evidence are orthogonal.",
+    "no_hit":"NO_HIT applies only to the defined search pass and remains revisable."
+  },
+  "records":[
+    {"target":"00005","raw_hit_type":"DOD_GUIDANCE_ID","occurrence":"DoD-CIO-00005","context":"CMMC Scoping Guide – Level 1, current DoD active guidance","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00005","raw_hit_type":"INTEL_SECURITY_ADVISORY_ID","occurrence":"INTEL-SA-00005","context":"Intel Centrino wireless-driver malformed-frame privilege escalation advisory","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00005","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s44492-026-00005-1","context":"2026 diffusion-bonded vanadium/Ti-6Al-4V interface microstructure and residual-stress study","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","TEST_AND_MEASUREMENT","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00500","raw_hit_type":"ASTRONOMICAL_CATALOG_COMPONENT","occurrence":"IRAS 00500+6713","context":"White-dwarf merger / SN Iax remnant object identifier used in X-ray and dynamical-model studies","glob_weight":"M1_RAW","worldshepherd_use":["SIMULATION_AND_NUMERICAL_METHODS","ATOMIC_AND_MOLECULAR_MODELS","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00500","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"Colombo 00500, Sri Lanka","context":"Recurring address code for electronics/automation and production-monitoring organizations surfaced during raw scanning","glob_weight":"N0_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00003","raw_hit_type":"DOD_GUIDANCE_ID","occurrence":"DoD-CIO-00003","context":"CMMC Assessment Guide – Level 2, current DoD active guidance","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00003","raw_hit_type":"FEDERAL_ITEM_GUIDE_CODE","occurrence":"FIIG/record code 00003","context":"Federal supply-item record coding example surfaced in NSN data","glob_weight":"M1_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00300","raw_hit_type":"INTEL_SECURITY_ADVISORY_ID","occurrence":"INTEL-SA-00300","context":"Intel SNMP Subagent Stand-Alone for Windows privilege-escalation advisory; discontinued product","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00300","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"S0040-6090(11)00300-2","context":"Thin Solid Films record for laser-based local back-surface-field formation in n-type silicon solar cells","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","MATERIALS_AND_CHARACTERIZATION","TEST_AND_MEASUREMENT","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"30000","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 30000 security software manufacturing operations materials","context":"Results were dominated by salary/count/marketing quantities rather than stable technical identifiers or admissible physical values in this pass","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"target":"03000","raw_hit_type":"MANUFACTURER_PART_NUMBER","occurrence":"Axis part number 03000-001","context":"AXIS F9104-B Mk II AI-powered 4-channel modular camera main unit","glob_weight":"M1_RAW","worldshepherd_use":["SENSING_AND_SENSOR_FUSION","SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"DoD-CIO-00003 and DoD-CIO-00005 make the leading-zero raw block directly useful to Worldshepherd capture/security readiness by pointing to current CMMC Level 2 assessment and Level 1 scoping guidance.","worldshepherd_use":["SECURITY_HARDENING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPPORTUNITY_AND_PARTNER_INTEL"],"claims_boundary":"The five-digit strings are guidance identifiers, not physical evidence."},
+    {"finding":"Axis F9104-B Mk II provides an edge-sensing architecture reference with four video channels, DLPU-based analytics, hardware-backed Edge Vault security, current AXIS OS support and published SBOM/integrity information.","worldshepherd_use":["SENSING_AND_SENSOR_FUSION","SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY"],"claims_boundary":"03000 is the manufacturer part-number prefix."},
+    {"finding":"The Intel 00005/00300 advisories provide historical failure-mode examples for driver memory corruption and uncontrolled installer search paths, useful for hardening legacy integrations and deprecation/removal decisions.","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING"],"claims_boundary":"Advisory IDs are metadata controls."}
+  ],
+  "next_actions":[
+    "Continue raw coverage through 00130, 10030, 01030, 30410, 43010 and 04013 while routing useful sources across all Worldshepherd domains.",
+    "Continue source-by-source retroactive utility backfill for earlier ledgers alongside new internet scanning.",
+    "Continue same-system topology and relational verification independently for physical P1/P2 candidates.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}

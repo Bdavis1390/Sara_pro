@@ -1,0 +1,32 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_34.json",
+  "purpose":"Deepen sparse-state coverage with cross-domain security, AI evaluation, biological custody, simulation-code, laboratory-coding and supply-chain observations while keeping all identifier matches nonphysical.",
+  "policy":{
+    "rule":"Useful raw occurrences are retained across all domains with zero automatic physical-evidence weight.",
+    "promotion":"CVE, article, catalog, LOINC and repository identifiers never promote a target to P1/P2 without independent physical-value evidence.",
+    "no_hit":"Sparse and no-hit states remain priority search targets and may accumulate later observations append-only."
+  },
+  "records":[
+    {"target":"40194","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-40194","context":"phpseclib variable-time SSH HMAC comparison using short-circuiting binary comparison","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","TEST_AND_MEASUREMENT"]},
+    {"target":"40194","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-40194","context":"Linux intel_pstate QoS request object-lifecycle issue during CPU hot removal","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"40194","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2023-40194","context":"Foxit Reader arbitrary file creation through exportDataObject path/whitespace handling","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"89367","raw_hit_type":"ARTICLE_IDENTIFIER","occurrence":"JMIR Medical Education e89367","context":"2026 retrospective propensity-score-matched evaluation of voluntary real-world use of an AI history-taking training system","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","OPERATIONS_AND_RELIABILITY","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"95067","raw_hit_type":"BIOLOGICAL_MATERIAL_CATALOG_ID","occurrence":"ATCC 95067","context":"Human clone yWXD452 with certificate, contamination and material-handling metadata","glob_weight":"N0_RAW","worldshepherd_use":["ECHO_SENTINEL_LINK","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"92453","raw_hit_type":"BIOLOGICAL_MATERIAL_CATALOG_ID","occurrence":"ATCC 92453","context":"Human clone yWXD5193 with BSL, certificate and GenBank cross-reference metadata","glob_weight":"N0_RAW","worldshepherd_use":["ECHO_SENTINEL_LINK","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"99593","raw_hit_type":"ARTICLE_IDENTIFIER","occurrence":"eLife 99593","context":"Alternative stable states in microbial communities undergoing horizontal gene transfer; associated numerical-simulation code archived via Zenodo","glob_weight":"M1_RAW","worldshepherd_use":["SIMULATION_AND_NUMERICAL_METHODS","AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","ECHO_SENTINEL_LINK"]},
+    {"target":"54232","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-54232","context":"vLLM Dockerfile dependency-confusion vulnerability through extra package index and unsafe index strategy","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION"]},
+    {"target":"54232","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-54232","context":"Adobe FrameMaker use-after-free triggered by malicious file","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"54232","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2023-54232","context":"Linux m68k supervisor-mode bus-error/exception-table handling defect","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY"]},
+    {"target":"33295","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-33295","context":"AVideo stored XSS through unescaped video title in CDN download buttons","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"33295","raw_hit_type":"LABORATORY_CODE","occurrence":"LOINC 33295-7","context":"JC Virus PCR CSF laboratory observation code exposed through Mayo Clinic Laboratories interoperability metadata","glob_weight":"M1_RAW","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","ECHO_SENTINEL_LINK"]}
+  ],
+  "next_actions":[
+    "Continue analyzer-driven sparse-state sampling until single-record and single-namespace counts materially decline.",
+    "Cross-check vLLM, phpseclib and related security lessons against the actual Worldshepherd dependency/build inventory before asserting exposure.",
+    "Use real-world AI adoption and simulation-code provenance sources as validation-method inputs independent of their number collisions.",
+    "Continue physical topology/relational analysis with fixed tolerance and experiment-wide multiple-testing/false-discovery controls."
+  ]
+}

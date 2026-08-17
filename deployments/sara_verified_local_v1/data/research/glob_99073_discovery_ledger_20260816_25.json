@@ -1,0 +1,164 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 25,
+  "purpose": "Institutionalize parallel raw-number-hit accumulation while continuing evidence promotion separately, ingest newly surfaced spectroscopy/materials/sensing publications into Worldshepherd, and run a first density-only sanity check on the Sr I 60057/60705 P2 motif over the full 208-state three-family union.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, repeated database records, alternate landing pages, and derivative copies are provenance aliases and are not independent evidence.",
+    "search_noise": "Raw exact-number occurrence is retained for collision statistics, but DOI suffixes, article numbers, page numbers, registry identifiers, serials, software IDs and no-hit results are not Glob evidence unless independently promoted through the physical-evidence gates."
+  },
+  "sources": [
+    {
+      "source_id":"SRC-OPTICA-SRI-BROWN-1983-R25",
+      "title":"Absorption spectrum of Sr I between 1400 and 1900 Angstrom",
+      "authors":"C. M. Brown; M. S. Longmire; M. L. Ginter",
+      "year":1983,
+      "identifier":"doi:10.1364/JOSA.73.000985",
+      "authority":"Optical Society of America / Journal of the Optical Society of America",
+      "discovery_status":"REVERIFIED_EXISTING_WITH_FULL_TABLE_ACCESS",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"],
+      "note":"Publisher HTML exposes both spectroscopy tables, enabling a complete within-paper target screen instead of selective neighborhood checking."
+    },
+    {
+      "source_id":"SRC-NANOPHOTONIC-SPRM-2026-R25",
+      "title":"An integrated nanophotonic SPRM microsystem for real-time, label-free quantification of single-cell adhesion dynamics",
+      "year":2026,
+      "identifier":"doi:10.1038/s41378-026-01403-0",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use the integrated nanophotonic sensing, real-time imaging, and label-free quantification architecture as a sensor/measurement-system reference. The 01403 occurrence is metadata only."
+    },
+    {
+      "source_id":"SRC-POLYDOPAMINE-AFM-IR-2023-R25",
+      "title":"Atomic force and infrared spectroscopic studies on the role of surface charge for the anti-biofouling properties of polydopamine films",
+      "year":2023,
+      "identifier":"doi:10.1007/s00216-022-04431-7",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use combined AFM/infrared/surface-charge methodology for functional-surface characterization. The 04431 occurrence is a DOI component."
+    },
+    {
+      "source_id":"SRC-SULFATE-CRYO-ION-2020-R25",
+      "title":"Cryogenic ion trap vibrational spectroscopy of the microhydrated sulfate dianions SO4(2-)(H2O)3-8",
+      "year":2020,
+      "identifier":"doi:10.1039/D0CP04386A",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use cryogenic tagged-ion vibrational spectroscopy and solvation-structure analysis as a molecular validation reference. 27745 is the terminal article page, not a physical target value."
+    },
+    {
+      "source_id":"SRC-ANN-UVVIS-RIBONUCLEOTIDES-1998-R25",
+      "title":"Artificial Neural Networks in UV/VIS Spectral Analysis of Ribonucleotides",
+      "year":1998,
+      "identifier":"doi:10.1016/S1474-6670(17)40194-7",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["SARA","OVERWATCH","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use as a historical spectral-unmixing/chemometrics precedent for learning overlapping UV/VIS signatures with cross-validation controls. The 40194 occurrence is DOI metadata."
+    },
+    {
+      "source_id":"SRC-DBS-HBS-SUBDOPPLER-2008-R25",
+      "title":"Sub-Doppler millimetre-wave spectroscopy of DBS and HBS: accurate values of nuclear electric and magnetic hyperfine structure constants",
+      "year":2008,
+      "identifier":"doi:10.1039/B710356E; repository handle 11585/54232",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use as a high-resolution rotational/hyperfine spectroscopy benchmark. 54232 is the repository identifier, not the reported physical constant."
+    },
+    {
+      "source_id":"SRC-LIDAR-HETEROINTEGRATION-2020-R25",
+      "title":"Hetero-integration enables fast switching time-of-flight sensors for light detection and ranging",
+      "year":2020,
+      "identifier":"doi:10.1038/s41598-020-59677-x",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use hetero-integrated fast-switching ToF detector architecture as a sensing/ ranging reference. 59677 is DOI metadata."
+    },
+    {
+      "source_id":"SRC-FLUORITE-FERROELECTRIC-2026-R25",
+      "title":"Direct observation of cation-dependent polarisation switching dynamics in fluorite ferroelectrics",
+      "year":2026,
+      "identifier":"doi:10.1038/s41467-026-70593-y",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use direct switching-dynamics characterization in fluorite ferroelectrics as a programmable-material response reference. 70593 is DOI metadata."
+    },
+    {
+      "source_id":"SRC-ASCORBYL-ESR-2025-R25",
+      "title":"Direct Observation of Ascorbyl Free Radicals in Whole Blood of Goats During Cardiac Surgery With Cardiopulmonary Bypass",
+      "year":2025,
+      "identifier":"doi:10.7759/cureus.95067",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use direct ESR measurement methodology as a spectroscopy/signal-detection reference. 95067 is the article identifier, not a measured spectral quantity."
+    },
+    {
+      "source_id":"SRC-PUBCHEM-PCB163-63079-R25",
+      "title":"PubChem CID 63079 — PCB No. 163",
+      "authority":"NIH PubChem with NIST-linked GC-MS spectral records",
+      "identifier":"PubChem CID 63079",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use as an authoritative chemical-identifier collision and as a pointer to mass-spectral characterization data; 63079 is a CID, not the physical spectrum value."
+    },
+    {
+      "source_id":"SRC-AUTODESK-MOLDFLOW-99593-R25",
+      "title":"Autodesk Moldflow solver message 99593",
+      "authority":"Autodesk documentation",
+      "identifier":"solver message 99593",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"],
+      "note":"Use the explicit material-property range error as a solver input-validation precedent. 99593 is a software message identifier."
+    }
+  ],
+  "raw_reservoir": {
+    "path":"data/research/glob_99073_raw_hit_reservoir_20260816_01.json",
+    "status":"IMPLEMENTED",
+    "scope":"Exact/near-exact raw hits, duplicate source classes, and explicit no-hit observations are retained separately from promoted evidence.",
+    "current_union_unique_states":208
+  },
+  "sr_i_complete_table_sanity": {
+    "status":"DENSITY_ONLY_SANITY_CHECK_NOT_FORMAL_P_VALUE",
+    "source_id":"SRC-OPTICA-SRI-BROWN-1983-R25",
+    "table_frequency_span_cm-1":[52887.2,70402.16],
+    "approx_table_feature_rows":492,
+    "three_family_targets_inside_span":34,
+    "fixed_tolerance_cm-1":1.0,
+    "observed_union_targets_within_tolerance":[
+      {"target":"60057","observed_cm-1":60056.04,"delta_cm-1":0.96},
+      {"target":"60705","observed_cm-1":60705.36,"delta_cm-1":0.36}
+    ],
+    "observed_hit_count":2,
+    "uniform_density_approximation": {
+      "per_target_hit_probability":0.05463,
+      "expected_hits_across_34_targets":1.857,
+      "interpretation":"The raw two-hit count is consistent with the line density of this very dense spectrum under a simple uniform approximation."
+    },
+    "same_orbit_note":"60057 and 60705 remain in the same 13524 orbit 67500->65070->60057->60705 and the same documented Sr I absorption system. The relational motif remains P2 by the working definition, but this density sanity check does not establish statistical anomaly.",
+    "claims_boundary":"Feature rows are treated as an approximate density denominator and are not independent identically distributed lines. This is not a formal p-value and does not replace topology-preserving matched controls."
+  },
+  "information_updates": [
+    {
+      "update_id":"INFO-R25-RAW-HIT-SEPARATION",
+      "discovery_status":"NEWLY_IMPLEMENTED",
+      "finding":"Worldshepherd now preserves raw-number-hit accumulation as a first-class reservoir separate from evidence promotion. Weak hits are retained for collision statistics instead of discarded or silently promoted.",
+      "worldshepherd_uses":["SARA","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH","NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary":"Raw hit frequency may inform null models but has zero automatic causal or physical significance."
+    },
+    {
+      "update_id":"INFO-R25-SRI-DENSITY-SANITY",
+      "discovery_status":"NEWLY_COMPUTED",
+      "finding":"Only 60057 and 60705 among the 34 three-family states inside the published Sr I table span fall within the fixed 1 cm^-1 target tolerance. A simple uniform feature-density model expects about 1.86 hits, so the count of two alone is not anomalous.",
+      "worldshepherd_uses":["PRIME_SENTINEL","OVERWATCH","ECHO_SENTINEL_LINK"],
+      "claims_boundary":"The within-orbit/common-system relationship remains the more informative structure; topology-preserving nulls are still required."
+    }
+  ],
+  "next_actions": [
+    "Continue raw exact-number hit accumulation across all 208 union states and append source-class counts without pruning weak hits.",
+    "Add retrieval query, date, source-domain class, occurrence type and duplicate-group IDs to future raw-reservoir records so collision-rate estimates can be stratified.",
+    "Run topology-preserving matched controls for the Sr I same-orbit motif rather than interpreting the two-hit count alone.",
+    "Preserve the fixed 1 cm^-1 tolerance and apply experiment-wide multiple-testing and false-discovery correction across all 208 states before interpreting aggregate physical-hit counts.",
+    "Continue authoritative same-species scans for W II, Mo III, Pb III, N I, Mn XVIII, NS and additional physical systems while raw accumulation runs independently."
+  ]
+}

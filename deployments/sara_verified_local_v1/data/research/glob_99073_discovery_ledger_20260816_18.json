@@ -1,0 +1,214 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 18,
+  "purpose": "Route substantive materials, spectroscopy, detector, battery, memristor, and security information surfaced while scanning the 22345/32542/53242 target family, while preserving their observed occurrences as metadata/incidental controls rather than physical Glob evidence.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, indexing records, author copies, repository copies, and repeated publisher records are provenance aliases and are not independent evidence.",
+    "search_noise": "A DOI suffix, article page, postal code, CVE number, repository identifier, catalog number, or search co-occurrence is not Glob evidence unless a predeclared physical quantity and unit relationship is independently established."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-SN2FE-ANODE-22345-R18",
+      "title": "Reaction Mechanism of the Sn2Fe Anode in Lithium-Ion Batteries",
+      "authors": "Zhixin Dong et al.; M. Stanley Whittingham",
+      "year": 2019,
+      "identifier": "doi:10.1021/acsomega.9b02417; ACS Omega 4:22345-22355",
+      "authority": "ACS Omega",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://pubs.acs.org/doi/10.1021/acsomega.9b02417",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use the combined synchrotron XRD, XAS and magnetic characterization over repeated lithiation/delithiation cycles as a multimodal reaction-mechanism and degradation-validation precedent for Worldshepherd energy/material systems. Exact 22345 is the first page of the article, not a physical target."
+    },
+    {
+      "source_id": "SRC-TA2NISE5-PHOTO-PHASE-22345-R18",
+      "title": "Photoinduced multistage phase transitions in Ta2NiSe5",
+      "authors": "Q. M. Liu et al.",
+      "year": 2021,
+      "identifier": "doi:10.1038/s41467-021-22345-3",
+      "authority": "Nature Communications",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://www.nature.com/articles/s41467-021-22345-3",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use the combined ultrashort photoexcitation, transport, coherent-phonon spectroscopy and TEM workflow as a programmable/material-state-transition validation precedent. The reported strong-pump state shows a resistivity drop of more than four orders at 50 K and is stable to at least 350 K. Exact 22345 occurs only in the DOI suffix."
+    },
+    {
+      "source_id": "SRC-MRS-LONG-ECHO-22345-R18",
+      "title": "1H MRS of intramyocellular lipids in soleus muscle at 7 T: spectral simplification by using long echo times without water suppression",
+      "authors": "Jimin Ren; A. Dean Sherry; Craig R. Malloy",
+      "year": 2010,
+      "identifier": "doi:10.1002/mrm.22345; PMID:20578068",
+      "authority": "Magnetic Resonance in Medicine / PubMed-indexed research",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "note": "Use only as a signal-separation methodology reference and clean DOI-suffix control: long-echo acquisition reduces spectral overlap and allows rapid high-resolution MR spectra without water suppression. The number 22345 is metadata only."
+    },
+    {
+      "source_id": "SRC-AL-METALLOPOLYMER-53242-R18",
+      "title": "Synthesis and characterization of novel Al(III)-metallopolymer and its application as a non-volatile resistive memristive material",
+      "authors": "Anil Kumar et al.",
+      "year": 2022,
+      "identifier": "doi:10.1002/app.53242; J. Appl. Polym. Sci. e53242",
+      "authority": "Journal of Applied Polymer Science / Wiley",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://onlinelibrary.wiley.com/doi/abs/10.1002/app.53242",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a low-voltage nonvolatile metallopolymer/memristive materials reference, including structure-property and electrochemical characterization. Exact 53242 is an article/DOI identifier, not a physical measurement."
+    },
+    {
+      "source_id": "SRC-NVD-CVE-2026-53242-R18",
+      "title": "CVE-2026-53242 — Linux ALSA PCM wait-queue list corruption in snd_pcm_drain() linked streams",
+      "year": 2026,
+      "authority": "NIST National Vulnerability Database / kernel.org CNA",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_SECURITY_INFORMATION",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2026-53242",
+      "use": ["SECURITY_HARDENING", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "note": "Use as an OS/audio-stack hardening input for Worldshepherd Linux deployments and as a clean M1 target collision. The resolved bug concerns linked-stream wait-queue corruption in snd_pcm_drain(); the target digits come from the CVE identifier only."
+    },
+    {
+      "source_id": "SRC-SIC-MEMS-MURAMAN-32542-R18",
+      "title": "Detection of Residual Stress in Silicon Carbide MEMS by micro-Raman Spectroscopy",
+      "authors": "John C. Zingarelli; Michael A. Marciniak; Jason R. Foley",
+      "year": 2005,
+      "identifier": "doi:10.1557/PROC-872-J3.4",
+      "authority": "Materials Research Society / Cambridge Core",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://www.cambridge.org/core/journals/mrs-online-proceedings-library-archive/article/abs/detection-of-residual-stress-in-silicon-carbide-mems-by-raman-spectroscopy/35751FB9C6B7C09B2A9CCBBFE25F033D",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a spatial stress-mapping benchmark: micro-Raman scans of 6H-SiC MEMS identify TO Stokes peak shifts up to about 2 cm^-1 and calibrate phonon deformation potential against applied stress. The AFRL 32542 postal code is location metadata only."
+    },
+    {
+      "source_id": "SRC-AL-PH2-ABS-32542-R18",
+      "title": "Quantitative Absorption Spectroscopy of Aluminum Atoms in Cryogenic Parahydrogen Solids",
+      "author": "Mario E. Fajardo",
+      "year": 2019,
+      "identifier": "doi:10.1021/acs.jpca.9b09318",
+      "authority": "The Journal of Physical Chemistry A / U.S. Air Force Research Laboratory",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://pubs.acs.org/doi/10.1021/acs.jpca.9b09318",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a quantitative spectroscopy/deposition-control benchmark: UV/IR absorption is used to determine Al concentration, pH2 thickness, flux and isolation efficiency while distinguishing reaction products and matrix shifts. The AFRL 32542 postal code is an affiliation control only."
+    },
+    {
+      "source_id": "SRC-GRAPHENE-HGCDTE-MWIR-32542-R18",
+      "title": "Impact of Al2O3 and HfO2 Gate Dielectrics on Photoresponse of Graphene Channel Field-Effect MWIR Photodetectors with HgCdTe Absorber",
+      "authors": "Md Fazle Rabbe et al.",
+      "year": 2025,
+      "identifier": "doi:10.1007/s11664-025-12038-8",
+      "authority": "Journal of Electronic Materials / Springer Nature",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://link.springer.com/article/10.1007/s11664-025-12038-8",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "OPPORTUNITY_AND_PARTNER_INTEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as an MWIR detector architecture/prototype benchmark: room-temperature graphene/HgCdTe arrays, HfO2 versus Al2O3 dielectric comparison, 4-um response, dielectric-dependent photoresponse and detectivity. The AFRL 32542 affiliation is location metadata only."
+    },
+    {
+      "source_id": "SRC-C60-PH2-MATRIX-32542-R18",
+      "title": "Matrix isolation spectroscopy and spectral simulations of isotopically substituted C60 molecules",
+      "authors": "Tomonari Wakabayashi; Takamasa Momose; Mario E. Fajardo",
+      "year": 2019,
+      "identifier": "doi:10.1063/1.5134454; J. Chem. Phys. 151, 234301",
+      "authority": "The Journal of Chemical Physics",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as an isotopic/matrix-perturbation spectroscopy benchmark: high-resolution IR compares C60 isotopic composition and multiple cryogenic hosts to separate intrinsic isotopic shifts from environmental trapping effects. The AFRL 32542 postal code is location metadata only."
+    }
+  ],
+  "evidence_updates": [
+    {
+      "record_id": "EV-R18-22345-SN2FE-PAGE",
+      "source_id": "SRC-SN2FE-ANODE-22345-R18",
+      "target": "22345",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "22345 is the article's first page, not an electrochemical or spectroscopic physical value."
+    },
+    {
+      "record_id": "EV-R18-22345-TA2NISE5-DOI",
+      "source_id": "SRC-TA2NISE5-PHOTO-PHASE-22345-R18",
+      "target": "22345",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "22345 occurs in the DOI suffix and is not a reported physical quantity."
+    },
+    {
+      "record_id": "EV-R18-22345-MRS-DOI",
+      "source_id": "SRC-MRS-LONG-ECHO-22345-R18",
+      "target": "22345",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "22345 is a DOI suffix; medical MR spectroscopy context does not convert identifier equality into Glob physical evidence."
+    },
+    {
+      "record_id": "EV-R18-53242-METALLOPOLYMER-DOI",
+      "source_id": "SRC-AL-METALLOPOLYMER-53242-R18",
+      "target": "53242",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "53242 is the DOI/article identifier and is not a measured material parameter."
+    },
+    {
+      "record_id": "EV-R18-53242-CVE",
+      "source_id": "SRC-NVD-CVE-2026-53242-R18",
+      "target": "53242",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["SECURITY_HARDENING", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "53242 is the CVE identifier suffix, not a physical quantity."
+    },
+    {
+      "record_id": "EV-R18-32542-SIC-AFFILIATION",
+      "source_id": "SRC-SIC-MEMS-MURAMAN-32542-R18",
+      "target": "32542",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "32542 is the Eglin AFB postal code; the Raman data themselves do not provide a 32542 cm^-1 target hit."
+    },
+    {
+      "record_id": "EV-R18-32542-ALPH2-AFFILIATION",
+      "source_id": "SRC-AL-PH2-ABS-32542-R18",
+      "target": "32542",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "32542 is an author postal code and contributes zero physical evidence."
+    },
+    {
+      "record_id": "EV-R18-32542-MWIR-AFFILIATION",
+      "source_id": "SRC-GRAPHENE-HGCDTE-MWIR-32542-R18",
+      "target": "32542",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "32542 is an AFRL affiliation postal code; it is unrelated to detector response values."
+    },
+    {
+      "record_id": "EV-R18-32542-C60-AFFILIATION",
+      "source_id": "SRC-C60-PH2-MATRIX-32542-R18",
+      "target": "32542",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "32542 is the AFRL postal code; high-resolution IR content is useful but supplies no 32542 physical match."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R18-MULTIMODAL-MATERIALS-VALIDATION",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "The scan surfaced complementary validation strategies spanning synchrotron XRD/XAS/magnetics, ultrafast transport/coherent phonons/TEM, micro-Raman stress mapping, quantitative UV/IR absorption, and MWIR detector characterization.",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL"],
+      "claims_boundary": "Methodological reuse is independent of Glob evidence classification; metadata collisions remain M1/N0 even when the source method is high quality."
+    },
+    {
+      "update_id": "INFO-R18-32542-AFFILIATION-CLUSTER",
+      "discovery_status": "NEWLY_FORMALIZED_CONTROL",
+      "finding": "Multiple unrelated high-quality spectroscopy and detector papers contain 32542 solely because Eglin AFB/AFRL is located in ZIP 32542. This is a concrete clustered-metadata confounder rather than independent numeric evidence.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "OVERWATCH", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "Repeated target occurrence caused by a shared institution/location must be de-duplicated by provenance/context and cannot be counted as multiple independent hits."
+    }
+  ],
+  "next_actions": [
+    "Continue same-unit physical-value scans for 22345, 32542 and 53242 while treating DOI/page/postal clusters as negative controls; require explicit spectroscopy/energy/frequency units before P1 consideration.",
+    "Acquire complete N I and W II machine-readable line graphs and perform topology/relational tests against all predeclared target states.",
+    "Use the newly discovered materials and detector methods to expand Worldshepherd validation scenarios independently of the numeric hypothesis.",
+    "Run global multiple-testing/false-discovery correction across target strings, unit families, databases, species, institutions, evidence subtypes, tolerances and topology motifs before statistical promotion."
+  ]
+}

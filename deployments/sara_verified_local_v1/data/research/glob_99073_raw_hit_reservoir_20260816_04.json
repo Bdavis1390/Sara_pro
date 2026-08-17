@@ -1,0 +1,27 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_03.json",
+  "purpose":"Accumulate raw collision neighborhoods around core/high-interest states without modifying established P1/P2 records.",
+  "policy":{
+    "rule":"Additional occurrences around an already-promoted target do not constitute independent physical evidence unless they are independently verified physical quantities.",
+    "duplicate_namespace":"Multiple CAS/DOI/article occurrences are counted for collision-density analysis but grouped by identifier namespace and source independence."
+  },
+  "records":[
+    {"target":"30979","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1002/jbm.b.30979","context":"Hybrid TiO2/nanosilver multilayer antibacterial coating","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"30979","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1002/jbm.a.30979","context":"Alginate-PLL capsule zeta-potential/biocompatibility study","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"30979","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Omega 2025, 10, 30979-30984","context":"Energy shifts in predissociating N2 interacting states","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"30979","raw_hit_type":"CAS_PREFIX","occurrence":"CAS 30979-48-7 / 30979-68-1","context":"Multiple NIST Chemistry WebBook compound records","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"09379","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s00415-019-09379-w","context":"Myopathy and scleromyxedema","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"09379","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s12110-020-09379-0","context":"Human learning from pedagogue, engineer, and friend","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93709","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-025-93709-8","context":"Internal-friction evidence for carbide formation in high Co-Ni martensite steel","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93709","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1016/S0021-9673(01)93709-4","context":"Preparative reversed-phase HPLC purification of synthetic peptides","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99073","raw_hit_type":"KNOWN_METADATA_CARRY_FORWARD","occurrence":"Optica document ID 99073","context":"Control of quantum paths in the multicycle regime and efficient broadband attosecond pulse generation","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "next_actions":[
+    "Continue filling raw-hit neighborhoods for the remaining 208-state union.",
+    "Compute per-target collision density by namespace: DOI, CAS, page/article, software ID, registry ID, physical quantity.",
+    "Do not count multiple occurrences in the same namespace/source lineage as independent support for Glob."
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 6,
+  "purpose": "W II common-node degree lower bound, tungsten-domain publication routing, bibliographic infrastructure, and an exact unrelated-number collision control.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-W-ATOMIC-SPECTROSCOPIC-DATA-2011",
+      "title": "Spectroscopic data for atomic tungsten transitions of interest in fusion plasma research",
+      "authors": "Pascal Quinet; P. Palmeri; Emile Biemont",
+      "year": 2011,
+      "identifier": "doi:10.1088/0953-4075/44/14/145005",
+      "authority": "Peer-reviewed Journal of Physics B publication; ORBi institutional full-text record",
+      "url": "https://orbi.uliege.be/handle/2268/152598",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK"],
+      "note": "Use as a tungsten transition-data and fusion-plasma diagnostic reference; cross-link against NIST ASD/critical compilations when selecting benchmark lines or validating radiative models."
+    },
+    {
+      "source_id": "SRC-W-ITER-DIVERTOR-SPECTROSCOPY-2010",
+      "title": "Tungsten spectroscopy relevant to the diagnostics of ITER divertor plasmas",
+      "authors": "Joel Clementson; P. Beiersdorfer; E. W. Magee; H. S. McLean; R. Dwood",
+      "year": 2010,
+      "identifier": "doi:10.1088/0953-4075/43/14/144009",
+      "authority": "Peer-reviewed Journal of Physics B publication; Lund University research record",
+      "url": "https://portal.research.lu.se/en/publications/tungsten-spectroscopy-relevant-to-the-diagnostics-of-iter-diverto/",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use for low-charge-state tungsten EUV diagnostic design, Flexible Atomic Code comparison, grazing-incidence spectrometer methodology, and fusion/plasma partner-intelligence mapping."
+    },
+    {
+      "source_id": "SRC-NIST-WIII-WLXXIV-2006",
+      "title": "Compilation of Wavelengths and Energy Levels of Tungsten, W III through W LXXIV",
+      "authors": "Alexander Kramida; T. Shirai",
+      "year": 2006,
+      "authority": "NIST publication",
+      "url": "https://www.nist.gov/publications/compilation-wavelengths-and-energy-levels-tungsten-w-iii-through-w-lxxiv",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL"],
+      "note": "Extends the authoritative tungsten reference hierarchy beyond W I/W II; use to prevent ionization-stage conflation and to support plasma-state spectroscopy models."
+    },
+    {
+      "source_id": "SRC-NIST-ATOMIC-BIBLIOGRAPHIC-DB-2006",
+      "title": "Atomic Energy Levels and Spectra Bibliographic Database",
+      "authors": "Alexander Kramida; William C. Martin; Arlene Musgrove; Karen J. Olsen; Joseph Reader; Edward B. Saloman",
+      "year": 2006,
+      "authority": "NIST",
+      "url": "https://www.nist.gov/publications/atomic-energy-levels-and-spectra-bibliographic-database",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as an authoritative bibliographic expansion mechanism for atomic-spectra source discovery and primary-source reconciliation, with discovered references retained as separate provenance objects."
+    },
+    {
+      "source_id": "SRC-W23-PHOTOIONIZATION-2015",
+      "title": "Photoionization of tungsten ions: experiment and theory for W2+ and W3+",
+      "authors": "B. M. McLaughlin; C. P. Ballance; S. Schippers; J. Hellhund; A. L. D. Kilcoyne; R. A. Phaneuf; A. Muller",
+      "year": 2015,
+      "identifier": "arXiv:1512.06059",
+      "url": "https://arxiv.org/abs/1512.06059",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as an experiment-versus-theory benchmark for tungsten photoionization cross sections, spectral bandwidth effects, charge-state modeling, and advanced-light-source validation opportunities."
+    },
+    {
+      "source_id": "SRC-W-NIALCR-SUPERALLOY-2007",
+      "title": "Effects of a tungsten addition on the morphological evolution, spatial correlations, and temporal evolution of a model Ni-Al-Cr superalloy",
+      "authors": "Chantal K. Sudbrack; Tiffany D. Ziebell; Ronald D. Noebe; David N. Seidman",
+      "year": 2007,
+      "identifier": "arXiv:0710.3610",
+      "url": "https://arxiv.org/abs/0710.3610",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Route into the materials database as empirical evidence for tungsten-alloy effects on precipitate morphology, hardness, coarsening kinetics, spatial correlation, and microstructural evolution."
+    },
+    {
+      "source_id": "SRC-WVIII-CONFIG-INTERACTION-2015",
+      "title": "Detailed analysis of configuration interaction and calculation of radiative transition rates in seven times ionized tungsten (W VIII)",
+      "year": 2015,
+      "authority": "Institutional ORBi publication record",
+      "url": "https://orbi.uliege.be/handle/2268/211496",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "note": "Use for higher-charge tungsten configuration-interaction/radiative-rate modeling and as an ionization-stage-separated control against low-charge W II claims."
+    },
+    {
+      "source_id": "SRC-N0-THEJO-10592-485",
+      "title": "Unrelated stock-forecast page containing numeric value 10592.485",
+      "authority": "Non-authoritative commercial forecast page",
+      "url": "https://gov.capital/bse-stock-forecast/THEJO-stock",
+      "use": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Exact unrelated-domain collision with the W II lower-level number 10592.485. Retain only as an N0 context/source-quality control; do not use this page as financial evidence or as support for Glob physics."
+    }
+  ],
+  "referenced_sources": ["SRC-W-RADIATIVE-RATES-2011", "SRC-KRAMIDA-SHIRAI-WI-WII-2006", "SRC-NIST-ASD-WII-LEVELS-2026"],
+  "relational_tests": [
+    {
+      "test_id": "CAL-WII-10592-485-PUBLISHED-DEGREE-LOWER-BOUND",
+      "species": "W II",
+      "level_cm-1": 10592.485,
+      "result": "published_selected_transition_degree_at_least_6",
+      "selected_transition_examples": [
+        {"wavelength_nm": 340.6833, "other_level_cm-1": 39936.842, "class": "selected_allowed_diagnostic"},
+        {"wavelength_nm": 357.2472, "other_level_cm-1": 38576.313, "class": "selected_allowed_diagnostic"},
+        {"wavelength_nm": 1134.569, "other_level_cm-1": 19403.991, "class": "selected_forbidden_diagnostic"},
+        {"wavelength_nm": 1151.235, "other_level_cm-1": 19276.431, "class": "selected_forbidden_diagnostic"},
+        {"wavelength_nm": 1190.371, "other_level_cm-1": 18990.929, "class": "selected_forbidden_diagnostic"},
+        {"wavelength_nm": 1347.338, "other_level_cm-1": 3172.473, "class": "selected_forbidden_diagnostic"}
+      ],
+      "worldshepherd_uses": ["OVERWATCH", "PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "This is a lower bound from selected diagnostic tables, not the full current ASD degree. It demonstrates that the common endpoint is reused and that a uniform 1/76 endpoint model is optimistic for significance testing."
+    },
+    {
+      "test_id": "CTRL-EXACT-CROSS-DOMAIN-10592-485",
+      "number": "10592.485",
+      "scientific_context": "Current evaluated W II energy level",
+      "unrelated_context": "Commercial stock-forecast table value",
+      "result": "exact_numeric_collision_without_semantic_relation",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL"],
+      "claims_boundary": "Exact numeric equality across unrelated contexts carries zero relational/physical evidence weight and is retained to test source-aware false-positive suppression."
+    }
+  ],
+  "provenance_aliases": [
+    {
+      "canonical_source": "SRC-W-RADIATIVE-RATES-2011",
+      "alias_type": "full-text mirror",
+      "note": "A ResearchGate copy surfaced during search; it is not an independent publication/evidence item."
+    },
+    {
+      "canonical_source": "SRC-W-ITER-DIVERTOR-SPECTROSCOPY-2010",
+      "alias_type": "institutional portal duplicate",
+      "note": "Multiple Lund University portal URLs refer to the same DOI/publication and are not independent evidence."
+    }
+  ],
+  "next_actions": [
+    "Obtain or reconstruct the full current W II line graph and empirical degree distribution rather than treating the six selected transitions as the full degree.",
+    "Run topology-preserving null tests using empirical W II endpoint degrees and all predeclared in-range target states.",
+    "Apply multiple-testing correction across every species, dataset, orbit, tolerance, and relational motif tested.",
+    "Feed tungsten spectroscopy, photoionization, plasma-diagnostic, and alloy publications into their respective Worldshepherd materials/model-validation indexes with provenance links."
+  ]
+}

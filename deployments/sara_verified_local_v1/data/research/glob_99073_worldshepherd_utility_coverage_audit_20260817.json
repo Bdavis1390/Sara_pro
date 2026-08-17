@@ -1,0 +1,132 @@
+{
+  "schema_version":"ws-glob-worldshepherd-utility-audit-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "scope":{
+    "discovery_ledgers":"all available Glob discovery ledgers through sequence 30",
+    "raw_hit_reservoirs":"all available raw-hit reservoirs through append 22",
+    "permutation_families":["12345->31542","12345->13524","12345->14523"],
+    "union_unique_states":208,
+    "principle":"Retroactively evaluate everything covered so far for any concrete Worldshepherd use; preserve original Glob evidence classes and do not reinterpret usefulness as evidence."
+  },
+  "coverage_policy":{
+    "utility_axis":"A substantive item can be useful for science, engineering, software, security, manufacturing, operations, governance, commercialization, partner intelligence, data, AI/ML, testing, supply chain or negative-control work.",
+    "evidence_axis":"Glob evidence remains separately classified P2/P1/G1/M1/N0/gated with theory/evaluated/compiled/experimental subtypes where applicable.",
+    "historical_integrity":"Do not rewrite prior evidence outcomes merely to broaden utility routing. Add cross-domain uses as a retrospective overlay with provenance to the original source/ledger.",
+    "retention":"Retain substantive discoveries even when the matched number is only an identifier, page, address, accession, software code, grant, CVE, catalog number, or other control occurrence."
+  },
+  "coverage_domains":[
+    "PHYSICS_AND_SPECTROSCOPY",
+    "CHEMISTRY_AND_CHEMICAL_DATA",
+    "MATERIALS_AND_CHARACTERIZATION",
+    "MATERIALS_AND_MANUFACTURING",
+    "RF_HARDWARE",
+    "ADAPTIVE_METASURFACE_CONTROL",
+    "PLASMA_AND_FUSION_DATA",
+    "QUANTUM_DEVICE_CHARACTERIZATION",
+    "ATOMIC_AND_MOLECULAR_MODELS",
+    "SENSING_AND_SENSOR_FUSION",
+    "SOFTWARE_AND_DATA_ENGINEERING",
+    "AI_ML_AND_MODEL_VALIDATION",
+    "SECURITY_HARDENING",
+    "SYSTEMS_ENGINEERING_AND_GOVERNANCE",
+    "OPERATIONS_AND_RELIABILITY",
+    "SIMULATION_AND_NUMERICAL_METHODS",
+    "TEST_AND_MEASUREMENT",
+    "IP_AND_COMMERCIALIZATION",
+    "OPPORTUNITY_AND_PARTNER_INTEL",
+    "SUPPLY_CHAIN_AND_PRODUCTION",
+    "ENVIRONMENTAL_AND_CIVIL_SYSTEMS",
+    "NEGATIVE_CONTROL_CORPUS"
+  ],
+  "retrospective_crosswalk":[
+    {
+      "group":"Atomic, molecular and spectroscopy authorities/data infrastructure",
+      "covered_items":["NIST ASD and handbook records","historical NBS spectroscopy papers","VAMDC/XSAMS","OPEN-ADAS","ExoAtom","ExoMolHR","PyExoCross","NBS rare-earth atomic energy-level compilation","Yb MQDT and microwave spectroscopy","C2 Swan-system line strengths"],
+      "existing_primary_uses":["PHYSICS_AND_SPECTROSCOPY","ATOMIC_AND_MOLECULAR_MODELS","MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"],
+      "retroactive_added_uses":["SOFTWARE_AND_DATA_ENGINEERING","TEST_AND_MEASUREMENT","AI_ML_AND_MODEL_VALIDATION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPPORTUNITY_AND_PARTNER_INTEL"],
+      "why":"Machine-readable schemas, uncertainty models, state identifiers, line-list conversion, evaluated-data workflows and cross-database reconciliation are reusable software/data/validation capabilities beyond spectroscopy itself.",
+      "evidence_boundary":"No added utility changes any P1/P2/M1/N0 status."
+    },
+    {
+      "group":"Plasma, fusion and tungsten validation",
+      "covered_items":["NIFS LHD open/raw/analyzed data repositories","LHD diagnostic catalog and retrieval manual","LHD tungsten UTA density reconstruction","2026 LHD tungsten X-ray/line-identification studies","IAEA tungsten CRP and technical meetings","HL-3 ECRH/runaway-electron study","OPEN-ADAS tungsten holdings"],
+      "existing_primary_uses":["PLASMA_AND_FUSION_DATA","MATERIALS_AND_CHARACTERIZATION","OVERWATCH","PRIME_SENTINEL","ECHO_SENTINEL_LINK"],
+      "retroactive_added_uses":["SOFTWARE_AND_DATA_ENGINEERING","SENSING_AND_SENSOR_FUSION","TEST_AND_MEASUREMENT","OPERATIONS_AND_RELIABILITY","OPPORTUNITY_AND_PARTNER_INTEL","AI_ML_AND_MODEL_VALIDATION"],
+      "why":"These sources provide multichannel data ingestion patterns, diagnostic synchronization, model/measurement reconciliation, uncertainty targets, archived benchmark corpora and current research-network intelligence.",
+      "evidence_boundary":"Fusion-data utility is independent of Glob-number hits."
+    },
+    {
+      "group":"RF, EM, photonics and metasurface control",
+      "covered_items":["APS high-power UHV directional coupler","programmable EM boundary-condition hardware project input","3D conformal metasurface cloak","two-color HHG and attosecond quantum-path control","silicon photonic transfer-printing micro-assembly","THz magnon/spin-phonon work","microring sensing","microwave absorption in conducting powders"],
+      "existing_primary_uses":["RF_HARDWARE","ADAPTIVE_METASURFACE_CONTROL","QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION"],
+      "retroactive_added_uses":["MATERIALS_AND_MANUFACTURING","TEST_AND_MEASUREMENT","SOFTWARE_AND_DATA_ENGINEERING","SIMULATION_AND_NUMERICAL_METHODS","SENSING_AND_SENSOR_FUSION","OPERATIONS_AND_RELIABILITY"],
+      "why":"Coupler calibration, VNA verification, assembly tolerance mitigation, conformal design, field-control methods and detector architectures are directly reusable in hardware build/test/control workflows.",
+      "evidence_boundary":"Bibliographic identifiers remain controls unless independently physical."
+    },
+    {
+      "group":"Sensor fusion, imaging and instrumentation",
+      "covered_items":["U.S. Navy Volume Sensor lineage","LiDAR heterointegration","nanophotonic SPRM","focus-induced photoresponse ranging","photoacoustic black-phosphorus systems","AFM/IR surface characterization","ESR free-radical measurements","cryo-EM records","micro-CT cold-stage design","ultrasonic cement monitoring"],
+      "existing_primary_uses":["SENSING_AND_SENSOR_FUSION","OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION"],
+      "retroactive_added_uses":["SOFTWARE_AND_DATA_ENGINEERING","AI_ML_AND_MODEL_VALIDATION","TEST_AND_MEASUREMENT","OPERATIONS_AND_RELIABILITY","SECURITY_HARDENING"],
+      "why":"These sources inform timestamped raw/derived sensor separation, calibration, nuisance rejection, fusion architecture, imaging pipelines and sensor-data integrity.",
+      "evidence_boundary":"Sensor-system usefulness is orthogonal to number-match evidence."
+    },
+    {
+      "group":"Materials, manufacturing and energy-storage systems",
+      "covered_items":["WS-AlTi internal platform input","fluorite ferroelectric switching","Cr-Te phase-engineered MBE materials","TiO2/PyC films","O-Bi2S3@C defect-engineered anodes","NiO nanoporous films","noble-metal aerogels","cobalt-free Ni-rich cathode review","tungsten-carbide PEM fuel cells","radiative-cooling membranes","mechanoluminescent/triboelectric polymers","Zn-ion and X-ray-shielding composite studies"],
+      "existing_primary_uses":["MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","OVERWATCH"],
+      "retroactive_added_uses":["SUPPLY_CHAIN_AND_PRODUCTION","IP_AND_COMMERCIALIZATION","TEST_AND_MEASUREMENT","SIMULATION_AND_NUMERICAL_METHODS","OPERATIONS_AND_RELIABILITY","OPPORTUNITY_AND_PARTNER_INTEL"],
+      "why":"The accumulated corpus covers processing routes, defect engineering, characterization stacks, scale-up constraints, critical-material substitution, durability and commercial-production implications.",
+      "evidence_boundary":"Material usefulness does not validate unrelated Glob physical hypotheses."
+    },
+    {
+      "group":"Software, algorithms, data engineering and model governance",
+      "covered_items":["NIST ASD transition-graph analyzer","ExoAtom adapter","XSAMS normalization concepts","Jain fairness index","ANN UV/VIS spectral analysis","Martini coarse-grained modeling","genetic-algorithm/regression adsorption modeling","Gaussian-process remaining-useful-life methods","network epidemic-control models","constructive-solid-geometry to NC machining workflow","GitHub/Starlette/httpx2 CI maintenance findings"],
+      "existing_primary_uses":["SARA","OVERWATCH","PRIME_SENTINEL","SOFTWARE_AND_DATA_ENGINEERING","SIMULATION_AND_NUMERICAL_METHODS"],
+      "retroactive_added_uses":["AI_ML_AND_MODEL_VALIDATION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPERATIONS_AND_RELIABILITY","MATERIALS_AND_MANUFACTURING","NEGATIVE_CONTROL_CORPUS"],
+      "why":"These items collectively support ingestion, validation, optimization, resource allocation, model comparison, reproducible computation and digital-manufacturing automation.",
+      "evidence_boundary":"Algorithmic utility does not imply physical causality for number relations."
+    },
+    {
+      "group":"Cybersecurity, provenance and infrastructure reliability",
+      "covered_items":["CVE-2025-60957 network-time-server command injection","CVE-2025-67579 WordPress authorization flaw","CVE-2025-54322 remote-code-execution record","container root-pip/build warnings","dependency/deprecation maintenance","audit/runtime privilege separation","historical SARA admin handoff"],
+      "existing_primary_uses":["SECURITY_HARDENING","SARA","PRIME_SENTINEL","OVERWATCH"],
+      "retroactive_added_uses":["OPERATIONS_AND_RELIABILITY","ECHO_SENTINEL_LINK","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION"],
+      "why":"Time-source compromise, dependency drift, build/runtime privilege separation and advisory ingestion directly affect trusted provenance, audit chronology and production readiness.",
+      "evidence_boundary":"CVE numbers remain M1 controls."
+    },
+    {
+      "group":"Operations research, reliability, civil/environmental systems and metrology",
+      "covered_items":["railway-maintenance closure optimization","hydraulic-pressure key comparison","cement hydration ultrasonic dataset","rotating-fluid sphere validation","environmental resonant-sonic drilling","landfill-gas capture measurement","plastic-waste management","biomass gasifier simulation","high-pressure FTIR/calorimetry","field-controlled scroll waves"],
+      "existing_primary_uses":["OPERATIONS_AND_RELIABILITY","TEST_AND_MEASUREMENT","SIMULATION_AND_NUMERICAL_METHODS","OVERWATCH"],
+      "retroactive_added_uses":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SOFTWARE_AND_DATA_ENGINEERING","AI_ML_AND_MODEL_VALIDATION","MATERIALS_AND_MANUFACTURING","OPPORTUNITY_AND_PARTNER_INTEL"],
+      "why":"These provide scheduling, calibration, nondestructive evaluation, stress-response, environmental-process and multiphysics solver benchmarks.",
+      "evidence_boundary":"Article IDs/pages/postal codes remain raw controls."
+    },
+    {
+      "group":"Commercialization, finance, standards, IP and opportunity intelligence",
+      "covered_items":["IAEA meetings and research networks","VAMDC federation and partner databases","ISO 56007 innovation-management standard","wind-project bank-financing/subsidy study","ACS Petroleum Research Fund identifier/source context","patent publications surfaced by raw matches","NIFS/LHD institutional data infrastructure","current materials/fusion author-affiliation clusters"],
+      "existing_primary_uses":["OPPORTUNITY_AND_PARTNER_INTEL","IP_AND_COMMERCIALIZATION"],
+      "retroactive_added_uses":["SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPERATIONS_AND_RELIABILITY","SUPPLY_CHAIN_AND_PRODUCTION","SOFTWARE_AND_DATA_ENGINEERING","TEST_AND_MEASUREMENT"],
+      "why":"Standards, funding mechanisms, institutional networks, patent signals and research-program structures affect capture strategy, partnership, capital planning, sourcing and evidence-generation pathways.",
+      "evidence_boundary":"Commercial utility does not confer Glob evidence."
+    },
+    {
+      "group":"Negative-control and collision-statistics corpus",
+      "covered_items":["DOI/PII suffixes","article/page numbers","CAS/CID/ChEBI IDs","CVE IDs","postal codes","repository handles","grant IDs","ISBNs","instrument/software IDs","crystal database IDs","explicit NO_HIT observations","measured-but-unitless numeric outputs"],
+      "existing_primary_uses":["NEGATIVE_CONTROL_CORPUS","OVERWATCH","PRIME_SENTINEL"],
+      "retroactive_added_uses":["AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],
+      "why":"The growing raw reservoir supports empirical collision-rate estimation, namespace-specific null models, query-bias measurement, duplicate control and future automated classifiers for admissible vs non-admissible evidence.",
+      "evidence_boundary":"Control frequency must never be counted as positive physical evidence."
+    }
+  ],
+  "coverage_requirements_from_now_on":[
+    "Every new substantive source receives at least one explicit Worldshepherd utility destination or an explicit negative-control-only justification.",
+    "Every prior source group remains eligible for additional utility routing as new modules/use cases are created.",
+    "Utility routing must not overwrite historical P2/P1/G1/M1/N0 classifications.",
+    "Raw-number reservoir entries remain retained even when their source has no immediate use beyond collision/null statistics.",
+    "Periodic audits must check for under-routed software, security, manufacturing, operations, business, supply-chain and partner-intelligence value, not just scientific value."
+  ],
+  "audit_status":"RETROACTIVE_COVERAGE_BASELINE_ESTABLISHED; source-by-source fine-grained backfill remains open and should continue alongside internet scanning."
+}

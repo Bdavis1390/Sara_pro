@@ -1,0 +1,90 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 9,
+  "purpose": "Route remaining substantive cross-domain publications and container-build maintenance signals surfaced during NIST ASD acquisition and CI validation.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-CODATA-2010-CONSTANTS",
+      "title": "CODATA Recommended Values of the Fundamental Physical Constants: 2010",
+      "authors": "Peter J. Mohr; Barry N. Taylor; David B. Newell",
+      "year": 2012,
+      "identifier": "arXiv:1203.5425",
+      "use": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a historical example of critical data evaluation, covariance/least-squares adjustment, and versioned physical constants. It is not the current constants authority and contributes zero Glob-number evidence weight."
+    },
+    {
+      "source_id": "SRC-RIESS-SNIA-1998",
+      "title": "Observational Evidence from Supernovae for an Accelerating Universe and a Cosmological Constant",
+      "authors": "Adam G. Riess et al.",
+      "year": 1998,
+      "use": ["OVERWATCH", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a methodological precedent for multi-object observational inference, uncertainty propagation, systematic-error testing, and model comparison. Off-domain for Glob; no numerical evidence weight."
+    },
+    {
+      "source_id": "SRC-C2-SWAN-LINE-STRENGTHS-2012",
+      "title": "Line strengths and updated molecular constants for the C2 Swan system",
+      "year": 2012,
+      "identifier": "arXiv:1212.2102",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL"],
+      "note": "Use as directly relevant spectroscopy methodology for measured/calculated line reconciliation, molecular constants, global fitting, line-list generation, and uncertainty-aware validation. It is not evidence for the Glob digit transform."
+    },
+    {
+      "source_id": "SRC-JAIN-FAIRNESS-INDEX-1998",
+      "title": "A Quantitative Measure of Fairness and Discrimination for Resource Allocation in Shared Computer Systems",
+      "authors": "Raj Jain; Dah-Ming Chiu; William Hawe",
+      "year": 1998,
+      "use": ["SARA", "OVERWATCH"],
+      "note": "Route the fairness-index methodology into future SARA resource-allocation and OVERWATCH service-quality metrics. Search co-occurrence carries no Glob evidence weight."
+    }
+  ],
+  "referenced_sources": [
+    "SRC-NIST-ASD-LINES-HELP",
+    "SRC-GITHUB-CHECKOUT-V6",
+    "SRC-GITHUB-SETUP-PYTHON-V6",
+    "SRC-STARLETTE-TESTCLIENT-HTTPX2-2026"
+  ],
+  "maintenance_actions": [
+    {
+      "action_id": "MAINT-SARA-DOCKER-ROOT-PIP-BUILD-STAGE",
+      "trigger": "pip emitted its standard root-user warning while installing the SARA package during Docker image construction",
+      "observed_boundary": "Dockerfile performs package installation as root during image build, then creates/owns the data directory and explicitly switches to USER sara (UID 10001) for runtime.",
+      "status": "bounded_build_stage_warning_accepted_not_runtime_privilege_defect",
+      "worldshepherd_uses": ["SARA", "SECURITY_HARDENING", "PRIME_SENTINEL"],
+      "claims_boundary": "Do not suppress or label the warning a vulnerability solely because pip runs as root in the image build layer. Runtime privilege is separately enforced by USER sara and deployment tests. Revisit if build isolation/reproducibility policy later requires a virtual environment or stricter package pinning."
+    },
+    {
+      "action_id": "MAINT-SARA-CONTAINER-PIP-UPDATE-NOTICE",
+      "trigger": "Docker build reported a newer pip release than the one bundled in the python:3.12-slim base image",
+      "status": "tracked_no_automatic_upgrade",
+      "worldshepherd_uses": ["SARA", "SECURITY_HARDENING"],
+      "claims_boundary": "A version-availability notice is not by itself a security finding. Do not introduce unbounded build drift by automatically upgrading pip without a tested/pinned dependency policy."
+    },
+    {
+      "action_id": "MAINT-SARA-DEPRECATIONS-VERIFIED-RESOLVED",
+      "trigger": "Prior GitHub Node-runtime and Starlette TestClient deprecation warnings",
+      "status": "verified_resolved_in_ci_run_52",
+      "evidence": "Run 52 completed successfully with actions/checkout@v6, actions/setup-python@v6, httpx2 2.10.0, Starlette 1.6.0, and 44 passing tests; the prior deprecation warnings were absent.",
+      "worldshepherd_uses": ["SARA", "SECURITY_HARDENING", "OVERWATCH"],
+      "claims_boundary": "Resolution applies to the tested branch state/run. Future dependency upgrades remain subject to CI."
+    }
+  ],
+  "new_capability": {
+    "artifact": "scripts/analyze_nist_asd_transition_graph.py",
+    "purpose": "Parse NIST ASD pipe-ASCII/CSV/TSV line exports, build an empirical transition graph, compute endpoint degrees, load predeclared Glob states from the registry, identify strict Ritz-target matches, and report shared-endpoint motifs.",
+    "worldshepherd_uses": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
+    "claims_boundary": "The analyzer produces topology facts, not statistical significance. Null-model and multiple-testing gates remain mandatory."
+  },
+  "next_actions": [
+    "Validate the NIST ASD transition-graph analyzer through the full SARA CI gate.",
+    "Acquire the authoritative W II line export and run topology-preserving analysis on the current empirical graph.",
+    "Apply multiple-testing correction across all predeclared species, datasets, target states, tolerances, and relational motifs.",
+    "Keep the container-build root-pip and pip-version notices in maintenance telemetry; change build policy only when evidence warrants it."
+  ]
+}

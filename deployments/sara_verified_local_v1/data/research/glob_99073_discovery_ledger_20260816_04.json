@@ -1,0 +1,119 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 4,
+  "purpose": "Current NIST Yb II reconciliation and same-orbit level controls.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NIST-ASD-YBII-LEVELS-2026",
+      "title": "NIST Atomic Spectra Database Levels Data — Yb II",
+      "authority": "NIST Physical Measurement Laboratory",
+      "observed_access_state": "349 level entries returned by current ASD query; primary source identified by NIST as Martin et al. 1978 with later NIST correction notes.",
+      "url": "https://physics.nist.gov/cgi-bin/ASD/energy1.pl?biblio=on&conf_out=on&de=0&format=0&j_out=on&lande_out=on&level_out=on&multiplet_ordered=0&output=0&page_size=15&perc_out=on&spectrum=Yb+II&submit=Retrieve+Data&temp=&term_out=on&unc_out=1&units=0",
+      "use": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "OVERWATCH"],
+      "note": "Current-authority Yb II level dataset. Use to reconcile historical Meggers-era values, perform strict orbit screening, and prevent obsolete compact-table coverage from being mistaken for the full current level set."
+    }
+  ],
+  "referenced_sources": ["SRC-YBII-NIST", "SRC-YBII-MEGGERS-1967"],
+  "evidence_updates": [
+    {
+      "record_id": "EV-YBII-56977-CURRENT",
+      "seed_provenance": "245779675000031449401",
+      "derived_state": "56977",
+      "observed_value": 56977.71,
+      "units": "cm^-1",
+      "delta_observed_minus_target": 0.71,
+      "source_id": "SRC-NIST-ASD-YBII-LEVELS-2026",
+      "evidence_class": "P1",
+      "verification_status": "verified_current_authority",
+      "physical_context": "Current NIST ASD Yb II level at 56977.71 cm^-1, 4f^13(2F°5/2)5d^2(3F) 3[1/2]°, J=1/2.",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "OVERWATCH", "PRIME_SENTINEL"],
+      "claims_boundary": "Upgrades the prior historical-only 56977 carry-forward claim to a current-authority near-match. It remains a single P1 result, not a causal or same-orbit closure claim."
+    }
+  ],
+  "relational_tests": [
+    {
+      "test_id": "REL-YBII-ORBIT-44940-94044-09444-40449",
+      "species": "Yb II",
+      "orbit": ["44940", "94044", "09444", "40449"],
+      "screening_threshold_cm-1": 1.0,
+      "threshold_scope": "Deliberately strict screening threshold for this test; not a universal spectroscopy tolerance.",
+      "level_results": [
+        {
+          "target": 44940,
+          "observed": 44940.61,
+          "abs_delta_cm-1": 0.61,
+          "result": "tight_current_asd_level_match"
+        },
+        {
+          "target": 94044,
+          "nearest_current_asd_level_cm-1": 94008.96,
+          "nearest_abs_delta_cm-1": 35.04,
+          "result": "no_tight_level_match"
+        },
+        {
+          "target": 9444,
+          "nearest_relevant_boundary_note": "The first excited Yb II level in the current ASD begins at 21418.75 cm^-1.",
+          "result": "no_tight_level_match"
+        },
+        {
+          "target": 40449,
+          "nearest_current_asd_level_cm-1": 40035.82,
+          "nearest_abs_delta_cm-1": 413.18,
+          "result": "no_tight_level_match"
+        }
+      ],
+      "conclusion": "Only 44940.61 qualifies within +/-1 cm^-1. No second same-orbit Yb II level closure is present in the current ASD level set.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "Level-only relational test. Transition-wavenumber screening is a separate test and must not be inferred from level proximity."
+    },
+    {
+      "test_id": "REL-YBII-ORBIT-79675-67579-56977-95776",
+      "species": "Yb II",
+      "orbit": ["79675", "67579", "56977", "95776"],
+      "screening_threshold_cm-1": 1.0,
+      "threshold_scope": "Deliberately strict screening threshold for this test; not a universal spectroscopy tolerance.",
+      "level_results": [
+        {
+          "target": 79675,
+          "nearest_current_asd_level_cm-1": 79628.71,
+          "nearest_abs_delta_cm-1": 46.29,
+          "result": "no_tight_level_match"
+        },
+        {
+          "target": 67579,
+          "nearest_current_asd_level_cm-1": 67789.60,
+          "nearest_abs_delta_cm-1": 210.60,
+          "result": "no_tight_level_match"
+        },
+        {
+          "target": 56977,
+          "observed": 56977.71,
+          "abs_delta_cm-1": 0.71,
+          "result": "tight_current_asd_level_match"
+        },
+        {
+          "target": 95776,
+          "nearest_current_asd_level_cm-1": 95754.30,
+          "nearest_abs_delta_cm-1": 21.70,
+          "result": "no_tight_level_match"
+        }
+      ],
+      "conclusion": "Only 56977.71 qualifies within +/-1 cm^-1. No second same-orbit Yb II level closure is present in the current ASD level set.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "The current 56977.71 confirmation upgrades source authority but does not create P2 topology by itself."
+    }
+  ],
+  "next_actions": [
+    "Screen current NIST Yb II transition data for the same two orbit families without conflating transition wavenumbers with energy levels.",
+    "Reconcile any current transition hit against Ritz level differences and observed-line uncertainties.",
+    "Run topology-preserving null tests for any Yb II same-system motif that survives strict screening.",
+    "Apply multiple-testing correction across Yb II, Br I, W II, and subsequent species/datasets."
+  ]
+}

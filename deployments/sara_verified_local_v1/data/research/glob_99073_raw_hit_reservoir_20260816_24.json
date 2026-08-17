@@ -1,0 +1,39 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_23.json",
+  "purpose":"Continue raw coverage through 00130, 10030, 01030, 30410, 43010 and 04013 while retaining industrial interoperability, manufacturing-agent control, workforce metrics, reference materials, cybersecurity, GMP and supply-chain utility.",
+  "policy":{
+    "rule":"Raw exact-number occurrences remain namespace-classified controls with zero automatic physical-evidence weight; usefulness may span any Worldshepherd domain.",
+    "promotion":"Standards/specification numbers, product/catalog IDs, CVEs, postal codes and DOI components do not become P1/P2 unless the matched digits independently encode a verified physical quantity.",
+    "utility":"Manufacturing control, industrial data models, workforce planning, quality systems, reference materials, cybersecurity and GMP/supply-chain intelligence are first-class utility destinations."
+  },
+  "records":[
+    {"target":"00130","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1016/S0166-3615(01)00130-0","context":"Agent architecture for flexible/distributed manufacturing control with persistent data and failure recovery","glob_weight":"M1_RAW","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","AI_ML_AND_MODEL_VALIDATION","MATERIALS_AND_MANUFACTURING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"00130","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1016/S0925-5273(01)00130-X","context":"Network approach for agile manufacturing systems and distributed manufacturing-center coordination","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","OPERATIONS_AND_RELIABILITY","SUPPLY_CHAIN_AND_PRODUCTION","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"10030","raw_hit_type":"OPC_SPECIFICATION_NUMBER","occurrence":"OPC 10030","context":"OPC UA Common Object Model for ISA-95","glob_weight":"M1_RAW","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","MATERIALS_AND_MANUFACTURING","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"10030","raw_hit_type":"ISO_STANDARD_NUMBER","occurrence":"ISO/IEC 10030:1995","context":"End-system routing information exchange protocol standard","glob_weight":"M1_RAW","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"01030","raw_hit_type":"ARTICLE_NUMBER_DOI_COMPONENT","occurrence":"10.1051/e3sconf/20186701030","context":"Early-stage manufacturing cost estimation using implant miniplate complexity process index","glob_weight":"M1_RAW","worldshepherd_use":["IP_AND_COMMERCIALIZATION","MATERIALS_AND_MANUFACTURING","SIMULATION_AND_NUMERICAL_METHODS","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"01030","raw_hit_type":"TEXTILE_STANDARD_NUMBER","occurrence":"FZ/T 01030-2016","context":"Seam strength/expansibility bursting-style test method for knitted and elastic woven fabrics","glob_weight":"M1_RAW","worldshepherd_use":["TEST_AND_MEASUREMENT","MATERIALS_AND_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"30410","raw_hit_type":"ISO_STANDARD_NUMBER","occurrence":"ISO/TS 30410:2018","context":"Human resource management — Impact of hire metric","glob_weight":"M1_RAW","worldshepherd_use":["SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPERATIONS_AND_RELIABILITY","OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"30410","raw_hit_type":"CERTIFIED_REFERENCE_MATERIAL_CATALOG","occurrence":"Restek catalog 30410","context":"Certified styrene reference standard, 2000 µg/mL in purge-and-trap methanol","glob_weight":"M1_RAW","worldshepherd_use":["TEST_AND_MEASUREMENT","CHEMISTRY_AND_CHEMICAL_DATA","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"43010","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-43010","context":"SAP S/4HANA SCM Master Data Layer code-injection vulnerability","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"43010","raw_hit_type":"ATCC_CATALOG_ID","occurrence":"ATCC 43010","context":"Leminorella richardii bacterial strain catalog record with custody, handling and licensing constraints","glob_weight":"M1_RAW","worldshepherd_use":["CHEMISTRY_AND_CHEMICAL_DATA","SYSTEMS_ENGINEERING_AND_GOVERNANCE","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"04013","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"04013, Italy","context":"Postal code on current EudraGMDP GMP certificates for pharmaceutical manufacturing sites","glob_weight":"N0_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"04013","raw_hit_type":"PART_NUMBER_COMPONENT","occurrence":"04013-50040","context":"Defense/supply cross-reference part-number component for a production item","glob_weight":"M1_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"OPC 10030 gives Worldshepherd a direct bridge between ISA-95 production semantics and OPC UA objects/references, useful for integrating physical assets, logical equipment, material genealogy, production schedules and shop-floor telemetry.","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","MATERIALS_AND_MANUFACTURING","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],"claims_boundary":"10030 is a specification number."},
+    {"finding":"The manAge and NetMan manufacturing papers are historical but directly relevant to distributed/agentic manufacturing orchestration, persistent state, fault recovery and dynamic production-network coordination.","worldshepherd_use":["SOFTWARE_AND_DATA_ENGINEERING","AI_ML_AND_MODEL_VALIDATION","MATERIALS_AND_MANUFACTURING","OPERATIONS_AND_RELIABILITY"],"claims_boundary":"00130 is DOI metadata."},
+    {"finding":"ISO/TS 30410 can inform Worldshepherd workforce planning by linking critical-position segmentation to organizational value impact rather than treating hiring as a simple headcount metric.","worldshepherd_use":["SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPERATIONS_AND_RELIABILITY"],"claims_boundary":"30410 is the standard number."},
+    {"finding":"CVE-2025-43010 is especially relevant because it affects SAP SCM master-data infrastructure; arbitrary ABAP replacement through code injection is a direct integrity/availability risk for production and supply-chain systems.","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION","OPERATIONS_AND_RELIABILITY"],"claims_boundary":"43010 is the CVE identifier."},
+    {"finding":"The 04013 GMP certificate cluster is useful as current manufacturing-compliance and partner/supply-chain intelligence, even though the numeric match is only a postal code.","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPPORTUNITY_AND_PARTNER_INTEL"],"claims_boundary":"04013 is an address code, not a physical quantity."}
+  ],
+  "next_actions":[
+    "Continue raw coverage through 10443, 41340, 34041, 43941, 94143 and 19344 while maintaining domain-agnostic utility routing.",
+    "Continue source-by-source retroactive utility backfill for prior ledgers and raw reservoirs.",
+    "Continue same-system topology and relational verification independently for physical P1/P2 candidates.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}

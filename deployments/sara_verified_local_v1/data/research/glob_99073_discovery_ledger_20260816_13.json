@@ -1,0 +1,81 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 13,
+  "purpose": "Route the newly surfaced U.S. Navy Volume Sensor multisensor/data-fusion lineage into Worldshepherd while assigning zero Glob evidence weight to the search-side discovery itself.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered and screened during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, and repeated records are provenance aliases and are not independent evidence.",
+    "search_noise": "A source surfaced by an unrelated search path is not Glob evidence; search co-occurrence receives zero evidence weight unless an independently verified physical or relational feature is established."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-USN-VOLUME-SENSOR-PATENT-2008",
+      "title": "Volume sensor: data fusion-based, multi-sensor system for advanced damage control",
+      "authors": "Susan L. Rose-Pehrsson; Frederick W. Williams; Jeffrey C. Owrutsky; Daniel T. Gottuk; Daniel A. Steinhurst; Christian P. Minor; Stephen C. Wales",
+      "year": 2008,
+      "identifier": "US20080036593A1; US11/833,753",
+      "authority": "U.S. Department of the Navy patent publication",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["SARA", "OVERWATCH", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use the modular sensor-suite -> subsystem analysis -> fusion-node -> supervisory-control architecture as a historical shipboard multisensor reference. Particularly relevant are raw-plus-derived feature transport, event-specific fusion, pre-alarm/alarm staging, nuisance-source rejection, one-second networked updates, extensible sensor modalities, and synchronized full-scale testing. Its discovery during a Glob search carries zero Glob-number evidence weight."
+    },
+    {
+      "source_id": "SRC-USN-VOLUME-SENSOR-FSJ-2006",
+      "title": "Volume sensor for damage assessment and situational awareness",
+      "authors": "Susan L. Rose-Pehrsson et al.",
+      "year": 2006,
+      "identifier": "doi:10.1016/j.firesaf.2005.12.005",
+      "authority": "Fire Safety Journal / U.S. Navy Advanced Damage Countermeasures research",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["SARA", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as a peer-reviewed multisensor prototype precedent combining video, spectral, acoustic, image-recognition, and data-fusion methods for real-time damage assessment. Map the heterogeneous sensor and nuisance-rejection methodology into Worldshepherd sensor-fusion replay and validation cases rather than treating it as Glob evidence."
+    },
+    {
+      "source_id": "SRC-USN-VID-FSJ-2006",
+      "title": "Video image fire detection for shipboard use",
+      "authors": "D. T. Gottuk; J. A. Lynch; S. L. Rose-Pehrsson; J. C. Owrutsky; F. W. Williams",
+      "year": 2006,
+      "identifier": "doi:10.1016/j.firesaf.2005.12.007",
+      "authority": "Fire Safety Journal / Office of Naval Research-supported testing",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["OVERWATCH", "SARA", "MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use the 280 full-scale ship-compartment tests, camera/lighting perturbations, flaming/smoldering cases, nuisance sources, and benchmarking against ionization/photoelectric detectors as a validation-design precedent. Its controlled nuisance cases are especially useful for false-positive and robustness methodology."
+    },
+    {
+      "source_id": "SRC-NRL-VOLUME-SENSOR-TEST4-2006",
+      "title": "Volume Sensor Development Test Series 4 Results — Multi-Component Prototype Evaluation",
+      "authors": "James A. Lynch et al.",
+      "year": 2006,
+      "identifier": "NRL/MR/6180--06-8934; report identifier 20060322091",
+      "authority": "U.S. Naval Research Laboratory",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["OVERWATCH", "SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as the detailed prototype-test lineage behind the peer-reviewed Volume Sensor work. Preserve test configuration, synchronized event timing, sensor modalities, event/nuisance labels, and prototype-vs-commercial comparisons as a candidate benchmark schema for Worldshepherd multisensor validation."
+    }
+  ],
+  "integration_actions": [
+    {
+      "action_id": "INT-R13-HETEROGENEOUS-SENSOR-FUSION-SCHEMA",
+      "status": "ROUTED",
+      "worldshepherd_uses": ["SARA", "OVERWATCH", "ECHO_SENTINEL_LINK"],
+      "action": "Use the Volume Sensor architecture as a precedent for retaining both raw sensor measurements and subsystem-derived features, carrying timestamps and provenance to a fusion layer, and emitting bounded pre-alarm/alarm classifications with replayable evidence."
+    },
+    {
+      "action_id": "INT-R13-NUISANCE-ROBUSTNESS-BENCHMARK",
+      "status": "ROUTED",
+      "worldshepherd_uses": ["OVERWATCH", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "action": "Translate shipboard nuisance-source testing (lighting variation, welding/grinding/cutting, camera degradation, background activity) into controlled negative and robustness tests for Worldshepherd sensing and anomaly-classification pipelines."
+    }
+  ],
+  "discovery_scope_boundary": {
+    "rule": "A citation appearing only inside a screened source is recorded as a bibliographic lead only when it is materially relevant; it is not promoted to a fully ingested source until its own content is screened. This prevents recursive bibliography expansion from being mistaken for evidence acquisition.",
+    "worldshepherd_use": "ECHO_SENTINEL_LINK maintains the lead/provenance distinction; PRIME_SENTINEL prevents unscreened references from contributing evidence weight."
+  },
+  "next_actions": [
+    "Use the Navy Volume Sensor test architecture to strengthen Worldshepherd sensor-fusion validation design while retaining application-specific boundaries.",
+    "Keep W II full-graph topology/relational analysis as the active Glob evidentiary gate; unrelated sensor-fusion sources contribute zero Glob evidence weight.",
+    "Apply multiple-testing or false-discovery correction across all Glob species, datasets, targets, tolerances, and relational motifs before any statistical promotion."
+  ]
+}

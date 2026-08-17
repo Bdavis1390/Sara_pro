@@ -1,0 +1,87 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 7,
+  "purpose": "Source-metadata correction and operational routing of substantive cross-domain publications/patents surfaced during exact W II level searches.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-TRANSITION-MATRIX-SOCIAL-MOBILITY-2025",
+      "title": "Social Mobility in the Long Run: An Analysis of Tongcheng, China, 1300 to 1900",
+      "year": 2025,
+      "authority": "Journal of Economic History / Cambridge Core",
+      "url": "https://www.cambridge.org/core/journals/journal-of-economic-history/article/social-mobility-in-the-long-run-an-analysis-of-tongcheng-china-1300-to-1900/6ACF959FC27EC0534A5D86B9B7D60BFC",
+      "use": ["OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Off-domain search result. Reuse its transition-matrix framing as a generic state-transition comparison method for OVERWATCH; retain off-domain provenance as a context-control example, not Glob evidence."
+    },
+    {
+      "source_id": "SRC-CMP-WAFER-INTERFACE-REVIEW-2020",
+      "title": "A review on chemical and mechanical phenomena at the wafer interface during chemical mechanical planarization",
+      "year": 2020,
+      "authority": "Journal of Materials Research / Cambridge Core",
+      "url": "https://www.cambridge.org/core/journals/journal-of-materials-research/article/review-on-chemical-and-mechanical-phenomena-at-the-wafer-interface-during-chemical-mechanical-planarization/F53CF209A1FD6CA18FFF50631A0CC654",
+      "use": ["MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Route to materials/process knowledge for tungsten/cobalt metallization and chemical-mechanical-planarization interface phenomena; useful for manufacturing/surface-finish modeling, not Glob-number evidence."
+    },
+    {
+      "source_id": "SRC-PATENT-ELECTRO-OPTIC-10191348",
+      "title": "Electro-optic element",
+      "year": 2019,
+      "identifier": "US 10,191,348",
+      "authority": "U.S. patent publication record surfaced via Justia",
+      "url": "https://patents.justia.com/patent/10191348",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL"],
+      "note": "Route as prior-art/material-property intelligence for electrochromic/optical multilayers. Includes tungsten/tungsten-oxide options and example optical constants; validate against primary patent/measurement sources before design use."
+    },
+    {
+      "source_id": "SRC-PATENT-TOF-MS-12027359",
+      "title": "Bench-top Time of Flight mass spectrometer",
+      "year": 2024,
+      "identifier": "US 12,027,359",
+      "authority": "U.S. patent publication record surfaced via Justia",
+      "url": "https://patents.justia.com/patent/12027359",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "SARA", "PRIME_SENTINEL"],
+      "note": "Route to instrumentation knowledge: tungsten-wire grid-electrode construction, support geometry, interlocks, and operating-state logic. Treat as patent/prior-art engineering information, not scientific validation."
+    },
+    {
+      "source_id": "SRC-COBOT-GESTURE-BDD-2025",
+      "title": "A gesture-based behaviour-driven development approach for end-user cobot programming",
+      "year": 2025,
+      "authority": "Robotica / Cambridge Core",
+      "url": "https://www.cambridge.org/core/journals/robotica/article/gesturebased-behaviourdriven-development-approach-for-enduser-cobot-programming/F3F22E64F5C1631D4D4F30D9D0088E0C",
+      "use": ["SARA", "OVERWATCH"],
+      "note": "Route gesture-to-symbol mapping, behavior-driven scenario syntax, and finite-state-machine execution concepts into future human/cobot orchestration and observable state-transition workflows."
+    }
+  ],
+  "referenced_sources": ["SRC-W-RADIATIVE-RATES-2011", "SRC-NIST-ASD-WII-LEVELS-2026"],
+  "source_corrections": [
+    {
+      "source_id": "SRC-W-RADIATIVE-RATES-2011",
+      "field": "journal_publication_year",
+      "previous_interpretation": 2011,
+      "corrected_value": 2010,
+      "reason": "The peer-reviewed Journal of Physics B article is volume 43 (2010), article 144003; a 2011 repository/manuscript-version timestamp should not be used as the journal publication year.",
+      "identifier_stability_rule": "Keep the existing source_id for referential stability; consumers must apply the correction record when presenting bibliographic metadata.",
+      "worldshepherd_uses": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL"]
+    }
+  ],
+  "relational_tests": [
+    {
+      "test_id": "CTRL-CROSS-DOMAIN-SEARCH-ROUTING",
+      "result": "substantive_search_spillover_routed_without_glob_evidence_weight",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "Cross-domain usefulness does not convert search-engine co-occurrence into numerical or physical evidence."
+    }
+  ],
+  "next_actions": [
+    "Keep cross-domain search spillover source-bounded so useful methods are retained without allowing uncontrolled topic expansion.",
+    "Run topology-preserving tests only on predeclared physical datasets and target sets.",
+    "Apply multiple-testing correction to Glob hypothesis tests; cross-domain methodology reuse is not part of the hypothesis hit count.",
+    "Where patent-derived values influence a design, reconcile them against the primary patent and independent material-property measurements before PRIME SENTINEL approval."
+  ]
+}
