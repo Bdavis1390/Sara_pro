@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.9",
-  "updated_utc": "2026-08-17T17:17:00Z",
+  "schema_version": "2.0",
+  "updated_utc": "2026-08-17T17:30:00Z",
   "policy": {
     "default_rule": "classical baseline before quantum attribution",
     "simulator_is_not_qpu": true,
@@ -24,17 +24,23 @@
     "annealing_hardware_execution_cannot_replace_mission_instance_or_classical_baseline": true,
     "cudaq_portable_target_selection_is_not_provider_hardware_evidence": true,
     "braket_simulator_jobs_are_not_provider_parity_hardware_evidence": true,
+    "ddil_local_evidence_identity_must_survive_delayed_provider_sync": true,
+    "provider_sync_conflicts_must_not_rewrite_local_evidence_identity": true,
+    "quantum_mission_evidence_profile_is_internal_draft_not_external_standard": true,
+    "profile_conformance_does_not_equal_external_certification": true,
     "mission_readiness_is_not_trl_or_deployment_authority": true
   },
   "current_state": {
     "internally_controllable_quantum_closure": {
       "score": 100,
       "target": 97,
-      "controls_complete": 28,
-      "controls_total": 28,
+      "controls_complete": 30,
+      "controls_total": 30,
       "decision": "PASS_INTERNAL_CLOSURE",
-      "generated_ci_artifacts_expected": 17,
-      "claim_control": "Internal software, provider adapters, evidence contracts and governance do not upgrade physical mission evidence."
+      "generated_ci_artifacts_expected": 18,
+      "profile_conformance_cases_passed": 10,
+      "profile_conformance_cases_total": 10,
+      "claim_control": "Internal software, provider adapters, evidence contracts, DDIL custody and profile conformance do not upgrade physical mission evidence."
     },
     "provider_neutrality": {
       "ibm_gate_model_adapter": "implemented_credential_gated_no_worldshepherd_hardware_run_yet",
@@ -44,6 +50,13 @@
       "statistical_cross_backend_reproduction": "implemented_requires_real_distinct_qpu_runs",
       "qdk_resource_sensitivity": "implemented_three_scenario_envelope",
       "claim_control": "Provider breadth is an integration capability until actual provider runs and evidence packages exist."
+    },
+    "evidence_governance_differentiation": {
+      "quantum_mission_evidence_profile": "internal_draft_0.1",
+      "profile_conformance": "10_of_10_controlled_cases_passed_ci",
+      "ddil_deferred_sync_custody": "implemented_with_conflict_preservation",
+      "external_review_required_before_market_leadership_claim": true,
+      "publication_requires_legal_ip_security_review": true
     },
     "external_campaign_state": {
       "projects_covered": 7,
@@ -56,6 +69,7 @@
       "canonical_state_change_is_separate": true,
       "market_parity_plan": "docs/QUANTUM_MARKET_BENCHMARK_AND_PARITY_PLAN_2026-08-17.md",
       "defense_integrator_benchmark": "docs/QUANTUM_DEFENSE_INTEGRATOR_BENCHMARK_2026-08-17.md",
+      "quantum_mission_evidence_profile": "docs/QUANTUM_MISSION_EVIDENCE_PROFILE_DRAFT_2026-08-17.md",
       "partner_target_snapshot": "data/quantum_external_partner_targets_2026-08-17.json",
       "first_qpu_runbook": "docs/QUANTUM_SARA_QPU_FIRST_RUN_2026-08-17.md",
       "apnt_partner_evaluation_package": "docs/QUANTUM_APNT_PARTNER_EVALUATION_2026-08-17.md"
@@ -107,6 +121,8 @@
     "typed external-evidence intake",
     "local raw-artifact re-hash and current-gate locking",
     "identified-human technical review before promotion recommendation",
+    "DDIL local evidence custody, tamper detection and delayed-sync identity preservation",
+    "ten-case executable Quantum Mission Evidence Profile conformance suite",
     "APNT truth-reference synthetic benchmark",
     "exact-vs-variational materials harness",
     "WS-AlTi periodic-structure freeze validator",
@@ -124,7 +140,7 @@
       "priority": 1,
       "quantum_fit": "high",
       "mission_readiness": {"score": 55, "target": 97, "gap": 42, "evidence_stage": "integrated_simulation", "cap": 55, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["IBM QPU adapter", "statistical cross-backend reproduction", "CUDA-Q portable execution", "Braket Hybrid Job evidence contract", "QDK three-scenario resource sensitivity", "external evidence ingest/review governance"],
+      "internally_closed": ["IBM QPU adapter", "statistical cross-backend reproduction", "CUDA-Q portable execution", "Braket Hybrid Job evidence contract", "QDK three-scenario resource sensitivity", "DDIL evidence custody", "external evidence ingest/review governance", "Quantum Mission Evidence Profile conformance"],
       "remaining_external_gates": ["first real gate-model QPU execution", "same-backend repeat", "second independent gate-model provider", "one real Braket QPU Hybrid Job if used", "queue/cost/degraded telemetry", "hardware-in-loop", "relevant-environment operational demonstration"],
       "campaign_first_active_gate": "SARA-QRF-EXT-01",
       "next_gate": "execute QRF-BELL-001 on a named real QPU and retain a gate-valid evidence bundle"
