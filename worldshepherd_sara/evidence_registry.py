@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
-from typing import Any, Dict, Iterable, Iterator, Literal
+from typing import Any, Dict, Iterator, Literal
 
 from worldshepherd_sara.evidence_contract import (
     EvidenceValidationError,
@@ -26,6 +26,10 @@ class DuplicateEvidenceId(EvidenceRegistryError):
 
 class EvidenceNotFound(EvidenceRegistryError):
     """Raised when a record or supersession target cannot be found."""
+
+
+class EvidenceReferenceError(EvidenceRegistryError):
+    """Raised when a claim references missing, ambiguous, or incompatible evidence."""
 
 
 class EvidenceSupersessionError(EvidenceRegistryError):
@@ -86,11 +90,7 @@ def verify_local_raw_digest(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 class EvidenceRegistry:
-    """Append-only experiment and claim registry.
-
-    Records are never updated in place. Corrections use a new identifier plus
-    ``supersedes_record_id``. The original record remains retrievable forever.
-    """
+    """Append-only experiment and claim registry with cross-record claims control."""
 
     def __init__(self, data_dir: Path | str):
         self.root = Path(data_dir) / "evidence"
@@ -134,6 +134,54 @@ class EvidenceRegistry:
                 continue
         return result
 
+    def _all_id_locations(self) -> Dict[str, list[tuple[RecordKind, Dict[str, Any]]]]:
+        result: Dict[str, list[tuple[RecordKind, Dict[str, Any]]]] = {}
+        for kind in ("experiment", "claim"):
+            for identifier, envelope in self._id_index(kind).items():
+                result.setdefault(identifier, []).append((kind, envelope))
+        return result
+
+    def _resolve_record(self, record_id: str) -> tuple[RecordKind, Dict[str, Any]]:
+        matches = self._all_id_locations().get(record_id, [])
+        if not matches:
+            raise EvidenceReferenceError(f"referenced evidence record does not exist: {record_id}")
+        if len(matches) != 1:
+            raise EvidenceReferenceError(f"referenced evidence record is ambiguous: {record_id}")
+        return matches[0]
+
+    @staticmethod
+    def _envelope_evidence_classes(kind: RecordKind, envelope: Dict[str, Any]) -> set[str]:
+        record = envelope.get("record") or {}
+        key = "evidence_class" if kind == "experiment" else "evidence_classes"
+        values = record.get(key, [])
+        return {str(value) for value in values if isinstance(value, str)}
+
+    def _validate_claim_references(self, payload: Dict[str, Any]) -> None:
+        supporting_ids = payload.get("supporting_record_ids", [])
+        contradicting_ids = payload.get("contradicting_record_ids", [])
+        replication_ids = payload.get("replication_ids", [])
+
+        support_classes: set[str] = set()
+        for record_id in supporting_ids:
+            kind, envelope = self._resolve_record(record_id)
+            support_classes.update(self._envelope_evidence_classes(kind, envelope))
+
+        for record_id in contradicting_ids:
+            self._resolve_record(record_id)
+
+        for record_id in replication_ids:
+            self._resolve_record(record_id)
+
+        if "MEASURED" in payload.get("evidence_classes", []) and "MEASURED" not in support_classes:
+            raise EvidenceReferenceError(
+                "claim declares MEASURED evidence but no supporting record is actually MEASURED"
+            )
+
+        if payload.get("confidence_status") == "INDEPENDENTLY_REPRODUCED" and not replication_ids:
+            raise EvidenceReferenceError(
+                "INDEPENDENTLY_REPRODUCED confidence requires resolvable replication_ids"
+            )
+
     def _superseded_ids(self, kind: RecordKind) -> set[str]:
         return {
             str(envelope["supersedes_record_id"])
@@ -153,21 +201,25 @@ class EvidenceRegistry:
         identifier = _record_id(kind, validated)
 
         with self._lock:
-            index = self._id_index(kind)
-            if identifier in index:
-                raise DuplicateEvidenceId(f"{kind} id already exists: {identifier}")
+            all_ids = self._all_id_locations()
+            if identifier in all_ids:
+                raise DuplicateEvidenceId(f"evidence id already exists: {identifier}")
 
+            index = self._id_index(kind)
             if supersedes_record_id:
                 if supersedes_record_id == identifier:
                     raise EvidenceSupersessionError("record cannot supersede itself")
                 if supersedes_record_id not in index:
                     raise EvidenceNotFound(
-                        f"supersession target does not exist: {supersedes_record_id}"
+                        f"supersession target does not exist in the same record class: {supersedes_record_id}"
                     )
                 if supersedes_record_id in self._superseded_ids(kind):
                     raise EvidenceSupersessionError(
                         f"supersession target already has a successor: {supersedes_record_id}"
                     )
+
+            if kind == "claim":
+                self._validate_claim_references(validated)
 
             digest_verification = (
                 verify_local_raw_digest(validated)
@@ -199,7 +251,7 @@ class EvidenceRegistry:
 
     def iter_all(self) -> Iterator[Dict[str, Any]]:
         for kind in ("experiment", "claim"):
-            yield from self._iter_envelopes(kind)  # type: ignore[arg-type]
+            yield from self._iter_envelopes(kind)
 
     def export_jsonl(self) -> str:
         return "".join(json.dumps(item, sort_keys=True) + "\n" for item in self.iter_all())
