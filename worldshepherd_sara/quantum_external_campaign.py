@@ -1,19 +1,18 @@
 """Stage-locked external evidence acquisition campaigns for the Worldshepherd QRF.
 
 The campaign layer converts each project's remaining 97-point closure gap into a
-sequence of evidence-acquisition gates. It deliberately prevents evidence from a
-later stage from being used to skip an earlier stage and requires each external
-record to identify the campaign gate that it was collected to satisfy.
+sequence of evidence-acquisition gates. Gate identifiers remain stable as a project
+advances: completed historical gates are filtered from the active campaign rather
+than renumbered. Later-stage evidence cannot skip the first currently active gate.
 
-Campaign completion is not mission approval. It only advances the internal
-Worldshepherd evidence stage when the declared evidence package is structurally
-complete and has separately passed the underlying technical review.
+Campaign completion is not mission approval. A structurally satisfied gate still
+requires separate technical review before a mission-readiness stage is promoted.
 """
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-from typing import Iterable, Mapping
+from dataclasses import dataclass
+from typing import Iterable
 
 from worldshepherd_sara.quantum_external_evidence import (
     ExternalEvidenceRecord,
@@ -135,26 +134,26 @@ def _sara() -> tuple[CampaignGate, ...]:
               _m(ExternalEvidenceType.QPU_EXECUTION, 1), devices=1,
               metadata=("test_protocol_digest", "program_digest", "transpiled_program_digest", "backend_properties_digest", "queue_seconds", "failure_mode"),
               environments=("remote_cloud_qpu", "integration_lab"),
-              acceptance="Retain one named real-QPU execution with immutable program/backend/result provenance and measured queue, latency, cost, and failure-state telemetry."),
+              acceptance="Retain one named real-QPU execution with immutable program/backend/result provenance and measured queue, latency, cost, and failure telemetry."),
         _gate(p, 2, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE, MissionEvidenceStage.REPRODUCED_HARDWARE,
               _m(ExternalEvidenceType.QPU_EXECUTION, 2), devices=1,
               metadata=("replication_series_id", "test_protocol_digest", "program_digest"),
-              acceptance="Repeat the frozen workload at least twice under one replication series; preserve backend identity and compare result stability."),
+              acceptance="Repeat the frozen workload at least twice under one replication series and quantify stability."),
         _gate(p, 3, MissionEvidenceStage.REPRODUCED_HARDWARE, MissionEvidenceStage.HARDWARE_IN_LOOP,
               _m(ExternalEvidenceType.QPU_EXECUTION, 1), devices=1,
               metadata=("sara_workflow_digest", "degraded_state_result_digest", "fallback_result_digest", "test_protocol_digest"),
               environments=("hardware_in_loop", "integration_lab"),
-              acceptance="Run the QPU path inside the SARA control loop with deterministic classical fallback and degraded-state evidence."),
+              acceptance="Run the QPU path inside SARA with deterministic classical fallback and degraded-state evidence."),
         _gate(p, 4, MissionEvidenceStage.HARDWARE_IN_LOOP, MissionEvidenceStage.RELEVANT_ENVIRONMENT,
               _m(ExternalEvidenceType.QPU_EXECUTION, 2), devices=1,
               metadata=("mission_scenario_id", "truth_reference_digest", "operator_log_digest", "test_protocol_digest"),
               environments=("relevant_environment",),
-              acceptance="Execute repeated end-to-end trials in a declared relevant environment with mission truth/reference instrumentation."),
+              acceptance="Execute repeated end-to-end trials in a declared relevant environment with truth/reference instrumentation."),
         _gate(p, 5, MissionEvidenceStage.RELEVANT_ENVIRONMENT, MissionEvidenceStage.OPERATIONAL_DEMONSTRATION,
               _m(ExternalEvidenceType.QPU_EXECUTION, 3), devices=1,
               metadata=("operational_scenario_id", "acceptance_criteria_digest", "operator_log_digest", "test_protocol_digest"),
               environments=("operational_demonstration",),
-              acceptance="Complete an operational demonstration series against predeclared acceptance criteria; separate deployment authorization remains required."),
+              acceptance="Complete an operational demonstration series against predeclared acceptance criteria."),
     )
 
 
@@ -168,25 +167,25 @@ def _apnt() -> tuple[CampaignGate, ...]:
               _m(ExternalEvidenceType.QUANTUM_SENSOR, 1), devices=1,
               metadata=("observable", "units", "sample_rate_hz", "calibration_certificate_digest", "test_protocol_digest"),
               environments=("calibration_lab", "integration_lab"),
-              acceptance="Acquire a calibrated named sensor/device dataset against a declared truth reference and uncertainty budget."),
+              acceptance="Acquire a calibrated named sensor/device dataset against a truth reference and uncertainty budget."),
         _gate(p, 3, MissionEvidenceStage.CALIBRATED_MODEL, MissionEvidenceStage.INTEGRATED_SIMULATION,
               _m(ExternalEvidenceType.QUANTUM_SENSOR, 2), devices=1,
               metadata=("interface_schema_digest", "denied_reference_injection", "fusion_algorithm_digest", "test_protocol_digest"),
-              acceptance="Replay calibrated data through the APNT fusion/control interface, including denied/degraded-reference cases."),
+              acceptance="Replay calibrated data through the APNT fusion/control interface including denied/degraded-reference cases."),
         _gate(p, 4, MissionEvidenceStage.INTEGRATED_SIMULATION, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
               _m(ExternalEvidenceType.QUANTUM_SENSOR, 1), devices=1,
               metadata=("live_stream", "interface_schema_digest", "truth_reference_digest", "test_protocol_digest"),
               environments=("hardware_bench", "integration_lab"),
-              acceptance="Run a live named quantum sensor through the Worldshepherd APNT interface against a truth reference."),
+              acceptance="Run a live named quantum sensor through the APNT interface against a truth reference."),
         _gate(p, 5, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE, MissionEvidenceStage.REPRODUCED_HARDWARE,
               _m(ExternalEvidenceType.QUANTUM_SENSOR, 2), devices=1,
               metadata=("replication_series_id", "truth_reference_digest", "test_protocol_digest"),
-              acceptance="Repeat the live sensor trial and quantify run-to-run stability under the same frozen protocol."),
+              acceptance="Repeat the live sensor trial and quantify run-to-run stability."),
         _gate(p, 6, MissionEvidenceStage.REPRODUCED_HARDWARE, MissionEvidenceStage.HARDWARE_IN_LOOP,
               _m(ExternalEvidenceType.QUANTUM_SENSOR, 2), devices=1,
               metadata=("navigation_solution_digest", "degraded_mode_digest", "fallback_result_digest", "test_protocol_digest"),
               environments=("hardware_in_loop",),
-              acceptance="Close the sensor in the APNT navigation/control loop and verify degraded-mode and classical fallback behavior."),
+              acceptance="Close the sensor in the APNT navigation/control loop with degraded-mode and classical fallback tests."),
         _gate(p, 7, MissionEvidenceStage.HARDWARE_IN_LOOP, MissionEvidenceStage.RELEVANT_ENVIRONMENT,
               _m(ExternalEvidenceType.QUANTUM_SENSOR, 3), devices=1,
               metadata=("route_or_profile_id", "truth_reference_digest", "environmental_conditions_digest", "test_protocol_digest"),
@@ -196,7 +195,7 @@ def _apnt() -> tuple[CampaignGate, ...]:
               _m(ExternalEvidenceType.QUANTUM_SENSOR, 3), devices=1,
               metadata=("operational_scenario_id", "acceptance_criteria_digest", "truth_reference_digest", "operator_log_digest"),
               environments=("operational_demonstration",),
-              acceptance="Complete an operational APNT demonstration series against predeclared accuracy, continuity, integrity, and degraded-mode criteria."),
+              acceptance="Complete an operational APNT demonstration series against predeclared criteria."),
     )
 
 
@@ -207,39 +206,38 @@ def _alti() -> tuple[CampaignGate, ...]:
               _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1),
               metadata=("geometry_source", "composition_id", "test_protocol_digest"),
               preconditions=("WS-ALTI-P0-PHYSICAL-STRUCTURE-FROZEN",),
-              acceptance="Freeze a physically specified Al-Ti-Mg-Sc-Zr structure and reproducible reduced Hamiltonian with provenance."),
+              acceptance="Freeze a physically specified Al-Ti-Mg-Sc-Zr structure and reduced Hamiltonian with provenance."),
         _gate(p, 2, MissionEvidenceStage.SYNTHETIC_SURROGATE, MissionEvidenceStage.CALIBRATED_MODEL,
               _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1),
               metadata=("dft_method", "reference_energy_units", "exact_active_space_method", "geometry_source", "test_protocol_digest"),
-              acceptance="Establish HF/exact-active-space/DFT references for the same frozen structure and quantify model disagreement."),
+              acceptance="Establish HF/exact-active-space/DFT references for the same frozen structure."),
         _gate(p, 3, MissionEvidenceStage.CALIBRATED_MODEL, MissionEvidenceStage.INTEGRATED_SIMULATION,
               _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1),
               metadata=("variational_ansatz", "optimizer", "noise_model_digest", "reference_error", "test_protocol_digest"),
-              acceptance="Run the governed exact-versus-variational workflow against the frozen classical references with explicit noise assumptions."),
+              acceptance="Run the exact-versus-variational workflow against frozen classical references with explicit noise assumptions."),
         _gate(p, 4, MissionEvidenceStage.INTEGRATED_SIMULATION, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
               _m(ExternalEvidenceType.QPU_EXECUTION, 1), devices=1,
               metadata=("materials_problem_id", "hamiltonian_digest", "reference_result_digest", "test_protocol_digest"),
-              acceptance="Execute the justified reduced materials workload on a named QPU and compare to the frozen exact/DFT reference."),
+              acceptance="Execute the justified reduced materials workload on a named QPU and compare to exact/DFT reference."),
         _gate(p, 5, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE, MissionEvidenceStage.REPRODUCED_HARDWARE,
               _m(ExternalEvidenceType.QPU_EXECUTION, 2), devices=1,
               metadata=("replication_series_id", "materials_problem_id", "reference_result_digest", "test_protocol_digest"),
-              acceptance="Repeat the materials workload and quantify hardware-result stability and reference error."),
+              acceptance="Repeat the materials workload and quantify hardware-result stability/reference error."),
         _gate(p, 6, MissionEvidenceStage.REPRODUCED_HARDWARE, MissionEvidenceStage.HARDWARE_IN_LOOP,
-              _m(ExternalEvidenceType.QPU_EXECUTION, 1),
-              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 1), devices=1,
+              _m(ExternalEvidenceType.QPU_EXECUTION, 1), _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 1), devices=1,
               metadata=("coupon_id", "process_log_digest", "predicted_observable", "measured_observable", "test_protocol_digest"),
               environments=("materials_lab", "hardware_in_loop"),
-              acceptance="Link the governed computation to a physical coupon/process record and compare at least one predicted material observable to calibrated measurement."),
+              acceptance="Link governed computation to a physical coupon/process and compare a predicted observable to calibrated measurement."),
         _gate(p, 7, MissionEvidenceStage.HARDWARE_IN_LOOP, MissionEvidenceStage.RELEVANT_ENVIRONMENT,
               _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
               metadata=("coupon_family_id", "process_log_digest", "environmental_conditions_digest", "test_protocol_digest"),
               environments=("relevant_environment", "materials_lab"),
-              acceptance="Validate prediction-to-coupon correlation across a repeated coupon family under declared relevant process/environmental conditions."),
+              acceptance="Validate prediction-to-coupon correlation across a repeated coupon family."),
         _gate(p, 8, MissionEvidenceStage.RELEVANT_ENVIRONMENT, MissionEvidenceStage.OPERATIONAL_DEMONSTRATION,
               _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
               metadata=("demonstrator_id", "acceptance_criteria_digest", "process_log_digest", "independent_measurement_digest"),
               environments=("operational_demonstration",),
-              acceptance="Demonstrate the materials-computation workflow on a declared demonstrator against predeclared physical acceptance criteria; this does not replace materials qualification."),
+              acceptance="Demonstrate the materials-computation workflow against predeclared physical criteria without replacing qualification."),
     )
 
 
@@ -251,34 +249,32 @@ def _metasurface() -> tuple[CampaignGate, ...]:
               metadata=("full_wave_solver", "mesh_or_discretization_digest", "frequency_grid_digest", "tile_state_map_digest", "test_protocol_digest"),
               acceptance="Calibrate the reduced tile objective to authoritative Maxwell/FEM/FDTD results with quantified error."),
         _gate(p, 2, MissionEvidenceStage.CALIBRATED_MODEL, MissionEvidenceStage.INTEGRATED_SIMULATION,
-              _m(ExternalEvidenceType.CALIBRATED_PHYSICS_MODEL, 2),
-              _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 2),
+              _m(ExternalEvidenceType.CALIBRATED_PHYSICS_MODEL, 2), _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 2),
               metadata=("instance_family_digest", "classical_optimizer", "reduced_model_digest", "test_protocol_digest"),
-              acceptance="Run a calibrated instance family through the reduced model and strong classical optimizer before quantum challenge."),
+              acceptance="Run a calibrated instance family through the reduced model and strong classical optimizer."),
         _gate(p, 3, MissionEvidenceStage.INTEGRATED_SIMULATION, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
               _m(ExternalEvidenceType.QPU_EXECUTION, 1), devices=1,
               metadata=("instance_family_digest", "classical_reference_digest", "end_to_end_objective", "test_protocol_digest"),
-              acceptance="Execute a calibrated metasurface optimization instance on a named QPU with end-to-end objective comparison."),
+              acceptance="Execute a calibrated metasurface optimization instance on a named QPU with end-to-end comparison."),
         _gate(p, 4, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE, MissionEvidenceStage.REPRODUCED_HARDWARE,
               _m(ExternalEvidenceType.QPU_EXECUTION, 2), devices=1,
               metadata=("replication_series_id", "instance_family_digest", "classical_reference_digest", "test_protocol_digest"),
-              acceptance="Repeat the calibrated QPU optimization and compare quality, latency, cost, and run-to-run stability."),
+              acceptance="Repeat calibrated QPU optimization and compare quality, latency, cost and stability."),
         _gate(p, 5, MissionEvidenceStage.REPRODUCED_HARDWARE, MissionEvidenceStage.HARDWARE_IN_LOOP,
-              _m(ExternalEvidenceType.QPU_EXECUTION, 1),
-              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 1), devices=1,
+              _m(ExternalEvidenceType.QPU_EXECUTION, 1), _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 1), devices=1,
               metadata=("rf_hardware_id", "tile_command_digest", "measured_field_digest", "fallback_result_digest", "test_protocol_digest"),
               environments=("hardware_in_loop", "rf_lab"),
-              acceptance="Close the optimization result through real RF tile hardware and compare commanded versus measured field/response with fallback behavior."),
+              acceptance="Close optimization through real RF tile hardware and compare commanded versus measured response."),
         _gate(p, 6, MissionEvidenceStage.HARDWARE_IN_LOOP, MissionEvidenceStage.RELEVANT_ENVIRONMENT,
               _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
               metadata=("rf_hardware_id", "environmental_conditions_digest", "truth_reference_digest", "test_protocol_digest"),
               environments=("relevant_environment",),
-              acceptance="Repeat measured RF performance under the relevant electromagnetic/environmental conditions with truth/reference instrumentation."),
+              acceptance="Repeat measured RF performance under relevant electromagnetic/environmental conditions."),
         _gate(p, 7, MissionEvidenceStage.RELEVANT_ENVIRONMENT, MissionEvidenceStage.OPERATIONAL_DEMONSTRATION,
               _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
               metadata=("operational_scenario_id", "acceptance_criteria_digest", "operator_log_digest", "independent_measurement_digest"),
               environments=("operational_demonstration",),
-              acceptance="Complete an operational metasurface demonstration series against frozen electromagnetic performance criteria."),
+              acceptance="Complete an operational metasurface demonstration series against frozen EM criteria."),
     )
 
 
@@ -288,91 +284,78 @@ def _logistics() -> tuple[CampaignGate, ...]:
         _gate(p, 1, MissionEvidenceStage.SYNTHETIC_SURROGATE, MissionEvidenceStage.CALIBRATED_MODEL,
               _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 3),
               metadata=("mission_source", "instance_family_digest", "classical_optimizer", "latency_budget_seconds", "test_protocol_digest"),
-              acceptance="Freeze a mission-relevant route/assignment instance family and authoritative CP-SAT/MILP/strong-heuristic baselines."),
+              acceptance="Freeze a mission-relevant route/assignment family and CP-SAT/MILP/strong-heuristic baselines."),
         _gate(p, 2, MissionEvidenceStage.CALIBRATED_MODEL, MissionEvidenceStage.INTEGRATED_SIMULATION,
               _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 5),
               metadata=("communications_model_digest", "queue_model_digest", "degraded_state_definition", "classical_optimizer", "test_protocol_digest"),
-              acceptance="Benchmark the frozen instance family end-to-end with communications, queue, cost, and degraded-state assumptions included."),
+              acceptance="Benchmark the frozen family end-to-end with communications, queue, cost and degraded-state assumptions."),
         _gate(p, 3, MissionEvidenceStage.INTEGRATED_SIMULATION, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
-              _m(ExternalEvidenceType.QPU_EXECUTION, 1),
-              _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 1), devices=1,
+              _m(ExternalEvidenceType.QPU_EXECUTION, 1), _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 1), devices=1,
               metadata=("instance_family_digest", "classical_reference_digest", "end_to_end_latency_seconds", "test_protocol_digest"),
-              acceptance="Run one frozen mission instance on a named QPU and compare feasible quality, latency, cost, and fallback to the classical baseline."),
+              acceptance="Run one frozen mission instance on a named QPU and compare feasible quality, latency, cost and fallback."),
         _gate(p, 4, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE, MissionEvidenceStage.REPRODUCED_HARDWARE,
-              _m(ExternalEvidenceType.QPU_EXECUTION, 2),
-              _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 2), devices=1,
+              _m(ExternalEvidenceType.QPU_EXECUTION, 2), _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 2), devices=1,
               metadata=("replication_series_id", "instance_family_digest", "classical_reference_digest", "test_protocol_digest"),
-              acceptance="Repeat the QPU-backed mission optimization and quantify feasibility, objective quality, queue variance, and total cost."),
+              acceptance="Repeat QPU-backed mission optimization and quantify feasibility, objective, queue variance and cost."),
         _gate(p, 5, MissionEvidenceStage.REPRODUCED_HARDWARE, MissionEvidenceStage.HARDWARE_IN_LOOP,
               _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 3),
               metadata=("vehicle_or_mission_interface_digest", "degraded_state_result_digest", "fallback_result_digest", "operator_log_digest", "test_protocol_digest"),
               environments=("hardware_in_loop", "integration_lab"),
-              acceptance="Close the optimizer into the mission/vehicle interface with classical fallback and degraded communications/compute tests."),
+              acceptance="Close optimizer into mission/vehicle interface with classical fallback and degraded tests."),
         _gate(p, 6, MissionEvidenceStage.HARDWARE_IN_LOOP, MissionEvidenceStage.RELEVANT_ENVIRONMENT,
               _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 5),
               metadata=("mission_scenario_id", "environmental_conditions_digest", "truth_reference_digest", "operator_log_digest", "test_protocol_digest"),
               environments=("relevant_environment",),
-              acceptance="Repeat mission optimization under relevant operational constraints and degraded states with authoritative mission truth/reference data."),
+              acceptance="Repeat mission optimization under relevant constraints/degraded states with mission truth data."),
         _gate(p, 7, MissionEvidenceStage.RELEVANT_ENVIRONMENT, MissionEvidenceStage.OPERATIONAL_DEMONSTRATION,
               _m(ExternalEvidenceType.MISSION_OPTIMIZATION, 5),
               metadata=("operational_scenario_id", "acceptance_criteria_digest", "fallback_result_digest", "operator_log_digest"),
               environments=("operational_demonstration",),
-              acceptance="Complete an operational logistics demonstration series against frozen feasibility, quality, latency, cost, and fallback criteria."),
+              acceptance="Complete operational logistics demonstrations against feasibility, quality, latency, cost and fallback criteria."),
     )
 
 
 def _em_propulsion() -> tuple[CampaignGate, ...]:
     p = "WS-EM-PROPULSION"
-    separate_claim = "WS-EMP-PROPULSION-CLAIM-GATE-SEPARATE"
+    separate = "WS-EMP-PROPULSION-CLAIM-GATE-SEPARATE"
     return (
         _gate(p, 1, MissionEvidenceStage.CONCEPT, MissionEvidenceStage.SYNTHETIC_SURROGATE,
               _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1),
-              preconditions=("WS-EMP-P0-MEASURABLE-SUPPORT-TASK-FROZEN", separate_claim),
+              preconditions=("WS-EMP-P0-MEASURABLE-SUPPORT-TASK-FROZEN", separate),
               metadata=("material_system_id", "target_observable", "test_protocol_digest"),
-              acceptance="Freeze one legitimate quantum-materials or quantum-metrology support task; do not use it as propulsion-force evidence."),
+              acceptance="Freeze one legitimate quantum-materials/metrology support task without using it as propulsion-force evidence."),
         _gate(p, 2, MissionEvidenceStage.SYNTHETIC_SURROGATE, MissionEvidenceStage.CALIBRATED_MODEL,
-              _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1),
-              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
-              preconditions=(separate_claim,),
-              metadata=("target_observable", "calibration_chain_digest", "null_matrix_digest", "test_protocol_digest"),
+              _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1), _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
+              preconditions=(separate,), metadata=("target_observable", "calibration_chain_digest", "null_matrix_digest", "test_protocol_digest"),
               environments=("metrology_lab", "materials_lab"),
-              acceptance="Calibrate the selected materials/metrology observable against independent physical measurement and completed null controls."),
+              acceptance="Calibrate the materials/metrology observable against independent measurement and completed null controls."),
         _gate(p, 3, MissionEvidenceStage.CALIBRATED_MODEL, MissionEvidenceStage.INTEGRATED_SIMULATION,
-              _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1),
-              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
-              preconditions=(separate_claim,),
-              metadata=("model_prediction_digest", "measurement_result_digest", "uncertainty_budget_digest", "test_protocol_digest"),
-              acceptance="Integrate model and measurement evidence while preserving a separate, independent propulsion-force claim gate."),
+              _m(ExternalEvidenceType.MATERIALS_HAMILTONIAN, 1), _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3),
+              preconditions=(separate,), metadata=("model_prediction_digest", "measurement_result_digest", "uncertainty_budget_digest", "test_protocol_digest"),
+              acceptance="Integrate model and measurement evidence while preserving the independent propulsion-force claim gate."),
         _gate(p, 4, MissionEvidenceStage.INTEGRATED_SIMULATION, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
-              _m(ExternalEvidenceType.QUANTUM_SENSOR, 1), devices=1,
-              preconditions=(separate_claim,),
-              metadata=("observable", "calibration_certificate_digest", "null_matrix_digest", "test_protocol_digest"),
-              environments=("metrology_lab",),
-              acceptance="Use a named calibrated quantum sensor only for the declared metrology observable; it does not establish anomalous thrust."),
+              _m(ExternalEvidenceType.QUANTUM_SENSOR, 1), devices=1, preconditions=(separate,),
+              metadata=("observable", "calibration_certificate_digest", "null_matrix_digest", "test_protocol_digest"), environments=("metrology_lab",),
+              acceptance="Use a named calibrated quantum sensor only for the declared metrology observable."),
         _gate(p, 5, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE, MissionEvidenceStage.REPRODUCED_HARDWARE,
-              _m(ExternalEvidenceType.QUANTUM_SENSOR, 2), devices=1,
-              preconditions=(separate_claim,),
+              _m(ExternalEvidenceType.QUANTUM_SENSOR, 2), devices=1, preconditions=(separate,),
               metadata=("replication_series_id", "truth_reference_digest", "null_matrix_digest", "test_protocol_digest"),
-              acceptance="Repeat the quantum-sensor metrology result under the frozen protocol and null matrix."),
+              acceptance="Repeat the quantum-sensor metrology result under the frozen protocol/null matrix."),
         _gate(p, 6, MissionEvidenceStage.REPRODUCED_HARDWARE, MissionEvidenceStage.HARDWARE_IN_LOOP,
-              _m(ExternalEvidenceType.QUANTUM_SENSOR, 2),
-              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3), devices=1,
-              preconditions=(separate_claim,),
+              _m(ExternalEvidenceType.QUANTUM_SENSOR, 2), _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 3), devices=1, preconditions=(separate,),
               metadata=("apparatus_configuration_digest", "environmental_monitor_digest", "null_matrix_digest", "test_protocol_digest"),
               environments=("hardware_in_loop", "metrology_lab"),
-              acceptance="Integrate the sensor into the physical apparatus with environmental monitoring, blinded/null controls, and immutable configuration evidence."),
+              acceptance="Integrate sensor into apparatus with environmental monitoring and blinded/null controls."),
         _gate(p, 7, MissionEvidenceStage.HARDWARE_IN_LOOP, MissionEvidenceStage.RELEVANT_ENVIRONMENT,
-              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 5),
-              preconditions=(separate_claim,),
+              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 5), preconditions=(separate,),
               metadata=("apparatus_configuration_digest", "environmental_conditions_digest", "null_matrix_digest", "independent_measurement_digest"),
               environments=("relevant_environment",),
-              acceptance="Repeat the metrology-support task in its relevant environment; any propulsion-force claim remains separately governed."),
+              acceptance="Repeat the metrology-support task in its relevant environment; propulsion-force claims remain separate."),
         _gate(p, 8, MissionEvidenceStage.RELEVANT_ENVIRONMENT, MissionEvidenceStage.OPERATIONAL_DEMONSTRATION,
-              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 5),
-              preconditions=(separate_claim,),
+              _m(ExternalEvidenceType.PHYSICAL_METROLOGY, 5), preconditions=(separate,),
               metadata=("operational_scenario_id", "acceptance_criteria_digest", "null_matrix_digest", "independent_measurement_digest"),
               environments=("operational_demonstration",),
-              acceptance="Demonstrate the bounded materials/metrology support capability only; this gate cannot be cited as proof of anomalous propulsion."),
+              acceptance="Demonstrate only the bounded materials/metrology support capability; do not cite this as anomalous propulsion proof."),
     )
 
 
@@ -380,43 +363,34 @@ def _glob() -> tuple[CampaignGate, ...]:
     p = "WS-GLOB"
     return (
         _gate(p, 1, MissionEvidenceStage.CONCEPT, MissionEvidenceStage.SYNTHETIC_SURROGATE,
-              providers=0,
-              preconditions=("WS-GLOB-QMAPPING-PASSED", "WS-GLOB-NULL-MODEL-FROZEN", "WS-GLOB-CLASSICAL-COMPLEXITY-FROZEN"),
-              acceptance="Admit only a measurable oracle/Hamiltonian/search/sampling/optimization mapping with frozen null and classical complexity baselines."),
+              providers=0, preconditions=("WS-GLOB-QMAPPING-PASSED", "WS-GLOB-NULL-MODEL-FROZEN", "WS-GLOB-CLASSICAL-COMPLEXITY-FROZEN"),
+              acceptance="Admit only a measurable mapping with frozen null and classical complexity baselines."),
         _gate(p, 2, MissionEvidenceStage.SYNTHETIC_SURROGATE, MissionEvidenceStage.CALIBRATED_MODEL,
-              providers=0,
-              preconditions=("WS-GLOB-CALIBRATED-OBJECTIVE-FROZEN",),
-              acceptance="Calibrate the admitted quantum problem to a declared measurable objective; number-pattern recurrence alone is insufficient."),
+              providers=0, preconditions=("WS-GLOB-CALIBRATED-OBJECTIVE-FROZEN",),
+              acceptance="Calibrate the admitted quantum problem to a declared measurable objective; recurrence alone is insufficient."),
         _gate(p, 3, MissionEvidenceStage.CALIBRATED_MODEL, MissionEvidenceStage.INTEGRATED_SIMULATION,
-              providers=0,
-              preconditions=("WS-GLOB-IDEAL-NOISY-SIM-EVIDENCE", "WS-GLOB-RESOURCE-ESTIMATE"),
-              acceptance="Retain ideal/noisy simulation and resource-estimation evidence against the frozen classical/null comparator."),
+              providers=0, preconditions=("WS-GLOB-IDEAL-NOISY-SIM-EVIDENCE", "WS-GLOB-RESOURCE-ESTIMATE"),
+              acceptance="Retain ideal/noisy simulation and resource-estimation evidence against the null/classical comparator."),
         _gate(p, 4, MissionEvidenceStage.INTEGRATED_SIMULATION, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE,
               _m(ExternalEvidenceType.QPU_EXECUTION, 1), devices=1,
               metadata=("problem_mapping_digest", "classical_reference_digest", "null_model_digest", "test_protocol_digest"),
-              acceptance="Execute the admitted measurable workload on one named QPU and compare to the frozen null/classical result."),
+              acceptance="Execute the admitted measurable workload on one named QPU and compare to null/classical result."),
         _gate(p, 5, MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE, MissionEvidenceStage.REPRODUCED_HARDWARE,
               _m(ExternalEvidenceType.QPU_EXECUTION, 2), devices=1,
               metadata=("replication_series_id", "problem_mapping_digest", "classical_reference_digest", "null_model_digest"),
-              acceptance="Repeat the real-QPU workload and quantify reproducibility versus the frozen null/classical baseline."),
+              acceptance="Repeat the real-QPU workload and quantify reproducibility versus the frozen baselines."),
         _gate(p, 6, MissionEvidenceStage.REPRODUCED_HARDWARE, MissionEvidenceStage.HARDWARE_IN_LOOP,
-              _m(ExternalEvidenceType.QPU_EXECUTION, 1), devices=1,
-              preconditions=("WS-GLOB-MISSION-CONTEXT-DECLARED",),
-              metadata=("mission_interface_digest", "fallback_result_digest", "test_protocol_digest"),
-              environments=("hardware_in_loop", "integration_lab"),
-              acceptance="Only if a legitimate mission context exists, integrate the admitted quantum task with the mission interface and deterministic classical fallback."),
+              _m(ExternalEvidenceType.QPU_EXECUTION, 1), devices=1, preconditions=("WS-GLOB-MISSION-CONTEXT-DECLARED",),
+              metadata=("mission_interface_digest", "fallback_result_digest", "test_protocol_digest"), environments=("hardware_in_loop", "integration_lab"),
+              acceptance="Only with a legitimate mission context, integrate the task with mission interface and classical fallback."),
         _gate(p, 7, MissionEvidenceStage.HARDWARE_IN_LOOP, MissionEvidenceStage.RELEVANT_ENVIRONMENT,
-              _m(ExternalEvidenceType.QPU_EXECUTION, 2), devices=1,
-              preconditions=("WS-GLOB-MISSION-CONTEXT-DECLARED",),
-              metadata=("mission_scenario_id", "truth_reference_digest", "null_model_digest", "test_protocol_digest"),
-              environments=("relevant_environment",),
+              _m(ExternalEvidenceType.QPU_EXECUTION, 2), devices=1, preconditions=("WS-GLOB-MISSION-CONTEXT-DECLARED",),
+              metadata=("mission_scenario_id", "truth_reference_digest", "null_model_digest", "test_protocol_digest"), environments=("relevant_environment",),
               acceptance="Demonstrate the measurable task in a relevant mission environment; numerical coincidence is not evidence."),
         _gate(p, 8, MissionEvidenceStage.RELEVANT_ENVIRONMENT, MissionEvidenceStage.OPERATIONAL_DEMONSTRATION,
-              _m(ExternalEvidenceType.QPU_EXECUTION, 3), devices=1,
-              preconditions=("WS-GLOB-MISSION-CONTEXT-DECLARED",),
-              metadata=("operational_scenario_id", "acceptance_criteria_digest", "null_model_digest", "operator_log_digest"),
-              environments=("operational_demonstration",),
-              acceptance="Complete an operational demonstration only for the admitted measurable task; no unrelated physical or cryptographic claim is upgraded."),
+              _m(ExternalEvidenceType.QPU_EXECUTION, 3), devices=1, preconditions=("WS-GLOB-MISSION-CONTEXT-DECLARED",),
+              metadata=("operational_scenario_id", "acceptance_criteria_digest", "null_model_digest", "operator_log_digest"), environments=("operational_demonstration",),
+              acceptance="Complete an operational demonstration only for the admitted measurable task."),
     )
 
 
@@ -432,10 +406,18 @@ _GATE_BUILDERS = {
 
 
 def _validate_campaign(campaign: ProjectEvidenceCampaign) -> None:
+    if campaign.current_stage == campaign.target_stage:
+        if campaign.gates:
+            raise ValueError(f"{campaign.project_id}: completed campaign must have no active gates")
+        return
+    if not campaign.gates:
+        raise ValueError(f"{campaign.project_id}: active campaign has no remaining gates")
+
     expected_from = campaign.current_stage
-    for expected_ordinal, gate in enumerate(campaign.gates, start=1):
+    expected_ordinal = campaign.gates[0].ordinal
+    for gate in campaign.gates:
         if gate.ordinal != expected_ordinal:
-            raise ValueError(f"{campaign.project_id}: non-contiguous campaign ordinal at {gate.gate_id}")
+            raise ValueError(f"{campaign.project_id}: non-contiguous stable gate ordinal at {gate.gate_id}")
         if gate.project_id != campaign.project_id:
             raise ValueError(f"{campaign.project_id}: gate project mismatch at {gate.gate_id}")
         if gate.from_stage != expected_from:
@@ -459,6 +441,8 @@ def _validate_campaign(campaign: ProjectEvidenceCampaign) -> None:
             if not any(req.evidence_type in hardware_types for req in gate.evidence_minimums):
                 raise ValueError(f"{campaign.project_id}: hardware-stage gate lacks hardware/runtime evidence")
         expected_from = gate.to_stage
+        expected_ordinal += 1
+
     if expected_from != MissionEvidenceStage.OPERATIONAL_DEMONSTRATION:
         raise ValueError(f"{campaign.project_id}: campaign does not terminate at operational demonstration")
 
@@ -469,8 +453,11 @@ def build_external_campaigns() -> tuple[ProjectEvidenceCampaign, ...]:
     if set(current) != set(_GATE_BUILDERS):
         missing = sorted(set(current) ^ set(_GATE_BUILDERS))
         raise ValueError(f"campaign/project matrix mismatch: {missing}")
+
     for project_id, row in current.items():
-        gates = _GATE_BUILDERS[project_id]()
+        all_gates = _GATE_BUILDERS[project_id]()
+        current_index = _STAGE_INDEX[row.evidence_stage]
+        gates = tuple(gate for gate in all_gates if _STAGE_INDEX[gate.from_stage] >= current_index)
         campaign = ProjectEvidenceCampaign(
             project_id=project_id,
             mission_lane=row.mission_lane,
@@ -479,8 +466,8 @@ def build_external_campaigns() -> tuple[ProjectEvidenceCampaign, ...]:
             target_score=MISSION_READY_TARGET,
             gates=gates,
             claim_control=(
-                "Campaign gates define the evidence acquisition sequence only. Structural gate satisfaction does not validate "
-                "the underlying scientific/engineering claim, does not prove quantum advantage, and does not grant deployment authority."
+                "Campaign gates define the remaining evidence acquisition sequence only. Structural gate satisfaction does not validate "
+                "the scientific/engineering claim, prove quantum advantage, or grant deployment authority."
             ),
         )
         _validate_campaign(campaign)
@@ -492,11 +479,7 @@ def _record_matches_gate(record: ExternalEvidenceRecord, gate: CampaignGate) -> 
     return record.project_id == gate.project_id and record.metadata.get("campaign_gate_id") == gate.gate_id
 
 
-def _evaluate_gate(
-    gate: CampaignGate,
-    records: Iterable[ExternalEvidenceRecord],
-    completed_preconditions: set[str],
-) -> GateEvaluation:
+def _evaluate_gate(gate: CampaignGate, records: Iterable[ExternalEvidenceRecord], completed_preconditions: set[str]) -> GateEvaluation:
     reasons: list[str] = []
     missing_preconditions = [item for item in gate.preconditions if item not in completed_preconditions]
     if missing_preconditions:
@@ -513,16 +496,12 @@ def _evaluate_gate(
     for requirement in gate.evidence_minimums:
         count = sum(1 for record in accepted if record.evidence_type == requirement.evidence_type)
         if count < requirement.minimum_records:
-            reasons.append(
-                f"{requirement.evidence_type.value} records {count} < required {requirement.minimum_records}"
-            )
+            reasons.append(f"{requirement.evidence_type.value} records {count} < required {requirement.minimum_records}")
 
     if gate.minimum_distinct_providers:
         providers = {record.provider_or_lab for record in accepted if record.provider_or_lab.strip()}
         if len(providers) < gate.minimum_distinct_providers:
-            reasons.append(
-                f"distinct providers {len(providers)} < required {gate.minimum_distinct_providers}"
-            )
+            reasons.append(f"distinct providers {len(providers)} < required {gate.minimum_distinct_providers}")
 
     if gate.minimum_distinct_devices:
         devices = {record.backend_or_device for record in accepted if record.backend_or_device}
@@ -536,16 +515,9 @@ def _evaluate_gate(
 
     if gate.allowed_environments and accepted:
         if not any(record.environment in gate.allowed_environments for record in accepted):
-            reasons.append(
-                "no accepted record in allowed environment: " + ", ".join(gate.allowed_environments)
-            )
+            reasons.append("no accepted record in allowed environment: " + ", ".join(gate.allowed_environments))
 
-    return GateEvaluation(
-        gate_id=gate.gate_id,
-        satisfied=not reasons,
-        reasons=tuple(reasons),
-        accepted_record_count=len(accepted),
-    )
+    return GateEvaluation(gate_id=gate.gate_id, satisfied=not reasons, reasons=tuple(reasons), accepted_record_count=len(accepted))
 
 
 def evaluate_campaign(
@@ -580,7 +552,7 @@ def evaluate_campaign(
         gate_evaluations=tuple(evaluations),
         claim_control=(
             "A satisfied campaign gate means the declared evidence package is structurally present and stage-locked. "
-            "Technical validity, mission-readiness scoring, independent review, and deployment authorization remain separate decisions."
+            "Technical validity, mission-readiness scoring, independent review and deployment authorization remain separate decisions."
         ),
     )
 
@@ -608,10 +580,11 @@ def campaigns_as_dict() -> dict[str, object]:
         }
 
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "system": "Worldshepherd QRF External Evidence Acquisition Campaign",
         "mission_readiness_target": MISSION_READY_TARGET,
         "stage_skipping_prohibited": True,
+        "stable_gate_ids_preserved_after_promotion": True,
         "gate_binding_field": "metadata.campaign_gate_id",
         "campaigns": [
             {
@@ -620,6 +593,8 @@ def campaigns_as_dict() -> dict[str, object]:
                 "current_stage": campaign.current_stage.value,
                 "target_stage": campaign.target_stage.value,
                 "target_score": campaign.target_score,
+                "active_gate_count": len(campaign.gates),
+                "first_active_gate_id": campaign.gates[0].gate_id if campaign.gates else None,
                 "gates": [encode_gate(gate) for gate in campaign.gates],
                 "claim_control": campaign.claim_control,
             }
