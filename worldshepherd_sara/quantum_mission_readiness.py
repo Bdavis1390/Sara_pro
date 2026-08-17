@@ -4,6 +4,10 @@ Worldshepherd requires >=97/100 for a lane to satisfy the internal mission-readi
 acceptance threshold. Scores cannot be inflated past missing evidence stages: every
 stage below operational demonstration caps below 97.
 
+A quantum execution lane may also be explicitly held when a legitimate mapping exists
+but a strong classical baseline dominates. That is still a NO-GO for quantum execution,
+not a readiness promotion.
+
 This internal calibration is not TRL, certification, deployment authority, safety
 approval, combat suitability, or proof of quantum advantage.
 """
@@ -79,6 +83,10 @@ class MissionReadinessInputs:
     physical_environment_validation: int
     blockers: tuple[str, ...] = ()
     evidence_refs: tuple[str, ...] = ()
+    mission_use_override: str | None = None
+    closure_status_override: str | None = None
+    next_gate_override: str | None = None
+    closure_sequence_override: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -113,6 +121,12 @@ def _validate(inputs: MissionReadinessInputs) -> None:
         value = getattr(inputs, field)
         if not isinstance(value, int) or not 0 <= value <= maximum:
             raise ValueError(f"{field} must be an integer in [0, {maximum}]")
+    if inputs.mission_use_override is not None and not inputs.mission_use_override.strip():
+        raise ValueError("mission_use_override cannot be blank")
+    if inputs.closure_status_override is not None and not inputs.closure_status_override.strip():
+        raise ValueError("closure_status_override cannot be blank")
+    if inputs.next_gate_override is not None and not inputs.next_gate_override.strip():
+        raise ValueError("next_gate_override cannot be blank")
 
 
 def readiness_band(score: int) -> str:
@@ -152,8 +166,12 @@ def calibrate_mission_readiness(inputs: MissionReadinessInputs) -> MissionReadin
     cap = _STAGE_CAP[inputs.evidence_stage]
     score = min(raw, cap)
     meets_target = score >= MISSION_READY_TARGET
-    sequence = () if meets_target else _closure_sequence(inputs.evidence_stage)
-    next_gate = "maintain >=97 evidence under regression" if meets_target else sequence[0]
+    default_sequence = () if meets_target else _closure_sequence(inputs.evidence_stage)
+    sequence = inputs.closure_sequence_override if inputs.closure_sequence_override is not None else default_sequence
+    default_next_gate = "maintain >=97 evidence under regression" if meets_target else sequence[0]
+    next_gate = inputs.next_gate_override or default_next_gate
+    use_decision = inputs.mission_use_override or mission_use_decision(score)
+    closure_status = inputs.closure_status_override or ("PASS_97" if meets_target else "CLOSURE_REQUIRED")
     return MissionReadinessDecision(
         project_id=inputs.project_id,
         mission_lane=inputs.mission_lane,
@@ -166,18 +184,19 @@ def calibrate_mission_readiness(inputs: MissionReadinessInputs) -> MissionReadin
         raw_gap_to_target=max(0, MISSION_READY_TARGET - raw),
         meets_target=meets_target,
         readiness_band=readiness_band(score),
-        mission_use_decision=mission_use_decision(score),
-        closure_status="PASS_97" if meets_target else "CLOSURE_REQUIRED",
+        mission_use_decision=use_decision,
+        closure_status=closure_status,
         required_target_stage=MissionEvidenceStage.OPERATIONAL_DEMONSTRATION.value,
         dimension_scores=dimension_scores,
         dimension_headroom=dimension_headroom,
         blockers=tuple(inputs.blockers),
         evidence_refs=tuple(inputs.evidence_refs),
         next_gate=next_gate,
-        closure_sequence=sequence,
+        closure_sequence=tuple(sequence),
         claim_control=(
             "Worldshepherd Mission Readiness Calibration is an internal evidence-governed engineering measure. "
-            "A score below 97 is a hard NO-GO. Reaching 97 does not itself grant deployment, safety, combat, or acquisition approval."
+            "A score below 97 is a hard NO-GO. A quantum-specific NO-GO may also record that a legitimate mapping is classically dominated. "
+            "Reaching 97 does not itself grant deployment, safety, combat, or acquisition approval."
         ),
     )
 
@@ -251,7 +270,7 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         degraded_latency_cost=5,
         physical_environment_validation=0,
         blockers=("current optimization instance is synthetic and not a mission instance family", "QPU queue, cost, communications, and degraded-state performance are unmeasured"),
-        evidence_refs=("WS-LOG-QO-001",),
+        evidence_refs=("WS-LOG-QO-001", "OR-Tools CP-SAT controlled comparator capability"),
     ),
     MissionReadinessInputs(
         project_id="WS-EM-PROPULSION",
@@ -272,14 +291,18 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         mission_lane="conditional quantum problem mapping",
         evidence_stage=MissionEvidenceStage.CONCEPT,
         mission_fidelity=4,
-        classical_comparator=9,
+        classical_comparator=15,
         quantum_evidence_reproducibility=0,
-        integration_interoperability=2,
+        integration_interoperability=4,
         security_provenance=5,
         degraded_latency_cost=1,
         physical_environment_validation=0,
-        blockers=("no legitimate oracle/Hamiltonian/search objective mapping has passed the gate",),
-        evidence_refs=("WS-GLOB-QMAPPING-001 design contract",),
+        blockers=("established PA/PB/PC reversible mappings are classically trivial and do not justify QPU execution",),
+        evidence_refs=("quantum_glob_operator_mappings.json", "PA/PB/PC exact classical orbit controls"),
+        mission_use_override="NO_GO_QUANTUM_EXECUTION_CLASSICAL_DOMINATES",
+        closure_status_override="QUANTUM_EXECUTION_NOT_JUSTIFIED",
+        next_gate_override="keep PA/PB/PC in the classical numerical lane; reopen quantum execution only for a materially different nontrivial problem",
+        closure_sequence_override=(),
     ),
 )
 
