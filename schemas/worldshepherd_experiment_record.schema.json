@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:worldshepherd:schema:experiment-record:0.1",
+  "title": "Worldshepherd Experiment Record v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "experiment_id",
+    "campaign_id",
+    "test_article_id",
+    "timestamp_utc",
+    "evidence_class",
+    "hardware",
+    "software",
+    "calibration_ids",
+    "sensor_manifest",
+    "environment",
+    "raw_data",
+    "uncertainty",
+    "hypotheses",
+    "result_class",
+    "review_state"
+  ],
+  "properties": {
+    "experiment_id": {"type": "string", "minLength": 1},
+    "campaign_id": {"type": "string", "minLength": 1},
+    "parent_experiment_id": {"type": ["string", "null"]},
+    "test_article_id": {"type": "string", "minLength": 1},
+    "module_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "timestamp_utc": {"type": "string", "format": "date-time"},
+    "operator": {"type": ["string", "null"]},
+    "evidence_class": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["MEASURED", "CALCULATED", "LITERATURE", "SIMULATED", "HYPOTHESIS", "NULL_CONTROL", "ARTIFACT"]
+      }
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["geometry_digest", "configuration_digest"],
+      "properties": {
+        "geometry_digest": {"type": "string", "minLength": 1},
+        "configuration_digest": {"type": "string", "minLength": 1},
+        "material_batch_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "firmware_digest": {"type": ["string", "null"]}
+      }
+    },
+    "software": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sara_version", "commit"],
+      "properties": {
+        "sara_version": {"type": "string", "minLength": 1},
+        "commit": {"type": "string", "minLength": 1},
+        "solver_name": {"type": ["string", "null"]},
+        "solver_version": {"type": ["string", "null"]},
+        "solver_commit": {"type": ["string", "null"]},
+        "model_id": {"type": ["string", "null"]}
+      }
+    },
+    "calibration_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "sensor_manifest": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sensor_id", "quantity", "units", "sample_rate_hz", "calibration_id"],
+        "properties": {
+          "sensor_id": {"type": "string"},
+          "quantity": {"type": "string"},
+          "units": {"type": "string"},
+          "sample_rate_hz": {"type": "number", "exclusiveMinimum": 0},
+          "calibration_id": {"type": "string"},
+          "location_frame": {"type": ["string", "null"]},
+          "orientation": {"type": ["string", "null"]},
+          "clock_source": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "pressure_pa": {"type": ["number", "null"]},
+        "temperature_k": {"type": ["number", "null"]},
+        "relative_humidity": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "magnetic_field_t": {
+          "type": ["array", "null"],
+          "items": {"type": "number"},
+          "minItems": 3,
+          "maxItems": 3
+        }
+      },
+      "additionalProperties": true
+    },
+    "power_trace_ref": {"type": ["string", "null"]},
+    "command_history_ref": {"type": ["string", "null"]},
+    "raw_data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["location", "digest"],
+      "properties": {
+        "location": {"type": "string", "minLength": 1},
+        "digest": {"type": "string", "minLength": 1},
+        "format": {"type": ["string", "null"]}
+      }
+    },
+    "processed_data": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "location": {"type": "string"},
+        "digest": {"type": "string"},
+        "processing_method_id": {"type": "string"}
+      }
+    },
+    "glob": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "seed": {"type": "string"},
+        "operator": {"enum": ["PA", "PB", "PC"]},
+        "orbit_state": {"type": "string"},
+        "test_order": {"type": "integer", "minimum": 0}
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_id", "expanded_uncertainty"],
+      "properties": {
+        "model_id": {"type": "string"},
+        "expanded_uncertainty": {"type": "number", "minimum": 0},
+        "coverage_factor": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "units": {"type": ["string", "null"]}
+      }
+    },
+    "null_article_id": {"type": ["string", "null"]},
+    "hypotheses": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["H0", "H1"],
+      "properties": {
+        "H0": {"type": "string", "minLength": 1},
+        "H1": {"type": "string", "minLength": 1}
+      }
+    },
+    "result_class": {"enum": ["WS-R0", "WS-R1", "WS-R2", "WS-R3", "WS-R4"]},
+    "claim_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "review_state": {"enum": ["DRAFT", "OPERATOR_REVIEWED", "CRE1AWS_REVIEWED", "FROZEN"]}
+  }
+}
