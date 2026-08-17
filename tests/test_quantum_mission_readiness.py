@@ -117,7 +117,10 @@ def test_current_quantum_calibration_is_hard_no_go_until_closed():
     assert by_project["SARA-QRF"].mission_readiness_score == 55
     assert by_project["WS-METASURFACE"].mission_readiness_score == 30
     assert by_project["WS-AUTONOMOUS-LOGISTICS"].mission_readiness_score == 30
-    assert by_project["WS-APNT"].mission_readiness_score == 15
+    assert by_project["WS-APNT"].mission_readiness_score == 30
+    assert by_project["WS-APNT"].evidence_stage == "synthetic_surrogate"
+    assert by_project["WS-APNT"].gap_to_target == 67
+    assert "WS-APNT-SYN-001" in " ".join(by_project["WS-APNT"].evidence_refs)
     assert by_project["WS-ALTI"].mission_readiness_score == 15
     assert by_project["WS-EM-PROPULSION"].mission_readiness_score == 15
     assert by_project["WS-GLOB"].mission_readiness_score == 15
