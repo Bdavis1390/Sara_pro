@@ -75,6 +75,8 @@ jobs:
             --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
           python scripts/generate_quantum_application_benchmarks.py \
             --output .qrf-artifacts/quantum_application_benchmarks.json
+          python scripts/generate_quantum_robustness.py \
+            --output .qrf-artifacts/quantum_robustness_sweeps.json
           python scripts/generate_quantum_resource_estimate.py \
             --output .qrf-artifacts/quantum_resource_estimate.json
           python scripts/generate_quantum_mission_readiness.py \
