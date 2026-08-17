@@ -46,6 +46,12 @@ CONTROLS: tuple[InternalControl, ...] = (
         ("tests/test_quantum_external_campaign.py",),
         "stage-locked external evidence acquisition and no-skip progression",
     ),
+    InternalControl(
+        "QRF-ACQ-REQUEST",
+        ("worldshepherd_sara/quantum_acquisition_request.py", "scripts/generate_quantum_acquisition_requests.py"),
+        ("tests/test_quantum_acquisition_request.py",),
+        "evidence-complete partner/lab request generation from campaign gates",
+    ),
     InternalControl("QRF-CI", (".github/workflows/quantum-readiness.yml", "requirements-quantum.txt"), (), "cross-version CI and retained evidence artifacts"),
 )
 
