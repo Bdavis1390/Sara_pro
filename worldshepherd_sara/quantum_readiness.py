@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+from itertools import combinations
+from math import isfinite, sqrt
 from typing import Iterable, Mapping
 
 
@@ -95,6 +97,7 @@ class QuantumRunEvidence:
     logical_gate_count: int | None = None
     estimated_runtime_seconds: float | None = None
     result_digest: str | None = None
+    outcome_distribution: Mapping[str, float] = field(default_factory=dict)
     uncertainty: float | None = None
     seed: int | None = None
     notes: tuple[str, ...] = ()
@@ -117,6 +120,22 @@ class ReadinessDecision:
     accepted: bool
     claim_class: ClaimClass
     reasons: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CrossBackendReproducibilityDecision:
+    reproducible: bool
+    reasons: tuple[str, ...]
+    providers_backends: tuple[str, ...]
+    canonical_program_digest: str | None
+    max_total_variation_distance_observed: float | None
+    min_bhattacharyya_fidelity_observed: float | None
+    max_total_variation_distance_allowed: float
+    min_bhattacharyya_fidelity_required: float
+    claim_control: str = (
+        "Statistical cross-backend agreement supports a reproduced-QPU evidence claim only for the frozen canonical workload and declared tolerances. "
+        "It does not establish quantum advantage, physical-model validity, or mission readiness by itself."
+    )
 
 
 def evidence_at_least(actual: EvidenceLevel, required: EvidenceLevel) -> bool:
@@ -168,8 +187,8 @@ def evaluate_run(
     if evidence.evidence_level in {
         EvidenceLevel.REPRODUCED_QPU,
         EvidenceLevel.INDEPENDENTLY_REPRODUCED,
-    } and evidence.circuit_digest is None:
-        reasons.append("reproduced QPU claims require a circuit digest")
+    } and evidence.circuit_digest is None and evidence.qasm_or_qir_digest is None:
+        reasons.append("reproduced QPU claims require a canonical circuit/program digest")
 
     claim = classify_claim(evidence)
     claim_rank = list(ClaimClass).index(claim)
@@ -182,22 +201,152 @@ def evaluate_run(
     return ReadinessDecision(not reasons, claim, tuple(reasons))
 
 
-def cross_backend_reproducible(records: Iterable[QuantumRunEvidence]) -> bool:
-    """Require at least two QPU providers/backends and identical circuit/result identity.
+def _canonical_program_digest(record: QuantumRunEvidence) -> str | None:
+    return record.qasm_or_qir_digest or record.circuit_digest
 
-    This is intentionally strict. A richer statistical equivalence test belongs in the
-    execution adapter, but governance should not call one vendor run 'reproduced'.
+
+def _normalized_distribution(values: Mapping[str, float]) -> dict[str, float] | None:
+    if not values:
+        return None
+    normalized: dict[str, float] = {}
+    total = 0.0
+    for key, raw in values.items():
+        try:
+            value = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if not isfinite(value) or value < 0:
+            return None
+        normalized[str(key)] = value
+        total += value
+    if total <= 0:
+        return None
+    return {key: value / total for key, value in normalized.items()}
+
+
+def total_variation_distance(left: Mapping[str, float], right: Mapping[str, float]) -> float:
+    """Return TVD for two count/probability mappings after normalization."""
+    p = _normalized_distribution(left)
+    q = _normalized_distribution(right)
+    if p is None or q is None:
+        raise ValueError("distributions must be non-empty, finite and non-negative")
+    keys = set(p) | set(q)
+    return 0.5 * sum(abs(p.get(key, 0.0) - q.get(key, 0.0)) for key in keys)
+
+
+def bhattacharyya_fidelity(left: Mapping[str, float], right: Mapping[str, float]) -> float:
+    """Return squared Bhattacharyya coefficient in [0,1] after normalization."""
+    p = _normalized_distribution(left)
+    q = _normalized_distribution(right)
+    if p is None or q is None:
+        raise ValueError("distributions must be non-empty, finite and non-negative")
+    keys = set(p) | set(q)
+    coefficient = sum(sqrt(p.get(key, 0.0) * q.get(key, 0.0)) for key in keys)
+    return min(1.0, max(0.0, coefficient * coefficient))
+
+
+def evaluate_cross_backend_reproducibility(
+    records: Iterable[QuantumRunEvidence],
+    *,
+    max_total_variation_distance: float = 0.10,
+    min_bhattacharyya_fidelity: float = 0.95,
+) -> CrossBackendReproducibilityDecision:
+    """Evaluate sampled-QPU reproduction using canonical identity plus distributions.
+
+    Independent hardware runs should retain distinct immutable result identities. Exact
+    equality of sampled result digests is neither expected nor required. Reproduction
+    instead requires the same frozen canonical workload and declared pairwise statistical
+    tolerances across at least two distinct real QPU backends.
     """
-    rows = [r for r in records if r.backend.backend_class == BackendClass.QPU]
+    if not 0.0 <= max_total_variation_distance <= 1.0:
+        raise ValueError("max_total_variation_distance must be in [0,1]")
+    if not 0.0 <= min_bhattacharyya_fidelity <= 1.0:
+        raise ValueError("min_bhattacharyya_fidelity must be in [0,1]")
+
+    rows = [record for record in records if record.backend.backend_class == BackendClass.QPU]
+    reasons: list[str] = []
+    backend_ids = tuple(sorted({f"{r.backend.provider}/{r.backend.backend}" for r in rows}))
+
     if len(rows) < 2:
-        return False
-    if len({(r.backend.provider, r.backend.backend) for r in rows}) < 2:
-        return False
-    circuit_digests = {r.circuit_digest for r in rows}
-    if None in circuit_digests or len(circuit_digests) != 1:
-        return False
-    result_digests = {r.result_digest for r in rows}
-    return None not in result_digests and len(result_digests) == 1
+        reasons.append("at least two real QPU records are required")
+    if len(backend_ids) < 2:
+        reasons.append("at least two distinct provider/backend identities are required")
+
+    projects = {r.project_id for r in rows}
+    algorithms = {r.algorithm for r in rows}
+    baselines = {r.classical_baseline_id for r in rows}
+    if len(projects) > 1:
+        reasons.append("all reproduction records must belong to the same project")
+    if len(algorithms) > 1:
+        reasons.append("all reproduction records must use the same governed algorithm label")
+    if None in baselines or len(baselines) != 1:
+        reasons.append("all reproduction records must bind to the same classical baseline")
+
+    program_digests = {_canonical_program_digest(r) for r in rows}
+    canonical_digest = next(iter(program_digests)) if len(program_digests) == 1 else None
+    if None in program_digests or len(program_digests) != 1:
+        reasons.append("all reproduction records must share one canonical program digest")
+
+    result_digests = [r.result_digest for r in rows]
+    if any(digest is None for digest in result_digests):
+        reasons.append("every QPU reproduction record requires an immutable result digest")
+    elif len(set(result_digests)) != len(result_digests):
+        reasons.append("independent QPU runs must retain distinct result-record digests")
+
+    experiment_ids = [r.experiment_id for r in rows]
+    if len(set(experiment_ids)) != len(experiment_ids):
+        reasons.append("independent QPU runs require distinct experiment/run identities")
+
+    distributions: list[dict[str, float]] = []
+    for record in rows:
+        normalized = _normalized_distribution(record.outcome_distribution)
+        if normalized is None:
+            reasons.append(f"{record.experiment_id} lacks a valid sampled outcome distribution")
+        else:
+            distributions.append(normalized)
+
+    tvd_values: list[float] = []
+    fidelity_values: list[float] = []
+    if len(distributions) == len(rows) and len(rows) >= 2:
+        for left, right in combinations(distributions, 2):
+            tvd_values.append(total_variation_distance(left, right))
+            fidelity_values.append(bhattacharyya_fidelity(left, right))
+
+    max_tvd_observed = max(tvd_values) if tvd_values else None
+    min_fidelity_observed = min(fidelity_values) if fidelity_values else None
+    if max_tvd_observed is not None and max_tvd_observed > max_total_variation_distance:
+        reasons.append(
+            f"pairwise total-variation distance {max_tvd_observed:.6f} exceeds declared limit {max_total_variation_distance:.6f}"
+        )
+    if min_fidelity_observed is not None and min_fidelity_observed < min_bhattacharyya_fidelity:
+        reasons.append(
+            f"pairwise Bhattacharyya fidelity {min_fidelity_observed:.6f} is below declared minimum {min_bhattacharyya_fidelity:.6f}"
+        )
+
+    return CrossBackendReproducibilityDecision(
+        reproducible=not reasons,
+        reasons=tuple(reasons),
+        providers_backends=backend_ids,
+        canonical_program_digest=canonical_digest,
+        max_total_variation_distance_observed=max_tvd_observed,
+        min_bhattacharyya_fidelity_observed=min_fidelity_observed,
+        max_total_variation_distance_allowed=max_total_variation_distance,
+        min_bhattacharyya_fidelity_required=min_bhattacharyya_fidelity,
+    )
+
+
+def cross_backend_reproducible(
+    records: Iterable[QuantumRunEvidence],
+    *,
+    max_total_variation_distance: float = 0.10,
+    min_bhattacharyya_fidelity: float = 0.95,
+) -> bool:
+    """Compatibility wrapper returning the governed statistical reproduction verdict."""
+    return evaluate_cross_backend_reproducibility(
+        records,
+        max_total_variation_distance=max_total_variation_distance,
+        min_bhattacharyya_fidelity=min_bhattacharyya_fidelity,
+    ).reproducible
 
 
 PROJECT_PROFILES: dict[str, ProjectQuantumProfile] = {
