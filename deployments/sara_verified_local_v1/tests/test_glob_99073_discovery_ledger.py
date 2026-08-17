@@ -80,9 +80,16 @@ def test_current_nist_reconciliation_separates_historical_and_current_graphs() -
     relation = reconciliation["shared_level_relation"]
 
     assert historical["levels"] == historical["even_levels"] + historical["odd_levels"] == 194
-    assert current["levels"] == 264
+    assert current["physical_wii_levels"] == current["even_levels"] + current["odd_levels"] == 263
+    assert current["asd_output_entries"] == 264
+    assert current["terminal_non_wii_entry"] == "W III ionization limit"
     assert current["classified_lines_with_level_designations"] == 2838
-    assert current["parity_counts_status"] == "not_yet_extracted"
+
+    topology = current["uniform_endpoint_approximation"]
+    assert abs(topology["pair_probability_same_even_endpoint"] - (1 / 76)) < 1e-12
+    assert abs(topology["pair_probability_same_odd_endpoint"] - (1 / 187)) < 1e-12
+    expected_either = (1 / 76) + (1 / 187) - (1 / (76 * 187))
+    assert abs(topology["pair_probability_share_either_endpoint"] - expected_either) < 1e-12
 
     assert abs((relation["upper_1_cm-1"] - relation["lower_level_cm-1"]) - relation["ritz_1_cm-1"]) < 1e-9
     assert abs((relation["upper_2_cm-1"] - relation["lower_level_cm-1"]) - relation["ritz_2_cm-1"]) < 1e-9
