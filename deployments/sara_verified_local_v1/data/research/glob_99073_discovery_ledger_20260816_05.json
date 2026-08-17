@@ -1,0 +1,92 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 5,
+  "purpose": "Current NIST ytterbium selected-line transition screening and anti-double-counting control.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, navigation pages, and repeated copies of the same substantive source are provenance aliases, not independent evidence.",
+    "search_noise": "Substantive off-topic publications surfaced by search may be routed as reusable methodology/domain intelligence or negative-control material; search appearance never grants Glob evidence weight."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NIST-ASD-YB-ALL-LINES-2026",
+      "title": "NIST Atomic Spectra Database Lines Data — Yb (all ionization stages in selected output)",
+      "authority": "NIST Physical Measurement Laboratory",
+      "observed_access_state": "829 selected ytterbium spectral lines returned across multiple Yb ionization stages in the current ASD query.",
+      "url": "https://physics.nist.gov/cgi-bin/ASD/lines1.pl?spectra=Yb&output_type=0&low_w=&upp_w=&unit=1&submit=Retrieve+Data",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "OVERWATCH"],
+      "note": "Use as a bounded current selected-line screening set. Because the query spans Yb ionization stages and ASD selected lines are not a proof of exhaustive weak-line absence, negative findings are scoped accordingly."
+    }
+  ],
+  "referenced_sources": ["SRC-NIST-ASD-YBII-LEVELS-2026", "SRC-YBII-NIST", "SRC-NIST-ASD-LINES-WAVENUMBER-METHOD"],
+  "relational_tests": [
+    {
+      "test_id": "REL-YBII-SELECTED-LINES-HIGH-WAVENUMBER-ORBITS",
+      "species": "Yb II",
+      "screening_mode": "selected-current-ASD-line screening, wavelength-ordered output",
+      "screening_threshold_cm-1": 1.0,
+      "threshold_scope": "Strict screening criterion. Absence is bounded to the current selected ASD output inspected; no universal weak-line absence is claimed.",
+      "targets": [
+        {
+          "target_wavenumber_cm-1": 94044,
+          "vacuum_wavelength_nm": 106.3332057335,
+          "result": "no_tight_ybii_selected_line_found",
+          "context": "Nearby current ASD entries in this region belong to higher Yb ionization stages rather than Yb II."
+        },
+        {
+          "target_wavenumber_cm-1": 95776,
+          "vacuum_wavelength_nm": 104.4101685195,
+          "result": "no_tight_ybii_selected_line_found",
+          "context": "No Yb II selected line found near the target wavelength in the inspected ASD region."
+        },
+        {
+          "target_wavenumber_cm-1": 79675,
+          "vacuum_wavelength_nm": 125.509883902,
+          "result": "no_tight_ybii_selected_line_found",
+          "context": "No Yb II selected line found near the target wavelength in the inspected ASD region."
+        },
+        {
+          "target_wavenumber_cm-1": 67579,
+          "vacuum_wavelength_nm": 147.9749620438,
+          "result": "no_tight_ybii_selected_line_found",
+          "context": "A nearby selected line around 147.792 nm is assigned to Yb IV, not Yb II; ionization-stage identity is retained as a negative discriminant."
+        },
+        {
+          "target_wavenumber_cm-1": 56977,
+          "vacuum_wavelength_nm": 175.5094188876,
+          "result": "no_tight_ybii_selected_line_found",
+          "context": "Nearby selected lines around 173.918 and 176.280 nm are Yb III, not Yb II. The separate 56977.71 cm^-1 Yb II energy-level match must not be reinterpreted as a transition hit."
+        }
+      ],
+      "conclusion": "No second selected-line Yb II closure was found for the high-wavenumber members of the two tested orbit families. Ionization-stage mismatches are retained as negative controls.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "The selected-line screen is not exhaustive for every weak historical transition. Energy-level matches and transition-line matches remain separate evidence objects."
+    },
+    {
+      "test_id": "CTRL-YBII-44940-LEVEL-AND-TRANSITION-DOUBLE-COUNT",
+      "species": "Yb II",
+      "derived_state": "44940",
+      "level_value_cm-1": 44940.61,
+      "persistent_transition_wavelength_A": 2224.46,
+      "result": "same_physical_fact_do_not_double_count",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "The ground-to-44940.61 transition and the 44940.61 upper energy level are physically linked representations, not two independent Glob hits."
+    },
+    {
+      "test_id": "CTRL-YBII-AIR-VACUUM-CONVERSION-BOUNDARY",
+      "species": "Yb II",
+      "targets_deferred": [40449, 9444],
+      "result": "deferred_pending_asd_wavenumber_or_refractive_index_reconciliation",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "SARA"],
+      "claims_boundary": "For wavelengths in the ASD air-wavelength regime, naive vacuum conversion is not sufficient for a tight transition test. Use ASD wavenumber/Ritz output or the documented refractive-index conversion before declaring a match or absence."
+    }
+  ],
+  "next_actions": [
+    "Query current NIST ASD Yb II lines directly in wavenumber/Ritz form for the deferred 40449 and 9444 targets.",
+    "Continue topology-preserving same-system tests rather than widening tolerances after inspection.",
+    "Apply multiple-testing correction across all Br I, Yb II, W II, and subsequent species/dataset screens.",
+    "Retain ionization-stage mismatches and representation double-count controls for OVERWATCH false-positive monitoring."
+  ]
+}
