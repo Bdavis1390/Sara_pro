@@ -7,11 +7,11 @@ metasurface electromagnetic models or operational logistics mission instances.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from hashlib import sha256
 import json
 from math import pi
-from typing import Callable, Mapping
+from typing import Mapping
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -55,6 +55,7 @@ class QAOABenchmarkResult:
     project: str
     evidence_level: str
     instance_kind: str
+    problem_id: str
     qubits: int
     exact_optimum: float
     exact_optimal_bitstrings: tuple[str, ...]
@@ -87,8 +88,10 @@ def _display_bits(bits: tuple[int, ...]) -> str:
 
 
 def exact_solve(problem: BinaryQuadraticProblem) -> tuple[float, tuple[tuple[int, ...], ...]]:
-    scored = [(_bits_from_index(index, problem.n),) for index in range(1 << problem.n)]
-    values = [(bits[0], problem.objective(bits[0])) for bits in scored]
+    values = []
+    for index in range(1 << problem.n):
+        bits = _bits_from_index(index, problem.n)
+        values.append((bits, problem.objective(bits)))
     optimum = min(value for _, value in values)
     states = tuple(bits for bits, value in values if abs(value - optimum) <= 1e-12)
     return optimum, states
@@ -249,8 +252,6 @@ def run_benchmark(
     ideal_best, ideal_feasible, _ = _counts_metrics(problem, ideal_counts, shots=shots, optimum=optimum)
     noisy_best, noisy_feasible, noisy_optimal = _counts_metrics(problem, noisy_counts, shots=shots, optimum=optimum)
 
-    # Exhaustive enumeration is exact for these intentionally tiny instances, so the
-    # simulator cannot establish computational advantage even when it samples an optimum.
     payload = {
         "benchmark_id": benchmark_id,
         "project": problem.project,
@@ -259,7 +260,7 @@ def run_benchmark(
         "problem_id": problem.problem_id,
         "qubits": problem.n,
         "exact_optimum": optimum,
-        "exact_optimal_bitstrings": [_display_bits(bits) for bits in optimal_states],
+        "exact_optimal_bitstrings": tuple(_display_bits(bits) for bits in optimal_states),
         "classical_states_evaluated": 1 << problem.n,
         "grid_size": grid_size,
         "best_gamma": gamma,
@@ -278,7 +279,9 @@ def run_benchmark(
         "promotion_decision": "NOT_PROMOTED_CLASSICAL_EXACT_BASELINE_DOMINATES_TOY_INSTANCE",
         "claim_control": "This is a frozen synthetic surrogate used to validate the QRF application pipeline. It is not a calibrated EM model, mission logistics model, real-QPU result, or quantum-advantage demonstration.",
     }
-    digest = sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+    digest_payload = dict(payload)
+    digest_payload["exact_optimal_bitstrings"] = list(payload["exact_optimal_bitstrings"])
+    digest = sha256(json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     return QAOABenchmarkResult(result_digest=f"sha256:{digest}", **payload)
 
 
