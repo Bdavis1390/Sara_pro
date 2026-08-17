@@ -1,0 +1,34 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_24.json",
+  "purpose":"Continue raw coverage through 10443, 41340, 34041, 43941, 94143 and 19344 while retaining security, hardware-security, supply-ontology, quality-control and chemical-regulatory utility independently of Glob evidence.",
+  "policy":{
+    "rule":"Raw CVE, DOI, classification, standard and supply-code occurrences are retained with zero automatic physical-evidence weight even when the underlying source is highly useful to Worldshepherd.",
+    "promotion":"Utility and Glob evidence remain orthogonal; P1/P2 requires independently verified physical semantics and provenance rather than identifier recurrence.",
+    "source_quality":"Official and primary records are preferred for substantive utility claims; derivative supply-code records may be retained only as raw collision/control observations until independently authoritative lineage is obtained."
+  },
+  "records":[
+    {"target":"10443","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2024-10443","context":"Synology BeePhotos/Photos Task Manager OS command injection allowing remote arbitrary code execution in affected versions","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"41340","raw_hit_type":"SUPPLY_ITEM_NAMING_CODE","occurrence":"Item Naming Code 41340","context":"Repeated in derivative FLIS/NSN records for aerospace craft and airframe structural components; authoritative DLA lineage not independently fetched in this pass","glob_weight":"M1_RAW","worldshepherd_use":["SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"34041","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-34041","context":"nektos/act before 0.2.86 processes deprecated GitHub Actions set-env/add-path commands, enabling environment/PATH injection from untrusted workflow stdout","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY","PRIME_SENTINEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"43941","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2026-43941","context":"Electerm <=3.8.15 terminal hyperlinks pass arbitrary URLs to shell.openExternal without protocol validation; malicious terminal output plus user click can enable code execution/local-file access","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"43941","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-023-43941-5","context":"Nature Communications FeFET in-situ memory encryption/decryption study","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","SECURITY_HARDENING","AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"94143","raw_hit_type":"OCCUPATIONAL_CLASSIFICATION_CODE","occurrence":"NOC 2021 code 94143","context":"Statistics Canada classification for testers and graders in food and beverage processing, including routine product-specification tests and conformance grading","glob_weight":"M1_RAW","worldshepherd_use":["TEST_AND_MEASUREMENT","OPERATIONS_AND_RELIABILITY","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"19344","raw_hit_type":"ISO_STANDARD_NUMBER","occurrence":"ISO 19344:2015","context":"Current ISO standardized flow-cytometry method for active/total lactic-acid-bacteria quantification in starter cultures, probiotics and fermented products; reconfirmed in 2026","glob_weight":"M1_RAW","worldshepherd_use":["TEST_AND_MEASUREMENT","CHEMISTRY_AND_CHEMICAL_DATA","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"19344","raw_hit_type":"REGULATORY_NOTIFICATION_NUMBER","occurrence":"New Substances Notification No. 19344","context":"Environment and Climate Change Canada / Health Canada risk-assessment summary under CEPA","glob_weight":"M1_RAW","worldshepherd_use":["CHEMISTRY_AND_CHEMICAL_DATA","ENVIRONMENTAL_AND_CIVIL_SYSTEMS","SYSTEMS_ENGINEERING_AND_GOVERNANCE","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"CVE-2026-34041 is directly relevant to the Worldshepherd CI trust boundary because local GitHub Actions emulation can turn untrusted step output into downstream environment/PATH mutation; version 0.2.86 is the stated patched boundary.","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","OPERATIONS_AND_RELIABILITY","PRIME_SENTINEL"],"claims_boundary":"34041 is a CVE identifier and contributes zero Glob physical evidence."},
+    {"finding":"The FeFET security study demonstrates device/array-level in-situ encryption/decryption and reports substantial throughput/latency advantages over an AES-based comparison, making it useful for future secure memory/compute-in-memory architecture exploration.","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","SECURITY_HARDENING","AI_ML_AND_MODEL_VALIDATION"],"claims_boundary":"43941 is DOI metadata; the hardware-security result is independent of Glob evidence."},
+    {"finding":"ISO 19344 supplies a standardized flow-cytometry quantification and quality-control pattern with explicit scope and non-specificity/overcounting caveats, useful as a measurement-governance precedent beyond its dairy application.","worldshepherd_use":["TEST_AND_MEASUREMENT","SYSTEMS_ENGINEERING_AND_GOVERNANCE","CHEMISTRY_AND_CHEMICAL_DATA"],"claims_boundary":"19344 is a standard number."},
+    {"finding":"Statistics Canada NOC 94143 encodes a production-quality role whose duties include sampling, specification testing, grading and sanitation conformance, useful as a workforce/process-control reference rather than a physical-data source.","worldshepherd_use":["OPERATIONS_AND_RELIABILITY","TEST_AND_MEASUREMENT","SYSTEMS_ENGINEERING_AND_GOVERNANCE"],"claims_boundary":"94143 is an occupational classification code."}
+  ],
+  "next_actions":[
+    "Continue raw coverage through 41494, 44491, 44194, 94044, 09444, 40449, 44109, 14904 and 91404 while preserving cross-domain utility.",
+    "Continue source-by-source retroactive utility backfill across all earlier ledgers and raw reservoirs.",
+    "Continue same-system topology and relational verification independently for physical P1/P2 candidates, including the established 31449/41494/W II-related evidence families.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}
