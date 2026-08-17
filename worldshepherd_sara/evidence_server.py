@@ -17,10 +17,6 @@ from worldshepherd_sara.evidence_registry import (
 
 APP_NAME = legacy_server.APP_NAME
 registry = EvidenceRegistry(legacy_server.DATA_DIR)
-
-# Evidence routes are registered directly before the legacy app is mounted. This
-# avoids dependency on nested-router behavior and ensures the legacy catch-all
-# cannot shadow /v1/evidence/*.
 app = FastAPI(title=f"{APP_NAME} + Evidence Registry")
 
 
@@ -31,12 +27,7 @@ def _translate_error(exc: Exception) -> HTTPException:
         return HTTPException(status_code=404, detail=str(exc))
     if isinstance(
         exc,
-        (
-            EvidenceValidationError,
-            EvidenceReferenceError,
-            EvidenceSupersessionError,
-            EvidenceDigestMismatch,
-        ),
+        (EvidenceValidationError, EvidenceReferenceError, EvidenceSupersessionError, EvidenceDigestMismatch),
     ):
         return HTTPException(status_code=400, detail=str(exc))
     if isinstance(exc, EvidenceRegistryError):
@@ -54,14 +45,13 @@ async def _create_record(kind: str, request: Request, authorization: str | None)
     payload = dict(payload)
     supersedes = payload.pop("supersedes_record_id", None)
     try:
-        envelope = registry.append(
-            kind,  # type: ignore[arg-type]
-            payload,
-            actor=actor,
-            supersedes_record_id=supersedes,
-        )
+        envelope = registry.append(kind, payload, actor=actor, supersedes_record_id=supersedes)  # type: ignore[arg-type]
     except Exception as exc:
-        id_field = "experiment_id" if kind == "experiment" else "claim_id"
+        id_field = {
+            "experiment": "experiment_id",
+            "claim": "claim_id",
+            "calibration": "calibration_id",
+        }.get(kind, "record_id")
         legacy_server.audit(
             "evidence_rejected",
             actor,
@@ -116,6 +106,23 @@ def get_claim(claim_id: str, authorization: str | None = Header(default=None)):
     return envelope
 
 
+@app.post("/v1/evidence/calibrations")
+async def create_calibration(request: Request, authorization: str | None = Header(default=None)):
+    return await _create_record("calibration", request, authorization)
+
+
+@app.get("/v1/evidence/calibrations/{calibration_id}")
+def get_calibration(calibration_id: str, authorization: str | None = Header(default=None)):
+    actor = legacy_server.require_admin(authorization)
+    try:
+        envelope = registry.get("calibration", calibration_id)
+    except Exception as exc:
+        legacy_server.audit("evidence_read_failed", actor, {"kind": "calibration", "record_id": calibration_id})
+        raise _translate_error(exc) from exc
+    legacy_server.audit("evidence_read", actor, {"kind": "calibration", "record_id": calibration_id})
+    return envelope
+
+
 @app.get("/v1/evidence/export", response_class=PlainTextResponse)
 def export_evidence(authorization: str | None = Header(default=None)):
     actor = legacy_server.require_admin(authorization)
@@ -139,36 +146,14 @@ def capabilities():
     caps = dict(result.get("capabilities", {}))
     caps.update(
         {
-            "evidence_experiment_create": {
-                "path": "/v1/evidence/experiments",
-                "method": "POST",
-                "auth": "operator_or_admin",
-            },
-            "evidence_experiment_read": {
-                "path": "/v1/evidence/experiments/{experiment_id}",
-                "method": "GET",
-                "auth": "admin",
-            },
-            "evidence_claim_create": {
-                "path": "/v1/evidence/claims",
-                "method": "POST",
-                "auth": "operator_or_admin",
-            },
-            "evidence_claim_read": {
-                "path": "/v1/evidence/claims/{claim_id}",
-                "method": "GET",
-                "auth": "admin",
-            },
-            "evidence_export": {
-                "path": "/v1/evidence/export",
-                "method": "GET",
-                "auth": "admin",
-            },
-            "evidence_metrics": {
-                "path": "/v1/evidence/metrics",
-                "method": "GET",
-                "auth": "admin",
-            },
+            "evidence_experiment_create": {"path": "/v1/evidence/experiments", "method": "POST", "auth": "operator_or_admin"},
+            "evidence_experiment_read": {"path": "/v1/evidence/experiments/{experiment_id}", "method": "GET", "auth": "admin"},
+            "evidence_claim_create": {"path": "/v1/evidence/claims", "method": "POST", "auth": "operator_or_admin"},
+            "evidence_claim_read": {"path": "/v1/evidence/claims/{claim_id}", "method": "GET", "auth": "admin"},
+            "evidence_calibration_create": {"path": "/v1/evidence/calibrations", "method": "POST", "auth": "operator_or_admin"},
+            "evidence_calibration_read": {"path": "/v1/evidence/calibrations/{calibration_id}", "method": "GET", "auth": "admin"},
+            "evidence_export": {"path": "/v1/evidence/export", "method": "GET", "auth": "admin"},
+            "evidence_metrics": {"path": "/v1/evidence/metrics", "method": "GET", "auth": "admin"},
         }
     )
     result["capabilities"] = caps
