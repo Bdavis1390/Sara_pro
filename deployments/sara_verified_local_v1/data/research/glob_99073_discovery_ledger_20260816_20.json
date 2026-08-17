@@ -1,0 +1,148 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 20,
+  "purpose": "Continue the live internet scan of the parallel 12345->13524 family, promote a same-system Sr I relational motif, and route all substantive publications or information items surfaced in this pass without allowing search co-occurrence to become evidence.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, repeated records, and alternate landing pages are provenance aliases and are not independent evidence.",
+    "search_noise": "Identifiers, page numbers, search snippets, axis labels, catalog records and other numeric collisions are not Glob evidence unless the declared physical quantity is independently verified in authoritative source content."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-SRI-BROWN-LONGMIRE-GINTER-1983-R20",
+      "title": "Absorption spectrum of Sr I between 1400 and 1900 Angstrom",
+      "authors": "C. M. Brown; M. S. Longmire; M. L. Ginter",
+      "year": 1983,
+      "identifier": "doi:10.1364/JOSA.73.000985",
+      "authority": "Journal of the Optical Society of America / Optica Publishing Group",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Primary absorption-spectroscopy source. The article states that observed Sr I transitions originate from the 5s2 1S0 ground state into J=1-odd channels and tabulates measured frequencies including 60056.04 and 60705.36 cm^-1."
+    },
+    {
+      "source_id": "SRC-SI2N-IONIZATION-PAUKSTIS-2002-R20",
+      "title": "The Ionization Potential of Si2N and Si2O",
+      "authors": "S. J. Paukstis; J. L. Gole; David A. Dixon; Kirk A. Peterson",
+      "year": 2002,
+      "identifier": "doi:10.1021/jp020468j",
+      "authority": "The Journal of Physical Chemistry A / American Chemical Society",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Use the one-color resonant/nonresonant pulsed-laser ionization and time-of-flight mass-spectrometry methodology as a molecular ionization-validation reference. A search-side full-text mirror exposes 63709 cm^-1 as the nominal 7.9 eV F2 excimer photon energy, but the exact value is not promoted until independently confirmed from authoritative primary full text."
+    },
+    {
+      "source_id": "SRC-THIOACETAMIDE-REMIJAN-2022-R20",
+      "title": "Expanding the submillimeter wave spectroscopy and astronomical search for thioacetamide (CH3CSNH2) in the ISM",
+      "authors": "A. Remijan et al.",
+      "year": 2022,
+      "identifier": "doi:10.1051/0004-6361/202142504; arXiv:2112.03356",
+      "authority": "Astronomy & Astrophysics / arXiv author manuscript",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "SARA", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use the 2035-line torsion-rotation fit, rho-axis-method Hamiltonian, laboratory-to-astronomical search workflow, nondetection/upper-limit handling and survey provenance as a spectroscopy/model-validation precedent. Search results show a 97930-MHz plot window in related astronomical panels, but exact target equality is not promoted from an axis/window occurrence."
+    },
+    {
+      "source_id": "SRC-JOVE-BROADBAND-SRS-2022-R20",
+      "title": "Multiplex Chemical Imaging Based on Broadband Stimulated Raman Scattering Microscopy",
+      "authors": "Alejandro De la Cadena et al.",
+      "year": 2022,
+      "identifier": "doi:10.3791/63709",
+      "authority": "Journal of Visualized Experiments",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "QUANTUM_DEVICE_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use broadband SRS plus differential multichannel lock-in detection and chemometric decomposition as a hyperspectral chemical-imaging reference. The value 63709 is the article identifier and therefore an M1 metadata collision, not a physical-value hit."
+    }
+  ],
+  "evidence_updates": [
+    {
+      "record_id": "EV-R20-SRI-60057",
+      "source_id": "SRC-SRI-BROWN-LONGMIRE-GINTER-1983-R20",
+      "permutation_family": "12345->13524",
+      "seed": "245779675000031449401",
+      "source_window": "67500",
+      "orbit": ["67500", "65070", "60057", "60705"],
+      "target": "60057",
+      "observed_value_cm-1": 60056.04,
+      "absolute_delta_cm-1": 0.96,
+      "evidence_class": "P1",
+      "physical_value_subtype": "EXPERIMENTAL_ATOMIC_ABSORPTION_FREQUENCY",
+      "verification_status": "verified_primary",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "Within the standing 1 cm^-1 screening tolerance. It contributes to a same-system motif only because the source independently establishes common Sr I transition topology."
+    },
+    {
+      "record_id": "EV-R20-SRI-60705",
+      "source_id": "SRC-SRI-BROWN-LONGMIRE-GINTER-1983-R20",
+      "permutation_family": "12345->13524",
+      "seed": "245779675000031449401",
+      "source_window": "67500",
+      "orbit": ["67500", "65070", "60057", "60705"],
+      "target": "60705",
+      "observed_value_cm-1": 60705.36,
+      "absolute_delta_cm-1": 0.36,
+      "evidence_class": "P1",
+      "physical_value_subtype": "EXPERIMENTAL_ATOMIC_ABSORPTION_FREQUENCY",
+      "verification_status": "verified_primary",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "Within the standing 1 cm^-1 screening tolerance and measured with reported 0.10 cm^-1 uncertainty."
+    },
+    {
+      "record_id": "EV-R20-SRI-60057-60705-P2",
+      "source_id": "SRC-SRI-BROWN-LONGMIRE-GINTER-1983-R20",
+      "permutation_family": "12345->13524",
+      "seed": "245779675000031449401",
+      "source_window": "67500",
+      "orbit": ["67500", "65070", "60057", "60705"],
+      "targets": ["60057", "60705"],
+      "observed_values_cm-1": [60056.04, 60705.36],
+      "evidence_class": "P2",
+      "physical_relation": "same Sr I absorption system; article describes transitions from the common 5s2 1S0 lower state into J=1-odd channels",
+      "verification_status": "verified_primary",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "This satisfies the current P2 same-system relational definition but is not a statistical promotion. It must be evaluated against the full 190-state two-family search space, the number of species/datasets screened, the 1 cm^-1 tolerance, and topology-preserving nulls."
+    }
+  ],
+  "gated_leads": [
+    {
+      "target": "63709",
+      "permutation_family": "12345->13524",
+      "orbit": ["67930", "69073", "60397", "63709"],
+      "status": "P1_CANDIDATE_NOT_PROMOTED",
+      "basis": "A full-text mirror of the verified ACS Si2N/Si2O paper states that the F2 excimer photon energy is 7.9 eV = 63709 cm^-1. The authoritative ACS landing page verifies the experiment and 7.9-eV bound but does not expose the exact cm^-1 sentence in accessible primary text in this pass.",
+      "worldshepherd_uses": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"]
+    },
+    {
+      "target": "97930",
+      "permutation_family": "12345->13524",
+      "orbit": ["99073", "90397", "93709", "97930"],
+      "status": "NOT_PROMOTED_AXIS_WINDOW",
+      "basis": "Search-visible figures from the thioacetamide/related acetamide astronomical analysis use a 97930-MHz plotting window. Axis-range inclusion is not an exact measured-transition claim.",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "OVERWATCH"]
+    },
+    {
+      "target": "73590",
+      "permutation_family": "12345->13524",
+      "orbit": ["79305", "73590", "75039", "70953"],
+      "status": "AUTHORITATIVE_CONFIRMATION_PENDING",
+      "basis": "A mirror of NIST ASD v5.12 line output contains 73590 cm^-1 as an atomic level in classified forbidden transitions. Species/official primary ASD query must be resolved before P1 promotion.",
+      "worldshepherd_uses": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL"]
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R20-FIRST-WITHIN-ORBIT-P2-13524",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "The 13524-family orbit 67500->65070->60057->60705 contains two separately measured Sr I absorption frequencies within the standing 1 cm^-1 target tolerance, and both belong to the common-ground-state transition system described in the same primary paper.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "The motif is relationally stronger than isolated cross-species P1 hits, but its significance is unknown until topology-preserving nulls and experiment-wide multiple-testing correction are run."
+    }
+  ],
+  "next_actions": [
+    "Resolve the official NIST ASD species/query behind the 73590-cm^-1 mirror result before any P1 promotion.",
+    "Acquire authoritative primary full text for the Si2N/Si2O experiment to verify the exact 63709-cm^-1 F2 photon-energy statement or keep it gated.",
+    "Continue same-unit scans across the remaining 13524-only states and prioritize repeated hits within one species or one transition graph over isolated values.",
+    "Run topology-preserving relational null tests for the new Sr I two-hit orbit motif and update multiple-testing/FDR calculations over the union of both permutation families and all screened datasets."
+  ]
+}
