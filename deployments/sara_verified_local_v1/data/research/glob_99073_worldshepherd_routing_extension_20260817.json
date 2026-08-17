@@ -1,0 +1,25 @@
+{
+  "schema_version":"ws-worldshepherd-routing-extension-1.0",
+  "as_of":"2026-08-17",
+  "parent_registry":"glob_99073_registry.json",
+  "purpose":"Extend the canonical Glob inquiry routing vocabulary so useful sources can be retained across all materially relevant Worldshepherd domains without rewriting historical registry records.",
+  "routes":{
+    "ATOMIC_AND_MOLECULAR_MODELS":"atomic/molecular structure, line-list, collisional-radiative and molecular-model validation",
+    "PLASMA_AND_FUSION_DATA":"fusion/plasma diagnostics, transport, atomic data and archived discharge/diagnostic corpora",
+    "ADAPTIVE_METASURFACE_CONTROL":"programmable electromagnetic boundary-condition, metasurface and field-control methods",
+    "MATERIALS_AND_MANUFACTURING":"synthesis, additive/subtractive processing, assembly, scale-up and fabrication methods",
+    "IP_AND_COMMERCIALIZATION":"patent, licensing, standards-to-market, capital, productization and commercialization intelligence",
+    "RF_HARDWARE":"RF/microwave/THz components, high-power transmission, couplers, antennas and measurement hardware",
+    "CHEMISTRY_AND_CHEMICAL_DATA":"chemical identities, reactions, analytical chemistry and structured chemical-data resources",
+    "SENSING_AND_SENSOR_FUSION":"sensor architectures, raw/derived observation pipelines, fusion, nuisance rejection and alarm logic",
+    "SOFTWARE_AND_DATA_ENGINEERING":"APIs, schemas, interoperability, data pipelines, parsers, storage, transformation and software architecture",
+    "AI_ML_AND_MODEL_VALIDATION":"machine-learning, surrogate/model evaluation, statistical learning, benchmarking and model/data reconciliation",
+    "SYSTEMS_ENGINEERING_AND_GOVERNANCE":"requirements, standards, lifecycle controls, audit/governance, decision gates and architecture practices",
+    "OPERATIONS_AND_RELIABILITY":"maintenance, scheduling, incident/failure handling, availability, RUL, recovery and operational optimization",
+    "SIMULATION_AND_NUMERICAL_METHODS":"solvers, numerical algorithms, model reduction, uncertainty, multiphysics and computational validation",
+    "TEST_AND_MEASUREMENT":"metrology, calibration, instrumentation, interlaboratory comparison, measurement uncertainty and NDE",
+    "SUPPLY_CHAIN_AND_PRODUCTION":"critical materials, sourcing, production constraints, process scale-up, logistics and manufacturing readiness",
+    "ENVIRONMENTAL_AND_CIVIL_SYSTEMS":"civil infrastructure, environmental monitoring/remediation, geotechnical, waste and built-environment systems"
+  },
+  "claims_boundary":"Routing expresses utility only. It does not modify or imply Glob P2/P1/G1/M1/N0 evidence status."
+}
