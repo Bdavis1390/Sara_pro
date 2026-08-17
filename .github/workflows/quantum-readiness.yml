@@ -75,6 +75,8 @@ jobs:
             --output .qrf-artifacts/quantum_internal_readiness.json
           python scripts/generate_quantum_external_campaign.py \
             --output .qrf-artifacts/quantum_external_campaign.json
+          python scripts/generate_quantum_acquisition_requests.py \
+            --output .qrf-artifacts/quantum_acquisition_requests.json
           python scripts/generate_quantum_evidence.py \
             --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
           python scripts/generate_quantum_application_benchmarks.py \
@@ -101,9 +103,11 @@ jobs:
           test -s data/quantum_project_matrix.json
           test -s data/pqc_migration_inventory.json
           test -s data/quantum_application_benchmarks.json
+          test -s data/quantum_external_partner_targets_2026-08-17.json
           python -m json.tool data/quantum_project_matrix.json >/dev/null
           python -m json.tool data/pqc_migration_inventory.json >/dev/null
           python -m json.tool data/quantum_application_benchmarks.json >/dev/null
+          python -m json.tool data/quantum_external_partner_targets_2026-08-17.json >/dev/null
 
       - name: Upload QRF evidence artifacts
         uses: actions/upload-artifact@v4
