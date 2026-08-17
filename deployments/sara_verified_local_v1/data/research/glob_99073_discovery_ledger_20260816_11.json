@@ -4,6 +4,11 @@
   "as_of": "2026-08-16",
   "ledger_sequence": 11,
   "purpose": "Capture substantive publications and program information surfaced while resolving the unverified 79305-MHz claim, with explicit Worldshepherd routing and negative-control boundaries.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, and repeated records are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence or a numeric collision is not Glob evidence and receives zero evidence weight unless independently verified as a physical or relational feature."
+  },
   "sources": [
     {
       "source_id": "SRC-APS-UHV-DIRECTIONAL-COUPLER-1995",
@@ -13,7 +18,7 @@
       "identifier": "doi:10.1109/PAC.1995.505438; ANL/ASD/CP--84996; OSTI report 82330",
       "authority": "Argonne National Laboratory / IEEE Particle Accelerator Conference",
       "discovery_status": "NEWLY_DISCOVERED",
-      "use": ["ADAPTIVE_METASURFACE_CONTROL", "RF_HARDWARE", "MATERIALS_AND_CHARACTERIZATION", "OVERWATCH"],
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "SARA"],
       "note": "Use the WR-284 high-power directional-coupler redesign as a practical RF hardware reference for forward/reverse power sensing, directivity, coupling calibration, vacuum-window maintainability, geometric tolerance sensitivity, and network-analyzer verification. The -79.305 dB table entry that caused search retrieval is an incidental numeric collision and carries zero Glob evidence weight."
     },
     {
@@ -22,7 +27,7 @@
       "authority": "National Institute for Fusion Science (NIFS)",
       "year": 2026,
       "discovery_status": "NEWLY_DISCOVERED",
-      "use": ["OPPORTUNITY_AND_PARTNER_INTEL", "SARA", "OVERWATCH", "MULTIPHYSICS_VALIDATION"],
+      "use": ["OPPORTUNITY_AND_PARTNER_INTEL", "SARA", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
       "note": "NIFS states that LHD experiments concluded on 2025-12-25 after more than 27 years and more than 200,000 ultra-high-temperature plasma discharges, while emphasizing continuing discovery from the accumulated data. Use this to prioritize the LHD repository as a mature retrospective validation corpus rather than as a live-shot experimental feed."
     }
   ],
@@ -39,7 +44,8 @@
   },
   "next_actions": [
     "Obtain the primary full table/figure set for Phys. Rev. A 99, 042507 and search exact transition-frequency values before changing the 79305 evidence class.",
-    "Add RF coupler directivity/coupling calibration concepts to the adaptive-metasurface hardware validation checklist, while preserving accelerator-specific operating boundaries.",
-    "Treat the completed LHD corpus as a candidate retrospective multichannel validation benchmark and preserve diagnostic/shot provenance in any ingestion adapter."
+    "Add RF coupler directivity/coupling calibration concepts to the Worldshepherd materials-and-characterization hardware validation checklist, while preserving accelerator-specific operating boundaries.",
+    "Treat the completed LHD corpus as a candidate retrospective multichannel validation benchmark and preserve diagnostic/shot provenance in any ingestion adapter.",
+    "Keep topology/relational testing active for all predeclared Glob states and apply multiple-testing correction before any statistical promotion."
   ]
 }
