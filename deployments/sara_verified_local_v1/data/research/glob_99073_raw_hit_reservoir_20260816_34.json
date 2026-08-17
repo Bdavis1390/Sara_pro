@@ -1,0 +1,29 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_33.json",
+  "purpose":"Sample nonphysical namespace multiplicity around strong physical/P2 states to test whether metadata abundance is independent of physical evidence and harvest useful security, standards, R&D-statistics and biological-custody sources.",
+  "policy":{
+    "rule":"Raw namespace multiplicity is accumulated even for P1/P2 targets but has zero automatic physical-evidence weight.",
+    "promotion":"A target's existing physical classification is not strengthened by CVE, standard, catalog, article, bug, rule or dataset identifiers with the same digits.",
+    "no_hit":"Post-coverage scans are append-only; absence and later discovery remain separately auditable observations."
+  },
+  "records":[
+    {"target":"60705","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-60705","context":"Windows Client-Side Caching Service improper access control enabling local privilege escalation","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"60705","raw_hit_type":"SECURITY_RULE_ID","occurrence":"Snort rule 1:60705","context":"Cisco Talos rule for detecting Windows privilege-escalation exploit traffic","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SENSING_AND_SENSOR_FUSION","OPERATIONS_AND_RELIABILITY"]},
+    {"target":"60705","raw_hit_type":"STANDARD_NUMBER","occurrence":"IEC 60705:2024 / BS EN IEC 60705:2024","context":"Current methods for measuring microwave-oven performance including power output and energy-consumption testing","glob_weight":"M1_RAW","worldshepherd_use":["TEST_AND_MEASUREMENT","RF_HARDWARE","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"60705","raw_hit_type":"SOFTWARE_BUG_ID","occurrence":"PHP bug #60705","context":"Historical Rijndael IV-size behavior discussion in PHP mcrypt","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60057","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-60057","context":"PHP local-file-inclusion flaw in DJ Rainflow WordPress theme","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"60057","raw_hit_type":"ARTICLE_IDENTIFIER","occurrence":"JMIR e60057","context":"Bibliometric/network analysis of 25 years of digital-health research","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]},
+    {"target":"60397","raw_hit_type":"PUBLIC_DATASET_API_ID","occurrence":"Spain INE API dataset identifier 60397","context":"National statistics on internal R&D expenditure by type of administration","glob_weight":"N0_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","OPERATIONS_AND_RELIABILITY","SOFTWARE_AND_DATA_ENGINEERING"]},
+    {"target":"60397","raw_hit_type":"SECURITY_ADVISORY_ID","occurrence":"Secunia advisory reference 60397 cited by NVD for CVE-2014-5273","context":"Legacy vulnerability-advisory namespace associated with phpMyAdmin XSS","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93709","raw_hit_type":"BIOLOGICAL_MATERIAL_CATALOG_ID","occurrence":"ATCC 93709","context":"Human clone yWXD3439 with biosafety, certificate and GenBank cross-reference metadata","glob_weight":"N0_RAW","worldshepherd_use":["ECHO_SENTINEL_LINK","SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE"]}
+  ],
+  "next_actions":[
+    "Compare namespace multiplicity for P1/P2 targets against nonphysical/control targets without using namespace count as physical evidence.",
+    "Continue cross-domain use extraction from standards, security rules, public statistics and material-custody records.",
+    "Use analyzer sparse-target rankings to drive future web sampling after CI validates multiplicity metrics.",
+    "Continue same-system physical topology with fixed tolerance and experiment-wide multiple-testing/false-discovery correction."
+  ]
+}
