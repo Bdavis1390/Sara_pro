@@ -1,0 +1,37 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_16.json",
+  "purpose":"Continue raw-hit accumulation through 33925, 93452, 94235, 92543, 52234, 52423 and 54322 while preserving namespace collisions separately from physical-evidence promotion.",
+  "policy":{
+    "rule":"Every exact raw occurrence is retained for collision statistics, but raw recurrence has zero automatic physical-evidence weight.",
+    "promotion":"P1/P2 requires an independently verified physical quantity or same-system physical relation; page numbers, identifiers, postal codes and computational counts remain raw controls.",
+    "namespace_control":"Repeated digits in distinct namespaces are counted separately by namespace before any independence claim is considered."
+  },
+  "records":[
+    {"target":"33925","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"ACS Nano 2025, 19(38), 33913-33925","context":"Two-Dimensional Defective MoO3-x Layers: Formation of a Magneli-Type Nanophase","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"33925","raw_hit_type":"COMPUTATIONAL_STATE_COUNT","occurrence":"GRASP manual example: After NCSF = 33925 for J/P block 3","context":"Relativistic atomic-structure workflow example; integer is a configuration-state-function count, not an energy/frequency","glob_weight":"N0_RAW","worldshepherd_use":["ATOMIC_AND_MOLECULAR_MODELS","SARA","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"93452","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0020-1693(00)93452-2","context":"1979 Fe(II) spin-ground-state study using temperature-dependent Mossbauer spectroscopy and magnetic susceptibility","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ATOMIC_AND_MOLECULAR_MODELS","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"94235","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"94235 Cachan, France","context":"Recurring ENS Cachan/Paris-Saclay affiliation in nonlinear-optics, Raman, photophysics and materials papers","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OPPORTUNITY_AND_PARTNER_INTEL"]},
+    {"target":"92543","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-025-92543-2","context":"2025 TiO2/pyrolytic-carbon thin-film structural and optical characterization","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52234","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Appl. Mater. Interfaces 2021, 13(44), 52234-52249","context":"De novo encapsulation of biocatalysts into synthetic matrices","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52234","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Appl. Mater. Interfaces 2020, 12(47), 52234-52250","context":"Noble metal aerogels review","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52423","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Appl. Mater. Interfaces 2024, 16(39), 52423-52431","context":"Oxygen self-doped Bi2S3@C anode with sulfur vacancies for lithium-ion batteries","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"52423","raw_hit_type":"GRANT_IDENTIFIER","occurrence":"ACS Petroleum Research Fund 52423-DNI10","context":"Funding identifier in Au/Ag/Pd nanoalloy aerogel study","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OPPORTUNITY_AND_PARTNER_INTEL"]},
+    {"target":"54322","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Appl. Mater. Interfaces 2023, 15(47), 54322-54334","context":"Polydopamine-functionalized black-phosphorus nanocomposites for photoacoustic imaging-guided therapy","glob_weight":"N0_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"54322","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-54322","context":"NIST NVD entry for Xspeeder SXZOS remote-code-execution vulnerability","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","NEGATIVE_CONTROL_CORPUS","PRIME_SENTINEL"]},
+    {"target":"54322","raw_hit_type":"COMPUTATIONAL_JOB_ID","occurrence":"WebMO Job Summary 54322","context":"University quantum-chemistry job identifier; underlying orbital energies are separate quantities","glob_weight":"M1_RAW","worldshepherd_use":["ATOMIC_AND_MOLECULAR_MODELS","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"52234 and 54322 demonstrate multi-source collision multiplicity within scientific publishing and technical databases; one integer can recur as pages, security identifiers and computational IDs without encoding the measured quantity.","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH","PRIME_SENTINEL"],"claims_boundary":"Collision multiplicity is a null-model input, not positive Glob evidence."},
+    {"finding":"The TiO2/PyC study combines Raman, SEM/EDS, ellipsometry and UV-Vis characterization and is useful as a multimodal material-validation reference.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH"],"claims_boundary":"92543 occurs only in the DOI component."},
+    {"finding":"The O-Bi2S3@C study provides a defect-engineering battery-material benchmark using oxygen self-doping and sulfur vacancies to modify storage kinetics and stability.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH"],"claims_boundary":"52423 is the article start page."}
+  ],
+  "next_actions":[
+    "Continue raw coverage through remaining three-family union gaps and revisit prior NO_HIT records with broader namespace-aware queries.",
+    "Continue independent physical-value and same-system topology scans using fixed tolerance and primary/authoritative spectroscopy sources.",
+    "Stratify collision rates by page, DOI/PII, CVE, CAS/CID, grant, repository, job, postal and computational-count namespaces.",
+    "Apply experiment-wide multiple-testing/false-discovery controls before interpreting aggregate P1/P2 counts."
+  ]
+}
