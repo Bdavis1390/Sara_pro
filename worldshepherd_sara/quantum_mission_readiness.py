@@ -200,7 +200,7 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
     MissionReadinessInputs(
         project_id="WS-APNT",
         mission_lane="quantum sensing and assured PNT integration",
-        evidence_stage=MissionEvidenceStage.CONCEPT,
+        evidence_stage=MissionEvidenceStage.SYNTHETIC_SURROGATE,
         mission_fidelity=11,
         classical_comparator=8,
         quantum_evidence_reproducibility=0,
@@ -208,8 +208,8 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         security_provenance=6,
         degraded_latency_cost=5,
         physical_environment_validation=0,
-        blockers=("no calibrated quantum sensor/device/dataset under Worldshepherd test control",),
-        evidence_refs=("WS-APNT-QS-001 design contract",),
+        blockers=("no calibrated external quantum sensor/device/dataset under Worldshepherd test control",),
+        evidence_refs=("WS-APNT-QS-001 design contract", "WS-APNT-SYN-001 deterministic normalized truth-reference benchmark"),
     ),
     MissionReadinessInputs(
         project_id="WS-ALTI",
