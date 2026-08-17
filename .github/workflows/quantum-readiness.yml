@@ -10,6 +10,7 @@ on:
       - "requirements-quantum.txt"
       - "benchmarks/quantum/**"
       - "data/quantum_project_matrix.json"
+      - "data/pqc_migration_inventory.json"
       - "docs/QUANTUM_READINESS_FABRIC.md"
       - ".github/workflows/quantum-readiness.yml"
   push:
@@ -23,6 +24,7 @@ on:
       - "requirements-quantum.txt"
       - "benchmarks/quantum/**"
       - "data/quantum_project_matrix.json"
+      - "data/pqc_migration_inventory.json"
       - "docs/QUANTUM_READINESS_FABRIC.md"
       - ".github/workflows/quantum-readiness.yml"
 
@@ -62,8 +64,11 @@ jobs:
           PYTHONPATH: .
         run: pytest -q tests/test_quantum_qiskit.py
 
-      - name: Verify benchmark artifacts exist
+      - name: Verify governed artifacts exist
         run: |
           test -s benchmarks/quantum/bell_qasm3.qasm
           test -s benchmarks/quantum/qrf_bell_001.json
           test -s data/quantum_project_matrix.json
+          test -s data/pqc_migration_inventory.json
+          python -m json.tool data/quantum_project_matrix.json >/dev/null
+          python -m json.tool data/pqc_migration_inventory.json >/dev/null
