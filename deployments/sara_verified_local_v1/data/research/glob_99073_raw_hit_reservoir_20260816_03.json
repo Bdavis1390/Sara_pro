@@ -1,0 +1,29 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_02.json",
+  "purpose":"Continue raw exact-number accumulation for original 31542-family states while routing substantive physics publications into Worldshepherd independently of Glob evidence weight.",
+  "policy":{
+    "rule":"Raw occurrence does not imply physical correspondence.",
+    "promotion":"Physical evidence requires separately verified quantity, unit and provenance.",
+    "worldshepherd_use":"Useful scientific methods and datasets are retained even when the target digits occur only in metadata."
+  },
+  "records":[
+    {"target":"09736","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41586-025-09736-y","context":"Detection of triboelectric discharges during dust events on Mars","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"09736","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1140/epjc/s10052-021-09736-y","context":"Mass spectroscopy and strong decays of excited open-charm D_J mesons","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"37509","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-023-37509-6","context":"Coherent THz magnons in an antiferromagnetic insulator triggered by ultrafast spin-phonon interactions","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"37509","raw_hit_type":"TERMINAL_PAGE","occurrence":"ACS Applied Materials & Interfaces 17(26):37500-37509","context":"Panthenol citrate photoprotective antioxidant material","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"53907","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.3791/53907","context":"In-vitro ocular platform for contact-lens testing","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"53907","raw_hit_type":"CAS_PREFIX","occurrence":"CAS 53907-61-2 / 53907-72-5 / 53907-60-1 / 53907-77-0","context":"Multiple NIST Chemistry WebBook chemical records sharing the same five-digit CAS prefix","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95703","raw_hit_type":"PUBCHEM_CID","occurrence":"CID 95703","context":"3-ethylpent-1-en-4-yn-3-ol chemical record","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"A single generated five-digit state can recur repeatedly as a prefix within one identifier namespace, as demonstrated by multiple NIST CAS records beginning 53907.","use":["PRIME_SENTINEL","OVERWATCH","NEGATIVE_CONTROL_CORPUS"],"claims_boundary":"Prefix multiplicity within an identifier namespace is not independent evidence."}
+  ],
+  "next_actions":[
+    "Continue raw-search coverage across remaining union states.",
+    "Count repeated prefixes inside one identifier namespace separately from independent domain/source occurrences.",
+    "Use Mars discharge and THz-magnon publications for Worldshepherd physical-model references without promoting their DOI digits."
+  ]
+}
