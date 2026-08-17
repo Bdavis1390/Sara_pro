@@ -1,6 +1,6 @@
 """Credential-gated IBM Quantum hardware adapter for QRF-BELL-001.
 
-No credential is persisted by this module. A caller must inject the API token at
+No credential is persisted by this module. A caller must inject the API key at
 runtime. The returned evidence is hardware execution evidence, not a quantum
 advantage claim.
 """
@@ -10,12 +10,16 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from hashlib import sha256
+import importlib.metadata
 import json
+from time import perf_counter
 from typing import Any
 
 from qiskit import QuantumCircuit, qasm3
 from qiskit.transpiler import generate_preset_pass_manager
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2
+
+from worldshepherd_sara.quantum_external_evidence import ExternalEvidenceRecord, ExternalEvidenceType
 
 
 @dataclass(frozen=True)
@@ -33,6 +37,14 @@ class IBMQPUResult:
     backend_num_qubits: int | None
     native_operations: tuple[str, ...]
     executed_at_utc: str
+    backend_properties_digest: str | None = None
+    job_metrics: dict[str, Any] | None = None
+    job_metrics_digest: str | None = None
+    queue_seconds: float | None = None
+    platform_latency_seconds: float | None = None
+    wall_latency_seconds: float | None = None
+    qpu_charge_time_seconds: float | None = None
+    runtime_version: str | None = None
     claim_class: str = "quantum_executed"
 
     def to_dict(self) -> dict[str, Any]:
@@ -43,6 +55,42 @@ def _digest_text(text: str) -> str:
     return f"sha256:{sha256(text.encode('utf-8')).hexdigest()}"
 
 
+def _digest_json(payload: Any) -> str:
+    return _digest_text(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str))
+
+
+def _json_safe(payload: Any) -> Any:
+    return json.loads(json.dumps(payload, sort_keys=True, default=str))
+
+
+def _utc_now_z() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _parse_timestamp(value: Any) -> datetime | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _elapsed_seconds(start: Any, end: Any) -> float | None:
+    left = _parse_timestamp(start)
+    right = _parse_timestamp(end)
+    if left is None or right is None:
+        return None
+    seconds = (right - left).total_seconds()
+    return max(0.0, seconds)
+
+
 def _build_hardware_bell_circuit() -> QuantumCircuit:
     circuit = QuantumCircuit(2, name="QRF-BELL-001")
     circuit.h(0)
@@ -51,15 +99,52 @@ def _build_hardware_bell_circuit() -> QuantumCircuit:
     return circuit
 
 
-def _calibration_id(backend: Any) -> str | None:
+def _properties_snapshot(job: Any, backend: Any) -> tuple[Any | None, str | None, str | None]:
+    properties = None
     try:
-        properties = backend.properties()
+        properties = job.properties()
     except Exception:
-        return None
+        try:
+            properties = backend.properties()
+        except Exception:
+            properties = None
     if properties is None:
-        return None
+        return None, None, None
+
+    try:
+        payload = properties.to_dict()
+    except Exception:
+        payload = {"repr": repr(properties)}
+    safe_payload = _json_safe(payload)
     stamp = getattr(properties, "last_update_date", None)
-    return str(stamp) if stamp is not None else None
+    return safe_payload, _digest_json(safe_payload), str(stamp) if stamp is not None else None
+
+
+def _job_metrics(job: Any) -> tuple[dict[str, Any], str, float | None, float | None, float | None, str | None]:
+    try:
+        metrics_raw = job.metrics()
+    except Exception as exc:
+        metrics_raw = {"metrics_error": f"{type(exc).__name__}: {exc}"}
+    metrics = _json_safe(metrics_raw)
+    digest = _digest_json(metrics)
+    timestamps = metrics.get("timestamps", {}) if isinstance(metrics, dict) else {}
+    usage = metrics.get("usage", {}) if isinstance(metrics, dict) else {}
+    queue_seconds = _elapsed_seconds(timestamps.get("created"), timestamps.get("running"))
+    platform_latency = _elapsed_seconds(timestamps.get("created"), timestamps.get("finished"))
+    qpu_charge = None
+    if isinstance(usage, dict):
+        raw_charge = usage.get("qpu_charge_time_seconds")
+        if raw_charge is None:
+            raw_charge = usage.get("quantum_seconds")
+        if raw_charge is not None:
+            try:
+                qpu_charge = max(0.0, float(raw_charge))
+            except (TypeError, ValueError):
+                qpu_charge = None
+    finished = timestamps.get("finished") if isinstance(timestamps, dict) else None
+    finished_dt = _parse_timestamp(finished)
+    finished_z = finished_dt.isoformat().replace("+00:00", "Z") if finished_dt else None
+    return metrics, digest, queue_seconds, platform_latency, qpu_charge, finished_z
 
 
 def run_bell_on_ibm_hardware(
@@ -109,8 +194,11 @@ def run_bell_on_ibm_hardware(
     isa_qasm = qasm3.dumps(isa_circuit)
 
     sampler = SamplerV2(mode=backend)
+    wall_start = perf_counter()
     job = sampler.run([isa_circuit], shots=shots)
     primitive_result = job.result()
+    wall_latency = max(0.0, perf_counter() - wall_start)
+
     counts_raw = primitive_result[0].data.meas.get_counts()
     counts = {str(key): int(value) for key, value in counts_raw.items()}
     correlated = (counts.get("00", 0) + counts.get("11", 0)) / shots
@@ -122,9 +210,9 @@ def run_bell_on_ibm_hardware(
         "shots": shots,
         "counts": dict(sorted(counts.items())),
     }
-    result_digest = _digest_text(
-        json.dumps(result_payload, sort_keys=True, separators=(",", ":"))
-    )
+    result_digest = _digest_json(result_payload)
+    _, properties_digest, calibration_id = _properties_snapshot(job, backend)
+    metrics, metrics_digest, queue_seconds, platform_latency, qpu_charge, finished_z = _job_metrics(job)
 
     operations = tuple(sorted(str(op) for op in getattr(backend, "operation_names", ())))
     num_qubits = getattr(backend, "num_qubits", None)
@@ -138,8 +226,90 @@ def run_bell_on_ibm_hardware(
         circuit_digest=_digest_text(source_qasm),
         transpiled_circuit_digest=_digest_text(isa_qasm),
         result_digest=result_digest,
-        calibration_id=_calibration_id(backend),
+        calibration_id=calibration_id,
         backend_num_qubits=int(num_qubits) if num_qubits is not None else None,
         native_operations=operations,
-        executed_at_utc=datetime.now(timezone.utc).isoformat(),
+        executed_at_utc=finished_z or _utc_now_z(),
+        backend_properties_digest=properties_digest,
+        job_metrics=metrics,
+        job_metrics_digest=metrics_digest,
+        queue_seconds=queue_seconds,
+        platform_latency_seconds=platform_latency,
+        wall_latency_seconds=wall_latency,
+        qpu_charge_time_seconds=qpu_charge,
+        runtime_version=importlib.metadata.version("qiskit-ibm-runtime"),
+    )
+
+
+def build_sara_qpu_external_evidence(
+    result: IBMQPUResult,
+    *,
+    plan_name: str,
+    cost_usd: float,
+    campaign_gate_id: str = "SARA-QRF-EXT-01",
+) -> ExternalEvidenceRecord:
+    """Convert a successful IBM hardware result into a gate-bound SARA intake record.
+
+    Cost must be explicitly known. For an IBM Open Plan execution this can be 0.0;
+    paid-plan executions should pass the actual recorded/allocated execution cost.
+    """
+    if not plan_name.strip():
+        raise ValueError("plan_name is required for external QPU evidence")
+    if cost_usd < 0:
+        raise ValueError("cost_usd must be non-negative")
+    if not result.backend_properties_digest:
+        raise ValueError("IBM job/backend properties digest is required for SARA-QRF-EXT-01")
+    if result.queue_seconds is None:
+        raise ValueError("IBM job metrics must expose created/running timestamps for measured queue time")
+    latency = result.platform_latency_seconds
+    if latency is None:
+        latency = result.wall_latency_seconds
+    if latency is None:
+        raise ValueError("measured end-to-end IBM job latency is required")
+
+    raw_payload = result.to_dict()
+    raw_artifact_digest = _digest_json(raw_payload)
+    configuration_digest = _digest_json({
+        "backend": result.backend,
+        "shots": result.shots,
+        "circuit_digest": result.circuit_digest,
+        "transpiled_circuit_digest": result.transpiled_circuit_digest,
+        "runtime_version": result.runtime_version,
+        "plan_name": plan_name,
+    })
+    protocol_digest = _digest_text(
+        "QRF-BELL-001 IBM hardware protocol v1: transpile to named backend; execute measured Bell circuit; "
+        "retain backend properties, runtime metrics, result counts, latency, queue, cost, and immutable digests."
+    )
+
+    return ExternalEvidenceRecord(
+        project_id="SARA-QRF",
+        evidence_type=ExternalEvidenceType.QPU_EXECUTION,
+        source_id=f"ibm-quantum-platform:{result.job_id}",
+        raw_artifact_digest=raw_artifact_digest,
+        collected_utc=result.executed_at_utc,
+        provider_or_lab=result.provider,
+        configuration_digest=configuration_digest,
+        repeat_count=1,
+        calibration_id=result.calibration_id,
+        result_digest=result.result_digest,
+        job_or_run_id=result.job_id,
+        backend_or_device=result.backend,
+        latency_seconds=float(latency),
+        cost_usd=float(cost_usd),
+        environment="remote_cloud_qpu",
+        metadata={
+            "campaign_gate_id": campaign_gate_id,
+            "test_protocol_digest": protocol_digest,
+            "program_digest": result.circuit_digest,
+            "transpiled_program_digest": result.transpiled_circuit_digest,
+            "backend_properties_digest": result.backend_properties_digest,
+            "queue_seconds": str(result.queue_seconds),
+            "failure_mode": "none_observed",
+            "plan_name": plan_name,
+            "job_metrics_digest": result.job_metrics_digest or "unavailable",
+            "qpu_charge_time_seconds": "unavailable" if result.qpu_charge_time_seconds is None else str(result.qpu_charge_time_seconds),
+            "runtime_version": result.runtime_version or "unknown",
+            "wall_latency_seconds": "unavailable" if result.wall_latency_seconds is None else str(result.wall_latency_seconds),
+        },
     )
