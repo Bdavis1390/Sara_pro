@@ -1,0 +1,61 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 14,
+  "purpose": "Promote the ExoAtom interoperability path from capability plan to CI-validated Worldshepherd adapter, record the June-2024 derivative-source boundary, and preserve the distinction between ExoAtom transition selection and the complete current NIST W II line graph.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative copies, and repeated records are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence or a numeric collision is not Glob evidence; it receives zero evidence weight unless the underlying physical or relational relationship is independently verified."
+  },
+  "sources": [],
+  "referenced_sources": [
+    "SRC-EXOATOM-NI-2026",
+    "SRC-NIST-ASD-WII-HOLDINGS-R12",
+    "SRC-NIST-ASD-LINES-HELP"
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R14-EXOATOM-NIST-SNAPSHOT-DATE",
+      "discovery_status": "NEWLY_DISCOVERED_INFORMATION_FROM_EXISTING_SOURCE",
+      "finding": "The ExoAtom paper states that its NIST ASD data were scraped in June 2024. Its W II NIST-derived subset therefore represents a dated derivative snapshot rather than the current 2026 ASD state.",
+      "worldshepherd_uses": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "Do not infer current NIST completeness, current line count, or independent confirmation from the ExoAtom snapshot."
+    },
+    {
+      "update_id": "INFO-R14-EXOATOM-TRANSITION-SELECTION",
+      "discovery_status": "NEWLY_DISCOVERED_INFORMATION_FROM_EXISTING_SOURCE",
+      "finding": "ExoAtom constructs NIST .trans files by combining levels and lines data. Rows require a valid Einstein A coefficient and resolvable level information; rows whose A coefficient cannot be correlated with valid Ei/Ek/configuration/term information are excluded.",
+      "worldshepherd_uses": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "The ExoAtom W II 71-transition subset is selection-biased toward transitions with usable A/level linkage and must not be used as an unbiased surrogate for the full 2838-line W II graph."
+    },
+    {
+      "update_id": "INFO-R14-NIST-MACHINE-READABLE-PATH-REVERIFIED",
+      "discovery_status": "REVERIFIED_EXISTING",
+      "finding": "NIST ASD officially supports ASCII fixed-width, CSV, and tab-delimited spectral-line output with energy-level classifications, and recommends pipe-delimited ASCII for local data import.",
+      "worldshepherd_uses": ["SARA", "ECHO_SENTINEL_LINK"],
+      "claims_boundary": "Machine-readable support is verified; the complete W II 2838-line export has not yet been acquired into this branch and no full-graph result is claimed."
+    }
+  ],
+  "capability_update": {
+    "capability": "EXOATOM_TO_TRANSITION_GRAPH_ADAPTER",
+    "artifact": "scripts/convert_exoatom_transition_graph.py",
+    "status": "CI_VALIDATED_INTEROPERABILITY_ADAPTER",
+    "validation": {
+      "workflow": "SARA Verified Local v1 Gate",
+      "head_commit": "c8ff332b0389bb82ae393801e880f7bd801a1046",
+      "unit_and_api_tests": "52 passed",
+      "compose_validation": "passed",
+      "deployment_smoke_before_restart": "passed",
+      "deployment_smoke_after_restart": "passed"
+    },
+    "worldshepherd_uses": ["SARA", "ECHO_SENTINEL_LINK", "OVERWATCH", "PRIME_SENTINEL", "MATERIALS_AND_CHARACTERIZATION"],
+    "claims_boundary": "CI validates adapter behavior against controlled fixtures and integration with the existing analyzer; it does not validate the scientific completeness of any external dataset."
+  },
+  "next_actions": [
+    "Acquire the complete current NIST ASD W II machine-readable line export before running the authoritative full topology/relational graph test.",
+    "Replay the actual ExoAtom W II .states/.trans subset through the validated adapter when the source files are acquired, recording its selected-transition coverage rather than treating it as a full-graph substitute.",
+    "Apply topology-preserving null models and multiple-testing or false-discovery correction across all predeclared Glob targets, species, tolerances, datasets, and relational motifs before statistical promotion."
+  ]
+}
