@@ -37,6 +37,12 @@ CONTROLS: tuple[InternalControl, ...] = (
     InternalControl("QRF-MISSION", ("worldshepherd_sara/quantum_mission_readiness.py",), ("tests/test_quantum_mission_readiness.py",), "97/100 evidence-capped mission gate"),
     InternalControl("QRF-CLOSURE", ("worldshepherd_sara/quantum_closure.py",), ("tests/test_quantum_closure.py",), "per-project closure packages"),
     InternalControl("QRF-EXT-INTAKE", ("worldshepherd_sara/quantum_external_evidence.py",), ("tests/test_quantum_external_evidence.py",), "typed external evidence intake"),
+    InternalControl(
+        "QRF-EXT-INGEST",
+        ("worldshepherd_sara/quantum_external_ingest.py", "scripts/ingest_quantum_external_evidence.py"),
+        ("tests/test_quantum_external_ingest.py",),
+        "local artifact re-hash, current-gate enforcement, and fail-closed external evidence batch intake",
+    ),
     InternalControl("QRF-APNT", ("worldshepherd_sara/quantum_apnt.py", "scripts/generate_quantum_apnt_benchmark.py"), ("tests/test_quantum_apnt.py",), "truth-referenced sensor metrics and synthetic prerequisite"),
     InternalControl("QRF-MATERIALS", ("worldshepherd_sara/quantum_materials.py",), ("tests/test_quantum_materials.py",), "exact-vs-variational materials harness"),
     InternalControl(
