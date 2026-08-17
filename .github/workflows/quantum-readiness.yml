@@ -60,30 +60,12 @@ jobs:
           python -m pip install -r requirements-quantum.txt
 
       - name: Compile QRF modules
-        run: |
-          python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
+        run: python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
 
-      - name: Run QRF governance and mission calibration tests
+      - name: Run complete QRF test suite
         env:
           PYTHONPATH: .
-        run: |
-          pytest -q \
-            tests/test_quantum_readiness.py \
-            tests/test_quantum_resource.py \
-            tests/test_quantum_mission_readiness.py \
-            tests/test_pqc_inventory.py
-
-      - name: Run quantum execution, application, resource, and evidence tests
-        env:
-          PYTHONPATH: .
-        run: |
-          pytest -q \
-            tests/test_quantum_qiskit.py \
-            tests/test_quantum_optimization.py \
-            tests/test_quantum_microsoft_resource.py \
-            tests/test_quantum_evidence.py \
-            tests/test_quantum_ibm.py \
-            tests/test_quantum_sara_bridge.py
+        run: pytest -q tests/test_quantum_*.py tests/test_pqc_inventory.py
 
       - name: Generate governed CI evidence
         env:
@@ -97,6 +79,8 @@ jobs:
             --output .qrf-artifacts/quantum_resource_estimate.json
           python scripts/generate_quantum_mission_readiness.py \
             --output .qrf-artifacts/quantum_mission_readiness.json
+          python scripts/generate_quantum_97_closure.py \
+            --output .qrf-artifacts/quantum_97_closure.json
           python scripts/scan_pqc_inventory.py \
             --root . \
             --output .qrf-artifacts/pqc_inventory_scan.json \
