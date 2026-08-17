@@ -1,14 +1,20 @@
-"""Mission-readiness calibration for Worldshepherd quantum project lanes.
+"""Evidence-capped mission-readiness calibration for Worldshepherd quantum lanes.
 
-This is not TRL, certification, deployment authority, or an acquisition decision.
-It is an evidence-capped engineering calibration used to prevent synthetic or
-simulator evidence from being mistaken for mission-ready capability.
+Worldshepherd requires >=97/100 for a lane to satisfy the internal mission-readiness
+acceptance threshold. Scores cannot be inflated past missing evidence stages: every
+stage below operational demonstration caps below 97.
+
+This internal calibration is not TRL, certification, deployment authority, safety
+approval, combat suitability, or proof of quantum advantage.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+
+
+MISSION_READY_TARGET = 97
 
 
 class MissionEvidenceStage(str, Enum):
@@ -33,6 +39,29 @@ _STAGE_CAP = {
     MissionEvidenceStage.HARDWARE_IN_LOOP: 85,
     MissionEvidenceStage.RELEVANT_ENVIRONMENT: 92,
     MissionEvidenceStage.OPERATIONAL_DEMONSTRATION: 100,
+}
+_STAGE_ORDER = tuple(MissionEvidenceStage)
+
+_STAGE_ACTION = {
+    MissionEvidenceStage.CONCEPT: "freeze a measurable mission problem and strong classical/truth baseline",
+    MissionEvidenceStage.SYNTHETIC_SURROGATE: "replace synthetic instance with calibrated mission-relevant model/data",
+    MissionEvidenceStage.CALIBRATED_MODEL: "execute integrated noisy/hardware-aware workflow with operational telemetry",
+    MissionEvidenceStage.INTEGRATED_SIMULATION: "execute on named external QPU/sensor hardware with retained provenance",
+    MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE: "repeat and reproduce the hardware result on another run/backend where practical",
+    MissionEvidenceStage.REPRODUCED_HARDWARE: "integrate hardware-in-loop with mission interfaces and degraded-state tests",
+    MissionEvidenceStage.HARDWARE_IN_LOOP: "demonstrate in a relevant environment with truth/reference instrumentation",
+    MissionEvidenceStage.RELEVANT_ENVIRONMENT: "complete operational demonstration under declared mission constraints",
+    MissionEvidenceStage.OPERATIONAL_DEMONSTRATION: "close remaining dimension deficit, sustain regression evidence, and obtain separate deployment authorization",
+}
+
+_MAXIMA = {
+    "mission_fidelity": 20,
+    "classical_comparator": 15,
+    "quantum_evidence_reproducibility": 15,
+    "integration_interoperability": 15,
+    "security_provenance": 10,
+    "degraded_latency_cost": 15,
+    "physical_environment_validation": 10,
 }
 
 
@@ -60,23 +89,21 @@ class MissionReadinessDecision:
     raw_score: int
     evidence_cap: int
     mission_readiness_score: int
+    target_score: int
+    gap_to_target: int
+    raw_gap_to_target: int
+    meets_target: bool
     readiness_band: str
     mission_use_decision: str
+    closure_status: str
+    required_target_stage: str
+    dimension_scores: dict[str, int]
+    dimension_headroom: dict[str, int]
     blockers: tuple[str, ...]
     evidence_refs: tuple[str, ...]
     next_gate: str
+    closure_sequence: tuple[str, ...]
     claim_control: str
-
-
-_MAXIMA = {
-    "mission_fidelity": 20,
-    "classical_comparator": 15,
-    "quantum_evidence_reproducibility": 15,
-    "integration_interoperability": 15,
-    "security_provenance": 10,
-    "degraded_latency_cost": 15,
-    "physical_environment_validation": 10,
-}
 
 
 def _validate(inputs: MissionReadinessInputs) -> None:
@@ -101,38 +128,32 @@ def readiness_band(score: int) -> str:
         return "HARDWARE_BACKED"
     if score < 90:
         return "RELEVANT_ENVIRONMENT"
-    return "OPERATIONALLY_DEMONSTRATED"
+    if score < MISSION_READY_TARGET:
+        return "PRE_MISSION_CLOSURE"
+    return "MISSION_READY_THRESHOLD_MET"
 
 
 def mission_use_decision(score: int) -> str:
-    if score < 60:
-        return "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
-    if score < 75:
-        return "NO_GO_OPERATIONAL_USE_HARDWARE_EVALUATION_ONLY"
-    if score < 90:
-        return "NO_GO_OPERATIONAL_USE_RELEVANT_ENVIRONMENT_TEST_ONLY"
+    if score < MISSION_READY_TARGET:
+        return "NO_GO_BELOW_97"
     return "CANDIDATE_FOR_SEPARATE_OPERATIONAL_APPROVAL"
 
 
-def _next_gate(stage: MissionEvidenceStage) -> str:
-    return {
-        MissionEvidenceStage.CONCEPT: "freeze a measurable problem and strong classical/truth baseline",
-        MissionEvidenceStage.SYNTHETIC_SURROGATE: "replace synthetic instance with calibrated mission-relevant model/data",
-        MissionEvidenceStage.CALIBRATED_MODEL: "execute integrated noisy/hardware-aware workflow with operational telemetry",
-        MissionEvidenceStage.INTEGRATED_SIMULATION: "execute on named external QPU/sensor hardware with retained provenance",
-        MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE: "repeat and reproduce hardware result on another run/backend where practical",
-        MissionEvidenceStage.REPRODUCED_HARDWARE: "integrate hardware-in-loop with mission interfaces and degraded-state tests",
-        MissionEvidenceStage.HARDWARE_IN_LOOP: "demonstrate in a relevant environment with truth/reference instrumentation",
-        MissionEvidenceStage.RELEVANT_ENVIRONMENT: "complete operational demonstration under declared mission constraints",
-        MissionEvidenceStage.OPERATIONAL_DEMONSTRATION: "sustain configuration control, regression evidence, and deployment authorization",
-    }[stage]
+def _closure_sequence(stage: MissionEvidenceStage) -> tuple[str, ...]:
+    start = _STAGE_ORDER.index(stage)
+    return tuple(_STAGE_ACTION[row] for row in _STAGE_ORDER[start:])
 
 
 def calibrate_mission_readiness(inputs: MissionReadinessInputs) -> MissionReadinessDecision:
     _validate(inputs)
-    raw = sum(getattr(inputs, field) for field in _MAXIMA)
+    dimension_scores = {field: getattr(inputs, field) for field in _MAXIMA}
+    dimension_headroom = {field: _MAXIMA[field] - value for field, value in dimension_scores.items()}
+    raw = sum(dimension_scores.values())
     cap = _STAGE_CAP[inputs.evidence_stage]
     score = min(raw, cap)
+    meets_target = score >= MISSION_READY_TARGET
+    sequence = () if meets_target else _closure_sequence(inputs.evidence_stage)
+    next_gate = "maintain >=97 evidence under regression" if meets_target else sequence[0]
     return MissionReadinessDecision(
         project_id=inputs.project_id,
         mission_lane=inputs.mission_lane,
@@ -140,14 +161,23 @@ def calibrate_mission_readiness(inputs: MissionReadinessInputs) -> MissionReadin
         raw_score=raw,
         evidence_cap=cap,
         mission_readiness_score=score,
+        target_score=MISSION_READY_TARGET,
+        gap_to_target=max(0, MISSION_READY_TARGET - score),
+        raw_gap_to_target=max(0, MISSION_READY_TARGET - raw),
+        meets_target=meets_target,
         readiness_band=readiness_band(score),
         mission_use_decision=mission_use_decision(score),
+        closure_status="PASS_97" if meets_target else "CLOSURE_REQUIRED",
+        required_target_stage=MissionEvidenceStage.OPERATIONAL_DEMONSTRATION.value,
+        dimension_scores=dimension_scores,
+        dimension_headroom=dimension_headroom,
         blockers=tuple(inputs.blockers),
         evidence_refs=tuple(inputs.evidence_refs),
-        next_gate=_next_gate(inputs.evidence_stage),
+        next_gate=next_gate,
+        closure_sequence=sequence,
         claim_control=(
             "Worldshepherd Mission Readiness Calibration is an internal evidence-governed engineering measure. "
-            "It is not TRL, certification, deployment approval, combat suitability, safety approval, or proof of quantum advantage."
+            "A score below 97 is a hard NO-GO. Reaching 97 does not itself grant deployment, safety, combat, or acquisition approval."
         ),
     )
 
@@ -164,10 +194,7 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         security_provenance=8,
         degraded_latency_cost=6,
         physical_environment_validation=0,
-        blockers=(
-            "no real QPU execution retained yet",
-            "QPU queue/cost/failure behavior not measured in the SARA control loop",
-        ),
+        blockers=("no real QPU execution retained yet", "QPU queue/cost/failure behavior not measured in the SARA control loop"),
         evidence_refs=("QRF-BELL-001", "SARA evidence-registry bridge", "Python 3.10/3.12 CI"),
     ),
     MissionReadinessInputs(
@@ -195,10 +222,7 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         security_provenance=5,
         degraded_latency_cost=2,
         physical_environment_validation=0,
-        blockers=(
-            "physically specified reduced Hamiltonian not yet frozen",
-            "DFT/exact-active-space comparison not yet executed",
-        ),
+        blockers=("physically specified reduced Hamiltonian not yet frozen", "DFT/exact-active-space comparison not yet executed"),
         evidence_refs=("WS-ALTI-QM-001 design contract",),
     ),
     MissionReadinessInputs(
@@ -212,10 +236,7 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         security_provenance=7,
         degraded_latency_cost=4,
         physical_environment_validation=0,
-        blockers=(
-            "current QAOA instance is synthetic and not calibrated to a full-wave EM model",
-            "no real QPU execution",
-        ),
+        blockers=("current QAOA instance is synthetic and not calibrated to a full-wave EM model", "no real QPU execution"),
         evidence_refs=("WS-META-QO-001",),
     ),
     MissionReadinessInputs(
@@ -229,10 +250,7 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         security_provenance=7,
         degraded_latency_cost=5,
         physical_environment_validation=0,
-        blockers=(
-            "current optimization instance is synthetic and not a mission instance family",
-            "QPU queue, cost, communications, and degraded-state performance are unmeasured",
-        ),
+        blockers=("current optimization instance is synthetic and not a mission instance family", "QPU queue, cost, communications, and degraded-state performance are unmeasured"),
         evidence_refs=("WS-LOG-QO-001",),
     ),
     MissionReadinessInputs(
@@ -246,10 +264,7 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         security_provenance=5,
         degraded_latency_cost=1,
         physical_environment_validation=0,
-        blockers=(
-            "no project-specific quantum materials benchmark executed",
-            "physical force claims remain gated by independent controlled measurement",
-        ),
+        blockers=("no project-specific quantum materials benchmark executed", "physical force claims remain gated by independent controlled measurement"),
         evidence_refs=("WS-EMP-QM-001 design contract",),
     ),
     MissionReadinessInputs(
