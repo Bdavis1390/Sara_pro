@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "status": "DISCOVERY_REQUIRED",
+  "schema_version": "1.1",
+  "status": "REPOSITORY_DISCOVERY_COMPLETE_DEPLOYMENT_DISCOVERY_REQUIRED",
   "standards_baseline": {
     "key_establishment": "ML-KEM (FIPS 203)",
     "primary_signature": "ML-DSA (FIPS 204)",
@@ -10,55 +10,91 @@
     "Do not implement cryptographic primitives inside Worldshepherd application code.",
     "Prefer maintained protocol/library implementations with explicit interoperability tests.",
     "Do not remove classical algorithms until the relevant protocol and counterparties support the migration path.",
-    "Treat long-retention confidentiality as higher priority because harvest-now-decrypt-later risk precedes cryptographically relevant quantum computers."
+    "Treat long-retention confidentiality as higher priority because harvest-now-decrypt-later risk precedes cryptographically relevant quantum computers.",
+    "Repository text discovery is not proof of deployed cryptographic configuration; runtime, TLS, SSH, OIDC, secret-store, backup, and release-signing configuration must be inspected separately."
   ],
+  "source_discovery_snapshot": {
+    "date_utc": "2026-08-17",
+    "branch": "agent/quantum-readiness-fabric",
+    "scanned_head_sha": "44cf00d47b6b683ea1efa98341b1090aa1a55d88",
+    "workflow_run_id": 32041200159,
+    "artifact_name": "qrf-evidence-py3.12",
+    "artifact_digest": "sha256:1e28fb18e7feeff433799ddd60e41e47e1e8716ae11965c42ad8e3686a0cd93d",
+    "scanner_schema": "1.1",
+    "files_scanned": 75,
+    "finding_count": 91,
+    "actionable_operational_review_count": 37,
+    "critical_operational_private_key_material_count": 0,
+    "critical_reference_private_key_material_count": 0,
+    "operational_classical_public_key_reference_count": 0,
+    "documentation_classical_public_key_reference_count": 1,
+    "application_credential_surface_reference_count": 34,
+    "operational_config_credential_surface_reference_count": 3,
+    "application_symmetric_or_hash_reference_count": 23,
+    "interpretation": "The source tree contains substantial bearer/API credential handling and hash/provenance logic, but this scan found no operational repository reference to RSA/ECDSA/Ed25519/X25519/DSA/secp256k1/secp256r1 and no private-key material marker. This does not establish the algorithms used by deployed TLS, SSH, OIDC/JWT, backups, Git signing, or external services."
+  },
   "surfaces": [
     {
       "surface": "external TLS termination",
-      "current_algorithm": "UNKNOWN",
-      "state": "DISCOVERY_REQUIRED",
+      "current_algorithm": "UNKNOWN_AT_DEPLOYMENT",
+      "repository_discovery": "No operational RSA/ECC-family reference found by source scan; this is not a deployed TLS-suite determination.",
+      "state": "DEPLOYMENT_DISCOVERY_REQUIRED",
       "quantum_exposure": "key establishment and authentication depend on deployed TLS suite",
       "target": "crypto-agile TLS stack with standards-supported PQ/hybrid migration when ecosystem-ready"
     },
     {
       "surface": "SSH operator/admin access",
-      "current_algorithm": "UNKNOWN",
-      "state": "DISCOVERY_REQUIRED",
+      "current_algorithm": "UNKNOWN_AT_DEPLOYMENT",
+      "repository_discovery": "No operational RSA/ECC-family reference found by source scan; host/user SSH configuration is outside this evidence.",
+      "state": "DEPLOYMENT_DISCOVERY_REQUIRED",
       "quantum_exposure": "public-key authentication and key exchange",
       "target": "supported PQ/hybrid SSH path; preserve break-glass interoperability"
     },
     {
       "surface": "OIDC/JWT and service identity signatures",
-      "current_algorithm": "UNKNOWN",
-      "state": "DISCOVERY_REQUIRED",
+      "current_algorithm": "UNKNOWN_AT_DEPLOYMENT",
+      "repository_discovery": "Bearer/API credential handling is present in application source; asymmetric issuer/signature algorithms were not established by this scan.",
+      "state": "DEPLOYMENT_DISCOVERY_REQUIRED",
       "quantum_exposure": "public-key signatures if asymmetric JWT/OIDC signing is used",
       "target": "crypto-agile issuer/verifier interfaces and PQ-capable standards as ecosystem support matures"
     },
     {
       "surface": "artifact/evidence signatures",
-      "current_algorithm": "UNKNOWN",
-      "state": "DISCOVERY_REQUIRED",
+      "current_algorithm": "SHA-256 DIGEST/PROVENANCE REFERENCES PRESENT; SIGNATURE ALGORITHM UNKNOWN",
+      "repository_discovery": "Hash/provenance references are present, but a deployed asymmetric evidence-signature algorithm was not established.",
+      "state": "SIGNATURE_DISCOVERY_REQUIRED",
       "quantum_exposure": "long-lived authenticity and provenance",
       "target": "ML-DSA or SLH-DSA where tooling and verifier support permit; retain algorithm identifiers"
     },
     {
       "surface": "Git/release signing",
-      "current_algorithm": "UNKNOWN",
-      "state": "DISCOVERY_REQUIRED",
+      "current_algorithm": "UNKNOWN_AT_DEPLOYMENT",
+      "repository_discovery": "Repository content scan does not establish local or GitHub signing configuration.",
+      "state": "DEPLOYMENT_DISCOVERY_REQUIRED",
       "quantum_exposure": "long-lived software provenance",
       "target": "dual/hybrid provenance strategy once repository/tooling support is available"
     },
     {
       "surface": "backup/archive encryption",
-      "current_algorithm": "UNKNOWN",
-      "state": "DISCOVERY_REQUIRED",
+      "current_algorithm": "UNKNOWN_AT_DEPLOYMENT",
+      "repository_discovery": "Repository content scan does not establish backup encryption or key-wrapping configuration.",
+      "state": "DEPLOYMENT_DISCOVERY_REQUIRED",
       "quantum_exposure": "key wrapping/establishment may be vulnerable even when bulk symmetric encryption remains adequate",
       "target": "inventory retention horizon and migrate vulnerable public-key wrapping mechanisms"
     },
     {
+      "surface": "application/admin bearer credentials",
+      "current_algorithm": "BEARER/API CREDENTIAL HANDLING REFERENCES PRESENT",
+      "repository_discovery": "34 application-source and 3 operational-config credential references require secrets/custody review; reference counts do not imply 37 unique credentials.",
+      "state": "SECRETS_CUSTODY_REVIEW_REQUIRED",
+      "quantum_exposure": "credential custody is primarily an operational secret-management problem; transport and issuer cryptography still require deployment discovery",
+      "target": "secret-store/environment injection, least privilege, rotation/revocation, non-persistence in evidence, and transport authentication inventory"
+    },
+    {
       "surface": "QPU/provider credentials",
-      "current_algorithm": "bearer/API credentials; transport stack UNKNOWN",
-      "state": "SECRETS_ISOLATION_REQUIRED",
+      "current_algorithm": "runtime-injected bearer/API credential path implemented; transport stack UNKNOWN_AT_DEPLOYMENT",
+      "repository_discovery": "IBM QPU adapter requires runtime token injection and does not include provider tokens in returned evidence records.",
+      "state": "CREDENTIAL_PATH_IMPLEMENTED_HARDWARE_EXECUTION_PENDING",
       "quantum_exposure": "credential custody is primarily an operational secret-management problem; transport still requires inventory",
       "target": "environment/secret-store injection only; never persist provider tokens in evidence records"
     }
