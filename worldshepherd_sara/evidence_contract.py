@@ -221,14 +221,25 @@ def validate_claim_record(payload: Dict[str, Any]) -> Dict[str, Any]:
     _require_nonempty_string(payload["statement"], "statement")
     _require_enum(payload["claim_class"], CLAIM_CLASSES, "claim_class")
     _validate_evidence_classes(payload["evidence_classes"], "evidence_classes")
-    _require_string_list(payload["supporting_record_ids"], "supporting_record_ids")
-    _require_string_list(payload["contradicting_record_ids"], "contradicting_record_ids")
+    supporting_ids = _require_string_list(payload["supporting_record_ids"], "supporting_record_ids")
+    contradicting_ids = _require_string_list(payload["contradicting_record_ids"], "contradicting_record_ids")
+    if set(supporting_ids) & set(contradicting_ids):
+        raise EvidenceValidationError(
+            "supporting_record_ids and contradicting_record_ids must not overlap"
+        )
     _require_object(payload["validity_domain"], "validity_domain")
     _require_enum(payload["confidence_status"], CONFIDENCE_STATES, "confidence_status")
     _require_enum(payload["review_state"], REVIEW_STATES, "review_state")
 
     replication_ids = payload.get("replication_ids", [])
     _require_string_list(replication_ids, "replication_ids")
+
+    quantitative = payload.get("quantitative", False)
+    if not isinstance(quantitative, bool):
+        raise EvidenceValidationError("quantitative must be a boolean")
+    if quantitative and "MEASURED" in payload["evidence_classes"]:
+        uncertainty_reference = payload.get("uncertainty_reference")
+        _require_nonempty_string(uncertainty_reference, "uncertainty_reference")
 
     if (
         payload["claim_class"] == "ANOMALOUS_RESIDUAL"
