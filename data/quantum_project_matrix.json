@@ -1,6 +1,6 @@
 {
-  "schema_version": "2.3",
-  "updated_utc": "2026-08-17T18:14:00Z",
+  "schema_version": "2.4",
+  "updated_utc": "2026-08-17T19:28:00Z",
   "policy": {
     "default_rule": "classical baseline before quantum attribution",
     "simulator_is_not_qpu": true,
@@ -14,6 +14,7 @@
     "stage_skipping_prohibited": true,
     "stable_gate_ids_preserved_after_promotion": true,
     "external_requests_are_not_evidence": true,
+    "outreach_transmission_is_not_evidence": true,
     "structural_ingest_is_not_technical_approval": true,
     "identified_human_review_required_before_promotion_recommendation": true,
     "review_recommendation_does_not_mutate_canonical_state": true,
@@ -34,6 +35,7 @@
     "provider_sync_conflicts_must_not_rewrite_local_evidence_identity": true,
     "quantum_mission_evidence_profile_is_internal_draft_not_external_standard": true,
     "profile_conformance_does_not_equal_external_certification": true,
+    "outbound_verification_must_use_read_only_actions": true,
     "mission_readiness_is_not_trl_or_deployment_authority": true
   },
   "current_state": {
@@ -43,18 +45,18 @@
       "controls_complete": 33,
       "controls_total": 33,
       "decision": "PASS_INTERNAL_CLOSURE",
-      "validated_head": "0829b8f0b16bf32e85fbf72bd158fb66973c42e2",
-      "quantum_readiness_ci_run": 32053663719,
+      "validated_evidence_head": "f14066f435a1bad8dad52c77c41f5632a599b468",
+      "quantum_readiness_ci_run": 32053949813,
       "python_3_10": "PASS",
       "python_3_12": "PASS",
       "generated_ci_artifacts": 19,
-      "py312_artifact_id": 9295614479,
-      "py312_artifact_digest": "sha256:caa27036b332ceee832c891bd81b7c03fa3287e5fbfb28e2ac9e53be5b269fd6",
+      "py312_artifact_id": 9295713244,
+      "py312_artifact_digest": "sha256:82b3eba63126a93fa6f0e89d76ffaa50e6534f2fb607b42dd027cd174930e7a1",
       "auxiliary_logistics_comparator_artifacts": 1,
       "auxiliary_metasurface_uc06_artifacts": 1,
       "profile_conformance_cases_passed": 10,
       "profile_conformance_cases_total": 10,
-      "claim_control": "Internal software, provider adapters, comparator capability, retained pre-calibration status, evidence contracts, DDIL custody and profile conformance do not upgrade physical mission evidence."
+      "claim_control": "Internal software, provider adapters, comparator capability, retained pre-calibration status, evidence contracts, DDIL custody, outreach execution records and profile conformance do not upgrade physical mission evidence."
     },
     "provider_neutrality": {
       "gate_model_execution_schema": "implemented_common_normalization_for_real_qpu_records",
@@ -92,9 +94,9 @@
       "full_campaign_authorized": false,
       "raw_solver_artifacts_in_qrf_custody": false,
       "status": "PRECALIBRATION_EVIDENCE_PRESENT_GATE_NOT_SATISFIED",
-      "workflow_run": 32053663617,
-      "artifact_id": 9295596198,
-      "artifact_digest": "sha256:4812becfeef692f04f3971c907aa6b4c82f7494c09d28462a1774bc8b0f3bd44",
+      "workflow_run": 32053949739,
+      "artifact_id": 9295699245,
+      "artifact_digest": "sha256:698e2612cea38c2155e557238be9b258528be19832b860960fd79811ed2caef9",
       "claim_control": "Retained UC06 status narrows the blocker but is not raw full-wave calibration evidence and cannot satisfy WS-METASURFACE-EXT-01."
     },
     "glob_quantum_mapping": {
@@ -104,6 +106,16 @@
       "qpu_execution_justified_for_established_operators": false,
       "reason": "direct exact classical permutation/orbit traversal dominates the tiny fixed operators",
       "claim_control": "A legitimate reversible mapping exists, but no QPU run is recommended for PA/PB/PC absent a larger nontrivial mission problem."
+    },
+    "apnt_outreach_execution": {
+      "authorization_received": true,
+      "sandboxaq_aqnav": "SENT_AWAITING_RESPONSE",
+      "ionq_vector_atomic": "SENT_AWAITING_RESPONSE",
+      "q_ctrl_ironstone_opal": "AUTHORIZED_FORM_SUBMISSION_BLOCKED_BY_AVAILABLE_TOOLING",
+      "infleqtion_inertial_timing": "AUTHORIZED_FORM_SUBMISSION_BLOCKED_BY_AVAILABLE_TOOLING",
+      "communications_incident_recorded": true,
+      "authoritative_message_rule": "Only the original reviewed email to each email-capable target is authoritative; duplicate/test-style verification messages were explicitly disclaimed.",
+      "evidence_effect": "none_until_delivered_partner_artifacts_pass_governed_intake_and_identified_human_review"
     },
     "evidence_governance_differentiation": {
       "quantum_mission_evidence_profile": "internal_draft_0.1",
@@ -125,6 +137,7 @@
       "defense_integrator_benchmark": "docs/QUANTUM_DEFENSE_INTEGRATOR_BENCHMARK_2026-08-17.md",
       "quantum_mission_evidence_profile": "docs/QUANTUM_MISSION_EVIDENCE_PROFILE_DRAFT_2026-08-17.md",
       "partner_target_snapshot": "data/quantum_external_partner_targets_2026-08-17.json",
+      "partner_outreach_execution_ledger": "data/quantum_external_partner_outreach_status_2026-08-17.json",
       "first_qpu_runbook": "docs/QUANTUM_SARA_QPU_FIRST_RUN_2026-08-17.md",
       "apnt_partner_evaluation_package": "docs/QUANTUM_APNT_PARTNER_EVALUATION_2026-08-17.md"
     },
@@ -208,10 +221,11 @@
       "quantum_fit": "high",
       "mission_readiness": {"score": 30, "target": 97, "gap": 67, "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
       "synthetic_benchmark": {"benchmark_id": "WS-APNT-SYN-001", "evidence_level": "synthetic_surrogate", "claim_control": "Normalized software benchmark only; not physical navigation accuracy."},
+      "outreach_status": {"SandboxAQ": "SENT_AWAITING_RESPONSE", "IonQ_Vector_Atomic": "SENT_AWAITING_RESPONSE", "Q_CTRL": "AUTHORIZED_FORM_ONLY", "Infleqtion": "AUTHORIZED_FORM_ONLY"},
       "remaining_external_gates": ["calibrated quantum sensor/device/dataset", "truth reference and uncertainty", "denied/degraded replay", "live hardware", "repeatability", "HIL", "relevant-environment operational demonstration"],
       "completed_historical_gate": "WS-APNT-EXT-01",
       "campaign_first_active_gate": "WS-APNT-EXT-02",
-      "next_gate": "send reviewed evidence-specific outreach after user authorization, then ingest a calibrated partner sensor evidence package if offered"
+      "next_gate": "await substantive SandboxAQ and IonQ/Vector Atomic responses, submit the authorized Q-CTRL and Infleqtion forms when a form-capable path is available, and ingest any offered calibrated evidence through WS-APNT-EXT-02"
     },
     {
       "project_id": "WS-ALTI",
