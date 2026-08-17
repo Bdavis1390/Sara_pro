@@ -1,0 +1,35 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_15.json",
+  "purpose":"Continue raw accumulation through 93593, 95339, 35293 and 32359 and route field-controlled nonlinear dynamics, high-pressure spectroscopy and advanced-material studies into Worldshepherd.",
+  "policy":{
+    "rule":"Article pages and DOI/PII components remain raw collision observations with zero automatic physical-evidence weight.",
+    "promotion":"The physical methods in a publication may be useful to Worldshepherd while the matched digits remain N0/M1; P1/P2 requires the digits to encode the verified physical quantity itself.",
+    "no_hit":"No-hit records apply only to the defined query pass and remain revisable when broader authoritative searches find an occurrence."
+  },
+  "records":[
+    {"target":"93593","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 93593 spectroscopy physics chemistry","context":"No sufficiently relevant exact occurrence beyond generic number/noise was established in this pass","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"target":"95339","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 95339 spectroscopy physics chemistry","context":"No sufficiently relevant exact occurrence established in this defined pass","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"target":"35293","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Omega 2025, 10, 35293-35300","context":"Effect of electric field on partially pinned scroll waves in excitable chemical media","glob_weight":"N0_RAW","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"35293","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"JACS 2025, 147, 35293-35303","context":"Phase-regulatable single-atom-alloy nanocages for alkaline hydrogen evolution","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"35293","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"ACS Appl. Mater. Interfaces 2019, 11, 35286-35293","context":"Self-emitting artificial cilia produced by field-effect spinning","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"35293","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-022-35293-3","context":"Catalytic direct hydrocarboxylation of styrenes with CO2 and H2","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"32359","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"J. Biol. Chem. 2004, 279, 32354-32359","context":"High-pressure FTIR spectroscopy and pressure-perturbation calorimetry of prion folding and beta-sheet conversion","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"32359","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"Environmental Science and Pollution Research 2019, 26, 32345-32359","context":"Superparamagnetic graphene-oxide nanocomposite for tetracycline adsorption","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"32359","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"ACS Appl. Mater. Interfaces 2020, 12, 32352-32359","context":"Linear alternating supramolecular photosensitizer for enhanced photodynamic therapy","glob_weight":"N0_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"32359","raw_hit_type":"PUBLICATION_RESULT_ID","occurrence":"SPring-8 result number 32359","context":"Atomic-scale structure study of face-centered-cubic ruthenium nanoparticle catalytic activity","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"The electric-field scroll-wave experiment is a high-value nonlinear-control benchmark because a constant applied field can induce drift and alter the dynamics of partially pinned three-dimensional excitation structures.","worldshepherd_use":["OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"35293 is the article start page, not the applied field strength."},
+    {"finding":"The high-pressure prion study combines FTIR structural readout with pressure perturbation calorimetry and reversible/irreversible state changes, providing a useful multiphysics stress-response validation pattern.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"32359 is the terminal page."},
+    {"finding":"The SPring-8 result indexed by 32359 provides an atomic-scale catalytic-structure characterization reference for fcc ruthenium nanoparticles and should be retained in the materials evidence corpus independently of the identifier collision.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK"],"claims_boundary":"32359 is a publication/result identifier."}
+  ],
+  "next_actions":[
+    "Continue raw coverage through 33925, 93452, 94235, 92543, 52234, 52423 and 54322 and then backfill any 208-state union gaps.",
+    "Continue independent physical-value scans rather than interpreting article-page density as physics evidence.",
+    "Use field-controlled scroll waves as a nonlinear-control benchmark and high-pressure FTIR/calorimetry as a coupled-stress characterization benchmark.",
+    "Maintain namespace stratification, fixed tolerance and experiment-wide multiple-testing/false-discovery controls."
+  ]
+}
