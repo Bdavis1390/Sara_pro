@@ -10,7 +10,6 @@ from __future__ import annotations
 from dataclasses import asdict
 from hashlib import sha256
 import importlib.metadata
-import json
 from pathlib import Path
 from typing import Any
 
@@ -25,8 +24,37 @@ def _sha256_text(text: str) -> str:
     return "sha256:" + sha256(text.encode("utf-8")).hexdigest()
 
 
+def _scalar(value: Any) -> Any:
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if hasattr(value, "item"):
+        try:
+            return value.item()
+        except (ValueError, TypeError):
+            pass
+    return str(value)
+
+
 def _records_from_frame(frame: Any) -> list[dict[str, Any]]:
-    return json.loads(frame.to_json(orient="records"))
+    """Normalize QRE DataFrame without truncating pandas Timedelta values.
+
+    DataFrame.to_json defaults can represent timedelta-like values in epoch
+    milliseconds. QRE runtimes can be much shorter than one millisecond, so that
+    path loses evidence by rounding them to zero. Preserve nanoseconds and seconds.
+    """
+    normalized: list[dict[str, Any]] = []
+    for source in frame.to_dict(orient="records"):
+        row: dict[str, Any] = {}
+        for key, value in source.items():
+            if key == "runtime" and hasattr(value, "total_seconds"):
+                seconds = float(value.total_seconds())
+                nanoseconds = int(getattr(value, "value", round(seconds * 1e9)))
+                row["runtime_seconds"] = seconds
+                row["runtime_nanoseconds"] = nanoseconds
+            else:
+                row[key] = _scalar(value)
+        normalized.append(row)
+    return normalized
 
 
 def estimate_openqasm(
@@ -63,10 +91,17 @@ def estimate_openqasm(
     if not records:
         raise RuntimeError("Microsoft QDK returned no Pareto-optimal resource estimates")
 
-    candidates = [row for row in records if row.get("qubits") is not None and row.get("runtime") is not None]
+    candidates = [
+        row
+        for row in records
+        if row.get("qubits") is not None and row.get("runtime_seconds") is not None
+    ]
     if not candidates:
         raise RuntimeError(f"QDK result lacks documented qubits/runtime fields: {records!r}")
-    selected = min(candidates, key=lambda row: (float(row["qubits"]), float(row["runtime"])))
+    selected = min(
+        candidates,
+        key=lambda row: (float(row["qubits"]), float(row["runtime_seconds"])),
+    )
 
     qdk_version = importlib.metadata.version("qdk")
     record = ResourceEstimateRecord(
@@ -79,13 +114,14 @@ def estimate_openqasm(
         target_logical_error_rate=max_error,
         error_correction_model="SurfaceCode + RoundBasedFactory",
         physical_qubits_estimate=int(selected["qubits"]),
-        estimated_runtime_seconds=float(selected["runtime"]) * 1e-9,
+        estimated_runtime_seconds=float(selected["runtime_seconds"]),
         assumptions={
             "physical_error_rate": str(physical_error_rate),
             "gate_time_ns": str(int(gate_time_ns)),
             "measurement_time_ns": str(int(measurement_time_ns)),
             "max_error": str(max_error),
             "selection_rule": "minimum physical qubits, then runtime from Pareto frontier",
+            "runtime_evidence": "pandas Timedelta preserved as exact nanoseconds and seconds",
         },
     )
     decision = validate_resource_estimate(record)
@@ -93,7 +129,7 @@ def estimate_openqasm(
         raise RuntimeError(f"resource-estimate governance rejected QDK output: {decision.reasons}")
 
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "evidence_level": "resource_estimated",
         "record": asdict(record),
         "selected_qre_result": selected,
