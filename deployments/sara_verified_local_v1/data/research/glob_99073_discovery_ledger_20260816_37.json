@@ -1,0 +1,28 @@
+{
+  "schema_version":"ws-glob-discovery-ledger-1.0",
+  "parent_registry":"glob_99073_registry.json",
+  "as_of":"2026-08-17",
+  "ledger_sequence":37,
+  "purpose":"Ingest authoritative sources surfaced by raw states 39359 and 33959 and route associated information-security/formal-modeling discoveries, while preserving all matched identifiers as nonphysical Glob controls.",
+  "source_ingestion_policy":{
+    "rule":"Every substantive unique publication, dataset, advisory, standard, method, software resource, operational precedent, commercial signal or information item receives a Worldshepherd use when it materially improves any capability, or an explicit negative-control role.",
+    "duplicates":"Duplicate MHRA certificate views, NVD/vendor advisory mirrors and repeated bibliographic records are provenance aliases and are not independent evidence.",
+    "search_noise":"CVE IDs, GMP certificate numbers, national-standard numbers, ISBN components and postal codes may be operationally valuable but are not Glob evidence unless the digits independently encode a verified physical quantity."
+  },
+  "sources":[
+    {"source_id":"SRC-NVD-CVE-2023-33959-R37","title":"CVE-2023-33959 — OCI artifact verification identity mismatch in notation-go","year":2023,"identifier":"CVE-2023-33959","authority":"NIST National Vulnerability Database / Notary Project advisory","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_33959","use":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION","PRIME_SENTINEL","ECHO_SENTINEL_LINK"],"note":"Use as an artifact-provenance control case: compromised registry state can cause verification of the wrong artifact. 33959 is the CVE identifier."},
+    {"source_id":"SRC-GBT-33959-REBAR-R37","title":"GB/T 33959-2017 — Stainless steel bars for the reinforcement of concrete","identifier":"GB/T 33959-2017","authority":"State Administration for Market Regulation / Standardization Administration of China","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_33959","use":["ENVIRONMENTAL_AND_CIVIL_SYSTEMS","MATERIALS_AND_CHARACTERIZATION","SUPPLY_CHAIN_AND_PRODUCTION"],"note":"Use as a civil/material standards reference for stainless reinforcement. 33959 is the standard number."},
+    {"source_id":"SRC-MHRA-API-39359-R37","title":"UK API 39359 GMP compliance record — Shanghai Desano Chemical Pharmaceutical","identifier":"UK API 39359 Insp GMP 39359/2460457-0001","authority":"UK Medicines and Healthcare products Regulatory Agency","discovery_status":"NEWLY_DISCOVERED_FOR_RAW_39359","use":["SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","CHEMISTRY_AND_CHEMICAL_DATA","TEST_AND_MEASUREMENT","OPPORTUNITY_AND_PARTNER_INTEL"],"note":"Use regulated-site identity, inspected operations and physical/chemical QC scope as a manufacturing due-diligence schema reference. 39359 is certificate metadata."}
+  ],
+  "information_updates":[
+    {"update_id":"INFO-R37-OCI-SIGNATURE-BINDING","discovery_status":"NEWLY_DISCOVERED","finding":"Worldshepherd software-supply-chain controls should verify not only that an OCI artifact is signed, but that the verified digest/identity is exactly the artifact selected for use after registry resolution. Registry trust and signature trust are separate controls.","worldshepherd_uses":["SECURITY_HARDENING","SOFTWARE_AND_DATA_ENGINEERING","SUPPLY_CHAIN_AND_PRODUCTION","PRIME_SENTINEL","ECHO_SENTINEL_LINK"],"claims_boundary":"Derived from CVE-2023-33959; no claim is made that current Worldshepherd images use the vulnerable library."},
+    {"update_id":"INFO-R37-GMP-DUE-DILIGENCE-SCHEMA","discovery_status":"NEWLY_DISCOVERED","finding":"The MHRA record supplies a reusable supplier/facility due-diligence structure: authority, site identity, inspection date, validity caveats, licensed operations, named substances and QC testing scope.","worldshepherd_uses":["SUPPLY_CHAIN_AND_PRODUCTION","SYSTEMS_ENGINEERING_AND_GOVERNANCE","OPPORTUNITY_AND_PARTNER_INTEL","TEST_AND_MEASUREMENT"],"claims_boundary":"The source is a manufacturing-governance reference; 39359 remains metadata."},
+    {"update_id":"INFO-R37-RETRO-FORMAL-MODELING","discovery_status":"NEWLY_DISCOVERED_VIA_RAW_SCAN","finding":"The 99353 metadata neighborhood surfaced UML-to-Alloy transformation and FPGA NIDS literature, which should be retained in the retrospective software/formal-verification and security-acceleration corpus despite the matched digits being ISBN components.","worldshepherd_uses":["SOFTWARE_AND_DATA_ENGINEERING","SIMULATION_AND_NUMERICAL_METHODS","SECURITY_HARDENING","RF_HARDWARE"],"claims_boundary":"Bibliographic digits contribute zero Glob evidence."}
+  ],
+  "next_actions":[
+    "Continue raw scanning through 53239, 25933, 92335, 39425, 43529, 54923, 22345 and 32542 while retaining any materially useful cross-domain source.",
+    "Inspect the repository/container release workflow for existing OCI signing/verification tools before converting the notation-go lesson into a specific remediation requirement.",
+    "Continue same-system topology and relational verification independently for physical P1/P2 candidates.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}
