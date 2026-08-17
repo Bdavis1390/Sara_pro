@@ -27,7 +27,7 @@ class MissionEvidenceStage(str, Enum):
     CALIBRATED_MODEL = "calibrated_model"
     INTEGRATED_SIMULATION = "integrated_simulation"
     SINGLE_EXTERNAL_HARDWARE = "single_external_hardware"
-    REPRODUCED_HARDWARE = "reproduced_hardware"
+    REPRODUED_HARDWARE = "reproduced_hardware"
     HARDWARE_IN_LOOP = "hardware_in_loop"
     RELEVANT_ENVIRONMENT = "relevant_environment"
     OPERATIONAL_DEMONSTRATION = "operational_demonstration"
@@ -39,7 +39,7 @@ _STAGE_CAP = {
     MissionEvidenceStage.CALIBRATED_MODEL: 45,
     MissionEvidenceStage.INTEGRATED_SIMULATION: 55,
     MissionEvidenceStage.SINGLE_EXTERNAL_HARDWARE: 65,
-    MissionEvidenceStage.REPRODUCED_HARDWARE: 75,
+    MissionEvidenceStage.REPRODUED_HARDWARE: 75,
     MissionEvidenceStage.HARDWARE_IN_LOOP: 85,
     MissionEvidenceStage.RELEVANT_ENVIRONMENT: 92,
     MissionEvidenceStage.OPERATIONAL_DEMONSTRATION: 100,
@@ -168,8 +168,14 @@ def calibrate_mission_readiness(inputs: MissionReadinessInputs) -> MissionReadin
     meets_target = score >= MISSION_READY_TARGET
     default_sequence = () if meets_target else _closure_sequence(inputs.evidence_stage)
     sequence = inputs.closure_sequence_override if inputs.closure_sequence_override is not None else default_sequence
-    default_next_gate = "maintain >=97 evidence under regression" if meets_target else sequence[0]
-    next_gate = inputs.next_gate_override or default_next_gate
+    if inputs.next_gate_override is not None:
+        next_gate = inputs.next_gate_override
+    elif meets_target:
+        next_gate = "maintain >=97 evidence under regression"
+    elif sequence:
+        next_gate = sequence[0]
+    else:
+        next_gate = "no further quantum closure action defined"
     use_decision = inputs.mission_use_override or mission_use_decision(score)
     closure_status = inputs.closure_status_override or ("PASS_97" if meets_target else "CLOSURE_REQUIRED")
     return MissionReadinessDecision(
@@ -255,8 +261,13 @@ CURRENT_QUANTUM_MISSION_INPUTS: tuple[MissionReadinessInputs, ...] = (
         security_provenance=7,
         degraded_latency_cost=4,
         physical_environment_validation=0,
-        blockers=("current QAOA instance is synthetic and not calibrated to a full-wave EM model", "no real QPU execution"),
-        evidence_refs=("WS-META-QO-001",),
+        blockers=(
+            "UC06 Palace six-smoke runtime matrix and 18-point historical comparison exist, but the frozen convergence gate failed",
+            "semantic and numerical equivalence are not established, VNA correlation is not executed, and the full campaign is not authorized",
+            "the quantum QAOA challenger remains synthetic and is not yet calibrated to accepted full-wave evidence",
+            "no real QPU execution",
+        ),
+        evidence_refs=("WS-META-QO-001", "UC06-P1 R1-M six-smoke Palace runtime matrix", "UC06-P1 R1-N 18-point reconstruction audit"),
     ),
     MissionReadinessInputs(
         project_id="WS-AUTONOMOUS-LOGISTICS",
