@@ -158,6 +158,7 @@
     "Continue raw exact-number hit accumulation across all 208 union states and append source-class counts without pruning weak hits.",
     "Add retrieval query, date, source-domain class, occurrence type and duplicate-group IDs to future raw-reservoir records so collision-rate estimates can be stratified.",
     "Run topology-preserving matched controls for the Sr I same-orbit motif rather than interpreting the two-hit count alone.",
+    "Preserve the fixed 1 cm^-1 tolerance and apply experiment-wide multiple-testing and false-discovery correction across all 208 states before interpreting aggregate physical-hit counts.",
     "Continue authoritative same-species scans for W II, Mo III, Pb III, N I, Mn XVIII, NS and additional physical systems while raw accumulation runs independently."
   ]
 }
