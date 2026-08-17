@@ -1,0 +1,39 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_11.json",
+  "purpose":"Continue raw-hit accumulation for the 13524 orbit neighborhood containing 14494->14449->14944->19444, preserve neighboring metadata/page collisions, and carry the newly resolved LiCa 19444-cm^-1 theoretical physical value separately.",
+  "policy":{
+    "rule":"Raw page/DOI/PII/CAS occurrences remain collision records, while an explicitly calculated physical molecular term value may be subtyped P1_THEORY after source-context resolution.",
+    "promotion":"Theoretical P1 is not equivalent to experimental/evaluated P1 and does not become P2 without another generated state in a documented physical relation in the same system.",
+    "namespace_control":"Article page boundaries and DOI components are retained for hit-density analysis but have zero independent physical-evidence weight."
+  },
+  "records":[
+    {"target":"04341","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"10.1016/0378-5173(95)04341-1","context":"Simultaneous quantitative determination of metronidazole and diloxanide furoate by difference spectroscopy","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"04341","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s00216-022-04341-8","context":"In-vivo magnetic resonance spectroscopy plus MALDI-MSI analysis of neurochemistry in a DJ-1 knockout mouse model","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"04341","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s10895-025-04341-8","context":"Nitrogen-doped carbon dots characterized by XRD, TEM, FTIR, CHNS, UV-Vis and photoluminescence for VO2+ sensing and imaging","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"14449","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"PCCP 2020, 22, 14449-14453","context":"Operando synchrotron photoionization mass spectrometry of sulfur clusters in a microfluidic Li-sulfide electrochemical cell","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"14449","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"PCCP 2021, 23, 14449-14456","context":"DFT exploration of lead-free CsSn/Ge iodide-bromide perovskites for visible-light absorption","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"14449","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"JACS 2020, 142, 14443-14449","context":"Artificial molecular pump operating in response to electricity and light","glob_weight":"N0_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"14449","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1111/head.14449","context":"Proton magnetic-resonance spectroscopy study of thalamic GABA and glutamate/glutamine in migraine","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"14944","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"Inorg. Chem. 2021, 60, 14944-14951","context":"Trimodal ratiometric luminescent thermometer spanning three near-infrared transparency windows","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"14944","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"Angew. Chem. Int. Ed. 2021, 60, 14938-14944","context":"Dual fluorescence-spin-label probe combining FLIM and EPR spectroscopy","glob_weight":"N0_RAW","worldshepherd_use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"19444","raw_hit_type":"PHYSICAL_THEORY_VALUE","occurrence":"Te=19444 cm^-1","context":"LiCa 3^2Pi electronic-state term energy from the authors' theoretical molecular-parameter calculation/comparison in Spectroscopy of Cold LiCa Molecules Formed on Helium Nanodroplets","glob_weight":"P1_THEORY","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"]},
+    {"target":"19444","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"ACS Omega 2025, 10, 19444-19452","context":"Crystallization regulation of PA66/calcium-chloride fibers and mechanical properties","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"19444","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"PCCP 2025, 27, 19435-19444","context":"Electrochemical/solid-state integrated PCPDTBT polaronic-state sensor using EIS and in-operando ATR-IR","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"19444","raw_hit_type":"CAS_PREFIX","occurrence":"CAS 19444-84-9","context":"NIST Chemistry WebBook 2-hydroxy-gamma-butyrolactone","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"19444 cm^-1 is a genuine calculated LiCa electronic-state term energy but the same paper's experimentally derived 3^2Pi term energy is near 19330 cm^-1; the target is therefore P1_THEORY only.","worldshepherd_use":["PRIME_SENTINEL","ECHO_SENTINEL_LINK","QUANTUM_DEVICE_CHARACTERIZATION","OVERWATCH"],"claims_boundary":"Do not describe 19444 as an observed LiCa transition or experimental term energy."},
+    {"finding":"The sulfur-cluster electrochemical-cell paper combines operando electrochemistry with synchrotron photoionization mass spectrometry and is a strong battery/intermediate-species validation reference.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK"],"claims_boundary":"14449 is the article start page."},
+    {"finding":"The trimodal NIR luminescent thermometer provides a multi-window ratiometric sensing architecture relevant to robust remote temperature readout.","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION"],"claims_boundary":"14944 is the article start page."},
+    {"finding":"The PCPDTBT study couples EIS with in-operando ATR-IR to relate an electrochemically induced polaronic state to conductivity, making it directly relevant to programmable electrochemical/solid-state sensing.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION"],"claims_boundary":"19444 is only the terminal page in this separate source."}
+  ],
+  "next_actions":[
+    "Promote LiCa 19444 only in the evidence ledger as P1_THEORY with explicit source/table provenance.",
+    "Search the full LiCa system for other predeclared 208-state targets before considering any P2 relation.",
+    "Continue raw coverage of remaining 13524 and overlap states while grouping page/DOI/CAS namespaces separately.",
+    "Maintain fixed tolerance and experiment-wide false-discovery/multiple-testing controls for all empirical/evaluated physical promotions."
+  ]
+}
