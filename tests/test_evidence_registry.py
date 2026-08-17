@@ -1,25 +1,26 @@
 from __future__ import annotations
 
 import hashlib
-from copy import deepcopy
 
 import pytest
 
+from worldshepherd_sara.evidence_contract import EvidenceValidationError
 from worldshepherd_sara.evidence_registry import (
     DuplicateEvidenceId,
     EvidenceDigestMismatch,
+    EvidenceReferenceError,
     EvidenceRegistry,
     EvidenceSupersessionError,
 )
 
 
-def experiment_payload(experiment_id: str = "WS-EXP-001"):
+def experiment_payload(experiment_id: str = "WS-EXP-001", evidence_class=None):
     return {
         "experiment_id": experiment_id,
         "campaign_id": "ITX01-CAMPAIGN-A",
         "test_article_id": "ITX01-EAD-REF-01",
         "timestamp_utc": "2026-08-17T14:00:00Z",
-        "evidence_class": ["MEASURED"],
+        "evidence_class": evidence_class or ["MEASURED"],
         "hardware": {
             "geometry_digest": "sha256:geometry-placeholder",
             "configuration_digest": "sha256:configuration-placeholder",
@@ -87,6 +88,15 @@ def test_duplicate_ids_are_rejected(tmp_path):
         registry.append("experiment", experiment_payload(), actor="operator")
 
 
+def test_ids_are_globally_unique_across_record_kinds(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    registry.append("experiment", experiment_payload("WS-SHARED-ID"), actor="operator")
+    claim = claim_payload("WS-SHARED-ID")
+    claim["supporting_record_ids"] = ["WS-SHARED-ID"]
+    with pytest.raises(DuplicateEvidenceId):
+        registry.append("claim", claim, actor="admin")
+
+
 def test_supersession_is_append_only_and_single_successor(tmp_path):
     registry = EvidenceRegistry(tmp_path)
     registry.append("experiment", experiment_payload("WS-EXP-001"), actor="operator")
@@ -134,3 +144,66 @@ def test_local_digest_mismatch_is_rejected(tmp_path):
     registry = EvidenceRegistry(tmp_path / "registry")
     with pytest.raises(EvidenceDigestMismatch):
         registry.append("experiment", payload, actor="operator")
+
+
+def test_missing_support_reference_is_rejected(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    with pytest.raises(EvidenceReferenceError, match="does not exist"):
+        registry.append("claim", claim_payload(), actor="admin")
+
+
+def test_measured_claim_cannot_be_supported_only_by_simulation(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    registry.append(
+        "experiment",
+        experiment_payload("WS-EXP-001", evidence_class=["SIMULATED"]),
+        actor="operator",
+    )
+    with pytest.raises(EvidenceReferenceError, match="no supporting record is actually MEASURED"):
+        registry.append("claim", claim_payload(), actor="admin")
+
+
+def test_measured_claim_accepts_actual_measured_support(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    registry.append("experiment", experiment_payload(), actor="operator")
+    envelope = registry.append("claim", claim_payload(), actor="admin")
+    assert envelope["record_id"] == "WS-CLAIM-001"
+
+
+def test_missing_contradicting_reference_is_rejected(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    registry.append("experiment", experiment_payload(), actor="operator")
+    claim = claim_payload()
+    claim["contradicting_record_ids"] = ["WS-EXP-MISSING"]
+    with pytest.raises(EvidenceReferenceError, match="does not exist"):
+        registry.append("claim", claim, actor="admin")
+
+
+def test_unresolved_replication_reference_is_rejected(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    registry.append("experiment", experiment_payload(), actor="operator")
+    claim = claim_payload()
+    claim["claim_class"] = "ANOMALOUS_RESIDUAL"
+    claim["confidence_status"] = "INDEPENDENTLY_REPRODUCED"
+    claim["replication_ids"] = ["WS-EXP-REPLICATION-MISSING"]
+    with pytest.raises(EvidenceReferenceError, match="does not exist"):
+        registry.append("claim", claim, actor="admin")
+
+
+def test_quantitative_measured_claim_requires_uncertainty_reference(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    registry.append("experiment", experiment_payload(), actor="operator")
+    claim = claim_payload()
+    claim["quantitative"] = True
+    with pytest.raises(EvidenceValidationError, match="uncertainty_reference"):
+        registry.append("claim", claim, actor="admin")
+
+
+def test_quantitative_measured_claim_accepts_uncertainty_reference(tmp_path):
+    registry = EvidenceRegistry(tmp_path)
+    registry.append("experiment", experiment_payload(), actor="operator")
+    claim = claim_payload()
+    claim["quantitative"] = True
+    claim["uncertainty_reference"] = "WS-EXP-001#uncertainty"
+    envelope = registry.append("claim", claim, actor="admin")
+    assert envelope["record"]["uncertainty_reference"] == "WS-EXP-001#uncertainty"
