@@ -122,4 +122,5 @@ jobs:
           name: qrf-evidence-py${{ matrix.python-version }}
           path: .qrf-artifacts/*.json
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
