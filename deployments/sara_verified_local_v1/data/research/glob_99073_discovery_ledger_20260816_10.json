@@ -1,0 +1,146 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 10,
+  "purpose": "Reconcile the current Glob 99073 continuation against the existing Worldshepherd registry, route every substantive source or information item surfaced in this pass, and explicitly mark newly discovered material.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, technical manual, internal project input, or information item discovered during the inquiry receives a Worldshepherd use or a negative-control role.",
+    "discovery_status": "Use NEWLY_DISCOVERED only when the item was not already represented in the recovered registry/ledger set inspected in this pass; use REVERIFIED_EXISTING for already represented evidence that was independently rechecked.",
+    "duplicates": "Duplicate mirrors, aggregator records, search-result copies, navigation pages, and repeated publications are provenance aliases rather than independent evidence.",
+    "claims_boundary": "A number match does not become physical evidence merely because the surrounding source is scientific. Physical-value, relational, metadata, and incidental-control classes remain separate."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-WII-NIST-ASD-CURRENT-2026-R10",
+      "title": "NIST Atomic Spectra Database — W II levels/lines authority",
+      "authority": "National Institute of Standards and Technology",
+      "discovery_status": "REVERIFIED_EXISTING",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Reverified as the current authoritative compilation route for W II energy levels and Ritz relationships. Use to reconcile historical W II line evidence, preserve line/level identities, and gate any claimed same-system relational closure."
+    },
+    {
+      "source_id": "SRC-BRI-NIST-R10",
+      "title": "Energy Levels of Neutral Bromine (Br I)",
+      "authority": "NIST Physical Measurement Laboratory",
+      "discovery_status": "REVERIFIED_EXISTING",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL"],
+      "note": "Reverified the 4p4(3P)5p 4D° J=5/2 level at 75697.05 cm^-1. Preserve as a P1 physical-value hit for the 57796->75697 orbit and as an atomic-spectroscopy benchmark dataset."
+    },
+    {
+      "source_id": "SRC-YB-RYDBERG-MICROWAVE-2019",
+      "title": "Microwave spectroscopy of the Yb 6s(n+3)d to 6sng, 6snh, and 6sni transitions",
+      "authors": "F. Niyaz; J. Nunkaew; T. F. Gallagher",
+      "year": 2019,
+      "identifier": "doi:10.1103/PhysRevA.99.042507; OSTI:1610332",
+      "authority": "Physical Review A / U.S. DOE OSTI",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Use the microwave/RF resonance methodology, high-l Rydberg transition intervals, and fitted Yb+ dipole/quadrupole polarizabilities as validation inputs for atomic-response and frequency-domain modeling. Do not promote 79305 to P1 unless the exact 79305-MHz datum is directly confirmed in the primary table/figure."
+    },
+    {
+      "source_id": "SRC-YB-EVEN-RYDBERG-MQDT-2018",
+      "title": "Laser and microwave spectroscopy of even-parity Rydberg states of neutral ytterbium and multichannel-quantum-defect-theory analysis",
+      "authors": "H. Lehec; A. Zuliani; W. Maineult; E. Luc-Koenig; P. Pillet; P. Cheinet; F. Niyaz; T. F. Gallagher",
+      "year": 2018,
+      "identifier": "doi:10.1103/PhysRevA.98.062506; OSTI:1610331",
+      "authority": "Physical Review A / U.S. DOE OSTI",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL", "SARA"],
+      "note": "Use as an MQDT/model-validation reference: two-step laser excitation, field-ionization detection, microwave refinement, coupled-series analysis, and the revised 174Yb first ionization limit 50443.07041(25) cm^-1 provide a concrete model-to-measurement reconciliation workflow."
+    },
+    {
+      "source_id": "SRC-NBS-RARE-EARTH-AEL-60-1978",
+      "title": "Atomic energy levels — the rare earth elements",
+      "authors": "W. C. Martin; R. Zalubas; L. Hagan",
+      "year": 1978,
+      "identifier": "NSRDS-NBS-60; OSTI:6507735",
+      "authority": "National Bureau of Standards / U.S. DOE OSTI",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "NEGATIVE_CONTROL_CORPUS", "OVERWATCH"],
+      "note": "Use as a 66-atom/ion rare-earth experimental energy-level reference for broad target-graph scans, species-aware controls, ionization-stage separation, and historical/current compilation reconciliation."
+    },
+    {
+      "source_id": "SRC-NIFS-LHD-OPEN-DATA",
+      "title": "Large Helical Device Fusion Diagnostic Data Repository / LHD Open Data",
+      "authority": "National Institute for Fusion Science (NIFS)",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["OVERWATCH", "SARA", "ECHO_SENTINEL_LINK", "MULTIPHYSICS_VALIDATION", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as an external real-world multichannel plasma-diagnostics corpus for time-series ingestion, sensor synchronization, anomaly detection, and solver/diagnostic replay. Shot identifiers that numerically resemble Glob states are metadata controls unless a separate physical relation is demonstrated."
+    },
+    {
+      "source_id": "SRC-NIFS-LHD-RETRIEVE-MANUAL",
+      "title": "LHD Retrieve data-access manual",
+      "authority": "National Institute for Fusion Science (NIFS)",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "OVERWATCH"],
+      "note": "Use to design a provenance-preserving LHD ingestion adapter: diagnostic name, shot/subshot, channels, data arrays, and diagnostic parameters can be retained as explicit acquisition metadata rather than flattened into anonymous arrays."
+    },
+    {
+      "source_id": "SRC-NIFS-LHD-DIAGNOSTIC-CATALOG",
+      "title": "LHD diagnostics and analyzed-data descriptions",
+      "authority": "National Institute for Fusion Science (NIFS)",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["OVERWATCH", "MULTIPHYSICS_VALIDATION", "MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Use diagnostic definitions such as resistive bolometry/radiated-power profiles, pellet injection, soft-X-ray channels, magnetic probes, interferometry, and other synchronized diagnostics to construct sensor-to-physics mappings for Worldshepherd replay and cross-modal validation."
+    }
+  ],
+  "internal_project_inputs": [
+    {
+      "artifact": "Branch · Branch · Branch · Branch · Active Secure Access Protocols.txt",
+      "status": "CURRENT_PROJECT_INPUT",
+      "use": ["ADAPTIVE_METASURFACE_CONTROL", "MULTIPHYSICS_VALIDATION", "MATERIALS_AND_CHARACTERIZATION"],
+      "integration": "Route validated spectroscopy/polarizability information into frequency-dependent material/EM response models and use the document's constructive/destructive coupling hardware interpretation only as an engineering control model, not as evidence for Glob-number causation."
+    },
+    {
+      "artifact": "Meta-Alloy Design for Al-Ti.txt",
+      "status": "CURRENT_PROJECT_INPUT",
+      "use": ["MATERIALS_AND_MANUFACTURING", "IP_AND_COMMERCIALIZATION", "MATERIALS_AND_CHARACTERIZATION"],
+      "integration": "Use spectroscopy and diagnostics sources as characterization-method precedents and validation architecture inputs for WS-AlTi; do not treat W/Br/Yb numerical matches as evidence for the Al-Ti composition itself."
+    },
+    {
+      "artifact": "Branch · Generic adaptive metasurface control system under multi-physics constra.txt",
+      "status": "CURRENT_PROJECT_INPUT",
+      "use": ["MULTIPHYSICS_SOLVER", "ADAPTIVE_METASURFACE_CONTROL", "PRIME_SENTINEL"],
+      "integration": "Use MQDT, atomic-level, microwave, and plasma-diagnostic sources as empirical/model-validation datasets. Preserve the prime-indexed decomposition as a mathematical organization layer unless separately given physical justification."
+    },
+    {
+      "artifact": "Repo Review Summary.txt",
+      "status": "CURRENT_PROJECT_INPUT",
+      "use": ["SARA", "SECURITY_HARDENING", "ECHO_SENTINEL_LINK"],
+      "integration": "Use the prior admin/audit interface handoff as historical operational context. Current branch/CI evidence remains authoritative for present test counts and deployment state."
+    }
+  ],
+  "integration_actions": [
+    {
+      "action_id": "INT-R10-SPECTROSCOPY-BENCHMARK-PACK",
+      "status": "ROUTED",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "OVERWATCH"],
+      "action": "Build species-aware benchmark cases from W II, Br I, Yb I/Yb+, and the rare-earth level compilation with explicit units, ionization stage, uncertainty/source fields, and exact-vs-near-match tolerances."
+    },
+    {
+      "action_id": "INT-R10-LHD-MULTICHANNEL-REPLAY",
+      "status": "ROUTED",
+      "worldshepherd_uses": ["SARA", "OVERWATCH", "MULTIPHYSICS_VALIDATION"],
+      "action": "Treat LHD as a candidate multichannel replay corpus for synchronization, anomaly detection, cross-diagnostic inference, and solver-observation comparison. Keep shot numbers as identifiers and test them as negative controls for Glob-number matching."
+    },
+    {
+      "action_id": "INT-R10-CLAIMS-GATE-79305",
+      "status": "HARDENED",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK"],
+      "action": "Demote/carry 79305 as unconfirmed physical-value evidence until the exact 79305-MHz value is located in the primary Yb publication table/figure. The publication itself remains fully utilized for microwave spectroscopy and polarizability methodology."
+    },
+    {
+      "action_id": "INT-R10-NUMERIC-COLLISION-CONTROLS",
+      "status": "ROUTED",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "OVERWATCH", "PRIME_SENTINEL"],
+      "action": "Retain scientific shot IDs, DOI tails, article numbers, CVEs, CAS numbers, and other technical identifiers as hard negative controls so the detector learns that scientific context alone does not convert a numeric collision into physical evidence."
+    }
+  ],
+  "next_actions": [
+    "Acquire or inspect the primary Yb 2019 table/figure containing transition frequencies and resolve whether exact 79305 MHz is present before any P1 promotion.",
+    "Feed the W II authoritative line export to scripts/analyze_nist_asd_transition_graph.py and compute topology/relational closures with multiple-testing correction.",
+    "Prototype an LHD ingestion adapter that preserves diagnostic name, shot/subshot, channel, time base, units, and source rights/provenance.",
+    "Continue append-only ingestion: every newly surfaced substantive item must receive a Worldshepherd use or an explicit negative-control disposition."
+  ]
+}
