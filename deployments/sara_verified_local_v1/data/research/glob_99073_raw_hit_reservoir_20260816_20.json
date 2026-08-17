@@ -1,0 +1,37 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_19.json",
+  "purpose":"Continue raw accumulation through 67579, 95776, 79056 and 07659 while broadening Worldshepherd utility routing beyond physics to security, civil materials, finance, environmental technology, imaging, isotope separation and data/modeling methods.",
+  "policy":{
+    "rule":"Raw exact-number occurrences are retained for collision statistics with zero automatic physical-evidence weight regardless of how useful the underlying source may be to Worldshepherd.",
+    "promotion":"Utility and Glob evidence are independent axes; P1/P2 requires verified physical semantics and provenance, while M1/N0 records may still carry high engineering, software, security, commercial or operational utility.",
+    "namespace_control":"CVE, DOI/article, PMID, postal, patent and repository identifiers are classified by namespace before independence or significance is assessed."
+  },
+  "records":[
+    {"target":"67579","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-67579","context":"Missing-authorization vulnerability in WordPress User Extra Fields plugin through version 16.8","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","PRIME_SENTINEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"67579","raw_hit_type":"PATENT_PUBLICATION_NUMBER","occurrence":"MA67579A1","context":"2024 Moroccan patent publication for plant-derived biomolluscicide pellets","glob_weight":"M1_RAW","worldshepherd_use":["IP_AND_COMMERCIALIZATION","MATERIALS_AND_MANUFACTURING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95776","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"Woodland / Davis region CA 95776","context":"Repeated affiliation/address code across isotope-separation, environmental-engineering, imaging and waste-management publications","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OPPORTUNITY_AND_PARTNER_INTEL"]},
+    {"target":"95776","raw_hit_type":"NASA_GRANT_COMPONENT","occurrence":"JPL-95776","context":"Funding number on NASA upper-ionosphere modeling record","glob_weight":"M1_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95776","raw_hit_type":"PATENT_PUBLICATION_NUMBER","occurrence":"ZA95776B","context":"South African patent publication for a pharmaceutical formulation","glob_weight":"M1_RAW","worldshepherd_use":["IP_AND_COMMERCIALIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"79056","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.7759/cureus.79056","context":"2025 systematic review article identifier","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"79056","raw_hit_type":"PUBMED_ID","occurrence":"PMID 79056","context":"1978 Lancet letter record","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"07659","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41597-026-07659-5","context":"2026 Scientific Data cement-paste ultrasonic pulse-transmission dataset","glob_weight":"M1_RAW","worldshepherd_use":["TEST_AND_MEASUREMENT","MATERIALS_AND_CHARACTERIZATION","SIMULATION_AND_NUMERICAL_METHODS","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"07659","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1057/s41599-026-07659-1","context":"2026 wind-power investment under bank-financing study comparing output and interest-rate subsidies","glob_weight":"M1_RAW","worldshepherd_use":["IP_AND_COMMERCIALIZATION","OPPORTUNITY_AND_PARTNER_INTEL","OPERATIONS_AND_RELIABILITY","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"07659","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-025-07659-2","context":"2025 magnetic chitosan/CMC/MWCNT composite study using genetic algorithms and regression for adsorption modeling","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","MATERIALS_AND_CHARACTERIZATION","SIMULATION_AND_NUMERICAL_METHODS","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"07659","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1007/s11664-019-07659-9","context":"HgCdTe heterojunction infrared avalanche-photodiode modeling paper","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","SENSING_AND_SENSOR_FUSION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"The cement-paste dataset provides a current open benchmark for ultrasonic pulse-transmission monitoring of hydration and material-property evolution, useful for nondestructive testing and solver validation.","worldshepherd_use":["TEST_AND_MEASUREMENT","MATERIALS_AND_CHARACTERIZATION","SIMULATION_AND_NUMERICAL_METHODS"],"claims_boundary":"07659 is DOI metadata."},
+    {"finding":"The wind-finance study provides a non-physics utility example: financing and subsidy mechanism selection can feed commercialization/capital-model scenarios for energy projects.","worldshepherd_use":["IP_AND_COMMERCIALIZATION","OPPORTUNITY_AND_PARTNER_INTEL","OPERATIONS_AND_RELIABILITY"],"claims_boundary":"07659 is DOI metadata and carries zero Glob evidence."},
+    {"finding":"CVE-2025-67579 is a direct security-hardening input despite contributing no physical evidence, demonstrating the domain-agnostic usefulness rule in operation.","worldshepherd_use":["SECURITY_HARDENING","PRIME_SENTINEL"],"claims_boundary":"67579 is the CVE identifier."},
+    {"finding":"The 95776 postal-code cluster surfaces useful environmental and instrumentation work including resonant sonic drilling, micro-CT cold-stage design, landfill-gas capture measurement and biomass gasifier simulation.","worldshepherd_use":["TEST_AND_MEASUREMENT","MATERIALS_AND_MANUFACTURING","SIMULATION_AND_NUMERICAL_METHODS","OPPORTUNITY_AND_PARTNER_INTEL"],"claims_boundary":"95776 is an address/funding identifier, not a physical parameter."}
+  ],
+  "next_actions":[
+    "Continue raw accumulation through 60957, 56007, 05706, 70605, 07005, 00507 and 50700 while routing useful sources across all Worldshepherd domains.",
+    "Continue physical-value and same-system topology scans independently of utility routing.",
+    "Track source utility by domain in addition to collision namespace so high-value non-physics sources are retained systematically.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}
