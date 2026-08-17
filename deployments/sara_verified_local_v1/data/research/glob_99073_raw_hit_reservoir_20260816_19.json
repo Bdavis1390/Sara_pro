@@ -1,0 +1,38 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_18.json",
+  "purpose":"Backfill 31542-family raw states 97574, 59477, 67795, 97767, 79767 and 77769 while retaining current fusion/materials sources and namespace collisions separately from physical evidence.",
+  "policy":{
+    "rule":"Raw identifiers, page numbers, crystal-database IDs and product/development codes are retained with zero automatic physical-evidence weight.",
+    "promotion":"P1/P2 promotion requires verified physical semantics, unit/provenance and where applicable same-system topology; bibliographic or registry recurrence is not enough.",
+    "no_hit":"NO_HIT means no qualifying exact occurrence was established in this defined query pass and remains revisable."
+  },
+  "records":[
+    {"target":"97574","raw_hit_type":"PUBCHEM_CID","occurrence":"PubChem CID 97574","context":"Phosphoric acid, 2,2-dichloroethenyl bis(1-methylethyl) ester","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"97574","raw_hit_type":"COMPOUND_DEVELOPMENT_CODE","occurrence":"SK&F 97574","context":"Reversible gastric H+/K+-ATPase inhibitor development compound","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"59477","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-026-59477-9","context":"2026 HL-3 tokamak study of ECRH impact on runaway electrons during disruptions","glob_weight":"M1_RAW","worldshepherd_use":["PLASMA_AND_FUSION_DATA","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"59477","raw_hit_type":"CHEBI_IDENTIFIER","occurrence":"CHEBI:59477","context":"chloroxine chemical ontology identifier","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"59477","raw_hit_type":"CONFERENCE_ABSTRACT_ID","occurrence":"59477","context":"Mineralogical-system physical-property conference abstract identifier","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"67795","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"RSC Advances 2015, 5, 67795-67802","context":"Spark-prepared nanoporous NiO films for electrochemical energy storage","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"67795","raw_hit_type":"PUBCHEM_CID","occurrence":"PubChem CID 67795","context":"bis(trifluoromethyl) disulfide with linked spectral/material records","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"97767","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 97767 spectroscopy physics chemistry; 97767 cm-1 atomic spectroscopy","context":"No sufficiently authoritative exact physical or technical occurrence was established in this pass","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"target":"79767","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0006-3495(96)79767-9","context":"Elastic-substratum inversion method for imaging traction stresses of locomoting cells","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"79767","raw_hit_type":"CRYSTAL_DATABASE_ID","occurrence":"ICSD 79767","context":"LuPO4 structural reference used in Yb3+/Er3+ nanocrystal thermometry study","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77769","raw_hit_type":"EDUCATIONAL_PAGE_ID","occurrence":"LibreTexts Page ID 77769","context":"Quantitative NMR reference-standard guidance","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77769","raw_hit_type":"PUBCHEM_CID","occurrence":"PubChem CID 77769","context":"dicyclohexyl sebacate","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77769","raw_hit_type":"ISBN_COMPONENT","occurrence":"978-3-642-77769-1","context":"Springer Nonlinear Processes in Physics ebook ISBN/DOI namespace","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]}
+  ],
+  "information_updates":[
+    {"finding":"The 2026 HL-3 result is operationally relevant to Worldshepherd fusion modeling because ECRH during MGI-triggered disruptions was associated with a higher-current, longer-lasting runaway-electron plateau and changed inferred RE energy distribution.","worldshepherd_use":["PLASMA_AND_FUSION_DATA","OVERWATCH"],"claims_boundary":"59477 is DOI metadata, not a plasma parameter."},
+    {"finding":"The NiO sparking study provides a rapid nanoporous-film fabrication and electrochemical characterization reference for flexible energy-storage materials.","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","MATERIALS_AND_CHARACTERIZATION"],"claims_boundary":"67795 is the article start page."},
+    {"finding":"The Yb3+/Er3+ orthophosphate work uses ICSD 79767 as a structural database reference, providing a clean example of a highly technical identifier embedded in a spectroscopy/thermometry paper without being the measured spectral quantity.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"],"claims_boundary":"79767 is the crystal-database identifier."}
+  ],
+  "next_actions":[
+    "Continue 31542 backfill through 79767, 77769-adjacent orbit states and remaining unscreened long-seed states, retaining explicit revisable NO_HIT records where appropriate.",
+    "Continue same-species topology and relational scans only on verified physical P1/gated states, independent of raw-hit density.",
+    "Route current fusion and materials studies into Worldshepherd methodology even when the matched digits are metadata.",
+    "Preserve fixed tolerance and experiment-wide multiple-testing/false-discovery controls across the complete search space."
+  ]
+}
