@@ -1,0 +1,41 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_09.json",
+  "purpose":"Append raw-hit neighborhoods for the established Sr I states 60057/60705 and 13524 orbit states 70050/70005/70500, explicitly correcting a provisional 70005 no-hit impression after broader authoritative search.",
+  "policy":{
+    "rule":"Raw number occurrences are retained for collision statistics and have zero automatic physical-evidence weight.",
+    "promotion":"Existing P1/P2 records may be carried forward for context, but new metadata collisions do not add independent physical evidence.",
+    "search_revision":"A provisional no-hit is never canonical if a broader or better search later finds a valid exact occurrence; the positive raw record supersedes the provisional search impression while provenance is retained in notes."
+  },
+  "records":[
+    {"target":"60057","raw_hit_type":"P1_CARRY_FORWARD","occurrence":"60056.04 cm^-1","context":"Primary Sr I absorption-frequency match already established within fixed 1 cm^-1 tolerance; paired with 60705 in the same 13524 orbit and same Sr I absorption system","glob_weight":"P1_CARRY_FORWARD","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"]},
+    {"target":"60057","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"10.1016/S0065-2199(08)60057-3","context":"Scattering studies of rotational and vibrational excitation of molecules; cross-section inversion and potential-surface methodology","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60057","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"10.1016/S0065-2377(08)60057-5","context":"Crystallization from solution","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60057","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"RSC Advances 4:60052-60057","context":"L-phenylalanine edge-functionalized graphite platelets characterized by elemental analysis, XPS, FTIR, Raman, TGA and cyclic voltammetry","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60705","raw_hit_type":"P1_CARRY_FORWARD","occurrence":"60705.36 cm^-1","context":"Primary Sr I absorption-frequency match already established within fixed 1 cm^-1 tolerance and same-system P2 relation with 60057","glob_weight":"P1_CARRY_FORWARD","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL","OVERWATCH"]},
+    {"target":"60705","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"10.1016/S0076-695X(08)60705-X","context":"Lunar occultation measurement methods using diffraction/brightness-profile geometry","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70050","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/dta.70050","context":"2026 neural-network detection of adulterants using IR absorption spectroscopy","glob_weight":"M1_RAW","worldshepherd_use":["SARA","OVERWATCH","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70050","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/rcm.70050","context":"2026 atmospheric-pressure photoionization source for VOC detection with a miniature high-pressure mass spectrometer","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70050","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/cem.70050","context":"2025 spectral wavelength-selection method combining improved particle swarm optimization with simulated annealing","glob_weight":"M1_RAW","worldshepherd_use":["SARA","OVERWATCH","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70005","raw_hit_type":"NIST_MOLECULAR_SPECTRAL_REFERENCE_ID","occurrence":"NIST Molecular Spectral Databases reference 70005","context":"P. Helminger, F.C. DeLucia, and W. Gordy, Phys. Rev. Lett. 25, 1397 (1970), molecules CO, OCS and HF","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70005","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/jcc.70005","context":"2025 study of local constraint violations in density-functional-theory energy computations","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70005","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/jssc.70005","context":"2024 penicillin-G extraction using deep-eutectic-solvent/alginate beads enhanced with Sr-Al layered double hydroxides; FTIR, SEM, XRD and HPLC characterization","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70005","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/smmd.70005","context":"2025 KRAS/ferroptosis systems study","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70005","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"Tainan 70005, Taiwan","context":"Materials/quantum-dot and synchrotron publications use 70005 as an institutional postal code","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70500","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_DEFINED_PASS","occurrence":"query: 70500 spectroscopy physics chemistry","context":"No sufficiently relevant exact occurrence was identified in this defined search pass; this is not a claim of global absence","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]}
+  ],
+  "information_updates":[
+    {"finding":"The 2026 IR-adulterant paper and 2025 wavelength-selection paper provide independent modern examples of machine-learning/optimization applied to spectra; use as candidate SARA/OVERWATCH spectral-analysis references, subject to independent evaluation.","worldshepherd_use":["SARA","OVERWATCH","MATERIALS_AND_CHARACTERIZATION"],"claims_boundary":"70050 is an article identifier in both cases."},
+    {"finding":"The 2026 atmospheric-pressure photoionization miniature-MS paper is a compact sensor/instrumentation reference for VOC detection and can inform Worldshepherd fieldable chemical-sensing concepts.","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION"],"claims_boundary":"70050 is the article identifier."},
+    {"finding":"NIST reference number 70005 demonstrates that authoritative spectroscopy databases themselves contain dense numeric identifier namespaces unrelated to the measured spectral values, strengthening the raw-hit null corpus.","worldshepherd_use":["PRIME_SENTINEL","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"finding":"The local-constraint DFT paper should be used as a solver-validation reference for how local constraint violations affect computed energies and how numerical/physical constraints should be audited.","worldshepherd_use":["OVERWATCH","MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION"],"claims_boundary":"70005 is the article identifier, not an energy."}
+  ],
+  "next_actions":[
+    "Continue raw accumulation through 70500 and the remaining three-family states, preserving later search revisions when provisional no-hits are overturned.",
+    "Track raw collision density separately for NIST database record IDs, DOI/e-article IDs, PII suffixes, pages and true physical quantities.",
+    "Carry the established Sr I 60057/60705 P2 only as existing physical evidence; do not let their additional metadata neighborhoods inflate evidence weight.",
+    "Maintain fixed physical-value tolerance and experiment-wide multiple-testing/false-discovery controls independently from raw accumulation."
+  ]
+}
