@@ -9,8 +9,12 @@ on:
       - "worldshepherd_sara/quantum_resource.py"
       - "worldshepherd_sara/quantum_ibm.py"
       - "worldshepherd_sara/quantum_sara_bridge.py"
+      - "worldshepherd_sara/quantum_optimization.py"
+      - "worldshepherd_sara/quantum_mission_readiness.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_evidence.py"
+      - "scripts/generate_quantum_application_benchmarks.py"
+      - "scripts/generate_quantum_mission_readiness.py"
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
       - "tests/test_quantum_*.py"
@@ -33,8 +37,12 @@ on:
       - "worldshepherd_sara/quantum_resource.py"
       - "worldshepherd_sara/quantum_ibm.py"
       - "worldshepherd_sara/quantum_sara_bridge.py"
+      - "worldshepherd_sara/quantum_optimization.py"
+      - "worldshepherd_sara/quantum_mission_readiness.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_evidence.py"
+      - "scripts/generate_quantum_application_benchmarks.py"
+      - "scripts/generate_quantum_mission_readiness.py"
       - "scripts/scan_pqc_inventory.py"
       - "scripts/run_ibm_qpu_bell.py"
       - "tests/test_quantum_*.py"
@@ -80,17 +88,30 @@ jobs:
             worldshepherd_sara/quantum_resource.py \
             worldshepherd_sara/quantum_ibm.py \
             worldshepherd_sara/quantum_sara_bridge.py \
+            worldshepherd_sara/quantum_optimization.py \
+            worldshepherd_sara/quantum_mission_readiness.py \
             worldshepherd_sara/pqc_inventory.py
 
-      - name: Run QRF governance tests
+      - name: Run QRF governance and mission calibration tests
         env:
           PYTHONPATH: .
-        run: pytest -q tests/test_quantum_readiness.py tests/test_quantum_resource.py tests/test_pqc_inventory.py
+        run: |
+          pytest -q \
+            tests/test_quantum_readiness.py \
+            tests/test_quantum_resource.py \
+            tests/test_quantum_mission_readiness.py \
+            tests/test_pqc_inventory.py
 
-      - name: Run quantum execution and evidence tests
+      - name: Run quantum execution, application, and evidence tests
         env:
           PYTHONPATH: .
-        run: pytest -q tests/test_quantum_qiskit.py tests/test_quantum_evidence.py tests/test_quantum_ibm.py tests/test_quantum_sara_bridge.py
+        run: |
+          pytest -q \
+            tests/test_quantum_qiskit.py \
+            tests/test_quantum_optimization.py \
+            tests/test_quantum_evidence.py \
+            tests/test_quantum_ibm.py \
+            tests/test_quantum_sara_bridge.py
 
       - name: Generate governed CI evidence
         env:
@@ -98,11 +119,17 @@ jobs:
         run: |
           python scripts/generate_quantum_evidence.py \
             --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
+          python scripts/generate_quantum_application_benchmarks.py \
+            --output .qrf-artifacts/quantum_application_benchmarks.json
+          python scripts/generate_quantum_mission_readiness.py \
+            --output .qrf-artifacts/quantum_mission_readiness.json
           python scripts/scan_pqc_inventory.py \
             --root . \
             --output .qrf-artifacts/pqc_inventory_scan.json \
             --fail-on-private-key
           python -m json.tool .qrf-artifacts/qrf_bell_001_simulation_evidence.json >/dev/null
+          python -m json.tool .qrf-artifacts/quantum_application_benchmarks.json >/dev/null
+          python -m json.tool .qrf-artifacts/quantum_mission_readiness.json >/dev/null
           python -m json.tool .qrf-artifacts/pqc_inventory_scan.json >/dev/null
 
       - name: Verify governed source artifacts
