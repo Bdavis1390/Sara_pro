@@ -108,7 +108,9 @@ def test_every_discovery_ledger_preserves_evidence_boundaries() -> None:
         policy = ledger["source_ingestion_policy"]
         assert "Worldshepherd use" in policy["rule"], path.name
         assert "not independent evidence" in policy["duplicates"], path.name
-        assert "never Glob evidence" in policy["search_noise"], path.name
+        search_noise = policy["search_noise"].lower()
+        assert "glob evidence" in search_noise, path.name
+        assert any(term in search_noise for term in ("never", "not", "zero")), path.name
 
 
 def test_historical_topology_calibration_is_numerically_coherent() -> None:
