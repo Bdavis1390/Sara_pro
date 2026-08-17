@@ -1,0 +1,36 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-17",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_20.json",
+  "purpose":"Continue raw accumulation through 60957, 56007, 05706 and 70605 while retaining high-value cybersecurity, manufacturing, photonics, AI/data, energy-storage and materials sources independently of Glob evidence.",
+  "policy":{
+    "rule":"Underlying source utility may be high in any Worldshepherd domain while its matched number remains raw metadata; raw recurrence carries zero automatic physical-evidence weight.",
+    "promotion":"Existing physical P1 history for a target is tracked separately from newly accumulated metadata collisions; a new CVE/DOI/article occurrence neither strengthens nor weakens the physical P1 by itself.",
+    "namespace_control":"CVE, DOI/article, postal, ISBN and publication identifiers are retained by namespace; physical quantities retain units and source semantics separately."
+  },
+  "records":[
+    {"target":"60957","raw_hit_type":"CVE_IDENTIFIER","occurrence":"CVE-2025-60957","context":"OS command injection in EndRun Technologies Sonoma D12 network time server; CISA-ADP CVSS 3.1 score shown as 9.9 critical in NVD","glob_weight":"M1_RAW","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","PRIME_SENTINEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60957","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0007-8506(07)60957-3","context":"PADL-based automatic numerical-control machining data generation from constructive solid geometry","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","SOFTWARE_AND_DATA_ENGINEERING","SIMULATION_AND_NUMERICAL_METHODS","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60957","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-025-60957-1","context":"Transfer-printing micro-assembly of silicon photonic crystal cavity arrays to beat fabrication tolerance limits","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_MANUFACTURING","TEST_AND_MEASUREMENT","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"56007","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-025-56007-5","context":"Super-elastic negative-triboelectric polymer matrix for high-performance mechanoluminescent platforms","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","SENSING_AND_SENSOR_FUSION","ADAPTIVE_METASURFACE_CONTROL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"56007","raw_hit_type":"ISO_STANDARD_NUMBER","occurrence":"ISO 56007:2023","context":"Innovation management guidance for opportunities and ideas","glob_weight":"M1_RAW","worldshepherd_use":["SYSTEMS_ENGINEERING_AND_GOVERNANCE","IP_AND_COMMERCIALIZATION","OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"05706","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41597-025-05706-1","context":"Seasonal Green View Index mapping dataset across Chinese cities powered by deep learning","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","SENSING_AND_SENSOR_FUSION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"05706","raw_hit_type":"ISBN_COMPONENT","occurrence":"978-3-528-05706-0","context":"Intelligent Media Agents book, interactive multimedia/internet applications","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","SOFTWARE_AND_DATA_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70605","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.1002/asia.70605 / e70605","context":"2026 review of preparation processes for cobalt-free Ni-rich layered oxide cathode materials","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","MATERIALS_AND_CHARACTERIZATION","SUPPLY_CHAIN_AND_PRODUCTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70605","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-026-70605-x","context":"2026 microbial community field/experimental study","glob_weight":"M1_RAW","worldshepherd_use":["AI_ML_AND_MODEL_VALIDATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70605","raw_hit_type":"AFFILIATION_POSTAL_CODE","occurrence":"Lake Charles, LA 70605","context":"Current cellulose/ionic-liquid experimental plus COSMO-RS modeling publication affiliation","glob_weight":"N0_RAW","worldshepherd_use":["OPPORTUNITY_AND_PARTNER_INTEL","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"CVE-2025-60957 is directly relevant to Worldshepherd infrastructure hardening because a network time server is foundational to audit-log ordering, sensor fusion and distributed-system provenance; compromise could corrupt both availability and trusted timing.","worldshepherd_use":["SECURITY_HARDENING","OPERATIONS_AND_RELIABILITY","ECHO_SENTINEL_LINK","PRIME_SENTINEL"],"claims_boundary":"The CVE identifier is independent of the target's spectroscopy P1 history."},
+    {"finding":"The PADL NC-machining paper is a reusable historical architecture linking constructive-solid-geometry representations to automatic cutter-motion/control-surface generation, relevant to Worldshepherd digital manufacturing workflows.","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","SOFTWARE_AND_DATA_ENGINEERING","SIMULATION_AND_NUMERICAL_METHODS"],"claims_boundary":"60957 is DOI/PII metadata."},
+    {"finding":"ISO 56007 provides a governance reference for systematic opportunity/idea intake, concept creation and validation and should inform Worldshepherd's opportunity-intelligence and innovation pipeline.","worldshepherd_use":["SYSTEMS_ENGINEERING_AND_GOVERNANCE","IP_AND_COMMERCIALIZATION","OPPORTUNITY_AND_PARTNER_INTEL"],"claims_boundary":"56007 is the standard number, not Glob physical evidence."},
+    {"finding":"The 2026 cobalt-free Ni-rich cathode review is useful beyond physics because it addresses preparation processes, cobalt supply concerns, cost volatility and scalable energy-storage materials production.","worldshepherd_use":["MATERIALS_AND_MANUFACTURING","SUPPLY_CHAIN_AND_PRODUCTION","IP_AND_COMMERCIALIZATION"],"claims_boundary":"70605 is article/DOI metadata."}
+  ],
+  "next_actions":[
+    "Continue raw accumulation through 07005, 00507, 50700 and the leading-zero/low-value 31542 states while retaining useful non-physics sources.",
+    "Continue physical-value and same-system topology scans separately, including the previously established physical 60957 and 56007 leads.",
+    "Add infrastructure-timing/security advisories to Worldshepherd security controls when source discovery reveals time-source, logging or provenance risks.",
+    "Maintain fixed tolerance and experiment-wide multiple-testing/false-discovery controls for numerical evidence promotion."
+  ]
+}
