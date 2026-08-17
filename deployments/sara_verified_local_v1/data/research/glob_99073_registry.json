@@ -1,0 +1,420 @@
+{
+  "schema_version": "ws-glob-evidence-1.0",
+  "as_of": "2026-08-16",
+  "inquiry": "Glob 99073",
+  "transform": {
+    "name": "five-position permutation",
+    "mapping": "12345->31542",
+    "index_order_1_based": [3, 1, 5, 4, 2],
+    "leading_zero_policy": "Preserve five-position strings exactly. A zero-padded normalization is derived data and must not replace an exact shorter seed."
+  },
+  "active_expanded_seeds": [
+    "99073",
+    "8679305",
+    "245779675000031449401",
+    "396993953242"
+  ],
+  "active_unexpanded_seed_note": {
+    "seed": "9675",
+    "status": "exact_4_digit_seed_preserved",
+    "rule": "Do not silently conflate with 09675. Any five-position normalization must be separately recorded."
+  },
+  "orbits": [
+    {"seed":"99073","window_index_0":0,"window":"99073","orbit":["99073","09379","30979","93970"]},
+    {"seed":"8679305","window_index_0":0,"window":"86793","orbit":["86793","78396","37698","63897"]},
+    {"seed":"8679305","window_index_0":1,"window":"67930","orbit":["67930","96037","09736","70639"]},
+    {"seed":"8679305","window_index_0":2,"window":"79305","orbit":["79305","37509","53907","95703"]},
+    {"seed":"245779675000031449401","window_index_0":0,"window":"24577","orbit":["24577","52774","75472","47275"]},
+    {"seed":"245779675000031449401","window_index_0":1,"window":"45779","orbit":["45779","74975","97574","59477"]},
+    {"seed":"245779675000031449401","window_index_0":2,"window":"57796","orbit":["57796","75697","67795","76597"]},
+    {"seed":"245779675000031449401","window_index_0":3,"window":"77967","orbit":["77967","97767","79767","77769"]},
+    {"seed":"245779675000031449401","window_index_0":4,"window":"79675","orbit":["79675","67579","56977","95776"]},
+    {"seed":"245779675000031449401","window_index_0":5,"window":"96750","orbit":["96750","79056","07659","60957"]},
+    {"seed":"245779675000031449401","window_index_0":6,"window":"67500","orbit":["67500","56007","05706","70605"]},
+    {"seed":"245779675000031449401","window_index_0":7,"window":"75000","orbit":["75000","07005","00507","50700"]},
+    {"seed":"245779675000031449401","window_index_0":8,"window":"50000","orbit":["50000","05000","00005","00500"]},
+    {"seed":"245779675000031449401","window_index_0":9,"window":"00003","orbit":["00003","00300","30000","03000"]},
+    {"seed":"245779675000031449401","window_index_0":10,"window":"00031","orbit":["00031","00130","10030","01030"]},
+    {"seed":"245779675000031449401","window_index_0":11,"window":"00314","orbit":["00314","30410","43010","04013"]},
+    {"seed":"245779675000031449401","window_index_0":12,"window":"03144","orbit":["03144","10443","41340","34041"]},
+    {"seed":"245779675000031449401","window_index_0":13,"window":"31449","orbit":["31449","43941","94143","19344"]},
+    {"seed":"245779675000031449401","window_index_0":14,"window":"14494","orbit":["14494","41494","44491","44194"]},
+    {"seed":"245779675000031449401","window_index_0":15,"window":"44940","orbit":["44940","94044","09444","40449"]},
+    {"seed":"245779675000031449401","window_index_0":16,"window":"49401","orbit":["49401","44109","14904","91404"]},
+    {"seed":"396993953242","window_index_0":0,"window":"39699","orbit":["39699","63999","96993","99396"]},
+    {"seed":"396993953242","window_index_0":1,"window":"96993","orbit":["96993","99396","39699","63999"]},
+    {"seed":"396993953242","window_index_0":2,"window":"69939","orbit":["69939","96939","99936","99639"]},
+    {"seed":"396993953242","window_index_0":3,"window":"99395","orbit":["99395","39599","53999","95993"]},
+    {"seed":"396993953242","window_index_0":4,"window":"93953","orbit":["93953","99353","39359","33959"]},
+    {"seed":"396993953242","window_index_0":5,"window":"39532","orbit":["39532","53239","25933","92335"]},
+    {"seed":"396993953242","window_index_0":6,"window":"95324","orbit":["95324","39425","43529","54923"]},
+    {"seed":"396993953242","window_index_0":7,"window":"53242","orbit":["53242","25243","22345","32542"]}
+  ],
+  "evidence_classes": {
+    "P2": "Physical relational closure: two or more generated states occur in the same physical system with a documented physical relationship.",
+    "P1": "Physical-value hit: generated state matches or nearly matches a measured/derived physical quantity with units and provenance.",
+    "G1": "Mathematical graph closure among generated states; no physical causality implied.",
+    "M1": "Technical metadata collision: identifier, DOI/arXiv/CVE/article/accession number, etc.",
+    "N0": "Incidental collision/control: registry, report, page, product, ordinary ID, or unrelated number."
+  },
+  "verification_statuses": {
+    "verified_primary": "Verified in an original/primary technical publication or official authoritative data source.",
+    "verified_current_authority": "Verified in a current authoritative compilation or government database.",
+    "historical_primary_reconcile_current": "Verified in historical primary literature; current compilation reconciliation still required.",
+    "carry_forward_unverified": "Previously reported in this inquiry but not reverified in the present ingestion pass.",
+    "negative_control": "Intentionally retained as a collision/control exemplar."
+  },
+  "worldshepherd_routing": {
+    "SARA": "orchestration, ingestion, schema validation, deterministic transforms",
+    "ECHO_SENTINEL_LINK": "source provenance, lineage, exact/near-match custody, raw-source pointers",
+    "PRIME_SENTINEL": "claims gates, verification status, promotion/demotion decisions",
+    "OVERWATCH": "comparative dashboards, replay, anomaly/null metrics, false-positive rate",
+    "SECURITY_HARDENING": "dependency/vulnerability controls discovered during research",
+    "MATERIALS_AND_CHARACTERIZATION": "spectroscopy, atomic/molecular/material characterization inputs",
+    "QUANTUM_DEVICE_CHARACTERIZATION": "non-destructive imaging and device-characterization methods",
+    "NEGATIVE_CONTROL_CORPUS": "training/evaluation corpus for separating physical matches from metadata coincidences",
+    "OPPORTUNITY_AND_PARTNER_INTEL": "source institutions/authors/facilities useful for future validation or collaboration"
+  },
+  "sources": [
+    {
+      "source_id":"SRC-WII-LAUN-1964",
+      "title":"Second Spectrum of Tungsten (W II)",
+      "author":"Donald D. Laun",
+      "year":1964,
+      "identifier":"doi:10.6028/jres.068A.021",
+      "authority":"U.S. National Bureau of Standards / Journal of Research",
+      "url":"https://doi.org/10.6028/jres.068A.021",
+      "use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS","OPPORTUNITY_AND_PARTNER_INTEL"]
+    },
+    {
+      "source_id":"SRC-WII-KRAMIDA-SHIRAI-2018",
+      "title":"Compilation of Wavelengths, Energy Levels, and Transition Probabilities for W I and W II",
+      "author":"Alexander Kramida; T. Shirai",
+      "year":2018,
+      "identifier":"NIST JPCRD compilation",
+      "authority":"NIST",
+      "url":"https://www.nist.gov/publications/compilation-wavelengths-energy-levels-and-transition-probabilities-w-i-and-w-ii",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL"]
+    },
+    {
+      "source_id":"SRC-BRI-NIST",
+      "title":"Energy Levels of Neutral Bromine (Br I)",
+      "authority":"NIST Physical Measurement Laboratory",
+      "identifier":"NIST Atomic Spectra Handbook table",
+      "url":"https://physics.nist.gov/PhysRefData/Handbook/Tables/brominetable5.htm",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK"]
+    },
+    {
+      "source_id":"SRC-YBII-NIST",
+      "title":"Energy Levels of Singly Ionized Ytterbium (Yb II)",
+      "authority":"NIST Physical Measurement Laboratory",
+      "identifier":"NIST Atomic Spectra Handbook table",
+      "url":"https://physics.nist.gov/PhysRefData/Handbook/Tables/ytterbiumtable6.htm",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK"]
+    },
+    {
+      "source_id":"SRC-YBII-MEGGERS-1967",
+      "title":"The second spectrum of ytterbium (Yb II)",
+      "author":"William F. Meggers",
+      "year":1967,
+      "identifier":"doi:10.6028/jres.071A.045",
+      "authority":"NBS / Journal of Research",
+      "url":"https://doi.org/10.6028/jres.071A.045",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL"]
+    },
+    {
+      "source_id":"SRC-H2S-KREIS-2022",
+      "title":"Threshold-ion-pair-production spectroscopy of H2S and D2S",
+      "author":"C. Kreis; U. Hollenstein; F. Merkt",
+      "year":2022,
+      "identifier":"doi:10.1080/00268976.2022.2071349",
+      "authority":"Molecular Physics",
+      "url":"https://doi.org/10.1080/00268976.2022.2071349",
+      "use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK"]
+    },
+    {
+      "source_id":"SRC-XRAY-2208-09379",
+      "title":"Non-destructive X-ray imaging of patterned delta-layer devices in silicon",
+      "year":2022,
+      "identifier":"arXiv:2208.09379; doi:10.1002/aelm.202201212",
+      "authority":"arXiv / Advanced Electronic Materials",
+      "url":"https://arxiv.org/abs/2208.09379",
+      "use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]
+    },
+    {
+      "source_id":"SRC-ICC-CVE-2026-30979",
+      "title":"CVE-2026-30979 — iccDEV heap-based buffer overflow",
+      "year":2026,
+      "identifier":"CVE-2026-30979",
+      "authority":"NIST National Vulnerability Database",
+      "url":"https://nvd.nist.gov/vuln/detail/CVE-2026-30979",
+      "use":["SECURITY_HARDENING","NEGATIVE_CONTROL_CORPUS"]
+    },
+    {
+      "source_id":"SRC-ICC-CVE-2026-30978",
+      "title":"CVE-2026-30978 — iccDEV heap-use-after-free",
+      "year":2026,
+      "identifier":"CVE-2026-30978",
+      "authority":"NIST National Vulnerability Database",
+      "url":"https://nvd.nist.gov/vuln/detail/CVE-2026-30978",
+      "use":["SECURITY_HARDENING"]
+    },
+    {
+      "source_id":"SRC-NIST-CAS-56977-48-1",
+      "title":"CAS Reg. No. 56977-48-1",
+      "identifier":"CAS 56977-48-1",
+      "authority":"NIST Chemistry WebBook",
+      "url":"https://webbook.nist.gov/cgi/cbook.cgi?ID=C56977481&Mask=FFFF",
+      "use":["NEGATIVE_CONTROL_CORPUS"]
+    },
+    {
+      "source_id":"SRC-ELIFE-E79305",
+      "title":"Open-source tools for behavioral video analysis: Setup, methods, and best practices",
+      "year":2023,
+      "identifier":"eLife 12:e79305; doi:10.7554/eLife.79305",
+      "authority":"eLife",
+      "use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"],
+      "note":"79305 is an article identifier, not a spectroscopy value; methodology is reusable for video/behavioral analytics."
+    },
+    {
+      "source_id":"SRC-OSTI-FACILITY-MONITORING",
+      "title":"Development of a Facility Monitoring Testbed",
+      "year":2001,
+      "identifier":"OSTI:783355; LA-UR-01-3569",
+      "authority":"DOE OSTI / Los Alamos National Laboratory",
+      "url":"https://www.osti.gov/biblio/783355",
+      "use":["OVERWATCH","ECHO_SENTINEL_LINK","SECURITY_HARDENING"],
+      "note":"Operational precedent for remote sensor monitoring, fault precursor detection, and reasoning-triggered alarms."
+    },
+    {
+      "source_id":"SRC-ARL-TUNGSTEN-CARBIDE-SPALL",
+      "title":"Spall Strength of Tungsten Carbide",
+      "year":2004,
+      "identifier":"ARL-TR-3335",
+      "authority":"U.S. Army Research Laboratory / GovInfo",
+      "url":"https://www.govinfo.gov/app/details/GOVPUB-D101-PURL-LPS124997",
+      "use":["MATERIALS_AND_CHARACTERIZATION"],
+      "note":"Use as mechanical-material reference for tungsten-carbide dynamic/spall behavior, not as number-pattern evidence."
+    },
+    {
+      "source_id":"SRC-DOE-OSTI-API",
+      "title":"OSTI.GOV API v1 Documentation",
+      "authority":"U.S. Department of Energy OSTI",
+      "url":"https://www.osti.gov/api/v1/docs",
+      "use":["SARA","ECHO_SENTINEL_LINK"],
+      "note":"Use to automate source metadata/full-text acquisition while retaining provenance."
+    },
+    {
+      "source_id":"SRC-DOE-PUBLIC-ACCESS",
+      "title":"Publications Public Access Guidance",
+      "authority":"U.S. Department of Energy OSTI",
+      "url":"https://www.osti.gov/publications-public-access-guidance",
+      "use":["SARA","ECHO_SENTINEL_LINK","PRIME_SENTINEL"],
+      "note":"Use as source-acquisition and provenance-policy reference for DOE-funded scholarly material."
+    }
+  ],
+  "evidence_records": [
+    {
+      "record_id":"EV-WII-30979-40",
+      "seed_provenance":"99073",
+      "derived_state":"30979",
+      "observed_value":30979.40,
+      "units":"cm^-1",
+      "delta_observed_minus_target":0.40,
+      "source_id":"SRC-WII-LAUN-1964",
+      "evidence_class":"P1",
+      "verification_status":"verified_primary",
+      "physical_context":"W II classified spectral line; transition 23046_(3.5) -> 54026_(2.5) odd.",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH"],
+      "claims_boundary":"Near-match in a dense spectral table; not evidence that the digit permutation generated the spectrum."
+    },
+    {
+      "record_id":"EV-WII-39699-84",
+      "seed_provenance":"396993953242",
+      "derived_state":"39699",
+      "observed_value":39699.84,
+      "units":"cm^-1",
+      "delta_observed_minus_target":0.84,
+      "source_id":"SRC-WII-LAUN-1964",
+      "evidence_class":"P2",
+      "verification_status":"verified_primary",
+      "physical_context":"W II line from lower level a^4P_(3/2) at 10592.52 cm^-1 to upper level 50292.33 cm^-1.",
+      "relation_group":"REL-WII-A4P3/2",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH"],
+      "claims_boundary":"Relational candidate because it shares the same lower level with EV-WII-41494-48; statistical significance unresolved."
+    },
+    {
+      "record_id":"EV-WII-41494-48",
+      "seed_provenance":"245779675000031449401",
+      "derived_state":"41494",
+      "observed_value":41494.48,
+      "units":"cm^-1",
+      "delta_observed_minus_target":0.48,
+      "source_id":"SRC-WII-LAUN-1964",
+      "evidence_class":"P2",
+      "verification_status":"verified_primary",
+      "physical_context":"W II classified line sharing lower level a^4P_(3/2) with the 39699.84 cm^-1 line; upper level approximately 52087 cm^-1.",
+      "relation_group":"REL-WII-A4P3/2",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH"],
+      "claims_boundary":"Relational candidate only; topology-preserving null test required."
+    },
+    {
+      "record_id":"EV-WII-REL-1794-64",
+      "derived_relation":"41494.48 - 39699.84",
+      "observed_value":1794.64,
+      "units":"cm^-1",
+      "source_id":"SRC-WII-LAUN-1964",
+      "evidence_class":"P2",
+      "verification_status":"verified_primary",
+      "relation_group":"REL-WII-A4P3/2",
+      "worldshepherd_uses":["OVERWATCH","PRIME_SENTINEL"],
+      "claims_boundary":"Documented separation between two independently seeded near-matches; no causal interpretation."
+    },
+    {
+      "record_id":"EV-BRI-75697-05",
+      "seed_provenance":"245779675000031449401",
+      "derived_state":"75697",
+      "observed_value":75697.05,
+      "units":"cm^-1",
+      "delta_observed_minus_target":0.05,
+      "source_id":"SRC-BRI-NIST",
+      "evidence_class":"P1",
+      "verification_status":"verified_current_authority",
+      "physical_context":"Neutral Br I 4p^4(3P)5p 4D° J=5/2 level.",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH"],
+      "claims_boundary":"Excellent numerical near-match; still subject to multiple-testing and line-density controls."
+    },
+    {
+      "record_id":"EV-YBII-44940-61",
+      "seed_provenance":"245779675000031449401",
+      "derived_state":"44940",
+      "observed_value":44940.61,
+      "units":"cm^-1",
+      "delta_observed_minus_target":0.61,
+      "source_id":"SRC-YBII-NIST",
+      "evidence_class":"P1",
+      "verification_status":"verified_current_authority",
+      "physical_context":"Yb II level listed by NIST; persistent 2224.46 Å transition from the ground level reaches 44940.61 cm^-1.",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK"],
+      "claims_boundary":"Near-match; treat only as reference/validation target."
+    },
+    {
+      "record_id":"EV-YBII-56977-HISTORICAL",
+      "seed_provenance":"245779675000031449401",
+      "derived_state":"56977",
+      "source_id":"SRC-YBII-MEGGERS-1967",
+      "evidence_class":"P1",
+      "verification_status":"historical_primary_reconcile_current",
+      "physical_context":"Historical Yb II paper contains a level labeled 56977; current NIST handbook excerpt does not list an exact 56977 level.",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","PRIME_SENTINEL","ECHO_SENTINEL_LINK"],
+      "claims_boundary":"Retain as historical evidence and reconciliation task; do not state as current NIST-confirmed level."
+    },
+    {
+      "record_id":"EV-H2S-31449",
+      "seed_provenance":"245779675000031449401",
+      "derived_state":"31449",
+      "observed_value":31449,
+      "uncertainty":2,
+      "units":"cm^-1",
+      "source_id":"SRC-H2S-KREIS-2022",
+      "evidence_class":"P1",
+      "verification_status":"verified_primary",
+      "physical_context":"Reported improved H-SH bond dissociation energy D0(H-SH)=31449(2) cm^-1.",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH"],
+      "claims_boundary":"Exact central-value match; multiple-testing correction still mandatory."
+    },
+    {
+      "record_id":"EV-ARXIV-09379",
+      "seed_provenance":"99073",
+      "derived_state":"09379",
+      "source_id":"SRC-XRAY-2208-09379",
+      "evidence_class":"M1",
+      "verification_status":"negative_control",
+      "physical_context":"09379 is part of arXiv identifier 2208.09379, not a physical measurement.",
+      "worldshepherd_uses":["NEGATIVE_CONTROL_CORPUS","QUANTUM_DEVICE_CHARACTERIZATION"],
+      "claims_boundary":"Zero evidence weight for the number hypothesis. Publication remains useful for non-destructive quantum-device/material characterization."
+    },
+    {
+      "record_id":"EV-CVE-30979",
+      "seed_provenance":"99073",
+      "derived_state":"30979",
+      "source_id":"SRC-ICC-CVE-2026-30979",
+      "evidence_class":"M1",
+      "verification_status":"negative_control",
+      "worldshepherd_uses":["SECURITY_HARDENING","NEGATIVE_CONTROL_CORPUS"],
+      "action":"If iccDEV is introduced anywhere in the image/ICC analysis stack, require >=2.3.1.5; otherwise record dependency as absent/not detected.",
+      "claims_boundary":"Security identifier collision only; no physics evidence."
+    },
+    {
+      "record_id":"EV-CAS-56977",
+      "seed_provenance":"245779675000031449401",
+      "derived_state":"56977",
+      "source_id":"SRC-NIST-CAS-56977-48-1",
+      "evidence_class":"N0",
+      "verification_status":"negative_control",
+      "worldshepherd_uses":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"],
+      "claims_boundary":"Same digit sequence as a historical spectroscopy candidate but here it is only a CAS Registry prefix. Deliberately retained as a discriminative paired control."
+    },
+    {
+      "record_id":"EV-ELIFE-79305",
+      "seed_provenance":"8679305",
+      "derived_state":"79305",
+      "source_id":"SRC-ELIFE-E79305",
+      "evidence_class":"M1",
+      "verification_status":"negative_control",
+      "worldshepherd_uses":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"],
+      "claims_boundary":"Article number collision; methodology may inform video-analysis pipelines, but identifier gives no support to the number hypothesis."
+    },
+    {
+      "record_id":"EV-G1-09736-69939-79675",
+      "seed_provenance":["8679305","396993953242","245779675000031449401"],
+      "derived_relation":"09736 + 69939 = 79675",
+      "evidence_class":"G1",
+      "verification_status":"verified_primary",
+      "source_id":null,
+      "worldshepherd_uses":["SARA","OVERWATCH","NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary":"Exact deterministic graph closure. Prior random-set sanity check indicated additive closures of this kind are not by themselves statistically anomalous."
+    }
+  ],
+  "statistical_calibration": {
+    "wii_dataset": {
+      "source_id":"SRC-WII-LAUN-1964",
+      "classified_lines":2173,
+      "wavelength_range_A":[1756.6,6219.77],
+      "derived_wavenumber_range_cm-1":[16077.76493343,56928.15666629],
+      "unique_generated_states_total":112,
+      "generated_integer_targets_in_range":41,
+      "uniform_density_expected_matches": {
+        "plus_minus_0.05_cm-1":0.2180958278,
+        "plus_minus_0.1_cm-1":0.4361916556,
+        "plus_minus_0.5_cm-1":2.1809582778,
+        "plus_minus_1.0_cm-1":4.3619165555,
+        "plus_minus_2.0_cm-1":8.7238331111,
+        "plus_minus_5.0_cm-1":21.8095827777
+      },
+      "observed_selected_near_hits":[
+        {"target":30979,"observed":30979.40,"abs_delta":0.40},
+        {"target":41494,"observed":41494.48,"abs_delta":0.48},
+        {"target":39699,"observed":39699.84,"abs_delta":0.84}
+      ],
+      "interpretation":"Raw W II near-hit count is not anomalous under this crude uniform-density baseline. The same-lower-level topology of 39699.84 and 41494.48 is the higher-value feature to test next.",
+      "next_test":"Topology-preserving null: sample/randomize target sets against the W II transition graph while preserving target count/range, then compare frequency of shared lower/upper-level closures."
+    }
+  },
+  "carry_forward_claims_requiring_reverification": [
+    {"target":"79305 MHz","publication_context":"Yb microwave spectroscopy","status":"exact value not re-found in current primary-source pass; publication still retained for microwave-spectroscopy methodology."},
+    {"target":"79675.1 cm^-1","publication_context":"Cu compilation","status":"not reverified in current NIST handbook pass."},
+    {"target":"96750 / 79056 / 60957","publication_context":"spectroscopy claims from earlier inquiry","status":"retain as carry-forward only until source-level re-verification."},
+    {"target":"99639 ±10 / 99395","publication_context":"molecular spectroscopy claims from earlier inquiry","status":"retain as carry-forward only until source-level re-verification."},
+    {"target":"99073","publication_context":"historical table-of-wavenumbers claim","status":"not reverified in current pass."},
+    {"target":"93970","publication_context":"exact physical hit","status":"unresolved; nearest-neighbor values must remain controls, not substitutes."}
+  ],
+  "operational_rules": [
+    "Every discovered publication or information item must have at least one Worldshepherd use or an explicit negative-control role.",
+    "No metadata collision is allowed to contribute physical-evidence weight.",
+    "Exact and near matches must retain units, delta, source authority, seed/window provenance, and multiple-testing context.",
+    "Counterevidence and failed searches are first-class evidence records.",
+    "Promotion from P1/P2 candidate to a substantive scientific claim requires null-model testing and independent replication/validation.",
+    "Source discovery does not imply causal connection to the number transform."
+  ]
+}
