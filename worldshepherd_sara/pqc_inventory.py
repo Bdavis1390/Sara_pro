@@ -2,7 +2,8 @@
 
 This scanner is deliberately conservative: it finds code/configuration references
 that deserve review. A finding does not prove that the named primitive or protocol
-is deployed in production.
+is deployed in production. Findings are scoped so operational source/configuration
+can be separated from documentation and test fixtures.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from typing import Iterable
 class CryptoFinding:
     path: str
     line: int
+    scope: str
     category: str
     token: str
     severity: str
@@ -27,7 +29,10 @@ class CryptoFinding:
 _PATTERNS: tuple[tuple[str, re.Pattern[str], str, str], ...] = (
     (
         "classical_public_key",
-        re.compile(r"\b(RSA|ECDSA|Ed25519|X25519|DSA|secp256k1|secp256r1)\b", re.IGNORECASE),
+        re.compile(
+            r"\b(RSA|ECDSA|Ed25519|X25519|secp256k1|secp256r1)\b|(?<!ML-)(?<!SLH-)\bDSA\b",
+            re.IGNORECASE,
+        ),
         "migration_review",
         "Public-key use may require PQ or hybrid migration depending on the protocol and retention horizon.",
     ),
@@ -67,12 +72,30 @@ _TEXT_SUFFIXES = {
     ".py", ".md", ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf",
     ".sh", ".bash", ".txt", ".env", ".example", ".qasm",
 }
-_IGNORE_DIRS = {".git", ".venv", "venv", "__pycache__", "node_modules", ".pytest_cache"}
+_IGNORE_DIRS = {
+    ".git", ".venv", "venv", "__pycache__", "node_modules", ".pytest_cache", ".qrf-artifacts"
+}
 _IGNORE_PATHS = {
     "worldshepherd_sara/pqc_inventory.py",
     "tests/test_pqc_inventory.py",
     "data/pqc_migration_inventory.json",
 }
+_OPERATIONAL_SCOPES = {"application_source", "operational_config", "other_source"}
+
+
+def _scope(relative: Path) -> str:
+    posix = relative.as_posix()
+    if posix.startswith("worldshepherd_sara/"):
+        return "application_source"
+    if posix.startswith("scripts/") or posix.startswith(".github/"):
+        return "operational_config"
+    if posix.startswith("tests/"):
+        return "test_fixture"
+    if posix.startswith("payloads/"):
+        return "data_fixture"
+    if posix.startswith("docs/") or relative.suffix.lower() == ".md":
+        return "documentation"
+    return "other_source"
 
 
 def _iter_text_files(root: Path) -> Iterable[Path]:
@@ -102,7 +125,9 @@ def scan_repository(root: str | Path) -> dict[str, object]:
             lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
             continue
-        rel = path.relative_to(base).as_posix()
+        relative = path.relative_to(base)
+        rel = relative.as_posix()
+        scope = _scope(relative)
         for line_number, line in enumerate(lines, start=1):
             for category, pattern, severity, interpretation in _PATTERNS:
                 for match in pattern.finditer(line):
@@ -110,6 +135,7 @@ def scan_repository(root: str | Path) -> dict[str, object]:
                         CryptoFinding(
                             path=rel,
                             line=line_number,
+                            scope=scope,
                             category=category,
                             token=match.group(0),
                             severity=severity,
@@ -119,19 +145,38 @@ def scan_repository(root: str | Path) -> dict[str, object]:
 
     findings.sort(key=lambda row: (row.path, row.line, row.category, row.token.lower()))
     summary: dict[str, int] = {}
+    summary_by_scope: dict[str, dict[str, int]] = {}
     for row in findings:
         summary[row.category] = summary.get(row.category, 0) + 1
+        scoped = summary_by_scope.setdefault(row.scope, {})
+        scoped[row.category] = scoped.get(row.category, 0) + 1
 
-    critical = [row for row in findings if row.severity == "critical"]
+    critical_all = [row for row in findings if row.severity == "critical"]
+    critical_operational = [
+        row for row in critical_all if row.scope in _OPERATIONAL_SCOPES
+    ]
+    actionable = [
+        row
+        for row in findings
+        if row.scope in _OPERATIONAL_SCOPES
+        and row.severity in {"critical", "migration_review", "secrets_review"}
+    ]
+
     return {
-        "schema_version": "1.0",
-        "status": "CRITICAL_REVIEW_REQUIRED" if critical else "DISCOVERY_COMPLETE_REVIEW_REQUIRED",
+        "schema_version": "1.1",
+        "status": "CRITICAL_REVIEW_REQUIRED" if critical_operational else "DISCOVERY_COMPLETE_REVIEW_REQUIRED",
         "files_scanned": files_scanned,
         "finding_count": len(findings),
+        "actionable_count": len(actionable),
         "summary": dict(sorted(summary.items())),
-        "critical_count": len(critical),
+        "summary_by_scope": {
+            scope: dict(sorted(categories.items()))
+            for scope, categories in sorted(summary_by_scope.items())
+        },
+        "critical_count": len(critical_operational),
+        "reference_critical_count": len(critical_all) - len(critical_operational),
         "findings": [asdict(row) for row in findings],
-        "claim_control": "Findings are repository references, not proof of deployed cryptographic configuration.",
+        "claim_control": "Findings are repository references, not proof of deployed cryptographic configuration. Operational source/configuration findings are separated from documentation and fixtures.",
     }
 
 
