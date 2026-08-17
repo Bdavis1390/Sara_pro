@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.8",
-  "updated_utc": "2026-08-17T17:08:00Z",
+  "schema_version": "1.9",
+  "updated_utc": "2026-08-17T17:17:00Z",
   "policy": {
     "default_rule": "classical baseline before quantum attribution",
     "simulator_is_not_qpu": true,
@@ -22,30 +22,28 @@
     "resource_estimation_requires_sensitivity_not_single_point_for_parity": true,
     "quantum_annealing_is_distinct_from_gate_model_quantum_computing": true,
     "annealing_hardware_execution_cannot_replace_mission_instance_or_classical_baseline": true,
+    "cudaq_portable_target_selection_is_not_provider_hardware_evidence": true,
+    "braket_simulator_jobs_are_not_provider_parity_hardware_evidence": true,
     "mission_readiness_is_not_trl_or_deployment_authority": true
   },
   "current_state": {
     "internally_controllable_quantum_closure": {
       "score": 100,
       "target": 97,
-      "controls_complete": 26,
-      "controls_total": 26,
+      "controls_complete": 28,
+      "controls_total": 28,
       "decision": "PASS_INTERNAL_CLOSURE",
       "generated_ci_artifacts_expected": 17,
-      "newly_closed_controls": [
-        "stage-locked external evidence acquisition campaign",
-        "evidence-complete partner/lab acquisition request generation",
-        "local raw-artifact re-hash and current-gate enforcement",
-        "identified-human technical review bound to exact ingest decision",
-        "WS-AlTi physical structure freeze validation",
-        "metasurface full-wave calibration contract",
-        "mission-relevant logistics instance-family contract",
-        "bounded EM materials/metrology task and null-matrix contract",
-        "statistical cross-backend QPU reproducibility evaluation",
-        "Microsoft QDK multi-scenario resource sensitivity envelope",
-        "credential-gated D-Wave quantum-annealing adapter with solver/working-graph, embedding and timing provenance"
-      ],
-      "claim_control": "Software, governance, test, ingest, statistical-reproduction, resource-sensitivity and optional provider-adapter completeness does not upgrade mission evidence."
+      "claim_control": "Internal software, provider adapters, evidence contracts and governance do not upgrade physical mission evidence."
+    },
+    "provider_neutrality": {
+      "ibm_gate_model_adapter": "implemented_credential_gated_no_worldshepherd_hardware_run_yet",
+      "dwave_annealing_adapter": "implemented_credential_gated_no_worldshepherd_hardware_run_yet",
+      "amazon_braket_hybrid_job_evidence_contract": "implemented_no_worldshepherd_job_yet",
+      "cudaq_portable_execution": "implemented_optional_runtime_hardware_provenance_requires_provider_specific_evidence",
+      "statistical_cross_backend_reproduction": "implemented_requires_real_distinct_qpu_runs",
+      "qdk_resource_sensitivity": "implemented_three_scenario_envelope",
+      "claim_control": "Provider breadth is an integration capability until actual provider runs and evidence packages exist."
     },
     "external_campaign_state": {
       "projects_covered": 7,
@@ -56,13 +54,13 @@
       "structural_ingest_result": "ready_for_technical_review_only",
       "human_review_required_before_promotion_recommendation": true,
       "canonical_state_change_is_separate": true,
-      "partner_target_snapshot": "data/quantum_external_partner_targets_2026-08-17.json",
-      "first_qpu_runbook": "docs/QUANTUM_SARA_QPU_FIRST_RUN_2026-08-17.md",
       "market_parity_plan": "docs/QUANTUM_MARKET_BENCHMARK_AND_PARITY_PLAN_2026-08-17.md",
       "defense_integrator_benchmark": "docs/QUANTUM_DEFENSE_INTEGRATOR_BENCHMARK_2026-08-17.md",
+      "partner_target_snapshot": "data/quantum_external_partner_targets_2026-08-17.json",
+      "first_qpu_runbook": "docs/QUANTUM_SARA_QPU_FIRST_RUN_2026-08-17.md",
       "apnt_partner_evaluation_package": "docs/QUANTUM_APNT_PARTNER_EVALUATION_2026-08-17.md"
     },
-    "mission_release_rule": "Every project remains NO_GO until its evidence-capped mission readiness is >=97 and separate deployment authorization is obtained."
+    "mission_release_rule": "Every project remains NO_GO until evidence-capped mission readiness is >=97 and separate deployment authorization is obtained."
   },
   "mission_readiness_calibration": {
     "system": "Worldshepherd Mission Readiness Calibration",
@@ -88,38 +86,30 @@
       "relevant_environment": 92,
       "operational_demonstration": 100
     },
-    "bands": {
-      "0-14": "RESEARCH_ONLY",
-      "15-29": "BENCH_READY",
-      "30-44": "MISSION_SURROGATE",
-      "45-59": "INTEGRATED_LAB",
-      "60-74": "HARDWARE_BACKED",
-      "75-89": "RELEVANT_ENVIRONMENT",
-      "90-96": "PRE_MISSION_CLOSURE",
-      "97-100": "MISSION_READY_THRESHOLD_MET"
-    },
-    "claim_control": "A score >=97 satisfies only the internal Worldshepherd mission-readiness threshold and still requires separate deployment, safety and mission authorization."
+    "claim_control": "A score >=97 satisfies only the internal Worldshepherd threshold and still requires deployment, safety and mission authorization."
   },
   "global_internal_controls": [
-    "claim/evidence governance including statistical cross-backend reproduction",
-    "ideal/noisy circuit execution",
-    "machine-readable evidence and digests",
-    "SARA evidence-registry integration",
-    "credential-gated IBM gate-model real-QPU path",
-    "credential-gated D-Wave quantum-annealing path with distinct-modality claims control",
-    "fault-tolerant resource estimation with multi-scenario sensitivity envelope",
+    "claim/evidence governance with statistical cross-backend reproduction",
+    "Qiskit/Aer ideal and noisy circuit execution",
+    "machine-readable evidence and immutable digests",
+    "SARA evidence-registry bridge",
+    "credential-gated IBM gate-model QPU adapter",
+    "credential-gated D-Wave quantum-annealing adapter",
+    "Amazon Braket Hybrid Job evidence contract",
+    "CUDA-Q provider-neutral portable execution adapter",
+    "Microsoft QDK resource estimation and multi-scenario sensitivity",
     "resource-estimate claims governance",
     "PQC/cryptographic inventory and private-key hard fail",
-    "quantum-vs-classical application benchmarks",
+    "classical-vs-quantum application benchmarks",
     "noise/seed robustness sweeps",
     "97-point evidence-capped mission gate",
     "per-project closure packages",
     "typed external-evidence intake",
-    "local raw-artifact re-hash and gate-locked batch ingest",
+    "local raw-artifact re-hash and current-gate locking",
     "identified-human technical review before promotion recommendation",
-    "APNT truth-reference benchmark harness",
+    "APNT truth-reference synthetic benchmark",
     "exact-vs-variational materials harness",
-    "WS-AlTi structure-freeze validator",
+    "WS-AlTi periodic-structure freeze validator",
     "metasurface full-wave calibration validator",
     "logistics mission-instance-family validator",
     "EM materials/metrology null-matrix validator",
@@ -133,80 +123,69 @@
       "project_id": "SARA-QRF",
       "priority": 1,
       "quantum_fit": "high",
-      "current_lane": "software_governance",
-      "mission_readiness": {"score": 55, "target": 97, "gap": 42, "band": "INTEGRATED_LAB", "evidence_stage": "integrated_simulation", "cap": 55, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["evidence governance", "ideal/noisy simulation", "SARA evidence bridge", "IBM credential-gated QPU adapter", "IBM queue/latency/backend-property evidence capture", "Microsoft QDK estimator execution and three-scenario sensitivity envelope", "statistical cross-backend reproducibility evaluator using canonical workload identity, distinct run/result identities, total-variation distance and Bhattacharyya fidelity", "PQC source discovery", "external evidence intake", "artifact re-hash and gate locking", "human technical-review gate", "stage-locked external campaign", "evidence-complete acquisition requests", "97 release gate"],
-      "remaining_external_gates": ["real gate-model QPU execution", "same-backend repeat execution", "second independent gate-model provider execution", "measured queue/cost/failure/degraded-state behavior", "hardware-in-loop", "relevant-environment operational demonstration"],
+      "mission_readiness": {"score": 55, "target": 97, "gap": 42, "evidence_stage": "integrated_simulation", "cap": 55, "decision": "NO_GO_BELOW_97"},
+      "internally_closed": ["IBM QPU adapter", "statistical cross-backend reproduction", "CUDA-Q portable execution", "Braket Hybrid Job evidence contract", "QDK three-scenario resource sensitivity", "external evidence ingest/review governance"],
+      "remaining_external_gates": ["first real gate-model QPU execution", "same-backend repeat", "second independent gate-model provider", "one real Braket QPU Hybrid Job if used", "queue/cost/degraded telemetry", "hardware-in-loop", "relevant-environment operational demonstration"],
       "campaign_first_active_gate": "SARA-QRF-EXT-01",
-      "next_gate": "execute QRF-BELL-001 on a named real gate-model QPU and retain a gate-valid evidence bundle"
+      "next_gate": "execute QRF-BELL-001 on a named real QPU and retain a gate-valid evidence bundle"
     },
     {
       "project_id": "WS-APNT",
       "priority": 2,
       "quantum_fit": "high",
-      "current_lane": "partner_hardware",
-      "mission_readiness": {"score": 30, "target": 97, "gap": 67, "band": "MISSION_SURROGATE", "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["sensor benchmark contract", "truth-reference metrics harness", "deterministic WS-APNT-SYN-001 normalized benchmark", "concept-to-synthetic prerequisite closure", "truth-reference and uncertainty requirements", "typed quantum-sensor intake", "artifact re-hash and gate locking", "human technical-review gate", "stage-locked APNT campaign", "partner evaluation request specification", "PQC lane", "97 release gate"],
-      "synthetic_benchmark": {"benchmark_id": "WS-APNT-SYN-001", "precondition_id": "WS-APNT-P0-SIMULATED-SENSOR-BENCHMARK", "evidence_level": "synthetic_surrogate", "units": "normalized_test_units_not_physical_navigation_units", "claim_control": "Software benchmark only; not calibrated sensor or navigation-performance evidence."},
-      "remaining_external_gates": ["calibrated quantum sensor or dataset", "truth-reference validation", "integrated replay with denied/degraded reference", "live hardware", "repeatability", "hardware-in-loop degraded/denied PNT test", "relevant-environment operational demonstration"],
+      "mission_readiness": {"score": 30, "target": 97, "gap": 67, "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
+      "synthetic_benchmark": {"benchmark_id": "WS-APNT-SYN-001", "evidence_level": "synthetic_surrogate", "claim_control": "Normalized software benchmark only; not physical navigation accuracy."},
+      "remaining_external_gates": ["calibrated quantum sensor/device/dataset", "truth reference and uncertainty", "denied/degraded replay", "live hardware", "repeatability", "HIL", "relevant-environment operational demonstration"],
       "completed_historical_gate": "WS-APNT-EXT-01",
       "campaign_first_active_gate": "WS-APNT-EXT-02",
-      "next_gate": "ingest a partner-backed calibrated sensor evidence package with calibration, truth reference and uncertainty"
+      "next_gate": "ingest a calibrated partner sensor evidence package"
     },
     {
       "project_id": "WS-ALTI",
       "priority": 3,
       "quantum_fit": "medium_high",
-      "current_lane": "materials_computation",
-      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "band": "BENCH_READY", "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["materials benchmark contract", "exact-vs-variational Hamiltonian harness", "classical-reference gate", "typed Hamiltonian intake", "fault-tolerant estimator path", "periodic-structure freeze validator", "structure-bound reference-computation gate", "stage-locked materials campaign", "human technical-review gate", "97 release gate"],
-      "remaining_external_gates": ["actual periodic structure artifact and provenance", "active-space Hamiltonian", "HF/exact/DFT reference execution", "justified quantum chemistry execution", "coupon/material correlation", "relevant-environment use-case validation"],
+      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_BELOW_97"},
+      "remaining_external_gates": ["actual periodic structure artifact", "structure-bound Hamiltonian", "HF/exact/DFT reference", "justified quantum chemistry execution", "coupon/material correlation", "relevant-environment validation"],
       "campaign_first_active_gate": "WS-ALTI-EXT-01",
-      "next_gate": "freeze an actual periodic structure and structure-bound Hamiltonian/classical reference"
+      "next_gate": "freeze an actual periodic structure and classical electronic-structure reference"
     },
     {
       "project_id": "WS-METASURFACE",
       "priority": 4,
       "quantum_fit": "medium",
-      "current_lane": "optimization_and_materials",
-      "mission_readiness": {"score": 30, "target": 97, "gap": 67, "band": "MISSION_SURROGATE", "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["exact classical QUBO baseline", "ideal/noisy QAOA", "noise/seed robustness", "credential-gated D-Wave annealing adapter available as a distinct optimization modality", "typed calibrated-physics intake", "full-wave authority rule", "full-wave/reduced-order calibration validator", "stage-locked campaign", "human technical-review gate", "97 release gate"],
-      "remaining_external_gates": ["retained Maxwell/FEM/FDTD calibration dataset", "calibrated reduced-order objective", "MILP/CP-SAT comparison on calibrated family", "justified gate-model and/or annealing hardware trials with end-to-end overhead", "RF hardware-in-loop", "relevant-environment demonstration"],
+      "mission_readiness": {"score": 30, "target": 97, "gap": 67, "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
+      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter available as distinct modality", "full-wave calibration contract"],
+      "remaining_external_gates": ["retained Maxwell/FEM/FDTD calibration dataset", "calibrated reduced objective", "strong classical comparator", "justified hardware optimization trials", "RF HIL", "relevant-environment demonstration"],
       "campaign_first_active_gate": "WS-METASURFACE-EXT-01",
-      "next_gate": "calibrate the reduced-order tile objective to retained Maxwell/FEM/FDTD evidence"
+      "next_gate": "calibrate reduced-order objective to full-wave evidence"
     },
     {
       "project_id": "WS-AUTONOMOUS-LOGISTICS",
       "priority": 5,
       "quantum_fit": "medium",
-      "current_lane": "hybrid_optimization",
-      "mission_readiness": {"score": 30, "target": 97, "gap": 67, "band": "MISSION_SURROGATE", "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["exact classical assignment baseline", "ideal/noisy QAOA", "feasibility metrics", "noise/seed robustness", "credential-gated D-Wave annealing adapter and typed mission-optimization evidence conversion", "mission-instance-family validator", "typed mission-optimization intake", "stage-locked campaign", "human technical-review gate", "97 release gate"],
-      "remaining_external_gates": ["mission-relevant retained instance family", "CP-SAT/MILP/strong-heuristic comparison", "actual D-Wave/gate-model execution only after mission-family freeze", "real-provider queue/communications/cost", "degraded-state hardware-in-loop", "relevant-environment demonstration"],
+      "mission_readiness": {"score": 30, "target": 97, "gap": 67, "evidence_stage": "synthetic_surrogate", "cap": 30, "decision": "NO_GO_BELOW_97"},
+      "internally_closed": ["QAOA surrogate", "D-Wave annealing adapter with typed optimization evidence conversion", "mission-instance-family validator"],
+      "remaining_external_gates": ["mission-relevant retained instance family", "CP-SAT/MILP/strong heuristic", "actual annealing/gate-model runs only after family freeze", "provider queue/cost/latency", "degraded HIL", "relevant-environment demonstration"],
       "campaign_first_active_gate": "WS-AUTONOMOUS-LOGISTICS-EXT-01",
-      "next_gate": "freeze and ingest a mission-relevant multi-instance family with full-family classical baseline before hardware optimization trials"
+      "next_gate": "freeze mission instance family and full-family classical baseline"
     },
     {
       "project_id": "WS-EM-PROPULSION",
       "priority": 6,
       "quantum_fit": "bounded",
-      "current_lane": "materials_and_metrology_only",
-      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "band": "BENCH_READY", "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["materials/metrology-only quantum boundary", "calibrated-task contract", "minimum null-matrix validator", "environmental-channel and repeat requirements", "typed physical-metrology intake", "stage-locked bounded-support campaign", "separate propulsion-claim gate", "human technical-review gate", "97 release gate"],
-      "remaining_external_gates": ["project-specific measurable support task", "calibrated instrumentation and raw data", "null-control completion", "repeatable physical measurements", "separate propulsion-claim validation"],
+      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_BELOW_97"},
+      "remaining_external_gates": ["bounded measurable materials/metrology task", "calibrated instrumentation and raw data", "null controls", "repeatability", "separate propulsion-claim validation"],
       "campaign_first_active_gate": "WS-EM-PROPULSION-EXT-01",
-      "next_gate": "freeze and execute one legitimate calibrated materials/metrology support task while preserving the independent propulsion-claim gate"
+      "next_gate": "execute one calibrated materials/metrology support task without conflating it with propulsion proof"
     },
     {
       "project_id": "WS-GLOB",
       "priority": 7,
       "quantum_fit": "conditional",
-      "current_lane": "classical_numerical_research",
-      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "band": "BENCH_READY", "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_BELOW_97"},
-      "internally_closed": ["quantum problem-mapping admissibility gate", "classical enumeration/null-model requirement", "resource-estimate-before-QPU rule", "stage-locked GLOB campaign", "mission-context precondition for HIL", "human technical-review gate", "97 release gate"],
-      "remaining_external_gates": ["legitimate measurable oracle/Hamiltonian/search/sampling/optimization mapping", "classical/null complexity baseline", "calibrated objective", "resource estimate", "justified QPU execution", "reproduction if quantum execution is pursued"],
+      "mission_readiness": {"score": 15, "target": 97, "gap": 82, "evidence_stage": "concept", "cap": 15, "decision": "NO_GO_BELOW_97"},
+      "remaining_external_gates": ["legitimate measurable quantum problem mapping", "classical/null complexity baseline", "resource estimate", "justified QPU execution", "reproduction if pursued"],
       "campaign_first_active_gate": "WS-GLOB-EXT-01",
-      "next_gate": "formalize a measurable quantum computational mapping that survives classical and null comparison"
+      "next_gate": "formalize a measurable mapping that survives null and classical-complexity controls"
     }
   ]
 }
