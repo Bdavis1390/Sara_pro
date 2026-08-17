@@ -1,0 +1,277 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 16,
+  "purpose": "Promote the NIST-confirmed 96750 neutral-nitrogen physical-value hit, distinguish evaluated/observed physical values from theoretical calculated-value coincidences, and ingest additional substantive 2026 tungsten and exact-target sources surfaced by the continuing internet scan.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative records, complementary views of the same underlying authority, and repeated copies are provenance aliases and are not independent evidence.",
+    "search_noise": "Search co-occurrence, page numbers, catalog numbers, DOI suffixes, PMIDs, CVEs, product numbers, and other identifiers are not Glob evidence unless the underlying physical relationship is independently verified."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NIST-NI-LEVELS-R16",
+      "title": "Energy Levels of Neutral Nitrogen (N I)",
+      "authority": "NIST Physical Measurement Laboratory",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/nitrogentable5.htm",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Current-authority handbook cross-check for N I. It lists 2s2 2p2(3P)3p 4S° J=3/2 at 96750.840 cm^-1, providing a directly sourced near-exact physical-level match to predeclared target 96750."
+    },
+    {
+      "source_id": "SRC-NIST-NI-PERSISTENT-LINES-R16",
+      "title": "Persistent Lines of Neutral Nitrogen (N I)",
+      "authority": "NIST Physical Measurement Laboratory",
+      "discovery_status": "NEWLY_DISCOVERED_COMPLEMENTARY_VIEW",
+      "url": "https://physics.nist.gov/PhysRefData/Handbook/Tables/nitrogentable3.htm",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Complementary NIST view showing the 96750.840 cm^-1 upper level participating in persistent N I lines at 7442.29 A and 7468.31 A. This confirms graph connectivity but is not independent of the NIST atomic-data authority."
+    },
+    {
+      "source_id": "SRC-LIBS-MA-DAGDIGIAN-2011-R16",
+      "title": "Kinetic model of atomic and molecular emissions in laser-induced breakdown spectroscopy of organic compounds",
+      "authors": "Qianli Ma; Paul J. Dagdigian",
+      "year": 2011,
+      "identifier": "doi:10.1007/s00216-011-4687-y; PMID:21279806",
+      "authority": "Analytical and Bioanalytical Chemistry / PubMed metadata",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Use the kinetic-model-to-experiment workflow for LIBS excited-state populations and time-dependent atomic/molecular emission as a validation precedent. NIST, not the search-result copy of this paper, is the authority used to promote 96750 as a physical-level match."
+    },
+    {
+      "source_id": "SRC-NBS-SHADMI-PD-GROUP-1966-R16",
+      "title": "The Configurations 4dn + 4dn-1 5s in Doubly-Ionized Atoms of the Palladium Group",
+      "author": "Yehuda Shadmi",
+      "year": 1966,
+      "identifier": "doi:10.6028/jres.070A.036",
+      "authority": "Journal of Research of the National Bureau of Standards",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a historical theoretical atomic-structure/modeling reference and as a calibration case for distinguishing predicted/calculated energy-level coincidences from evaluated experimental levels. The table contains an exact 60957 cm^-1 predicted level, but the paper explicitly describes its 483 levels as predicted by interpolation formulas."
+    },
+    {
+      "source_id": "SRC-NVD-CVE-2025-60957-R16",
+      "title": "CVE-2025-60957 — EndRun Technologies Sonoma D12 OS command injection",
+      "authority": "NIST National Vulnerability Database",
+      "year": 2025,
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_SECURITY_INFORMATION",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-60957",
+      "use": ["SECURITY_HARDENING", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as a current hardening input for network-time/GPS infrastructure and as a technical-metadata collision for target 60957. Particularly relevant to timing/PNT systems because the affected product is a GPS network time server."
+    },
+    {
+      "source_id": "SRC-NIST-COBLENTZ-GERANIC-07659-R16",
+      "title": "NIST Chemistry WebBook evaluated IR spectrum of geranic acid — Coblentz No. 07659",
+      "authority": "NIST Chemistry WebBook / Coblentz Society evaluated IR collection",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?ID=C459803&Mask=3DFF",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use the JCAMP-DX/downloadable evaluated IR spectrum as a spectroscopy-ingestion fixture and target 07659 as a catalog-number metadata control. Preserve the five-position string with its leading zero in Glob provenance."
+    },
+    {
+      "source_id": "SRC-PUBMED-PMID-79056-R16",
+      "title": "A spoonful of sugar",
+      "author": "D. R. Nalin",
+      "year": 1978,
+      "identifier": "PMID:79056",
+      "authority": "PubMed / Lancet bibliographic record",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "note": "Use only as a clean PMID metadata collision for target 79056; the medical content is unrelated to the Glob physical hypothesis."
+    },
+    {
+      "source_id": "SRC-SCIREP-RASHBA-39699-R16",
+      "title": "Superconductivity Bordering Rashba Type Topological Transition",
+      "authors": "M. L. Jin et al.",
+      "year": 2017,
+      "identifier": "doi:10.1038/srep39699; Scientific Reports 7:39699",
+      "authority": "Scientific Reports",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "note": "Use the superconductivity/topological-transition content as materials/quantum reference material. Exact 39699 is the article number and therefore technical metadata, not a physical-value match."
+    },
+    {
+      "source_id": "SRC-ACS-LIPVFM-LATP-41494-R16",
+      "title": "Across Interfacial Li+ Conduction Accelerated by a Single-Ion Conducting Polymer in Ceramic-Rich Composite Electrolytes for Solid-State Batteries",
+      "authors": "Nan Meng et al.",
+      "year": 2024,
+      "identifier": "doi:10.1021/acsami.4c06551; pages 41487-41494",
+      "authority": "ACS Applied Materials & Interfaces",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use the experimentally and AIMD-supported interfacial Li+ transport design, high ceramic fraction, mechanical robustness and electrolyte performance as an energy-storage materials reference. Exact 41494 is the terminal page number and carries zero physical Glob weight."
+    },
+    {
+      "source_id": "SRC-NATCOMM-FERROELECTRIC-41494-R16",
+      "title": "Broad-high operating temperature range and enhanced energy storage performances in lead-free ferroelectrics",
+      "authors": "Weichen Zhao et al.",
+      "year": 2023,
+      "identifier": "doi:10.1038/s41467-023-41494-1",
+      "authority": "Nature Communications",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a lead-free ferroelectric energy-storage operating-range reference. Exact 41494 occurs in the DOI suffix and is metadata only."
+    },
+    {
+      "source_id": "SRC-MA3MPO-TDDFT-41494-R16",
+      "title": "Crystal structure, vibrational and optic properties of 2-N-methylamino-3-methylpyridine N-oxide — X-ray, spectroscopic and DFT studies",
+      "year": 2020,
+      "authority": "Peer-reviewed spectroscopy/DFT study indexed in PubMed Central",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "note": "Use as a theory-vs-experiment calibration case. TD-DFT reports a calculated S6 electronic excited state at exactly 41494 cm^-1; this is a calculated physical quantity, not an observed discrete 41494-cm^-1 line and must remain subtype-separated from the W II relational evidence."
+    },
+    {
+      "source_id": "SRC-LHD-W43-W47-XCS-2026-R16",
+      "title": "Exploration of emission spectra from W43+-W47+ highly charged tungsten impurity ions in the x-ray wavelength range of 3.7-4.0 A in the Large Helical Device for fusion plasma diagnostics",
+      "year": 2026,
+      "identifier": "doi:10.1088/1741-4326/ae712e",
+      "authority": "Nuclear Fusion / IOP Publishing; LHD experimental work",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_PUBLICATION",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as a current LHD X-ray spectroscopy benchmark combining ten reproducible tungsten-pellet discharges, XCS measurements, FAC calculations and ADAS-weighted collisional-radiative modeling; includes W43+-W47+ identification and a W47+ line at 3.7691 A."
+    },
+    {
+      "source_id": "SRC-WI-RDW-EIE-2026-R16",
+      "title": "Relativistic calculations of electron impact excitation cross-sections of neutral tungsten",
+      "authors": "Ritu Dey et al.",
+      "year": 2026,
+      "identifier": "arXiv:2603.02612",
+      "authority": "arXiv preprint; fine-structure-resolved RDW/MCDF tungsten study",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_PREPRINT",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL"],
+      "note": "Use as a current neutral-W excitation/metastable benchmark for 1-50 eV plasma modeling, with ground/metastable initial-state dependence, threshold-to-500-eV cross sections, NIST energy comparisons and selected radiative transition probabilities. Keep preprint status explicit."
+    },
+    {
+      "source_id": "SRC-MWE-LIBS-W-2026-R16",
+      "title": "Microwave-enhanced laser-induced breakdown spectroscopy for trace tungsten analysis",
+      "year": 2026,
+      "identifier": "doi:10.1016/j.sab.2025.107403",
+      "authority": "Spectrochimica Acta Part B: Atomic Spectroscopy",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_PUBLICATION",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "note": "Use as an instrumentation/prototyping benchmark for trace W diagnostics: microwave enhancement of both W I and W II emission, plasma lifetime beyond 100 microseconds, reported intensity enhancement above 400 and detection limits of 0.036 wt% W I / 0.062 wt% W II in Al-W alloys."
+    }
+  ],
+  "evidence_updates": [
+    {
+      "record_id": "EV-R16-NI-96750-840",
+      "source_id": "SRC-NIST-NI-LEVELS-R16",
+      "target": "96750",
+      "observed_value_cm-1": 96750.840,
+      "delta_cm-1": 0.840,
+      "evidence_class": "P1",
+      "physical_value_subtype": "EVALUATED_ATOMIC_ENERGY_LEVEL",
+      "verification_status": "verified_current_authority",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "This is a current-authority near-exact physical energy-level match within the pre-used 1 cm^-1 screening tolerance. It establishes a P1 candidate only; it does not establish causal connection to the permutation and remains subject to global null/multiple-testing correction."
+    },
+    {
+      "record_id": "EV-R16-NI-96750-CONNECTIVITY",
+      "source_id": "SRC-NIST-NI-PERSISTENT-LINES-R16",
+      "target": "96750",
+      "evidence_class": "P1",
+      "physical_value_subtype": "EVALUATED_LEVEL_WITH_DOCUMENTED_TRANSITIONS",
+      "verification_status": "verified_current_authority",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "claims_boundary": "NIST persistent-line connectivity strengthens physical interpretation of the 96750.840 level but is a complementary view of the same NIST authority, not an independent statistical observation."
+    },
+    {
+      "record_id": "EV-R16-60957-SHADMI-THEORY",
+      "source_id": "SRC-NBS-SHADMI-PD-GROUP-1966-R16",
+      "target": "60957",
+      "evidence_class": "P1",
+      "physical_value_subtype": "THEORETICAL_PREDICTED_ATOMIC_LEVEL",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "60957 cm^-1 is a predicted level in a paper whose abstract states that the energy levels were predicted by interpolation formulas. Treat this as a theoretical physical-value coincidence, not empirical confirmation; it must not be pooled with evaluated/observed P1 values without subtype control."
+    },
+    {
+      "record_id": "EV-R16-41494-TDDFT",
+      "source_id": "SRC-MA3MPO-TDDFT-41494-R16",
+      "target": "41494",
+      "evidence_class": "P1",
+      "physical_value_subtype": "THEORETICAL_TDDFT_EXCITED_STATE",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "PRIME_SENTINEL", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "The exact 41494 cm^-1 value is calculated by TD-DFT for an electronic state. It is not an observed exact transition; use it to calibrate the frequency of integer-valued theory coincidences and keep it separate from the current-authority W II same-level relational result."
+    },
+    {
+      "record_id": "EV-R16-60957-CVE",
+      "source_id": "SRC-NVD-CVE-2025-60957-R16",
+      "target": "60957",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["SECURITY_HARDENING", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "60957 is the CVE identifier suffix, not a physical quantity."
+    },
+    {
+      "record_id": "EV-R16-07659-COBLENTZ",
+      "source_id": "SRC-NIST-COBLENTZ-GERANIC-07659-R16",
+      "target": "07659",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["SARA", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "07659 is the Coblentz spectrum catalog number. Preserve the leading-zero target string; the spectrum is useful as an ingestion fixture but the catalog collision is metadata only."
+    },
+    {
+      "record_id": "EV-R16-79056-PMID",
+      "source_id": "SRC-PUBMED-PMID-79056-R16",
+      "target": "79056",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "79056 is a PubMed identifier and carries no physical Glob evidence weight."
+    },
+    {
+      "record_id": "EV-R16-39699-SCIREP",
+      "source_id": "SRC-SCIREP-RASHBA-39699-R16",
+      "target": "39699",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "NEGATIVE_CONTROL_CORPUS", "PRIME_SENTINEL"],
+      "claims_boundary": "39699 is the Scientific Reports article number, not a physical-value match."
+    },
+    {
+      "record_id": "EV-R16-41494-ACS-PAGE",
+      "source_id": "SRC-ACS-LIPVFM-LATP-41494-R16",
+      "target": "41494",
+      "evidence_class": "N0",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "41494 is the terminal page number of the publication; it is an incidental publication-location collision."
+    },
+    {
+      "record_id": "EV-R16-41494-NATCOMM-DOI",
+      "source_id": "SRC-NATCOMM-FERROELECTRIC-41494-R16",
+      "target": "41494",
+      "evidence_class": "M1",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "41494 is embedded in the DOI suffix and is technical metadata, not a measured physical value."
+    }
+  ],
+  "information_updates": [
+    {
+      "update_id": "INFO-R16-P1-SUBTYPE-HARDENING",
+      "discovery_status": "NEWLY_FORMALIZED",
+      "finding": "P1 physical-value hits require an internal subtype so evaluated/observed values, experimentally derived values and theoretical/calculated values are not pooled as equivalent evidence.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "OVERWATCH"],
+      "claims_boundary": "The canonical P1 label remains unchanged; subtype is a claims-control refinement and does not automatically raise or lower statistical significance."
+    },
+    {
+      "update_id": "INFO-R16-96750-SAME-LEVEL-DEGREE-SEED",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "The NIST persistent-lines table shows at least two prominent transitions terminating at the 96750.840 cm^-1 N I level, establishing that the target-near level is not an isolated catalog entry and can support future species-specific topology tests.",
+      "worldshepherd_uses": ["OVERWATCH", "PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "The two persistent lines are a selected observability subset, not the complete N I transition degree. Full ASD line acquisition is required before topology statistics."
+    },
+    {
+      "update_id": "INFO-R16-2026-W-DIAGNOSTIC-STACK",
+      "discovery_status": "NEWLY_DISCOVERED_CURRENT_INFORMATION",
+      "finding": "Current 2026 tungsten work now spans high-charge-state LHD X-ray identification, neutral-W fine-structure electron-impact excitation/metastable modeling, and microwave-enhanced W I/W II LIBS instrumentation, giving Worldshepherd complementary atomic-data, plasma-model and sensor/prototype validation layers.",
+      "worldshepherd_uses": ["MATERIALS_AND_CHARACTERIZATION", "OVERWATCH", "PRIME_SENTINEL", "OPPORTUNITY_AND_PARTNER_INTEL"],
+      "claims_boundary": "These sources strengthen Worldshepherd tungsten diagnostics and validation capability but do not contribute Glob-number evidence unless a predeclared target relationship is separately established."
+    }
+  ],
+  "next_actions": [
+    "Acquire complete N I ASD line data around the 96750.840 cm^-1 level and test whether any additional predeclared Glob targets participate in same-species topology/relational motifs.",
+    "Acquire the complete current W II ASD machine-readable transition table and run the authoritative predeclared-target topology analysis.",
+    "Add P1 physical-value subtype handling to future statistical exports so evaluated/observed, experimentally derived and theoretical/calculated coincidences can be analyzed separately.",
+    "Continue internet scanning of all active target-state families and current spectroscopy/plasma/materials literature, routing substantive sources even when the numeric occurrence is metadata or negative-control only.",
+    "Apply topology-preserving null models and global multiple-testing/false-discovery correction across species, datasets, target states, tolerances, evidence subtypes and motif searches before statistical promotion."
+  ]
+}
