@@ -1,0 +1,53 @@
+{
+  "schema_version": "ws-glob-raw-hit-reservoir-1.0",
+  "as_of": "2026-08-16",
+  "inquiry": "Glob 99073",
+  "purpose": "Preserve raw exact-number internet hits separately from P1/P2 evidence so collision frequency, source-class frequency, no-hit outcomes, and null-model behavior remain auditable.",
+  "policy": {
+    "rule": "A raw hit records occurrence only. It carries zero automatic physical-evidence weight.",
+    "promotion": "Promotion to P1/P2 requires an independently verified physical quantity and, for P2, a documented same-system physical relation.",
+    "no_hit": "Defined searches that return no relevant exact occurrence are retained as no-hit observations rather than discarded.",
+    "worldshepherd_use": "Every substantive publication surfaced through a raw hit is separately routed for engineering, characterization, security, data-analysis, or negative-control use."
+  },
+  "search_scope": {
+    "permutation_families": ["12345->31542", "12345->13524", "12345->14523"],
+    "current_union_unique_states": 208,
+    "focus_this_pass": "14523-only states plus immediate three-family controls"
+  },
+  "records": [
+    {"target":"01403","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1016/S0009-2614(02)01403-3","context":"Transient resonance Raman investigation of CHBr2 and CHBrCl radicals","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"01403","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1038/s41378-026-01403-0","context":"Integrated nanophotonic SPRM microsystem for single-cell adhesion dynamics","glob_weight":"M1_RAW","worldshepherd_use":["SENSOR_FUSION_AND_IMAGING","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"01403","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1038/s42004-024-01403-z","context":"Excited-state dynamics of azanaphthalenes","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"03100","raw_hit_type":"NO_RELEVANT_EXACT_HIT_IN_PASS","glob_weight":"NO_HIT","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS","OVERWATCH"]},
+    {"target":"04431","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1007/s00216-022-04431-7","context":"AFM and infrared spectroscopy of polydopamine antibiofouling surfaces","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"04431","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1007/s13205-025-04431-1","context":"Seed-mediated synthesis and biosynthesis of iron oxide nanoparticles","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"27745","raw_hit_type":"TERMINAL_PAGE","occurrence":"27732-27745","context":"Cryogenic ion-trap vibrational spectroscopy of microhydrated sulfate dianions","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"33295","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1002/jbm.a.33295","context":"Diamond-like-carbon-coated NiTi alloy biological response","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"33295","raw_hit_type":"TELEPHONE_EXTENSION","occurrence":"33295","context":"Atomic/laser-spectroscopy laboratory personnel page","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"40194","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1016/S1474-6670(17)40194-7","context":"Artificial neural networks in UV/VIS spectral analysis of ribonucleotides","glob_weight":"M1_RAW","worldshepherd_use":["SARA","OVERWATCH","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"40194","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1038/40194","context":"DAF-16 insulin-like metabolic/longevity signaling study","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"54232","raw_hit_type":"ARTICLE_ID","occurrence":"2007:54232","context":"Blue copper protein rusticyanin folding/unfolding study","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"54232","raw_hit_type":"REPOSITORY_ID","occurrence":"hdl:11585/54232","context":"Sub-Doppler millimetre-wave spectroscopy of DBS and HBS","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"59677","raw_hit_type":"DOI_SUFFIX","occurrence":"10.1038/s41598-020-59677-x","context":"Fast switching hetero-integrated time-of-flight LiDAR sensors","glob_weight":"M1_RAW","worldshepherd_use":["SENSOR_FUSION_AND_IMAGING","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"59677","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"RSC Adv. 2016, 6, 59677","context":"Fluorescein colorimetric Cu2+ probe","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"63079","raw_hit_type":"PUBCHEM_CID","occurrence":"CID 63079","context":"PCB No. 163 chemical record with NIST-linked GC-MS spectral data","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70593","raw_hit_type":"DOI_ARTICLE_NUMBER","occurrence":"10.1038/s41467-026-70593-y","context":"Direct observation of cation-dependent polarization switching in fluorite ferroelectrics","glob_weight":"M1_RAW","worldshepherd_use":["PROGRAMMABLE_MATERIALS","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"70593","raw_hit_type":"DOI_ARTICLE_NUMBER","occurrence":"10.1002/ejoc.70593","context":"Intramolecular hydrogen bonds in aminoalcohol-containing receptor systems","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77596","raw_hit_type":"PHYSICAL_THEORY_VALUE","occurrence":"77596 cm^-1","context":"Historical NBS calculated Rh III energy level","glob_weight":"P1_THEORY","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL"]},
+    {"target":"89367","raw_hit_type":"DOI_SUFFIX","occurrence":"10.2196/89367","context":"AI-powered medical history-taking system","glob_weight":"M1_RAW","worldshepherd_use":["HUMAN_MACHINE_INTERACTION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"89367","raw_hit_type":"PII_COMPONENT","occurrence":"0009-2614(93)89367-Q","context":"Picosecond intracomplex electron-transfer spectroscopy","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"92453","raw_hit_type":"SOFTWARE_PR_ID","occurrence":"LLVM/MLIR PR #92453","context":"ArrayMaxCount attribute constraint","glob_weight":"N0_RAW","worldshepherd_use":["SOFTWARE_ENGINEERING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"92453","raw_hit_type":"LOINC_CODE","occurrence":"92453-0","context":"PROMIS self-efficacy survey item","glob_weight":"M1_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95067","raw_hit_type":"ARTICLE_ID_DOI_SUFFIX","occurrence":"10.7759/cureus.95067","context":"Electron-spin-resonance detection of ascorbyl radicals in whole blood","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","SENSOR_FUSION_AND_IMAGING","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"97390","raw_hit_type":"SERIAL_OR_INSTRUMENT_ID","occurrence":"97390","context":"Previously screened portable-XRF/instrument serial occurrence","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99593","raw_hit_type":"METEORITE_NAME","occurrence":"Queen Alexandra Range 99593 / Sahara 99593","context":"Official Meteoritical Bulletin names","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"99593","raw_hit_type":"SOFTWARE_SOLVER_MESSAGE","occurrence":"Autodesk Moldflow message 99593","context":"Filler/fiber specific-heat property range error","glob_weight":"N0_RAW","worldshepherd_use":["SOLVER_VALIDATION","MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"44049","raw_hit_type":"PHYSICAL_COMPILED_VALUE","occurrence":"Te=(44049) cm^-1","context":"NIST Chemistry WebBook NS H 2Pi_i electronic state","glob_weight":"P1_COMPILED","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL"]}
+  ],
+  "next_actions": [
+    "Continue appending raw exact-number hits across all 208 union states without deleting weak or incidental occurrences.",
+    "Record query/source class and retrieval date so hit density can be modeled by source type.",
+    "Keep raw hit count separate from unique-source count and independent-evidence count.",
+    "Run authoritative physical-value and same-system topology scans in parallel with raw accumulation."
+  ]
+}
