@@ -8,6 +8,7 @@ on:
       - "worldshepherd_sara/quantum_evidence.py"
       - "worldshepherd_sara/quantum_resource.py"
       - "worldshepherd_sara/quantum_ibm.py"
+      - "worldshepherd_sara/quantum_sara_bridge.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_evidence.py"
       - "scripts/scan_pqc_inventory.py"
@@ -20,6 +21,7 @@ on:
       - "data/pqc_migration_inventory.json"
       - "data/quantum_application_benchmarks.json"
       - "docs/QUANTUM_READINESS_FABRIC.md"
+      - "docs/QUANTUM_READINESS_STATUS_2026-08-17.md"
       - ".github/workflows/quantum-readiness.yml"
   push:
     branches:
@@ -30,6 +32,7 @@ on:
       - "worldshepherd_sara/quantum_evidence.py"
       - "worldshepherd_sara/quantum_resource.py"
       - "worldshepherd_sara/quantum_ibm.py"
+      - "worldshepherd_sara/quantum_sara_bridge.py"
       - "worldshepherd_sara/pqc_inventory.py"
       - "scripts/generate_quantum_evidence.py"
       - "scripts/scan_pqc_inventory.py"
@@ -42,6 +45,7 @@ on:
       - "data/pqc_migration_inventory.json"
       - "data/quantum_application_benchmarks.json"
       - "docs/QUANTUM_READINESS_FABRIC.md"
+      - "docs/QUANTUM_READINESS_STATUS_2026-08-17.md"
       - ".github/workflows/quantum-readiness.yml"
 
 jobs:
@@ -75,6 +79,7 @@ jobs:
             worldshepherd_sara/quantum_evidence.py \
             worldshepherd_sara/quantum_resource.py \
             worldshepherd_sara/quantum_ibm.py \
+            worldshepherd_sara/quantum_sara_bridge.py \
             worldshepherd_sara/pqc_inventory.py
 
       - name: Run QRF governance tests
@@ -85,7 +90,7 @@ jobs:
       - name: Run quantum execution and evidence tests
         env:
           PYTHONPATH: .
-        run: pytest -q tests/test_quantum_qiskit.py tests/test_quantum_evidence.py tests/test_quantum_ibm.py
+        run: pytest -q tests/test_quantum_qiskit.py tests/test_quantum_evidence.py tests/test_quantum_ibm.py tests/test_quantum_sara_bridge.py
 
       - name: Generate governed CI evidence
         env:
