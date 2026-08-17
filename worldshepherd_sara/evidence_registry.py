@@ -13,9 +13,15 @@ from worldshepherd_sara.evidence_contract import (
     validate_claim_record,
     validate_experiment_record,
 )
+from worldshepherd_sara.evidence_material import validate_material_record
 
-RecordKind = Literal["experiment", "claim", "calibration"]
-RECORD_KINDS: tuple[RecordKind, ...] = ("experiment", "claim", "calibration")
+RecordKind = Literal["experiment", "claim", "calibration", "material"]
+RECORD_KINDS: tuple[RecordKind, ...] = (
+    "experiment",
+    "claim",
+    "calibration",
+    "material",
+)
 
 
 class EvidenceRegistryError(RuntimeError):
@@ -51,7 +57,9 @@ def _record_id(kind: RecordKind, payload: Dict[str, Any]) -> str:
         return payload["experiment_id"]
     if kind == "claim":
         return payload["claim_id"]
-    return payload["calibration_id"]
+    if kind == "calibration":
+        return payload["calibration_id"]
+    return payload["material_batch_id"]
 
 
 def _normalize_sha256(value: str) -> str | None:
@@ -69,18 +77,14 @@ def verify_local_raw_digest(payload: Dict[str, Any]) -> Dict[str, Any]:
     digest_text = raw.get("digest")
     if not isinstance(location, str) or not isinstance(digest_text, str):
         return {"status": "UNVERIFIED", "reason": "missing location or digest"}
-
     expected = _normalize_sha256(digest_text)
     if expected is None:
         return {"status": "UNVERIFIED", "reason": "digest is not SHA-256"}
-
     if "://" in location and not location.startswith("file://"):
         return {"status": "UNVERIFIED", "reason": "remote evidence object"}
-
     path = Path(location[7:] if location.startswith("file://") else location)
     if not path.is_file():
         return {"status": "UNVERIFIED", "reason": "local evidence object not present"}
-
     actual = hashlib.sha256(path.read_bytes()).hexdigest()
     if actual != expected:
         raise EvidenceDigestMismatch(
@@ -90,7 +94,7 @@ def verify_local_raw_digest(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 class EvidenceRegistry:
-    """Append-only experiment, claim, and calibration registry."""
+    """Append-only scientific evidence and engineering provenance registry."""
 
     def __init__(self, data_dir: Path | str):
         self.root = Path(data_dir) / "evidence"
@@ -99,6 +103,7 @@ class EvidenceRegistry:
             "experiment": self.root / "experiments.jsonl",
             "claim": self.root / "claims.jsonl",
             "calibration": self.root / "calibrations.jsonl",
+            "material": self.root / "materials.jsonl",
         }
         self._lock = RLock()
 
@@ -109,6 +114,8 @@ class EvidenceRegistry:
             return validate_claim_record(payload)
         if kind == "calibration":
             return validate_calibration_record(payload)
+        if kind == "material":
+            return validate_material_record(payload)
         raise EvidenceValidationError("unsupported evidence record kind")
 
     def _iter_envelopes(self, kind: RecordKind) -> Iterator[Dict[str, Any]]:
@@ -157,20 +164,32 @@ class EvidenceRegistry:
         if kind == "calibration":
             return {"MEASURED"}
         record = envelope.get("record") or {}
-        key = "evidence_class" if kind == "experiment" else "evidence_classes"
-        values = record.get(key, [])
+        if kind == "experiment":
+            values = record.get("evidence_class", [])
+        elif kind == "claim":
+            values = record.get("evidence_classes", [])
+        else:
+            values = []
+            values.extend(
+                observation.get("evidence_class")
+                for observation in record.get("microstructure_observations", [])
+                if isinstance(observation, dict)
+            )
+            values.extend(
+                prop.get("evidence_class")
+                for prop in record.get("properties", [])
+                if isinstance(prop, dict)
+            )
         return {str(value) for value in values if isinstance(value, str)}
 
     def _validate_experiment_references(self, payload: Dict[str, Any]) -> None:
         if "MEASURED" not in payload.get("evidence_class", []):
             return
-
         calibration_ids = payload.get("calibration_ids", [])
         if not calibration_ids:
             raise EvidenceReferenceError(
                 "MEASURED experiment requires at least one registered calibration_id"
             )
-
         calibration_set = set(calibration_ids)
         for calibration_id in calibration_ids:
             kind, _ = self._resolve_record(calibration_id)
@@ -178,7 +197,6 @@ class EvidenceRegistry:
                 raise EvidenceReferenceError(
                     f"experiment calibration_id must resolve to calibration record: {calibration_id}"
                 )
-
         for sensor in payload.get("sensor_manifest", []):
             sensor_calibration = sensor.get("calibration_id")
             if sensor_calibration not in calibration_set:
@@ -195,32 +213,27 @@ class EvidenceRegistry:
         supporting_ids = payload.get("supporting_record_ids", [])
         contradicting_ids = payload.get("contradicting_record_ids", [])
         replication_ids = payload.get("replication_ids", [])
-
         support_classes: set[str] = set()
         for record_id in supporting_ids:
             kind, envelope = self._resolve_record(record_id)
             support_classes.update(self._envelope_evidence_classes(kind, envelope))
-
         for record_id in contradicting_ids:
             self._resolve_record(record_id)
         for record_id in replication_ids:
             self._resolve_record(record_id)
-
         if "MEASURED" in payload.get("evidence_classes", []) and "MEASURED" not in support_classes:
             raise EvidenceReferenceError(
                 "claim declares MEASURED evidence but no supporting record is actually MEASURED"
             )
-
         if payload.get("confidence_status") == "INDEPENDENTLY_REPRODUCED" and not replication_ids:
             raise EvidenceReferenceError(
                 "INDEPENDENTLY_REPRODUCED confidence requires resolvable replication_ids"
             )
-
         uncertainty_reference = payload.get("uncertainty_reference")
         if payload.get("quantitative") and "MEASURED" in payload.get("evidence_classes", []):
             base_id = str(uncertainty_reference).split("#", 1)[0]
             kind, envelope = self._resolve_record(base_id)
-            if kind == "claim":
+            if kind not in {"experiment", "calibration"}:
                 raise EvidenceReferenceError(
                     "quantitative measured uncertainty_reference must resolve to an experiment or calibration"
                 )
@@ -228,6 +241,39 @@ class EvidenceRegistry:
                 raise EvidenceReferenceError(
                     "quantitative measured uncertainty_reference experiment must be MEASURED"
                 )
+
+    def _validate_material_references(self, payload: Dict[str, Any]) -> None:
+        for feedstock_id in payload.get("feedstock_ids", []):
+            kind, _ = self._resolve_record(feedstock_id)
+            if kind != "material":
+                raise EvidenceReferenceError(
+                    f"feedstock_id must resolve to material record: {feedstock_id}"
+                )
+
+        for collection_name in ("microstructure_observations", "properties"):
+            for item in payload.get(collection_name, []):
+                evidence_class = item.get("evidence_class")
+                source_ids = item.get("source_record_ids", [])
+                source_classes: set[str] = set()
+                for source_id in source_ids:
+                    kind, envelope = self._resolve_record(source_id)
+                    source_classes.update(self._envelope_evidence_classes(kind, envelope))
+                if evidence_class == "MEASURED" and "MEASURED" not in source_classes:
+                    raise EvidenceReferenceError(
+                        f"{collection_name} item declares MEASURED but has no measured source record"
+                    )
+                uncertainty_reference = item.get("uncertainty_reference")
+                if evidence_class == "MEASURED" and uncertainty_reference:
+                    base_id = str(uncertainty_reference).split("#", 1)[0]
+                    kind, envelope = self._resolve_record(base_id)
+                    if kind not in {"experiment", "calibration"}:
+                        raise EvidenceReferenceError(
+                            "measured material uncertainty_reference must resolve to experiment or calibration"
+                        )
+                    if kind == "experiment" and "MEASURED" not in self._envelope_evidence_classes(kind, envelope):
+                        raise EvidenceReferenceError(
+                            "measured material uncertainty_reference experiment must be MEASURED"
+                        )
 
     def _superseded_ids(self, kind: RecordKind) -> set[str]:
         return {
@@ -246,12 +292,9 @@ class EvidenceRegistry:
     ) -> Dict[str, Any]:
         validated = dict(self._validate(kind, payload))
         identifier = _record_id(kind, validated)
-
         with self._lock:
-            all_ids = self._all_id_locations()
-            if identifier in all_ids:
+            if identifier in self._all_id_locations():
                 raise DuplicateEvidenceId(f"evidence id already exists: {identifier}")
-
             index = self._id_index(kind)
             if supersedes_record_id:
                 if supersedes_record_id == identifier:
@@ -269,15 +312,16 @@ class EvidenceRegistry:
                 self._validate_experiment_references(validated)
             elif kind == "claim":
                 self._validate_claim_references(validated)
+            elif kind == "material":
+                self._validate_material_references(validated)
 
             digest_verification = (
                 verify_local_raw_digest(validated)
                 if kind in {"experiment", "calibration"}
                 else {"status": "NOT_APPLICABLE"}
             )
-
             envelope = {
-                "registry_version": "WS-EVIDENCE-0.2",
+                "registry_version": "WS-EVIDENCE-0.3",
                 "record_type": kind,
                 "record_id": identifier,
                 "stored_at_utc": _utc_now(),
@@ -309,12 +353,13 @@ class EvidenceRegistry:
         experiments = list(self._iter_envelopes("experiment"))
         claims = list(self._iter_envelopes("claim"))
         calibrations = list(self._iter_envelopes("calibration"))
-
+        materials = list(self._iter_envelopes("material"))
         evidence_counts: Dict[str, int] = {}
         result_counts: Dict[str, int] = {}
         claim_counts: Dict[str, int] = {}
         confidence_counts: Dict[str, int] = {}
         calibration_counts: Dict[str, int] = {}
+        material_role_counts: Dict[str, int] = {}
 
         for envelope in experiments:
             record = envelope.get("record", {})
@@ -323,7 +368,6 @@ class EvidenceRegistry:
             result_class = record.get("result_class")
             if result_class:
                 result_counts[result_class] = result_counts.get(result_class, 0) + 1
-
         for envelope in claims:
             record = envelope.get("record", {})
             claim_class = record.get("claim_class")
@@ -332,24 +376,29 @@ class EvidenceRegistry:
                 claim_counts[claim_class] = claim_counts.get(claim_class, 0) + 1
             if confidence:
                 confidence_counts[confidence] = confidence_counts.get(confidence, 0) + 1
-
         for envelope in calibrations:
-            record = envelope.get("record", {})
-            calibration_type = record.get("calibration_type")
+            calibration_type = envelope.get("record", {}).get("calibration_type")
             if calibration_type:
                 calibration_counts[calibration_type] = calibration_counts.get(calibration_type, 0) + 1
+        for envelope in materials:
+            role = envelope.get("record", {}).get("batch_role")
+            if role:
+                material_role_counts[role] = material_role_counts.get(role, 0) + 1
 
         return {
-            "registry_version": "WS-EVIDENCE-0.2",
+            "registry_version": "WS-EVIDENCE-0.3",
             "experiments": len(experiments),
             "claims": len(claims),
             "calibrations": len(calibrations),
+            "materials": len(materials),
             "superseded_experiments": len(self._superseded_ids("experiment")),
             "superseded_claims": len(self._superseded_ids("claim")),
             "superseded_calibrations": len(self._superseded_ids("calibration")),
+            "superseded_materials": len(self._superseded_ids("material")),
             "evidence_classes": evidence_counts,
             "result_classes": result_counts,
             "claim_classes": claim_counts,
             "confidence_states": confidence_counts,
             "calibration_types": calibration_counts,
+            "material_roles": material_role_counts,
         }
