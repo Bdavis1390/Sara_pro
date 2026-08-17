@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "updated_utc": "2026-08-17",
+  "policy": {
+    "default_rule": "classical baseline before quantum attribution",
+    "simulator_is_not_qpu": true,
+    "quantum_advantage_requires_task_specific_proof": true,
+    "partner_hardware_does_not_imply_worldshepherd_hardware_ownership": true
+  },
+  "projects": [
+    {
+      "project_id": "SARA-QRF",
+      "priority": 1,
+      "quantum_fit": "high",
+      "current_lane": "software_governance",
+      "apply_now": [
+        "quantum evidence schema",
+        "backend registry",
+        "OpenQASM/QIR digest retention",
+        "resource-estimation records",
+        "post-quantum cryptography inventory"
+      ],
+      "physical_gap": "real QPU access remains external",
+      "next_gate": "execute Bell/GHZ smoke workload on simulator and real QPU with provenance"
+    },
+    {
+      "project_id": "WS-APNT",
+      "priority": 2,
+      "quantum_fit": "high",
+      "current_lane": "partner_hardware",
+      "apply_now": [
+        "atomic-clock interface contract",
+        "quantum inertial/magnetometer partner requirements",
+        "sensor uncertainty/provenance schema",
+        "PQC control-link migration"
+      ],
+      "physical_gap": "calibrated quantum sensor hardware",
+      "next_gate": "partner-backed sensor dataset or hardware-in-loop test"
+    },
+    {
+      "project_id": "WS-ALTI",
+      "priority": 3,
+      "quantum_fit": "medium_high",
+      "current_lane": "materials_computation",
+      "apply_now": [
+        "select reduced electronic-structure benchmark",
+        "establish DFT reference",
+        "run ideal/noisy VQE study",
+        "perform fault-tolerant resource estimate"
+      ],
+      "physical_gap": "quantum result cannot replace coupon/material validation",
+      "next_gate": "quantum result compared against classical reference and experimental target"
+    },
+    {
+      "project_id": "WS-METASURFACE",
+      "priority": 4,
+      "quantum_fit": "medium",
+      "current_lane": "optimization_and_materials",
+      "apply_now": [
+        "classical full-wave baseline",
+        "discrete tile-state optimization benchmark",
+        "QAOA challenger experiment",
+        "quantum-sensor partner option for metrology"
+      ],
+      "physical_gap": "no evidence that signed classical coupling is quantum entanglement",
+      "next_gate": "QAOA compared against classical optimizer on fixed objective and budget"
+    },
+    {
+      "project_id": "WS-AUTONOMOUS-LOGISTICS",
+      "priority": 5,
+      "quantum_fit": "medium",
+      "current_lane": "hybrid_optimization",
+      "apply_now": [
+        "MILP/CP-SAT baseline",
+        "QAOA/hybrid benchmark",
+        "latency/cost/quality telemetry",
+        "PQC mission-data path"
+      ],
+      "physical_gap": "QPU queue/cost and scale may erase theoretical gains",
+      "next_gate": "measured improvement on a mission-relevant instance family"
+    },
+    {
+      "project_id": "WS-EM-PROPULSION",
+      "priority": 6,
+      "quantum_fit": "bounded",
+      "current_lane": "materials_and_metrology_only",
+      "apply_now": [
+        "electronic-structure support for candidate materials",
+        "quantum-limited sensor literature/partner scan",
+        "force-measurement null-control design"
+      ],
+      "physical_gap": "quantum computation does not establish anomalous thrust",
+      "next_gate": "controlled physical force measurement independent of quantum modeling"
+    },
+    {
+      "project_id": "WS-GLOB",
+      "priority": 7,
+      "quantum_fit": "conditional",
+      "current_lane": "classical_numerical_research",
+      "apply_now": [
+        "preserve exact seed/permutation provenance",
+        "randomized/null-model baselines",
+        "allow quantum experiment only after explicit oracle/Hamiltonian/objective mapping"
+      ],
+      "physical_gap": "prime indexing and permutation structure are not quantum observables",
+      "next_gate": "formal quantum algorithm mapping with measurable output and classical comparator"
+    }
+  ]
+}
