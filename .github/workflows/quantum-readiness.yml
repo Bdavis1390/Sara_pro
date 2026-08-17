@@ -61,8 +61,10 @@ jobs:
           python -m pip install pytest
           python -m pip install -r requirements-quantum.txt
 
-      - name: Compile QRF modules
-        run: python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
+      - name: Compile QRF modules and CLIs
+        run: |
+          python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
+          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py
 
       - name: Run complete QRF test suite
         env:
