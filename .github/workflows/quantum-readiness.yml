@@ -70,7 +70,7 @@ jobs:
       - name: Compile QRF modules and CLIs
         run: |
           python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
-          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_ionq_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py scripts/generate_quantum_evidence_profile_conformance.py
+          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_ionq_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py scripts/generate_quantum_evidence_profile_conformance.py scripts/generate_quantum_glob_operator_mappings.py
 
       - name: Run complete QRF test suite
         env:
@@ -86,6 +86,7 @@ jobs:
           python scripts/generate_quantum_acquisition_requests.py --output .qrf-artifacts/quantum_acquisition_requests.json
           python scripts/generate_quantum_external_review_template.py --output .qrf-artifacts/quantum_external_review_template.json
           python scripts/generate_quantum_evidence_profile_conformance.py --root . --output .qrf-artifacts/quantum_evidence_profile_conformance.json
+          python scripts/generate_quantum_glob_operator_mappings.py --output .qrf-artifacts/quantum_glob_operator_mappings.json
           python scripts/generate_quantum_apnt_benchmark.py --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
           python scripts/generate_quantum_alti_structure_template.py --output .qrf-artifacts/quantum_alti_structure_template.json
           python scripts/generate_quantum_metasurface_calibration_template.py --output .qrf-artifacts/quantum_metasurface_calibration_template.json
@@ -107,14 +108,17 @@ jobs:
           test -s scripts/generate_quantum_external_review_template.py
           test -s scripts/generate_quantum_resource_sensitivity.py
           test -s scripts/generate_quantum_evidence_profile_conformance.py
+          test -s scripts/generate_quantum_glob_operator_mappings.py
           test -s scripts/run_ionq_qpu_bell.py
           test -s scripts/run_dwave_qubo.py
           test -s scripts/run_cudaq_bell.py
           test -s requirements-quantum-dwave.txt
           test -s requirements-quantum-cudaq.txt
+          test -s requirements-quantum-logistics.txt
           test -s benchmarks/quantum/bell_qasm3.qasm
           test -s benchmarks/quantum/qrf_resource_smoke.qasm
           test -s benchmarks/quantum/qrf_bell_001.json
+          test -s benchmarks/quantum/logistics_cp_sat_fixture.json
           test -s data/quantum_project_matrix.json
           test -s data/pqc_migration_inventory.json
           test -s data/quantum_application_benchmarks.json
