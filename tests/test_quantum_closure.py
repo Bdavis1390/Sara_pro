@@ -16,7 +16,7 @@ def test_every_current_lane_below_97_is_either_active_closure_or_held():
             assert row["closure_status"] == "QUANTUM_EXECUTION_NOT_JUSTIFIED"
             assert row["mission_closure_status"] == "HELD_CLASSICAL_DOMINANCE"
             assert row["external_evidence_required"] == []
-            assert row["closure_sequence"] == []
+            assert row["closure_sequence"] == ()
         else:
             assert row["mission_use_decision"] == "NO_GO_BELOW_97"
             assert row["mission_closure_status"] == "BLOCKED_ON_EVIDENCE"
