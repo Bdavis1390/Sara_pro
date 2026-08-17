@@ -1,0 +1,44 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_08.json",
+  "purpose":"Append raw-hit neighborhoods for 76779, 75769, 77956, 97065, 90576, 95607 and 65070, emphasizing repeated spectroscopy/materials identifier collisions and their independent Worldshepherd technical value.",
+  "policy":{
+    "rule":"Repeated appearance in spectroscopy-heavy corpora remains raw collision evidence unless the five digits themselves are the verified physical quantity.",
+    "promotion":"PII/DOI/repository/library/CID occurrences are never converted to P1 solely because the underlying paper is physical science.",
+    "namespace_control":"Repeated legacy PII suffixes are grouped as one identifier behavior class for null-model purposes."
+  },
+  "records":[
+    {"target":"76779","raw_hit_type":"DISSERTATION_URN_SUFFIX","occurrence":"urn:nbn:de:hbz:5-76779","context":"2024 dissertation developing computational protocols for molecular spectroscopy of photoluminescent inorganic and organometallic materials","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"76779","raw_hit_type":"ARTICLE_TERMINAL_PAGE","occurrence":"RSC Advances 6:76773-76779","context":"Nitrogen-doped carbon nanotubes grown by CVD decomposition of melamine over coal fly ash","glob_weight":"N0_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"76779","raw_hit_type":"ARTICLE_START_PAGE","occurrence":"RSC Advances 5:76779-76782","context":"Sequential hydrogen and lipid generation from starch via dark fermentation and microalgal cultivation","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"75769","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41467-026-75769-0","context":"2026 cobalt-catalyzed ligand-relay asymmetric migratory dearomative annulation of N-heteroarenes","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"75769","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.1002/advs.75769","context":"2026 hierarchical carbon current collector for suppressing interfacial instabilities and dendritic growth in lithium-metal anodes","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"75769","raw_hit_type":"COURSE_ID","occurrence":"Modern Physics class 75769","context":"university course identifier","glob_weight":"N0_RAW","worldshepherd_use":["NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77956","raw_hit_type":"DOI_COMPONENT","occurrence":"10.1038/s41598-020-77956-5","context":"Atmospheric-pressure air microplasma current time series for true random-bit generation","glob_weight":"M1_RAW","worldshepherd_use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77956","raw_hit_type":"REPOSITORY_ID","occurrence":"BaDAP publication ID 77956","context":"Mossbauer spectroscopy of Dy-doped bismuth ferrite/lead iron tungstate multiferroics","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"77956","raw_hit_type":"THESIS_URN_SUFFIX","occurrence":"urn:nbn:de:hbz:38-77956","context":"Multinucleon-transfer reactions and neutron-rich nuclear-structure spectroscopy thesis","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"97065","raw_hit_type":"REPOSITORY_HANDLE","occurrence":"hdl.handle.net/2142/97065","context":"HITRAN2016 molecular-spectroscopic line-list presentation for H2O, CO2, O3, N2O, CO, CH4 and O2","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"90576","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"0022-3697(94)90576-2","context":"Impedance spectroscopy of perfluorosulfonated ionomer polymer electrolyte; chain polarization and conductivity characterization","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"90576","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"0168-583X(87)90576-3","context":"Time-of-flight stopping-power measurements for low-energy ions in gases","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"90576","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"0029-554X(69)90576-X","context":"Rapid source-preparation method for high-resolution alpha-particle spectroscopy","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"90576","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"0921-4526(92)90576-E","context":"Raman spectroscopy of DMSO and DMSO-water mixtures up to 20 GPa","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"90576","raw_hit_type":"REPOSITORY_ID","occurrence":"UNICA IRIS handle 11584/90576","context":"X-ray absorption study of inversion degree in zinc ferrite nanocrystals dispersed in porous silica aerogel","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"95607","raw_hit_type":"LEGACY_PII_SUFFIX","occurrence":"0168-583X(94)95607-3","context":"Electron emission induced by slow highly charged ions on clean metal surfaces; hollow-atom formation and electron/soft-X-ray observables","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"65070","raw_hit_type":"NIST_MS_LIBRARY_ID","occurrence":"NIST MS number 65070","context":"NIST Chemistry WebBook EI mass spectrum for dyclonine","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"65070","raw_hit_type":"PUBCHEM_CID","occurrence":"PubChem CID 65070","context":"Deoxyuridine triphosphate record with multiple MS/MS and LC-MS spectra","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"90576 recurs across many unrelated physical-science papers because it is embedded in legacy publisher PII structures; this is a high-value namespace-specific collision exemplar for the null model.","worldshepherd_use":["PRIME_SENTINEL","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"finding":"The HITRAN2016 source documents evaluated/vetted molecular line lists and improved line-shape/cross-section treatment; use it as a molecular-spectroscopy dataset/provenance reference independently of repository ID 97065.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","OVERWATCH"]},
+    {"finding":"The lithium-metal current-collector paper reports a lightweight porous CNT/activated-carbon architecture designed to promote uniform Li-ion flux and internal nucleation while suppressing dendritic growth; use as an energy-storage architecture reference.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH"],"claims_boundary":"75769 is the DOI/article identifier."},
+    {"finding":"The microplasma-current paper uses atmospheric-pressure plasma fluctuations as a true-random-bit source, providing a physical entropy-source reference for bounded randomness/health testing research.","worldshepherd_use":["OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION"],"claims_boundary":"77956 is a DOI component."}
+  ],
+  "next_actions":[
+    "Continue raw accumulation through 60057, 60705, 70050, 70005, 70500 and other overlapping states while preserving established physical records separately.",
+    "Quantify how often legacy PII suffixes recur compared with DOI article numbers, CAS/CID identifiers and true physical values.",
+    "Use HITRAN and high-pressure Raman sources as characterization/data references without treating their identifiers as Glob evidence.",
+    "Continue fixed-tolerance same-system physical scans with experiment-wide multiple-testing correction."
+  ]
+}
