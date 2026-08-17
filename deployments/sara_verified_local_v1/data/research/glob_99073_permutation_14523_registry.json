@@ -1,0 +1,64 @@
+{
+  "schema_version": "ws-glob-permutation-family-1.0",
+  "as_of": "2026-08-16",
+  "inquiry": "Glob 99073",
+  "permutation": {
+    "mapping": "12345->14523",
+    "index_order_1_based": [1, 4, 5, 2, 3],
+    "period_generic_positions": 2,
+    "generic_position_orbit": ["12345", "14523"],
+    "relationship_to_existing": "ADDITIONAL_PARALLEL_FAMILY_DO_NOT_REPLACE_12345_TO_31542_OR_12345_TO_13524"
+  },
+  "seed_policy": {
+    "active_expanded_seeds": ["99073", "8679305", "245779675000031449401", "396993953242"],
+    "exact_4_digit_seed": "9675",
+    "exact_4_digit_rule": "Preserve exact 9675. Do not silently conflate with 09675.",
+    "derived_zero_padded_normalization": {
+      "input": "09675",
+      "status": "DERIVED_SEPARATE_FROM_EXACT_9675",
+      "orbit": ["09675", "07596"]
+    }
+  },
+  "orbits": [
+    {"seed":"99073","window_index_0":0,"window":"99073","orbit":["99073","97390"]},
+    {"seed":"8679305","window_index_0":0,"window":"86793","orbit":["86793","89367"]},
+    {"seed":"8679305","window_index_0":1,"window":"67930","orbit":["67930","63079"]},
+    {"seed":"8679305","window_index_0":2,"window":"79305","orbit":["79305","70593"]},
+    {"seed":"245779675000031449401","window_index_0":0,"window":"24577","orbit":["24577","27745"]},
+    {"seed":"245779675000031449401","window_index_0":1,"window":"45779","orbit":["45779","47957"]},
+    {"seed":"245779675000031449401","window_index_0":2,"window":"57796","orbit":["57796","59677"]},
+    {"seed":"245779675000031449401","window_index_0":3,"window":"77967","orbit":["77967","76779"]},
+    {"seed":"245779675000031449401","window_index_0":4,"window":"79675","orbit":["79675","77596"]},
+    {"seed":"245779675000031449401","window_index_0":5,"window":"96750","orbit":["96750","95067"]},
+    {"seed":"245779675000031449401","window_index_0":6,"window":"67500","orbit":["67500","60075"]},
+    {"seed":"245779675000031449401","window_index_0":7,"window":"75000","orbit":["75000","70050"]},
+    {"seed":"245779675000031449401","window_index_0":8,"window":"50000","orbit":["50000"]},
+    {"seed":"245779675000031449401","window_index_0":9,"window":"00003","orbit":["00003","00300"]},
+    {"seed":"245779675000031449401","window_index_0":10,"window":"00031","orbit":["00031","03100"]},
+    {"seed":"245779675000031449401","window_index_0":11,"window":"00314","orbit":["00314","01403"]},
+    {"seed":"245779675000031449401","window_index_0":12,"window":"03144","orbit":["03144","04431"]},
+    {"seed":"245779675000031449401","window_index_0":13,"window":"31449","orbit":["31449","34914"]},
+    {"seed":"245779675000031449401","window_index_0":14,"window":"14494","orbit":["14494","19444"]},
+    {"seed":"245779675000031449401","window_index_0":15,"window":"44940","orbit":["44940","44049"]},
+    {"seed":"245779675000031449401","window_index_0":16,"window":"49401","orbit":["49401","40194"]},
+    {"seed":"396993953242","window_index_0":0,"window":"39699","orbit":["39699","39996"]},
+    {"seed":"396993953242","window_index_0":1,"window":"96993","orbit":["96993","99369"]},
+    {"seed":"396993953242","window_index_0":2,"window":"69939","orbit":["69939","63999"]},
+    {"seed":"396993953242","window_index_0":3,"window":"99395","orbit":["99395","99593"]},
+    {"seed":"396993953242","window_index_0":4,"window":"93953","orbit":["93953","95339"]},
+    {"seed":"396993953242","window_index_0":5,"window":"39532","orbit":["39532","33295"]},
+    {"seed":"396993953242","window_index_0":6,"window":"95324","orbit":["95324","92453"]},
+    {"seed":"396993953242","window_index_0":7,"window":"53242","orbit":["53242","54232"]}
+  ],
+  "summary": {
+    "orbit_records": 29,
+    "unique_states": 57,
+    "existing_two_family_union_unique_states": 190,
+    "overlap_with_existing_two_family_union": 39,
+    "new_unique_states_vs_existing_two_family_union": 18,
+    "three_family_union_unique_states": 208,
+    "new_states": ["01403","03100","04431","27745","33295","40194","44049","54232","59677","60075","63079","70593","77596","89367","92453","95067","97390","99593"],
+    "overlap_states": ["00003","00031","00300","00314","03144","14494","19444","24577","31449","34914","39532","39699","39996","44940","45779","47957","49401","50000","53242","57796","63999","67500","67930","69939","70050","75000","76779","77967","79305","79675","86793","93953","95324","95339","96750","96993","99073","99369","99395"]
+  },
+  "claims_boundary": "Permutation membership is deterministic graph structure only. A new state becomes P1/P2 evidence only through independently verified physical data and the experiment-wide multiple-testing/null controls applied across the union of all active permutation families."
+}
