@@ -37,7 +37,7 @@ def main() -> int:
     token = os.getenv("IBM_QUANTUM_TOKEN", "")
     instance = os.getenv("IBM_QUANTUM_INSTANCE")
     if not args.plan_name:
-        raise SystemExit("--plan-name or IBM_QUANTUM_PLAN_NAME is required; use 'open' only when the job actually uses IBM Open Plan")
+        raise SystemExit("--plan-name or IBM_QUANTUM_PLAN_NAME is required; use 'open' only when the job is intended for IBM Open Plan")
     cost_usd = args.cost_usd
     if cost_usd is None and args.plan_name.strip().lower() == "open":
         cost_usd = 0.0
@@ -50,6 +50,7 @@ def main() -> int:
         backend_name=args.backend,
         shots=args.shots,
         optimization_level=args.optimization_level,
+        expected_plan=args.plan_name,
     )
     evidence = build_sara_qpu_external_evidence(
         result,
@@ -68,7 +69,7 @@ def main() -> int:
         raise SystemExit(f"IBM QPU evidence did not close SARA-QRF-EXT-01: {reasons}")
 
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "benchmark_id": "QRF-BELL-001",
         "hardware_result": result.to_dict(),
         "external_evidence_record": asdict(evidence),
@@ -76,6 +77,7 @@ def main() -> int:
         "campaign_evaluation": asdict(campaign),
         "claim_control": (
             "This bundle closes only the structural SARA-QRF first external-hardware acquisition gate when all recorded fields are genuine. "
+            "The IBM instance and plan are service-resolved and verified before QPU submission. "
             "It does not establish quantum advantage, reproduced hardware evidence, 97 mission readiness, or deployment authority."
         ),
     }
@@ -83,7 +85,10 @@ def main() -> int:
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
-    print(f"{out}: backend={result.backend} job_id={result.job_id} gate=SARA-QRF-EXT-01")
+    print(
+        f"{out}: backend={result.backend} instance={result.instance} plan={result.instance_plan} "
+        f"job_id={result.job_id} gate=SARA-QRF-EXT-01"
+    )
     return 0
 
 
