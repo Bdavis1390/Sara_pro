@@ -1,0 +1,91 @@
+{
+  "schema_version": "ws-glob-discovery-ledger-1.0",
+  "parent_registry": "glob_99073_registry.json",
+  "as_of": "2026-08-16",
+  "ledger_sequence": 21,
+  "purpose": "Resolve the species and source lineage behind the 13524-family 73590 lead, ingest newly discovered NIST highly-ionized manganese reference compilations, and preserve the exact-value promotion gate until 73590 cm^-1 is exposed in an official primary/current NIST record.",
+  "source_ingestion_policy": {
+    "rule": "Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates": "Duplicate mirrors, derivative snapshots, repeated records, and alternate landing pages are provenance aliases and are not independent evidence.",
+    "search_noise": "A derivative database snapshot may identify a candidate and its provenance lineage, but it may not independently promote a physical-value claim when an authoritative primary/current record has not been directly retrieved."
+  },
+  "sources": [
+    {
+      "source_id": "SRC-NIST-MN-HIGHLY-IONIZED-1994-R21",
+      "title": "Spectral Data and Grotrian Diagrams for Highly Ionized Manganese, Mn VII through Mn XXV",
+      "authors": "T. Shirai; T. Nakagaki; K. Okazaki; J. Sugar; W. L. Wiese",
+      "year": 1994,
+      "identifier": "doi:10.1063/1.555954",
+      "authority": "NIST / Journal of Physical and Chemical Reference Data",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://www.nist.gov/srd/nist-standard-reference-database-journal-physical-and-chemical-reference-data-reprints",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Use as the dedicated highly-ionized manganese spectral/Grotrian reference lineage. It supplies species-aware topology context for Mn VII-Mn XXV and is a primary reference path for resolving Mn XVIII lines and levels."
+    },
+    {
+      "source_id": "SRC-NIST-HIGHLY-IONIZED-MONOGRAPH8-2000-R21",
+      "title": "Spectral Data for Highly Ionized Atoms: Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Kr, and Mo",
+      "authors": "T. Shirai; J. Sugar; A. Musgrove; W. L. Wiese",
+      "year": 2000,
+      "identifier": "JPCRD Monograph 8",
+      "authority": "NIST / Journal of Physical and Chemical Reference Data",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "url": "https://www.nist.gov/publications/spectral-data-highly-ionized-atoms",
+      "use": ["MATERIALS_AND_CHARACTERIZATION", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH"],
+      "note": "Use as a broad highly-ionized-atom reference and provenance bridge into current ASD. NIST version history states that a large body of Mn VI-Mn XXV line/level data was incorporated from this compilation, with subsequent corrections and source-level updates."
+    },
+    {
+      "source_id": "SRC-NIST-ASD-MN-HOLDINGS-R21",
+      "title": "NIST Atomic Spectra Database holdings — manganese levels and lines",
+      "authority": "NIST Physical Measurement Laboratory",
+      "discovery_status": "NEWLY_DISCOVERED_INFORMATION",
+      "url": "https://physics.nist.gov/cgi-bin/ASD/levels_hold.pl?el=Mn",
+      "use": ["SARA", "ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
+      "note": "Current holdings report 22 Mn XVIII energy levels. The corresponding line holdings report 50 Mn XVIII lines, 47 with transition probabilities and all 50 with level designations. Use these counts as current-authority scope controls for any Mn XVIII topology scan."
+    },
+    {
+      "source_id": "SRC-NIST-ASD-VERSION3-HIGHLY-IONIZED-R21",
+      "title": "NIST ASD version-history record for highly ionized atom data",
+      "authority": "NIST Physical Measurement Laboratory",
+      "discovery_status": "NEWLY_DISCOVERED_INFORMATION",
+      "url": "https://physics.nist.gov/PhysRefData/ASD/Html/Version.history.3.html",
+      "use": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "SARA"],
+      "note": "Use for provenance/version control. NIST documents that Mn VI-Mn XXV data from Monograph 8 entered ASD and that level data received modifications relative to earlier compilations; current ASD therefore takes precedence over historical snapshots for present-state claims."
+    }
+  ],
+  "candidate_update": {
+    "target": "73590",
+    "permutation_family": "12345->13524",
+    "seed": "8679305",
+    "source_window": "79305",
+    "orbit": ["79305", "73590", "75039", "70953"],
+    "species_resolution": "Mn XVIII",
+    "status": "SPECIES_RESOLVED_EXACT_VALUE_PRIMARY_CONFIRMATION_PENDING",
+    "derivative_observation": "A static derivative snapshot of NIST ASD v5.12 identifies Mn XVIII and displays 73590 cm^-1 as a classified level participating in multiple transitions.",
+    "authoritative_confirmation": "Official NIST holdings confirm that Mn XVIII is represented by 22 levels and 50 lines, all 50 lines with level designations; NIST publication/version history confirms the relevant Shirai/Sugar compilation lineage.",
+    "promotion_gate": "Do not promote 73590 to P1 until the exact 73590-cm^-1 level or line classification is retrieved from current official NIST ASD output or the underlying NIST/JPCRD primary table itself.",
+    "worldshepherd_uses": ["ECHO_SENTINEL_LINK", "PRIME_SENTINEL", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"]
+  },
+  "information_updates": [
+    {
+      "update_id": "INFO-R21-DERIVATIVE-SNAPSHOT-GOVERNANCE",
+      "discovery_status": "NEWLY_FORMALIZED",
+      "finding": "Derivative/static copies of authoritative scientific databases are useful for candidate discovery and provenance resolution but are not independent evidence and cannot alone satisfy the exact-value promotion gate.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "ECHO_SENTINEL_LINK", "NEGATIVE_CONTROL_CORPUS"],
+      "claims_boundary": "This rule applies consistently to NIST mirrors, article mirrors, repository copies and cached tables."
+    },
+    {
+      "update_id": "INFO-R21-MN-XVIII-SEARCH-DENOMINATOR",
+      "discovery_status": "NEWLY_DISCOVERED",
+      "finding": "Any future Mn XVIII relational test must operate over the current 22-level/50-line system rather than selectively examining only the 73590 candidate neighborhood.",
+      "worldshepherd_uses": ["PRIME_SENTINEL", "OVERWATCH", "MATERIALS_AND_CHARACTERIZATION"],
+      "claims_boundary": "Selective neighborhood inspection may generate hypotheses; statistical claims require complete-system or explicitly sampled null treatment."
+    }
+  ],
+  "next_actions": [
+    "Retrieve the official current NIST ASD Mn XVIII levels/lines output or the corresponding primary NIST/JPCRD table and search exact 73590 cm^-1 before promotion.",
+    "If 73590 is confirmed, search the complete Mn XVIII 22-level/50-line topology for the same-orbit states 79305, 75039 and 70953 before assigning any P2 relation.",
+    "Continue same-unit physical-value scanning of the remaining 13524-only states using authoritative primary spectroscopy sources.",
+    "Retain the Sr I 60057/60705 P2 motif as the leading new-family relational result pending topology-preserving null and experiment-wide multiple-testing correction."
+  ]
+}
