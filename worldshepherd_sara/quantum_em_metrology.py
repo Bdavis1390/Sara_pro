@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
 import re
-from typing import Sequence
 
 
 _SHA256 = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -170,7 +169,7 @@ def em_metrology_template_as_dict() -> dict[str, object]:
             ],
             "environmental_channels": ["<channel-1>", "<channel-2>"],
             "repeat_target": 3,
-            "separate_propulsion_claim_gate": true,
+            "separate_propulsion_claim_gate": True,
             "source_reference": "<replace-me>"
         },
         "claim_control": (
