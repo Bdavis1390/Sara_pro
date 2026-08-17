@@ -68,7 +68,7 @@ jobs:
       - name: Compile QRF modules and CLIs
         run: |
           python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
-          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py
+          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py scripts/generate_quantum_evidence_profile_conformance.py
 
       - name: Run complete QRF test suite
         env:
@@ -83,6 +83,7 @@ jobs:
           python scripts/generate_quantum_external_campaign.py --output .qrf-artifacts/quantum_external_campaign.json
           python scripts/generate_quantum_acquisition_requests.py --output .qrf-artifacts/quantum_acquisition_requests.json
           python scripts/generate_quantum_external_review_template.py --output .qrf-artifacts/quantum_external_review_template.json
+          python scripts/generate_quantum_evidence_profile_conformance.py --root . --output .qrf-artifacts/quantum_evidence_profile_conformance.json
           python scripts/generate_quantum_apnt_benchmark.py --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
           python scripts/generate_quantum_alti_structure_template.py --output .qrf-artifacts/quantum_alti_structure_template.json
           python scripts/generate_quantum_metasurface_calibration_template.py --output .qrf-artifacts/quantum_metasurface_calibration_template.json
@@ -103,6 +104,7 @@ jobs:
           test -s scripts/ingest_quantum_external_evidence.py
           test -s scripts/generate_quantum_external_review_template.py
           test -s scripts/generate_quantum_resource_sensitivity.py
+          test -s scripts/generate_quantum_evidence_profile_conformance.py
           test -s scripts/run_dwave_qubo.py
           test -s scripts/run_cudaq_bell.py
           test -s requirements-quantum-dwave.txt
@@ -117,6 +119,7 @@ jobs:
           test -s docs/QUANTUM_ALTI_STRUCTURE_FREEZE_2026-08-17.md
           test -s docs/QUANTUM_MARKET_BENCHMARK_AND_PARITY_PLAN_2026-08-17.md
           test -s docs/QUANTUM_DEFENSE_INTEGRATOR_BENCHMARK_2026-08-17.md
+          test -s docs/QUANTUM_MISSION_EVIDENCE_PROFILE_DRAFT_2026-08-17.md
           python -m json.tool data/quantum_project_matrix.json >/dev/null
           python -m json.tool data/pqc_migration_inventory.json >/dev/null
           python -m json.tool data/quantum_application_benchmarks.json >/dev/null
