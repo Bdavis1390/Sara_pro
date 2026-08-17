@@ -61,6 +61,7 @@ class MissionReadinessDecision:
     evidence_cap: int
     mission_readiness_score: int
     readiness_band: str
+    mission_use_decision: str
     blockers: tuple[str, ...]
     evidence_refs: tuple[str, ...]
     next_gate: str
@@ -103,6 +104,16 @@ def readiness_band(score: int) -> str:
     return "OPERATIONALLY_DEMONSTRATED"
 
 
+def mission_use_decision(score: int) -> str:
+    if score < 60:
+        return "NO_GO_MISSION_USE_EXPERIMENTAL_ONLY"
+    if score < 75:
+        return "NO_GO_OPERATIONAL_USE_HARDWARE_EVALUATION_ONLY"
+    if score < 90:
+        return "NO_GO_OPERATIONAL_USE_RELEVANT_ENVIRONMENT_TEST_ONLY"
+    return "CANDIDATE_FOR_SEPARATE_OPERATIONAL_APPROVAL"
+
+
 def _next_gate(stage: MissionEvidenceStage) -> str:
     return {
         MissionEvidenceStage.CONCEPT: "freeze a measurable problem and strong classical/truth baseline",
@@ -130,6 +141,7 @@ def calibrate_mission_readiness(inputs: MissionReadinessInputs) -> MissionReadin
         evidence_cap=cap,
         mission_readiness_score=score,
         readiness_band=readiness_band(score),
+        mission_use_decision=mission_use_decision(score),
         blockers=tuple(inputs.blockers),
         evidence_refs=tuple(inputs.evidence_refs),
         next_gate=_next_gate(inputs.evidence_stage),
