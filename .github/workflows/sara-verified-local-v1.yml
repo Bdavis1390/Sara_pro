@@ -58,8 +58,18 @@ jobs:
 
       - name: Capture container logs on failure
         if: failure()
-        run: docker compose logs --no-color || true
+        run: |
+          if [ -f .env ]; then
+            docker compose logs --no-color || true
+          else
+            echo "CI environment was not created; no Compose logs to capture."
+          fi
 
       - name: Stop and remove CI services
         if: always()
-        run: docker compose down -v || true
+        run: |
+          if [ -f .env ]; then
+            docker compose down -v || true
+          else
+            echo "CI environment was not created; no Compose services to remove."
+          fi
