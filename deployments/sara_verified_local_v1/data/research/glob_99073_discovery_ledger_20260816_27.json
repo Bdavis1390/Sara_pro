@@ -1,0 +1,64 @@
+{
+  "schema_version":"ws-glob-discovery-ledger-1.0",
+  "parent_registry":"glob_99073_registry.json",
+  "as_of":"2026-08-16",
+  "ledger_sequence":27,
+  "purpose":"Record a second independent physical-system occurrence of target 31449 as an estimated apatite lattice energy while preserving the existing experimental H2S spectroscopy P1 and preventing cross-system equality from being mislabeled P2.",
+  "source_ingestion_policy":{
+    "rule":"Every substantive unique publication, authoritative dataset, advisory, or information item discovered during the inquiry receives a Worldshepherd use or an explicit negative-control role.",
+    "duplicates":"Publisher and PubMed records of the same apatite article are provenance aliases and are not independent evidence.",
+    "search_noise":"Cross-system numerical equality is not same-system physical relation. A physical value in a different unit/system may be P1 but cannot become P2 without a documented within-system relation."
+  },
+  "sources":[
+    {
+      "source_id":"SRC-APATITE-FLORA-YODER-JENKINS-2004-R27",
+      "title":"Lattice Energies of Apatites and the Estimation of Delta Hf degrees (PO4 3-, g)",
+      "authors":"Natalie J. Flora; Claude H. Yoder; H. Donald Brooke Jenkins",
+      "year":2004,
+      "identifier":"doi:10.1021/ic030255o",
+      "authority":"Inorganic Chemistry / American Chemical Society",
+      "discovery_status":"NEWLY_DISCOVERED_FOR_GLOB_31449",
+      "use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK","PRIME_SENTINEL"],
+      "note":"The article compares experimentally based apatite lattice energies from thermodynamic cycles with Glasser-Jenkins estimates. Its table gives an estimated U_POT of 31449 kJ mol^-1 for Sr10(PO4)6I2."
+    }
+  ],
+  "evidence_updates":[
+    {
+      "record_id":"EV-R27-APATITE-31449",
+      "source_id":"SRC-APATITE-FLORA-YODER-JENKINS-2004-R27",
+      "target":"31449",
+      "permutation_membership":"predeclared three-family union; source window 31449 in 13524 family",
+      "physical_value":31449,
+      "unit":"kJ mol^-1",
+      "quantity_type":"estimated lattice energy U_POT",
+      "species_system":"Sr10(PO4)6I2 apatite",
+      "evidence_class":"P1",
+      "physical_value_subtype":"THEORETICAL_ESTIMATED_THERMOCHEMICAL_PROPERTY",
+      "verification_status":"verified_primary_publisher",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK","PRIME_SENTINEL"],
+      "claims_boundary":"Independent P1 physical-value occurrence only. It is not related physically to the previously established H2S 31449(2) cm^-1 result merely because the integer digits match."
+    }
+  ],
+  "information_updates":[
+    {
+      "update_id":"INFO-R27-CROSS-SYSTEM-P1-MULTIPLICITY",
+      "discovery_status":"NEWLY_FORMALIZED",
+      "finding":"Worldshepherd now distinguishes target-level physical multiplicity from P2 relation: one generated integer may correspond to verified physical quantities in multiple unrelated systems and units, but those are separate P1 observations unless a physical relation is independently demonstrated.",
+      "worldshepherd_uses":["PRIME_SENTINEL","OVERWATCH","ECHO_SENTINEL_LINK"],
+      "claims_boundary":"Cross-system multiplicity can be counted for null/statistical analysis but is not mechanistic evidence."
+    },
+    {
+      "update_id":"INFO-R27-APATITE-THERMOCHEMISTRY-METHOD",
+      "discovery_status":"NEWLY_DISCOVERED",
+      "finding":"The apatite work provides a compact validation pattern for material-property estimation: derive reference energies from thermodynamic cycles, estimate from structural volume and ionic strength, quantify deviations, and separate experimentally based from estimated values.",
+      "worldshepherd_uses":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","ECHO_SENTINEL_LINK"],
+      "claims_boundary":"Methodology use is independent of Glob-number evidence."
+    }
+  ],
+  "next_actions":[
+    "Add a target-level statistic for number of independent physical systems per state, separated by experimental/evaluated/theoretical subtype and unit family.",
+    "Do not pool the H2S cm^-1 and apatite kJ mol^-1 31449 observations into a same-system P2 score.",
+    "Continue raw-hit accumulation and same-species topology scans across the 208-state union.",
+    "Apply unit-aware experiment-wide multiple-testing/false-discovery controls before interpreting physical-hit multiplicity."
+  ]
+}
