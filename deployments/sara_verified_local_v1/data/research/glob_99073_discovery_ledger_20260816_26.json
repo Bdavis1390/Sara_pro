@@ -58,7 +58,7 @@
     }
   ],
   "next_actions":[
-    "Screen the complete LiCa physical parameter tables and spectra against all 208 predeclared union states before considering any same-system P2 relationship.",
+    "Screen the complete LiCa physical parameter tables and spectra against all 208 predeclared union states and perform same-system topology and relational checks before considering any P2 relationship.",
     "Continue raw-hit accumulation independently, including the dense 14449/14944/19444 page and identifier neighborhoods.",
     "Preserve the fixed 1 cm^-1 empirical screening tolerance where applicable and keep calculated exact-value matches in a separate P1_THEORY stratum.",
     "Apply experiment-wide multiple-testing and false-discovery correction across all 208 target states and all screened physical systems before interpreting aggregate P1/P2 rates."
