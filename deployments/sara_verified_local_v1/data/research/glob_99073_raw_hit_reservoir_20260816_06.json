@@ -1,0 +1,34 @@
+{
+  "schema_version":"ws-glob-raw-hit-reservoir-1.0",
+  "as_of":"2026-08-16",
+  "inquiry":"Glob 99073",
+  "parent_raw_reservoir":"glob_99073_raw_hit_reservoir_20260816_05.json",
+  "purpose":"Continue raw-number accumulation for 13524-family states 89637, 69073, 60397 and 63709 while preserving the already-established Pb III physical record separately from metadata collisions.",
+  "policy":{
+    "rule":"Every raw occurrence is retained for collision/source-frequency analysis but has zero automatic physical-evidence weight.",
+    "promotion":"A metadata occurrence never upgrades an existing or new target to P1/P2; physical promotion remains a separate verified workflow.",
+    "duplicates":"Multiple records in the same identifier namespace are grouped for density analysis and are not independent physical evidence."
+  },
+  "records":[
+    {"target":"89637","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S0003-2670(00)89637-3","context":"Radioactivation determination of oxygen in powdered metals, with particular reference to beryllium","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"69073","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.22146/ijbiotech.69073","context":"Near-infrared spectroscopy plus chemometrics for patchouli essential-oil characterization","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"69073","raw_hit_type":"CAS_PREFIX","occurrence":"CAS 69073-38-7","context":"Terpinolene synonym/CAS occurrence in NIST Chemistry WebBook","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"69073","raw_hit_type":"REPOSITORY_ID","occurrence":"Okayama University repository ID 69073","context":"Near-infrared photoimmunotherapy for recurrent cancer at the base of the tongue","glob_weight":"M1_RAW","worldshepherd_use":["QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60397","raw_hit_type":"DOI_PII_COMPONENT","occurrence":"10.1016/S1003-6326(08)60397-0","context":"Au-nanoparticle functionalization of suspended single-walled carbon nanotubes with enhanced Raman scattering","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"60397","raw_hit_type":"KNOWN_PHYSICAL_CARRY_FORWARD","occurrence":"60397 cm^-1","context":"Current NIST Pb III energy-level record already classified separately as physical P1 with NIST classification caution","glob_weight":"P1_CARRY_FORWARD","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK","PRIME_SENTINEL"]},
+    {"target":"63709","raw_hit_type":"NIST_MS_LIBRARY_ID","occurrence":"NIST MS number 63709","context":"NIST Chemistry WebBook electron-ionization mass spectrum for 1H-indole-2,3-dione (isatin)","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]},
+    {"target":"63709","raw_hit_type":"DOI_ARTICLE_ID","occurrence":"10.3791/63709","context":"Multiplex chemical imaging based on broadband stimulated Raman scattering microscopy","glob_weight":"M1_RAW","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH","QUANTUM_DEVICE_CHARACTERIZATION","NEGATIVE_CONTROL_CORPUS"]}
+  ],
+  "information_updates":[
+    {"finding":"The generated target 63709 independently occurs as both a NIST mass-spectral-library identifier and a JoVE broadband-SRS article identifier; this is cross-namespace collision evidence, not physical-value evidence.","worldshepherd_use":["PRIME_SENTINEL","OVERWATCH","NEGATIVE_CONTROL_CORPUS"]},
+    {"finding":"The patchouli-oil paper demonstrates a reusable NIR+chemometrics workflow: 84 samples, 1000-2500 nm spectra, PLS models, LC-MS reference measurements and reported model correlations above 0.90.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","OVERWATCH"],"claims_boundary":"69073 is the DOI/article identifier, not a spectral quantity."},
+    {"finding":"The Au-SWNT study uses Raman spectroscopy to track metal-nanoparticle functionalization and reports enhanced Raman scattering/resonant behavior, making it useful for Worldshepherd nanomaterial characterization independent of the 60397 DOI collision.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","QUANTUM_DEVICE_CHARACTERIZATION"]},
+    {"finding":"The 1954 radioactivation study provides a historical benchmark for oxygen quantification in powdered beryllium using irradiation, chemical separation of fluorine-18 and comparison with standards.","worldshepherd_use":["MATERIALS_AND_CHARACTERIZATION","ECHO_SENTINEL_LINK"],"claims_boundary":"89637 is a PII/DOI component only."}
+  ],
+  "next_actions":[
+    "Continue raw coverage across the remaining three-family states and retain explicit no-hit observations.",
+    "Group identifier collisions by namespace and source lineage before computing hit densities.",
+    "Keep the existing Pb III 60397 P1 record separate from the new 60397 metadata collisions.",
+    "Continue authoritative same-system topology scans under the fixed tolerance and global multiple-testing controls."
+  ]
+}
