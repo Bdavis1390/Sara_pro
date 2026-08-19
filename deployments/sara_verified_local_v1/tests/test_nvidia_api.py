@@ -24,10 +24,17 @@ def test_nvidia_status_accepts_relay_and_admin_without_mutating_audit(client, to
         assert response.status_code == 200
         body = response.json()
         assert body["integration_id"] == "WS-NV-01"
-        assert body["status"] == "contract_ready_runtime_unverified"
+        assert body["status"] == "proof_contracts_ready_runtime_unverified"
         assert body["runtime_verified"] is False
         assert body["network_calls_enabled"] is False
         assert body["contract_digest"].startswith("sha256:")
+        assert len(body["implemented_increments"]) == 7
+        assert set(body["proof_contracts"]) == {
+            "omniverse_kit",
+            "isaac_sim_ros2",
+            "jetson_platform_services",
+            "cuda_acceleration",
+        }
 
     assert client.app.state.store.audit_path.read_bytes() == audit_before
 
