@@ -1,11 +1,11 @@
 """Governed Amazon Braket on-demand QPU task execution for QRF-BELL-001.
 
-The existing :mod:`quantum_braket` contract covers Amazon Braket Hybrid Jobs.  This
+The existing :mod:`quantum_braket` contract covers Amazon Braket Hybrid Jobs. This
 module covers the lighter-weight on-demand quantum-task path that is appropriate for
-a shallow Bell benchmark.  It deliberately keeps provider execution separate from
+a shallow Bell benchmark. It deliberately keeps provider execution separate from
 canonical workload identity and from mission-readiness promotion.
 
-No AWS credentials are accepted by these APIs.  The real submitter relies on the
+No AWS credentials are accepted by these APIs. The real submitter relies on the
 normal AWS SDK credential chain / AWS_PROFILE configured outside Worldshepherd.
 """
 
@@ -24,6 +24,7 @@ from worldshepherd_sara.quantum_external_evidence import ExternalEvidenceRecord,
 _SHA = re.compile(r"^sha256:[0-9a-fA-F]{64}$")
 _TASK_ARN = re.compile(r"^arn:aws[a-z-]*:braket:[a-z0-9-]+:[0-9]{12}:quantum-task/.+")
 _DEVICE_ARN = re.compile(r"^arn:aws[a-z-]*:braket:[a-z0-9-]*:[0-9]*:device/.+")
+_QPU_DEVICE_MARKER = ":device/qpu/"
 
 BRAKET_BELL_SUBMISSION_SPEC: tuple[tuple[str, tuple[int, ...]], ...] = (
     ("h", (0,)),
@@ -89,10 +90,9 @@ def _jsonable(value: Any) -> Any:
 
 
 def _provider_from_device_arn(device_arn: str) -> str:
-    marker = "/device/qpu/"
-    if marker not in device_arn:
+    if _QPU_DEVICE_MARKER not in device_arn:
         return "unknown"
-    remainder = device_arn.split(marker, 1)[1]
+    remainder = device_arn.split(_QPU_DEVICE_MARKER, 1)[1]
     return remainder.split("/", 1)[0]
 
 
@@ -135,7 +135,7 @@ def validate_braket_quantum_task(record: BraketQuantumTaskRecord) -> BraketQuant
         reasons.append("quantum_task_arn must be a valid Amazon Braket quantum-task ARN")
     if not _DEVICE_ARN.fullmatch(record.device_arn):
         reasons.append("device_arn must be a valid Amazon Braket device ARN")
-    if "/device/qpu/" not in record.device_arn:
+    if _QPU_DEVICE_MARKER not in record.device_arn:
         reasons.append("hardware evidence requires a Braket QPU device ARN")
     if record.status != "COMPLETED":
         reasons.append("Amazon Braket quantum task must have COMPLETED status")
@@ -293,12 +293,12 @@ def execute_braket_bell_task(
 ) -> dict[str, Any]:
     """Execute/normalize one Braket Bell task and return an unhashed raw artifact payload.
 
-    ``submitter`` is dependency-injected by tests.  Production calls use the official
-    Amazon Braket SDK.  The returned payload must be written locally and SHA-256 hashed
+    ``submitter`` is dependency-injected by tests. Production calls use the official
+    Amazon Braket SDK. The returned payload must be written locally and SHA-256 hashed
     before constructing :class:`BraketQuantumTaskRecord`.
     """
 
-    if "/device/qpu/" not in device_arn or not _DEVICE_ARN.fullmatch(device_arn):
+    if _QPU_DEVICE_MARKER not in device_arn or not _DEVICE_ARN.fullmatch(device_arn):
         raise ValueError("device_arn must identify an Amazon Braket QPU")
     if shots <= 0:
         raise ValueError("shots must be positive")
