@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "status": "DESIGN_CONTRACT",
+  "global_rules": [
+    "Every quantum-computing benchmark must declare and execute a strong classical baseline before any advantage claim.",
+    "Simulator-only results may be labeled quantum_simulated but never quantum_executed or quantum_validated.",
+    "Real-QPU records must retain provider, backend, calibration/properties when exposed, program digest, transpiler/compiler identity, shots, raw-result digest, and postprocessing version.",
+    "Fault-tolerant candidates must include a resource estimate before being proposed as operationally practical.",
+    "No Worldshepherd project may use the word quantum to upgrade the evidence maturity of unrelated physical claims."
+  ],
+  "resource_estimation_minimum": [
+    "logical_qubits",
+    "logical_gate_count_or_depth",
+    "non_clifford_or_magic_state_demand_when_applicable",
+    "target_logical_error_rate",
+    "error_correction_assumptions",
+    "physical_qubits_estimate",
+    "estimated_runtime_seconds",
+    "estimator_name_and_version"
+  ],
+  "benchmarks": [
+    {
+      "benchmark_id": "WS-ALTI-QM-001",
+      "project": "WS-ALTI",
+      "domain": "quantum_materials",
+      "problem": "Reduced electronic-structure benchmark derived from a physically specified Al-Ti-Mg-Sc-Zr local chemistry or phase motif.",
+      "quantum_candidate": "VQE or quantum subspace method on a reduced active-space Hamiltonian",
+      "classical_baselines": [
+        "Hartree-Fock active-space reference",
+        "exact diagonalization or selected-CI where reduced problem size permits",
+        "DFT or higher-level classical electronic-structure calculation for the associated physical structure"
+      ],
+      "primary_metrics": [
+        "energy_error_vs_best_available_classical_reference",
+        "observable_error_for_declared_material_property",
+        "logical_qubits",
+        "circuit_depth",
+        "wall_time",
+        "physical_qubits_estimate_if_fault_tolerant"
+      ],
+      "promotion_gate": "Quantum result must match a declared reference tolerance and add validated predictive or computational value; it never replaces coupon manufacture or materials characterization."
+    },
+    {
+      "benchmark_id": "WS-META-QO-001",
+      "project": "WS-METASURFACE",
+      "domain": "quantum_optimization",
+      "problem": "Discrete reduced-order tile-state optimization for a bounded metasurface objective after the EM physics model is calibrated.",
+      "quantum_candidate": "QAOA or another explicitly defined combinatorial quantum solver",
+      "classical_baselines": [
+        "exhaustive solution for small instances",
+        "MILP or CP-SAT where formulation permits",
+        "strong heuristic or local-search baseline for larger instances"
+      ],
+      "primary_metrics": [
+        "objective_gap_to_best_known_solution",
+        "constraint_violation",
+        "total_wall_time_including_compilation_and_queueing",
+        "shot_budget",
+        "robustness_to_model_and_hardware_noise"
+      ],
+      "promotion_gate": "Quantum optimization is retained only when it beats or materially complements the strongest available classical method on the same reduced-order problem. Full-wave Maxwell/FEM/FDTD validation remains authoritative for field behavior."
+    },
+    {
+      "benchmark_id": "WS-LOG-QO-001",
+      "project": "WS-AUTONOMOUS-LOGISTICS",
+      "domain": "quantum_optimization",
+      "problem": "Constrained routing, assignment, or scheduling instance with a frozen objective and constraint set.",
+      "quantum_candidate": "Hybrid QAOA or another governed quantum combinatorial solver",
+      "classical_baselines": [
+        "CP-SAT or MILP",
+        "problem-specific heuristic",
+        "best-known feasible incumbent under the same time budget"
+      ],
+      "primary_metrics": [
+        "feasibility_rate",
+        "objective_value",
+        "optimality_or_best-known gap",
+        "end_to_end_latency",
+        "compute_cost",
+        "degraded-state robustness"
+      ],
+      "promotion_gate": "No operational deployment unless quantum/hybrid execution produces a repeatable mission-relevant advantage over classical planning after queueing and communication overhead are included."
+    },
+    {
+      "benchmark_id": "WS-APNT-QS-001",
+      "project": "WS-APNT",
+      "domain": "quantum_sensing",
+      "problem": "Partner-integrated quantum timing, inertial, magnetic, or related PNT sensing under controlled truth-reference conditions.",
+      "quantum_candidate": "Calibrated external quantum sensor integrated through SARA",
+      "classical_baselines": [
+        "GNSS/INS or laboratory reference appropriate to the modality",
+        "conventional sensor of comparable size/power/environment class when available"
+      ],
+      "primary_metrics": [
+        "bias",
+        "stability_or_allan_deviation_when_applicable",
+        "drift",
+        "noise_density_or_sensitivity",
+        "latency",
+        "availability",
+        "performance_under_degraded_or_denied_reference conditions"
+      ],
+      "promotion_gate": "Requires calibrated hardware, truth-reference data, uncertainty accounting, and retained sensor provenance. Architecture alone cannot satisfy this gate."
+    },
+    {
+      "benchmark_id": "WS-EMP-QM-001",
+      "project": "WS-EM-PROPULSION",
+      "domain": "quantum_materials_and_metrology",
+      "problem": "Use quantum electronic-structure methods or quantum-grade sensing to improve material-property estimates or field/force metrology.",
+      "quantum_candidate": "Reduced electronic-structure calculation and/or calibrated external quantum sensor",
+      "classical_baselines": [
+        "validated classical electronic-structure calculation",
+        "conventional calibrated force/field/thermal instrumentation"
+      ],
+      "primary_metrics": [
+        "material_observable_error",
+        "sensor_uncertainty",
+        "force_or_field measurement uncertainty",
+        "repeatability",
+        "null-control behavior"
+      ],
+      "promotion_gate": "Quantum calculation or sensing may improve materials/metrology evidence but cannot by itself establish anomalous thrust, reactionless propulsion, or net-energy claims."
+    },
+    {
+      "benchmark_id": "WS-GLOB-QMAPPING-001",
+      "project": "WS-GLOB",
+      "domain": "quantum_problem_mapping",
+      "problem": "Determine whether a numerical/permutation inquiry admits a legitimate oracle, Hamiltonian, sampling, search, or optimization formulation with a measurable target.",
+      "quantum_candidate": "None until a formal problem mapping exists",
+      "classical_baselines": [
+        "exact classical enumeration where feasible",
+        "null-model statistics",
+        "classical search/optimization baseline"
+      ],
+      "primary_metrics": [
+        "well-defined_input_output_contract",
+        "classical_complexity_baseline",
+        "oracle_or_hamiltonian_cost",
+        "resource_estimate_if_quantum_formulation_survives"
+      ],
+      "promotion_gate": "Numerical coincidence, permutation structure, prime indexing, or symbolic quantum language is not quantum evidence. A formal computational mapping is mandatory before QPU execution is justified."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+qiskit~=2.5.0
+qiskit-aer==0.17.2
+# QPU execution is optional and credential-gated. IBM's current runtime docs
+# pair qiskit 2.5.x with qiskit-ibm-runtime 0.47.x.
+qiskit-ibm-runtime~=0.47.0
+# Microsoft QDK 1.30.0 (released 2026-07-09). qre runs locally without an Azure account.
+qdk[qre]==1.30.0

@@ -1,0 +1,4 @@
+# Optional Worldshepherd QRF CUDA-Q portable execution environment.
+# CUDA-Q currently requires Python 3.11+; keep this isolated from the Python 3.10
+# core QRF CI matrix. Version verified against NVIDIA's current release on 2026-08-17.
+cudaq==0.15.0
