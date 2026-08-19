@@ -1,6 +1,6 @@
 # WS-NV-01 — NVIDIA Physical-AI Integration Contract
 
-Status: **IMPLEMENTED IN SOFTWARE — CONTRACT + STATUS/EVIDENCE PRIMITIVES**  
+Status: **IMPLEMENTED IN SOFTWARE — CONTRACT + STATUS/EVIDENCE + OMNIVERSE INTERFACE PRIMITIVES**  
 NVIDIA runtime status: **NOT VERIFIED**  
 External network execution: **DISABLED BY DEFAULT**
 
@@ -19,11 +19,12 @@ The initial contract maps four integration surfaces:
 
 ## Why these boundaries
 
-NVIDIA documents Omniverse Kit as a modular SDK that can support headless microservices as well as full applications. Isaac Sim exposes a ROS 2 bridge for robotics integration. Jetson Platform Services provides modular API-driven services for edge AI. Those interfaces allow SARA governance, authorization, telemetry provenance, and evidence capture to remain separate from vendor-specific runtime execution.
+NVIDIA documents Omniverse Kit as a modular SDK that can support headless microservices as well as full applications. The current Omniverse services stack uses Kit and exposes standards-oriented service primitives around FastAPI/OpenAPI and Pydantic. Isaac Sim exposes a ROS 2 bridge for robotics integration. Jetson Platform Services provides modular API-driven services for edge AI. Those interfaces allow SARA governance, authorization, telemetry provenance, and evidence capture to remain separate from vendor-specific runtime execution.
 
 Official references:
 
 - https://docs.omniverse.nvidia.com/dev-guide/latest/kit-architecture.html
+- https://docs.omniverse.nvidia.com/services/latest/core/index.html
 - https://docs.isaacsim.omniverse.nvidia.com/latest/ros2_tutorials/ros2_landing_page.html
 - https://developer.nvidia.com/embedded/jetpack/jetson-platform-services-get-started
 
@@ -48,6 +49,18 @@ The integration package can create evidence envelopes for declared NVIDIA surfac
 The raw configuration is deliberately not stored in the envelope. Creating an envelope does not validate a runtime and cannot silently promote a surface claim.
 
 **Current limitation:** envelopes are configuration-digested but not cryptographically signed. Signing remains a future custody/integrity increment and must not be claimed as implemented.
+
+### WS-NV-01C — Omniverse headless proof-of-interface
+
+Worldshepherd now defines a versioned request/response contract for a future headless Omniverse Kit service. The contract specifies:
+
+- a bounded `interface_probe` request with correlation ID and requested capabilities;
+- a structured response with service identity, Kit version, service state, extension versions, and observed capabilities;
+- offline parsing and correlation checks;
+- creation of a configuration-digested evidence envelope after parsing;
+- explicit preservation of `REQUIRES_PARTNER_VALIDATION` even when a captured response parses successfully.
+
+No SARA network client is implemented in this increment. No Omniverse service is implemented in this repository. A conforming captured JSON payload therefore proves only interface compatibility, not provenance or a functioning NVIDIA runtime.
 
 ## Promotion gate
 
@@ -76,9 +89,9 @@ Distributed simulated sensors/autonomous nodes -> digital-twin state -> decision
 
 ## Next implementation increments
 
-- WS-NV-01C: create an Omniverse Kit headless proof-of-interface without promoting runtime validation.
 - WS-NV-01D: create an Isaac Sim ROS 2 bridge proof-of-interface.
 - WS-NV-01E: create a Jetson Platform Services proof-of-interface on approved hardware.
 - WS-NV-01F: add evidence-envelope signing and verification with explicit key-custody rules.
+- WS-NV-01G: implement an outbound Omniverse service client only after endpoint authentication, transport security, allowlisting, failure semantics, and operator approval are defined.
 
-Until runtime-specific increments are executed against an actual NVIDIA runtime and reproducible evidence is captured, NVIDIA capability remains unverified even though the Worldshepherd integration contract, authenticated status surface, and evidence-envelope primitives are implemented in software.
+Until runtime-specific increments are executed against an actual NVIDIA runtime and reproducible evidence is captured, NVIDIA capability remains unverified even though the Worldshepherd integration contract, authenticated status surface, evidence-envelope primitives, and Omniverse wire contract are implemented in software.
