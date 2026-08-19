@@ -68,6 +68,25 @@ SURFACES: Final[tuple[NvidiaSurfaceContract, ...]] = (
 )
 
 
+IMPLEMENTED_INCREMENTS: Final[tuple[str, ...]] = (
+    "WS-NV-01",
+    "WS-NV-01A",
+    "WS-NV-01B",
+    "WS-NV-01C",
+    "WS-NV-01D",
+    "WS-NV-01E",
+    "WS-NV-01F",
+)
+
+
+PROOF_CONTRACTS: Final[dict[str, str]] = {
+    "omniverse_kit": "interface_contract_only",
+    "isaac_sim_ros2": "captured_observation_contract_only",
+    "jetson_platform_services": "captured_observation_contract_only",
+    "cuda_acceleration": "captured_compute_observation_contract_only",
+}
+
+
 def integration_manifest() -> dict[str, object]:
     """Return the non-executing WS-NV-01 integration contract.
 
@@ -79,11 +98,14 @@ def integration_manifest() -> dict[str, object]:
     return {
         "integration_id": "WS-NV-01",
         "vendor": "NVIDIA",
-        "architecture_version": "0.2",
-        "execution_mode": "scaffold_only",
+        "architecture_version": "0.6",
+        "execution_mode": "contract_and_offline_evidence_only",
         "network_calls_enabled": False,
+        "runtime_verified": False,
         "contract_claim": ClaimStatus.IMPLEMENTED_IN_SOFTWARE,
         "vendor_capability_claim": ClaimStatus.REQUIRES_PARTNER_VALIDATION,
+        "implemented_increments": list(IMPLEMENTED_INCREMENTS),
+        "proof_contracts": dict(PROOF_CONTRACTS),
         "promotion_rule": (
             "No NVIDIA runtime capability may be promoted beyond its current "
             "claim state without reproducible lab or partner evidence."
@@ -108,13 +130,15 @@ def integration_status() -> dict[str, object]:
         "integration_id": manifest["integration_id"],
         "vendor": manifest["vendor"],
         "architecture_version": manifest["architecture_version"],
-        "status": "contract_ready_runtime_unverified",
+        "status": "proof_contracts_ready_runtime_unverified",
         "execution_mode": manifest["execution_mode"],
         "network_calls_enabled": False,
         "runtime_verified": False,
         "surface_count": len(SURFACES),
         "contract_claim": manifest["contract_claim"],
         "vendor_capability_claim": manifest["vendor_capability_claim"],
+        "implemented_increments": manifest["implemented_increments"],
+        "proof_contracts": manifest["proof_contracts"],
         "contract_digest": canonical_config_digest(manifest),
         "evidence_envelope_schema_version": EVIDENCE_ENVELOPE_SCHEMA_VERSION,
         "surfaces": [
