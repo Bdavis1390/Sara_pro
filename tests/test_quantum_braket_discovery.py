@@ -1,3 +1,6 @@
+import ast
+from pathlib import Path
+
 from worldshepherd_sara.quantum_braket_discovery import candidates_as_dict, discover_online_qpus
 
 
@@ -89,3 +92,14 @@ def test_region_is_required():
         assert "region" in str(exc)
     else:
         raise AssertionError("blank region must fail closed")
+
+
+def test_discovery_cli_parses_and_exposes_profile_name_not_secret_arguments():
+    script = Path("scripts/list_braket_qpu_devices.py").read_text(encoding="utf-8")
+    ast.parse(script)
+    assert "--aws-profile" in script
+    assert "--region" in script
+    assert "--output" in script
+    assert "--access-key" not in script
+    assert "--secret-key" not in script
+    assert "aws_secret_access_key" not in script
