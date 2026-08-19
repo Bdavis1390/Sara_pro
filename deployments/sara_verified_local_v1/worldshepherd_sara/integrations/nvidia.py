@@ -9,6 +9,7 @@ from .evidence import (
     EvidenceEnvelope,
     canonical_config_digest,
 )
+from .promotion import REQUIRED_EVIDENCE_CATEGORIES, assess_promotion_readiness
 
 
 class IntegrationState(StrEnum):
@@ -76,6 +77,7 @@ IMPLEMENTED_INCREMENTS: Final[tuple[str, ...]] = (
     "WS-NV-01D",
     "WS-NV-01E",
     "WS-NV-01F",
+    "WS-NV-01G",
 )
 
 
@@ -98,7 +100,7 @@ def integration_manifest() -> dict[str, object]:
     return {
         "integration_id": "WS-NV-01",
         "vendor": "NVIDIA",
-        "architecture_version": "0.6",
+        "architecture_version": "0.7",
         "execution_mode": "contract_and_offline_evidence_only",
         "network_calls_enabled": False,
         "runtime_verified": False,
@@ -106,9 +108,14 @@ def integration_manifest() -> dict[str, object]:
         "vendor_capability_claim": ClaimStatus.REQUIRES_PARTNER_VALIDATION,
         "implemented_increments": list(IMPLEMENTED_INCREMENTS),
         "proof_contracts": dict(PROOF_CONTRACTS),
+        "promotion_gate": {
+            "required_categories": list(REQUIRED_EVIDENCE_CATEGORIES),
+            "auto_promotion_allowed": False,
+            "human_review_required": True,
+        },
         "promotion_rule": (
             "No NVIDIA runtime capability may be promoted beyond its current "
-            "claim state without reproducible lab or partner evidence."
+            "claim state without reproducible evidence and explicit human review."
         ),
         "evidence_required": [
             "runtime and SDK version inventory",
@@ -139,6 +146,7 @@ def integration_status() -> dict[str, object]:
         "vendor_capability_claim": manifest["vendor_capability_claim"],
         "implemented_increments": manifest["implemented_increments"],
         "proof_contracts": manifest["proof_contracts"],
+        "promotion_gate": manifest["promotion_gate"],
         "contract_digest": canonical_config_digest(manifest),
         "evidence_envelope_schema_version": EVIDENCE_ENVELOPE_SCHEMA_VERSION,
         "surfaces": [
@@ -180,3 +188,22 @@ def build_evidence_envelope(
         evidence_refs=evidence_refs,
         operator_authorization_ref=operator_authorization_ref,
     )
+
+
+def assess_surface_promotion_readiness(
+    *,
+    surface_name: str,
+    evidence_by_category: Mapping[str, Sequence[str]],
+) -> dict[str, object]:
+    """Assess completeness for human review without changing any claim state."""
+
+    try:
+        surface = next(item for item in SURFACES if item.name == surface_name)
+    except StopIteration as exc:
+        raise ValueError(f"Unknown NVIDIA integration surface: {surface_name}") from exc
+
+    return assess_promotion_readiness(
+        surface=surface.name,
+        submitted_claim_status=surface.capability_claim.value,
+        evidence_by_category=evidence_by_category,
+    ).to_dict()
