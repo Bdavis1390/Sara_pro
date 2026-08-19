@@ -28,7 +28,9 @@ def test_nvidia_status_accepts_relay_and_admin_without_mutating_audit(client, to
         assert body["runtime_verified"] is False
         assert body["network_calls_enabled"] is False
         assert body["contract_digest"].startswith("sha256:")
-        assert len(body["implemented_increments"]) == 7
+        assert len(body["implemented_increments"]) == 8
+        assert body["promotion_gate"]["auto_promotion_allowed"] is False
+        assert body["promotion_gate"]["human_review_required"] is True
         assert set(body["proof_contracts"]) == {
             "omniverse_kit",
             "isaac_sim_ros2",
