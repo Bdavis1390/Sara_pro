@@ -5,6 +5,10 @@ They do not imply that an external vendor runtime is installed, connected, or
 validated unless the module explicitly reports that state.
 """
 
-from .nvidia import integration_manifest
+from .nvidia import build_evidence_envelope, integration_manifest, integration_status
 
-__all__ = ["integration_manifest"]
+__all__ = [
+    "build_evidence_envelope",
+    "integration_manifest",
+    "integration_status",
+]
