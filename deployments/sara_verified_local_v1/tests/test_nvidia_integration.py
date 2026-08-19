@@ -18,8 +18,9 @@ def test_ws_nv_01_is_non_executing_by_default():
 
     assert manifest["integration_id"] == "WS-NV-01"
     assert manifest["vendor"] == "NVIDIA"
-    assert manifest["execution_mode"] == "scaffold_only"
+    assert manifest["execution_mode"] == "contract_and_offline_evidence_only"
     assert manifest["network_calls_enabled"] is False
+    assert manifest["runtime_verified"] is False
     assert manifest["contract_claim"] == ClaimStatus.IMPLEMENTED_IN_SOFTWARE
     assert manifest["vendor_capability_claim"] == ClaimStatus.REQUIRES_PARTNER_VALIDATION
 
@@ -51,10 +52,30 @@ def test_evidence_gate_covers_runtime_provenance_and_failure_behavior():
     assert "operator authorization record" in required
 
 
+def test_manifest_reports_all_current_proof_contract_increments():
+    manifest = integration_manifest()
+
+    assert manifest["implemented_increments"] == [
+        "WS-NV-01",
+        "WS-NV-01A",
+        "WS-NV-01B",
+        "WS-NV-01C",
+        "WS-NV-01D",
+        "WS-NV-01E",
+        "WS-NV-01F",
+    ]
+    assert set(manifest["proof_contracts"]) == {
+        "omniverse_kit",
+        "isaac_sim_ros2",
+        "jetson_platform_services",
+        "cuda_acceleration",
+    }
+
+
 def test_status_exposes_digest_without_promoting_runtime():
     status = integration_status()
 
-    assert status["status"] == "contract_ready_runtime_unverified"
+    assert status["status"] == "proof_contracts_ready_runtime_unverified"
     assert status["runtime_verified"] is False
     assert status["network_calls_enabled"] is False
     assert status["surface_count"] == 4
