@@ -1,6 +1,6 @@
 # WS-NV-01 — NVIDIA Physical-AI Integration Contract
 
-Status: **IMPLEMENTED IN SOFTWARE — CONTRACT + STATUS/EVIDENCE + OMNIVERSE INTERFACE PRIMITIVES**  
+Status: **IMPLEMENTED IN SOFTWARE — CONTRACT + STATUS/EVIDENCE + VENDOR INTERFACE PRIMITIVES**  
 NVIDIA runtime status: **NOT VERIFIED**  
 External network execution: **DISABLED BY DEFAULT**
 
@@ -19,14 +19,15 @@ The initial contract maps four integration surfaces:
 
 ## Why these boundaries
 
-NVIDIA documents Omniverse Kit as a modular SDK that can support headless microservices as well as full applications. The current Omniverse services stack uses Kit and exposes standards-oriented service primitives around FastAPI/OpenAPI and Pydantic. Isaac Sim exposes a ROS 2 bridge for robotics integration. Jetson Platform Services provides modular API-driven services for edge AI. Those interfaces allow SARA governance, authorization, telemetry provenance, and evidence capture to remain separate from vendor-specific runtime execution.
+NVIDIA documents Omniverse Kit as a modular SDK that can support headless microservices as well as full applications. The current Omniverse services stack uses Kit and exposes standards-oriented service primitives around FastAPI/OpenAPI and Pydantic. Isaac Sim exposes a ROS 2 bridge for robotics integration, with publishers, subscribers, and services active during simulation playback. Jetson Platform Services provides modular, API-driven services for edge AI, including REST-based AI-service operations. Those interfaces allow SARA governance, authorization, telemetry provenance, and evidence capture to remain separate from vendor-specific runtime execution.
 
 Official references:
 
 - https://docs.omniverse.nvidia.com/dev-guide/latest/kit-architecture.html
 - https://docs.omniverse.nvidia.com/services/latest/core/index.html
-- https://docs.isaacsim.omniverse.nvidia.com/latest/ros2_tutorials/ros2_landing_page.html
+- https://docs.isaacsim.omniverse.nvidia.com/latest/py/source/extensions/isaacsim.ros2.bridge/docs/index.html
 - https://developer.nvidia.com/embedded/jetpack/jetson-platform-services-get-started
+- https://docs.nvidia.com/moj/inference-services/overview.html
 
 ## Implemented increments
 
@@ -52,15 +53,19 @@ The raw configuration is deliberately not stored in the envelope. Creating an en
 
 ### WS-NV-01C — Omniverse headless proof-of-interface
 
-Worldshepherd now defines a versioned request/response contract for a future headless Omniverse Kit service. The contract specifies:
+Worldshepherd defines a versioned request/response contract for a future headless Omniverse Kit service. It includes a bounded `interface_probe` request, structured response metadata, offline parsing and correlation checks, and evidence-envelope creation. A captured response that parses successfully remains `REQUIRES_PARTNER_VALIDATION`; no SARA network client or Omniverse service is implemented by this increment.
 
-- a bounded `interface_probe` request with correlation ID and requested capabilities;
-- a structured response with service identity, Kit version, service state, extension versions, and observed capabilities;
-- offline parsing and correlation checks;
-- creation of a configuration-digested evidence envelope after parsing;
-- explicit preservation of `REQUIRES_PARTNER_VALIDATION` even when a captured response parses successfully.
+### WS-NV-01D — Isaac Sim ROS 2 proof-of-interface
 
-No SARA network client is implemented in this increment. No Omniverse service is implemented in this repository. A conforming captured JSON payload therefore proves only interface compatibility, not provenance or a functioning NVIDIA runtime.
+Worldshepherd defines a captured-observation contract for the Isaac Sim ROS 2 bridge. The record includes bridge version, ROS distribution, simulation state, observed topics, observed services, and correlation ID. The assessment only marks bridge activity as observed when simulation state is `playing` and at least one topic or service is present. It still returns `runtime_validated: false` and retains `REQUIRES_LAB_VALIDATION`.
+
+No ROS client is implemented and no Isaac Sim runtime is claimed present.
+
+### WS-NV-01E — Jetson Platform Services proof-of-interface
+
+Worldshepherd defines an offline observation contract for a future Jetson Platform Services integration. The record captures service identity/type, JetPack version, Platform Services version, containerization state, service status, observed API operations, and correlation ID. Captured API metadata can be parsed and wrapped in a configuration-digested evidence envelope, but this does not validate Jetson hardware or software.
+
+No outbound REST client is implemented and no Jetson device is claimed present. Hardware-backed proof remains required before the Jetson surface can move beyond `REQUIRES_LAB_VALIDATION`.
 
 ## Promotion gate
 
@@ -89,9 +94,9 @@ Distributed simulated sensors/autonomous nodes -> digital-twin state -> decision
 
 ## Next implementation increments
 
-- WS-NV-01D: create an Isaac Sim ROS 2 bridge proof-of-interface.
-- WS-NV-01E: create a Jetson Platform Services proof-of-interface on approved hardware.
 - WS-NV-01F: add evidence-envelope signing and verification with explicit key-custody rules.
-- WS-NV-01G: implement an outbound Omniverse service client only after endpoint authentication, transport security, allowlisting, failure semantics, and operator approval are defined.
+- WS-NV-01G: define a CUDA compute-backend proof contract without importing CUDA or claiming GPU availability.
+- WS-NV-01H: implement outbound vendor clients only after endpoint authentication, transport security, allowlisting, bounded failure semantics, and operator approval are defined.
+- LAB-NV-01: execute the contracts against approved Omniverse/Isaac and Jetson environments and collect reproducible evidence.
 
-Until runtime-specific increments are executed against an actual NVIDIA runtime and reproducible evidence is captured, NVIDIA capability remains unverified even though the Worldshepherd integration contract, authenticated status surface, evidence-envelope primitives, and Omniverse wire contract are implemented in software.
+Until runtime-specific increments are executed against actual NVIDIA runtimes and reproducible evidence is captured, NVIDIA capability remains unverified even though the Worldshepherd integration contracts, authenticated status surface, evidence-envelope primitives, and vendor wire contracts are implemented in software.
