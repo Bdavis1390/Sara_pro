@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import pytest
+
+from worldshepherd_sara.integrations.evidence import canonical_config_digest
 from worldshepherd_sara.integrations.nvidia import (
     ClaimStatus,
     IntegrationState,
     SURFACES,
+    build_evidence_envelope,
     integration_manifest,
+    integration_status,
 )
 
 
@@ -44,3 +49,47 @@ def test_evidence_gate_covers_runtime_provenance_and_failure_behavior():
     assert "telemetry and decision-provenance capture" in required
     assert "failure and degraded-state behavior" in required
     assert "operator authorization record" in required
+
+
+def test_status_exposes_digest_without_promoting_runtime():
+    status = integration_status()
+
+    assert status["status"] == "contract_ready_runtime_unverified"
+    assert status["runtime_verified"] is False
+    assert status["network_calls_enabled"] is False
+    assert status["surface_count"] == 4
+    assert str(status["contract_digest"]).startswith("sha256:")
+    assert len(str(status["contract_digest"])) == len("sha256:") + 64
+    assert all(item["state"] != IntegrationState.VALIDATED for item in status["surfaces"])
+
+
+def test_configuration_digest_is_canonical_and_deterministic():
+    left = canonical_config_digest({"b": 2, "a": {"z": 3, "y": 4}})
+    right = canonical_config_digest({"a": {"y": 4, "z": 3}, "b": 2})
+
+    assert left == right
+    assert left.startswith("sha256:")
+
+
+def test_evidence_envelope_records_digest_not_raw_config_and_preserves_claim():
+    config = {"sdk": "unverified", "mode": "simulation", "network": False}
+    envelope = build_evidence_envelope(
+        surface_name="isaac_sim_ros2",
+        config=config,
+        evidence_refs=["test://bounded-interface-001"],
+        operator_authorization_ref="auth://CRE1AWS/example",
+    )
+    body = envelope.to_dict()
+
+    assert body["integration_id"] == "WS-NV-01"
+    assert body["surface"] == "isaac_sim_ros2"
+    assert body["claim_status"] == ClaimStatus.REQUIRES_LAB_VALIDATION.value
+    assert body["config_digest"] == canonical_config_digest(config)
+    assert "config" not in body
+    assert body["evidence_refs"] == ("test://bounded-interface-001",)
+    assert body["operator_authorization_ref"] == "auth://CRE1AWS/example"
+
+
+def test_unknown_surface_cannot_receive_nvidia_evidence_envelope():
+    with pytest.raises(ValueError, match="Unknown NVIDIA integration surface"):
+        build_evidence_envelope(surface_name="invented_runtime", config={})
