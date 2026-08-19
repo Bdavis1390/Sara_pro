@@ -63,7 +63,20 @@ def test_manifest_reports_all_current_proof_contract_increments():
         "WS-NV-01D",
         "WS-NV-01E",
         "WS-NV-01F",
+        "WS-NV-01G",
     ]
+    assert manifest["promotion_gate"] == {
+        "required_categories": [
+            "runtime_version_inventory",
+            "configuration_digest",
+            "bounded_interface_test",
+            "telemetry_and_provenance",
+            "failure_or_degraded_behavior",
+            "operator_authorization",
+        ],
+        "auto_promotion_allowed": False,
+        "human_review_required": True,
+    }
     assert set(manifest["proof_contracts"]) == {
         "omniverse_kit",
         "isaac_sim_ros2",
