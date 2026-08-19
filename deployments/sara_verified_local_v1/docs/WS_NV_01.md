@@ -19,7 +19,7 @@ The initial contract maps four integration surfaces:
 
 ## Why these boundaries
 
-NVIDIA documents Omniverse Kit as a modular SDK that can support headless microservices as well as full applications. The current Omniverse services stack uses Kit and exposes standards-oriented service primitives around FastAPI/OpenAPI and Pydantic. Isaac Sim exposes a ROS 2 bridge for robotics integration, with publishers, subscribers, and services active during simulation playback. Jetson Platform Services provides modular, API-driven services for edge AI, including REST-based AI-service operations. Those interfaces allow SARA governance, authorization, telemetry provenance, and evidence capture to remain separate from vendor-specific runtime execution.
+NVIDIA documents Omniverse Kit as a modular SDK that can support headless microservices as well as full applications. The current Omniverse services stack uses Kit and exposes standards-oriented service primitives around FastAPI/OpenAPI and Pydantic. Isaac Sim exposes a ROS 2 bridge for robotics integration, with publishers, subscribers, and services active during simulation playback. Jetson Platform Services provides modular, API-driven services for edge AI, including REST-based AI-service operations. CUDA compatibility depends on runtime/driver identity, device identity, and compute capability. Those interfaces allow SARA governance, authorization, telemetry provenance, and evidence capture to remain separate from vendor-specific runtime execution.
 
 Official references:
 
@@ -28,6 +28,8 @@ Official references:
 - https://docs.isaacsim.omniverse.nvidia.com/latest/py/source/extensions/isaacsim.ros2.bridge/docs/index.html
 - https://developer.nvidia.com/embedded/jetpack/jetson-platform-services-get-started
 - https://docs.nvidia.com/moj/inference-services/overview.html
+- https://docs.nvidia.com/cuda/cuda-programming-guide/05-appendices/compute-capabilities.html
+- https://docs.nvidia.com/cuda/cuda-programming-guide/01-introduction/cuda-platform.html
 
 ## Implemented increments
 
@@ -35,13 +37,7 @@ Official references:
 
 SARA exposes `GET /v1/integrations/nvidia/status` behind existing bearer-token authentication. Relay and admin roles can read the endpoint. The endpoint performs no NVIDIA calls and does not append to the application audit store.
 
-The returned status includes:
-
-- integration and architecture version;
-- explicit `runtime_verified: false` and `network_calls_enabled: false` values;
-- current claim status for each NVIDIA surface;
-- deterministic SHA-256 digest of the integration contract;
-- evidence-envelope schema version.
+The returned status includes integration and architecture version, explicit runtime/network-disabled state, current claim status for each surface, deterministic SHA-256 contract digest, proof-contract inventory, and evidence-envelope schema version.
 
 ### WS-NV-01B — Configuration-digested evidence envelopes
 
@@ -67,6 +63,12 @@ Worldshepherd defines an offline observation contract for a future Jetson Platfo
 
 No outbound REST client is implemented and no Jetson device is claimed present. Hardware-backed proof remains required before the Jetson surface can move beyond `REQUIRES_LAB_VALIDATION`.
 
+### WS-NV-01F — CUDA compute-backend proof contract
+
+Worldshepherd defines an offline captured-compute contract containing driver version, CUDA Toolkit version, device identity, compute capability, workload identity, workload SHA-256 digest, optional result SHA-256 digest, execution state, and correlation ID.
+
+A captured record may establish that an evidence payload is structurally consistent with the Worldshepherd CUDA contract. Even a record marked `success` does not validate the GPU or CUDA runtime by itself; provenance, hardware inventory, reproducible execution, and independent evidence remain required. No CUDA library is imported, no GPU discovery is performed, and no workload is launched by this increment.
+
 ## Promotion gate
 
 No NVIDIA capability is promoted to VALIDATED until the evidence package contains, at minimum:
@@ -77,6 +79,8 @@ No NVIDIA capability is promoted to VALIDATED until the evidence package contain
 4. Telemetry and decision-provenance capture.
 5. Failure and degraded-state behavior.
 6. Operator authorization record.
+
+For CUDA, the package additionally requires device identity, compute capability, workload digest, result digest, and reproducible execution evidence.
 
 ## Planned demonstrations
 
@@ -92,11 +96,15 @@ Jetson service event -> local policy gate -> telemetry/provenance -> degraded-st
 
 Distributed simulated sensors/autonomous nodes -> digital-twin state -> decision-support workflow -> configuration custody -> after-action evidence.
 
+### NV-D4 — Reproducible Accelerated Workload
+
+Approved deterministic workload -> CUDA-capable lab host -> device/runtime inventory -> input/workload digest -> execution -> result digest -> evidence envelope -> independent rerun comparison.
+
 ## Next implementation increments
 
-- WS-NV-01F: add evidence-envelope signing and verification with explicit key-custody rules.
-- WS-NV-01G: define a CUDA compute-backend proof contract without importing CUDA or claiming GPU availability.
+- WS-NV-01G: add evidence-envelope signing and verification with explicit key-custody rules.
 - WS-NV-01H: implement outbound vendor clients only after endpoint authentication, transport security, allowlisting, bounded failure semantics, and operator approval are defined.
-- LAB-NV-01: execute the contracts against approved Omniverse/Isaac and Jetson environments and collect reproducible evidence.
+- LAB-NV-01: execute Omniverse/Isaac contracts against an approved NVIDIA runtime and collect reproducible evidence.
+- LAB-NV-02: execute Jetson and CUDA contracts on approved hardware and collect reproducible evidence.
 
 Until runtime-specific increments are executed against actual NVIDIA runtimes and reproducible evidence is captured, NVIDIA capability remains unverified even though the Worldshepherd integration contracts, authenticated status surface, evidence-envelope primitives, and vendor wire contracts are implemented in software.
