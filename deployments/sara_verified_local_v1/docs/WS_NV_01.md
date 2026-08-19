@@ -1,6 +1,6 @@
 # WS-NV-01 — NVIDIA Physical-AI Integration Contract
 
-Status: **IMPLEMENTED IN SOFTWARE — CONTRACT ONLY**  
+Status: **IMPLEMENTED IN SOFTWARE — CONTRACT + STATUS/EVIDENCE PRIMITIVES**  
 NVIDIA runtime status: **NOT VERIFIED**  
 External network execution: **DISABLED BY DEFAULT**
 
@@ -26,6 +26,28 @@ Official references:
 - https://docs.omniverse.nvidia.com/dev-guide/latest/kit-architecture.html
 - https://docs.isaacsim.omniverse.nvidia.com/latest/ros2_tutorials/ros2_landing_page.html
 - https://developer.nvidia.com/embedded/jetpack/jetson-platform-services-get-started
+
+## Implemented increments
+
+### WS-NV-01A — Authenticated read-only status
+
+SARA exposes `GET /v1/integrations/nvidia/status` behind existing bearer-token authentication. Relay and admin roles can read the endpoint. The endpoint performs no NVIDIA calls and does not append to the application audit store.
+
+The returned status includes:
+
+- integration and architecture version;
+- explicit `runtime_verified: false` and `network_calls_enabled: false` values;
+- current claim status for each NVIDIA surface;
+- deterministic SHA-256 digest of the integration contract;
+- evidence-envelope schema version.
+
+### WS-NV-01B — Configuration-digested evidence envelopes
+
+The integration package can create evidence envelopes for declared NVIDIA surfaces. An envelope records the integration ID, surface, inherited claim state, evidence references, optional operator-authorization reference, timestamp, and deterministic SHA-256 digest of a JSON-compatible configuration.
+
+The raw configuration is deliberately not stored in the envelope. Creating an envelope does not validate a runtime and cannot silently promote a surface claim.
+
+**Current limitation:** envelopes are configuration-digested but not cryptographically signed. Signing remains a future custody/integrity increment and must not be claimed as implemented.
 
 ## Promotion gate
 
@@ -54,10 +76,9 @@ Distributed simulated sensors/autonomous nodes -> digital-twin state -> decision
 
 ## Next implementation increments
 
-- WS-NV-01A: expose a read-only SARA integration-status endpoint.
-- WS-NV-01B: add signed/config-digested evidence envelopes for simulation events.
-- WS-NV-01C: create an Omniverse Kit headless adapter proof-of-interface.
+- WS-NV-01C: create an Omniverse Kit headless proof-of-interface without promoting runtime validation.
 - WS-NV-01D: create an Isaac Sim ROS 2 bridge proof-of-interface.
 - WS-NV-01E: create a Jetson Platform Services proof-of-interface on approved hardware.
+- WS-NV-01F: add evidence-envelope signing and verification with explicit key-custody rules.
 
-Until those increments are executed and verified, the integration remains a contract scaffold rather than a demonstrated NVIDIA runtime capability.
+Until runtime-specific increments are executed against an actual NVIDIA runtime and reproducible evidence is captured, NVIDIA capability remains unverified even though the Worldshepherd integration contract, authenticated status surface, and evidence-envelope primitives are implemented in software.
