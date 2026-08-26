@@ -43,6 +43,24 @@ jobs:
       - name: Run unit and API tests
         run: pytest
 
+      - name: Compile PRE qualification evidence
+        run: |
+          rm -rf qualification_evidence_ci
+          python -m worldshepherd_sara.pre_cli \
+            --fixtures fixtures \
+            --out qualification_evidence_ci \
+            --software-commit "$GITHUB_SHA" \
+            --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --operator "github-actions"
+          test -s qualification_evidence_ci/qualification_index.json
+
+      - name: Upload PRE qualification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-qualification-evidence
+          path: deployments/sara_verified_local_v1/qualification_evidence_ci
+          if-no-files-found: error
+
       - name: Create ephemeral CI environment
         run: |
           printf 'SARA_RELAY_TOKEN=%s\nSARA_ADMIN_TOKEN=%s\nSARA_PORT=9530\nSARA_HOST_PORT=19530\n' \
