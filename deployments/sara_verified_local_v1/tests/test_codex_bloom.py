@@ -152,3 +152,5 @@ def test_apnt_timeline_compiles_claims_bounded_qualification_bundle():
     assert all(item["result"] == "PASS" for item in bundle["evidence"])
     assert all(item["evidence_scope"] == "SOFTWARE" for item in bundle["evidence"])
     assert bundle["scope_note"].startswith("Synthetic software qualification")
+    assert bundle["prime_action_proposals"]
+    assert all(item["state"] == "PROPOSED" for item in bundle["prime_action_proposals"])
