@@ -27,7 +27,14 @@ def test_full_bloom_compiler_emits_cross_domain_evidence_readiness_horizons_and_
     assert (out / "capability_readiness_ledger.json").is_file()
     assert (out / "capability_horizons.json").is_file()
     assert (out / "software_provenance.json").is_file()
+
     provenance = json.loads((out / "software_provenance.json").read_text())
     assert provenance["attestation_state"] == "INTERNAL_UNSIGNED"
+    policy = provenance["metadata"]["build_policy_inputs"]
+    for name in ("pyproject.toml", "constraints-runtime.txt", "constraints-ci.txt", "Dockerfile"):
+        assert policy["files"][name].startswith("sha256:")
+    assert "@sha256:" in policy["container_base_reference"]
+    assert "build_policy_input_digests" in index["bloom_extensions"]
+
     horizons = json.loads((out / "capability_horizons.json").read_text())
     assert {record["horizon"] for record in horizons["records"]} >= {"0-90D", "3-12M", "12-24M_PLUS"}
