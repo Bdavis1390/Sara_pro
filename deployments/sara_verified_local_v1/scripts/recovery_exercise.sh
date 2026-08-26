@@ -3,6 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 RECOVERY_DIR="${RECOVERY_DIR:-recovery_evidence}"
 export RECOVERY_DIR
+HOST_PORT="${SARA_HOST_PORT:-$(awk -F= '$1=="SARA_HOST_PORT" {print $2}' .env 2>/dev/null || true)}"
+HOST_PORT="${HOST_PORT:-9530}"
 mkdir -p "$RECOVERY_DIR"
 rm -f "$RECOVERY_DIR"/sara-data.tar.gz "$RECOVERY_DIR"/sara-data.tar.gz.sha256 "$RECOVERY_DIR"/before.json "$RECOVERY_DIR"/after.json "$RECOVERY_DIR"/result.json
 
@@ -40,10 +42,10 @@ with tarfile.open(fileobj=sys.stdin.buffer,mode="r|gz") as tf:
 
 docker compose up -d
 for _ in $(seq 1 30); do
-  if curl -fsS http://127.0.0.1:${SARA_HOST_PORT:-9530}/readyz >/dev/null; then break; fi
+  if curl -fsS "http://127.0.0.1:${HOST_PORT}/readyz" >/dev/null; then break; fi
   sleep 1
 done
-curl -fsS http://127.0.0.1:${SARA_HOST_PORT:-9530}/readyz >/dev/null
+curl -fsS "http://127.0.0.1:${HOST_PORT}/readyz" >/dev/null
 
 docker compose run --rm --no-deps --user 0 -T --entrypoint python sara -c '
 import hashlib,json,pathlib
