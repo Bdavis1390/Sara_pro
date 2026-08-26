@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .apnt import apnt_snapshot_graph, derive_apnt_decision
+from .prime import ActionProposal
 from .qualification import (
     CapabilityStatus,
     EvidenceScope,
@@ -24,6 +25,7 @@ def qualify_synthetic_apnt_timeline(
 ) -> dict[str, Any]:
     """Evaluate the frozen synthetic APNT timeline and compile replayable evidence."""
     evidence: list[QualificationEvidenceRecord] = []
+    proposals: list[dict[str, Any]] = []
     last_graph = None
 
     env_digest = canonical_digest(
@@ -43,6 +45,15 @@ def qualify_synthetic_apnt_timeline(
             source_state=point["source_state"],
             decision=decision,
         )
+        for action_index, action in enumerate(decision.recovery_options, start=1):
+            proposals.append(
+                ActionProposal(
+                    proposal_id=f"APNT-{point['t_seconds']}-{action_index}",
+                    action=action,
+                    rationale=list(decision.rationale),
+                    authority_required="identified-human-authority",
+                ).model_dump(mode="json")
+            )
         evidence.append(
             QualificationEvidenceRecord(
                 qualification_id=f"WS-QE-2026-{index:04d}",
@@ -95,8 +106,9 @@ def qualify_synthetic_apnt_timeline(
     bundle = compile_qualification_bundle(requirement, evidence, last_graph)
     bundle.pop("bundle_digest", None)
     bundle["fixture_id"] = fixture["fixture_id"]
+    bundle["prime_action_proposals"] = proposals
     bundle["scope_note"] = (
-        "Synthetic software qualification only; no physical APNT or Navy operational claim."
+        "Synthetic software qualification only; recovery options remain PROPOSED until identified human review; no physical APNT or Navy operational claim."
     )
     bundle["bundle_digest"] = canonical_digest(bundle)
     return bundle
