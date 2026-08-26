@@ -1,0 +1,19 @@
+{
+  "fixture_id": "WS-RF-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic S11-like values only.",
+    "No VNA, anechoic chamber, fabricated metasurface, RF power handling, radiation pattern, or physical material validation is represented."
+  ],
+  "points": [
+    {"frequency_ghz": 8.0, "predicted_s11_db": -8.0, "measured_s11_db": -7.7, "measurement_uncertainty_db": 0.5},
+    {"frequency_ghz": 9.0, "predicted_s11_db": -12.0, "measured_s11_db": -11.6, "measurement_uncertainty_db": 0.5},
+    {"frequency_ghz": 10.0, "predicted_s11_db": -18.0, "measured_s11_db": -17.5, "measurement_uncertainty_db": 0.6},
+    {"frequency_ghz": 11.0, "predicted_s11_db": -11.0, "measured_s11_db": -10.8, "measurement_uncertainty_db": 0.5},
+    {"frequency_ghz": 12.0, "predicted_s11_db": -7.0, "measured_s11_db": -6.6, "measurement_uncertainty_db": 0.5}
+  ],
+  "expected": {
+    "max_absolute_error_db": 0.6,
+    "minimum_within_uncertainty_fraction": 0.8
+  }
+}

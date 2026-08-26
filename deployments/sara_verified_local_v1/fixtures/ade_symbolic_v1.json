@@ -1,0 +1,32 @@
+{
+  "fixture_id": "WS-ADE-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic symbolic-regression benchmark only.",
+    "Does not establish state-of-the-art algorithm discovery, novelty, scientific discovery, or DARPA SPEED DIAL Direct-to-Phase-II eligibility."
+  ],
+  "problem": {
+    "name": "shifted_square",
+    "samples": [
+      [-3, 4],
+      [-2, 1],
+      [-1, 0],
+      [0, 1],
+      [1, 4],
+      [2, 9],
+      [3, 16]
+    ],
+    "baseline": "x",
+    "target_description": "Discover an interpretable expression matching y=(x+1)^2 without providing that expression to the search engine."
+  },
+  "search": {
+    "constants": [-2, -1, 0, 1, 2],
+    "max_depth": 2,
+    "beam_width": 256
+  },
+  "expected": {
+    "mse_max": 0.0,
+    "human_interpretable": true,
+    "must_improve_over_baseline": true
+  }
+}

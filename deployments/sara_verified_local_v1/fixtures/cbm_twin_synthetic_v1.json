@@ -1,0 +1,24 @@
+{
+  "fixture_id": "WS-CBM-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic telemetry only.",
+    "No NAVAIR platform, real component, predictive-maintenance, remaining-useful-life, or fleet-effectiveness claim."
+  ],
+  "asset_id": "synthetic-pump-1",
+  "expected_envelopes": [
+    {"metric": "temperature_c", "minimum": 20.0, "maximum": 80.0, "units": "C"},
+    {"metric": "vibration_rms", "minimum": 0.0, "maximum": 4.0, "units": "mm/s"}
+  ],
+  "telemetry": [
+    {"sample_id": "T1", "asset_id": "synthetic-pump-1", "metric": "temperature_c", "value": 60.0, "t_seconds": 0.0, "source_ref": "synthetic://temp"},
+    {"sample_id": "T2", "asset_id": "synthetic-pump-1", "metric": "vibration_rms", "value": 2.0, "t_seconds": 0.0, "source_ref": "synthetic://vibration"},
+    {"sample_id": "T3", "asset_id": "synthetic-pump-1", "metric": "temperature_c", "value": 91.0, "t_seconds": 10.0, "source_ref": "synthetic://temp"},
+    {"sample_id": "T4", "asset_id": "synthetic-pump-1", "metric": "vibration_rms", "value": 5.0, "t_seconds": 10.0, "source_ref": "synthetic://vibration"}
+  ],
+  "expected": {
+    "finding_statuses": ["NOMINAL", "NOMINAL", "HIGH", "HIGH"],
+    "anomaly_count": 2,
+    "all_findings_traceable": true
+  }
+}

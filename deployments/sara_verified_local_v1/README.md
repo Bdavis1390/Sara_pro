@@ -1,6 +1,6 @@
 # Worldshepherd SARA / SSPADAWANZZ
 
-Evidence-governed local administration and relay-recording service for the Worldshepherd stack.
+Evidence-governed local administration, relay-recording, and predictive-requirements qualification service for the Worldshepherd stack.
 
 ## Verified boundary
 
@@ -16,11 +16,9 @@ Evidence-governed local administration and relay-recording service for the World
 
 External scanning, broadcasting, arbitrary command execution, third-party activation, and self-expanding network behavior are excluded.
 
-The audit is an application-appended JSON Lines log on the local persistent
-volume. It is useful operational evidence, but it is not immutable,
-tamper-proof, or independently verified.
+The audit is an application-appended JSON Lines log on the local persistent volume. It is useful operational evidence, but it is not immutable, tamper-proof, or independently verified.
 
-## Quick start
+## Quick start — SARA local service
 
 ```bash
 python -m venv .venv
@@ -32,3 +30,21 @@ cp .env.example .env
 ```
 
 For the Docker-based acceptance sequence, see [`docs/VERIFIED_DEPLOYMENT.md`](docs/VERIFIED_DEPLOYMENT.md).
+
+## Quick start — PRE full-bloom qualification compiler
+
+After installing the package, compile the current frozen internal qualification evidence with:
+
+```bash
+rm -rf qualification_evidence
+ws-pre-bloom \
+  --fixtures fixtures \
+  --out qualification_evidence \
+  --software-commit "$(git rev-parse HEAD)" \
+  --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --operator "$(whoami)"
+```
+
+The compiler exits nonzero if a qualification record fails or ECHO-style custody verification fails. Expected outputs include `qualification_index.json`, domain qualification bundles, `capability_readiness_ledger.json`, `capability_horizons.json`, `software_provenance.json`, and the local hash-addressed `echo_store/`.
+
+See [`docs/PRE_FULL_BLOOM.md`](docs/PRE_FULL_BLOOM.md) for operation and evidence interpretation, and [`docs/COMPLIANCE_BOUNDARY.md`](docs/COMPLIANCE_BOUNDARY.md) for the exact distinction between internal software conformance and external regulatory, contractual, physical, partner, and government validation.

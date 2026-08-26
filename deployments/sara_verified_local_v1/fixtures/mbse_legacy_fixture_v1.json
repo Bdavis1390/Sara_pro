@@ -1,0 +1,67 @@
+{
+  "fixture_id": "WS-MBSE-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic legacy-system corpus with known ground truth.",
+    "Not derived from AEGIS or other Navy technical data.",
+    "Does not establish Cameo/MagicDraw interoperability or production SysML reconstruction accuracy."
+  ],
+  "ground_truth": {
+    "nodes": [
+      {"id": "power_bus", "type": "subsystem", "name": "Power Distribution"},
+      {"id": "sensor_a", "type": "sensor", "name": "Sensor A"},
+      {"id": "processor_a", "type": "compute", "name": "Mission Processor"},
+      {"id": "display_a", "type": "hmi", "name": "Operator Display"},
+      {"id": "service_track", "type": "software_service", "name": "Track Service"}
+    ],
+    "edges": [
+      {"source": "power_bus", "target": "sensor_a", "relation": "powers"},
+      {"source": "power_bus", "target": "processor_a", "relation": "powers"},
+      {"source": "sensor_a", "target": "processor_a", "relation": "ethernet_data"},
+      {"source": "processor_a", "target": "service_track", "relation": "hosts"},
+      {"source": "service_track", "target": "display_a", "relation": "publishes_track_data"}
+    ]
+  },
+  "legacy_artifacts": [
+    {
+      "artifact_id": "doc-001",
+      "kind": "technical_manual_excerpt",
+      "content": "Sensor A receives 28 VDC from the Power Distribution subsystem and forwards observation messages to the Mission Processor over Ethernet.",
+      "expected_support": ["power_bus->sensor_a:powers", "sensor_a->processor_a:ethernet_data"]
+    },
+    {
+      "artifact_id": "bom-001",
+      "kind": "hardware_bom",
+      "rows": [
+        {"item": "Sensor A", "part": "SYN-SA-001"},
+        {"item": "Mission Processor", "part": "SYN-MP-001"},
+        {"item": "Operator Display", "part": "SYN-DIS-001"}
+      ]
+    },
+    {
+      "artifact_id": "net-001",
+      "kind": "network_configuration",
+      "rows": [
+        {"host": "Mission Processor", "service": "Track Service", "protocol": "TCP", "port": 4500},
+        {"consumer": "Operator Display", "service": "Track Service"}
+      ],
+      "expected_support": ["processor_a->service_track:hosts", "service_track->display_a:publishes_track_data"]
+    },
+    {
+      "artifact_id": "cable-001",
+      "kind": "cable_record",
+      "rows": [
+        {"from": "Power Distribution", "to": "Mission Processor", "purpose": "28 VDC"}
+      ],
+      "expected_support": ["power_bus->processor_a:powers"]
+    }
+  ],
+  "scoring": {
+    "entity_precision_target": 0.95,
+    "entity_recall_target": 0.95,
+    "relationship_precision_target": 0.90,
+    "relationship_recall_target": 0.90,
+    "unsupported_inference_target": 0.0,
+    "notes": "Internal synthetic benchmark targets only; not government performance claims."
+  }
+}
