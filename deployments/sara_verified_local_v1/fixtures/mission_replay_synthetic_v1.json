@@ -1,0 +1,23 @@
+{
+  "fixture_id": "WS-MISSION-REPLAY-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic mission-event fixture only.",
+    "Does not represent CCA, Navy, operational UAS, or classified mission data.",
+    "Follow-on actions are proposals requiring identified human authorization."
+  ],
+  "events": [
+    {"sequence": 1, "t_seconds": 0, "source": "mission_manager", "event_type": "mission_start", "payload": {}},
+    {"sequence": 2, "t_seconds": 10, "source": "comms", "event_type": "comms_degraded", "payload": {"packet_loss_fraction": 0.45}},
+    {"sequence": 3, "t_seconds": 20, "source": "sensor_a", "event_type": "sensor_stale", "payload": {"age_seconds": 12}},
+    {"sequence": 4, "t_seconds": 30, "source": "task_manager", "event_type": "task_failed", "payload": {"task_id": "survey-2", "reason": "insufficient_fresh_data"}},
+    {"sequence": 5, "t_seconds": 40, "source": "operator", "event_type": "operator_override", "payload": {"action": "hold_position"}},
+    {"sequence": 6, "t_seconds": 50, "source": "comms", "event_type": "comms_restored", "payload": {}},
+    {"sequence": 7, "t_seconds": 60, "source": "mission_manager", "event_type": "mission_complete", "payload": {"status": "partial_success"}}
+  ],
+  "expected": {
+    "finding_types": ["communications_degradation", "stale_sensor_dependency", "task_failure"],
+    "proposal_actions": ["validate_alternate_comms_path", "tighten_stale_data_gate", "review_task_reassignment_policy"],
+    "all_proposals_must_start_proposed": true
+  }
+}
