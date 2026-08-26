@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import platform
@@ -30,6 +31,28 @@ def _write(path: Path, value: dict[str, Any]) -> None:
         json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
         encoding="utf-8",
     )
+
+
+def _file_sha256(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _build_policy_inputs() -> dict[str, Any]:
+    cwd = Path.cwd()
+    paths = ["pyproject.toml", "constraints-runtime.txt", "constraints-ci.txt", "Dockerfile"]
+    values: dict[str, Any] = {
+        "files": {name: _file_sha256(cwd / name) for name in paths},
+        "capture_root": str(cwd),
+    }
+    dockerfile = cwd / "Dockerfile"
+    if dockerfile.is_file():
+        first_line = dockerfile.read_text(encoding="utf-8").splitlines()[0].strip()
+        values["container_base_reference"] = first_line[5:].strip() if first_line.startswith("FROM ") else None
+    else:
+        values["container_base_reference"] = None
+    return values
 
 
 def _requirement(
@@ -120,6 +143,7 @@ def build_bloom(
         "machine": platform.machine(),
         "execution_context": "pre-bloom-cli",
     }
+    build_policy_inputs = _build_policy_inputs()
 
     edge = qualify_host_callable(
         function=_edge_workload,
@@ -178,6 +202,7 @@ def build_bloom(
                 "builder": operator,
                 "runtime_identity": runtime_identity,
                 "components": [component.model_dump(mode="json") for component in components],
+                "build_policy_inputs": build_policy_inputs,
             }
         ),
         output_artifact_digest=canonical_digest(bundle_manifest),
@@ -185,6 +210,7 @@ def build_bloom(
         metadata={
             "attested_object": "WS-PRE-BUNDLE-MANIFEST-V1",
             "runtime_identity": runtime_identity,
+            "build_policy_inputs": build_policy_inputs,
         },
     )
     provenance_value = provenance.model_dump(mode="json")
@@ -202,6 +228,7 @@ def build_bloom(
         "capability_readiness_ledger",
         "0-90D_3-12M_12-24M_PLUS_horizons",
         "internal_unsigned_software_provenance",
+        "build_policy_input_digests",
     ]
     index["claims_boundary"].extend(
         [
@@ -209,6 +236,7 @@ def build_bloom(
             "DDIL rejoin evidence validates a synthetic conflict policy, not distributed consensus or operational network resilience.",
             "Capability horizons schedule preparation only and never upgrade readiness claims.",
             "Software provenance is INTERNAL_UNSIGNED unless a later attestation explicitly records signing/verification evidence.",
+            "Pinned versions and base-image digests improve repeatability but do not constitute a hermetic or independently verified software supply chain.",
         ]
     )
     _write(out / "qualification_index.json", index)
