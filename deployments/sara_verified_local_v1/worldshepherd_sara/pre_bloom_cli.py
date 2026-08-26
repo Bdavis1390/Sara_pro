@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -70,6 +72,20 @@ def _edge_workload(value: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _installed_component(name: str, *, supplier: str | None = None) -> SoftwareComponent:
+    try:
+        installed_version = version(name)
+    except PackageNotFoundError:
+        installed_version = "UNKNOWN"
+    return SoftwareComponent(
+        name=name,
+        version=installed_version,
+        package_type="python",
+        supplier=supplier,
+        purl=None if installed_version == "UNKNOWN" else f"pkg:pypi/{name}@{installed_version}",
+    )
+
+
 def build_bloom(
     *, fixtures: Path, out: Path, software_commit: str, executed_utc: str, operator: str
 ) -> dict[str, Any]:
@@ -96,6 +112,15 @@ def build_bloom(
         ["distributed deployment", "real network partitions", "consensus validation"],
     )
 
+    runtime_identity = {
+        "python_version": platform.python_version(),
+        "implementation": platform.python_implementation(),
+        "system": platform.system(),
+        "release": platform.release(),
+        "machine": platform.machine(),
+        "execution_context": "pre-bloom-cli",
+    }
+
     edge = qualify_host_callable(
         function=_edge_workload,
         input_value={"values": list(range(1, 129))},
@@ -104,8 +129,8 @@ def build_bloom(
         executed_utc=executed_utc,
         operator=operator,
         environment={
+            **runtime_identity,
             "runtime": "python",
-            "execution_context": "qualification-compiler-host",
             "device_claim": "NONE",
         },
         repetitions=7,
@@ -137,24 +162,30 @@ def build_bloom(
         "software_commit": software_commit,
         "bundle_digests": dict(sorted(index["bundle_digests"].items())),
     }
+    components = [
+        _installed_component("worldshepherd-sara", supplier="Worldshepherd internal"),
+        _installed_component("fastapi"),
+        _installed_component("uvicorn"),
+        _installed_component("pydantic"),
+    ]
     provenance = BuildProvenance(
         provenance_id="WS-PRE-BLOOM-BUILD-V1",
         source_repository="Bdavis1390/Sara_pro",
         source_commit=software_commit,
         builder_id=operator,
         build_environment_digest=canonical_digest(
-            {"builder": operator, "execution_context": "pre-bloom-cli"}
+            {
+                "builder": operator,
+                "runtime_identity": runtime_identity,
+                "components": [component.model_dump(mode="json") for component in components],
+            }
         ),
         output_artifact_digest=canonical_digest(bundle_manifest),
-        components=[
-            SoftwareComponent(
-                name="worldshepherd-sara",
-                version="0.1.0",
-                package_type="python",
-                supplier="Worldshepherd internal",
-            )
-        ],
-        metadata={"attested_object": "WS-PRE-BUNDLE-MANIFEST-V1"},
+        components=components,
+        metadata={
+            "attested_object": "WS-PRE-BUNDLE-MANIFEST-V1",
+            "runtime_identity": runtime_identity,
+        },
     )
     provenance_value = provenance.model_dump(mode="json")
     provenance_value["provenance_digest"] = provenance.digest()
