@@ -37,16 +37,16 @@ def derive_apnt_decision(source_state: dict[str, dict[str, Any]]) -> ApntDecisio
         rationale.append("primary GNSS confidence is below trusted-use threshold")
         recovery.extend(["exclude_gnss", "fuse_ins_alt_pnt", "request_operator_approval"])
         confidence = max(ins_conf, alt_conf)
-    elif gnss_health in {"DEGRADED"} or gnss_conf < 0.70:
-        state = "DEGRADED_PNT"
-        rationale.append("primary GNSS is degraded or below nominal confidence")
-        recovery.extend(["weight_ins_more", "enable_alt_pnt_cross_check", "alert_operator"])
-        confidence = max(gnss_conf, ins_conf, alt_conf)
     elif gnss_health == "RECOVERING":
         state = "RECOVERY"
         rationale.append("primary GNSS is recovering and requires cross-validation")
         recovery.extend(["cross_validate_gnss_before_reentry", "retain_alt_pnt", "operator_review"])
         confidence = max(ins_conf, alt_conf)
+    elif gnss_health == "DEGRADED" or gnss_conf < 0.70:
+        state = "DEGRADED_PNT"
+        rationale.append("primary GNSS is degraded or below nominal confidence")
+        recovery.extend(["weight_ins_more", "enable_alt_pnt_cross_check", "alert_operator"])
+        confidence = max(gnss_conf, ins_conf, alt_conf)
     else:
         state = "NORMAL"
         rationale.append("normalized source set is within nominal demonstrator thresholds")
@@ -70,10 +70,9 @@ def apnt_snapshot_graph(
     edges: list[EvidenceGraphEdge] = []
 
     for source_id, state in sorted(source_state.items()):
-        node_id = f"source:{source_id}"
         nodes.append(
             EvidenceGraphNode(
-                node_id=node_id,
+                node_id=f"source:{source_id}",
                 node_type="apnt_source_state",
                 label=source_id,
                 confidence=float(state.get("confidence", 0.0)),
