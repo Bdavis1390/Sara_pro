@@ -1,0 +1,28 @@
+{
+  "fixture_id": "WS-FUSION-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic 2-D point observations only.",
+    "Does not represent AESA, EO/IR, NAVAIR, classified sensor data, or operational track performance.",
+    "Benchmark validates only the bounded deterministic association/fusion implementation."
+  ],
+  "truth": [
+    {"track_id": "T1", "t_seconds": 10.0, "x": 100.0, "y": 50.0},
+    {"track_id": "T2", "t_seconds": 10.0, "x": -40.0, "y": 80.0}
+  ],
+  "observations": [
+    {"observation_id": "A1", "sensor_id": "sensor_a", "t_seconds": 10.0, "x": 101.0, "y": 49.5, "confidence": 0.90},
+    {"observation_id": "B1", "sensor_id": "sensor_b", "t_seconds": 10.1, "x": 99.0, "y": 50.5, "confidence": 0.80},
+    {"observation_id": "A2", "sensor_id": "sensor_a", "t_seconds": 10.0, "x": -39.5, "y": 79.0, "confidence": 0.85},
+    {"observation_id": "B2", "sensor_id": "sensor_b", "t_seconds": 9.9, "x": -40.5, "y": 81.0, "confidence": 0.75}
+  ],
+  "association": {
+    "max_spatial_distance": 5.0,
+    "max_time_delta_seconds": 0.5
+  },
+  "expected": {
+    "fused_track_count": 2,
+    "max_position_error": 1.0,
+    "all_source_observations_preserved": true
+  }
+}
