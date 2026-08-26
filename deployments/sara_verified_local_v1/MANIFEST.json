@@ -1,19 +1,24 @@
 {
-  "artifact": "Worldshepherd SARA / SSPADAWANZZ namespaced repository promotion candidate",
-  "version": "v1-repository-promotion",
-  "generated_utc": "2026-07-29T01:42:26Z",
-  "derived_from": {
-    "artifact": "Worldshepherd SARA / SSPADAWANZZ verified local deployment candidate",
-    "source_manifest_sha256": "c201426d441ddaea908f99e755fbfc43de4767749d5e68dc28d44bebf1210275"
+  "schema": "WS-SARA-DEPLOYMENT-METADATA-V2",
+  "artifact": "Worldshepherd SARA / SSPADAWANZZ verified local deployment and PRE qualification package",
+  "version": "v2-live-tracked-inventory",
+  "updated_utc": "2026-08-26T03:40:00Z",
+  "integrity_model": {
+    "static_file_hash_inventory": "SUPERSEDED",
+    "operative_inventory": "scripts/verify_deployment.sh generates tracked-files.json from every Git-tracked file in the deployment subtree at verification time",
+    "commit_binding": "baseline.txt records git_head and tracked_files_sha256",
+    "evidence_binding": "SHA256SUMS covers emitted deployment evidence files",
+    "pre_qualification": "GitHub Actions invokes the full-bloom PRE compiler and uploads its hash-addressed qualification evidence artifact"
   },
   "security_boundary": [
-    "localhost-only port binding",
-    "separate host and container ports",
-    "separate operator and administrator bearer tokens",
+    "localhost-only service publication",
+    "separate relay and administrator bearer tokens",
+    "persistent local storage with restrictive file modes",
     "no external scanning",
     "no broadcasting",
     "no arbitrary command execution",
-    "no self-expanding network behavior"
+    "no self-expanding network behavior",
+    "AI proposals and bounded automation remain subject to explicit policy/authorization rules"
   ],
   "port_model": {
     "container_port": 9530,
@@ -21,164 +26,38 @@
     "parallel_validation_host_port": 19530,
     "host_binding": "127.0.0.1 only"
   },
-  "source_validation": {
-    "pytest": "29 passed with 0 failures, 0 errors, and 0 skips under Python 3.12; application and test code unchanged by the CI evidence-root correction",
-    "compileall": "passed; Python source unchanged by the CI evidence-root correction",
-    "shell_syntax": "passed after CI clean-checkout evidence-root correction",
-    "runtime_verifier": "passed after CI clean-checkout evidence-root correction in isolated Docker Compose project sara_orl4_hardening_20260728 on localhost port 19532 with independently verified evidence at .deployment-evidence/20260729T014206Z"
-  },
-  "repository_promotion_validation": {
-    "status": "passed_local_isolated_orl4_validation",
-    "required_checks": [
-      "manifest digest verification",
-      "shell syntax validation",
-      "Python compilation",
-      "unit and API tests",
-      "Compose rendering",
-      "parallel-port deployment verification"
-    ],
-    "completed_utc": "2026-07-29T01:42:26Z",
-    "evidence_directory": ".deployment-evidence/20260729T014206Z",
-    "completed_checks": [
-      "29-test Python 3.12 unit and API suite retained; application and test code unchanged",
-      "all 22 manifest hashes, sizes, JSON validity, and canonical inventory verification",
-      "final shell syntax and git diff validation",
-      "clean-checkout verification with an initially absent .deployment-evidence parent",
-      "fail-closed evidence-root type and permission validation",
-      "isolated localhost build, startup, health, readiness, role separation, self-test, restart, and persistence verification",
-      "evidence directory and file permission validation",
-      "SHA256SUMS, redacted Compose YAML, and baseline provenance validation",
-      "Git HEAD, dirty precommit state, and canonical manifest inventory binding",
-      "CI failure analysis and evidence-root initialization correction"
-    ],
-    "claims_boundary": [
-      "isolated localhost validation only",
-      "committed-revision CI and remote publication are tracked outside this precommit evidence record",
-      "merge approval remains pending",
-      "rollback and replacement-host recovery remain pending",
-      "off-host evidence retention remains pending",
-      "immutable audit is not provided by the application-appended local audit log",
-      "production and public-network readiness remain pending"
-    ],
-    "validated_git_head": "b683a6470358e15f0480bef851db8a97bc47d2c6",
-    "validated_git_worktree_state": "dirty_precommit_ci_evidence_root_correction",
-    "manifest_files_sha256": "a3b62edb85877d99474c7601a3cbebb99f287100090bf0740a2887c875744bbb"
+  "internal_release_gate": [
+    "Python package installation",
+    "Python compilation",
+    "unit and API tests",
+    "PRE full-bloom qualification compiler",
+    "required machine-readable evidence outputs",
+    "ECHO-style custody verification",
+    "Docker Compose validation",
+    "ephemeral local deployment",
+    "health and readiness checks",
+    "role-separated administrator/relay smoke testing",
+    "restart and persistence verification",
+    "live Git-tracked subtree inventory capture"
+  ],
+  "claims_boundary": [
+    "Internal software conformance and localhost deployment evidence only unless a separate evidence package establishes more.",
+    "CMMC certification is not claimed.",
+    "NIST SP 800-171 organizational conformity is not claimed.",
+    "SAM/UEI/CAGE/SBIR/STTR eligibility is not established by this software artifact.",
+    "ITAR/EAR, FOCI, security clearance, ATO/RMF, and government interoperability certification require external authoritative review/evidence.",
+    "Synthetic qualification does not establish physical hardware, RF, material, navigation, autonomy, maintenance, or operational performance.",
+    "External partner/customer/laboratory validation remains distinct from internal CI evidence."
+  ],
+  "documentation": {
+    "quick_start": "README.md",
+    "deployment": "docs/VERIFIED_DEPLOYMENT.md",
+    "pre_full_bloom": "docs/PRE_FULL_BLOOM.md",
+    "compliance_boundary": "docs/COMPLIANCE_BOUNDARY.md"
   },
   "repository_integration": {
     "workflow_path": ".github/workflows/sara-verified-local-v1.yml",
-    "workflow_sha256": "4402aa4eb5e15a8c3d76850c0606dea0acd2a4fa8e7df8a8a095e773206a32cc",
-    "workflow_location": "repository root; outside namespaced artifact directory"
+    "workflow_behavior": "push and pull-request changes to the deployment subtree execute the full internal release gate"
   },
-  "files": [
-    {
-      "path": ".dockerignore",
-      "sha256": "1c4c38fccd94b5e0fc6ba515dd8f73b01e43bdb2aa40d83b0d45cc1b31ca6a5b",
-      "size_bytes": 68
-    },
-    {
-      "path": ".env.example",
-      "sha256": "7f6aba4bf3e0f036dd93c8ef5669fe9ba848ff0189428ccf7a58334a1347c357",
-      "size_bytes": 398
-    },
-    {
-      "path": ".gitignore",
-      "sha256": "fc89910178057d6906682425fda8bd638fdd66930a8662f9f4975c1f066dd880",
-      "size_bytes": 78
-    },
-    {
-      "path": "Dockerfile",
-      "sha256": "c04967cbc183459fc72c8e5cfd10db9de2de87a4e777b150ff72462cb43ac0ea",
-      "size_bytes": 681
-    },
-    {
-      "path": "README.md",
-      "sha256": "aaf8fa97286d743af29433caf893698c0059cbfb82423fb9e0aac111663a2275",
-      "size_bytes": 1289
-    },
-    {
-      "path": "SECURITY.md",
-      "sha256": "38b0ed3f90107a36908d6d7a5bb1e8b35b673cb1eee097c4dca360cb0fd5a5b6",
-      "size_bytes": 1186
-    },
-    {
-      "path": "compose.yaml",
-      "sha256": "972a3eced169a3423a1f9d55b87cf0c5bb07772edaa3b4041b2619f55eeb9ec6",
-      "size_bytes": 712
-    },
-    {
-      "path": "docs/QUARANTINED_LEGACY.md",
-      "sha256": "b9254518953105211f07b0416f039b62e2b36c67958b9e6d8c0712e2e39203d9",
-      "size_bytes": 783
-    },
-    {
-      "path": "docs/VERIFIED_DEPLOYMENT.md",
-      "sha256": "58c4a354a67c1ead29485ac37215b5c6a9ce5dadda5865d102dbe8792b293cc2",
-      "size_bytes": 2873
-    },
-    {
-      "path": "pyproject.toml",
-      "sha256": "fa9485131a1b58a16d72c2ea7c4a0dfa86a47337304c657fb88178cbde6aa5ee",
-      "size_bytes": 533
-    },
-    {
-      "path": "scripts/admin_smoke_test.sh",
-      "sha256": "a1ac8ce42bac7a897d6957651322dd863efefa33417fffb58d5a68c4504b97eb",
-      "size_bytes": 2181
-    },
-    {
-      "path": "scripts/start_interface.sh",
-      "sha256": "52f0c160682e25483296a46dac4cabd0fdb9988678b40eb32e18baf4f5bf3b7c",
-      "size_bytes": 448
-    },
-    {
-      "path": "scripts/verify_deployment.sh",
-      "sha256": "05719fe88628e76cf9ac333aab8a729756964cc0c0c5e54f514c2ccd7bf740b1",
-      "size_bytes": 4812
-    },
-    {
-      "path": "tests/conftest.py",
-      "sha256": "9ad6f28c00775584d23bc2d0c19d68b4c41a70819698ebd7885cb78d9a2ee5ca",
-      "size_bytes": 600
-    },
-    {
-      "path": "tests/test_api.py",
-      "sha256": "b2715bc2510128c32be96b7cf85b8aa63545e8fcf13996b0376bd4a28b1477ce",
-      "size_bytes": 11603
-    },
-    {
-      "path": "worldshepherd_sara/__init__.py",
-      "sha256": "bf9af3222f06eb997a73c4b8b55f26cf33be438d3415c5d7e327a4363b5fd231",
-      "size_bytes": 78
-    },
-    {
-      "path": "worldshepherd_sara/__main__.py",
-      "sha256": "1372ecb7d44cc521e33f21f9eadbe093558b3e10d2b0283f78ab155c206552af",
-      "size_bytes": 332
-    },
-    {
-      "path": "worldshepherd_sara/app.py",
-      "sha256": "b4fc951c3e6c9d2df85b8a89a3a9af305a0583cc5764a0c3c48117b3b1558ae0",
-      "size_bytes": 9410
-    },
-    {
-      "path": "worldshepherd_sara/auth.py",
-      "sha256": "53c91c40a428fdbad63a921e8ffd14c048afc3c9ae111cd0f0f25ee197ef0de6",
-      "size_bytes": 2102
-    },
-    {
-      "path": "worldshepherd_sara/models.py",
-      "sha256": "105f82c252a1206a0145d3bf0f797c2f1938cf751096adce8199284c11561823",
-      "size_bytes": 1383
-    },
-    {
-      "path": "worldshepherd_sara/limits.py",
-      "sha256": "db24ac92005c081f61f0c81dfb34a3a9b536cce667f680f29a2875def9251f4f",
-      "size_bytes": 1889
-    },
-    {
-      "path": "worldshepherd_sara/storage.py",
-      "sha256": "0e8be29217099bfe8dd69d282a2d0bf97ce9cb4aa1d514d0c76ec6f2421c5e84",
-      "size_bytes": 10032
-    }
-  ]
+  "historical_note": "The July 2026 v1 static file-hash inventory and pre-merge status were retired because the deployment expanded substantially. Historical evidence remains available through Git history; this V2 manifest is metadata, while the operative file inventory is generated live during verification."
 }

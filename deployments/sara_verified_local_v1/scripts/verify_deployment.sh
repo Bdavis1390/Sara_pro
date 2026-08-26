@@ -45,35 +45,52 @@ if ! mkdir -m 0700 "$evidence_dir"; then
 fi
 
 git_head="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
-manifest_files_sha256="$(
-  python3 - <<'PY_MANIFEST'
+
+# Build a live inventory from every Git-tracked file in this deployment subtree.
+# This supersedes the historical static file-hash list in MANIFEST.json and binds
+# deployment evidence to the files actually present at the tested commit.
+tracked_files_sha256="$(
+  python3 - "$evidence_dir/tracked-files.json" <<'PY_TRACKED'
 import hashlib
 import json
+import subprocess
+import sys
 from pathlib import Path
 
-manifest = json.loads(
-    Path("MANIFEST.json").read_text(encoding="utf-8")
-)
-payload = json.dumps(
-    manifest["files"],
-    sort_keys=True,
-    separators=(",", ":"),
-).encode("utf-8")
+out = Path(sys.argv[1])
+raw = subprocess.check_output(["git", "ls-files", "-z", "--", "."])
+paths = sorted(p.decode("utf-8") for p in raw.split(b"\0") if p)
+records = []
+for value in paths:
+    path = Path(value)
+    data = path.read_bytes()
+    records.append(
+        {
+            "path": value,
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "size_bytes": len(data),
+        }
+    )
+payload = json.dumps(records, sort_keys=True, separators=(",", ":")).encode("utf-8")
+out.write_text(json.dumps({"schema": "WS-TRACKED-SUBTREE-INVENTORY-V1", "files": records}, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 print(hashlib.sha256(payload).hexdigest())
-PY_MANIFEST
+PY_TRACKED
 )"
 
-if git diff --quiet -- .   && git diff --cached --quiet -- .   && [[ -z "$(git ls-files --others --exclude-standard)" ]]; then
-  git_worktree_state="clean"
+manifest_metadata_sha256="$(sha256sum MANIFEST.json | awk '{print $1}')"
+
+if git diff --quiet -- . && git diff --cached --quiet -- .; then
+  tracked_worktree_state="clean"
 else
-  git_worktree_state="dirty"
+  tracked_worktree_state="dirty"
 fi
 
 {
   echo "timestamp_utc=${stamp}"
   echo "git_head=${git_head}"
-  echo "git_worktree_state=${git_worktree_state}"
-  echo "manifest_files_sha256=${manifest_files_sha256}"
+  echo "tracked_worktree_state=${tracked_worktree_state}"
+  echo "tracked_files_sha256=${tracked_files_sha256}"
+  echo "manifest_metadata_sha256=${manifest_metadata_sha256}"
   echo "docker_version=$(docker --version)"
   echo "compose_version=$(docker compose version)"
   echo "sara_host_port=${host_port}"
@@ -101,6 +118,7 @@ docker compose config | awk '
 ' > "$redacted_compose"
 mv "$redacted_compose" "${evidence_dir}/compose.rendered.yaml"
 trap - EXIT
+
 docker compose build --pull | tee "${evidence_dir}/build.log"
 docker compose up -d
 
@@ -156,13 +174,16 @@ if [ "${restart_ready}" -ne 1 ]; then
   docker compose logs --no-color --tail=100 sara >&2
   exit 1
 fi
+
 curl --fail --silent --show-error -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" \
   "${base_url}/admin/registry" | tee "${evidence_dir}/registry.after-restart.json" | grep -q "SARA_CORE"
 scripts/admin_smoke_test.sh | tee "${evidence_dir}/smoke.after-restart.log"
+
 if ! wait_for_healthy; then
   echo "ERROR: Docker health was not healthy before evidence capture." >&2
   exit 1
 fi
+
 docker compose ps > "${evidence_dir}/compose.ps.txt"
 docker compose logs --no-color > "${evidence_dir}/service.log"
 
