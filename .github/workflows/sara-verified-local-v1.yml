@@ -32,12 +32,21 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install package and test dependencies
+      - name: Install pinned package and test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e '.[test]'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+          python -m pip freeze --all | sort > dependency-freeze.txt
           command -v ws-pre-bloom
           ws-pre-bloom --help >/dev/null
+
+      - name: Upload dependency resolution evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-dependency-freeze-evidence
+          path: deployments/sara_verified_local_v1/dependency-freeze.txt
+          if-no-files-found: error
 
       - name: Validate operations policy
         run: |
