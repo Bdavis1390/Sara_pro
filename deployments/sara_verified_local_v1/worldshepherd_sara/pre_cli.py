@@ -12,6 +12,7 @@ from .ddil_campaign import run_ddil_campaign
 from .evidence_store import EvidenceStore
 from .ietm import qualify_synthetic_ietm
 from .mbse_benchmark import qualify_synthetic_mbse
+from .mission_qualification import qualify_synthetic_mission_replay
 from .qualification import (
     CapabilityStatus,
     DemandClass,
@@ -80,6 +81,7 @@ def build_all(
     mbse_fixture = _load(fixtures / "mbse_legacy_fixture_v1.json")
     ietm_fixture = _load(fixtures / "ietm_synthetic_v1.json")
     ade_fixture = _load(fixtures / "ade_symbolic_v1.json")
+    mission_fixture = _load(fixtures / "mission_replay_synthetic_v1.json")
 
     apnt_requirement = _requirement(
         requirement_id="PRE-RD-2026-0001",
@@ -126,6 +128,17 @@ def build_all(
         claims=["No SOTA, scientific novelty, real-engineering superiority, or SPEED DIAL D2P2 eligibility claim"],
         source_status=SourceStatus.OFFICIAL_SOURCE_VERIFIED,
     )
+    mission_requirement = _requirement(
+        requirement_id="PRE-RD-2026-0013",
+        title="Navy automated post-mission debrief and replanning readiness target",
+        agency="Navy",
+        url="https://www.sbir.gov/",
+        topic="DON26BZ05-NV074",
+        statement="Preserve mission events, reconstruct evidence, derive bounded findings, and generate traceable follow-on COA proposals that remain subject to identified human authorization.",
+        lanes=["OVERWATCH", "ECHO", "PRIME", "autonomy governance", "mission replay"],
+        missing=["operational CCA/UAS mission data", "validated causal reasoning", "operator effectiveness", "platform integration"],
+        claims=["No operational CCA/UAS, causal-AI, autonomous replanning, or Navy mission-performance claim"],
+    )
 
     apnt = qualify_synthetic_apnt_timeline(
         fixture=apnt_fixture,
@@ -155,6 +168,13 @@ def build_all(
         executed_utc=executed_utc,
         operator=operator,
     )
+    mission = qualify_synthetic_mission_replay(
+        fixture=mission_fixture,
+        requirement=mission_requirement,
+        software_commit=software_commit,
+        executed_utc=executed_utc,
+        operator=operator,
+    )
     ddil_messages = [
         Envelope(
             sequence=i,
@@ -177,6 +197,7 @@ def build_all(
         "mbse": mbse,
         "ietm": ietm,
         "ade": ade,
+        "mission": mission,
         "ddil": ddil,
     }
     custody_store = EvidenceStore(out / "echo_store")
@@ -202,12 +223,14 @@ def build_all(
             "mbse": canonical_digest(mbse_fixture),
             "ietm": canonical_digest(ietm_fixture),
             "ade": canonical_digest(ade_fixture),
+            "mission": canonical_digest(mission_fixture),
         },
         "failures": failures,
         "claims_boundary": [
             "This index records synthetic/internal software evidence only.",
             "The hash-addressed ECHO-style store provides local integrity/custody behavior only; it is not a government records system or legal chain-of-custody service.",
             "ADE-G evidence in this index is a bounded synthetic interpretability/discovery benchmark and does not establish SOTA or SPEED DIAL D2P2 eligibility.",
+            "Mission replay evidence is synthetic and all follow-on actions remain proposals pending identified human authorization.",
             "No physical, platform, government, certification, compliance, clearance, or operational readiness is inferred from these passing bundles.",
         ],
     }
