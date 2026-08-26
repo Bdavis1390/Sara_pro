@@ -1,0 +1,34 @@
+{
+  "schema": "WS-SARA-OPS-POLICY-V1",
+  "profile": "sara_verified_local_v1",
+  "network_scope": "localhost_only",
+  "data_scope": ["synthetic", "public", "releasable"],
+  "prohibited_by_default": [
+    "CUI",
+    "classified",
+    "export_controlled_technical_data",
+    "partner_proprietary",
+    "operational_mission_data",
+    "credentials_in_repo_or_artifacts"
+  ],
+  "health_endpoints": {
+    "liveness": "/livez",
+    "readiness": "/readyz",
+    "compatibility": "/health"
+  },
+  "incident_classes": {
+    "SEV-1": "integrity, credential, unauthorized-admin, prohibited-data or evidence-trust failure",
+    "SEV-2": "availability, readiness, persistent-data or recovery failure",
+    "SEV-3": "degraded non-critical behavior, warning or drift"
+  },
+  "artifact_retention_days_minimum": 90,
+  "human_closure_required_for_sev1": true,
+  "claims_boundary": [
+    "internal operational policy only",
+    "not CMMC certification",
+    "not NIST SP 800-171 compliance determination",
+    "not RMF/ATO",
+    "not government operational approval",
+    "not a regulated records schedule"
+  ]
+}
