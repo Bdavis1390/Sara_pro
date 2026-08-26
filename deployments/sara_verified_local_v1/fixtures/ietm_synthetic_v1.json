@@ -1,0 +1,39 @@
+{
+  "fixture_id": "WS-IETM-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic technical-data fixture only.",
+    "Distribution marking is fictitious test data.",
+    "Does not establish S1000D, MIL-STD-3001-1, MIL-DTL-81310, Navy viewer, or production conversion compliance."
+  ],
+  "manual": {
+    "manual_id": "SYN-TM-001",
+    "title": "Synthetic Cooling Pump Inspection",
+    "distribution_marking": "SYNTHETIC DISTRIBUTION MARKING - TEST ONLY",
+    "revision": "A",
+    "sections": [
+      {
+        "section_id": "1",
+        "title": "Safety",
+        "steps": [
+          {"step_id": "1.1", "text": "Verify test power is isolated."},
+          {"step_id": "1.2", "text": "Confirm synthetic pressure indicator reads zero."}
+        ]
+      },
+      {
+        "section_id": "2",
+        "title": "Inspection",
+        "steps": [
+          {"step_id": "2.1", "text": "Inspect the synthetic pump housing for visible damage."},
+          {"step_id": "2.2", "text": "Record the synthetic inspection result."}
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "section_count": 2,
+    "step_count": 4,
+    "marking_preserved": true,
+    "manual_id_preserved": true
+  }
+}
