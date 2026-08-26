@@ -78,4 +78,4 @@ def test_ddil_campaign_is_replayable_and_claims_bounded():
     without_digest = dict(first)
     digest = without_digest.pop("bundle_digest")
     assert digest == canonical_digest(without_digest)
-    assert "no RF" in first["scope_note"].lower()
+    assert "no rf" in first["scope_note"].lower()
