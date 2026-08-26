@@ -1,0 +1,49 @@
+{
+  "fixture_id": "WS-MFG-THREAD-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic manufacturing lineage only.",
+    "No physical coupon, alloy property, process qualification, machine calibration, or production acceptance claim."
+  ],
+  "thread": {
+    "thread_id": "THREAD-001",
+    "material_lots": [
+      {"lot_id": "LOT-1", "material_designation": "Synthetic Al-Ti-Mg-Sc-Zr research lot", "supplier": "SYNTHETIC"}
+    ],
+    "process_configurations": [
+      {
+        "configuration_id": "CFG-1",
+        "process_family": "DED_SYNTHETIC",
+        "machine_id": "SIMULATED-MACHINE",
+        "software_version": "synthetic-1",
+        "parameters": {"laser_power_w": 500, "travel_speed_mm_s": 10}
+      }
+    ],
+    "build_steps": [
+      {
+        "step_id": "STEP-1",
+        "material_lot_ids": ["LOT-1"],
+        "configuration_id": "CFG-1",
+        "operator": "synthetic-operator",
+        "telemetry_artifact_digests": ["sha256:synthetic-telemetry-placeholder"]
+      }
+    ],
+    "specimens": [
+      {
+        "specimen_id": "COUPON-1",
+        "build_step_ids": ["STEP-1"],
+        "geometry_ref": "synthetic://coupon-geometry",
+        "measurement_artifact_digests": [],
+        "physical_validation_performed": false
+      }
+    ],
+    "claims_boundary": ["Digital thread only; no physical property claim"]
+  },
+  "expected": {
+    "qualification_state": "DIGITAL_THREAD_ONLY",
+    "material_lot_count": 1,
+    "process_configuration_count": 1,
+    "build_step_count": 1,
+    "specimen_count": 1
+  }
+}
