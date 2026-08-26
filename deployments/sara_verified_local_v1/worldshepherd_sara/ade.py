@@ -146,10 +146,8 @@ def discover_expression(
     best_mse = _mse(best, data)
     if baseline_mse == 0.0:
         improvement = 1.0 if best_mse == 0.0 else 0.0
-    elif best_mse == 0.0:
-        improvement = float("inf")
     else:
-        improvement = baseline_mse / best_mse
+        improvement = baseline_mse / max(best_mse, 1e-12)
 
     return DiscoveryResult(
         expression=best,
