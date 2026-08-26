@@ -8,6 +8,7 @@ from pathlib import Path
 from .apnt_qualification import qualify_synthetic_apnt_timeline
 from .ddil import Envelope
 from .ddil_campaign import run_ddil_campaign
+from .evidence_store import EvidenceStore
 from .ietm import qualify_synthetic_ietm
 from .mbse_benchmark import qualify_synthetic_mbse
 from .qualification import (
@@ -155,8 +156,11 @@ def build_all(
         "ietm": ietm,
         "ddil": ddil,
     }
+    custody_store = EvidenceStore(out / "echo_store")
+    custody_digests: dict[str, str] = {}
     for name, bundle in bundles.items():
         _write(out / f"{name}_qualification_bundle.json", bundle)
+        custody_digests[name] = custody_store.put_bundle(bundle)
 
     failures = {
         name: [record["test_id"] for record in bundle["evidence"] if record["result"] != "PASS"]
@@ -168,6 +172,8 @@ def build_all(
         "executed_utc": executed_utc,
         "operator": operator,
         "bundle_digests": {name: bundle["bundle_digest"] for name, bundle in bundles.items()},
+        "custody_digests": custody_digests,
+        "custody_verification": custody_store.verify_all(),
         "fixture_digests": {
             "apnt": canonical_digest(apnt_fixture),
             "mbse": canonical_digest(mbse_fixture),
@@ -176,6 +182,7 @@ def build_all(
         "failures": failures,
         "claims_boundary": [
             "This index records synthetic/internal software evidence only.",
+            "The hash-addressed ECHO-style store provides local integrity/custody behavior only; it is not a government records system or legal chain-of-custody service.",
             "No physical, platform, government, certification, compliance, clearance, or operational readiness is inferred from these passing bundles.",
         ],
     }
@@ -199,7 +206,7 @@ def main() -> int:
         executed_utc=args.executed_utc,
         operator=args.operator,
     )
-    failed = any(index["failures"].values())
+    failed = any(index["failures"].values()) or not all(index["custody_verification"].values())
     print(json.dumps(index, sort_keys=True))
     return 1 if failed else 0
 
