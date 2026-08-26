@@ -1,0 +1,67 @@
+{
+  "fixture_id": "WS-APNT-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic scenario only.",
+    "Not derived from Navy platform data.",
+    "Does not validate GPNTS, ASPN, pntOS, sensor accuracy, shipboard integration, or operator performance."
+  ],
+  "scenario": {
+    "name": "surface_transit_gnss_degradation",
+    "description": "Synthetic surface-platform transit through a progressively degraded GNSS region with independent inertial and alternate-PNT-like sources.",
+    "operator_objective": "Maintain awareness of navigation confidence, understand degradation, and select a bounded recovery action."
+  },
+  "sources": [
+    {"source_id": "gnss_primary", "kind": "GNSS", "units": "normalized", "synthetic": true},
+    {"source_id": "ins_primary", "kind": "INS", "units": "normalized", "synthetic": true},
+    {"source_id": "alt_pnt_1", "kind": "ALTERNATE_PNT", "units": "normalized", "synthetic": true}
+  ],
+  "timeline": [
+    {
+      "t_seconds": 0,
+      "source_state": {
+        "gnss_primary": {"health": "NOMINAL", "confidence": 0.98},
+        "ins_primary": {"health": "NOMINAL", "confidence": 0.92},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.80}
+      },
+      "expected_operational_state": "NORMAL"
+    },
+    {
+      "t_seconds": 60,
+      "source_state": {
+        "gnss_primary": {"health": "DEGRADED", "confidence": 0.55, "indicator": "interference_suspected"},
+        "ins_primary": {"health": "NOMINAL", "confidence": 0.90},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.82}
+      },
+      "expected_operational_state": "DEGRADED_PNT",
+      "expected_recovery_options": ["weight_ins_more", "enable_alt_pnt_cross_check", "alert_operator"]
+    },
+    {
+      "t_seconds": 120,
+      "source_state": {
+        "gnss_primary": {"health": "UNTRUSTED", "confidence": 0.15, "indicator": "persistent_interference"},
+        "ins_primary": {"health": "DRIFT_RISK", "confidence": 0.72},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.84}
+      },
+      "expected_operational_state": "GNSS_DENIED",
+      "expected_recovery_options": ["exclude_gnss", "fuse_ins_alt_pnt", "request_operator_approval"]
+    },
+    {
+      "t_seconds": 240,
+      "source_state": {
+        "gnss_primary": {"health": "RECOVERING", "confidence": 0.60},
+        "ins_primary": {"health": "DRIFT_RISK", "confidence": 0.68},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.83}
+      },
+      "expected_operational_state": "RECOVERY",
+      "expected_recovery_options": ["cross_validate_gnss_before_reentry", "retain_alt_pnt", "operator_review"]
+    }
+  ],
+  "qualification_metrics": [
+    "source_lineage_complete",
+    "degradation_detected",
+    "confidence_state_reproducible",
+    "recovery_action_requires_policy_gate",
+    "mission_replay_complete"
+  ]
+}
