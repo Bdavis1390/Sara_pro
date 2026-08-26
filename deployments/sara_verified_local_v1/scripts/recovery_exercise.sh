@@ -8,14 +8,16 @@ rm -f "$RECOVERY_DIR"/sara-data.tar.gz "$RECOVERY_DIR"/before.json "$RECOVERY_DI
 
 docker compose up -d --build
 
-docker compose run --rm --no-deps -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
+# Recovery helpers run as root only to read the app-owned named volume and write
+# CI evidence to the host bind mount. The long-running SARA service remains UID 10001.
+docker compose run --rm --no-deps --user 0 -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
 import hashlib,json,pathlib
 root=pathlib.Path("/var/lib/sara"); rows=[]
 for p in sorted(x for x in root.rglob("*") if x.is_file()): rows.append({"path":str(p.relative_to(root)),"size":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
 pathlib.Path("/recovery/before.json").write_text(json.dumps(rows,sort_keys=True,indent=2)+"\n")
 '
 
-docker compose run --rm --no-deps -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
+docker compose run --rm --no-deps --user 0 -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
 import pathlib,tarfile
 root=pathlib.Path("/var/lib/sara")
 with tarfile.open("/recovery/sara-data.tar.gz","w:gz") as tf:
@@ -25,7 +27,7 @@ sha256sum "$RECOVERY_DIR/sara-data.tar.gz" > "$RECOVERY_DIR/sara-data.tar.gz.sha
 
 docker compose down -v
 docker compose create sara >/dev/null
-docker compose run --rm --no-deps -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
+docker compose run --rm --no-deps --user 0 -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
 import pathlib,tarfile
 root=pathlib.Path("/var/lib/sara"); root.mkdir(parents=True,exist_ok=True)
 with tarfile.open("/recovery/sara-data.tar.gz","r:gz") as tf: tf.extractall(root,filter="data")
@@ -34,7 +36,7 @@ docker compose up -d
 for _ in $(seq 1 30); do if curl -fsS http://127.0.0.1:${SARA_HOST_PORT:-9530}/readyz >/dev/null; then break; fi; sleep 1; done
 curl -fsS http://127.0.0.1:${SARA_HOST_PORT:-9530}/readyz >/dev/null
 
-docker compose run --rm --no-deps -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
+docker compose run --rm --no-deps --user 0 -v "$PWD/$RECOVERY_DIR:/recovery" --entrypoint python sara -c '
 import hashlib,json,pathlib
 root=pathlib.Path("/var/lib/sara"); rows=[]
 for p in sorted(x for x in root.rglob("*") if x.is_file()): rows.append({"path":str(p.relative_to(root)),"size":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()})
