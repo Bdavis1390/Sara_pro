@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 
+from .ade_qualification import qualify_synthetic_discovery
 from .apnt_qualification import qualify_synthetic_apnt_timeline
 from .ddil import Envelope
 from .ddil_campaign import run_ddil_campaign
@@ -33,6 +34,7 @@ def _requirement(
     lanes: list[str],
     missing: list[str],
     claims: list[str],
+    source_status: SourceStatus = SourceStatus.GOVERNMENT_SECONDARY_VERIFIED,
 ) -> RequirementDeltaRecord:
     return RequirementDeltaRecord(
         requirement_delta_id=requirement_id,
@@ -42,7 +44,7 @@ def _requirement(
             agency=agency,
             url=url,
             solicitation_or_topic=topic,
-            source_status=SourceStatus.GOVERNMENT_SECONDARY_VERIFIED,
+            source_status=source_status,
             retrieved_utc="2026-08-26T00:00:00Z",
         ),
         statement=statement,
@@ -77,6 +79,7 @@ def build_all(
     apnt_fixture = _load(fixtures / "apnt_destroyer_strait_v1.json")
     mbse_fixture = _load(fixtures / "mbse_legacy_fixture_v1.json")
     ietm_fixture = _load(fixtures / "ietm_synthetic_v1.json")
+    ade_fixture = _load(fixtures / "ade_symbolic_v1.json")
 
     apnt_requirement = _requirement(
         requirement_id="PRE-RD-2026-0001",
@@ -111,6 +114,18 @@ def build_all(
         missing=["S1000D/MIL-standard validation", "Navy viewer compatibility", "production accuracy"],
         claims=["No S1000D, MIL-standard, Navy viewer, or production conversion claim"],
     )
+    ade_requirement = _requirement(
+        requirement_id="PRE-RD-2026-0012",
+        title="DARPA SPEED DIAL automated algorithm-discovery readiness target",
+        agency="DARPA",
+        url="https://www.darpa.mil/research/programs/speed-dial",
+        topic="DPA26TZ05-DV003",
+        statement="Develop measurable automated interpretable algorithm-discovery capability while preserving the distinction between a synthetic internal benchmark and the topic's pre-existing D2P2/SOTA evidence gate.",
+        lanes=["ADE-G", "AI governance", "digital engineering", "simulation governance"],
+        missing=["SOTA benchmark", "real engineering workflow integration", "D2P2 prior discovery evidence", "research-institution partner"],
+        claims=["No SOTA, scientific novelty, real-engineering superiority, or SPEED DIAL D2P2 eligibility claim"],
+        source_status=SourceStatus.OFFICIAL_SOURCE_VERIFIED,
+    )
 
     apnt = qualify_synthetic_apnt_timeline(
         fixture=apnt_fixture,
@@ -129,6 +144,13 @@ def build_all(
     ietm = qualify_synthetic_ietm(
         fixture=ietm_fixture,
         requirement=ietm_requirement,
+        software_commit=software_commit,
+        executed_utc=executed_utc,
+        operator=operator,
+    )
+    ade = qualify_synthetic_discovery(
+        fixture=ade_fixture,
+        requirement=ade_requirement,
         software_commit=software_commit,
         executed_utc=executed_utc,
         operator=operator,
@@ -154,6 +176,7 @@ def build_all(
         "apnt": apnt,
         "mbse": mbse,
         "ietm": ietm,
+        "ade": ade,
         "ddil": ddil,
     }
     custody_store = EvidenceStore(out / "echo_store")
@@ -178,11 +201,13 @@ def build_all(
             "apnt": canonical_digest(apnt_fixture),
             "mbse": canonical_digest(mbse_fixture),
             "ietm": canonical_digest(ietm_fixture),
+            "ade": canonical_digest(ade_fixture),
         },
         "failures": failures,
         "claims_boundary": [
             "This index records synthetic/internal software evidence only.",
             "The hash-addressed ECHO-style store provides local integrity/custody behavior only; it is not a government records system or legal chain-of-custody service.",
+            "ADE-G evidence in this index is a bounded synthetic interpretability/discovery benchmark and does not establish SOTA or SPEED DIAL D2P2 eligibility.",
             "No physical, platform, government, certification, compliance, clearance, or operational readiness is inferred from these passing bundles.",
         ],
     }
