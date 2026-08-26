@@ -39,6 +39,11 @@ jobs:
           command -v ws-pre-bloom
           ws-pre-bloom --help >/dev/null
 
+      - name: Validate operations policy
+        run: |
+          python -m json.tool ops_policy.json >/dev/null
+          test -s docs/OPERATIONS.md
+
       - name: Compile package
         run: python -m compileall -q worldshepherd_sara
 
@@ -83,11 +88,21 @@ jobs:
       - name: Run destructive backup and restore exercise
         run: bash scripts/recovery_exercise.sh
 
+      - name: Capture operational snapshot after recovery
+        run: bash scripts/ops_snapshot.sh
+
       - name: Upload recovery evidence
         uses: actions/upload-artifact@v4
         with:
           name: sara-recovery-exercise-evidence
           path: deployments/sara_verified_local_v1/recovery_evidence
+          if-no-files-found: error
+
+      - name: Upload operational snapshot evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-operational-snapshot-evidence
+          path: deployments/sara_verified_local_v1/operations_evidence
           if-no-files-found: error
 
       - name: Capture container logs on failure
