@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:7a8b475003c4fe15a2cd4e55e5cfc2f3560bdc9333d624f24cdd6d4340fd7a17
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -8,9 +8,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN useradd --create-home --uid 10001 sara
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml README.md constraints-runtime.txt ./
 COPY worldshepherd_sara ./worldshepherd_sara
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir --disable-pip-version-check -c constraints-runtime.txt .
 RUN mkdir -p /var/lib/sara && chown -R sara:sara /var/lib/sara /app && chmod 0700 /var/lib/sara
 USER sara
 EXPOSE 9530
