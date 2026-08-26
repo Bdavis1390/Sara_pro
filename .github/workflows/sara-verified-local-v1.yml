@@ -83,9 +83,11 @@ jobs:
 
       - name: Create ephemeral CI environment
         run: |
-          printf 'SARA_RELAY_TOKEN=%s\nSARA_ADMIN_TOKEN=%s\nSARA_PORT=9530\nSARA_HOST_PORT=19530\n' \
+          printf 'SARA_RELAY_TOKEN=%s\nSARA_ADMIN_TOKEN=%s\nSARA_PORT=9530\nSARA_HOST_PORT=19530\nSARA_BUILD_COMMIT=%s\nSARA_RELEASE_ID=%s\n' \
             "$(openssl rand -hex 32)" \
-            "$(openssl rand -hex 32)" > .env
+            "$(openssl rand -hex 32)" \
+            "$GITHUB_SHA" \
+            "ci-${GITHUB_SHA}" > .env
           chmod 600 .env
 
       - name: Validate Compose configuration
@@ -99,6 +101,16 @@ jobs:
 
       - name: Capture operational snapshot after recovery
         run: bash scripts/ops_snapshot.sh
+
+      - name: Verify observable release identity
+        run: |
+          python - <<'PY'
+          import json, pathlib, os
+          record=json.loads(pathlib.Path('operations_evidence/snapshot.json').read_text())
+          identity=record['release_identity']
+          assert identity['build_commit'] == os.environ['GITHUB_SHA']
+          assert identity['release_id'] == 'ci-' + os.environ['GITHUB_SHA']
+          PY
 
       - name: Upload recovery evidence
         uses: actions/upload-artifact@v4

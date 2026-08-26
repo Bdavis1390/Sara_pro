@@ -17,12 +17,18 @@ out=pathlib.Path(os.environ['OUT_DIR'])
 inspect=json.loads(subprocess.check_output(['docker','inspect',os.environ['CONTAINER_ID']], text=True))[0]
 state=inspect.get('State',{})
 image_id=inspect.get('Image','')
+labels=(inspect.get('Config') or {}).get('Labels') or {}
 record={
-  'schema':'WS-SARA-OPS-SNAPSHOT-V1',
+  'schema':'WS-SARA-OPS-SNAPSHOT-V2',
   'executed_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
   'git_head':subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(),
   'compose_config_sha256':'sha256:'+os.environ['CONFIG_SHA'],
   'container_image_id':image_id,
+  'release_identity':{
+    'build_commit':labels.get('org.opencontainers.image.revision','UNKNOWN'),
+    'release_id':labels.get('org.opencontainers.image.version','UNVERIFIED'),
+    'image_title':labels.get('org.opencontainers.image.title','UNKNOWN')
+  },
   'container_running':bool(state.get('Running')),
   'container_health':(state.get('Health') or {}).get('Status','not_configured'),
   'host_binding':'127.0.0.1:'+os.environ['HOST_PORT'],
@@ -36,4 +42,11 @@ record={
 PY
 
 test -s "$OUT_DIR/snapshot.json"
+python - <<'PY'
+import json, pathlib, sys
+record=json.loads(pathlib.Path('operations_evidence/snapshot.json').read_text())
+identity=record['release_identity']
+if identity['build_commit'] in ('UNKNOWN','') or identity['release_id'] in ('UNVERIFIED',''):
+    raise SystemExit('release identity is not observable')
+PY
 echo "OPS_SNAPSHOT: PASS"

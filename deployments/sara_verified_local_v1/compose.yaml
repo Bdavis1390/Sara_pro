@@ -2,6 +2,9 @@ services:
   sara:
     build:
       context: .
+      args:
+        SARA_BUILD_COMMIT: ${SARA_BUILD_COMMIT:-UNKNOWN}
+        SARA_RELEASE_ID: ${SARA_RELEASE_ID:-UNVERIFIED}
     restart: unless-stopped
     env_file:
       - .env
