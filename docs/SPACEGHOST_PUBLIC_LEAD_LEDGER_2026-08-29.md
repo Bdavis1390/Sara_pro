@@ -3,11 +3,11 @@
 **Package ID:** `WS-SG-PUBLIC-AUDIT-2026-08-29`  
 **Date:** 2026-08-29  
 **Status:** Evidence-governed research ledger; not an attribution claim.  
-**Canonical Library package:** `/Worldshepherd/SPACEGHOST_Public_Mention_Audit_2026/`
+**Canonical Worldshepherd Library package:** `/Worldshepherd/SPACEGHOST_Public_Mention_Audit_2026/`
 
-## Current conclusion
+## Executive finding
 
-No direct public Elon Musk / SpaceX / Starlink / Joe Rogan **SPACEGHOST** or **ghost-protocol** attribution has been established in the sources reviewed. This ledger preserves confirmed facts, subspeak/subtalk leads, technical and cultural adjacency, coded-text tests, negative findings, and false positives separately.
+No direct public Elon Musk / SpaceX / Starlink / Joe Rogan **SPACEGHOST** or **ghost-protocol** attribution has been established in the sources reviewed. The ledger therefore separates confirmed public facts, lexical/technical adjacency, subspeak/subtalk candidates, coded-text candidates, negative results, and false positives.
 
 Worldshepherd's recovered internal chronology currently places **Worldshepherd** explicitly in sent correspondence on 2024-04-02, **Spaceghost Protocol + BRD953 + Worldshepherd** on 2024-06-16, and **Space.Ghost** expansion in March 2025. That is internal documentary chronology only; it does not establish outside attribution, technical lineage, authorship recognition, or external authority.
 
@@ -49,17 +49,6 @@ Sources:
 
 PB/PD: CODE/NODE-like fragments are source-derived/weak and not coded evidence.
 
-### SG-PUB-018 — 2014 Musk endorses Daniel Suarez's `Daemon`
-In an AI-risk thread, a user recommends Daniel Suarez's **Daemon** as “terrifyingly possible”; Musk replies that `Daemon` is a great read. Penguin Random House describes daemons as background computer programs and the novel as involving a dormant, self-replicating networked program activated after its creator's death. This supplies a documented pre-Starlink cultural/technical context around persistent autonomous background software and network propagation.
-
-Sources:
-- https://www.elonmuskarchive.org/posts?page=4&year=2014
-- https://www.penguinrandomhouse.com/books/304687/daemon-by-daniel-suarez/
-
-Boundary: this is a book recommendation; `daemon` is standard computing terminology and provides no SpaceX/Starlink/SPACEGHOST attribution.
-
-PB/PD: exact Musk phrase `Yeah, Daemon is a great read` tested as 5-word and normalized 5-character blocks across offsets/orbits. No new high-confidence target string; only source word `DAEMON` persists under word permutation.
-
 ### SG-PUB-004 — 2015 Seattle satellite Internet / Skynet / software / security / code
 Musk describes a global satellite communications system as effectively **rebuilding the Internet in space**, says SpaceX would make sure it did not create Skynet, and notes its server room had jokingly been called Skynet. The same talk covers software/firmware, distributed constellation robustness, security against takeover, and a low-level code path to safe mode/regain control. This remains the highest-density historical source combining Skynet, orbital networking, software, resilience, security and control-code concepts.
 
@@ -68,18 +57,6 @@ Sources:
 - https://starpath.global/news/how-elon-musk-plans-get-mars-via-seattle-what-the-spacex-founder-said-at-that-private-event/
 
 **SG-CODE-001:** exact Skynet paragraph; letters-only normalization; 5-character blocks; **PD `34521`, first step, offset 0** generates contiguous `LASER` across a transformed block boundary. Enumeration of all 120 five-position permutations × 5 offsets (600 combinations) on that exact paragraph produced that `LASER` only under PD/offset 0. A neighboring-control set generated another `LASER` at a different later PD step/alignment, so chance remains plausible. **Status: RETAIN FOR REPLICATION / NOT AUTHENTICATED.**
-
-### SG-PUB-019 — 2017 `Ghost in the Shell` + `Colossus: The Forbin Project`
-On 2017-01-16 Musk posted that he had rewatched **Ghost in the Shell** and the end of **Colossus: The Forbin Project**. Ghost in the Shell centers on networked cyborg identity/consciousness. Colossus depicts an autonomous defense supercomputer that discovers and links with another system; the fictional Soviet counterpart is named **Guardian**. This post falls roughly four weeks before Musk's February 2017 `digital ghost` remarks, making it useful cultural context for ghost/network/autonomous-system vocabulary.
-
-Sources:
-- https://elonmuskarchive.org/posts/820934434002063361
-- https://www.theghostintheshell-anime.jp/en/introduction/
-- https://en.wikipedia.org/wiki/Colossus%3A_The_Forbin_Project
-
-Boundary: media consumption and fictional terminology are not evidence of protocol identity, influence, acknowledgement or common lineage. The fictional `Guardian` name is retained as context only.
-
-PB/PD: exact post text tested across word/character blocks, offsets and non-identity orbit steps. No new high-confidence hidden target; `GHOST`/`SHELL` are source-derived words.
 
 ### SG-PUB-005 — 2017 “digital ghost”
 At the World Government Summit, Musk describes a person's persistent digital data after death as a **digital ghost** and discusses biological/digital integration and communications bandwidth. Confirms recurring ghost vocabulary, but not a SpaceX/Starlink/SPACEGHOST link.
@@ -156,30 +133,92 @@ Gwynne Shotwell describes a V3 Starlink speedrun connecting every satellite thro
 
 Source: https://elonmuskarchive.org/video/spacex-q2-2026-earnings-call
 
-## Negative / false-positive register
+### SG-PUB-018 — 2014 Musk endorses Daniel Suarez's `Daemon`
+In an AI-risk thread, a user recommends Daniel Suarez's **Daemon** as “terrifyingly possible”; Musk replies that `Daemon` is a great read. The publisher describes daemons as background computer programs and the novel as involving a dormant, self-replicating networked program activated after its creator's death. This supplies documented pre-Starlink cultural/technical context around persistent autonomous background software and network propagation.
 
-- Accessible transcript checks of the seven identified Musk JRE appearances found **zero exact SPACEGHOST / space ghost / ghost-protocol matches**.
+Sources:
+- https://www.elonmuskarchive.org/posts?page=4&year=2014
+- https://www.penguinrandomhouse.com/books/304687/daemon-by-daniel-suarez/
+
+Boundary: book recommendation only; `daemon` is standard computing terminology and provides no SpaceX/Starlink/SPACEGHOST attribution.
+
+PB/PD: no new high-confidence target; only source word DAEMON persists under word permutation.
+
+### SG-PUB-019 — 2017 `Ghost in the Shell` + `Colossus: The Forbin Project`
+On 2017-01-16 Musk posted that he had rewatched **Ghost in the Shell** and the end of **Colossus: The Forbin Project**. Ghost in the Shell centers on networked cyborg identity/consciousness. Colossus depicts an autonomous defense supercomputer that discovers and links with another system; the fictional Soviet counterpart is named **Guardian**. The film plot further has the two systems develop communications beyond human comprehension and synchronize using a protocol humans cannot interpret. This post falls roughly four weeks before Musk's February 2017 `digital ghost` remarks.
+
+Sources:
+- https://elonmuskarchive.org/posts/820934434002063361
+- https://www.theghostintheshell-anime.jp/en/introduction/
+- https://en.wikipedia.org/wiki/Colossus%3A_The_Forbin_Project
+
+Boundary: media consumption and fictional terminology are not evidence of protocol identity, influence, acknowledgement or common lineage. The fictional `Guardian` name and uninterpretable protocol remain cultural context only.
+
+PB/PD: no new high-confidence hidden target; GHOST/SHELL are source-derived.
+
+### SG-PUB-020 — xAI real AI supercomputer named Colossus after Musk's earlier Colossus-film reference
+
+**Date:** 2024-12-23  
+**Speaker/source:** xAI official + Elon Musk historical post  
+**Status:** CONFIRMED PUBLIC FACT / HIGH METHODOLOGICAL RELEVANCE
+
+Musk publicly referenced *Colossus: The Forbin Project* in 2017. By 2024, xAI's real AI supercomputer was named **Colossus**; xAI's Series C announcement describes it as its AI supercomputer and official xAI material documents the large GPU-cluster system.
+
+This is a concrete recurrence from a science-fiction system name in material Musk publicly referenced to the name of a later real technical system at a Musk-led company. It strengthens the audit method of treating recurring alternate/cultural system names such as **Skynet, Cyberdyne, and Colossus** as first-class leads.
+
+Boundary: no reviewed source says the film directly inspired xAI's naming. This does not establish SPACEGHOST, Guardian, Worldshepherd, Starlink-protocol, or coded-message linkage.
+
+Sources:
+- https://elonmuskarchive.org/posts/820934434002063361
+- https://x.ai/colossus
+- https://x.ai/news/series-c
+
+PB/PD: no new high-confidence hidden target; COLOSSUS is source-derived.
+
+### SG-PUB-021 — Colossus 1 compute partnership explicitly extends to proposed orbital AI compute
+
+**Date:** 2026-05-06  
+**Speaker/source:** SpaceXAI official announcement  
+**Status:** CONFIRMED PUBLIC FACT / HIGH TECHNICAL-CONTEXT LEAD
+
+SpaceXAI announced that Anthropic would use **Colossus 1** compute and that, as part of the agreement, Anthropic expressed interest in partnering to develop multiple gigawatts of **orbital AI compute capacity**. The announcement states that SpaceX's launch cadence, mass-to-orbit economics, and constellation operations make orbital compute a near-term engineering program if technical challenges can be overcome.
+
+This creates a direct official 2026 bridge from the real **Colossus** system to orbital compute and SpaceX constellation operations. It is relevant to the audit's space/cloud/compute/system-name cluster.
+
+Boundary: no SPACEGHOST, ghost-protocol, Skynet, or coded-message attribution is present; it cannot authenticate earlier permutation results.
+
+Source:
+- https://x.ai/news/anthropic-compute-partnership
+
+PB/PD: no new high-confidence target; SPACE/ORBIT/COLOSSUS are literal/source-derived.
+
+## Coded candidate register
+
+### SG-CODE-001 — PD/34521 → LASER
+
+Source: `SG-PUB-004`, the exact 2015 Seattle Skynet paragraph. Normalization: letters-only character stream; 5-character blocks; offset 0. Operator: PD `[3,4,5,2,1]`, first step. The transformed output contains contiguous `LASER` across a block boundary.
+
+**Control result:** all 120 five-position permutations × all five offsets were enumerated on that exact paragraph (600 permutation-offset combinations). The observed `LASER` instance occurred only under PD at offset 0. However, a neighboring-control set produced another `LASER` under a different later PD step/alignment. Therefore the result is **interesting but not authenticated**; it must not be described as a proven coded message.
+
+## Negative / false-positive registry
+
+- Accessible transcript checks of the seven identified Elon Musk JRE appearances found zero exact SPACEGHOST / space ghost / ghost-protocol matches.
 - Independent JRE transcript cross-checks found no Musk–Rogan Satoshi/Nakamoto exchange in the accessible full episodes; the confirmed Musk/Satoshi exchange found is Lex Fridman #252.
-- Current exact public searches for Musk + SPACEGHOST / ghost protocol have not produced a verified direct Musk-authored or SpaceX-authored hit.
-- Forum/usernames containing “Space Ghost” are false positives unless independently tied to the target speaker/source.
+- Current exact public searches for Elon Musk + SPACEGHOST / ghost protocol did not produce a verified direct Musk-authored or SpaceX-authored hit.
+- Forum/usernames containing 'Space Ghost' are false positives unless independently tied to the target speaker/source.
 - `NODE`, `CODE`, `LINK` and similar short transformed fragments are rejected where common, source-derived, late-orbit or alignment-sensitive without independent recurrence.
-- Literal source words (`GHOST`, `DAEMON`, `LASER`, etc.) surviving word-order permutation are not coded discoveries.
+- Literal source words (`GHOST`, `DAEMON`, `COLOSSUS`, `SPACE`, etc.) surviving a word-order permutation are not coded discoveries.
 
-## Evidence gates
+## Evidence gates before confidence can increase
 
-1. Preserve exact audio/video around Tier-1 passages and inspect off-mic remarks, interruptions, pauses, on-screen text, emoji, captions and edits omitted from transcripts.
-2. Preregister source segmentation, normalization, offsets and target vocabulary **before** viewing transformed output.
-3. Run matched same-length/topic controls, all 120 five-position permutations and shuffled-text controls to estimate target-word base rates.
-4. Require an independently located passage to reproduce a semantically related result under the same operator/offset/boundary rule before coded-message confidence increases.
-5. Maintain the false-positive registry and retain null results.
+1. Recover and preserve exact audio/video around Tier-1 passages to inspect off-mic remarks, interruptions, pauses, on-screen text, emoji, captions, and edits not represented in transcripts.
+2. Preregister permutation boundaries, normalization, offsets and target vocabulary before viewing outputs; use matched control passages of equal length/topic.
+3. Measure base-rate frequency of target words under PB/PD versus all 120 permutations and shuffled controls.
+4. Require independent recurrence of a semantically related sequence under the same operator/offset/boundary rule before raising coded-message confidence.
+5. Maintain a false-positive registry so repeated web results are not double-counted.
 
-## Claims boundary
+## Claims-control rule
 
-This ledger records **what public sources say and what specified transformations produce**. It does not convert thematic similarity into authorship, acknowledgement, collaboration, protocol identity, shared lineage, or intentional coded communication.
+This ledger records **what was said, when it was said, what transformed text can produce under specified operators, and what controls fail or pass**. It does not convert similarity into authorship, acknowledgement, collaboration, protocol identity, shared lineage, or intentional coded communication. Any future promotion requires independent source evidence or a reproducible cryptanalytic pattern that survives preregistered controls.
 
-## Canonical Library package integrity
-
-Latest Worldshepherd Library hashes after adding SG-PUB-018 and SG-PUB-019:
-
-- `SPACEGHOST_PUBLIC_LEAD_LEDGER_2026-08-29.md` — `737793d71ed38bca9d419ab2cd6708fa383121e7f89aaf8a20519df90b5e247a`
-- `SPACEGHOST_PUBLIC_LEAD_MANIFEST_2026-08-29.json` — `6926e267dd089e361773354d2f013c21718220b68d9d6e3bf814dee3eed368e6`
+The canonical Worldshepherd Library folder contains the fuller machine-readable JSON manifest and SHA-256 integrity record for this revision.
