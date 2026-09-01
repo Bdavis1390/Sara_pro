@@ -1,0 +1,111 @@
+name: SARA Release Evidence Attestation
+
+on:
+  workflow_run:
+    workflows:
+      - SARA Verified Local v1 Gate
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  attest-release-index:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+
+    steps:
+      - name: Download exact triggering release index
+        uses: actions/download-artifact@v4
+        with:
+          name: sara-release-evidence-index
+          path: release_index
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Verify index belongs to successful main gate
+        env:
+          TRIGGER_SHA: ${{ github.event.workflow_run.head_sha }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          test -s release_index/release-index.json
+          python -m json.tool release_index/release-index.json >/dev/null
+          python - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('release_index/release-index.json')
+          record = json.loads(path.read_text(encoding='utf-8'))
+          assert record['schema'] == 'WS-SARA-RELEASE-EVIDENCE-INDEX-V1'
+          assert record['commit_sha'] == os.environ['TRIGGER_SHA']
+          assert str(record['workflow']['run_id']) == os.environ['TRIGGER_RUN_ID']
+          assert record['workflow']['merge_state'] == 'MERGED_MAIN_PUSH'
+          assert record['workflow']['event_name'] == 'push'
+          assert record['workflow']['ref'] == 'refs/heads/main'
+          assert record['release_index_digest'].startswith('sha256:')
+          PY
+
+      - name: Generate signed build-provenance attestation
+        id: attest_release_index
+        uses: actions/attest@v4
+        with:
+          subject-path: release_index/release-index.json
+          create-storage-record: false
+
+      - name: Build attestation custody receipt
+        env:
+          TRIGGER_SHA: ${{ github.event.workflow_run.head_sha }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+          TRIGGER_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          ATTESTATION_ID: ${{ steps.attest_release_index.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.attest_release_index.outputs.attestation-url }}
+          BUNDLE_PATH: ${{ steps.attest_release_index.outputs.bundle-path }}
+        run: |
+          mkdir -p attestation_evidence
+          cp "$BUNDLE_PATH" attestation_evidence/sigstore-attestation-bundle.json
+          python - <<'PY'
+          import datetime, hashlib, json, os, pathlib
+          index = pathlib.Path('release_index/release-index.json')
+          bundle = pathlib.Path('attestation_evidence/sigstore-attestation-bundle.json')
+          receipt = {
+              'schema': 'WS-SARA-RELEASE-ATTESTATION-RECEIPT-V1',
+              'evidence_status': 'GITHUB_SIGSTORE_ATTESTED_INTERNAL_RELEASE_INDEX',
+              'executed_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'triggering_commit_sha': os.environ['TRIGGER_SHA'],
+              'triggering_workflow_run_id': os.environ['TRIGGER_RUN_ID'],
+              'triggering_workflow_run_url': os.environ['TRIGGER_RUN_URL'],
+              'release_index_file_sha256': 'sha256:' + hashlib.sha256(index.read_bytes()).hexdigest(),
+              'attestation_bundle_file_sha256': 'sha256:' + hashlib.sha256(bundle.read_bytes()).hexdigest(),
+              'attestation_id': os.environ['ATTESTATION_ID'],
+              'attestation_url': os.environ['ATTESTATION_URL'],
+              'signing_mechanism': 'GitHub Actions artifact attestation using GitHub OIDC and Sigstore-backed signing',
+              'claims_boundary': (
+                  'This receipt establishes cryptographic provenance for the exact release-index file emitted by a successful '
+                  'main-branch SARA gate. It does not independently validate the truth of claims inside referenced artifacts, '
+                  'does not constitute customer/government approval, ATO, CMMC certification, legal review, partner validation, '
+                  'field validation, or independent third-party reproduction.'
+              ),
+          }
+          pathlib.Path('attestation_evidence/attestation-receipt.json').write_text(
+              json.dumps(receipt, sort_keys=True, indent=2) + '\n', encoding='utf-8'
+          )
+          PY
+          python -m json.tool attestation_evidence/attestation-receipt.json >/dev/null
+
+      - name: Upload attestation custody evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-release-index-attestation-evidence
+          path: attestation_evidence
+          if-no-files-found: error
+          retention-days: 90
