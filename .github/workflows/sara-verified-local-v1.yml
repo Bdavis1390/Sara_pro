@@ -39,11 +39,13 @@ jobs:
           python -m pip check
           python -m pip freeze --all | sort > dependency-freeze.txt
           command -v ws-pre-bloom
+          command -v ws-sbom-evidence
           command -v ws-partner-screening
           command -v ws-partner-screening-batch
           command -v ws-partner-screening-verify
           command -v ws-release-index
           ws-pre-bloom --help >/dev/null
+          ws-sbom-evidence --help >/dev/null
           ws-partner-screening --help >/dev/null
           ws-partner-screening-batch --help >/dev/null
           ws-partner-screening-verify --help >/dev/null
@@ -55,6 +57,41 @@ jobs:
         with:
           name: sara-dependency-freeze-evidence
           path: deployments/sara_verified_local_v1/dependency-freeze.txt
+          if-no-files-found: error
+
+      - name: Build software SBOM evidence
+        run: |
+          rm -rf sbom_evidence_ci
+          ws-sbom-evidence \
+            --dependency-freeze dependency-freeze.txt \
+            --pyproject pyproject.toml \
+            --runtime-constraints constraints-runtime.txt \
+            --ci-constraints constraints-ci.txt \
+            --out sbom_evidence_ci \
+            --repository "$GITHUB_REPOSITORY" \
+            --commit-sha "$GITHUB_SHA" \
+            --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --operator "github-actions"
+          test -s sbom_evidence_ci/software-sbom.json
+          test -s sbom_evidence_ci/sbom-evidence-summary.json
+          python -m json.tool sbom_evidence_ci/software-sbom.json >/dev/null
+          python -m json.tool sbom_evidence_ci/sbom-evidence-summary.json >/dev/null
+          python - <<'PY'
+          import json
+          summary=json.load(open('sbom_evidence_ci/sbom-evidence-summary.json', encoding='utf-8'))
+          assert summary['schema'] == 'WS-SOFTWARE-SUPPLY-CHAIN-EVIDENCE-V1'
+          assert summary['evidence_status'] == 'INTERNAL_CI_GENERATED_UNSIGNED'
+          assert summary['component_count'] > 0
+          assert summary['software_sbom_sha256'].startswith('sha256:')
+          assert 'does not establish' in summary['claims_boundary']
+          PY
+
+      - name: Upload software SBOM evidence
+        id: upload_software_sbom_evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: software-sbom-evidence
+          path: deployments/sara_verified_local_v1/sbom_evidence_ci
           if-no-files-found: error
 
       - name: Validate operations policy
@@ -181,6 +218,9 @@ jobs:
 
       - name: Build release evidence index
         env:
+          SBOM_ARTIFACT_ID: ${{ steps.upload_software_sbom_evidence.outputs.artifact-id }}
+          SBOM_ARTIFACT_DIGEST: ${{ steps.upload_software_sbom_evidence.outputs.artifact-digest }}
+          SBOM_ARTIFACT_URL: ${{ steps.upload_software_sbom_evidence.outputs.artifact-url }}
           PRE_ARTIFACT_ID: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-id }}
           PRE_ARTIFACT_DIGEST: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-digest }}
           PRE_ARTIFACT_URL: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-url }}
@@ -206,6 +246,7 @@ jobs:
             --out release_index_ci/release-index.json \
             --pre-dir qualification_evidence_ci \
             --partner-dir partner_screening_ci \
+            --sbom-dir sbom_evidence_ci \
             --repository "$GITHUB_REPOSITORY" \
             --commit-sha "$GITHUB_SHA" \
             --workflow-name "$GITHUB_WORKFLOW" \
@@ -221,6 +262,9 @@ jobs:
             --partner-artifact-id "$PARTNER_ARTIFACT_ID" \
             --partner-artifact-digest "$PARTNER_ARTIFACT_DIGEST" \
             --partner-artifact-url "$PARTNER_ARTIFACT_URL" \
+            --sbom-artifact-id "$SBOM_ARTIFACT_ID" \
+            --sbom-artifact-digest "$SBOM_ARTIFACT_DIGEST" \
+            --sbom-artifact-url "$SBOM_ARTIFACT_URL" \
             --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
           test -s release_index_ci/release-index.json
           python -m json.tool release_index_ci/release-index.json >/dev/null
@@ -228,10 +272,14 @@ jobs:
           import json, os
           record=json.load(open('release_index_ci/release-index.json', encoding='utf-8'))
           assert record['schema'] == 'WS-SARA-RELEASE-EVIDENCE-INDEX-V1'
+          assert record['artifacts']['software_sbom_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['pre_full_bloom_qualification_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['partner_screening_batch_evidence']['artifact_digest'].startswith('sha256:')
+          assert record['local_evidence']['sbom_component_count'] > 0
+          assert record['local_evidence']['software_sbom_sha256'].startswith('sha256:')
           assert record['release_index_digest'].startswith('sha256:')
           assert 'does not establish partner validation' in record['claims_boundary']
+          assert 'software supply-chain completeness' in record['claims_boundary']
           merge_state = record['workflow']['merge_state']
           event_name = record['workflow']['event_name']
           ref = record['workflow']['ref']
