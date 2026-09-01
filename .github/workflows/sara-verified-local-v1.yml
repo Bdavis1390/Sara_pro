@@ -42,18 +42,22 @@ jobs:
           command -v ws-sbom-evidence
           command -v ws-vulnerability-evidence
           command -v ws-human-triage-ledger
+          command -v ws-intake-minimum-ledger
           command -v ws-partner-screening
           command -v ws-partner-screening-batch
           command -v ws-partner-screening-verify
           command -v ws-release-index
+          command -v ws-release-index-link-intake
           ws-pre-bloom --help >/dev/null
           ws-sbom-evidence --help >/dev/null
           ws-vulnerability-evidence --help >/dev/null
           ws-human-triage-ledger --help >/dev/null
+          ws-intake-minimum-ledger --help >/dev/null
           ws-partner-screening --help >/dev/null
           ws-partner-screening-batch --help >/dev/null
           ws-partner-screening-verify --help >/dev/null
           ws-release-index --help >/dev/null
+          ws-release-index-link-intake --help >/dev/null
           bash scripts/verify_partner_screening_artifact.sh --help >/dev/null
 
       - name: Upload dependency resolution evidence
@@ -165,6 +169,41 @@ jobs:
         with:
           name: human-triage-ledger-evidence
           path: deployments/sara_verified_local_v1/human_triage_ci
+          if-no-files-found: error
+
+      - name: Build intake minimum standard evidence
+        run: |
+          rm -rf intake_minimum_ci
+          ws-intake-minimum-ledger \
+            --intake-file fixtures/intake_minimum_standard.json \
+            --out intake_minimum_ci \
+            --repository "$GITHUB_REPOSITORY" \
+            --commit-sha "$GITHUB_SHA" \
+            --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --operator "github-actions"
+          test -s intake_minimum_ci/intake-minimum-ledger.json
+          test -s intake_minimum_ci/intake-minimum-summary.json
+          python -m json.tool intake_minimum_ci/intake-minimum-ledger.json >/dev/null
+          python -m json.tool intake_minimum_ci/intake-minimum-summary.json >/dev/null
+          python - <<'PY'
+          import json
+          summary=json.load(open('intake_minimum_ci/intake-minimum-summary.json', encoding='utf-8'))
+          assert summary['schema'] == 'WS-INTAKE-MINIMUM-STANDARD-LEDGER-V1'
+          assert summary['evidence_status'] == 'INTERNAL_INTAKE_STANDARD_UNSIGNED'
+          assert summary['intake_count'] > 0
+          assert summary['intake_minimum_ledger_sha256'].startswith('sha256:')
+          assert summary['intake_minimum_ledger_file_sha256'].startswith('sha256:')
+          assert 'does not establish' in summary['claims_boundary']
+          assert 'award probability' in summary['claims_boundary']
+          PY
+          bash scripts/verify_intake_minimum_artifact.sh intake_minimum_ci >/dev/null
+
+      - name: Upload intake minimum standard evidence
+        id: upload_intake_minimum_evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: intake-minimum-standard-evidence
+          path: deployments/sara_verified_local_v1/intake_minimum_ci
           if-no-files-found: error
 
       - name: Validate operations policy
@@ -300,6 +339,9 @@ jobs:
           HUMAN_TRIAGE_ARTIFACT_ID: ${{ steps.upload_human_triage_evidence.outputs.artifact-id }}
           HUMAN_TRIAGE_ARTIFACT_DIGEST: ${{ steps.upload_human_triage_evidence.outputs.artifact-digest }}
           HUMAN_TRIAGE_ARTIFACT_URL: ${{ steps.upload_human_triage_evidence.outputs.artifact-url }}
+          INTAKE_ARTIFACT_ID: ${{ steps.upload_intake_minimum_evidence.outputs.artifact-id }}
+          INTAKE_ARTIFACT_DIGEST: ${{ steps.upload_intake_minimum_evidence.outputs.artifact-digest }}
+          INTAKE_ARTIFACT_URL: ${{ steps.upload_intake_minimum_evidence.outputs.artifact-url }}
           PRE_ARTIFACT_ID: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-id }}
           PRE_ARTIFACT_DIGEST: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-digest }}
           PRE_ARTIFACT_URL: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-url }}
@@ -353,6 +395,12 @@ jobs:
             --human-triage-artifact-digest "$HUMAN_TRIAGE_ARTIFACT_DIGEST" \
             --human-triage-artifact-url "$HUMAN_TRIAGE_ARTIFACT_URL" \
             --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
+          ws-release-index-link-intake \
+            --release-index release_index_ci/release-index.json \
+            --intake-dir intake_minimum_ci \
+            --intake-artifact-id "$INTAKE_ARTIFACT_ID" \
+            --intake-artifact-digest "$INTAKE_ARTIFACT_DIGEST" \
+            --intake-artifact-url "$INTAKE_ARTIFACT_URL" >/dev/null
           test -s release_index_ci/release-index.json
           python -m json.tool release_index_ci/release-index.json >/dev/null
           python - <<'PY'
@@ -362,6 +410,7 @@ jobs:
           assert record['artifacts']['software_sbom_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['vulnerability_advisory_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['human_triage_ledger_evidence']['artifact_digest'].startswith('sha256:')
+          assert record['artifacts']['intake_minimum_standard_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['pre_full_bloom_qualification_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['partner_screening_batch_evidence']['artifact_digest'].startswith('sha256:')
           assert record['local_evidence']['sbom_component_count'] > 0
@@ -370,12 +419,16 @@ jobs:
           assert record['local_evidence']['vulnerability_report_sha256'].startswith('sha256:')
           assert record['local_evidence']['human_triage_ledger_record_count'] >= 0
           assert record['local_evidence']['human_triage_ledger_sha256'].startswith('sha256:')
+          assert record['local_evidence']['intake_minimum_intake_count'] > 0
+          assert record['local_evidence']['intake_minimum_ledger_sha256'].startswith('sha256:')
+          assert record['local_evidence']['intake_minimum_summary_sha256'].startswith('sha256:')
           assert record['release_index_digest'].startswith('sha256:')
           assert 'does not establish partner validation' in record['claims_boundary']
           assert 'software supply-chain completeness' in record['claims_boundary']
           assert 'absence of vulnerabilities' in record['claims_boundary']
           assert 'vulnerability remediation' in record['claims_boundary']
           assert 'human-review completion' in record['claims_boundary']
+          assert 'intake evidence linkage does not establish source truth' in record['claims_boundary'].lower()
           merge_state = record['workflow']['merge_state']
           event_name = record['workflow']['event_name']
           ref = record['workflow']['ref']
