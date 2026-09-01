@@ -175,6 +175,8 @@ def build_bloom(
 
     store = EvidenceStore(out / "echo_store")
     for name, bundle in {"edge": edge, "ddil_rejoin": rejoin, "geo_prov": geo_prov}.items():
+        bundle.pop("bundle_digest", None)
+        bundle["bundle_digest"] = canonical_digest(bundle)
         _write(out / f"{name}_qualification_bundle.json", bundle)
         index["bundle_digests"][name] = bundle["bundle_digest"]
         index["custody_digests"][name] = store.put_bundle(bundle)
