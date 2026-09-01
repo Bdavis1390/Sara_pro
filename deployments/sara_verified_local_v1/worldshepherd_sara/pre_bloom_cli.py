@@ -12,6 +12,7 @@ from typing import Any
 from .ddil_rejoin_qualification import qualify_partition_rejoin
 from .edge_qualification import qualify_host_callable
 from .evidence_store import EvidenceStore
+from .geo_provenance import build_geo_prov_bundle
 from .pre_cli import build_all
 from .pre_portfolio import build_horizon_portfolio, build_readiness_ledger
 from .qualification import (
@@ -166,9 +167,16 @@ def build_bloom(
         executed_utc=executed_utc,
         operator=operator,
     )
+    geo_prov = build_geo_prov_bundle(
+        software_commit=software_commit,
+        executed_utc=executed_utc,
+        operator=operator,
+    )
 
     store = EvidenceStore(out / "echo_store")
-    for name, bundle in {"edge": edge, "ddil_rejoin": rejoin}.items():
+    for name, bundle in {"edge": edge, "ddil_rejoin": rejoin, "geo_prov": geo_prov}.items():
+        bundle.pop("bundle_digest", None)
+        bundle["bundle_digest"] = canonical_digest(bundle)
         _write(out / f"{name}_qualification_bundle.json", bundle)
         index["bundle_digests"][name] = bundle["bundle_digest"]
         index["custody_digests"][name] = store.put_bundle(bundle)
@@ -225,6 +233,7 @@ def build_bloom(
     index["bloom_extensions"] = [
         "edge_host_benchmark",
         "ddil_partition_rejoin",
+        "geo_provenance_replay_bundle",
         "capability_readiness_ledger",
         "0-90D_3-12M_12-24M_PLUS_horizons",
         "internal_unsigned_software_provenance",
@@ -234,6 +243,7 @@ def build_bloom(
         [
             "Edge benchmark metrics are host/runtime specific and do not establish target-device performance.",
             "DDIL rejoin evidence validates a synthetic conflict policy, not distributed consensus or operational network resilience.",
+            "Geo provenance evidence validates a synthetic replay/evidence-chain workflow only; it does not establish land-restoration performance, emergency-response authority, BAE validation, DOE validation, CMMC/NIST conformity, or hardware field performance.",
             "Capability horizons schedule preparation only and never upgrade readiness claims.",
             "Software provenance is INTERNAL_UNSIGNED unless a later attestation explicitly records signing/verification evidence.",
             "Pinned versions and base-image digests improve repeatability but do not constitute a hermetic or independently verified software supply chain.",

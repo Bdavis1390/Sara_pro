@@ -19,7 +19,7 @@ def test_full_bloom_compiler_emits_cross_domain_evidence_readiness_horizons_and_
     )
     expected_bundles = {
         "apnt", "mbse", "ietm", "ade", "mission", "fusion", "rf", "cbm",
-        "manufacturing", "ddil", "edge", "ddil_rejoin",
+        "manufacturing", "ddil", "edge", "ddil_rejoin", "geo_prov",
     }
     assert expected_bundles.issubset(index["bundle_digests"])
     assert all(not failures for failures in index["failures"].values())
@@ -27,6 +27,18 @@ def test_full_bloom_compiler_emits_cross_domain_evidence_readiness_horizons_and_
     assert (out / "capability_readiness_ledger.json").is_file()
     assert (out / "capability_horizons.json").is_file()
     assert (out / "software_provenance.json").is_file()
+    assert (out / "geo_prov_qualification_bundle.json").is_file()
+
+    geo = json.loads((out / "geo_prov_qualification_bundle.json").read_text())
+    assert geo["requirement"]["requirement_delta_id"] == "PRE-RD-2026-0020"
+    assert geo["evidence"][0]["test_id"] == "WS-GEO-PROV-001A"
+    assert geo["evidence"][0]["evidence_scope"] == "SIMULATION"
+    assert geo["evidence"][0]["capability_status"] == "SIMULATED_ONLY"
+    assert geo["geo_provenance"]["change_event"]["null_control_passed"] is True
+    assert "BAE_validation" in geo["evidence"][0]["negative_evidence"][2]["case"]
+    assert any("No BAE interest" in item for item in geo["claims_boundary"])
+    assert "geo_prov" in index["bundle_digests"]
+    assert "geo_provenance_replay_bundle" in index["bloom_extensions"]
 
     provenance = json.loads((out / "software_provenance.json").read_text())
     assert provenance["attestation_state"] == "INTERNAL_UNSIGNED"
