@@ -48,7 +48,7 @@ wait_ready() {
 
 prepare_volume() {
   local volume="$1"
-  docker run --rm --user 0 -v "$volume:/data" "$IMAGE" sh -c 'chown 10001:10001 /data && chmod 0700 /data'
+  docker run --rm --user 0 -v "$volume:/data" "$IMAGE" sh -c 'chown -R 10001:10001 /data && chmod 0700 /data'
 }
 
 run_sara() {
@@ -126,6 +126,7 @@ root=pathlib.Path("/data"); root.mkdir(parents=True,exist_ok=True)
 with tarfile.open(fileobj=sys.stdin.buffer,mode="r|gz") as tf:
     tf.extractall(root,filter="data")
 ' < "$ARCHIVE"
+prepare_volume "$REPLACEMENT_VOLUME"
 
 run_sara "$REPLACEMENT_CONTAINER" "$REPLACEMENT_VOLUME"
 wait_ready "$REPLACEMENT_CONTAINER"
@@ -169,6 +170,7 @@ record={
   'source_volume_name':os.environ['SOURCE_VOLUME'],
   'replacement_volume_name':os.environ['REPLACEMENT_VOLUME'],
   'backup_sha256':'sha256:'+hashlib.sha256(archive.read_bytes()).hexdigest(),
+  'restore_ownership_normalization':'recursive chown to UID/GID 10001 after extraction; root volume mode 0700',
   'checks':checks,
   'data_scope':'synthetic/public/releasable CI data only',
   'claims_boundary':(
