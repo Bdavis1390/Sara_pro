@@ -41,6 +41,7 @@ jobs:
           command -v ws-pre-bloom
           command -v ws-sbom-evidence
           command -v ws-vulnerability-evidence
+          command -v ws-human-triage-ledger
           command -v ws-partner-screening
           command -v ws-partner-screening-batch
           command -v ws-partner-screening-verify
@@ -48,6 +49,7 @@ jobs:
           ws-pre-bloom --help >/dev/null
           ws-sbom-evidence --help >/dev/null
           ws-vulnerability-evidence --help >/dev/null
+          ws-human-triage-ledger --help >/dev/null
           ws-partner-screening --help >/dev/null
           ws-partner-screening-batch --help >/dev/null
           ws-partner-screening-verify --help >/dev/null
@@ -128,6 +130,41 @@ jobs:
         with:
           name: vulnerability-advisory-evidence
           path: deployments/sara_verified_local_v1/vulnerability_evidence_ci
+          if-no-files-found: error
+
+      - name: Build human-review triage ledger evidence
+        run: |
+          rm -rf human_triage_ci
+          ws-human-triage-ledger \
+            --vulnerability-report vulnerability_evidence_ci/vulnerability-advisory-report.json \
+            --vulnerability-summary vulnerability_evidence_ci/vulnerability-evidence-summary.json \
+            --out human_triage_ci \
+            --repository "$GITHUB_REPOSITORY" \
+            --commit-sha "$GITHUB_SHA" \
+            --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --operator "github-actions"
+          test -s human_triage_ci/human-triage-ledger.json
+          test -s human_triage_ci/human-triage-summary.json
+          python -m json.tool human_triage_ci/human-triage-ledger.json >/dev/null
+          python -m json.tool human_triage_ci/human-triage-summary.json >/dev/null
+          python - <<'PY'
+          import json
+          summary=json.load(open('human_triage_ci/human-triage-summary.json', encoding='utf-8'))
+          assert summary['schema'] == 'WS-VULNERABILITY-HUMAN-TRIAGE-LEDGER-V1'
+          assert summary['evidence_status'] == 'INTERNAL_REVIEW_LEDGER_UNSIGNED'
+          assert summary['ledger_record_count'] >= 0
+          assert summary['human_review_required_count'] >= 0
+          assert summary['human_triage_ledger_sha256'].startswith('sha256:')
+          assert 'does not establish absence of vulnerabilities' in summary['claims_boundary']
+          assert 'remediation completion' in summary['claims_boundary']
+          PY
+
+      - name: Upload human-review triage ledger evidence
+        id: upload_human_triage_evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: human-triage-ledger-evidence
+          path: deployments/sara_verified_local_v1/human_triage_ci
           if-no-files-found: error
 
       - name: Validate operations policy
@@ -260,6 +297,9 @@ jobs:
           VULNERABILITY_ARTIFACT_ID: ${{ steps.upload_vulnerability_evidence.outputs.artifact-id }}
           VULNERABILITY_ARTIFACT_DIGEST: ${{ steps.upload_vulnerability_evidence.outputs.artifact-digest }}
           VULNERABILITY_ARTIFACT_URL: ${{ steps.upload_vulnerability_evidence.outputs.artifact-url }}
+          HUMAN_TRIAGE_ARTIFACT_ID: ${{ steps.upload_human_triage_evidence.outputs.artifact-id }}
+          HUMAN_TRIAGE_ARTIFACT_DIGEST: ${{ steps.upload_human_triage_evidence.outputs.artifact-digest }}
+          HUMAN_TRIAGE_ARTIFACT_URL: ${{ steps.upload_human_triage_evidence.outputs.artifact-url }}
           PRE_ARTIFACT_ID: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-id }}
           PRE_ARTIFACT_DIGEST: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-digest }}
           PRE_ARTIFACT_URL: ${{ steps.upload_pre_qualification_evidence.outputs.artifact-url }}
@@ -287,6 +327,7 @@ jobs:
             --partner-dir partner_screening_ci \
             --sbom-dir sbom_evidence_ci \
             --vulnerability-dir vulnerability_evidence_ci \
+            --human-triage-dir human_triage_ci \
             --repository "$GITHUB_REPOSITORY" \
             --commit-sha "$GITHUB_SHA" \
             --workflow-name "$GITHUB_WORKFLOW" \
@@ -308,6 +349,9 @@ jobs:
             --vulnerability-artifact-id "$VULNERABILITY_ARTIFACT_ID" \
             --vulnerability-artifact-digest "$VULNERABILITY_ARTIFACT_DIGEST" \
             --vulnerability-artifact-url "$VULNERABILITY_ARTIFACT_URL" \
+            --human-triage-artifact-id "$HUMAN_TRIAGE_ARTIFACT_ID" \
+            --human-triage-artifact-digest "$HUMAN_TRIAGE_ARTIFACT_DIGEST" \
+            --human-triage-artifact-url "$HUMAN_TRIAGE_ARTIFACT_URL" \
             --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >/dev/null
           test -s release_index_ci/release-index.json
           python -m json.tool release_index_ci/release-index.json >/dev/null
@@ -317,17 +361,21 @@ jobs:
           assert record['schema'] == 'WS-SARA-RELEASE-EVIDENCE-INDEX-V1'
           assert record['artifacts']['software_sbom_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['vulnerability_advisory_evidence']['artifact_digest'].startswith('sha256:')
+          assert record['artifacts']['human_triage_ledger_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['pre_full_bloom_qualification_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['partner_screening_batch_evidence']['artifact_digest'].startswith('sha256:')
           assert record['local_evidence']['sbom_component_count'] > 0
           assert record['local_evidence']['software_sbom_sha256'].startswith('sha256:')
           assert record['local_evidence']['vulnerability_advisory_record_count'] >= 0
           assert record['local_evidence']['vulnerability_report_sha256'].startswith('sha256:')
+          assert record['local_evidence']['human_triage_ledger_record_count'] >= 0
+          assert record['local_evidence']['human_triage_ledger_sha256'].startswith('sha256:')
           assert record['release_index_digest'].startswith('sha256:')
           assert 'does not establish partner validation' in record['claims_boundary']
           assert 'software supply-chain completeness' in record['claims_boundary']
           assert 'absence of vulnerabilities' in record['claims_boundary']
           assert 'vulnerability remediation' in record['claims_boundary']
+          assert 'human-review completion' in record['claims_boundary']
           merge_state = record['workflow']['merge_state']
           event_name = record['workflow']['event_name']
           ref = record['workflow']['ref']
