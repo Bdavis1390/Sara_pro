@@ -41,9 +41,11 @@ jobs:
           command -v ws-pre-bloom
           command -v ws-partner-screening
           command -v ws-partner-screening-batch
+          command -v ws-partner-screening-verify
           ws-pre-bloom --help >/dev/null
           ws-partner-screening --help >/dev/null
           ws-partner-screening-batch --help >/dev/null
+          ws-partner-screening-verify --help >/dev/null
 
       - name: Upload dependency resolution evidence
         uses: actions/upload-artifact@v4
@@ -108,6 +110,7 @@ jobs:
           for forbidden in ('PARTNER_VALIDATED', 'SUPPLIER_APPROVED', 'FIELD_VALIDATED', 'CMMC_CERTIFIED'):
               assert forbidden not in text
           PY
+          ws-partner-screening-verify --batch partner_screening_ci >/dev/null
 
       - name: Upload PRE qualification evidence
         uses: actions/upload-artifact@v4
