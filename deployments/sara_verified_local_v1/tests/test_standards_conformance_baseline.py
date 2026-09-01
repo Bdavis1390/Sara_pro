@@ -100,4 +100,3 @@ def test_readiness_model_preserves_assessment_boundary() -> None:
     assert "third-party" in levels["L5_FORMALLY_ASSESSED"]
     assert "L1_CONTROL_INTENT" in baseline["current_global_readiness"]
     assert "L4_INDEPENDENT_REVIEW_READY" in baseline["target_global_readiness"]
-}
