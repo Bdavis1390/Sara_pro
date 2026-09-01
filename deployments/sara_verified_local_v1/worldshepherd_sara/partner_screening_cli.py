@@ -108,6 +108,16 @@ PROHIBITED_ASSERTIONS = (
     "FIELD_VALIDATED",
 )
 
+_NON_CLAIM_MARKERS = (
+    "does not",
+    "do not",
+    "not",
+    "no",
+    "without",
+    "unless",
+    "never",
+)
+
 
 def _json_text(value: dict[str, Any]) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
@@ -123,6 +133,15 @@ def _write_text(path: Path, value: str) -> None:
 
 def _file_digest(path: Path) -> str:
     return canonical_digest({"path": path.name, "content": path.read_text(encoding="utf-8")})
+
+
+def _normalized_words(text: str) -> str:
+    return " " + " ".join(text.lower().replace("-", " ").replace("/", " ").split()) + " "
+
+
+def _has_explicit_non_claim_language(text: str) -> bool:
+    words = _normalized_words(text)
+    return any(f" {marker} " in words for marker in _NON_CLAIM_MARKERS)
 
 
 def _assert_sanitized_text(text: str) -> None:
@@ -144,9 +163,7 @@ def _require_claim_boundary(bundle: dict[str, Any]) -> list[str]:
     if not isinstance(boundary, list) or not boundary:
         raise ValueError("qualification bundle missing claims_boundary")
     text = "\n".join(str(item) for item in boundary)
-    required = ["does not", "not"]
-    lowered = text.lower()
-    if not any(fragment in lowered for fragment in required):
+    if not _has_explicit_non_claim_language(text):
         raise ValueError("claims_boundary must include explicit non-claim language")
     return [str(item) for item in boundary]
 
