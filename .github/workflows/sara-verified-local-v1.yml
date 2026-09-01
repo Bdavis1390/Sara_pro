@@ -39,7 +39,11 @@ jobs:
           python -m pip check
           python -m pip freeze --all | sort > dependency-freeze.txt
           command -v ws-pre-bloom
+          command -v ws-partner-screening
+          command -v ws-partner-screening-batch
           ws-pre-bloom --help >/dev/null
+          ws-partner-screening --help >/dev/null
+          ws-partner-screening-batch --help >/dev/null
 
       - name: Upload dependency resolution evidence
         uses: actions/upload-artifact@v4
@@ -74,11 +78,49 @@ jobs:
           test -s qualification_evidence_ci/software_provenance.json
           test -d qualification_evidence_ci/echo_store
 
+      - name: Export partner-screening package evidence
+        run: |
+          rm -rf partner_screening_ci
+          ws-partner-screening-batch \
+            --bundle-dir qualification_evidence_ci \
+            --out partner_screening_ci \
+            --partner BAE_SYSTEMS \
+            --partner GENERIC_PRIME
+          test -s partner_screening_ci/batch-manifest.json
+          python - <<'PY'
+          import json
+          import pathlib
+
+          root = pathlib.Path('partner_screening_ci')
+          manifest = json.loads((root / 'batch-manifest.json').read_text())
+          assert manifest['schema'] == 'WS-PARTNER-SCREENING-BATCH-MANIFEST-V1'
+          assert set(manifest['partners']) == {'BAE_SYSTEMS', 'GENERIC_PRIME'}
+          assert manifest['source_bundle_count'] > 0
+          assert manifest['package_count'] == manifest['source_bundle_count'] * len(manifest['partners'])
+          assert manifest['batch_digest'].startswith('sha256:')
+          for record in manifest['exports']:
+              package_dir = pathlib.Path(record['output_dir'])
+              assert package_dir.is_dir()
+              assert (package_dir / 'manifest.json').is_file()
+              assert (package_dir / 'qualification-summary.json').is_file()
+              assert (package_dir / 'claims-boundary.md').is_file()
+          text = '\n'.join(path.read_text() for path in root.rglob('*') if path.is_file())
+          for forbidden in ('PARTNER_VALIDATED', 'SUPPLIER_APPROVED', 'FIELD_VALIDATED', 'CMMC_CERTIFIED'):
+              assert forbidden not in text
+          PY
+
       - name: Upload PRE qualification evidence
         uses: actions/upload-artifact@v4
         with:
           name: pre-full-bloom-qualification-evidence
           path: deployments/sara_verified_local_v1/qualification_evidence_ci
+          if-no-files-found: error
+
+      - name: Upload partner-screening package evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: partner-screening-batch-evidence
+          path: deployments/sara_verified_local_v1/partner_screening_ci
           if-no-files-found: error
 
       - name: Create ephemeral CI environment
