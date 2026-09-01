@@ -6,14 +6,18 @@ import shutil
 import subprocess
 import zipfile
 from pathlib import Path
+from typing import Any
 
 from worldshepherd_sara.geo_provenance import build_geo_prov_bundle
 from worldshepherd_sara.partner_screening_cli import export_partner_screening_batch
-from worldshepherd_sara.pre_bloom_cli import _write_json
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = PROJECT_ROOT / "scripts" / "verify_partner_screening_artifact.sh"
+
+
+def _write_json(path: Path, value: dict[str, Any]) -> None:
+    path.write_text(json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
 
 def _make_batch_export(tmp_path: Path) -> Path:
