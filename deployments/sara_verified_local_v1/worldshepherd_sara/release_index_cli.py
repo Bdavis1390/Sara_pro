@@ -196,6 +196,14 @@ def _pr_number_from_event(path: str | None) -> str | None:
     return str(number) if number else None
 
 
+def _resolve_pr_number(*, cli_value: str | None, event_name: str) -> str | None:
+    if cli_value is not None:
+        return cli_value or None
+    if event_name == "pull_request":
+        return _pr_number_from_event(os.getenv("GITHUB_EVENT_PATH"))
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build SARA release evidence index JSON for a CI run.")
     parser.add_argument("--out", type=Path, required=True, help="Output release-index.json path.")
@@ -219,7 +227,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--executed-utc", default=None)
     args = parser.parse_args(argv)
 
-    pr_number = args.pr_number or _pr_number_from_event(os.getenv("GITHUB_EVENT_PATH"))
+    pr_number = _resolve_pr_number(cli_value=args.pr_number, event_name=args.event_name)
     merge_state = args.merge_state or derive_merge_state(event_name=args.event_name, ref=args.ref)
 
     index = build_release_evidence_index(
