@@ -28,6 +28,7 @@ ws-partner-screening-batch = "worldshepherd_sara.partner_screening_cli:batch_mai
 ws-partner-screening-verify = "worldshepherd_sara.partner_screening_verify_cli:main"
 ws-release-index = "worldshepherd_sara.release_index_cli:main"
 ws-sbom-evidence = "worldshepherd_sara.sbom_cli:main"
+ws-vulnerability-evidence = "worldshepherd_sara.vulnerability_cli:main"
 
 [tool.setuptools]
 packages = ["worldshepherd_sara"]
