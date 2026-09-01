@@ -46,6 +46,7 @@ jobs:
           ws-partner-screening --help >/dev/null
           ws-partner-screening-batch --help >/dev/null
           ws-partner-screening-verify --help >/dev/null
+          bash scripts/verify_partner_screening_artifact.sh --help >/dev/null
 
       - name: Upload dependency resolution evidence
         uses: actions/upload-artifact@v4
@@ -111,6 +112,7 @@ jobs:
               assert forbidden not in text
           PY
           ws-partner-screening-verify --batch partner_screening_ci >/dev/null
+          bash scripts/verify_partner_screening_artifact.sh partner_screening_ci >/dev/null
 
       - name: Upload PRE qualification evidence
         uses: actions/upload-artifact@v4
