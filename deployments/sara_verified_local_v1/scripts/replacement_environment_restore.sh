@@ -27,11 +27,28 @@ cleanup() {
 trap cleanup EXIT
 
 wait_ready() {
+  local name="$1"
   for _ in $(seq 1 60); do
     if curl -fsS "http://127.0.0.1:${HOST_PORT}/readyz" >/dev/null 2>&1; then return 0; fi
+    if ! docker inspect "$name" >/dev/null 2>&1; then
+      echo "container ${name} disappeared before readiness" >&2
+      return 1
+    fi
+    if [ "$(docker inspect --format '{{.State.Running}}' "$name")" != "true" ]; then
+      echo "container ${name} exited before readiness" >&2
+      docker logs "$name" >&2 || true
+      return 1
+    fi
     sleep 1
   done
+  echo "container ${name} did not become ready" >&2
+  docker logs "$name" >&2 || true
   return 1
+}
+
+prepare_volume() {
+  local volume="$1"
+  docker run --rm --user 0 -v "$volume:/data" "$IMAGE" sh -c 'chown 10001:10001 /data && chmod 0700 /data'
 }
 
 run_sara() {
@@ -71,8 +88,9 @@ docker build \
   -t "$IMAGE" "$ROOT" >/dev/null
 
 docker volume create "$SOURCE_VOLUME" >/dev/null
+prepare_volume "$SOURCE_VOLUME"
 run_sara "$SOURCE_CONTAINER" "$SOURCE_VOLUME"
-wait_ready
+wait_ready "$SOURCE_CONTAINER"
 
 python - "$MARKER" "$SOURCE_SHA" > "$OUT_DIR/marker-request.json" <<'PY'
 import json,sys
@@ -86,7 +104,6 @@ curl -fsS -X PATCH \
   "http://127.0.0.1:${HOST_PORT}/admin/registry" > "$OUT_DIR/source-registry.json"
 inventory_volume "$SOURCE_VOLUME" "$OUT_DIR/source-inventory.json"
 
-# Export backup to runner-owned storage before deleting the entire source runtime and volume.
 docker run --rm --user 0 -v "$SOURCE_VOLUME:/data:ro" "$IMAGE" python -c '
 import pathlib,sys,tarfile
 root=pathlib.Path("/data")
@@ -96,14 +113,13 @@ with tarfile.open(fileobj=sys.stdout.buffer,mode="w|gz") as tf:
 ' > "$ARCHIVE"
 sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
 
-# Hard destruction boundary: the source container and source volume must cease to exist.
 docker rm -f "$SOURCE_CONTAINER" >/dev/null
 docker volume rm "$SOURCE_VOLUME" >/dev/null
 if docker inspect "$SOURCE_CONTAINER" >/dev/null 2>&1; then echo 'source container still exists' >&2; exit 1; fi
 if docker volume inspect "$SOURCE_VOLUME" >/dev/null 2>&1; then echo 'source volume still exists' >&2; exit 1; fi
 
-# Create an independently named clean replacement volume and restore only from exported backup bytes.
 docker volume create "$REPLACEMENT_VOLUME" >/dev/null
+prepare_volume "$REPLACEMENT_VOLUME"
 docker run --rm --user 0 -i -v "$REPLACEMENT_VOLUME:/data" "$IMAGE" python -c '
 import pathlib,sys,tarfile
 root=pathlib.Path("/data"); root.mkdir(parents=True,exist_ok=True)
@@ -112,7 +128,7 @@ with tarfile.open(fileobj=sys.stdin.buffer,mode="r|gz") as tf:
 ' < "$ARCHIVE"
 
 run_sara "$REPLACEMENT_CONTAINER" "$REPLACEMENT_VOLUME"
-wait_ready
+wait_ready "$REPLACEMENT_CONTAINER"
 curl -fsS "http://127.0.0.1:${HOST_PORT}/readyz" > "$OUT_DIR/replacement-readyz.json"
 curl -fsS "http://127.0.0.1:${HOST_PORT}/health" > "$OUT_DIR/replacement-health.json"
 curl -fsS -H "Authorization: Bearer ${ADMIN_TOKEN}" \
