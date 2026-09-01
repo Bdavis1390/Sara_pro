@@ -1,0 +1,206 @@
+{
+  "schema": "WS-INDUSTRY-STANDARDS-CONFORMANCE-BASELINE-V1",
+  "record_id": "WS-STANDARDS-BASELINE-2026-09-01",
+  "generated_utc": "2026-09-01T17:05:00Z",
+  "program": "Worldshepherd / SARA",
+  "objective": "Define a measurable baseline for meeting or exceeding relevant industry, federal, defense, software-supply-chain, application-security, AI-governance, and operational-evidence standards without overstating maturity.",
+  "claims_boundary": "This baseline records target standards, control intent, evidence gates, and current gaps. It does not establish certification, accreditation, CMMC conformity, NIST SP 800-171 implementation, DFARS satisfaction, FedRAMP authorization, ISO certification, SOC 2 attestation, BAE validation, DOE validation, supplier approval, export-control clearance, classified access, external reproduction, hardware performance, field performance, or operational authority.",
+  "stance": {
+    "meet_or_exceed_rule": "A requirement is not marked MET or EXCEEDED until mapped evidence exists, automated checks pass where applicable, and any required independent or formal assessment evidence is attached.",
+    "prediction_rule": "Forecasted industry demand may guide preparation, but it never upgrades capability maturity or compliance status.",
+    "partner_rule": "Partner or prime relevance may be recorded as a screening hypothesis only; it is not validation, acceptance, or endorsement.",
+    "cui_rule": "No CUI/CDI handling is claimed until the system boundary, asset inventory, control implementation, SSP, assessment evidence, and authorization route are documented."
+  },
+  "standard_sources": [
+    {
+      "id": "NIST_CSF_2_0",
+      "name": "NIST Cybersecurity Framework 2.0",
+      "domain": "enterprise cybersecurity governance",
+      "authoritative_url": "https://www.nist.gov/publications/nist-cybersecurity-framework-csf-20",
+      "baseline_target": "Map SARA governance, identify/protect/detect/respond/recover controls, and maintain evidence for each material system risk.",
+      "exceed_target": "Tie each control to CI evidence, audit events, recovery evidence, and owner-reviewed risk disposition.",
+      "current_status": "TARGET_BASELINE_DEFINED; NOT_CERTIFIED_OR_ASSESSED"
+    },
+    {
+      "id": "NIST_SSDF_800_218",
+      "name": "NIST SP 800-218 Secure Software Development Framework",
+      "domain": "secure software development lifecycle",
+      "authoritative_url": "https://csrc.nist.gov/pubs/sp/800/218/final",
+      "baseline_target": "Map software development practices to prepare the organization, protect software, produce well-secured software, and respond to vulnerabilities.",
+      "exceed_target": "Require CI artifacts, dependency evidence, release index custody, vulnerability response workflow, and claims-boundary enforcement for each release.",
+      "current_status": "PARTIAL_INTERNAL_CI_EVIDENCE; FORMAL_SSDF_ASSESSMENT_NOT_CLAIMED"
+    },
+    {
+      "id": "NIST_800_171_R3",
+      "name": "NIST SP 800-171 Revision 3",
+      "domain": "CUI safeguarding readiness",
+      "authoritative_url": "https://csrc.nist.gov/pubs/sp/800/171/r3/final",
+      "baseline_target": "Use Revision 3 requirements as forward-looking CUI readiness controls while preserving non-claim status.",
+      "exceed_target": "Maintain SSP-ready evidence, asset boundaries, control implementation status, assessment artifacts, POA&M, and external assessment route before CUI handling claims.",
+      "current_status": "GAP_MAP_REQUIRED; CUI_CONFORMITY_NOT_CLAIMED"
+    },
+    {
+      "id": "NIST_800_171A_R3",
+      "name": "NIST SP 800-171A Revision 3 assessment procedures",
+      "domain": "CUI control assessment",
+      "authoritative_url": "https://csrc.nist.gov/pubs/sp/800/171/a/r3/final",
+      "baseline_target": "Map each security requirement to objective assessment methods and evidence objects.",
+      "exceed_target": "Prebuild assessment evidence packages with traceable artifact IDs, reviewer decisions, and deficiency handling.",
+      "current_status": "ASSESSMENT_METHOD_TARGET; ASSESSMENT_NOT_PERFORMED"
+    },
+    {
+      "id": "NIST_800_172_R3",
+      "name": "NIST SP 800-172 Revision 3 enhanced CUI requirements",
+      "domain": "enhanced protection / high-value defense readiness",
+      "authoritative_url": "https://csrc.nist.gov/projects/protecting-controlled-unclassified-information/publications",
+      "baseline_target": "Track enhanced CUI requirements for high-value defense-system screening without claiming implementation.",
+      "exceed_target": "Design optional enhanced safeguards for advanced persistent threat resistance, segmented environments, stronger monitoring, and mission-assurance overlays.",
+      "current_status": "FORECAST_AND_GAP_MAP_REQUIRED; ENHANCED_REQUIREMENTS_NOT_CLAIMED"
+    },
+    {
+      "id": "DOD_CMMC_32_CFR_170",
+      "name": "DoD CMMC Program / 32 CFR Part 170",
+      "domain": "defense contractor cyber eligibility readiness",
+      "authoritative_url": "https://dodcio.defense.gov/CMMC/About/-DoD/",
+      "baseline_target": "Track CMMC Level 1/2/3 applicability and route to appropriate self-assessment, third-party assessment, or government assessment when contractually required.",
+      "exceed_target": "Keep CMMC status separate from internal CI evidence and require formal assessment status before any CMMC claim.",
+      "current_status": "READINESS_PLANNING_ONLY; CMMC_STATUS_NOT_CLAIMED"
+    },
+    {
+      "id": "NIST_800_161_R1_UPD1",
+      "name": "NIST SP 800-161 Revision 1 Update 1",
+      "domain": "cybersecurity supply-chain risk management",
+      "authoritative_url": "https://csrc.nist.gov/pubs/sp/800/161/r1/upd1/final",
+      "baseline_target": "Map suppliers, dependencies, build systems, external services, provenance, and supplier risk handling.",
+      "exceed_target": "Tie supplier/dependency risk to SBOM, dependency freeze evidence, release artifacts, vulnerability status, and owner risk decisions.",
+      "current_status": "PARTIAL_DEPENDENCY_EVIDENCE; FULL_C_SCRM_PROGRAM_NOT_CLAIMED"
+    },
+    {
+      "id": "SLSA_1_2",
+      "name": "Supply-chain Levels for Software Artifacts specification",
+      "domain": "build provenance and artifact integrity",
+      "authoritative_url": "https://slsa.dev/spec/v1.2/",
+      "baseline_target": "Map build provenance and artifact generation to SLSA source/build tracks.",
+      "exceed_target": "Require hosted, tamper-resistant provenance, source-to-build traceability, artifact digest custody, and independent verification route before higher-level claims.",
+      "current_status": "PROVENANCE_TARGET_DEFINED; SLSA_LEVEL_NOT_CLAIMED"
+    },
+    {
+      "id": "OPENSSF_SCORECARD",
+      "name": "OpenSSF Scorecard",
+      "domain": "open-source project security posture",
+      "authoritative_url": "https://openssf.org/projects/scorecard/",
+      "baseline_target": "Use Scorecard-style controls as open-source repository hygiene inputs.",
+      "exceed_target": "Add automated branch protection, pinned dependencies/actions, token permission minimization, vulnerability scanning, maintained metadata, and signed-release evidence where possible.",
+      "current_status": "TARGET_BASELINE_DEFINED; SCORECARD_SCORE_NOT_CLAIMED"
+    },
+    {
+      "id": "OWASP_ASVS_5",
+      "name": "OWASP Application Security Verification Standard 5.0",
+      "domain": "application/API security verification",
+      "authoritative_url": "https://github.com/OWASP/ASVS/releases",
+      "baseline_target": "Map web/API surfaces to ASVS verification controls for authentication, authorization, session, input, API, cryptography, errors, and configuration.",
+      "exceed_target": "Require testable API controls, negative tests, threat modeling, authz boundary checks, audit-log checks, and no-secret exposure for exposed surfaces.",
+      "current_status": "APPLICATION_SECURITY_MAPPING_REQUIRED; ASVS_CONFORMANCE_NOT_CLAIMED"
+    },
+    {
+      "id": "CYCLONEDX_1_6_PLUS",
+      "name": "OWASP CycloneDX BOM standard",
+      "domain": "software bill of materials and supply-chain transparency",
+      "authoritative_url": "https://cyclonedx.org/specification/overview/",
+      "baseline_target": "Generate or ingest SBOM evidence for releases and attach artifact digests.",
+      "exceed_target": "Include SBOM, VEX/affectedness posture, build provenance, component risk decisions, and release-index linkage.",
+      "current_status": "SBOM_ROUTE_REQUIRED; BOM_CONFORMANCE_NOT_CLAIMED"
+    },
+    {
+      "id": "SPDX_3",
+      "name": "SPDX 3 specification",
+      "domain": "software package data exchange / SBOM interoperability",
+      "authoritative_url": "https://spdx.dev/use/specifications/",
+      "baseline_target": "Support SPDX-compatible SBOM interchange where partner or customer workflows require it.",
+      "exceed_target": "Maintain CycloneDX and SPDX compatibility strategy with clear artifact formats and validation records.",
+      "current_status": "INTEROPERABILITY_TARGET; SPDX_CONFORMANCE_NOT_CLAIMED"
+    },
+    {
+      "id": "OPENVEX",
+      "name": "OpenVEX / VEX vulnerability affectedness statements",
+      "domain": "vulnerability exploitability communication",
+      "authoritative_url": "https://github.com/openvex/spec",
+      "baseline_target": "Track vulnerability affectedness separately from raw vulnerability presence.",
+      "exceed_target": "Publish or retain VEX-ready internal records only when affected/not-affected analysis is evidenced and reviewer-approved.",
+      "current_status": "VEX_WORKFLOW_TARGET; VEX_STATEMENTS_NOT_CLAIMED"
+    },
+    {
+      "id": "NIST_AI_RMF_1_0",
+      "name": "NIST AI Risk Management Framework 1.0",
+      "domain": "AI governance and risk management",
+      "authoritative_url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10",
+      "baseline_target": "Map AI-assisted workflow risks to governance, mapping, measurement, and management functions.",
+      "exceed_target": "Require model-use boundaries, human authorization, evidence provenance, evaluation records, red-team/adversarial cases where applicable, and no autonomous high-impact actions without approval.",
+      "current_status": "GOVERNANCE_TARGET_DEFINED; AI_RMF_ASSESSMENT_NOT_CLAIMED"
+    }
+  ],
+  "evidence_gates": [
+    "source_authority_recorded",
+    "control_owner_assigned",
+    "system_boundary_defined",
+    "asset_inventory_defined",
+    "threat_model_or_risk_record_exists",
+    "implementation_evidence_attached",
+    "automated_test_or_manual_assessment_defined",
+    "ci_artifact_or_review_artifact_attached",
+    "gap_or_exception_logged",
+    "claims_boundary_attached",
+    "external_or_formal_assessment_attached_when_required"
+  ],
+  "minimum_redlines": [
+    "No certification or conformity claim without formal evidence.",
+    "No CUI/CDI handling claim without a documented system boundary and control evidence.",
+    "No BAE, DOE, partner, supplier, or government validation claim from thematic overlap or internal CI evidence.",
+    "No autonomous external action without human authorization and audit record.",
+    "No public release package without claims-boundary text.",
+    "No release index without artifact digest custody.",
+    "No dependency or supplier acceptance without provenance and risk review.",
+    "No AI capability claim without evaluation scope, limitations, and human review boundary.",
+    "No hardware, field, laboratory, or operational-performance claim without reproducible measurement evidence."
+  ],
+  "readiness_levels": [
+    {
+      "level": "L0_UNMAPPED",
+      "meaning": "Standard identified but not mapped."
+    },
+    {
+      "level": "L1_CONTROL_INTENT",
+      "meaning": "Control objective, owner, and applicability are defined."
+    },
+    {
+      "level": "L2_INTERNAL_EVIDENCE",
+      "meaning": "Internal implementation evidence or CI artifact exists."
+    },
+    {
+      "level": "L3_REPEATABLE_CI_GATE",
+      "meaning": "Automated gate validates the evidence on every relevant run."
+    },
+    {
+      "level": "L4_INDEPENDENT_REVIEW_READY",
+      "meaning": "Evidence package is ready for external reviewer or assessor."
+    },
+    {
+      "level": "L5_FORMALLY_ASSESSED",
+      "meaning": "A recognized third-party, government, or formal assessment record supports the claim."
+    }
+  ],
+  "current_global_readiness": "L1_CONTROL_INTENT_WITH_SELECTED_L2_L3_CI_EVIDENCE",
+  "target_global_readiness": "L4_INDEPENDENT_REVIEW_READY before partner/prime submission; L5_FORMALLY_ASSESSED only where applicable and evidenced",
+  "next_controls_to_build": [
+    "standards_control_matrix.csv_or_json with per-control status and evidence IDs",
+    "automated secrets scan and dependency vulnerability scan in CI",
+    "SBOM generation and retention in release-index artifact",
+    "SLSA provenance route and signed artifact strategy",
+    "NIST CSF 2.0 and SSDF crosswalk docs",
+    "CUI boundary decision record and NIST 800-171 Rev.3 SSP skeleton",
+    "CMMC applicability decision record",
+    "ASVS API control checklist for SARA endpoints",
+    "AI RMF workflow-risk register",
+    "independent reviewer handoff package"
+  ]
+}
