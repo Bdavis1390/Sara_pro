@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import http.client
 import json
 import os
 import pathlib
+import re
+import ssl
 import time
-import urllib.error
-import urllib.request
+import urllib.parse
 
 REQUIRED = {
     "SARA Verified Local v1 Gate": "sara-release-evidence-index",
@@ -18,20 +20,76 @@ REQUIRED = {
     "SARA Operational Resilience Drill": "sara-operational-resilience-evidence",
 }
 
+API_HOST = "api.github.com"
+REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+def validate_repo(value: str) -> str:
+    if not REPO_RE.fullmatch(value):
+        raise SystemExit("CLOSURE_MANIFEST_INVALID_REPOSITORY")
+    return value
+
+
+def validate_sha(value: str) -> str:
+    value = value.lower()
+    if not SHA_RE.fullmatch(value):
+        raise SystemExit("CLOSURE_MANIFEST_INVALID_SHA")
+    return value
+
+
+def validate_run_id(value: object) -> int:
+    if isinstance(value, bool):
+        raise SystemExit("CLOSURE_MANIFEST_INVALID_RUN_ID")
+    try:
+        run_id = int(value)
+    except (TypeError, ValueError) as exc:
+        raise SystemExit("CLOSURE_MANIFEST_INVALID_RUN_ID") from exc
+    if run_id <= 0:
+        raise SystemExit("CLOSURE_MANIFEST_INVALID_RUN_ID")
+    return run_id
+
 
 def api(path: str) -> dict:
-    base = os.environ.get("GITHUB_API_URL", "https://api.github.com").rstrip("/")
-    req = urllib.request.Request(
-        base + path,
-        headers={
-            "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "worldshepherd-sara-closure-manifest",
-        },
+    if not path.startswith("/repos/") or "\r" in path or "\n" in path:
+        raise SystemExit("CLOSURE_MANIFEST_INVALID_API_PATH")
+    token = os.environ["GITHUB_TOKEN"]
+    connection = http.client.HTTPSConnection(
+        API_HOST,
+        port=443,
+        timeout=30,
+        context=ssl.create_default_context(),
     )
-    with urllib.request.urlopen(req, timeout=30) as response:
-        return json.load(response)
+    try:
+        connection.request(
+            "GET",
+            path,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "User-Agent": "worldshepherd-sara-closure-manifest",
+            },
+        )
+        response = connection.getresponse()
+        body = response.read()
+        if response.status != 200:
+            raise SystemExit(f"CLOSURE_MANIFEST_GITHUB_API_STATUS:{response.status}")
+        payload = json.loads(body.decode("utf-8"))
+        if not isinstance(payload, dict):
+            raise SystemExit("CLOSURE_MANIFEST_INVALID_API_RESPONSE")
+        return payload
+    finally:
+        connection.close()
+
+
+def runs_path(repo: str, sha: str) -> str:
+    query = urllib.parse.urlencode({"head_sha": sha, "per_page": "100"})
+    return f"/repos/{repo}/actions/runs?{query}"
+
+
+def artifacts_path(repo: str, run_id: int) -> str:
+    return f"/repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100"
 
 
 def select_successful_run(runs: list[dict], workflow_name: str, sha: str) -> dict | None:
@@ -48,8 +106,8 @@ def select_successful_run(runs: list[dict], workflow_name: str, sha: str) -> dic
 
 
 def main() -> None:
-    repo = os.environ["GITHUB_REPOSITORY"]
-    sha = os.environ["TARGET_SHA"]
+    repo = validate_repo(os.environ["GITHUB_REPOSITORY"])
+    sha = validate_sha(os.environ["TARGET_SHA"])
     out_dir = pathlib.Path(os.environ.get("CLOSURE_MANIFEST_DIR", "closure_manifest"))
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -58,8 +116,10 @@ def main() -> None:
     last_missing: list[str] = []
 
     while time.monotonic() < deadline:
-        run_payload = api(f"/repos/{repo}/actions/runs?head_sha={sha}&per_page=100")
+        run_payload = api(runs_path(repo, sha))
         runs = run_payload.get("workflow_runs", [])
+        if not isinstance(runs, list):
+            raise SystemExit("CLOSURE_MANIFEST_INVALID_RUN_LIST")
         selected.clear()
         missing: list[str] = []
         for workflow_name, artifact_name in REQUIRED.items():
@@ -67,14 +127,17 @@ def main() -> None:
             if run is None:
                 missing.append(f"workflow:{workflow_name}")
                 continue
-            artifacts = api(f"/repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100").get("artifacts", [])
+            run_id = validate_run_id(run.get("id"))
+            artifacts = api(artifacts_path(repo, run_id)).get("artifacts", [])
+            if not isinstance(artifacts, list):
+                raise SystemExit("CLOSURE_MANIFEST_INVALID_ARTIFACT_LIST")
             candidates = [a for a in artifacts if a.get("name") == artifact_name and not a.get("expired")]
             if not candidates:
                 missing.append(f"artifact:{artifact_name}")
                 continue
-            artifact = max(candidates, key=lambda a: a.get("id", 0))
+            artifact = max(candidates, key=lambda a: validate_run_id(a.get("id")))
             digest = artifact.get("digest") or ""
-            if not digest.startswith("sha256:"):
+            if not isinstance(digest, str) or not digest.startswith("sha256:"):
                 missing.append(f"artifact_digest:{artifact_name}")
                 continue
             selected[workflow_name] = (run, artifact)
@@ -91,7 +154,7 @@ def main() -> None:
         run, artifact = selected[workflow_name]
         entries.append({
             "workflow_name": workflow_name,
-            "workflow_run_id": run["id"],
+            "workflow_run_id": validate_run_id(run["id"]),
             "workflow_run_attempt": run.get("run_attempt"),
             "workflow_event": run.get("event"),
             "workflow_head_branch": run.get("head_branch"),
@@ -99,7 +162,7 @@ def main() -> None:
             "workflow_conclusion": run.get("conclusion"),
             "workflow_html_url": run.get("html_url"),
             "artifact_name": artifact_name,
-            "artifact_id": artifact["id"],
+            "artifact_id": validate_run_id(artifact["id"]),
             "artifact_digest": artifact["digest"],
             "artifact_size_in_bytes": artifact.get("size_in_bytes"),
             "artifact_created_at": artifact.get("created_at"),
