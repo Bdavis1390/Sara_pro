@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -41,7 +40,7 @@ NOT_CLAIMED = [
     "field_or_hardware_performance",
 ]
 
-PEP508_NAME_RE = re.compile(r"^\s*([A-Za-z0-9_.-]+)(?:\[[^\]]+\])?\s*(@|==|===|~=|!=|<=|>=|<|>)")
+SUPPORTED_SPECIFIERS = ("===", "==", "~=", "!=", "<=", ">=", "<", ">")
 
 
 def _json_text(value: dict[str, Any]) -> str:
@@ -76,14 +75,25 @@ def _normalize_name(value: str) -> str:
     return cleaned.lower()
 
 
+def _split_requirement_name(raw: str) -> tuple[str, str | None, str]:
+    for specifier in SUPPORTED_SPECIFIERS:
+        if specifier in raw:
+            name, version = raw.split(specifier, 1)
+            source = "pip_freeze" if specifier in {"==", "==="} else "requirement_specifier"
+            return name, version if specifier in {"==", "==="} else None, source
+    if " @ " in raw:
+        name, _url = raw.split(" @ ", 1)
+        return name, None, "direct_reference"
+    name = raw.split()[0] if raw.split() else "unparsed"
+    return name, None, "unparsed_freeze_entry"
+
+
 def _parse_freeze_line(line: str, index: int) -> dict[str, Any] | None:
     raw = line.strip()
     if not raw or raw.startswith("#"):
         return None
 
-    source = "pip_freeze"
-    version: str | None = None
-    name: str
+    version: str | None
     purl: str | None = None
 
     if raw.startswith("-e "):
@@ -92,23 +102,10 @@ def _parse_freeze_line(line: str, index: int) -> dict[str, Any] | None:
         if "#egg=" in editable:
             name = editable.rsplit("#egg=", 1)[1].strip()
         else:
-            name = Path(editable).name or f"editable-{index}"
+            name = f"editable-{index}"
         version = None
-    elif "===" in raw:
-        name, version = raw.split("===", 1)
-    elif "==" in raw:
-        name, version = raw.split("==", 1)
-    elif " @ " in raw:
-        name, _url = raw.split(" @ ", 1)
-        version = None
-        source = "direct_reference"
     else:
-        match = PEP508_NAME_RE.match(raw)
-        if match:
-            name = match.group(1)
-        else:
-            name = raw.split()[0] if raw.split() else f"unparsed-{index}"
-            source = "unparsed_freeze_entry"
+        name, version, source = _split_requirement_name(raw)
 
     name = _normalize_name(name)
     if version:
@@ -149,6 +146,27 @@ def parse_dependency_freeze(path: Path) -> list[dict[str, Any]]:
     if not components:
         raise ValueError("dependency freeze did not produce any SBOM components")
     return sorted(components, key=lambda item: (item["name"], item.get("version", "")))
+
+
+def _resolve_cli_path(path: Path, *, base_dir: Path, must_exist: bool, allow_directory: bool) -> Path:
+    base = base_dir.resolve()
+    resolved = path.expanduser().resolve()
+    try:
+        resolved.relative_to(base)
+    except ValueError as exc:
+        raise ValueError(f"CLI path must resolve under working directory: {path}") from exc
+    if must_exist:
+        if allow_directory and not resolved.is_dir():
+            raise ValueError(f"expected directory input: {path}")
+        if not allow_directory and not resolved.is_file():
+            raise ValueError(f"expected file input: {path}")
+    return resolved
+
+
+def _resolve_optional_cli_file(path: Path | None, *, base_dir: Path) -> Path | None:
+    if path is None:
+        return None
+    return _resolve_cli_path(path, base_dir=base_dir, must_exist=True, allow_directory=False)
 
 
 def build_sbom_evidence(
@@ -273,12 +291,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--executed-utc", default=None, help="Optional fixed execution timestamp.")
     args = parser.parse_args(argv)
 
+    working_dir = Path.cwd()
+    dependency_freeze = _resolve_cli_path(args.dependency_freeze, base_dir=working_dir, must_exist=True, allow_directory=False)
+    out_dir = _resolve_cli_path(args.out, base_dir=working_dir, must_exist=False, allow_directory=True)
+    pyproject = _resolve_optional_cli_file(args.pyproject, base_dir=working_dir)
+    runtime_constraints = _resolve_optional_cli_file(args.runtime_constraints, base_dir=working_dir)
+    ci_constraints = _resolve_optional_cli_file(args.ci_constraints, base_dir=working_dir)
+
     summary = write_sbom_evidence(
-        out_dir=args.out,
-        dependency_freeze=args.dependency_freeze,
-        pyproject=args.pyproject,
-        runtime_constraints=args.runtime_constraints,
-        ci_constraints=args.ci_constraints,
+        out_dir=out_dir,
+        dependency_freeze=dependency_freeze,
+        pyproject=pyproject,
+        runtime_constraints=runtime_constraints,
+        ci_constraints=ci_constraints,
         repository=args.repository,
         commit_sha=args.commit_sha,
         operator=args.operator,
