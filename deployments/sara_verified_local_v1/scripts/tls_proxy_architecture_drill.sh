@@ -8,7 +8,8 @@ HOST_PORT="${TLS_PROXY_HOST_PORT:-19443}"
 RUN_KEY="${GITHUB_RUN_ID:-local}-$$"
 SAFE_KEY="${RUN_KEY//[^a-zA-Z0-9_.-]/_}"
 IMAGE="sara-tls-architecture:${SOURCE_SHA:0:12}"
-NETWORK="sara_tls_${SAFE_KEY}"
+FRONT_NETWORK="sara_tls_front_${SAFE_KEY}"
+BACK_NETWORK="sara_tls_back_${SAFE_KEY}"
 DATA_VOLUME="sara_tls_data_${SAFE_KEY}"
 SARA_CONTAINER="sara-tls-backend-${SAFE_KEY}"
 PROXY_CONTAINER="sara-tls-proxy-${SAFE_KEY}"
@@ -20,8 +21,15 @@ mkdir -p "$OUT_DIR" "$CERT_DIR"
 rm -f "$OUT_DIR"/*.json "$OUT_DIR"/*.txt "$CERT_DIR"/*
 
 cleanup() {
+  local status=$?
+  if [ "$status" -ne 0 ]; then
+    echo "TLS drill failed; preserving diagnostics before cleanup" >&2
+    docker ps -a --no-trunc >&2 || true
+    docker logs "$SARA_CONTAINER" >&2 || true
+    docker logs "$PROXY_CONTAINER" >&2 || true
+  fi
   docker rm -f "$SARA_CONTAINER" "$PROXY_CONTAINER" >/dev/null 2>&1 || true
-  docker network rm "$NETWORK" >/dev/null 2>&1 || true
+  docker network rm "$FRONT_NETWORK" "$BACK_NETWORK" >/dev/null 2>&1 || true
   docker volume rm "$DATA_VOLUME" >/dev/null 2>&1 || true
   rm -rf "$CERT_DIR"
 }
@@ -42,6 +50,7 @@ wait_https() {
     sleep 1
   done
   docker logs "$PROXY_CONTAINER" >&2 || true
+  docker logs "$SARA_CONTAINER" >&2 || true
   return 1
 }
 
@@ -51,7 +60,10 @@ docker build \
   --build-arg SARA_RELEASE_ID="tls-architecture-${SOURCE_SHA}" \
   -t "$IMAGE" "$ROOT" >/dev/null
 
-docker network create --internal "$NETWORK" >/dev/null
+# Two-zone reference topology: frontend is host-reachable through the proxy only;
+# backend is Docker-internal and contains SARA plus the proxy's backend interface.
+docker network create "$FRONT_NETWORK" >/dev/null
+docker network create --internal "$BACK_NETWORK" >/dev/null
 docker volume create "$DATA_VOLUME" >/dev/null
 docker run --rm --user 0 -v "$DATA_VOLUME:/data" "$IMAGE" sh -c 'chown -R 10001:10001 /data && chmod 0700 /data'
 
@@ -65,10 +77,10 @@ openssl req -x509 -newkey rsa:2048 -sha256 -nodes \
 chmod 0755 "$CERT_DIR"
 chmod 0644 "$CERT_DIR/cert.pem" "$CERT_DIR/key.pem"
 
-# SARA has NO published host port. It is addressable only inside the internal Docker network.
+# SARA exists only on the internal backend network and has NO host-published port.
 docker run -d \
   --name "$SARA_CONTAINER" \
-  --network "$NETWORK" \
+  --network "$BACK_NETWORK" \
   --network-alias sara \
   --read-only \
   --tmpfs /tmp:size=16m,mode=1777 \
@@ -83,10 +95,11 @@ docker run -d \
   -v "$DATA_VOLUME:/var/lib/sara" \
   "$IMAGE" >/dev/null
 
-# The TLS proxy is the only host-published service. It is also non-root/read-only/capability-dropped.
+# Proxy starts on the frontend, publishes TLS on loopback, then receives a second
+# interface on the internal backend so it can reach SARA without exposing SARA.
 docker run -d \
   --name "$PROXY_CONTAINER" \
-  --network "$NETWORK" \
+  --network "$FRONT_NETWORK" \
   --read-only \
   --tmpfs /tmp:size=8m,mode=1777 \
   --security-opt no-new-privileges:true \
@@ -101,6 +114,7 @@ docker run -d \
     --upstream-port 9530 \
     --cert /certs/cert.pem \
     --key /certs/key.pem >/dev/null
+docker network connect "$BACK_NETWORK" "$PROXY_CONTAINER"
 
 wait_https
 
@@ -137,8 +151,15 @@ PROXY_RUNNING="$(docker inspect --format '{{.State.Running}}' "$PROXY_CONTAINER"
 SARA_USER="$(docker inspect --format '{{.Config.User}}' "$SARA_CONTAINER")"
 PROXY_USER="$(docker inspect --format '{{.Config.User}}' "$PROXY_CONTAINER")"
 PROXY_BINDING="$(docker port "$PROXY_CONTAINER" 8443/tcp)"
-NETWORK_INTERNAL="$(docker network inspect --format '{{.Internal}}' "$NETWORK")"
-export OUT_DIR SOURCE_SHA SARA_RUNNING PROXY_RUNNING SARA_USER PROXY_USER PROXY_BINDING NETWORK_INTERNAL HOST_PORT
+FRONT_INTERNAL="$(docker network inspect --format '{{.Internal}}' "$FRONT_NETWORK")"
+BACK_INTERNAL="$(docker network inspect --format '{{.Internal}}' "$BACK_NETWORK")"
+SARA_NETWORK_COUNT="$(docker inspect "$SARA_CONTAINER" --format '{{len .NetworkSettings.Networks}}')"
+PROXY_NETWORK_COUNT="$(docker inspect "$PROXY_CONTAINER" --format '{{len .NetworkSettings.Networks}}')"
+SARA_ON_BACK="$(docker inspect "$SARA_CONTAINER" --format "{{if index .NetworkSettings.Networks \"$BACK_NETWORK\"}}true{{else}}false{{end}}")"
+SARA_ON_FRONT="$(docker inspect "$SARA_CONTAINER" --format "{{if index .NetworkSettings.Networks \"$FRONT_NETWORK\"}}true{{else}}false{{end}}")"
+PROXY_ON_BACK="$(docker inspect "$PROXY_CONTAINER" --format "{{if index .NetworkSettings.Networks \"$BACK_NETWORK\"}}true{{else}}false{{end}}")"
+PROXY_ON_FRONT="$(docker inspect "$PROXY_CONTAINER" --format "{{if index .NetworkSettings.Networks \"$FRONT_NETWORK\"}}true{{else}}false{{end}}")"
+export OUT_DIR SOURCE_SHA SARA_RUNNING PROXY_RUNNING SARA_USER PROXY_USER PROXY_BINDING FRONT_INTERNAL BACK_INTERNAL SARA_NETWORK_COUNT PROXY_NETWORK_COUNT SARA_ON_BACK SARA_ON_FRONT PROXY_ON_BACK PROXY_ON_FRONT HOST_PORT
 
 python - <<'PY'
 import datetime, hashlib, json, os, pathlib
@@ -155,7 +176,10 @@ checks = {
     'sara_non_root_user': os.environ['SARA_USER'] == 'sara',
     'proxy_non_root_user': os.environ['PROXY_USER'] == 'sara',
     'proxy_bound_loopback_only': os.environ['PROXY_BINDING'].startswith('127.0.0.1:'),
-    'backend_network_marked_internal': os.environ['NETWORK_INTERNAL'] == 'true',
+    'frontend_network_not_internal': os.environ['FRONT_INTERNAL'] == 'false',
+    'backend_network_marked_internal': os.environ['BACK_INTERNAL'] == 'true',
+    'sara_has_single_backend_network_only': os.environ['SARA_NETWORK_COUNT'] == '1' and os.environ['SARA_ON_BACK'] == 'true' and os.environ['SARA_ON_FRONT'] == 'false',
+    'proxy_bridges_front_and_back_only': os.environ['PROXY_NETWORK_COUNT'] == '2' and os.environ['PROXY_ON_BACK'] == 'true' and os.environ['PROXY_ON_FRONT'] == 'true',
     'tls12_negotiated': 'TLSv1.2' in (root / 'tls12-session.txt').read_text(encoding='utf-8', errors='replace'),
     'certificate_san_matches_reference_name': 'DNS:sara.local' in (root / 'certificate-summary.txt').read_text(encoding='utf-8'),
 }
@@ -167,7 +191,7 @@ record = {
     'source_build_commit': os.environ['SOURCE_SHA'],
     'public_test_endpoint': f"127.0.0.1:{os.environ['HOST_PORT']} (TLS only)",
     'backend_host_port_exposure': 'NONE',
-    'backend_network': 'Docker internal network',
+    'network_topology': 'host -> frontend network/TLS proxy -> internal backend network -> SARA',
     'tls_minimum_version': 'TLSv1.2',
     'certificate_identity': 'sara.local — ephemeral self-signed CI certificate',
     'checks': checks,
@@ -176,11 +200,11 @@ record = {
         for name in ('https-health.json','https-readyz.json','tls12-session.txt','certificate-summary.txt')
     },
     'claims_boundary': (
-        'This evidence validates a bounded reference topology in CI: TLS terminates at a separate non-root proxy, the SARA '
-        'backend has no host-published port, and proxy/backend communicate only on an internal Docker network. The certificate '
-        'is ephemeral and self-signed. This does not establish production identity, public DNS ownership, public-CA issuance, '
-        'production key/HSM custody, enterprise reverse-proxy hardening, internet exposure approval, WAF/DDoS controls, customer '
-        'authorization, ATO, certification, or field readiness.'
+        'This evidence validates a bounded two-zone reference topology in CI: TLS terminates at a separate non-root proxy; '
+        'SARA has no host-published port and exists only on an internal backend network; the proxy bridges a frontend network '
+        'to that backend. The certificate is ephemeral and self-signed. This does not establish production identity, public '
+        'DNS ownership, public-CA issuance, production key/HSM custody, enterprise reverse-proxy hardening, internet exposure '
+        'approval, WAF/DDoS controls, customer authorization, ATO, certification, or field readiness.'
     ),
 }
 (root / 'tls-private-backend-architecture.json').write_text(json.dumps(record, sort_keys=True, indent=2)+'\n', encoding='utf-8')
