@@ -69,12 +69,13 @@ def test_build_sbom_evidence_records_claims_boundary_and_inputs(tmp_path: Path) 
     assert "cmmc_conformity" in summary["not_claimed"]
 
 
-def test_sbom_cli_writes_summary_and_bom(tmp_path: Path) -> None:
-    freeze = tmp_path / "dependency-freeze.txt"
-    pyproject = tmp_path / "pyproject.toml"
+def test_sbom_cli_writes_summary_and_bom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    freeze = Path("dependency-freeze.txt")
+    pyproject = Path("pyproject.toml")
     freeze.write_text("fastapi==0.141.1\npytest==8.4.2\n", encoding="utf-8")
     pyproject.write_text("[project]\nname='worldshepherd-sara'\n", encoding="utf-8")
-    out_dir = tmp_path / "sbom_evidence_ci"
+    out_dir = Path("sbom_evidence_ci")
 
     exit_code = main(
         [
@@ -101,6 +102,27 @@ def test_sbom_cli_writes_summary_and_bom(tmp_path: Path) -> None:
     assert sbom["components"][0]["name"] == "fastapi"
     assert summary["software_sbom_sha256"].startswith("sha256:")
     assert summary["summary_digest"].startswith("sha256:")
+
+
+def test_sbom_cli_rejects_paths_outside_working_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    workspace = tmp_path / "workspace"
+    outside = tmp_path / "outside"
+    workspace.mkdir()
+    outside.mkdir()
+    (outside / "dependency-freeze.txt").write_text("fastapi==0.141.1\n", encoding="utf-8")
+    monkeypatch.chdir(workspace)
+
+    with pytest.raises(ValueError, match="under working directory"):
+        main(
+            [
+                "--dependency-freeze",
+                str(outside / "dependency-freeze.txt"),
+                "--out",
+                "sbom_evidence_ci",
+                "--commit-sha",
+                "abc123",
+            ]
+        )
 
 
 def test_sbom_generation_rejects_missing_dependency_freeze(tmp_path: Path) -> None:
