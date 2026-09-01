@@ -57,9 +57,9 @@ The matrix currently maps all 14 baseline standards/frameworks:
 
 ```text
 records: 14
-TARGET_DEFINED: 7
+TARGET_DEFINED: 8
 GAP_IDENTIFIED: 3
-PARTIAL_INTERNAL_EVIDENCE: 4
+PARTIAL_INTERNAL_EVIDENCE: 3
 MET: 0
 EXCEEDED: 0
 FORMALLY_ASSESSED: 0
