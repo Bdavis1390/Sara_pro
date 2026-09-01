@@ -1,0 +1,65 @@
+name: SARA Replacement Environment Restore
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/**'
+      - '.github/workflows/sara-replacement-environment-restore.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/**'
+      - '.github/workflows/sara-replacement-environment-restore.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  replacement-environment-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact tested source
+        uses: actions/checkout@v4
+
+      - name: Execute clean replacement-environment restore
+        env:
+          REPLACEMENT_RECOVERY_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/replacement_recovery_evidence
+          REPLACEMENT_HOST_PORT: '19532'
+        run: bash deployments/sara_verified_local_v1/scripts/replacement_environment_restore.sh
+
+      - name: Validate replacement restore evidence contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          path=pathlib.Path('deployments/sara_verified_local_v1/replacement_recovery_evidence/replacement-environment-restore.json')
+          record=json.loads(path.read_text(encoding='utf-8'))
+          assert record['schema']=='WS-SARA-REPLACEMENT-ENVIRONMENT-RESTORE-EVIDENCE-V1'
+          assert record['evidence_status']=='INTERNAL_CI_GENERATED_UNSIGNED'
+          assert record['result']=='PASS'
+          assert record['source_build_commit']==os.environ['GITHUB_SHA']
+          assert record['source_volume_destroyed_before_restore'] is True
+          assert record['source_volume_name'] != record['replacement_volume_name']
+          assert all(record['checks'].values())
+          assert 'does not establish recovery on a physically separate host' in record['claims_boundary'].lower()
+          PY
+
+      - name: Upload replacement restore evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-replacement-environment-restore-evidence
+          path: deployments/sara_verified_local_v1/replacement_recovery_evidence
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture Docker state on failure
+        if: failure()
+        run: docker ps -a --no-trunc || true
+
+      - name: Clean residual replacement resources
+        if: always()
+        run: |
+          docker ps -aq --filter 'name=sara-source-' | xargs -r docker rm -f || true
+          docker ps -aq --filter 'name=sara-replacement-' | xargs -r docker rm -f || true
+          docker volume ls -q --filter 'name=sara_source_' | xargs -r docker volume rm || true
+          docker volume ls -q --filter 'name=sara_replacement_' | xargs -r docker volume rm || true
