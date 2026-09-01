@@ -190,7 +190,7 @@ jobs:
         run: |
           rm -rf release_index_ci
           PR_NUMBER=""
-          MERGE_STATE="POST_MERGE_OR_MANUAL_RUN"
+          MERGE_STATE="MANUAL_OR_NON_MAIN_RUN"
           if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
             PR_NUMBER=$(python - <<'PY'
           import json, os
@@ -199,6 +199,8 @@ jobs:
           PY
           )
             MERGE_STATE="PR_CANDIDATE_UNMERGED"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" ]]; then
+            MERGE_STATE="MERGED_MAIN_PUSH"
           fi
           ws-release-index \
             --out release_index_ci/release-index.json \
@@ -223,13 +225,24 @@ jobs:
           test -s release_index_ci/release-index.json
           python -m json.tool release_index_ci/release-index.json >/dev/null
           python - <<'PY'
-          import json
+          import json, os
           record=json.load(open('release_index_ci/release-index.json', encoding='utf-8'))
           assert record['schema'] == 'WS-SARA-RELEASE-EVIDENCE-INDEX-V1'
           assert record['artifacts']['pre_full_bloom_qualification_evidence']['artifact_digest'].startswith('sha256:')
           assert record['artifacts']['partner_screening_batch_evidence']['artifact_digest'].startswith('sha256:')
           assert record['release_index_digest'].startswith('sha256:')
           assert 'does not establish partner validation' in record['claims_boundary']
+          merge_state = record['workflow']['merge_state']
+          event_name = record['workflow']['event_name']
+          ref = record['workflow']['ref']
+          if event_name == 'pull_request':
+              assert merge_state == 'PR_CANDIDATE_UNMERGED'
+              assert record['workflow']['pull_request_number']
+          elif event_name == 'push' and ref == 'refs/heads/main':
+              assert merge_state == 'MERGED_MAIN_PUSH'
+              assert record['workflow']['pull_request_number'] is None
+          else:
+              assert merge_state == 'MANUAL_OR_NON_MAIN_RUN'
           PY
 
       - name: Upload release evidence index
