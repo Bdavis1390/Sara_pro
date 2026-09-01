@@ -26,6 +26,7 @@ ws-bae-geo-screening = "worldshepherd_sara.bae_geo_screening_cli:main"
 ws-partner-screening = "worldshepherd_sara.partner_screening_cli:main"
 ws-partner-screening-batch = "worldshepherd_sara.partner_screening_cli:batch_main"
 ws-partner-screening-verify = "worldshepherd_sara.partner_screening_verify_cli:main"
+ws-release-index = "worldshepherd_sara.release_index_cli:main"
 
 [tool.setuptools]
 packages = ["worldshepherd_sara"]
