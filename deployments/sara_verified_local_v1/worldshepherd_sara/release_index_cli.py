@@ -11,6 +11,7 @@ from typing import Any
 from .qualification import canonical_digest
 
 RELEASE_INDEX_SCHEMA = "WS-SARA-RELEASE-EVIDENCE-INDEX-V1"
+SBOM_EVIDENCE_SCHEMA = "WS-SOFTWARE-SUPPLY-CHAIN-EVIDENCE-V1"
 MERGE_STATE_PR_CANDIDATE = "PR_CANDIDATE_UNMERGED"
 MERGE_STATE_MAIN_PUSH = "MERGED_MAIN_PUSH"
 MERGE_STATE_MANUAL_OR_NON_MAIN = "MANUAL_OR_NON_MAIN_RUN"
@@ -23,7 +24,9 @@ ALLOWED_MERGE_STATES = {
 CLAIMS_BOUNDARY = (
     "Release index records CI evidence custody only. It does not establish partner validation, "
     "supplier approval, certification, CMMC/NIST/DFARS conformity, classified access, DOE validation, "
-    "external reproduction, field performance, hardware performance, export-control clearance, or operational authority."
+    "external reproduction, field performance, hardware performance, export-control clearance, "
+    "software supply-chain completeness, vulnerability remediation, license legal review, SLSA compliance, "
+    "or operational authority."
 )
 
 
@@ -101,6 +104,18 @@ def _validate_release_context(*, event_name: str, ref: str, pr_number: str | Non
         raise ValueError("main push release indexes must not include a PR number")
 
 
+def _validate_sbom_summary(sbom_summary: dict[str, Any]) -> None:
+    if sbom_summary.get("schema") != SBOM_EVIDENCE_SCHEMA:
+        raise ValueError("unexpected SBOM evidence summary schema")
+    if sbom_summary.get("evidence_status") != "INTERNAL_CI_GENERATED_UNSIGNED":
+        raise ValueError("unexpected SBOM evidence status")
+    if not sbom_summary.get("software_sbom_sha256", "").startswith("sha256:"):
+        raise ValueError("SBOM summary missing software_sbom_sha256")
+    claims_boundary = sbom_summary.get("claims_boundary", "")
+    if "does not establish" not in claims_boundary:
+        raise ValueError("SBOM summary missing claims boundary")
+
+
 def build_release_evidence_index(
     *,
     repository: str,
@@ -114,12 +129,16 @@ def build_release_evidence_index(
     merge_state: str,
     pre_dir: Path,
     partner_dir: Path,
+    sbom_dir: Path,
     pre_artifact_id: str | None,
     pre_artifact_digest: str | None,
     pre_artifact_url: str | None,
     partner_artifact_id: str | None,
     partner_artifact_digest: str | None,
     partner_artifact_url: str | None,
+    sbom_artifact_id: str | None,
+    sbom_artifact_digest: str | None,
+    sbom_artifact_url: str | None,
     executed_utc: str | None = None,
 ) -> dict[str, Any]:
     """Build a machine-readable release evidence index for one SARA CI run."""
@@ -128,13 +147,17 @@ def build_release_evidence_index(
     _validate_release_context(event_name=event_name, ref=ref, pr_number=pr_number, merge_state=merge_state)
     pre_root = Path(pre_dir)
     partner_root = Path(partner_dir)
+    sbom_root = Path(sbom_dir)
+
     qualification_index = _load_json(pre_root / "qualification_index.json")
     partner_batch_manifest = _load_json(partner_root / "batch-manifest.json")
+    sbom_summary = _load_json(sbom_root / "sbom-evidence-summary.json")
 
     if partner_batch_manifest.get("schema") != "WS-PARTNER-SCREENING-BATCH-MANIFEST-V1":
         raise ValueError("unexpected partner batch manifest schema")
     if qualification_index.get("schema") is None:
         raise ValueError("qualification index missing schema")
+    _validate_sbom_summary(sbom_summary)
 
     generated_at = executed_utc or datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     pre_artifact = _artifact_record(
@@ -148,6 +171,12 @@ def build_release_evidence_index(
         artifact_id=partner_artifact_id,
         digest=partner_artifact_digest,
         url=partner_artifact_url,
+    )
+    sbom_artifact = _artifact_record(
+        name="software-sbom-evidence",
+        artifact_id=sbom_artifact_id,
+        digest=sbom_artifact_digest,
+        url=sbom_artifact_url,
     )
 
     index: dict[str, Any] = {
@@ -165,10 +194,18 @@ def build_release_evidence_index(
             "merge_state": merge_state,
         },
         "artifacts": {
+            "software_sbom_evidence": sbom_artifact,
             "pre_full_bloom_qualification_evidence": pre_artifact,
             "partner_screening_batch_evidence": partner_artifact,
         },
         "local_evidence": {
+            "sbom_summary_path": str(sbom_root / "sbom-evidence-summary.json"),
+            "sbom_summary_sha256": _sha256_file(sbom_root / "sbom-evidence-summary.json"),
+            "software_sbom_path": str(sbom_root / "software-sbom.json"),
+            "software_sbom_sha256": _sha256_file(sbom_root / "software-sbom.json"),
+            "sbom_component_count": sbom_summary.get("component_count"),
+            "sbom_evidence_status": sbom_summary.get("evidence_status"),
+            "sbom_input_files": sbom_summary.get("input_files", {}),
             "qualification_index_path": str(pre_root / "qualification_index.json"),
             "qualification_index_sha256": _sha256_file(pre_root / "qualification_index.json"),
             "partner_batch_manifest_path": str(partner_root / "batch-manifest.json"),
@@ -209,6 +246,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True, help="Output release-index.json path.")
     parser.add_argument("--pre-dir", type=Path, required=True, help="Directory containing PRE full-bloom evidence.")
     parser.add_argument("--partner-dir", type=Path, required=True, help="Directory containing partner-screening batch evidence.")
+    parser.add_argument("--sbom-dir", type=Path, required=True, help="Directory containing software SBOM evidence.")
     parser.add_argument("--repository", default=os.getenv("GITHUB_REPOSITORY", ""))
     parser.add_argument("--commit-sha", default=os.getenv("GITHUB_SHA", ""))
     parser.add_argument("--workflow-name", default=os.getenv("GITHUB_WORKFLOW", ""))
@@ -224,6 +262,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--partner-artifact-id", default=None)
     parser.add_argument("--partner-artifact-digest", default=None)
     parser.add_argument("--partner-artifact-url", default=None)
+    parser.add_argument("--sbom-artifact-id", default=None)
+    parser.add_argument("--sbom-artifact-digest", default=None)
+    parser.add_argument("--sbom-artifact-url", default=None)
     parser.add_argument("--executed-utc", default=None)
     args = parser.parse_args(argv)
 
@@ -242,12 +283,16 @@ def main(argv: list[str] | None = None) -> int:
         merge_state=merge_state,
         pre_dir=args.pre_dir,
         partner_dir=args.partner_dir,
+        sbom_dir=args.sbom_dir,
         pre_artifact_id=args.pre_artifact_id,
         pre_artifact_digest=args.pre_artifact_digest,
         pre_artifact_url=args.pre_artifact_url,
         partner_artifact_id=args.partner_artifact_id,
         partner_artifact_digest=args.partner_artifact_digest,
         partner_artifact_url=args.partner_artifact_url,
+        sbom_artifact_id=args.sbom_artifact_id,
+        sbom_artifact_digest=args.sbom_artifact_digest,
+        sbom_artifact_url=args.sbom_artifact_url,
         executed_utc=args.executed_utc,
     )
     _write_json(args.out, index)
