@@ -234,6 +234,8 @@ def build_human_triage_ledger(
         raise ValueError("vulnerability advisory report records must be a list")
 
     source_ids_list: list[str] = []
+    seen_source_ids: set[str] = set()
+    duplicate_source_ids: set[str] = set()
     for source_record in source_records:
         if not isinstance(source_record, dict):
             raise ValueError("vulnerability advisory record entries must be objects")
@@ -241,11 +243,15 @@ def build_human_triage_ledger(
         if not advisory_id:
             raise ValueError("vulnerability advisory record missing advisory_id")
         source_ids_list.append(advisory_id)
-    duplicate_source_ids = sorted(
-        {advisory_id for advisory_id in source_ids_list if source_ids_list.count(advisory_id) > 1}
-    )
-    if duplicate_source_ids:
-        raise ValueError(f"duplicate advisory_id values in vulnerability evidence: {duplicate_source_ids}")
+        if advisory_id in seen_source_ids:
+            duplicate_source_ids.add(advisory_id)
+        else:
+            seen_source_ids.add(advisory_id)
+    duplicate_source_ids_sorted = sorted(duplicate_source_ids)
+    if duplicate_source_ids_sorted:
+        raise ValueError(
+            f"duplicate advisory_id values in vulnerability evidence: {duplicate_source_ids_sorted}"
+        )
 
     reviews = _load_review_input(review_input)
     review_by_advisory = {review["advisory_id"]: review for review in reviews}
