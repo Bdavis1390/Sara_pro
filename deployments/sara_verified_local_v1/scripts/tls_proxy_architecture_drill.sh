@@ -104,6 +104,7 @@ docker run -d \
   --tmpfs /tmp:size=8m,mode=1777 \
   --security-opt no-new-privileges:true \
   --cap-drop ALL \
+  --no-healthcheck \
   -p "127.0.0.1:${HOST_PORT}:8443" \
   -v "$ROOT/scripts/tls_reference_proxy.py:/proxy/tls_reference_proxy.py:ro" \
   -v "$CERT_DIR:/certs:ro" \
