@@ -118,6 +118,9 @@ _NON_CLAIM_MARKERS = (
     "never",
 )
 
+QUALIFICATION_BUNDLE_SUFFIX = "_qualification_bundle.json"
+DEFAULT_BATCH_PARTNERS = ("BAE_SYSTEMS", "GENERIC_PRIME")
+
 
 def _json_text(value: dict[str, Any]) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
@@ -175,6 +178,22 @@ def _partner_preset(partner: str) -> tuple[str, dict[str, Any]]:
     if key not in PARTNER_PRESETS:
         key = "GENERIC_PRIME"
     return key, PARTNER_PRESETS[key]
+
+
+def _partner_ids(partners: list[str] | tuple[str, ...] | None) -> list[str]:
+    values = list(partners or DEFAULT_BATCH_PARTNERS)
+    normalized: list[str] = []
+    for value in values:
+        for fragment in value.split(","):
+            fragment = fragment.strip()
+            if not fragment:
+                continue
+            partner_id, _preset = _partner_preset(fragment)
+            if partner_id not in normalized:
+                normalized.append(partner_id)
+    if not normalized:
+        raise ValueError("at least one partner preset is required")
+    return normalized
 
 
 def _derive_partner_overlay(bundle: dict[str, Any], partner_id: str, preset: dict[str, Any]) -> dict[str, Any]:
@@ -451,6 +470,67 @@ def export_partner_screening_package(bundle: dict[str, Any], out_dir: Path, *, p
     return manifest
 
 
+def _bundle_lane(path: Path) -> str:
+    if not path.name.endswith(QUALIFICATION_BUNDLE_SUFFIX):
+        raise ValueError(f"not a qualification bundle path: {path}")
+    return path.name[: -len(QUALIFICATION_BUNDLE_SUFFIX)]
+
+
+def discover_qualification_bundles(bundle_dir: Path) -> list[Path]:
+    if not bundle_dir.is_dir():
+        raise ValueError(f"qualification bundle directory does not exist: {bundle_dir}")
+    bundles = sorted(path for path in bundle_dir.glob(f"*{QUALIFICATION_BUNDLE_SUFFIX}") if path.is_file())
+    if not bundles:
+        raise ValueError(f"no qualification bundles found in {bundle_dir}")
+    return bundles
+
+
+def export_partner_screening_batch(bundle_dir: Path, out_dir: Path, *, partners: list[str] | tuple[str, ...] | None = None) -> dict[str, Any]:
+    """Export every PRE qualification bundle in a directory for each partner preset."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    partner_ids = _partner_ids(partners)
+    records: list[dict[str, Any]] = []
+    lanes: list[str] = []
+
+    for bundle_path in discover_qualification_bundles(bundle_dir):
+        lane = _bundle_lane(bundle_path)
+        lanes.append(lane)
+        bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+        for partner_id in partner_ids:
+            package_dir = out_dir / partner_id.lower() / lane
+            package_manifest = export_partner_screening_package(bundle, package_dir, partner=partner_id)
+            records.append(
+                {
+                    "lane": lane,
+                    "partner_id": partner_id,
+                    "source_bundle": bundle_path.name,
+                    "source_bundle_digest": bundle.get("bundle_digest"),
+                    "output_dir": str(package_dir),
+                    "package_manifest_digest": package_manifest["artifact_digests"]["manifest.json"],
+                    "package_file_count": len(package_manifest["output_files"]),
+                }
+            )
+
+    batch_manifest = {
+        "schema": "WS-PARTNER-SCREENING-BATCH-MANIFEST-V1",
+        "source_bundle_dir": str(bundle_dir),
+        "output_dir": str(out_dir),
+        "partners": partner_ids,
+        "lanes": sorted(set(lanes)),
+        "source_bundle_count": len(set(lanes)),
+        "package_count": len(records),
+        "exports": records,
+        "claims_boundary": (
+            "Batch screening export only; it does not establish partner interest, validation, supplier approval, "
+            "certification, classified access, compliance conformity, external reproduction, field performance, "
+            "hardware performance, or operational authority."
+        ),
+    }
+    batch_manifest["batch_digest"] = canonical_digest(batch_manifest)
+    _write_json(out_dir / "batch-manifest.json", batch_manifest)
+    return batch_manifest
+
+
 def _load_bundle(path: Path | None) -> dict[str, Any]:
     if path is None:
         return build_geo_prov_bundle(
@@ -469,6 +549,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     bundle = _load_bundle(args.bundle)
     manifest = export_partner_screening_package(bundle, args.out, partner=args.partner)
+    print(_json_text(manifest), end="")
+    return 0
+
+
+def batch_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Batch-export partner-screening packages from PRE full-bloom bundles.")
+    parser.add_argument("--bundle-dir", type=Path, required=True, help="Directory containing *_qualification_bundle.json files.")
+    parser.add_argument("--partner", action="append", default=[], help="Partner preset. May be repeated or comma-separated. Defaults to BAE_SYSTEMS and GENERIC_PRIME.")
+    parser.add_argument("--out", type=Path, required=True, help="Output root for partner/lane screening package directories.")
+    args = parser.parse_args(argv)
+    manifest = export_partner_screening_batch(args.bundle_dir, args.out, partners=args.partner or None)
     print(_json_text(manifest), end="")
     return 0
 
