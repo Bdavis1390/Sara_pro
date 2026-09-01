@@ -1,0 +1,71 @@
+name: SARA TLS Private Backend Architecture
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/**'
+      - '.github/workflows/sara-tls-proxy-architecture.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/**'
+      - '.github/workflows/sara-tls-proxy-architecture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tls-private-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact tested source
+        uses: actions/checkout@v4
+
+      - name: Compile reference proxy
+        run: python -m py_compile deployments/sara_verified_local_v1/scripts/tls_reference_proxy.py
+
+      - name: Execute TLS/private-backend architecture drill
+        env:
+          TLS_PROXY_EVIDENCE_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/tls_proxy_evidence
+          TLS_PROXY_HOST_PORT: '19443'
+        run: bash deployments/sara_verified_local_v1/scripts/tls_proxy_architecture_drill.sh
+
+      - name: Validate TLS architecture evidence contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('deployments/sara_verified_local_v1/tls_proxy_evidence/tls-private-backend-architecture.json')
+          record = json.loads(path.read_text(encoding='utf-8'))
+          assert record['schema'] == 'WS-SARA-TLS-PRIVATE-BACKEND-ARCHITECTURE-EVIDENCE-V1'
+          assert record['evidence_status'] == 'INTERNAL_CI_GENERATED_EPHEMERAL_IDENTITY'
+          assert record['result'] == 'PASS'
+          assert record['source_build_commit'] == os.environ['GITHUB_SHA']
+          assert record['backend_host_port_exposure'] == 'NONE'
+          assert record['tls_minimum_version'] == 'TLSv1.2'
+          assert all(record['checks'].values())
+          boundary = record['claims_boundary'].lower()
+          assert 'does not establish production identity' in boundary
+          assert 'public-ca issuance' in boundary
+          PY
+
+      - name: Upload TLS architecture evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-tls-private-backend-architecture-evidence
+          path: deployments/sara_verified_local_v1/tls_proxy_evidence
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture Docker state and logs on failure
+        if: failure()
+        run: |
+          docker ps -a --no-trunc || true
+          for id in $(docker ps -aq --filter 'name=sara-tls-'); do docker logs "$id" || true; done
+
+      - name: Clean residual TLS drill resources
+        if: always()
+        run: |
+          docker ps -aq --filter 'name=sara-tls-' | xargs -r docker rm -f || true
+          docker network ls -q --filter 'name=sara_tls_' | xargs -r docker network rm || true
+          docker volume ls -q --filter 'name=sara_tls_data_' | xargs -r docker volume rm || true
