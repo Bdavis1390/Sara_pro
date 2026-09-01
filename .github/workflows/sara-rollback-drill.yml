@@ -1,0 +1,82 @@
+name: SARA Rollback Drill
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/**'
+      - '.github/workflows/sara-rollback-drill.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/**'
+      - '.github/workflows/sara-rollback-drill.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rollback-drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BASELINE_SHA: 53cd710c04f823aaa209ac5e8d42a9a33e386f88
+      ROLLBACK_HOST_PORT: '19531'
+
+    steps:
+      - name: Check out tested source
+        uses: actions/checkout@v4
+        with:
+          path: current
+
+      - name: Check out frozen rollback baseline
+        uses: actions/checkout@v4
+        with:
+          ref: 53cd710c04f823aaa209ac5e8d42a9a33e386f88
+          path: baseline
+
+      - name: Confirm immutable baseline identity
+        run: |
+          test "$(git -C baseline rev-parse HEAD)" = "$BASELINE_SHA"
+          test -f baseline/deployments/sara_verified_local_v1/Dockerfile
+          grep -F 'ARG SARA_BUILD_COMMIT=UNKNOWN' baseline/deployments/sara_verified_local_v1/Dockerfile >/dev/null
+
+      - name: Execute current-to-baseline rollback drill
+        env:
+          BASELINE_DIR: ${{ github.workspace }}/baseline/deployments/sara_verified_local_v1
+          CURRENT_SHA: ${{ github.sha }}
+          ROLLBACK_EVIDENCE_DIR: ${{ github.workspace }}/current/deployments/sara_verified_local_v1/rollback_evidence
+        run: |
+          bash current/deployments/sara_verified_local_v1/scripts/rollback_drill.sh
+
+      - name: Validate rollback evidence contract
+        run: |
+          python - <<'PY'
+          import json, pathlib, os
+          path = pathlib.Path('current/deployments/sara_verified_local_v1/rollback_evidence/rollback-drill.json')
+          record = json.loads(path.read_text(encoding='utf-8'))
+          assert record['schema'] == 'WS-SARA-ROLLBACK-DRILL-EVIDENCE-V1'
+          assert record['evidence_status'] == 'INTERNAL_CI_GENERATED_UNSIGNED'
+          assert record['result'] == 'PASS'
+          assert record['rollback_target_commit'] == os.environ['BASELINE_SHA']
+          assert record['source_build_commit'] == os.environ['GITHUB_SHA']
+          assert record['source_container_image_id'] != record['rollback_container_image_id']
+          assert all(record['checks'].values())
+          assert 'does not establish production rollback approval' in record['claims_boundary']
+          PY
+
+      - name: Upload rollback drill evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-rollback-drill-evidence
+          path: current/deployments/sara_verified_local_v1/rollback_evidence
+          if-no-files-found: error
+
+      - name: Capture rollback container logs on failure
+        if: failure()
+        run: docker ps -a --no-trunc || true
+
+      - name: Clean rollback resources
+        if: always()
+        run: |
+          docker ps -aq --filter 'name=sara-rollback-' | xargs -r docker rm -f || true
+          docker volume ls -q --filter 'name=sara_rollback_' | xargs -r docker volume rm || true
