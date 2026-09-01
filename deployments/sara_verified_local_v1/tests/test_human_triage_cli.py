@@ -303,6 +303,33 @@ def test_human_triage_rejects_duplicate_source_advisory_ids(tmp_path) -> None:
         )
 
 
+def test_human_triage_handles_large_unique_advisory_input(tmp_path) -> None:
+    report_path, summary_path = _make_vulnerability_evidence(tmp_path, with_advisory=True)
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    template = report["advisory_triage"]["records"][0]
+    records = [
+        {**template, "advisory_id": f"CVE-2099-{index:05d}"}
+        for index in range(3_000)
+    ]
+    report["advisory_triage"]["records"] = records
+    report["advisory_triage"]["advisory_record_count"] = len(records)
+    report["advisory_triage"]["matched_advisory_count"] = len(records)
+    _write_json(report_path, report)
+
+    ledger, summary = build_human_triage_ledger(
+        vulnerability_report=report_path,
+        vulnerability_summary=summary_path,
+        review_input=None,
+        repository="Bdavis1390/Sara_pro",
+        commit_sha="abc123",
+        operator="github-actions",
+        executed_utc="2026-09-01T18:14:00Z",
+    )
+
+    assert len(ledger["records"]) == len(records)
+    assert summary["ledger_record_count"] == len(records)
+
+
 def test_human_triage_rejects_paths_outside_working_directory(tmp_path, monkeypatch) -> None:
     report_path, summary_path = _make_vulnerability_evidence(tmp_path, with_advisory=False)
     outside = tmp_path.parent / "outside-vulnerability-summary.json"
