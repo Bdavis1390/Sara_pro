@@ -4,7 +4,7 @@ import argparse
 import hashlib
 import json
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -155,12 +155,28 @@ def _require_string(record: dict[str, Any], field: str) -> str:
     return value.strip()
 
 
+def _require_utc_timestamp(record: dict[str, Any], field: str) -> str:
+    value = _require_string(record, field)
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(
+            f"intake {record.get('intake_id', '<unknown>')}: {field} must be an ISO-8601 UTC timestamp"
+        ) from exc
+    if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+        raise ValueError(
+            f"intake {record.get('intake_id', '<unknown>')}: {field} must be an ISO-8601 UTC timestamp"
+        )
+    return value
+
+
 def _require_claims_boundary(record: dict[str, Any]) -> str:
     boundary = _require_string(record, "claims_boundary")
     if not _has_non_claim_language(boundary):
         raise ValueError(f"intake {record.get('intake_id')}: claims_boundary must contain explicit non-claim language")
+    normalized_boundary = boundary.upper()
     for assertion in PROHIBITED_ASSERTIONS:
-        if assertion in boundary:
+        if assertion in normalized_boundary:
             raise ValueError(f"intake {record.get('intake_id')}: prohibited assertion found in claims_boundary: {assertion}")
     return boundary
 
@@ -246,7 +262,7 @@ def normalize_intake_record(record: dict[str, Any]) -> dict[str, Any]:
         "intake_type": _require_string(record, "intake_type"),
         "source_system": _require_string(record, "source_system"),
         "source_locator": _require_string(record, "source_locator"),
-        "source_retrieved_utc": _require_string(record, "source_retrieved_utc"),
+        "source_retrieved_utc": _require_utc_timestamp(record, "source_retrieved_utc"),
         "source_sha256": source_sha256,
         "evidence_status": evidence_status,
         "maturity_label": maturity_label,

@@ -16,6 +16,7 @@ from worldshepherd_sara.human_triage_cli import (
     main,
     write_human_triage_ledger,
 )
+from worldshepherd_sara.qualification import canonical_digest
 
 
 def _write_json(path, value):
@@ -285,6 +286,23 @@ def test_human_triage_rejects_bad_source_schema(tmp_path) -> None:
         )
 
 
+def test_human_triage_rejects_duplicate_source_advisory_ids(tmp_path) -> None:
+    report_path, summary_path = _make_vulnerability_evidence(tmp_path, with_advisory=True)
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["advisory_triage"]["records"][1]["advisory_id"] = "CVE-2099-0001"
+    _write_json(report_path, report)
+
+    with pytest.raises(ValueError, match="duplicate advisory_id values"):
+        build_human_triage_ledger(
+            vulnerability_report=report_path,
+            vulnerability_summary=summary_path,
+            review_input=None,
+            repository="Bdavis1390/Sara_pro",
+            commit_sha="abc123",
+            operator="github-actions",
+        )
+
+
 def test_human_triage_rejects_paths_outside_working_directory(tmp_path, monkeypatch) -> None:
     report_path, summary_path = _make_vulnerability_evidence(tmp_path, with_advisory=False)
     outside = tmp_path.parent / "outside-vulnerability-summary.json"
@@ -324,6 +342,9 @@ def test_write_human_triage_summary_contains_ledger_digest(tmp_path) -> None:
     assert summary["human_triage_ledger_path"].endswith("human-triage-ledger.json")
     assert summary["human_triage_ledger_sha256"].startswith("sha256:")
     assert summary["summary_digest"].startswith("sha256:")
+    digest_input = dict(summary)
+    recorded_digest = digest_input.pop("summary_digest")
+    assert recorded_digest == canonical_digest(digest_input)
 
 
 def test_human_triage_accepts_accepted_risk_decision_with_rationale(tmp_path) -> None:

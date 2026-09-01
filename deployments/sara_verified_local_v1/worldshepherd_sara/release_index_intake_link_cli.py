@@ -96,6 +96,76 @@ def _validate_intake_summary(summary: dict[str, Any]) -> None:
         raise ValueError("intake minimum summary missing claims boundary")
 
 
+def _validate_intake_ledger(
+    ledger: dict[str, Any],
+    summary: dict[str, Any],
+    ledger_path: Path,
+) -> None:
+    if ledger.get("schema") != INTAKE_MINIMUM_SCHEMA:
+        raise ValueError("unexpected intake minimum ledger schema")
+    records = ledger.get("records")
+    if not isinstance(records, list) or not records:
+        raise ValueError("intake minimum ledger must include at least one record")
+    ledger_summary = ledger.get("summary")
+    if not isinstance(ledger_summary, dict):
+        raise ValueError("intake minimum ledger missing summary")
+
+    recorded_ledger_digest = _normalize_digest(
+        ledger.get("ledger_digest"),
+        field="intake minimum ledger ledger_digest",
+    )
+    digest_input = dict(ledger)
+    digest_input.pop("ledger_digest", None)
+    actual_ledger_digest = canonical_digest(digest_input)
+    if recorded_ledger_digest != actual_ledger_digest:
+        raise ValueError(
+            "intake minimum canonical ledger digest mismatch: "
+            f"ledger records {recorded_ledger_digest}, content is {actual_ledger_digest}"
+        )
+
+    summary_ledger_digest = _normalize_digest(
+        summary.get("intake_minimum_ledger_sha256"),
+        field="intake minimum summary intake_minimum_ledger_sha256",
+    )
+    if summary_ledger_digest != actual_ledger_digest:
+        raise ValueError("intake minimum summary canonical ledger digest mismatch")
+
+    summary_file_digest = _normalize_digest(
+        summary.get("intake_minimum_ledger_file_sha256"),
+        field="intake minimum summary intake_minimum_ledger_file_sha256",
+    )
+    actual_file_digest = _sha256_file(ledger_path)
+    if summary_file_digest != actual_file_digest:
+        raise ValueError(
+            "intake minimum ledger file digest mismatch: "
+            f"summary records {summary_file_digest}, file is {actual_file_digest}"
+        )
+
+    if summary.get("intake_count") != len(records) or ledger_summary.get("intake_count") != len(records):
+        raise ValueError("intake minimum intake_count does not match ledger records")
+    for field in (
+        "pending_human_review_count",
+        "reviewed_action_required_count",
+        "not_material_count",
+        "review_counts",
+        "routing_counts",
+    ):
+        if summary.get(field) != ledger_summary.get(field):
+            raise ValueError(f"intake minimum summary {field} does not match ledger")
+
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError("intake minimum ledger records must be objects")
+        recorded_record_digest = _normalize_digest(
+            record.get("record_digest"),
+            field="intake minimum record record_digest",
+        )
+        record_input = dict(record)
+        record_input.pop("record_digest", None)
+        if recorded_record_digest != canonical_digest(record_input):
+            raise ValueError(f"intake minimum record digest mismatch: {record.get('intake_id')}")
+
+
 def link_intake_evidence(
     *,
     release_index_path: Path,
@@ -112,7 +182,9 @@ def link_intake_evidence(
     summary_path = intake_root / "intake-minimum-summary.json"
     ledger_path = intake_root / "intake-minimum-ledger.json"
     summary = _load_json(summary_path)
+    ledger = _load_json(ledger_path)
     _validate_intake_summary(summary)
+    _validate_intake_ledger(ledger, summary, ledger_path)
 
     index.pop("release_index_digest", None)
     index["artifacts"][INTAKE_ARTIFACT_KEY] = _artifact_record(
