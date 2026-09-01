@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import json
 from pathlib import Path
 
@@ -49,20 +48,6 @@ LANE_MATRIX = {
 }
 
 
-def _screening_ready_copy(bundle: dict) -> dict:
-    """Preserve source boundaries while adding one explicit matrix boundary.
-
-    Some early PRE bundles use short "No ... claim" wording. The generic exporter
-    already preserves those source lines, and this fixture adds a uniform explicit
-    non-claim sentence so the matrix focuses on cross-lane package compatibility.
-    """
-    value = copy.deepcopy(bundle)
-    value.setdefault("claims_boundary", []).append(
-        "Matrix screening export does not establish partner validation, supplier approval, certification, field performance, hardware performance, or operational authority."
-    )
-    return value
-
-
 def test_partner_screening_matrix_exports_major_non_geo_pre_lanes(tmp_path):
     bloom_dir = tmp_path / "bloom"
     index = build_bloom(
@@ -81,10 +66,11 @@ def test_partner_screening_matrix_exports_major_non_geo_pre_lanes(tmp_path):
         assert expected["required_lane"] in bundle["requirement"]["affected_lanes"]
         assert bundle["bundle_digest"] == index["bundle_digests"][lane]
         assert bundle["evidence"][0]["result"] == "PASS"
+        assert bundle["claims_boundary"]
 
         for partner in ("BAE_SYSTEMS", "GENERIC_PRIME"):
             out = tmp_path / "screening" / lane / partner.lower()
-            manifest = export_partner_screening_package(_screening_ready_copy(bundle), out, partner=partner)
+            manifest = export_partner_screening_package(bundle, out, partner=partner)
 
             assert manifest["schema"] == "WS-PARTNER-SCREENING-MANIFEST-V1"
             assert manifest["partner_id"] == partner
@@ -97,7 +83,7 @@ def test_partner_screening_matrix_exports_major_non_geo_pre_lanes(tmp_path):
             assert summary["evidence_scope"] == bundle["evidence"][0]["evidence_scope"]
             assert summary["capability_status"] == bundle["evidence"][0]["capability_status"]
             assert summary["result"] == "PASS"
-            assert "Matrix screening export does not establish" in "\n".join(summary["claim_boundary"])
+            assert summary["claim_boundary"] == bundle["claims_boundary"]
 
             overlay = json.loads((out / "partner-evidence-overlay.json").read_text())
             assert overlay["partner_id"] == partner

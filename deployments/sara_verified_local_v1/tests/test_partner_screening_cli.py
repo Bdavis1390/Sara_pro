@@ -65,6 +65,20 @@ def test_partner_screening_exports_generic_prime_without_bae_overlay(tmp_path):
     assert overlay["requirement_delta_id"] == "PRE-RD-2026-0020"
 
 
+def test_partner_screening_accepts_no_claim_boundary_language(tmp_path):
+    bundle = _bundle()
+    bundle["claims_boundary"] = [
+        "No physical APNT, shipboard, sensor-accuracy, or Navy operator-performance claim"
+    ]
+
+    manifest = export_partner_screening_package(bundle, tmp_path, partner="BAE_SYSTEMS")
+
+    assert manifest["partner_id"] == "BAE_SYSTEMS"
+    summary = json.loads((tmp_path / "qualification-summary.json").read_text())
+    assert summary["claim_boundary"] == bundle["claims_boundary"]
+    assert "No physical APNT" in (tmp_path / "claims-boundary.md").read_text()
+
+
 def test_partner_screening_rejects_missing_claim_boundary(tmp_path):
     bundle = _bundle()
     bundle["claims_boundary"] = []
