@@ -8,7 +8,7 @@ Bind the critical internal engineering evidence for one exact SARA commit into a
 
 ## Required evidence classes
 
-A closure manifest must fail closed unless it finds a successful workflow run and an unexpired SHA-256-addressed artifact for the same target commit from each of these classes:
+A closure manifest must fail closed unless its trusted main-branch collector supplies a successful workflow run and an unexpired SHA-256-addressed artifact for the same target commit from each of these classes:
 
 - SARA release evidence index
 - rollback drill evidence
@@ -18,13 +18,17 @@ A closure manifest must fail closed unless it finds a successful workflow run an
 
 The manifest records workflow identity, run ID/attempt, event, branch, exact head SHA, conclusion, workflow URL, artifact name/ID, provider-reported digest, size, creation time, expiration time, and expiration state.
 
+## Trust separation
+
+The manifest builder is deliberately offline: it receives a local snapshot and never receives a GitHub token or performs network requests. GitHub workflow/artifact discovery occurs only in the trusted main-branch `workflow_run` path after the SARA main gate succeeds. That collector uses the bounded GitHub CLI API client and passes only resulting metadata into the offline validator.
+
 ## Signing
 
 For a successful `main` push, the closure manifest is attested through GitHub Actions OIDC using Sigstore-backed artifact attestation. The custody receipt records the target commit, manifest digest, attestation bundle digest, attestation identifier, attestation URL, and signing mechanism.
 
 ## Pull-request qualification
 
-Pull requests build the same exact-commit evidence inventory without making a production or external-custody claim. The PR gate therefore exercises workflow/artifact discovery and commit binding before merge.
+Pull requests receive no Actions-read credential for closure discovery. Instead, the PR job uses a synthetic five-class snapshot to compile and exercise the offline schema, validation, exact-SHA binding, digest validation, manifest generation, and fail-closed contract. Live workflow/artifact discovery and signing are reserved for trusted `main` execution.
 
 ## Claims boundary
 
