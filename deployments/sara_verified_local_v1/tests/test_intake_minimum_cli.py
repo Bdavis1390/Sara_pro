@@ -158,6 +158,22 @@ def test_intake_minimum_rejects_prohibited_assertion() -> None:
         normalize_intake_record(_base_intake(claims_boundary="No false claim, but CMMC_CERTIFIED is still prohibited text."))
 
 
+def test_intake_minimum_rejects_lowercase_prohibited_assertion() -> None:
+    with pytest.raises(ValueError, match="prohibited assertion"):
+        normalize_intake_record(
+            _base_intake(claims_boundary="No false claim, but cmmc_certified is still prohibited text.")
+        )
+
+
+@pytest.mark.parametrize(
+    "source_retrieved_utc",
+    ["not-a-timestamp", "2026-09-01T18:25:00", "2026-09-01T14:25:00-04:00"],
+)
+def test_intake_minimum_rejects_non_utc_source_timestamp(source_retrieved_utc) -> None:
+    with pytest.raises(ValueError, match="must be an ISO-8601 UTC timestamp"):
+        normalize_intake_record(_base_intake(source_retrieved_utc=source_retrieved_utc))
+
+
 def test_intake_minimum_rejects_reviewed_without_rationale() -> None:
     with pytest.raises(ValueError, match="reviewed intakes require review_rationale"):
         normalize_intake_record(_base_intake(human_review_status="REVIEWED_ACTION_REQUIRED"))

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 import pytest
@@ -10,11 +11,16 @@ from worldshepherd_sara.release_index_intake_link_cli import (
     link_intake_evidence,
     main,
 )
+from worldshepherd_sara.qualification import canonical_digest
 
 
 def _write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+def _sha256_file(path):
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _release_index(path):
@@ -51,15 +57,37 @@ def _release_index(path):
 
 def _intake_dir(root):
     intake_dir = root / "intake_minimum_ci"
-    _write_json(
-        intake_dir / "intake-minimum-ledger.json",
-        {
-            "schema": "WS-INTAKE-MINIMUM-STANDARD-LEDGER-V1",
-            "ledger_digest": "sha256:" + "4" * 64,
-            "records": [{"intake_id": "INTAKE-001"}],
-            "claims_boundary": "Intake ledger does not establish source truth.",
+    record = {
+        "intake_id": "INTAKE-001",
+        "human_review_status": "PENDING_HUMAN_REVIEW",
+        "routing_status": "ROUTED_TO_BACKLOG",
+        "minimum_controls": {
+            "source_custody": "PASS",
+            "source_hash": "PASS",
+            "claims_boundary": "PASS",
+            "human_review_status": "PASS",
+            "routing_status": "PASS",
+            "downstream_route_or_evidence": "PASS",
+            "false_claim_guard": "PASS",
         },
-    )
+    }
+    record["record_digest"] = canonical_digest(record)
+    ledger = {
+        "schema": "WS-INTAKE-MINIMUM-STANDARD-LEDGER-V1",
+        "records": [record],
+        "summary": {
+            "intake_count": 1,
+            "pending_human_review_count": 1,
+            "reviewed_action_required_count": 0,
+            "not_material_count": 0,
+            "review_counts": {"PENDING_HUMAN_REVIEW": 1},
+            "routing_counts": {"ROUTED_TO_BACKLOG": 1},
+        },
+        "claims_boundary": "Intake ledger does not establish source truth.",
+    }
+    ledger["ledger_digest"] = canonical_digest(ledger)
+    ledger_path = intake_dir / "intake-minimum-ledger.json"
+    _write_json(ledger_path, ledger)
     _write_json(
         intake_dir / "intake-minimum-summary.json",
         {
@@ -71,8 +99,8 @@ def _intake_dir(root):
             "not_material_count": 0,
             "review_counts": {"PENDING_HUMAN_REVIEW": 1},
             "routing_counts": {"ROUTED_TO_BACKLOG": 1},
-            "intake_minimum_ledger_sha256": "sha256:" + "4" * 64,
-            "intake_minimum_ledger_file_sha256": "sha256:" + "5" * 64,
+            "intake_minimum_ledger_sha256": ledger["ledger_digest"],
+            "intake_minimum_ledger_file_sha256": _sha256_file(ledger_path),
             "input_files": {"intake_file": {"sha256": "sha256:" + "6" * 64}},
             "claims_boundary": "Intake minimum evidence does not establish source truth or operational authority.",
         },
@@ -99,7 +127,7 @@ def test_link_intake_evidence_adds_artifact_and_local_custody(tmp_path) -> None:
     assert artifact["artifact_digest"] == "sha256:" + "7" * 64
     assert linked["local_evidence"]["intake_minimum_intake_count"] == 1
     assert linked["local_evidence"]["intake_minimum_pending_human_review_count"] == 1
-    assert linked["local_evidence"]["intake_minimum_ledger_digest"] == "sha256:" + "4" * 64
+    assert linked["local_evidence"]["intake_minimum_ledger_digest"].startswith("sha256:")
     assert linked["local_evidence"]["intake_minimum_summary_sha256"].startswith("sha256:")
     assert linked["local_evidence"]["intake_minimum_ledger_sha256"].startswith("sha256:")
     assert linked["release_index_digest"].startswith("sha256:")
@@ -155,6 +183,46 @@ def test_link_intake_evidence_rejects_bad_summary_schema(tmp_path) -> None:
     _write_json(intake_dir / "intake-minimum-summary.json", {"schema": "WRONG"})
 
     with pytest.raises(ValueError, match="unexpected intake minimum summary schema"):
+        link_intake_evidence(
+            release_index_path=release_index,
+            intake_dir=intake_dir,
+            intake_artifact_id="777",
+            intake_artifact_digest="sha256:" + "7" * 64,
+            intake_artifact_url=None,
+        )
+
+
+def test_link_intake_evidence_rejects_ledger_file_digest_mismatch(tmp_path) -> None:
+    release_index = tmp_path / "release_index_ci" / "release-index.json"
+    _release_index(release_index)
+    intake_dir = _intake_dir(tmp_path)
+    ledger_path = intake_dir / "intake-minimum-ledger.json"
+    ledger_path.write_text(ledger_path.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="ledger file digest mismatch"):
+        link_intake_evidence(
+            release_index_path=release_index,
+            intake_dir=intake_dir,
+            intake_artifact_id="777",
+            intake_artifact_digest="sha256:" + "7" * 64,
+            intake_artifact_url=None,
+        )
+
+
+def test_link_intake_evidence_rejects_canonical_ledger_digest_mismatch(tmp_path) -> None:
+    release_index = tmp_path / "release_index_ci" / "release-index.json"
+    _release_index(release_index)
+    intake_dir = _intake_dir(tmp_path)
+    ledger_path = intake_dir / "intake-minimum-ledger.json"
+    summary_path = intake_dir / "intake-minimum-summary.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger["claims_boundary"] = "Tampered content that does not establish source truth."
+    _write_json(ledger_path, ledger)
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    summary["intake_minimum_ledger_file_sha256"] = _sha256_file(ledger_path)
+    _write_json(summary_path, summary)
+
+    with pytest.raises(ValueError, match="canonical ledger digest mismatch"):
         link_intake_evidence(
             release_index_path=release_index,
             intake_dir=intake_dir,
