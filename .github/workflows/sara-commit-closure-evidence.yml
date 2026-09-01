@@ -9,12 +9,6 @@ on:
       - SARA Verified Local v1 Gate
     types:
       - completed
-  workflow_dispatch:
-    inputs:
-      target_sha:
-        description: Exact commit SHA to inventory
-        required: true
-        type: string
 
 permissions: {}
 
@@ -22,28 +16,70 @@ jobs:
   validate-pr-closure-manifest:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     permissions:
-      actions: read
       contents: read
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TARGET_SHA: ${{ github.event.pull_request.head.sha }}
       CLOSURE_MANIFEST_DIR: closure_manifest
-      CLOSURE_WAIT_SECONDS: '420'
+      CLOSURE_SNAPSHOT_FILE: closure-fixture.json
     steps:
-      - name: Check out exact PR head
+      - name: Check out exact PR head without persisted credentials
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
 
-      - name: Compile closure manifest builder
+      - name: Compile offline closure manifest builder
         run: python -m py_compile deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
 
-      - name: Build exact-commit closure evidence manifest
+      - name: Build synthetic exact-commit fixture
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          names = [
+              ('SARA Verified Local v1 Gate', 'sara-release-evidence-index'),
+              ('SARA Rollback Drill', 'sara-rollback-drill-evidence'),
+              ('SARA Replacement Environment Restore', 'sara-replacement-environment-restore-evidence'),
+              ('SARA TLS Private Backend Architecture', 'sara-tls-private-backend-architecture-evidence'),
+              ('SARA Operational Resilience Drill', 'sara-operational-resilience-evidence'),
+          ]
+          sha = os.environ['TARGET_SHA']
+          entries = []
+          for i, (workflow, artifact_name) in enumerate(names, 1):
+              entries.append({
+                  'workflow_name': workflow,
+                  'run': {
+                      'id': 1000 + i,
+                      'run_attempt': 1,
+                      'event': 'pull_request',
+                      'head_branch': 'synthetic-contract-test',
+                      'head_sha': sha,
+                      'conclusion': 'success',
+                      'html_url': f'https://github.com/example/example/actions/runs/{1000+i}',
+                  },
+                  'artifact': {
+                      'id': 2000 + i,
+                      'name': artifact_name,
+                      'digest': 'sha256:' + format(i, '064x'),
+                      'size_in_bytes': 100 + i,
+                      'created_at': '2026-01-01T00:00:00Z',
+                      'expires_at': '2099-01-01T00:00:00Z',
+                      'expired': False,
+                  },
+              })
+          pathlib.Path('closure-fixture.json').write_text(json.dumps({
+              'schema': 'WS-SARA-CLOSURE-SNAPSHOT-V1',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'target_commit_sha': sha,
+              'entries': entries,
+          }, sort_keys=True, indent=2) + '\n')
+          PY
+
+      - name: Exercise offline closure manifest contract
         run: python deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
 
-      - name: Validate closure manifest contract
+      - name: Validate PR qualification output
         run: |
           python - <<'PY'
           import json, pathlib
@@ -56,14 +92,6 @@ jobs:
           assert pathlib.Path('closure_manifest/commit-closure-evidence-manifest.sha256').is_file()
           PY
 
-      - name: Upload PR closure manifest evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: sara-commit-closure-evidence-pr
-          path: closure_manifest/
-          if-no-files-found: error
-          retention-days: 30
-
   attest-main-closure-manifest:
     if: >-
       github.event_name == 'workflow_run' &&
@@ -71,7 +99,7 @@ jobs:
       github.event.workflow_run.head_branch == 'main' &&
       github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     permissions:
       actions: read
       contents: read
@@ -79,20 +107,95 @@ jobs:
       attestations: write
       artifact-metadata: write
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
       CLOSURE_MANIFEST_DIR: closure_manifest
-      CLOSURE_WAIT_SECONDS: '420'
+      CLOSURE_SNAPSHOT_FILE: closure-snapshot.json
     steps:
-      - name: Check out exact main commit
+      - name: Check out exact trusted main commit without persisted credentials
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
-      - name: Compile closure manifest builder
+      - name: Compile offline closure manifest builder
         run: python -m py_compile deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
 
-      - name: Build exact-commit closure evidence manifest
+      - name: Collect exact-main workflow and artifact metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          case "$TARGET_SHA" in
+            (*[!0-9a-f]*|'') echo 'invalid target SHA' >&2; exit 1 ;;
+          esac
+          test "${#TARGET_SHA}" -eq 40
+          case "$GITHUB_REPOSITORY" in
+            (*[!A-Za-z0-9_.\/-]*|''|*//*|/*|*/) echo 'invalid repository identifier' >&2; exit 1 ;;
+          esac
+
+          cat > required-evidence.tsv <<'EOF'
+          SARA Verified Local v1 Gate|sara-release-evidence-index
+          SARA Rollback Drill|sara-rollback-drill-evidence
+          SARA Replacement Environment Restore|sara-replacement-environment-restore-evidence
+          SARA TLS Private Backend Architecture|sara-tls-private-backend-architecture-evidence
+          SARA Operational Resilience Drill|sara-operational-resilience-evidence
+          EOF
+
+          printf '[]\n' > closure-entries.json
+          deadline=$((SECONDS + 420))
+          while :; do
+            gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/runs" \
+              -f head_sha="$TARGET_SHA" -f per_page=100 > closure-runs.json
+            printf '[]\n' > closure-entries.next.json
+            missing=0
+
+            while IFS='|' read -r workflow_name artifact_name; do
+              run="$(jq -c --arg n "$workflow_name" --arg s "$TARGET_SHA" '
+                [.workflow_runs[] | select(.name == $n and .head_sha == $s and .status == "completed" and .conclusion == "success")]
+                | sort_by(.id) | last // empty
+              ' closure-runs.json)"
+              if [ -z "$run" ]; then
+                echo "waiting for successful workflow: $workflow_name"
+                missing=1
+                continue
+              fi
+              run_id="$(jq -r '.id' <<<"$run")"
+              case "$run_id" in (*[!0-9]*|'') echo 'invalid run id' >&2; exit 1 ;; esac
+              gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts" \
+                -f per_page=100 > closure-artifacts.json
+              artifact="$(jq -c --arg n "$artifact_name" '
+                [.artifacts[] | select(.name == $n and .expired == false)] | sort_by(.id) | last // empty
+              ' closure-artifacts.json)"
+              if [ -z "$artifact" ]; then
+                echo "waiting for retained artifact: $artifact_name"
+                missing=1
+                continue
+              fi
+              jq --arg name "$workflow_name" --argjson run "$run" --argjson artifact "$artifact" \
+                '. + [{workflow_name:$name, run:$run, artifact:$artifact}]' \
+                closure-entries.next.json > closure-entries.tmp.json
+              mv closure-entries.tmp.json closure-entries.next.json
+            done < required-evidence.tsv
+
+            if [ "$missing" -eq 0 ] && [ "$(jq 'length' closure-entries.next.json)" -eq 5 ]; then
+              mv closure-entries.next.json closure-entries.json
+              break
+            fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo 'timed out waiting for complete exact-commit evidence set' >&2
+              exit 1
+            fi
+            sleep 3
+          done
+
+          jq -n --arg repo "$GITHUB_REPOSITORY" --arg sha "$TARGET_SHA" --slurpfile entries closure-entries.json '{
+            schema:"WS-SARA-CLOSURE-SNAPSHOT-V1",
+            repository:$repo,
+            target_commit_sha:$sha,
+            entries:$entries[0]
+          }' > "$CLOSURE_SNAPSHOT_FILE"
+
+      - name: Build exact-commit closure evidence manifest offline
         run: python deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
 
       - name: Validate closure manifest contract
