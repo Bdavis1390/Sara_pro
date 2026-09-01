@@ -58,6 +58,14 @@ run_image() {
     "$image" >/dev/null
 }
 
+container_env_value() {
+  local name="$1"
+  local key="$2"
+  docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$name" \
+    | sed -n "s/^${key}=//p" \
+    | head -n 1
+}
+
 echo "[rollback] building current image ${CURRENT_SHA}"
 docker build \
   --build-arg SARA_BUILD_COMMIT="$CURRENT_SHA" \
@@ -90,6 +98,7 @@ curl -fsS -X PATCH \
 
 CURRENT_IMAGE_ID="$(docker inspect --format '{{.Image}}' "$CURRENT_CONTAINER")"
 CURRENT_LABEL_REVISION="$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$CURRENT_CONTAINER")"
+CURRENT_RUNTIME_COMMIT="$(container_env_value "$CURRENT_CONTAINER" SARA_BUILD_COMMIT)"
 
 docker rm -f "$CURRENT_CONTAINER" >/dev/null
 
@@ -106,8 +115,9 @@ curl -fsS "http://127.0.0.1:${HOST_PORT}/readyz" > "$OUT_DIR/baseline-readyz.jso
 
 BASELINE_IMAGE_ID="$(docker inspect --format '{{.Image}}' "$BASELINE_CONTAINER")"
 BASELINE_LABEL_REVISION="$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$BASELINE_CONTAINER")"
+BASELINE_RUNTIME_COMMIT="$(container_env_value "$BASELINE_CONTAINER" SARA_BUILD_COMMIT)"
 
-export OUT_DIR CURRENT_SHA BASELINE_SHA CURRENT_IMAGE_ID BASELINE_IMAGE_ID CURRENT_LABEL_REVISION BASELINE_LABEL_REVISION MARKER
+export OUT_DIR CURRENT_SHA BASELINE_SHA CURRENT_IMAGE_ID BASELINE_IMAGE_ID CURRENT_LABEL_REVISION BASELINE_LABEL_REVISION CURRENT_RUNTIME_COMMIT BASELINE_RUNTIME_COMMIT MARKER
 python - <<'PY'
 import datetime, hashlib, json, os, pathlib
 root = pathlib.Path(os.environ['OUT_DIR'])
@@ -118,16 +128,14 @@ def load(name):
 def sha(name):
     return 'sha256:' + hashlib.sha256((root / name).read_bytes()).hexdigest()
 
-current_health = load('current-health.json')
-baseline_health = load('baseline-health.json')
 baseline_registry = load('baseline-registry.json')
 selftest = load('baseline-selftest.json')
 readyz = load('baseline-readyz.json')
 marker_record = baseline_registry['registry']['ROLLBACK_MARKER']
 
 checks = {
-    'current_runtime_identity_matches_source': current_health.get('build_commit') == os.environ['CURRENT_SHA'],
-    'baseline_runtime_identity_matches_target': baseline_health.get('build_commit') == os.environ['BASELINE_SHA'],
+    'current_runtime_identity_matches_source': os.environ['CURRENT_RUNTIME_COMMIT'] == os.environ['CURRENT_SHA'],
+    'baseline_runtime_identity_matches_target': os.environ['BASELINE_RUNTIME_COMMIT'] == os.environ['BASELINE_SHA'],
     'current_oci_revision_matches_source': os.environ['CURRENT_LABEL_REVISION'] == os.environ['CURRENT_SHA'],
     'baseline_oci_revision_matches_target': os.environ['BASELINE_LABEL_REVISION'] == os.environ['BASELINE_SHA'],
     'runtime_image_changed': os.environ['CURRENT_IMAGE_ID'] != os.environ['BASELINE_IMAGE_ID'],
@@ -143,6 +151,8 @@ record = {
     'executed_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
     'source_build_commit': os.environ['CURRENT_SHA'],
     'rollback_target_commit': os.environ['BASELINE_SHA'],
+    'source_runtime_build_commit': os.environ['CURRENT_RUNTIME_COMMIT'],
+    'rollback_runtime_build_commit': os.environ['BASELINE_RUNTIME_COMMIT'],
     'source_container_image_id': os.environ['CURRENT_IMAGE_ID'],
     'rollback_container_image_id': os.environ['BASELINE_IMAGE_ID'],
     'source_oci_revision': os.environ['CURRENT_LABEL_REVISION'],
