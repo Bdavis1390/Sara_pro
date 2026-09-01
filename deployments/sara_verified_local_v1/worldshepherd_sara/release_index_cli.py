@@ -13,6 +13,7 @@ from .qualification import canonical_digest
 RELEASE_INDEX_SCHEMA = "WS-SARA-RELEASE-EVIDENCE-INDEX-V1"
 SBOM_EVIDENCE_SCHEMA = "WS-SOFTWARE-SUPPLY-CHAIN-EVIDENCE-V1"
 VULNERABILITY_EVIDENCE_SCHEMA = "WS-VULNERABILITY-ADVISORY-EVIDENCE-V1"
+HUMAN_TRIAGE_LEDGER_SCHEMA = "WS-VULNERABILITY-HUMAN-TRIAGE-LEDGER-V1"
 MERGE_STATE_PR_CANDIDATE = "PR_CANDIDATE_UNMERGED"
 MERGE_STATE_MAIN_PUSH = "MERGED_MAIN_PUSH"
 MERGE_STATE_MANUAL_OR_NON_MAIN = "MANUAL_OR_NON_MAIN_RUN"
@@ -27,8 +28,8 @@ CLAIMS_BOUNDARY = (
     "supplier approval, certification, CMMC/NIST/DFARS conformity, classified access, DOE validation, "
     "external reproduction, field performance, hardware performance, export-control clearance, "
     "software supply-chain completeness, absence of vulnerabilities, advisory-feed completeness, "
-    "vulnerability scan pass, vulnerability remediation, license legal review, SLSA compliance, "
-    "or operational authority."
+    "vulnerability scan pass, vulnerability remediation, human-review completion, exploitability analysis, "
+    "license legal review, SLSA compliance, or operational authority."
 )
 
 
@@ -130,6 +131,18 @@ def _validate_vulnerability_summary(vulnerability_summary: dict[str, Any]) -> No
         raise ValueError("vulnerability summary missing claims boundary")
 
 
+def _validate_human_triage_summary(human_triage_summary: dict[str, Any]) -> None:
+    if human_triage_summary.get("schema") != HUMAN_TRIAGE_LEDGER_SCHEMA:
+        raise ValueError("unexpected human triage summary schema")
+    if human_triage_summary.get("evidence_status") != "INTERNAL_REVIEW_LEDGER_UNSIGNED":
+        raise ValueError("unexpected human triage evidence status")
+    if not human_triage_summary.get("human_triage_ledger_sha256", "").startswith("sha256:"):
+        raise ValueError("human triage summary missing human_triage_ledger_sha256")
+    claims_boundary = human_triage_summary.get("claims_boundary", "")
+    if "does not establish" not in claims_boundary:
+        raise ValueError("human triage summary missing claims boundary")
+
+
 def build_release_evidence_index(
     *,
     repository: str,
@@ -145,6 +158,7 @@ def build_release_evidence_index(
     partner_dir: Path,
     sbom_dir: Path,
     vulnerability_dir: Path,
+    human_triage_dir: Path,
     pre_artifact_id: str | None,
     pre_artifact_digest: str | None,
     pre_artifact_url: str | None,
@@ -157,6 +171,9 @@ def build_release_evidence_index(
     vulnerability_artifact_id: str | None,
     vulnerability_artifact_digest: str | None,
     vulnerability_artifact_url: str | None,
+    human_triage_artifact_id: str | None,
+    human_triage_artifact_digest: str | None,
+    human_triage_artifact_url: str | None,
     executed_utc: str | None = None,
 ) -> dict[str, Any]:
     """Build a machine-readable release evidence index for one SARA CI run."""
@@ -167,11 +184,13 @@ def build_release_evidence_index(
     partner_root = Path(partner_dir)
     sbom_root = Path(sbom_dir)
     vulnerability_root = Path(vulnerability_dir)
+    human_triage_root = Path(human_triage_dir)
 
     qualification_index = _load_json(pre_root / "qualification_index.json")
     partner_batch_manifest = _load_json(partner_root / "batch-manifest.json")
     sbom_summary = _load_json(sbom_root / "sbom-evidence-summary.json")
     vulnerability_summary = _load_json(vulnerability_root / "vulnerability-evidence-summary.json")
+    human_triage_summary = _load_json(human_triage_root / "human-triage-summary.json")
 
     if partner_batch_manifest.get("schema") != "WS-PARTNER-SCREENING-BATCH-MANIFEST-V1":
         raise ValueError("unexpected partner batch manifest schema")
@@ -179,6 +198,7 @@ def build_release_evidence_index(
         raise ValueError("qualification index missing schema")
     _validate_sbom_summary(sbom_summary)
     _validate_vulnerability_summary(vulnerability_summary)
+    _validate_human_triage_summary(human_triage_summary)
 
     generated_at = executed_utc or datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     pre_artifact = _artifact_record(
@@ -205,6 +225,12 @@ def build_release_evidence_index(
         digest=vulnerability_artifact_digest,
         url=vulnerability_artifact_url,
     )
+    human_triage_artifact = _artifact_record(
+        name="human-triage-ledger-evidence",
+        artifact_id=human_triage_artifact_id,
+        digest=human_triage_artifact_digest,
+        url=human_triage_artifact_url,
+    )
 
     index: dict[str, Any] = {
         "schema": RELEASE_INDEX_SCHEMA,
@@ -223,6 +249,7 @@ def build_release_evidence_index(
         "artifacts": {
             "software_sbom_evidence": sbom_artifact,
             "vulnerability_advisory_evidence": vulnerability_artifact,
+            "human_triage_ledger_evidence": human_triage_artifact,
             "pre_full_bloom_qualification_evidence": pre_artifact,
             "partner_screening_batch_evidence": partner_artifact,
         },
@@ -243,6 +270,20 @@ def build_release_evidence_index(
             "vulnerability_evidence_status": vulnerability_summary.get("evidence_status"),
             "vulnerability_advisory_input_status": vulnerability_summary.get("advisory_input_status"),
             "vulnerability_input_files": vulnerability_summary.get("input_files", {}),
+            "human_triage_summary_path": str(human_triage_root / "human-triage-summary.json"),
+            "human_triage_summary_sha256": _sha256_file(human_triage_root / "human-triage-summary.json"),
+            "human_triage_ledger_path": str(human_triage_root / "human-triage-ledger.json"),
+            "human_triage_ledger_sha256": _sha256_file(human_triage_root / "human-triage-ledger.json"),
+            "human_triage_evidence_status": human_triage_summary.get("evidence_status"),
+            "human_triage_review_input_status": human_triage_summary.get("review_input_status"),
+            "human_triage_overall_status": human_triage_summary.get("overall_status"),
+            "human_triage_ledger_record_count": human_triage_summary.get("ledger_record_count"),
+            "human_triage_review_required_count": human_triage_summary.get("human_review_required_count"),
+            "human_triage_pending_review_count": human_triage_summary.get("pending_review_count"),
+            "human_triage_patch_required_count": human_triage_summary.get("patch_required_count"),
+            "human_triage_accepted_risk_count": human_triage_summary.get("accepted_risk_count"),
+            "human_triage_deferred_count": human_triage_summary.get("deferred_count"),
+            "human_triage_input_files": human_triage_summary.get("input_files", {}),
             "qualification_index_path": str(pre_root / "qualification_index.json"),
             "qualification_index_sha256": _sha256_file(pre_root / "qualification_index.json"),
             "partner_batch_manifest_path": str(partner_root / "batch-manifest.json"),
@@ -290,6 +331,12 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="Directory containing vulnerability/advisory evidence.",
     )
+    parser.add_argument(
+        "--human-triage-dir",
+        type=Path,
+        required=True,
+        help="Directory containing human-review advisory triage ledger evidence.",
+    )
     parser.add_argument("--repository", default=os.getenv("GITHUB_REPOSITORY", ""))
     parser.add_argument("--commit-sha", default=os.getenv("GITHUB_SHA", ""))
     parser.add_argument("--workflow-name", default=os.getenv("GITHUB_WORKFLOW", ""))
@@ -311,6 +358,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--vulnerability-artifact-id", default=None)
     parser.add_argument("--vulnerability-artifact-digest", default=None)
     parser.add_argument("--vulnerability-artifact-url", default=None)
+    parser.add_argument("--human-triage-artifact-id", default=None)
+    parser.add_argument("--human-triage-artifact-digest", default=None)
+    parser.add_argument("--human-triage-artifact-url", default=None)
     parser.add_argument("--executed-utc", default=None)
     args = parser.parse_args(argv)
 
@@ -331,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
         partner_dir=args.partner_dir,
         sbom_dir=args.sbom_dir,
         vulnerability_dir=args.vulnerability_dir,
+        human_triage_dir=args.human_triage_dir,
         pre_artifact_id=args.pre_artifact_id,
         pre_artifact_digest=args.pre_artifact_digest,
         pre_artifact_url=args.pre_artifact_url,
@@ -343,6 +394,9 @@ def main(argv: list[str] | None = None) -> int:
         vulnerability_artifact_id=args.vulnerability_artifact_id,
         vulnerability_artifact_digest=args.vulnerability_artifact_digest,
         vulnerability_artifact_url=args.vulnerability_artifact_url,
+        human_triage_artifact_id=args.human_triage_artifact_id,
+        human_triage_artifact_digest=args.human_triage_artifact_digest,
+        human_triage_artifact_url=args.human_triage_artifact_url,
         executed_utc=args.executed_utc,
     )
     _write_json(args.out, index)
