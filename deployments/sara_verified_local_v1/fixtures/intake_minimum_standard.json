@@ -1,0 +1,20 @@
+{
+  "intakes": [
+    {
+      "intake_id": "WS-INTAKE-2026-09-01-001",
+      "intake_type": "USER_DIRECTIVE",
+      "source_system": "chatgpt_conversation",
+      "source_locator": "conversation:continue-to-this-extent-with-every-new-intake",
+      "source_retrieved_utc": "2026-09-01T18:25:00Z",
+      "source_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "evidence_status": "RAW_INTAKE_UNSIGNED",
+      "maturity_label": "RAW_INTAKE",
+      "human_review_status": "PENDING_HUMAN_REVIEW",
+      "routing_status": "ROUTED_TO_BACKLOG",
+      "downstream_route": "Apply the intake minimum standard to future Worldshepherd/SARA intakes before pipeline promotion.",
+      "claims_boundary": "This intake does not establish validation, compliance, remediation, award probability, partner interest, or operational authority.",
+      "owner": "CRE1AWS",
+      "priority": "HIGH"
+    }
+  ]
+}
