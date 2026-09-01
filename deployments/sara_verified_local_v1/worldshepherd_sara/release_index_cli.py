@@ -11,6 +11,14 @@ from typing import Any
 from .qualification import canonical_digest
 
 RELEASE_INDEX_SCHEMA = "WS-SARA-RELEASE-EVIDENCE-INDEX-V1"
+MERGE_STATE_PR_CANDIDATE = "PR_CANDIDATE_UNMERGED"
+MERGE_STATE_MAIN_PUSH = "MERGED_MAIN_PUSH"
+MERGE_STATE_MANUAL_OR_NON_MAIN = "MANUAL_OR_NON_MAIN_RUN"
+ALLOWED_MERGE_STATES = {
+    MERGE_STATE_PR_CANDIDATE,
+    MERGE_STATE_MAIN_PUSH,
+    MERGE_STATE_MANUAL_OR_NON_MAIN,
+}
 
 CLAIMS_BOUNDARY = (
     "Release index records CI evidence custody only. It does not establish partner validation, "
@@ -69,6 +77,30 @@ def _artifact_record(*, name: str, artifact_id: str | None, digest: str | None, 
     }
 
 
+def derive_merge_state(*, event_name: str, ref: str) -> str:
+    """Derive the release-index merge-state label from GitHub event context."""
+    if event_name == "pull_request":
+        return MERGE_STATE_PR_CANDIDATE
+    if event_name == "push" and ref == "refs/heads/main":
+        return MERGE_STATE_MAIN_PUSH
+    return MERGE_STATE_MANUAL_OR_NON_MAIN
+
+
+def _validate_release_context(*, event_name: str, ref: str, pr_number: str | None, merge_state: str) -> None:
+    if merge_state not in ALLOWED_MERGE_STATES:
+        raise ValueError(f"merge_state must be one of {sorted(ALLOWED_MERGE_STATES)}")
+    expected = derive_merge_state(event_name=event_name, ref=ref)
+    if merge_state != expected:
+        raise ValueError(
+            f"merge_state {merge_state!r} does not match event/ref context; expected {expected!r} "
+            f"for event_name={event_name!r}, ref={ref!r}"
+        )
+    if merge_state == MERGE_STATE_PR_CANDIDATE and not pr_number:
+        raise ValueError("pull_request release indexes must include a PR number")
+    if merge_state == MERGE_STATE_MAIN_PUSH and pr_number:
+        raise ValueError("main push release indexes must not include a PR number")
+
+
 def build_release_evidence_index(
     *,
     repository: str,
@@ -93,6 +125,7 @@ def build_release_evidence_index(
     """Build a machine-readable release evidence index for one SARA CI run."""
     if not commit_sha:
         raise ValueError("commit_sha is required")
+    _validate_release_context(event_name=event_name, ref=ref, pr_number=pr_number, merge_state=merge_state)
     pre_root = Path(pre_dir)
     partner_root = Path(partner_dir)
     qualification_index = _load_json(pre_root / "qualification_index.json")
@@ -163,6 +196,14 @@ def _pr_number_from_event(path: str | None) -> str | None:
     return str(number) if number else None
 
 
+def _resolve_pr_number(*, cli_value: str | None, event_name: str) -> str | None:
+    if cli_value is not None:
+        return cli_value or None
+    if event_name == "pull_request":
+        return _pr_number_from_event(os.getenv("GITHUB_EVENT_PATH"))
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build SARA release evidence index JSON for a CI run.")
     parser.add_argument("--out", type=Path, required=True, help="Output release-index.json path.")
@@ -186,10 +227,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--executed-utc", default=None)
     args = parser.parse_args(argv)
 
-    pr_number = args.pr_number or _pr_number_from_event(os.getenv("GITHUB_EVENT_PATH"))
-    merge_state = args.merge_state
-    if merge_state is None:
-        merge_state = "PR_CANDIDATE_UNMERGED" if args.event_name == "pull_request" else "POST_MERGE_OR_MANUAL_RUN"
+    pr_number = _resolve_pr_number(cli_value=args.pr_number, event_name=args.event_name)
+    merge_state = args.merge_state or derive_merge_state(event_name=args.event_name, ref=args.ref)
 
     index = build_release_evidence_index(
         repository=args.repository,

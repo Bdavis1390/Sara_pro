@@ -4,7 +4,15 @@ import json
 
 import pytest
 
-from worldshepherd_sara.release_index_cli import RELEASE_INDEX_SCHEMA, build_release_evidence_index, main
+from worldshepherd_sara.release_index_cli import (
+    MERGE_STATE_MAIN_PUSH,
+    MERGE_STATE_MANUAL_OR_NON_MAIN,
+    MERGE_STATE_PR_CANDIDATE,
+    RELEASE_INDEX_SCHEMA,
+    build_release_evidence_index,
+    derive_merge_state,
+    main,
+)
 
 
 def _write_json(path, value):
@@ -50,7 +58,7 @@ def test_release_index_records_ci_artifacts_and_claims_boundary(tmp_path) -> Non
         event_name="pull_request",
         ref="refs/pull/44/merge",
         pr_number="44",
-        merge_state="PR_CANDIDATE_UNMERGED",
+        merge_state=MERGE_STATE_PR_CANDIDATE,
         pre_dir=pre_dir,
         partner_dir=partner_dir,
         pre_artifact_id="111",
@@ -65,7 +73,7 @@ def test_release_index_records_ci_artifacts_and_claims_boundary(tmp_path) -> Non
     assert index["schema"] == RELEASE_INDEX_SCHEMA
     assert index["commit_sha"] == "abc123"
     assert index["workflow"]["pull_request_number"] == "44"
-    assert index["workflow"]["merge_state"] == "PR_CANDIDATE_UNMERGED"
+    assert index["workflow"]["merge_state"] == MERGE_STATE_PR_CANDIDATE
     assert index["artifacts"]["pre_full_bloom_qualification_evidence"]["artifact_digest"] == "sha256:" + "a" * 64
     assert index["artifacts"]["partner_screening_batch_evidence"]["artifact_digest"] == "sha256:" + "b" * 64
     assert index["local_evidence"]["partner_batch_digest"] == "sha256:" + "2" * 64
@@ -75,7 +83,7 @@ def test_release_index_records_ci_artifacts_and_claims_boundary(tmp_path) -> Non
     assert "does not establish partner validation" in index["claims_boundary"]
 
 
-def test_release_index_cli_writes_index_file(tmp_path) -> None:
+def test_release_index_cli_writes_main_push_index_file(tmp_path) -> None:
     pre_dir, partner_dir = _make_evidence_dirs(tmp_path)
     out_path = tmp_path / "release_index_ci" / "release-index.json"
 
@@ -101,8 +109,6 @@ def test_release_index_cli_writes_index_file(tmp_path) -> None:
             "push",
             "--ref",
             "refs/heads/main",
-            "--merge-state",
-            "POST_MERGE_OR_MANUAL_RUN",
             "--pre-artifact-id",
             "111",
             "--pre-artifact-digest",
@@ -120,7 +126,14 @@ def test_release_index_cli_writes_index_file(tmp_path) -> None:
     written = json.loads(out_path.read_text(encoding="utf-8"))
     assert written["schema"] == RELEASE_INDEX_SCHEMA
     assert written["workflow"]["event_name"] == "push"
-    assert written["workflow"]["merge_state"] == "POST_MERGE_OR_MANUAL_RUN"
+    assert written["workflow"]["ref"] == "refs/heads/main"
+    assert written["workflow"]["pull_request_number"] is None
+    assert written["workflow"]["merge_state"] == MERGE_STATE_MAIN_PUSH
+
+
+def test_release_index_derives_manual_or_non_main_state() -> None:
+    assert derive_merge_state(event_name="workflow_dispatch", ref="refs/heads/main") == MERGE_STATE_MANUAL_OR_NON_MAIN
+    assert derive_merge_state(event_name="push", ref="refs/heads/feature") == MERGE_STATE_MANUAL_OR_NON_MAIN
 
 
 def test_release_index_rejects_bad_artifact_digest(tmp_path) -> None:
@@ -136,11 +149,36 @@ def test_release_index_rejects_bad_artifact_digest(tmp_path) -> None:
             event_name="pull_request",
             ref="refs/pull/44/merge",
             pr_number="44",
-            merge_state="PR_CANDIDATE_UNMERGED",
+            merge_state=MERGE_STATE_PR_CANDIDATE,
             pre_dir=pre_dir,
             partner_dir=partner_dir,
             pre_artifact_id="111",
             pre_artifact_digest="not-a-digest",
+            pre_artifact_url=None,
+            partner_artifact_id="222",
+            partner_artifact_digest="sha256:" + "e" * 64,
+            partner_artifact_url=None,
+        )
+
+
+def test_release_index_rejects_merge_state_mismatch(tmp_path) -> None:
+    pre_dir, partner_dir = _make_evidence_dirs(tmp_path)
+
+    with pytest.raises(ValueError, match="does not match event/ref context"):
+        build_release_evidence_index(
+            repository="Bdavis1390/Sara_pro",
+            commit_sha="abc123",
+            workflow_name="SARA Verified Local v1 Gate",
+            workflow_run_id="33500000003",
+            workflow_run_number="656",
+            event_name="push",
+            ref="refs/heads/main",
+            pr_number=None,
+            merge_state=MERGE_STATE_PR_CANDIDATE,
+            pre_dir=pre_dir,
+            partner_dir=partner_dir,
+            pre_artifact_id="111",
+            pre_artifact_digest="sha256:" + "f" * 64,
             pre_artifact_url=None,
             partner_artifact_id="222",
             partner_artifact_digest="sha256:" + "e" * 64,
