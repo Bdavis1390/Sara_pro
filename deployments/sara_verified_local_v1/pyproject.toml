@@ -24,6 +24,7 @@ test = [
 ws-pre-bloom = "worldshepherd_sara.pre_bloom_cli:main"
 ws-bae-geo-screening = "worldshepherd_sara.bae_geo_screening_cli:main"
 ws-partner-screening = "worldshepherd_sara.partner_screening_cli:main"
+ws-partner-screening-batch = "worldshepherd_sara.partner_screening_cli:batch_main"
 
 [tool.setuptools]
 packages = ["worldshepherd_sara"]
