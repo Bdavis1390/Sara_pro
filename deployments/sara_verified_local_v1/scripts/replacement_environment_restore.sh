@@ -70,6 +70,12 @@ run_sara() {
     "$IMAGE" >/dev/null
 }
 
+container_env_value() {
+  local name="$1" key="$2"
+  docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$name" \
+    | sed -n "s/^${key}=//p" | head -n 1
+}
+
 inventory_volume() {
   local volume="$1" output="$2"
   docker run --rm --user 0 -v "$volume:/data:ro" "$IMAGE" python -c '
@@ -102,8 +108,10 @@ curl -fsS -X PATCH \
   -H 'Content-Type: application/json' \
   --data-binary "@$OUT_DIR/marker-request.json" \
   "http://127.0.0.1:${HOST_PORT}/admin/registry" > "$OUT_DIR/source-registry.json"
-inventory_volume "$SOURCE_VOLUME" "$OUT_DIR/source-inventory.json"
 
+# Quiesce the source before taking the authoritative byte inventory and backup.
+docker stop "$SOURCE_CONTAINER" >/dev/null
+inventory_volume "$SOURCE_VOLUME" "$OUT_DIR/source-inventory.json"
 docker run --rm --user 0 -v "$SOURCE_VOLUME:/data:ro" "$IMAGE" python -c '
 import pathlib,sys,tarfile
 root=pathlib.Path("/data")
@@ -113,11 +121,13 @@ with tarfile.open(fileobj=sys.stdout.buffer,mode="w|gz") as tf:
 ' > "$ARCHIVE"
 sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
 
-docker rm -f "$SOURCE_CONTAINER" >/dev/null
+# Hard destruction boundary: source runtime and source volume cease to exist before replacement creation.
+docker rm "$SOURCE_CONTAINER" >/dev/null
 docker volume rm "$SOURCE_VOLUME" >/dev/null
 if docker inspect "$SOURCE_CONTAINER" >/dev/null 2>&1; then echo 'source container still exists' >&2; exit 1; fi
 if docker volume inspect "$SOURCE_VOLUME" >/dev/null 2>&1; then echo 'source volume still exists' >&2; exit 1; fi
 
+# Restore only from exported backup bytes into a separately named clean volume.
 docker volume create "$REPLACEMENT_VOLUME" >/dev/null
 prepare_volume "$REPLACEMENT_VOLUME"
 docker run --rm --user 0 -i -v "$REPLACEMENT_VOLUME:/data" "$IMAGE" python -c '
@@ -128,37 +138,41 @@ with tarfile.open(fileobj=sys.stdin.buffer,mode="r|gz") as tf:
 ' < "$ARCHIVE"
 prepare_volume "$REPLACEMENT_VOLUME"
 
+# Compare restored bytes before SARA startup legitimately appends fresh service audit records.
+inventory_volume "$REPLACEMENT_VOLUME" "$OUT_DIR/replacement-prestart-inventory.json"
+
 run_sara "$REPLACEMENT_CONTAINER" "$REPLACEMENT_VOLUME"
 wait_ready "$REPLACEMENT_CONTAINER"
+REPLACEMENT_RUNTIME_COMMIT="$(container_env_value "$REPLACEMENT_CONTAINER" SARA_BUILD_COMMIT)"
+REPLACEMENT_OCI_REVISION="$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$REPLACEMENT_CONTAINER")"
 curl -fsS "http://127.0.0.1:${HOST_PORT}/readyz" > "$OUT_DIR/replacement-readyz.json"
 curl -fsS "http://127.0.0.1:${HOST_PORT}/health" > "$OUT_DIR/replacement-health.json"
 curl -fsS -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   "http://127.0.0.1:${HOST_PORT}/admin/registry" > "$OUT_DIR/replacement-registry.json"
 curl -fsS -H "Authorization: Bearer ${ADMIN_TOKEN}" \
   "http://127.0.0.1:${HOST_PORT}/admin/selftest" > "$OUT_DIR/replacement-selftest.json"
-inventory_volume "$REPLACEMENT_VOLUME" "$OUT_DIR/replacement-inventory.json"
 
-export OUT_DIR SOURCE_SHA MARKER SOURCE_VOLUME REPLACEMENT_VOLUME ARCHIVE
+export OUT_DIR SOURCE_SHA MARKER SOURCE_VOLUME REPLACEMENT_VOLUME ARCHIVE REPLACEMENT_RUNTIME_COMMIT REPLACEMENT_OCI_REVISION
 python - <<'PY'
 import datetime,hashlib,json,os,pathlib
 root=pathlib.Path(os.environ['OUT_DIR'])
 load=lambda n: json.loads((root/n).read_text(encoding='utf-8'))
 source_inv=load('source-inventory.json')
-replacement_inv=load('replacement-inventory.json')
+replacement_inv=load('replacement-prestart-inventory.json')
 registry=load('replacement-registry.json')['registry']
 ready=load('replacement-readyz.json')
 selftest=load('replacement-selftest.json')
-health=load('replacement-health.json')
 marker=registry['REPLACEMENT_RESTORE_MARKER']
 archive=pathlib.Path(os.environ['ARCHIVE'])
 checks={
   'source_and_replacement_volume_names_differ': os.environ['SOURCE_VOLUME'] != os.environ['REPLACEMENT_VOLUME'],
-  'restored_file_inventory_matches_source': source_inv == replacement_inv,
+  'restored_prestart_file_inventory_matches_source': source_inv == replacement_inv,
   'synthetic_marker_preserved': marker.get('marker') == os.environ['MARKER'],
   'marker_origin_preserved': marker.get('written_by_commit') == os.environ['SOURCE_SHA'],
   'replacement_ready': ready.get('ok') is True and ready.get('status') == 'ready',
   'replacement_selftest_passed': selftest.get('ok') is True,
-  'replacement_build_identity_matches_source': health.get('release_identity',{}).get('build_commit') == os.environ['SOURCE_SHA'],
+  'replacement_runtime_build_identity_matches_source': os.environ['REPLACEMENT_RUNTIME_COMMIT'] == os.environ['SOURCE_SHA'],
+  'replacement_oci_revision_matches_source': os.environ['REPLACEMENT_OCI_REVISION'] == os.environ['SOURCE_SHA'],
 }
 record={
   'schema':'WS-SARA-REPLACEMENT-ENVIRONMENT-RESTORE-EVIDENCE-V1',
@@ -166,6 +180,8 @@ record={
   'result':'PASS' if all(checks.values()) else 'FAIL',
   'executed_utc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
   'source_build_commit':os.environ['SOURCE_SHA'],
+  'replacement_runtime_build_commit':os.environ['REPLACEMENT_RUNTIME_COMMIT'],
+  'replacement_oci_revision':os.environ['REPLACEMENT_OCI_REVISION'],
   'source_volume_destroyed_before_restore':True,
   'source_volume_name':os.environ['SOURCE_VOLUME'],
   'replacement_volume_name':os.environ['REPLACEMENT_VOLUME'],
