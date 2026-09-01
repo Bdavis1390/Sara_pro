@@ -1,0 +1,72 @@
+name: SARA Operational Resilience Drill
+
+on:
+  push:
+    branches:
+      - main
+      - 'pre/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  operational-resilience:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact tested source
+        uses: actions/checkout@v4
+
+      - name: Execute controlled incident and recovery drill
+        env:
+          OPS_RESILIENCE_EVIDENCE_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/operational_resilience_evidence
+          OPS_RESILIENCE_HOST_PORT: '19530'
+        run: bash deployments/sara_verified_local_v1/scripts/operational_resilience_drill.sh
+
+      - name: Validate operational resilience evidence contract
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          path = pathlib.Path('deployments/sara_verified_local_v1/operational_resilience_evidence/operational-resilience-evidence.json')
+          data = json.loads(path.read_text())
+          assert data['schema'] == 'WS-SARA-OPERATIONAL-RESILIENCE-EVIDENCE-V1'
+          assert data['result'] == 'PASS'
+          assert data['evidence_status'] == 'INTERNAL_CI_CONTROLLED_INCIDENT_DRILL'
+          required = {
+              'pre_incident_health_ok',
+              'incident_detection_recorded',
+              'post_recovery_health_ok',
+              'post_recovery_ready',
+              'persistent_state_preserved',
+              'exact_build_identity_restored',
+              'detection_time_measured',
+              'recovery_time_measured',
+          }
+          assert required <= set(data['checks'])
+          assert all(data['checks'][k] for k in required)
+          assert data['retention_contract']['index_digest_required'] is True
+          PY
+
+      - name: Upload operational resilience evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-operational-resilience-evidence
+          path: deployments/sara_verified_local_v1/operational_resilience_evidence/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture Docker state and logs on failure
+        if: failure()
+        run: |
+          docker ps -a --no-trunc || true
+          for id in $(docker ps -aq --filter 'name=sara-ops-resilience-'); do docker logs "$id" || true; done
+
+      - name: Clean residual drill resources
+        if: always()
+        run: |
+          docker ps -aq --filter 'name=sara-ops-resilience-' | xargs -r docker rm -f || true
+          docker volume ls -q --filter 'name=sara_ops_resilience_' | xargs -r docker volume rm || true
