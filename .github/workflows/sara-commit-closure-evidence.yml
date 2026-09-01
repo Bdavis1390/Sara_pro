@@ -1,0 +1,156 @@
+name: SARA Commit Closure Evidence
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - SARA Verified Local v1 Gate
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Exact commit SHA to inventory
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  validate-pr-closure-manifest:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+      CLOSURE_MANIFEST_DIR: closure_manifest
+      CLOSURE_WAIT_SECONDS: '420'
+    steps:
+      - name: Check out exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Compile closure manifest builder
+        run: python -m py_compile deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
+
+      - name: Build exact-commit closure evidence manifest
+        run: python deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
+
+      - name: Validate closure manifest contract
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path('closure_manifest/commit-closure-evidence-manifest.json')
+          d = json.loads(p.read_text())
+          assert d['schema'] == 'WS-SARA-COMMIT-CLOSURE-EVIDENCE-MANIFEST-V1'
+          assert d['result'] == 'PASS'
+          assert len(d['entries']) == 5
+          assert all(d['checks'].values())
+          assert pathlib.Path('closure_manifest/commit-closure-evidence-manifest.sha256').is_file()
+          PY
+
+      - name: Upload PR closure manifest evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-commit-closure-evidence-pr
+          path: closure_manifest/
+          if-no-files-found: error
+          retention-days: 30
+
+  attest-main-closure-manifest:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+      CLOSURE_MANIFEST_DIR: closure_manifest
+      CLOSURE_WAIT_SECONDS: '420'
+    steps:
+      - name: Check out exact main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Compile closure manifest builder
+        run: python -m py_compile deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
+
+      - name: Build exact-commit closure evidence manifest
+        run: python deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
+
+      - name: Validate closure manifest contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          p = pathlib.Path('closure_manifest/commit-closure-evidence-manifest.json')
+          d = json.loads(p.read_text())
+          assert d['schema'] == 'WS-SARA-COMMIT-CLOSURE-EVIDENCE-MANIFEST-V1'
+          assert d['result'] == 'PASS'
+          assert d['target_commit_sha'] == os.environ['TARGET_SHA']
+          assert len(d['entries']) == 5
+          assert all(d['checks'].values())
+          PY
+
+      - name: Attest exact commit closure manifest
+        id: attest_closure
+        uses: actions/attest@v4
+        with:
+          subject-path: closure_manifest/commit-closure-evidence-manifest.json
+          create-storage-record: false
+
+      - name: Build closure custody receipt
+        env:
+          ATTESTATION_ID: ${{ steps.attest_closure.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.attest_closure.outputs.attestation-url }}
+          BUNDLE_PATH: ${{ steps.attest_closure.outputs.bundle-path }}
+        run: |
+          cp "$BUNDLE_PATH" closure_manifest/sigstore-closure-attestation-bundle.json
+          python - <<'PY'
+          import datetime, hashlib, json, os, pathlib
+          root = pathlib.Path('closure_manifest')
+          manifest = root / 'commit-closure-evidence-manifest.json'
+          bundle = root / 'sigstore-closure-attestation-bundle.json'
+          receipt = {
+              'schema': 'WS-SARA-COMMIT-CLOSURE-ATTESTATION-RECEIPT-V1',
+              'evidence_status': 'GITHUB_SIGSTORE_ATTESTED_COMMIT_CLOSURE_MANIFEST',
+              'executed_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'target_commit_sha': os.environ['TARGET_SHA'],
+              'manifest_sha256': 'sha256:' + hashlib.sha256(manifest.read_bytes()).hexdigest(),
+              'attestation_bundle_sha256': 'sha256:' + hashlib.sha256(bundle.read_bytes()).hexdigest(),
+              'attestation_id': os.environ['ATTESTATION_ID'],
+              'attestation_url': os.environ['ATTESTATION_URL'],
+              'signing_mechanism': 'GitHub OIDC with Sigstore-backed artifact attestation',
+              'claims_boundary': (
+                  'This receipt establishes cryptographic provenance for the commit-closure manifest inside GitHub-hosted custody. '
+                  'It does not establish off-provider or independent archival custody, legal-record retention, external audit, '
+                  'customer/government acceptance, certification, ATO, or third-party reproduction.'
+              ),
+          }
+          (root / 'commit-closure-attestation-receipt.json').write_text(json.dumps(receipt, sort_keys=True, indent=2)+'\n')
+          PY
+
+      - name: Upload attested commit closure evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-commit-closure-attestation-evidence
+          path: closure_manifest/
+          if-no-files-found: error
+          retention-days: 90
