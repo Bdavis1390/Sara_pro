@@ -1,173 +1,32 @@
 {
-  "schema": "WS-SARA-NIST800171-SSP-EVIDENCE-MAP-V1",
-  "standard": "NIST SP 800-171 Rev. 3",
-  "document_status": "INTERNAL_PRECURSOR_NOT_AN_ASSESSMENT",
-  "assessment_status": "NOT_ASSESSED",
-  "sprs_status": "NOT_CLAIMED",
-  "cmmc_status": "NOT_CLAIMED",
-  "ato_status": "NOT_CLAIMED",
-  "odp_status": "REQUIRES_CONTRACTUAL_SCOPING_AND_ORGANIZATION_ASSIGNMENT",
-  "system_security_plan_requirement_reference": "03.15.02",
-  "status_enum": [
-    "INTERNAL_EVIDENCE_PARTIAL",
-    "PROCEDURAL_ONLY",
-    "EXTERNAL_EVIDENCE_REQUIRED",
-    "UNVERIFIED"
+  "schema":"WS-SARA-NIST800171-SSP-EVIDENCE-MAP-V1",
+  "standard":"NIST SP 800-171 Rev. 3",
+  "document_status":"INTERNAL_PRECURSOR_NOT_AN_ASSESSMENT",
+  "assessment_status":"NOT_ASSESSED",
+  "sprs_status":"NOT_CLAIMED",
+  "cmmc_status":"NOT_CLAIMED",
+  "ato_status":"NOT_CLAIMED",
+  "odp_status":"REQUIRES_CONTRACTUAL_SCOPING_AND_ORGANIZATION_ASSIGNMENT",
+  "system_security_plan_requirement_reference":"03.15.02",
+  "status_enum":["INTERNAL_EVIDENCE_PARTIAL","PROCEDURAL_ONLY","EXTERNAL_EVIDENCE_REQUIRED","UNVERIFIED"],
+  "families":[
+    {"family":"Access Control","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / security lead","evidence_refs":[".github/workflows/sara-tls-proxy-architecture.yml","deployments/sara_verified_local_v1/scripts/tls_proxy_architecture_drill.sh"],"evidence_summary":"Private backend topology, bounded admin/relay token interfaces, non-root runtime and least-privilege container controls provide partial technical evidence.","gaps":["enterprise account lifecycle","role/privilege matrix","remote access policy","formal CUI access authorization"],"odp_status":"REQUIRES_CONTRACTUAL_SCOPING"},
+    {"family":"Awareness and Training","status":"EXTERNAL_EVIDENCE_REQUIRED","owner":"organization management / security lead","evidence_refs":[],"evidence_summary":"No authoritative workforce training records are established by SARA CI.","gaps":["security awareness curriculum","role-based training","training completion records"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Audit and Accountability","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / security lead","evidence_refs":[".github/workflows/sara-verified-local-v1.yml",".github/workflows/sara-operational-resilience.yml"],"evidence_summary":"SARA audit/operational snapshots and controlled incident evidence provide internal event-accountability precursors.","gaps":["approved audit-event selection","production retention period","central log protection/review","customer audit requirements"],"odp_status":"REQUIRES_CONTRACTUAL_SCOPING"},
+    {"family":"Configuration Management","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / engineering lead","evidence_refs":[".github/workflows/sara-verified-local-v1.yml","deployments/sara_verified_local_v1/constraints-runtime.txt","deployments/sara_verified_local_v1/Dockerfile","deployments/sara_verified_local_v1/compose.yaml"],"evidence_summary":"Pinned dependencies, immutable source identity, Compose validation, controlled builds and security gates provide partial configuration evidence.","gaps":["approved production baseline","formal change-control authority","asset configuration inventory outside SARA"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Identification and Authentication","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / security lead","evidence_refs":["deployments/sara_verified_local_v1/scripts/tls_proxy_architecture_drill.sh"],"evidence_summary":"Bounded SARA admin and relay tokens and exact build identity provide limited application-level identity/authentication evidence.","gaps":["enterprise IdP","MFA policy","workforce identity proofing","credential lifecycle and revocation"],"odp_status":"REQUIRES_CONTRACTUAL_SCOPING"},
+    {"family":"Incident Response","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / incident lead","evidence_refs":[".github/workflows/sara-operational-resilience.yml","docs/operations/operational-resilience-procedure.md"],"evidence_summary":"Controlled outage injection, detection, timestamped recovery and evidence retention demonstrate a bounded executable incident precursor.","gaps":["24x7 staffing","customer escalation","regulatory reporting","SIEM/SOC integration","production incident categories"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Maintenance","status":"PROCEDURAL_ONLY","owner":"system owner / operations lead","evidence_refs":["docs/operations/operational-resilience-procedure.md"],"evidence_summary":"Recovery/change procedures exist as an engineering precursor; maintenance authorization and tooling governance are not established.","gaps":["maintenance authorization","controlled maintenance tools","remote maintenance safeguards","maintenance records"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Media Protection","status":"EXTERNAL_EVIDENCE_REQUIRED","owner":"organization management / security lead","evidence_refs":["docs/operations/evidence-custody-policy.md"],"evidence_summary":"Commit-bound artifact custody is demonstrated within GitHub, but physical/removable media protection is outside the current boundary precursor.","gaps":["media inventory","physical media access","sanitization","transport","independent archive controls"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Personnel Security","status":"EXTERNAL_EVIDENCE_REQUIRED","owner":"organization management","evidence_refs":[],"evidence_summary":"Personnel screening, termination and transfer controls require organization records outside software CI.","gaps":["screening records","termination procedures","transfer procedures","personnel risk decisions"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Physical Protection","status":"EXTERNAL_EVIDENCE_REQUIRED","owner":"organization management / facility owner","evidence_refs":[],"evidence_summary":"Physical access and facility controls are outside the current software/CI evidence boundary.","gaps":["facility authorization","physical access logs","visitor control","physical security monitoring"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Planning","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / security lead","evidence_refs":["security/nist800171/system-boundary.json","security/nist800171/ssp-evidence-map.json"],"evidence_summary":"The system-boundary and SSP evidence-map precursors establish structured planning inputs without claiming an approved SSP.","gaps":["formally approved SSP","rules of behavior","contract-specific scope","enduring exception decisions"],"odp_status":"REQUIRES_CONTRACTUAL_SCOPING"},
+    {"family":"Risk Assessment","status":"PROCEDURAL_ONLY","owner":"system owner / security lead","evidence_refs":[".github/workflows/sara-verified-local-v1.yml"],"evidence_summary":"Vulnerability and security-analysis outputs are generated, but an organization-authorized risk assessment is not established.","gaps":["formal risk methodology","threat model approval","risk register","risk acceptance authority"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Security Assessment and Monitoring","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / security lead","evidence_refs":[".github/workflows/sara-verified-local-v1.yml",".github/workflows/sara-commit-closure-evidence.yml"],"evidence_summary":"CodeQL, workflow analysis, tests, evidence manifests and repeated exact-commit validation provide internal monitoring/assessment evidence only.","gaps":["formal 800-171A assessment","POA&M process","continuous-monitoring strategy","independent assessor evidence"],"odp_status":"REQUIRES_CONTRACTUAL_SCOPING"},
+    {"family":"System and Communications Protection","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / security lead","evidence_refs":[".github/workflows/sara-tls-proxy-architecture.yml","deployments/sara_verified_local_v1/scripts/tls_proxy_architecture_drill.sh"],"evidence_summary":"TLS termination, private SARA backend, no backend host-published port and plaintext rejection are demonstrated in bounded CI.","gaps":["production CA/DNS identity","production cryptographic module validation","key/HSM custody","network boundary approval"],"odp_status":"REQUIRES_CONTRACTUAL_SCOPING"},
+    {"family":"System and Information Integrity","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / security lead","evidence_refs":[".github/workflows/sara-verified-local-v1.yml"],"evidence_summary":"CodeQL, vulnerability advisory evidence, SBOM/dependency evidence and fail-closed CI gates provide partial integrity evidence.","gaps":["production flaw-remediation SLA","malware protection boundary","production security alert ingestion","customer reporting"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"System and Services Acquisition","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / engineering lead","evidence_refs":["deployments/sara_verified_local_v1/constraints-runtime.txt",".github/workflows/sara-verified-local-v1.yml"],"evidence_summary":"Dependency constraints, SBOM and vulnerability evidence provide software-acquisition provenance precursors.","gaps":["supplier security requirements","external service contracts","development lifecycle policy","component acceptance criteria"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"},
+    {"family":"Supply Chain Risk Management","status":"INTERNAL_EVIDENCE_PARTIAL","owner":"system owner / engineering lead","evidence_refs":["deployments/sara_verified_local_v1/Dockerfile","deployments/sara_verified_local_v1/constraints-runtime.txt",".github/workflows/sara-commit-closure-evidence.yml"],"evidence_summary":"Pinned software inputs, SBOM/dependency evidence, exact-commit provenance and signed closure manifests provide partial software supply-chain evidence.","gaps":["formal SCRM plan","supplier criticality analysis","external supplier monitoring","hardware supply-chain controls"],"odp_status":"REQUIRES_ORGANIZATION_ASSIGNMENT"}
   ],
-  "families": [
-    {
-      "family": "Access Control",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / security lead",
-      "evidence_refs": [".github/workflows/sara-tls-proxy-architecture.yml", "deployments/sara_verified_local_v1/scripts/tls_proxy_architecture_drill.sh"],
-      "evidence_summary": "Private backend topology, bounded admin/relay token interfaces, non-root runtime and least-privilege container controls provide partial technical evidence.",
-      "gaps": ["enterprise account lifecycle", "role/privilege matrix", "remote access policy", "formal CUI access authorization"],
-      "odp_status": "REQUIRES_CONTRACTUAL_SCOPING"
-    },
-    {
-      "family": "Awareness and Training",
-      "status": "EXTERNAL_EVIDENCE_REQUIRED",
-      "owner": "organization management / security lead",
-      "evidence_refs": [],
-      "evidence_summary": "No authoritative workforce training records are established by SARA CI.",
-      "gaps": ["security awareness curriculum", "role-based training", "training completion records"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Audit and Accountability",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / security lead",
-      "evidence_refs": [".github/workflows/sara-verified-local-v1.yml", ".github/workflows/sara-operational-resilience.yml"],
-      "evidence_summary": "SARA audit/operational snapshots and controlled incident evidence provide internal event-accountability precursors.",
-      "gaps": ["approved audit-event selection", "production retention period", "central log protection/review", "customer audit requirements"],
-      "odp_status": "REQUIRES_CONTRACTUAL_SCOPING"
-    },
-    {
-      "family": "Configuration Management",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / engineering lead",
-      "evidence_refs": [".github/workflows/sara-verified-local-v1.yml", "constraints-runtime.txt", "Dockerfile"],
-      "evidence_summary": "Pinned dependencies, immutable source identity, Compose validation, controlled builds and security gates provide partial configuration evidence.",
-      "gaps": ["approved production baseline", "formal change-control authority", "asset configuration inventory outside SARA"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Identification and Authentication",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / security lead",
-      "evidence_refs": ["deployments/sara_verified_local_v1/scripts/tls_proxy_architecture_drill.sh"],
-      "evidence_summary": "Bounded SARA admin and relay tokens and exact build identity provide limited application-level identity/authentication evidence.",
-      "gaps": ["enterprise IdP", "MFA policy", "workforce identity proofing", "credential lifecycle and revocation"],
-      "odp_status": "REQUIRES_CONTRACTUAL_SCOPING"
-    },
-    {
-      "family": "Incident Response",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / incident lead",
-      "evidence_refs": [".github/workflows/sara-operational-resilience.yml", "docs/operations/operational-resilience-procedure.md"],
-      "evidence_summary": "Controlled runtime-unavailable injection, detection, timestamped recovery and evidence retention demonstrate a bounded executable incident precursor.",
-      "gaps": ["24x7 staffing", "customer escalation", "regulatory reporting", "SIEM/SOC integration", "production incident categories"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Maintenance",
-      "status": "PROCEDURAL_ONLY",
-      "owner": "system owner / operations lead",
-      "evidence_refs": ["docs/operations/operational-resilience-procedure.md"],
-      "evidence_summary": "Recovery/change procedures exist as an engineering precursor; maintenance authorization and tooling governance are not established.",
-      "gaps": ["maintenance authorization", "controlled maintenance tools", "remote maintenance safeguards", "maintenance records"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Media Protection",
-      "status": "EXTERNAL_EVIDENCE_REQUIRED",
-      "owner": "organization management / security lead",
-      "evidence_refs": ["docs/operations/evidence-custody-policy.md"],
-      "evidence_summary": "Commit-bound artifact custody is demonstrated within GitHub, but physical/removable media protection is outside the current boundary precursor.",
-      "gaps": ["media inventory", "physical media access", "sanitization", "transport", "independent archive controls"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Personnel Security",
-      "status": "EXTERNAL_EVIDENCE_REQUIRED",
-      "owner": "organization management",
-      "evidence_refs": [],
-      "evidence_summary": "Personnel screening, termination and transfer controls require organization records outside software CI.",
-      "gaps": ["screening records", "termination procedures", "transfer procedures", "personnel risk decisions"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Physical Protection",
-      "status": "EXTERNAL_EVIDENCE_REQUIRED",
-      "owner": "organization management / facility owner",
-      "evidence_refs": [],
-      "evidence_summary": "Physical access and facility controls are outside the current software/CI evidence boundary.",
-      "gaps": ["facility authorization", "physical access logs", "visitor control", "physical security monitoring"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Planning",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / security lead",
-      "evidence_refs": ["security/nist800171/system-boundary.json", "security/nist800171/ssp-evidence-map.json"],
-      "evidence_summary": "The system-boundary and SSP evidence-map precursors establish structured planning inputs without claiming an approved SSP.",
-      "gaps": ["formally approved SSP", "rules of behavior", "contract-specific scope", "enduring exception decisions"],
-      "odp_status": "REQUIRES_CONTRACTUAL_SCOPING"
-    },
-    {
-      "family": "Risk Assessment",
-      "status": "PROCEDURAL_ONLY",
-      "owner": "system owner / security lead",
-      "evidence_refs": [".github/workflows/sara-verified-local-v1.yml"],
-      "evidence_summary": "Vulnerability and security-analysis outputs are generated, but an organization-authorized risk assessment is not established.",
-      "gaps": ["formal risk methodology", "threat model approval", "risk register", "risk acceptance authority"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Security Assessment and Monitoring",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / security lead",
-      "evidence_refs": [".github/workflows/sara-verified-local-v1.yml", ".github/workflows/sara-commit-closure-evidence.yml"],
-      "evidence_summary": "CodeQL, workflow analysis, tests, evidence manifests and repeated exact-commit validation provide internal monitoring/assessment evidence only.",
-      "gaps": ["formal 800-171A assessment", "POA&M process", "continuous-monitoring strategy", "independent assessor evidence"],
-      "odp_status": "REQUIRES_CONTRACTUAL_SCOPING"
-    },
-    {
-      "family": "System and Communications Protection",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / security lead",
-      "evidence_refs": [".github/workflows/sara-tls-proxy-architecture.yml", "deployments/sara_verified_local_v1/scripts/tls_proxy_architecture_drill.sh"],
-      "evidence_summary": "TLS termination, private SARA backend, no backend host-published port and plaintext rejection are demonstrated in bounded CI.",
-      "gaps": ["production CA/DNS identity", "production cryptographic module validation", "key/HSM custody", "network boundary approval"],
-      "odp_status": "REQUIRES_CONTRACTUAL_SCOPING"
-    },
-    {
-      "family": "System and Information Integrity",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / security lead",
-      "evidence_refs": [".github/workflows/sara-verified-local-v1.yml"],
-      "evidence_summary": "CodeQL, vulnerability advisory evidence, SBOM/dependency evidence and fail-closed CI gates provide partial integrity evidence.",
-      "gaps": ["production flaw-remediation SLA", "malware protection boundary", "production security alert ingestion", "customer reporting"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "System and Services Acquisition",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / engineering lead",
-      "evidence_refs": ["constraints-runtime.txt", ".github/workflows/sara-verified-local-v1.yml"],
-      "evidence_summary": "Dependency constraints, SBOM and vulnerability evidence provide software-acquisition provenance precursors.",
-      "gaps": ["supplier security requirements", "external service contracts", "development lifecycle policy", "component acceptance criteria"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    },
-    {
-      "family": "Supply Chain Risk Management",
-      "status": "INTERNAL_EVIDENCE_PARTIAL",
-      "owner": "system owner / engineering lead",
-      "evidence_refs": ["Dockerfile", "constraints-runtime.txt", ".github/workflows/sara-commit-closure-evidence.yml"],
-      "evidence_summary": "Pinned software inputs, SBOM/dependency evidence, exact-commit provenance and signed closure manifests provide partial software supply-chain evidence.",
-      "gaps": ["formal SCRM plan", "supplier criticality analysis", "external supplier monitoring", "hardware supply-chain controls"],
-      "odp_status": "REQUIRES_ORGANIZATION_ASSIGNMENT"
-    }
-  ],
-  "claims_boundary": "This is an evidence-readiness map, not a NIST SP 800-171 assessment, SSP approval, SPRS score, CMMC certification, RMF authorization, ATO, or authorization to process CUI. Family statuses indicate only the existence and limits of internal precursor evidence."
+  "claims_boundary":"This is an evidence-readiness map, not a NIST SP 800-171 assessment, SSP approval, SPRS score, CMMC certification, RMF authorization, ATO, or authorization to process CUI. Family statuses indicate only the existence and limits of internal precursor evidence."
 }
