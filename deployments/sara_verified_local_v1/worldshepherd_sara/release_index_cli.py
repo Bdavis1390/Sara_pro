@@ -12,6 +12,7 @@ from .qualification import canonical_digest
 
 RELEASE_INDEX_SCHEMA = "WS-SARA-RELEASE-EVIDENCE-INDEX-V1"
 SBOM_EVIDENCE_SCHEMA = "WS-SOFTWARE-SUPPLY-CHAIN-EVIDENCE-V1"
+VULNERABILITY_EVIDENCE_SCHEMA = "WS-VULNERABILITY-ADVISORY-EVIDENCE-V1"
 MERGE_STATE_PR_CANDIDATE = "PR_CANDIDATE_UNMERGED"
 MERGE_STATE_MAIN_PUSH = "MERGED_MAIN_PUSH"
 MERGE_STATE_MANUAL_OR_NON_MAIN = "MANUAL_OR_NON_MAIN_RUN"
@@ -25,7 +26,8 @@ CLAIMS_BOUNDARY = (
     "Release index records CI evidence custody only. It does not establish partner validation, "
     "supplier approval, certification, CMMC/NIST/DFARS conformity, classified access, DOE validation, "
     "external reproduction, field performance, hardware performance, export-control clearance, "
-    "software supply-chain completeness, vulnerability remediation, license legal review, SLSA compliance, "
+    "software supply-chain completeness, absence of vulnerabilities, advisory-feed completeness, "
+    "vulnerability scan pass, vulnerability remediation, license legal review, SLSA compliance, "
     "or operational authority."
 )
 
@@ -116,6 +118,18 @@ def _validate_sbom_summary(sbom_summary: dict[str, Any]) -> None:
         raise ValueError("SBOM summary missing claims boundary")
 
 
+def _validate_vulnerability_summary(vulnerability_summary: dict[str, Any]) -> None:
+    if vulnerability_summary.get("schema") != VULNERABILITY_EVIDENCE_SCHEMA:
+        raise ValueError("unexpected vulnerability evidence summary schema")
+    if vulnerability_summary.get("evidence_status") != "INTERNAL_CI_GENERATED_UNSIGNED":
+        raise ValueError("unexpected vulnerability evidence status")
+    if not vulnerability_summary.get("vulnerability_report_sha256", "").startswith("sha256:"):
+        raise ValueError("vulnerability summary missing vulnerability_report_sha256")
+    claims_boundary = vulnerability_summary.get("claims_boundary", "")
+    if "does not establish" not in claims_boundary:
+        raise ValueError("vulnerability summary missing claims boundary")
+
+
 def build_release_evidence_index(
     *,
     repository: str,
@@ -130,6 +144,7 @@ def build_release_evidence_index(
     pre_dir: Path,
     partner_dir: Path,
     sbom_dir: Path,
+    vulnerability_dir: Path,
     pre_artifact_id: str | None,
     pre_artifact_digest: str | None,
     pre_artifact_url: str | None,
@@ -139,6 +154,9 @@ def build_release_evidence_index(
     sbom_artifact_id: str | None,
     sbom_artifact_digest: str | None,
     sbom_artifact_url: str | None,
+    vulnerability_artifact_id: str | None,
+    vulnerability_artifact_digest: str | None,
+    vulnerability_artifact_url: str | None,
     executed_utc: str | None = None,
 ) -> dict[str, Any]:
     """Build a machine-readable release evidence index for one SARA CI run."""
@@ -148,16 +166,19 @@ def build_release_evidence_index(
     pre_root = Path(pre_dir)
     partner_root = Path(partner_dir)
     sbom_root = Path(sbom_dir)
+    vulnerability_root = Path(vulnerability_dir)
 
     qualification_index = _load_json(pre_root / "qualification_index.json")
     partner_batch_manifest = _load_json(partner_root / "batch-manifest.json")
     sbom_summary = _load_json(sbom_root / "sbom-evidence-summary.json")
+    vulnerability_summary = _load_json(vulnerability_root / "vulnerability-evidence-summary.json")
 
     if partner_batch_manifest.get("schema") != "WS-PARTNER-SCREENING-BATCH-MANIFEST-V1":
         raise ValueError("unexpected partner batch manifest schema")
     if qualification_index.get("schema") is None:
         raise ValueError("qualification index missing schema")
     _validate_sbom_summary(sbom_summary)
+    _validate_vulnerability_summary(vulnerability_summary)
 
     generated_at = executed_utc or datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     pre_artifact = _artifact_record(
@@ -178,6 +199,12 @@ def build_release_evidence_index(
         digest=sbom_artifact_digest,
         url=sbom_artifact_url,
     )
+    vulnerability_artifact = _artifact_record(
+        name="vulnerability-advisory-evidence",
+        artifact_id=vulnerability_artifact_id,
+        digest=vulnerability_artifact_digest,
+        url=vulnerability_artifact_url,
+    )
 
     index: dict[str, Any] = {
         "schema": RELEASE_INDEX_SCHEMA,
@@ -195,6 +222,7 @@ def build_release_evidence_index(
         },
         "artifacts": {
             "software_sbom_evidence": sbom_artifact,
+            "vulnerability_advisory_evidence": vulnerability_artifact,
             "pre_full_bloom_qualification_evidence": pre_artifact,
             "partner_screening_batch_evidence": partner_artifact,
         },
@@ -206,6 +234,15 @@ def build_release_evidence_index(
             "sbom_component_count": sbom_summary.get("component_count"),
             "sbom_evidence_status": sbom_summary.get("evidence_status"),
             "sbom_input_files": sbom_summary.get("input_files", {}),
+            "vulnerability_summary_path": str(vulnerability_root / "vulnerability-evidence-summary.json"),
+            "vulnerability_summary_sha256": _sha256_file(vulnerability_root / "vulnerability-evidence-summary.json"),
+            "vulnerability_report_path": str(vulnerability_root / "vulnerability-advisory-report.json"),
+            "vulnerability_report_sha256": _sha256_file(vulnerability_root / "vulnerability-advisory-report.json"),
+            "vulnerability_advisory_record_count": vulnerability_summary.get("advisory_record_count"),
+            "vulnerability_matched_advisory_count": vulnerability_summary.get("matched_advisory_count"),
+            "vulnerability_evidence_status": vulnerability_summary.get("evidence_status"),
+            "vulnerability_advisory_input_status": vulnerability_summary.get("advisory_input_status"),
+            "vulnerability_input_files": vulnerability_summary.get("input_files", {}),
             "qualification_index_path": str(pre_root / "qualification_index.json"),
             "qualification_index_sha256": _sha256_file(pre_root / "qualification_index.json"),
             "partner_batch_manifest_path": str(partner_root / "batch-manifest.json"),
@@ -247,6 +284,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pre-dir", type=Path, required=True, help="Directory containing PRE full-bloom evidence.")
     parser.add_argument("--partner-dir", type=Path, required=True, help="Directory containing partner-screening batch evidence.")
     parser.add_argument("--sbom-dir", type=Path, required=True, help="Directory containing software SBOM evidence.")
+    parser.add_argument(
+        "--vulnerability-dir",
+        type=Path,
+        required=True,
+        help="Directory containing vulnerability/advisory evidence.",
+    )
     parser.add_argument("--repository", default=os.getenv("GITHUB_REPOSITORY", ""))
     parser.add_argument("--commit-sha", default=os.getenv("GITHUB_SHA", ""))
     parser.add_argument("--workflow-name", default=os.getenv("GITHUB_WORKFLOW", ""))
@@ -265,6 +308,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--sbom-artifact-id", default=None)
     parser.add_argument("--sbom-artifact-digest", default=None)
     parser.add_argument("--sbom-artifact-url", default=None)
+    parser.add_argument("--vulnerability-artifact-id", default=None)
+    parser.add_argument("--vulnerability-artifact-digest", default=None)
+    parser.add_argument("--vulnerability-artifact-url", default=None)
     parser.add_argument("--executed-utc", default=None)
     args = parser.parse_args(argv)
 
@@ -284,6 +330,7 @@ def main(argv: list[str] | None = None) -> int:
         pre_dir=args.pre_dir,
         partner_dir=args.partner_dir,
         sbom_dir=args.sbom_dir,
+        vulnerability_dir=args.vulnerability_dir,
         pre_artifact_id=args.pre_artifact_id,
         pre_artifact_digest=args.pre_artifact_digest,
         pre_artifact_url=args.pre_artifact_url,
@@ -293,6 +340,9 @@ def main(argv: list[str] | None = None) -> int:
         sbom_artifact_id=args.sbom_artifact_id,
         sbom_artifact_digest=args.sbom_artifact_digest,
         sbom_artifact_url=args.sbom_artifact_url,
+        vulnerability_artifact_id=args.vulnerability_artifact_id,
+        vulnerability_artifact_digest=args.vulnerability_artifact_digest,
+        vulnerability_artifact_url=args.vulnerability_artifact_url,
         executed_utc=args.executed_utc,
     )
     _write_json(args.out, index)
