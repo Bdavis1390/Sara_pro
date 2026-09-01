@@ -1,0 +1,351 @@
+name: SARA Commit Closure Evidence
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_run:
+    workflows:
+      - SARA Verified Local v1 Gate
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  validate-pr-closure-manifest:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    env:
+      TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+      CLOSURE_MANIFEST_DIR: closure_manifest
+      CLOSURE_SNAPSHOT_FILE: closure-fixture.json
+    steps:
+      - name: Check out exact PR head without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Compile offline closure manifest builder
+        run: python -m py_compile deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
+
+      - name: Build synthetic exact-commit fixture
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          names = [
+              ('SARA Verified Local v1 Gate', 'sara-release-evidence-index'),
+              ('SARA Rollback Drill', 'sara-rollback-drill-evidence'),
+              ('SARA Replacement Environment Restore', 'sara-replacement-environment-restore-evidence'),
+              ('SARA TLS Private Backend Architecture', 'sara-tls-private-backend-architecture-evidence'),
+              ('SARA Operational Resilience Drill', 'sara-operational-resilience-evidence'),
+          ]
+          sha = os.environ['TARGET_SHA']
+          entries = []
+          for i, (workflow, artifact_name) in enumerate(names, 1):
+              entries.append({
+                  'workflow_name': workflow,
+                  'run': {
+                      'id': 1000 + i,
+                      'run_attempt': 1,
+                      'event': 'pull_request',
+                      'head_branch': 'synthetic-contract-test',
+                      'head_sha': sha,
+                      'conclusion': 'success',
+                      'html_url': f'https://github.com/example/example/actions/runs/{1000+i}',
+                  },
+                  'artifact': {
+                      'id': 2000 + i,
+                      'name': artifact_name,
+                      'digest': 'sha256:' + format(i, '064x'),
+                      'size_in_bytes': 100 + i,
+                      'created_at': '2026-01-01T00:00:00Z',
+                      'expires_at': '2099-01-01T00:00:00Z',
+                      'expired': False,
+                  },
+              })
+          pathlib.Path('closure-fixture.json').write_text(json.dumps({
+              'schema': 'WS-SARA-CLOSURE-SNAPSHOT-V1',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'target_commit_sha': sha,
+              'entries': entries,
+          }, sort_keys=True, indent=2) + '\n')
+          PY
+
+      - name: Exercise offline closure manifest contract
+        run: python deployments/sara_verified_local_v1/scripts/build_commit_closure_manifest.py
+
+      - name: Validate PR qualification output
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path('closure_manifest/commit-closure-evidence-manifest.json')
+          d = json.loads(p.read_text())
+          assert d['schema'] == 'WS-SARA-COMMIT-CLOSURE-EVIDENCE-MANIFEST-V1'
+          assert d['result'] == 'PASS'
+          assert len(d['entries']) == 5
+          assert all(d['checks'].values())
+          assert pathlib.Path('closure_manifest/commit-closure-evidence-manifest.sha256').is_file()
+          PY
+
+  collect-main-closure-manifest:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+    env:
+      TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Collect exact-main workflow and artifact metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          case "$TARGET_SHA" in
+            (*[!0-9a-f]*|'') echo 'invalid target SHA' >&2; exit 1 ;;
+          esac
+          test "${#TARGET_SHA}" -eq 40
+          case "$GITHUB_REPOSITORY" in
+            (*[!A-Za-z0-9_.\/-]*|''|*//*|/*|*/) echo 'invalid repository identifier' >&2; exit 1 ;;
+          esac
+
+          cat > required-evidence.tsv <<'EOF'
+          SARA Verified Local v1 Gate|sara-release-evidence-index
+          SARA Rollback Drill|sara-rollback-drill-evidence
+          SARA Replacement Environment Restore|sara-replacement-environment-restore-evidence
+          SARA TLS Private Backend Architecture|sara-tls-private-backend-architecture-evidence
+          SARA Operational Resilience Drill|sara-operational-resilience-evidence
+          EOF
+
+          deadline=$((SECONDS + 420))
+          while :; do
+            gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/runs" \
+              -f head_sha="$TARGET_SHA" -f per_page=100 > closure-runs.json
+            printf '[]\n' > closure-entries.json
+            missing=0
+
+            while IFS='|' read -r workflow_name artifact_name; do
+              run="$(jq -c --arg n "$workflow_name" --arg s "$TARGET_SHA" '
+                [.workflow_runs[] | select(.name == $n and .head_sha == $s and .status == "completed" and .conclusion == "success")]
+                | sort_by(.id) | last // empty
+              ' closure-runs.json)"
+              if [ -z "$run" ]; then
+                echo "waiting for successful workflow: $workflow_name"
+                missing=1
+                continue
+              fi
+              run_id="$(jq -r '.id' <<<"$run")"
+              case "$run_id" in (*[!0-9]*|'') echo 'invalid run id' >&2; exit 1 ;; esac
+              gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts" \
+                -f per_page=100 > closure-artifacts.json
+              artifact="$(jq -c --arg n "$artifact_name" '
+                [.artifacts[] | select(.name == $n and .expired == false)] | sort_by(.id) | last // empty
+              ' closure-artifacts.json)"
+              if [ -z "$artifact" ]; then
+                echo "waiting for retained artifact: $artifact_name"
+                missing=1
+                continue
+              fi
+              jq --arg name "$workflow_name" --argjson run "$run" --argjson artifact "$artifact" \
+                '. + [{workflow_name:$name, run:$run, artifact:$artifact}]' \
+                closure-entries.json > closure-entries.tmp.json
+              mv closure-entries.tmp.json closure-entries.json
+            done < required-evidence.tsv
+
+            if [ "$missing" -eq 0 ] && [ "$(jq 'length' closure-entries.json)" -eq 5 ]; then
+              break
+            fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo 'timed out waiting for complete exact-commit evidence set' >&2
+              exit 1
+            fi
+            sleep 3
+          done
+
+          jq -n --arg repo "$GITHUB_REPOSITORY" --arg sha "$TARGET_SHA" --slurpfile entries closure-entries.json '{
+            schema:"WS-SARA-CLOSURE-SNAPSHOT-V1",
+            repository:$repo,
+            target_commit_sha:$sha,
+            entries:$entries[0]
+          }' > closure-snapshot.json
+
+      - name: Build and validate commit closure manifest from trusted metadata
+        env:
+          CLOSURE_SNAPSHOT_FILE: closure-snapshot.json
+          CLOSURE_MANIFEST_DIR: closure_manifest
+        run: |
+          python - <<'PY'
+          import datetime as dt, hashlib, json, os, pathlib, re
+          required = {
+              'SARA Verified Local v1 Gate': 'sara-release-evidence-index',
+              'SARA Rollback Drill': 'sara-rollback-drill-evidence',
+              'SARA Replacement Environment Restore': 'sara-replacement-environment-restore-evidence',
+              'SARA TLS Private Backend Architecture': 'sara-tls-private-backend-architecture-evidence',
+              'SARA Operational Resilience Drill': 'sara-operational-resilience-evidence',
+          }
+          sha = os.environ['TARGET_SHA']
+          digest_re = re.compile(r'^sha256:[0-9a-f]{64}$')
+          snapshot = json.loads(pathlib.Path(os.environ['CLOSURE_SNAPSHOT_FILE']).read_text())
+          assert snapshot['schema'] == 'WS-SARA-CLOSURE-SNAPSHOT-V1'
+          assert snapshot['repository'] == os.environ['GITHUB_REPOSITORY']
+          assert snapshot['target_commit_sha'] == sha
+          supplied = snapshot['entries']
+          assert isinstance(supplied, list) and len(supplied) == 5
+          by_name = {item['workflow_name']: item for item in supplied}
+          assert set(by_name) == set(required)
+          entries = []
+          for workflow_name, artifact_name in required.items():
+              item = by_name[workflow_name]
+              run, artifact = item['run'], item['artifact']
+              assert isinstance(run['id'], int) and run['id'] > 0
+              assert isinstance(artifact['id'], int) and artifact['id'] > 0
+              assert artifact['name'] == artifact_name
+              assert digest_re.fullmatch(artifact['digest'])
+              entries.append({
+                  'workflow_name': workflow_name,
+                  'workflow_run_id': run['id'],
+                  'workflow_run_attempt': run.get('run_attempt'),
+                  'workflow_event': run.get('event'),
+                  'workflow_head_branch': run.get('head_branch'),
+                  'workflow_head_sha': run.get('head_sha'),
+                  'workflow_conclusion': run.get('conclusion'),
+                  'workflow_html_url': run.get('html_url'),
+                  'artifact_name': artifact_name,
+                  'artifact_id': artifact['id'],
+                  'artifact_digest': artifact['digest'],
+                  'artifact_size_in_bytes': artifact.get('size_in_bytes'),
+                  'artifact_created_at': artifact.get('created_at'),
+                  'artifact_expires_at': artifact.get('expires_at'),
+                  'artifact_expired': artifact.get('expired'),
+              })
+          checks = {
+              'all_required_workflows_successful': all(e['workflow_conclusion'] == 'success' for e in entries),
+              'all_evidence_bound_to_target_commit': all(e['workflow_head_sha'] == sha for e in entries),
+              'all_required_artifacts_present': {e['artifact_name'] for e in entries} == set(required.values()),
+              'all_artifacts_have_sha256_digests': all(digest_re.fullmatch(e['artifact_digest']) for e in entries),
+              'all_artifacts_unexpired_at_manifest_time': all(e['artifact_expired'] is False for e in entries),
+          }
+          manifest = {
+              'schema': 'WS-SARA-COMMIT-CLOSURE-EVIDENCE-MANIFEST-V1',
+              'result': 'PASS' if all(checks.values()) else 'FAIL',
+              'evidence_status': 'GITHUB_HOSTED_COMMIT_BOUND_EVIDENCE_INVENTORY',
+              'generated_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'target_commit_sha': sha,
+              'required_evidence_classes': list(required.values()),
+              'entries': entries,
+              'checks': checks,
+              'claims_boundary': (
+                  'This manifest binds named GitHub-hosted CI evidence artifacts and their provider-reported SHA-256 digests to one exact commit. '
+                  'It does not establish independent/off-provider custody, immutable legal-record retention, customer or government acceptance, '
+                  'external audit, certification, ATO, or third-party reproduction.'
+              ),
+          }
+          assert manifest['result'] == 'PASS'
+          root = pathlib.Path(os.environ['CLOSURE_MANIFEST_DIR'])
+          root.mkdir(parents=True, exist_ok=True)
+          path = root / 'commit-closure-evidence-manifest.json'
+          path.write_text(json.dumps(manifest, sort_keys=True, indent=2) + '\n')
+          digest = hashlib.sha256(path.read_bytes()).hexdigest()
+          (root / 'commit-closure-evidence-manifest.sha256').write_text(f'{digest}  {path.name}\n')
+          print('CLOSURE_MANIFEST_PASS', sha, 'sha256:' + digest)
+          PY
+
+      - name: Upload closure manifest staging artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-commit-closure-manifest-staging
+          path: closure_manifest/
+          if-no-files-found: error
+          retention-days: 1
+
+  attest-main-closure-manifest:
+    needs: collect-main-closure-manifest
+    if: >-
+      github.event_name == 'workflow_run' &&
+      needs.collect-main-closure-manifest.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Download closure manifest from collector
+        uses: actions/download-artifact@v4
+        with:
+          name: sara-commit-closure-manifest-staging
+          path: closure_manifest
+
+      - name: Verify staged manifest identity
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path('closure_manifest/commit-closure-evidence-manifest.json')
+          data = json.loads(path.read_text())
+          assert data['schema'] == 'WS-SARA-COMMIT-CLOSURE-EVIDENCE-MANIFEST-V1'
+          assert data['result'] == 'PASS'
+          assert data['target_commit_sha'] == os.environ['TARGET_SHA']
+          assert len(data['entries']) == 5
+          assert all(data['checks'].values())
+          PY
+
+      - name: Attest exact commit closure manifest
+        id: attest_closure
+        uses: actions/attest@v4
+        with:
+          subject-path: closure_manifest/commit-closure-evidence-manifest.json
+          create-storage-record: false
+
+      - name: Build closure custody receipt
+        env:
+          ATTESTATION_ID: ${{ steps.attest_closure.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.attest_closure.outputs.attestation-url }}
+          BUNDLE_PATH: ${{ steps.attest_closure.outputs.bundle-path }}
+        run: |
+          cp "$BUNDLE_PATH" closure_manifest/sigstore-closure-attestation-bundle.json
+          python - <<'PY'
+          import datetime, hashlib, json, os, pathlib
+          root = pathlib.Path('closure_manifest')
+          manifest = root / 'commit-closure-evidence-manifest.json'
+          bundle = root / 'sigstore-closure-attestation-bundle.json'
+          receipt = {
+              'schema': 'WS-SARA-COMMIT-CLOSURE-ATTESTATION-RECEIPT-V1',
+              'evidence_status': 'GITHUB_SIGSTORE_ATTESTED_COMMIT_CLOSURE_MANIFEST',
+              'executed_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'target_commit_sha': os.environ['TARGET_SHA'],
+              'manifest_sha256': 'sha256:' + hashlib.sha256(manifest.read_bytes()).hexdigest(),
+              'attestation_bundle_sha256': 'sha256:' + hashlib.sha256(bundle.read_bytes()).hexdigest(),
+              'attestation_id': os.environ['ATTESTATION_ID'],
+              'attestation_url': os.environ['ATTESTATION_URL'],
+              'signing_mechanism': 'GitHub OIDC with Sigstore-backed artifact attestation',
+              'claims_boundary': (
+                  'This receipt establishes cryptographic provenance for the commit-closure manifest inside GitHub-hosted custody. '
+                  'It does not establish off-provider or independent archival custody, legal-record retention, external audit, '
+                  'customer/government acceptance, certification, ATO, or third-party reproduction.'
+              ),
+          }
+          (root / 'commit-closure-attestation-receipt.json').write_text(json.dumps(receipt, sort_keys=True, indent=2)+'\n')
+          PY
+
+      - name: Upload attested commit closure evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-commit-closure-attestation-evidence
+          path: closure_manifest/
+          if-no-files-found: error
+          retention-days: 90
