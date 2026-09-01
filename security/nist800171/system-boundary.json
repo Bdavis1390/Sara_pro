@@ -1,0 +1,116 @@
+{
+  "schema": "WS-SARA-NIST800171-SYSTEM-BOUNDARY-V1",
+  "standard": "NIST SP 800-171 Rev. 3",
+  "document_status": "INTERNAL_PRECURSOR_NOT_AN_ASSESSMENT",
+  "cui_scope_status": "CUI_PROCESSING_NOT_AUTHORIZED_NOT_CURRENTLY_CLAIMED",
+  "target_deployment": "SARA verified-local reference architecture",
+  "scope_owner": "CRE1AWS / designated system owner",
+  "boundary_purpose": "Define the current internal engineering system boundary and evidence interfaces before any contractual CUI authorization or formal assessment.",
+  "components": [
+    {
+      "id": "sara-runtime",
+      "name": "SARA application runtime",
+      "in_boundary": true,
+      "trust_zone": "application",
+      "data_role": ["process synthetic/test mission data", "process operational metadata"],
+      "identity": "exact source commit via SARA_BUILD_COMMIT and OCI revision",
+      "persistence": "external named SARA state volume",
+      "security_properties": ["non-root UID 10001", "read-only root filesystem", "capabilities dropped", "no-new-privileges", "bounded admin and relay token interfaces"]
+    },
+    {
+      "id": "sara-state",
+      "name": "SARA persistent state volume",
+      "in_boundary": true,
+      "trust_zone": "persistent-state",
+      "data_role": ["registry/state", "audit/evidence-supporting state", "synthetic test markers"],
+      "identity": "container-attached named volume",
+      "persistence": "persistent",
+      "security_properties": ["application ownership UID/GID 10001", "restore ownership normalization", "backup/restore and replacement-environment drills"]
+    },
+    {
+      "id": "tls-proxy",
+      "name": "TLS reverse-proxy reference component",
+      "in_boundary": true,
+      "trust_zone": "boundary-proxy",
+      "data_role": ["terminate reference TLS", "forward bounded HTTP requests to SARA private backend"],
+      "identity": "separate non-root proxy process/container",
+      "persistence": "none required for reference drill",
+      "security_properties": ["non-root", "read-only", "capabilities dropped", "backend/frontend network separation", "only reference host-published TLS endpoint"]
+    },
+    {
+      "id": "ci-evidence-plane",
+      "name": "GitHub Actions evidence plane",
+      "in_boundary": true,
+      "trust_zone": "engineering-evidence",
+      "data_role": ["build/test evidence", "artifact metadata", "commit-bound manifests", "Sigstore attestation receipts"],
+      "identity": "GitHub workflow/run identity bound to exact commit",
+      "persistence": "provider-retained workflow artifacts",
+      "security_properties": ["least-privilege workflows", "CodeQL", "artifact SHA-256 digests", "OIDC/Sigstore attestations", "same-provider custody only"]
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "if-client-proxy",
+      "source": "external-test-client",
+      "destination": "tls-proxy",
+      "protocol": "HTTPS/TLS in bounded reference drill",
+      "direction": "inbound",
+      "authorization": "reference endpoint only; production identity not established",
+      "data_classes": ["synthetic-test-data", "operational-metadata"]
+    },
+    {
+      "id": "if-proxy-sara",
+      "source": "tls-proxy",
+      "destination": "sara-runtime",
+      "protocol": "HTTP on private internal Docker backend network",
+      "direction": "internal",
+      "authorization": "private backend topology; no SARA host-published port",
+      "data_classes": ["synthetic-test-data", "operational-metadata"]
+    },
+    {
+      "id": "if-sara-state",
+      "source": "sara-runtime",
+      "destination": "sara-state",
+      "protocol": "container volume filesystem",
+      "direction": "internal",
+      "authorization": "application UID/GID ownership",
+      "data_classes": ["synthetic-test-data", "operational-metadata", "audit-supporting-state"]
+    },
+    {
+      "id": "if-ci-artifacts",
+      "source": "ci-evidence-plane",
+      "destination": "github-artifact-custody",
+      "protocol": "GitHub Actions artifact/attestation services",
+      "direction": "outbound-evidence",
+      "authorization": "workflow-scoped GitHub permissions and OIDC",
+      "data_classes": ["engineering-evidence", "security-scan-results", "release-provenance"]
+    }
+  ],
+  "external_entities": [
+    {"id": "external-test-client", "status": "OUTSIDE_BOUNDARY_REFERENCE_ONLY"},
+    {"id": "github-artifact-custody", "status": "EXTERNAL_PROVIDER_SAME_TRUST_PROVIDER_NOT_INDEPENDENT_ARCHIVE"}
+  ],
+  "data_classes": [
+    {"id": "synthetic-test-data", "cui": false, "status": "INTERNAL_TEST_DATA"},
+    {"id": "operational-metadata", "cui": false, "status": "INTERNAL_ENGINEERING_METADATA"},
+    {"id": "audit-supporting-state", "cui": false, "status": "INTERNAL_ENGINEERING_EVIDENCE_SUPPORT"},
+    {"id": "engineering-evidence", "cui": false, "status": "INTERNAL_ENGINEERING_EVIDENCE"},
+    {"id": "security-scan-results", "cui": false, "status": "INTERNAL_ENGINEERING_EVIDENCE"},
+    {"id": "release-provenance", "cui": false, "status": "INTERNAL_ENGINEERING_EVIDENCE"},
+    {"id": "cui", "cui": true, "status": "NOT_AUTHORIZED_NOT_CURRENTLY_CLAIMED"}
+  ],
+  "explicit_exclusions": [
+    "production DNS and publicly trusted certificate authority identity",
+    "production private-key or HSM custody",
+    "enterprise identity provider and workforce account lifecycle",
+    "user endpoint/device management",
+    "production SIEM/SOC and paging infrastructure",
+    "physical facility and media handling environment",
+    "personnel screening and training records",
+    "independent/off-provider evidence archive",
+    "customer or government networks and systems",
+    "formal CUI enclave authorization",
+    "SPRS score, CMMC certification, RMF authorization, or ATO"
+  ],
+  "claims_boundary": "This boundary is an internal engineering precursor. It does not authorize CUI processing, establish NIST SP 800-171 compliance, produce an assessment score, establish SPRS or CMMC status, or constitute customer/government authorization."
+}

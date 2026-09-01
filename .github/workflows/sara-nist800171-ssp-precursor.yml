@@ -1,0 +1,56 @@
+name: SARA NIST 800-171 SSP Precursor
+
+on:
+  push:
+    branches:
+      - main
+      - 'pre/**'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nist800171-ssp-precursor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact tested source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Compile fail-closed precursor validator
+        run: python -m py_compile deployments/sara_verified_local_v1/scripts/validate_nist800171_precursor.py
+
+      - name: Validate system boundary and SSP evidence map
+        env:
+          NIST_PRECURSOR_EVIDENCE_DIR: ${{ github.workspace }}/nist800171_precursor_evidence
+        run: python deployments/sara_verified_local_v1/scripts/validate_nist800171_precursor.py
+
+      - name: Validate emitted evidence contract
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          path = pathlib.Path('nist800171_precursor_evidence/nist800171-ssp-precursor-evidence.json')
+          data = json.loads(path.read_text())
+          assert data['schema'] == 'WS-SARA-NIST800171-SSP-PRECURSOR-EVIDENCE-V1'
+          assert data['result'] == 'PASS'
+          assert data['standard'] == 'NIST SP 800-171 Rev. 3'
+          assert data['cui_scope_status'] == 'CUI_PROCESSING_NOT_AUTHORIZED_NOT_CURRENTLY_CLAIMED'
+          assert data['assessment_status'] == 'NOT_ASSESSED'
+          assert data['family_count'] == 17
+          assert all(data['checks'].values())
+          assert data['forbidden_claim_hits'] == []
+          PY
+
+      - name: Upload NIST 800-171 precursor evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-nist800171-ssp-precursor-evidence
+          path: nist800171_precursor_evidence/
+          if-no-files-found: error
+          retention-days: 90
