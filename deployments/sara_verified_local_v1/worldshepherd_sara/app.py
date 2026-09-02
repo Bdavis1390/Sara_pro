@@ -12,6 +12,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from . import __version__
 from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
+from .integrations.nvidia import integration_status
 from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
 from .storage import DurableStore
@@ -134,6 +135,7 @@ def health() -> dict[str, object]:
             "audit": "/v1/audit?limit=50",
             "registry": "/admin/registry",
             "relay": "/v1/relay",
+            "nvidia_status": "/v1/integrations/nvidia/status",
             "selftest": "/admin/selftest",
         },
     }
@@ -153,6 +155,14 @@ def readiness(request: Request) -> JSONResponse:
     )
 
 
+@app.get("/v1/integrations/nvidia/status")
+def nvidia_integration_status(
+    role: Annotated[Role, Depends(resolve_role)],
+) -> dict[str, object]:
+    del role
+    return integration_status()
+
+
 @app.get("/ui", response_class=HTMLResponse)
 def ui() -> str:
     return """<!doctype html>
@@ -164,7 +174,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/admin/registry</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/admin/registry</code>, <code>/v1/integrations/nvidia/status</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. Use Bearer authentication from an approved local client.</p></div>
 </body></html>"""
 
