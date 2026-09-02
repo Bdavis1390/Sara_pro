@@ -3,7 +3,7 @@
 Status: IMPLEMENTED AS GOVERNANCE/SCHEMA; domain performance remains evidence-gated.
 
 ## Evidence taxonomy separation
-Every record MUST contain independent `source.source_status` and `worldshepherd.capability_status` fields. These canonical nested paths match the Requirement Delta template below.
+Every record MUST contain independent `source.source_status` and root-level `capability_status` fields. These canonical paths match the executable `RequirementDeltaRecord` model and the template below.
 
 ### source.source_status
 - OFFICIAL_SOURCE_VERIFIED
@@ -13,7 +13,7 @@ Every record MUST contain independent `source.source_status` and `worldshepherd.
 - CONFLICTING_SOURCES
 - UNVERIFIED
 
-### worldshepherd.capability_status
+### capability_status
 - PROVEN INTERNALLY
 - IMPLEMENTED IN SOFTWARE
 - SUPPORTED BY LITERATURE
@@ -37,20 +37,17 @@ source:
   solicitation_or_topic:
   source_status:
   retrieved_utc:
-requirement:
-  statement:
-  recurrence:
-  forecast_horizon: 0-90D | 3-12M | 12-24M_PLUS
-  affected_lanes: []
-worldshepherd:
-  existing_capability: []
-  capability_status: []
-  missing_capability: []
-readiness:
-  experiment_or_demonstration_needed: []
-  partner_needed: []
-  evidence_target: []
-  likely_future_programs: []
+statement:
+recurrence:
+forecast_horizon: 0-90D | 3-12M | 12-24M_PLUS
+affected_lanes: []
+existing_capability: []
+capability_status: []
+missing_capability: []
+experiment_or_demonstration_needed: []
+partner_needed: []
+evidence_target: []
+likely_future_programs: []
 claims_boundary: []
 ```
 
