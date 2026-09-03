@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Validate Boeing/Spirit partner-pilot and security preparation artifacts.
+"""Validate Boeing/Spirit pre-partner preparation artifacts.
 
-Passing this validator means the internal templates are structurally complete and
-claims-controlled. It never closes external partner/security/contact gates.
+Passing this validator means the internal pilot, security, effect-measurement and
+independent-review templates are structurally complete and claims-controlled.
+It never closes external partner/security/effect/review/contact gates.
 """
 from __future__ import annotations
 
@@ -60,12 +61,12 @@ def validate_security(s: dict) -> list[str]:
             raise ValueError("unexpected security boundary schema")
         if s.get("default_posture") != "PUBLIC_OR_SYNTHETIC_ONLY":
             raise ValueError("default posture must remain public/synthetic only")
-        nonempty_list(s, "data_classes", 7)
-        nonempty_list(s, "required_partner_decisions", 10)
-        nonempty_list(s, "internal_controls_to_demonstrate_before_partner_data", 10)
-        nonempty_list(s, "prohibited_current_claims", 8)
+        nonempty_list(s, "data_classes", 8)
+        nonempty_list(s, "required_partner_decisions", 14)
+        nonempty_list(s, "internal_controls_to_demonstrate_before_partner_data", 14)
+        nonempty_list(s, "prohibited_current_claims", 10)
         class_map = {x.get("class"): x.get("handling", "") for x in s["data_classes"]}
-        for class_name in ["PARTNER_PROPRIETARY", "CUI_OR_CDI", "EXPORT_CONTROLLED", "CLASSIFIED"]:
+        for class_name in ["PARTNER_PROPRIETARY", "FCI", "CUI_OR_CDI", "EXPORT_CONTROLLED", "CLASSIFIED"]:
             handling = class_map.get(class_name, "").lower()
             if not handling or ("blocked" not in handling and "out of scope" not in handling):
                 raise ValueError(f"{class_name}: must be blocked or out of scope")
@@ -73,9 +74,57 @@ def validate_security(s: dict) -> list[str]:
         if "remains PARTIAL" not in effect:
             raise ValueError("security preparation must not close security_compliance_fit")
         boundary = s.get("claims_boundary", "").lower()
-        for term in ["does not establish", "compliance", "partner approval"]:
+        for term in ["does not establish", "compliance", "boeing c-scrm approval", "partner approval"]:
             if term not in boundary:
                 raise ValueError(f"security claims boundary missing {term!r}")
+    except ValueError as exc:
+        errors.append(str(exc))
+    return errors
+
+
+def validate_effect(e: dict) -> list[str]:
+    errors: list[str] = []
+    try:
+        if e.get("schema") != "WS-BOEING-SPIRIT-EFFECT-MEASUREMENT-PROTOCOL-V1":
+            raise ValueError("unexpected effect protocol schema")
+        if "NO BOEING/SPIRIT EFFECT MEASURED" not in e.get("status", ""):
+            raise ValueError("effect protocol status must reject measured-effect interpretation")
+        nonempty_list(e, "primary_measurement_principles", 8)
+        nonempty_list(e, "candidate_primary_endpoints", 5)
+        nonempty_list(e, "secondary_endpoints_requiring_stricter_attribution", 3)
+        nonempty_list(e, "comparison_design_options", 4)
+        nonempty_list(e, "preanalysis_record_required", 12)
+        nonempty_list(e, "effect_gate_closure_requirements", 8)
+        if not str(e.get("contact_gate_effect", "")).startswith("NONE"):
+            raise ValueError("effect protocol must have zero contact-gate effect")
+        boundary = e.get("claims_boundary", "").lower()
+        for term in ["not measured effect evidence", "does not establish boeing/spirit defect reduction", "remediation probability"]:
+            if term not in boundary:
+                raise ValueError(f"effect claims boundary missing {term!r}")
+    except ValueError as exc:
+        errors.append(str(exc))
+    return errors
+
+
+def validate_independent_review(r: dict) -> list[str]:
+    errors: list[str] = []
+    try:
+        if r.get("schema") != "WS-BOEING-SPIRIT-INDEPENDENT-REVIEW-PROTOCOL-V1":
+            raise ValueError("unexpected independent review schema")
+        if "NO INDEPENDENT REVIEW PERFORMED" not in r.get("status", ""):
+            raise ValueError("review protocol status must reject completed-review interpretation")
+        nonempty_list(r, "reviewer_independence_requirements", 6)
+        nonempty_list(r, "minimum_review_package", 10)
+        nonempty_list(r, "review_tests", 6)
+        nonempty_list(r, "permitted_dispositions", 5)
+        nonempty_list(r, "closure_requirements", 7)
+        nonempty_list(r, "automatic_nonclosure_conditions", 7)
+        if not str(r.get("contact_gate_effect", "")).startswith("NONE"):
+            raise ValueError("independent review protocol must have zero contact-gate effect")
+        boundary = r.get("claims_boundary", "").lower()
+        for term in ["not an independent review", "does not establish independent replication", "remediation probability"]:
+            if term not in boundary:
+                raise ValueError(f"review claims boundary missing {term!r}")
     except ValueError as exc:
         errors.append(str(exc))
     return errors
@@ -85,16 +134,31 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--protocol", default="boeing_spirit/partner_pilot_protocol.v1.json")
     ap.add_argument("--security", default="boeing_spirit/security_data_boundary.v1.json")
+    ap.add_argument("--effect", default="boeing_spirit/effect_measurement_protocol.v1.json")
+    ap.add_argument("--independent-review", dest="independent_review", default="boeing_spirit/independent_review_protocol.v1.json")
     ap.add_argument("--output", default="boeing_spirit/evidence/partner-preparation-report.json")
     args = ap.parse_args()
 
     protocol = load(args.protocol)
     security = load(args.security)
-    errors = validate_protocol(protocol) + validate_security(security)
+    effect = load(args.effect)
+    independent_review = load(args.independent_review)
+    errors = (
+        validate_protocol(protocol)
+        + validate_security(security)
+        + validate_effect(effect)
+        + validate_independent_review(independent_review)
+    )
     report = {
-        "schema": "WS-BOEING-SPIRIT-PARTNER-PREPARATION-REPORT-V1",
+        "schema": "WS-BOEING-SPIRIT-PARTNER-PREPARATION-REPORT-V2",
         "result": "PASS" if not errors else "FAIL",
         "errors": errors,
+        "validated_internal_artifacts": [
+            "partner_pilot_protocol",
+            "security_data_boundary",
+            "effect_measurement_protocol",
+            "independent_review_protocol"
+        ],
         "external_gate_updates": {
             "partner_data_access": "missing",
             "partner_pilot": "missing",
@@ -103,7 +167,7 @@ def main() -> int:
             "independent_review": "missing"
         },
         "contact_gate_effect": "NONE",
-        "claims_boundary": "A PASS validates internal preparation artifacts only. It does not authorize Boeing/Spirit contact or close any partner, security, effect-size, independent-review, certification, compliance, or production gate."
+        "claims_boundary": "A PASS validates internal preparation artifacts only. It does not authorize Boeing/Spirit contact or close any partner-data, partner-pilot, security, measured-effect, independent-review, certification, compliance, production, adoption or commercial-outcome gate."
     }
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
