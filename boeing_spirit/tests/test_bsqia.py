@@ -2,6 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
+from boeing_spirit.adversarial_campaign import generate_campaign, run_campaign
 from boeing_spirit.contact_gate import TARGET, evaluate as evaluate_contact, zero_failure_exact_lower_bound
 from boeing_spirit.quality_assurance import BLOCK, PASS, evaluate_corpus, evaluate_record
 
@@ -13,6 +14,7 @@ class QualityAssuranceTests(unittest.TestCase):
     def setUp(self):
         fixture = json.loads((ROOT / "boeing_spirit/fixtures/synthetic_supplier_records.v1.json").read_text())
         self.records = fixture["records"]
+        self.clean = next(r for r in self.records if r["record_id"] == "CLEAN-001")
 
     def test_synthetic_fixture_is_exactly_classified(self):
         report = evaluate_corpus(self.records)
@@ -35,8 +37,23 @@ class QualityAssuranceTests(unittest.TestCase):
         self.assertIn("SCHEDULE_OVERRIDE_REQUIRES_SEPARATE_AUTHORITY", {f["code"] for f in result["findings"]})
 
     def test_clean_record_passes(self):
-        record = next(r for r in self.records if r["record_id"] == "CLEAN-001")
-        self.assertEqual(evaluate_record(record)["disposition"], PASS)
+        self.assertEqual(evaluate_record(self.clean)["disposition"], PASS)
+
+    def test_adversarial_campaign_has_all_256_boolean_combinations(self):
+        cases = generate_campaign(self.clean)
+        self.assertEqual(len(cases), 256)
+        self.assertEqual(sum(1 for case in cases if case["expected"] == PASS), 1)
+        self.assertEqual(sum(1 for case in cases if case["expected"] == BLOCK), 255)
+
+    def test_adversarial_campaign_fails_closed_without_misses(self):
+        report = run_campaign(self.clean)
+        self.assertEqual(report["result"], "PASS")
+        self.assertEqual(report["case_count"], 256)
+        self.assertEqual(report["blocked_count"], 255)
+        self.assertEqual(report["pass_count"], 1)
+        self.assertEqual(report["mismatch_count"], 0)
+        self.assertEqual(report["critical_false_negative_count"], 0)
+        self.assertEqual(report["contact_decision"], "NO_CONTACT")
 
 
 class ContactGateTests(unittest.TestCase):
