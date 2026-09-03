@@ -31,7 +31,10 @@ jobs:
 
       - name: Compile bounded assurance modules
         run: |
-          python -m py_compile boeing_spirit/quality_assurance.py boeing_spirit/contact_gate.py
+          python -m py_compile \
+            boeing_spirit/quality_assurance.py \
+            boeing_spirit/adversarial_campaign.py \
+            boeing_spirit/contact_gate.py
 
       - name: Run regression tests
         run: python -m unittest discover -s boeing_spirit/tests -v
@@ -41,6 +44,12 @@ jobs:
           python boeing_spirit/quality_assurance.py \
             --input boeing_spirit/fixtures/synthetic_supplier_records.v1.json \
             --output boeing_spirit/evidence/synthetic-quality-report.json
+
+      - name: Execute 256-case combinatorial red-team campaign
+        run: |
+          python -m boeing_spirit.adversarial_campaign \
+            --fixture boeing_spirit/fixtures/synthetic_supplier_records.v1.json \
+            --output boeing_spirit/evidence/adversarial-campaign-report.json
 
       - name: Evaluate 98.7 external-contact gate
         run: |
@@ -55,18 +64,29 @@ jobs:
           from pathlib import Path
 
           quality = json.loads(Path('boeing_spirit/evidence/synthetic-quality-report.json').read_text())
+          redteam = json.loads(Path('boeing_spirit/evidence/adversarial-campaign-report.json').read_text())
           gate = json.loads(Path('boeing_spirit/evidence/contact-gate-report.json').read_text())
+
           assert quality['schema'] == 'WS-BSQIA-ASSURANCE-REPORT-V1'
           assert quality['result'] == 'PASS'
           assert quality['confusion'] == {'tp_block': 10, 'tn_pass': 2, 'fp_block': 0, 'fn_pass': 0}
           assert quality['external_solution_probability_pct'] is None
           assert quality['contact_decision'] == 'NO_CONTACT'
+
+          assert redteam['schema'] == 'WS-BSQIA-ADVERSARIAL-CAMPAIGN-V1'
+          assert redteam['result'] == 'PASS'
+          assert redteam['case_count'] == 256
+          assert redteam['blocked_count'] == 255
+          assert redteam['pass_count'] == 1
+          assert redteam['critical_false_negative_count'] == 0
+          assert redteam['contact_decision'] == 'NO_CONTACT'
+
           assert gate['schema'] == 'WS-BSQIA-CONTACT-GATE-REPORT-V1'
           assert gate['target_probability'] == 0.987
           assert gate['decision'] == 'NO_CONTACT'
           assert 'external_independent_evidence' in gate['failed_gates']
           assert 'statistical_lower_bound_98_7' in gate['failed_gates']
-          print('BS-QIA internal synthetic gate PASS; external contact remains blocked')
+          print('BS-QIA internal synthetic + adversarial gates PASS; external contact remains blocked')
           PY
 
       - name: Hash retained candidate evidence
@@ -74,10 +94,12 @@ jobs:
           sha256sum \
             boeing_spirit/problem_register.v1.json \
             boeing_spirit/quality_assurance.py \
+            boeing_spirit/adversarial_campaign.py \
             boeing_spirit/contact_gate.py \
             boeing_spirit/fixtures/synthetic_supplier_records.v1.json \
             boeing_spirit/evidence/current_contact_evidence.v1.json \
             boeing_spirit/evidence/synthetic-quality-report.json \
+            boeing_spirit/evidence/adversarial-campaign-report.json \
             boeing_spirit/evidence/contact-gate-report.json \
             | sort > boeing_spirit/evidence/SHA256SUMS.txt
           cat boeing_spirit/evidence/SHA256SUMS.txt
@@ -88,6 +110,7 @@ jobs:
           name: boeing-spirit-qia-internal-evidence
           path: |
             boeing_spirit/evidence/synthetic-quality-report.json
+            boeing_spirit/evidence/adversarial-campaign-report.json
             boeing_spirit/evidence/contact-gate-report.json
             boeing_spirit/evidence/SHA256SUMS.txt
           retention-days: 90
