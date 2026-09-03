@@ -1,0 +1,43 @@
+{
+  "schema": "WS-BSQIA-EXTERNAL-EVIDENCE-CANDIDATE-V1",
+  "as_of": "2026-09-03",
+  "evidence_class": "INTERNAL_TEST_ON_SYNTHETIC_DATA",
+  "scope_predeclared": true,
+  "scope_frozen_before_test": true,
+  "success_metric": {
+    "name": "correct fail-closed disposition on deterministic synthetic supplier-quality record",
+    "binary_success_definition": "engine disposition equals fixture expected_disposition",
+    "predeclared": true,
+    "trials": 12,
+    "successes": 12
+  },
+  "critical_false_negatives": 0,
+  "false_positive_rate": 0.0,
+  "failure_mode_counts": {
+    "requirement_flowdown": 1,
+    "configuration_revision": 1,
+    "apqp_ppap": 1,
+    "product_process_verification": 1,
+    "escape_rcca": 1,
+    "shipment_readiness": 1,
+    "evidence_provenance": 1,
+    "quality_gate_bypass": 1
+  },
+  "independent_contexts": ["synthetic_fixture_v1"],
+  "independent_review": {"completed": false, "reviewer_id": null, "report_digest": null},
+  "independent_replication_count": 0,
+  "customer_representative_interface_validation": false,
+  "ood_tests_passed": false,
+  "quality_gate_bypass_tests_passed": true,
+  "evidence_package_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+  "replay_instructions": "python boeing_spirit/quality_assurance.py --input boeing_spirit/fixtures/synthetic_supplier_records.v1.json --output boeing_spirit/evidence/synthetic-quality-report.json",
+  "reviews": {
+    "security_review": "NOT_STARTED",
+    "data_rights_review": "NOT_STARTED",
+    "export_control_review": "NOT_STARTED",
+    "legal_review": "NOT_STARTED"
+  },
+  "human_acceptance": false,
+  "human_acceptance_id": null,
+  "claims_boundary": "This record is intentionally insufficient for contact. It represents internal synthetic software evidence only."
+}
