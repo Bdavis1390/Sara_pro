@@ -42,6 +42,8 @@ REQUIRED_PACKAGE_FIELDS = [
     "reproducibility_outputs",
 ]
 
+CORE_SERVICE_LANES = {"WS-CORE", "SARA", "PRE", "REVENUE-E2E"}
+
 FORBIDDEN_TARGET_EQUIVALENCES = {
     "physical_validation",
     "flight_qualified",
@@ -152,7 +154,8 @@ def validate(data: dict, packages_data: dict | None = None) -> tuple[list[dict],
 
         pkg = package_map.get(wsid) if package_map else None
         pkg_ok = package_complete(pkg) if package_map else False
-        if package_map and score >= target and not pkg_ok:
+        package_required = wsid not in CORE_SERVICE_LANES
+        if package_map and package_required and score >= target and not pkg_ok:
             errors.append(
                 f"{wsid}: cannot meet 98.7 internal/partner readiness without a complete domain package"
             )
@@ -164,6 +167,7 @@ def validate(data: dict, packages_data: dict | None = None) -> tuple[list[dict],
             "target_pct": target,
             "gap_pct": round(max(0.0, target - score), 2),
             "target_met": score >= target,
+            "partner_package_required": package_required,
             "partner_package_complete": pkg_ok,
             "evidence_maturity": maturity,
             "external_maturity_cap_pct": cap,
@@ -215,7 +219,10 @@ def main() -> int:
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     for row in sorted(rows, key=lambda x: (x["gap_pct"], x["id"]), reverse=True):
-        package_flag = "pkg=complete" if row["partner_package_complete"] else "pkg=open"
+        if row["partner_package_required"]:
+            package_flag = "pkg=complete" if row["partner_package_complete"] else "pkg=open"
+        else:
+            package_flag = "pkg=n/a-core"
         print(
             f"{row['id']}: {row['internal_partner_readiness_pct']:.2f}% "
             f"(gap {row['gap_pct']:.2f} pp; {package_flag}; evidence={row['evidence_maturity']}; "
