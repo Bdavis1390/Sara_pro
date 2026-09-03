@@ -1,0 +1,43 @@
+{
+  "schema": "WS-BOEING-SPIRIT-FIVE-TASK-ROUTING-V1",
+  "as_of": "2026-09-03",
+  "policy": "Fold WS-BOEING-01 into the five existing active Worldshepherd task lanes. Do not create a sixth Boeing/Spirit automation.",
+  "task_lanes": [
+    {
+      "title": "USPTO DOE WEF BDS + Boeing/Spirit Scan",
+      "role": "Public technical-intelligence and requirements cross-feed",
+      "boeing_spirit_scope": ["supplier quality", "manufacturing", "standards", "safety/quality signals", "PRE requirement deltas", "national-lab or public validation methods relevant to the pilot"],
+      "outreach": "none"
+    },
+    {
+      "title": "Weekly Brief, Replies + Boeing/Spirit",
+      "role": "Executive reconciliation",
+      "boeing_spirit_scope": ["machine evidence state", "confidence/contact gate", "closed/open validation gates", "claims boundaries", "material relationship changes"],
+      "outreach": "briefing/draft review only unless separately authorized"
+    },
+    {
+      "title": "Defense & Dual-Use + Boeing/Spirit Watch",
+      "role": "Spirit Defense, supplier/teaming, qualification and dual-use opportunity intelligence",
+      "boeing_spirit_scope": ["Spirit Defense public demand", "prime/subcontract routes", "quality/mission-assurance requirements", "qualification/compliance deltas", "relevant government opportunities"],
+      "outreach": "feed verified routes to the relationship owner; do not duplicate contact"
+    },
+    {
+      "title": "Pentagon UAP + Boeing/Spirit Aerospace Lessons",
+      "role": "Aerospace sensing/mission-system lesson cross-feed only when the source already qualifies under the task",
+      "boeing_spirit_scope": ["sensor provenance", "telemetry lineage", "multi-source correlation", "configuration custody", "safety/mission-system evidence lessons"],
+      "outreach": "none"
+    },
+    {
+      "title": "Revenue, Partner Replies + Boeing/Spirit Oversight",
+      "role": "Canonical relationship and contact-gate owner",
+      "boeing_spirit_scope": ["revenue ledger row", "official route verification", "reply monitoring after contact", "contact package", "contact-gate evidence", "relationship stage"],
+      "outreach": "Do not contact while contact_gate_pass=false. If a future machine report reaches >=98.7 and every required external gate is verified/complete, reverify the official route and execute only a claims-controlled non-confidential first contact within existing authorization boundaries."
+    }
+  ],
+  "current_state": {
+    "evidence_backed_remediation_confidence_pct": 55.0,
+    "contact_gate_pass": false,
+    "contact_action": "DO NOT CONTACT — EXTERNAL VALIDATION GATES REMAIN OPEN"
+  },
+  "claims_boundary": "The five-task routing coordinates work; it does not establish Boeing/Spirit interest, partnership, adoption, validation, savings, defect reduction, compliance, certification, or a statistical probability of remediation."
+}
