@@ -148,7 +148,7 @@ def score(config: dict, synthetic_report: dict | None) -> dict:
         "contact_action": (
             "AUTHORIZED_BY_MACHINE_GATE_FOR_HUMAN/AGENT EXECUTION THROUGH OFFICIAL ROUTE"
             if contact_gate_pass
-            else "DO_NOT_CONTACT — EXTERNAL VALIDATION GATES REMAIN OPEN"
+            else "DO NOT CONTACT — EXTERNAL VALIDATION GATES REMAIN OPEN"
         ),
         "claims_boundary": config["claims_boundary"],
     }
