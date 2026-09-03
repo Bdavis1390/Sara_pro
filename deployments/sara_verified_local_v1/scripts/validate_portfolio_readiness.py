@@ -28,6 +28,20 @@ REQUIRED_GATES = [
     "reproducibility_evidence_package",
 ]
 
+REQUIRED_PACKAGE_FIELDS = [
+    "use_case",
+    "engineering_basis",
+    "assumptions_limits",
+    "hazards",
+    "data_package",
+    "baseline",
+    "test_campaign",
+    "acceptance",
+    "partner_interface",
+    "external_safe_statement",
+    "reproducibility_outputs",
+]
+
 FORBIDDEN_TARGET_EQUIVALENCES = {
     "physical_validation",
     "flight_qualified",
@@ -41,7 +55,7 @@ FORBIDDEN_TARGET_EQUIVALENCES = {
 def load_json(path: pathlib.Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data, dict):
-        raise SystemExit("readiness registry must be a JSON object")
+        raise SystemExit(f"{path}: expected JSON object")
     return data
 
 
@@ -61,7 +75,23 @@ def score_workstream(ws: dict, weights: dict) -> float:
     return round((score / total) * 100.0, 2)
 
 
-def validate(data: dict) -> tuple[list[dict], list[str]]:
+def package_complete(package: dict | None) -> bool:
+    if not isinstance(package, dict):
+        return False
+    for field in REQUIRED_PACKAGE_FIELDS:
+        value = package.get(field)
+        if isinstance(value, str):
+            if not value.strip():
+                return False
+        elif isinstance(value, list):
+            if not value:
+                return False
+        else:
+            return False
+    return True
+
+
+def validate(data: dict, packages_data: dict | None = None) -> tuple[list[dict], list[str]]:
     errors: list[str] = []
     if data.get("schema") != "WS-READINESS-PORTFOLIO-V1":
         errors.append("unexpected readiness schema")
@@ -77,6 +107,15 @@ def validate(data: dict) -> tuple[list[dict], list[str]]:
         errors.append("gate weights must sum to 100")
 
     caps = data.get("evidence_maturity_caps_pct", {})
+    package_map = {}
+    if packages_data is not None:
+        if packages_data.get("schema") != "WS-PARTNER-READINESS-PACKAGES-V1":
+            errors.append("unexpected partner-readiness package schema")
+        package_map = packages_data.get("packages", {})
+        if not isinstance(package_map, dict):
+            errors.append("packages must be a JSON object")
+            package_map = {}
+
     rows: list[dict] = []
     seen: set[str] = set()
 
@@ -111,6 +150,13 @@ def validate(data: dict) -> tuple[list[dict], list[str]]:
                 f"{wsid}: 98.7 target cannot be redefined as {target_kind}; use internal_partner_readiness"
             )
 
+        pkg = package_map.get(wsid) if package_map else None
+        pkg_ok = package_complete(pkg) if package_map else False
+        if package_map and score >= target and not pkg_ok:
+            errors.append(
+                f"{wsid}: cannot meet 98.7 internal/partner readiness without a complete domain package"
+            )
+
         rows.append({
             "id": wsid,
             "name": ws.get("name", wsid),
@@ -118,27 +164,26 @@ def validate(data: dict) -> tuple[list[dict], list[str]]:
             "target_pct": target,
             "gap_pct": round(max(0.0, target - score), 2),
             "target_met": score >= target,
+            "partner_package_complete": pkg_ok,
             "evidence_maturity": maturity,
             "external_maturity_cap_pct": cap,
             "open_external_gate_count": len(ws.get("open_external_gates", [])),
             "open_external_gates": ws.get("open_external_gates", []),
         })
 
+    if package_map:
+        unknown_packages = sorted(set(package_map) - seen)
+        if unknown_packages:
+            errors.append(f"partner packages exist for unknown workstreams: {unknown_packages}")
+
     return rows, errors
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--registry",
-        default="readiness/portfolio.v1.json",
-        help="Path to WS readiness registry",
-    )
-    parser.add_argument(
-        "--output",
-        default="readiness/portfolio-report.json",
-        help="Output report path",
-    )
+    parser.add_argument("--registry", default="readiness/portfolio.v1.json")
+    parser.add_argument("--packages", default="readiness/partner-packages.v1.json")
+    parser.add_argument("--output", default="readiness/portfolio-report.json")
     parser.add_argument(
         "--enforce-target",
         action="store_true",
@@ -146,10 +191,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    registry = pathlib.Path(args.registry)
-    output = pathlib.Path(args.output)
-    data = load_json(registry)
-    rows, errors = validate(data)
+    data = load_json(pathlib.Path(args.registry))
+    packages_path = pathlib.Path(args.packages)
+    packages_data = load_json(packages_path) if packages_path.exists() else None
+    rows, errors = validate(data, packages_data)
 
     target = float(data.get("target_internal_partner_readiness_pct", 98.7))
     report = {
@@ -157,6 +202,7 @@ def main() -> int:
         "target_internal_partner_readiness_pct": target,
         "workstreams": rows,
         "target_met_count": sum(1 for row in rows if row["target_met"]),
+        "package_complete_count": sum(1 for row in rows if row["partner_package_complete"]),
         "workstream_count": len(rows),
         "errors": errors,
         "claims_boundary": (
@@ -164,13 +210,15 @@ def main() -> int:
             "propulsion, regulatory, certification, or independent-validation evidence maturity."
         ),
     }
+    output = pathlib.Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     for row in sorted(rows, key=lambda x: (x["gap_pct"], x["id"]), reverse=True):
+        package_flag = "pkg=complete" if row["partner_package_complete"] else "pkg=open"
         print(
             f"{row['id']}: {row['internal_partner_readiness_pct']:.2f}% "
-            f"(gap {row['gap_pct']:.2f} pp; evidence={row['evidence_maturity']}; "
+            f"(gap {row['gap_pct']:.2f} pp; {package_flag}; evidence={row['evidence_maturity']}; "
             f"external cap={row['external_maturity_cap_pct']:.1f}%)"
         )
 
