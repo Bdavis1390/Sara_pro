@@ -1,0 +1,70 @@
+{
+  "schema": "WS-BOEING-SPIRIT-PUBLIC-QUALITY-CROSSWALK-V1",
+  "as_of": "2026-09-03",
+  "scope": "Internal crosswalk from publicly available Boeing supplier-quality requirements/resources to Worldshepherd evidence controls. Applicability to any real Boeing procurement is determined by the actual contract/order and Boeing authority.",
+  "sources": [
+    {
+      "id": "BQMS-D6-82479",
+      "title": "Boeing Quality Management System Requirements for Suppliers (D6-82479)",
+      "url": "https://www.boeingsuppliers.com/become/quality/qms",
+      "bounded_requirement": "Boeing defines supplier QMS requirements in D6-82479 appendices/addenda; applicability is contract-defined and Boeing retains assessment/recognition rights."
+    },
+    {
+      "id": "Q017-APQP-PPAP",
+      "title": "Boeing Clause Q017 — Advanced Product Quality Planning and Production Part Approval Process",
+      "url": "https://www.boeingsuppliers.com/clauses/docs/Q017_11022023.pdf",
+      "bounded_requirement": "For indicated contract line items, Q017 requires AS9145 APQP/PPAP artifacts as determined by the Buyer, with artifact sets varying by supplier/design responsibility."
+    },
+    {
+      "id": "SQS",
+      "title": "Boeing Supplier Quality Surveillance",
+      "url": "https://www.boeingsuppliers.com/become/quality/ecqs",
+      "bounded_requirement": "Boeing SQS uses Product Assessment, Quality Process Assessment and Manufacturing Process Assessment in a planned risk/performance-based surveillance process."
+    },
+    {
+      "id": "QUALITY-INDEX",
+      "title": "Boeing Quality Requirements and Information",
+      "url": "https://www.boeingsuppliers.com/become/quality/index-quality",
+      "bounded_requirement": "Enterprise resources include approved process sources, Nadcap, SQS, FAI, BQMS, digital product definition and quality clauses."
+    }
+  ],
+  "q017_ppap_artifacts": [
+    {"element": 1, "name": "Design Records", "worldshepherd_record": "design_record", "typical_applicability": "seller-designed when required by Buyer"},
+    {"element": 2, "name": "Design Risk Analysis / DFMEA", "worldshepherd_record": "dfmea", "typical_applicability": "seller-designed when required by Buyer"},
+    {"element": 3, "name": "Process Flow Diagram", "worldshepherd_record": "process_flow", "typical_applicability": "required as determined by Buyer"},
+    {"element": 4, "name": "PFMEA", "worldshepherd_record": "pfmea", "typical_applicability": "required as determined by Buyer"},
+    {"element": 5, "name": "Control Plan", "worldshepherd_record": "control_plan", "typical_applicability": "required as determined by Buyer"},
+    {"element": 6, "name": "Measurement Systems Analysis", "worldshepherd_record": "msa", "typical_applicability": "as required by Buyer"},
+    {"element": 7, "name": "Initial Process Capability Studies", "worldshepherd_record": "initial_process_capability", "typical_applicability": "as required by Buyer"},
+    {"element": 8, "name": "Packaging, Preservation and Labelling Approvals", "worldshepherd_record": "packaging_preservation_labeling", "typical_applicability": "as required by Buyer"},
+    {"element": 9, "name": "First Article Inspection Report", "worldshepherd_record": "fair", "typical_applicability": "as required by Buyer"},
+    {"element": 11, "name": "PPAP Approval Form or Equivalent", "worldshepherd_record": "ppap_approval", "typical_applicability": "required as determined by Buyer"}
+  ],
+  "sqs_crosswalk": [
+    {
+      "boeing_tool": "Product Assessment",
+      "worldshepherd_support": ["configuration-specific requirement lineage", "inspection evidence digest", "drawing/model revision custody", "nonconformance link"],
+      "boundary": "Worldshepherd can organize evidence; Boeing personnel retain Boeing surveillance/acceptance authority."
+    },
+    {
+      "boeing_tool": "Quality Process Assessment",
+      "worldshepherd_support": ["sub-tier supplier control evidence", "corrective-action lineage", "FAI evidence state", "audit trail"],
+      "boundary": "No Boeing QPA result is inferred from internal checks."
+    },
+    {
+      "boeing_tool": "Manufacturing Process Assessment",
+      "worldshepherd_support": ["process/configuration evidence graph", "calibration/MSA state", "process-change invalidation", "measurement provenance"],
+      "boundary": "Manufacturing-process conformance requires the applicable Boeing assessment and real process evidence."
+    }
+  ],
+  "machine_rules": [
+    "contract/order applicability must be explicit before any artifact is called required",
+    "artifact requirement state must distinguish REQUIRED, AS_REQUIRED, NOT_APPLICABLE and UNKNOWN",
+    "required artifact absence blocks PPAP evidence completeness",
+    "a process/design/configuration change invalidates affected downstream artifacts until reassessed",
+    "FAI/FAIR evidence is configuration-specific",
+    "MSA/calibration evidence cannot support release after expiry or unacceptable result",
+    "Boeing surveillance/approval status cannot be generated by Worldshepherd"
+  ],
+  "claims_boundary": "This crosswalk uses public Boeing material for preparation and software test design. It is not a Boeing-approved interpretation, does not replace AS9145/AS9100/D6-82479/Q017 or the governing contract, and does not establish supplier approval, QMS approval, APQP/PPAP acceptance, SQS results, or product acceptance."
+}
