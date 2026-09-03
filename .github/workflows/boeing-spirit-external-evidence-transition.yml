@@ -1,0 +1,78 @@
+name: Boeing Spirit External Evidence Transition Guard
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/confidence.v1.json'
+      - 'boeing_spirit/external_evidence_transition_contract.v1.json'
+      - 'boeing_spirit/validate_external_evidence_transition.py'
+      - '.github/workflows/boeing-spirit-external-evidence-transition.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/confidence.v1.json'
+      - 'boeing_spirit/external_evidence_transition_contract.v1.json'
+      - 'boeing_spirit/validate_external_evidence_transition.py'
+      - '.github/workflows/boeing-spirit-external-evidence-transition.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  external-evidence-transition-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile validator
+        run: python -m py_compile boeing_spirit/validate_external_evidence_transition.py
+
+      - name: Validate external evidence transition contract
+        run: >-
+          python boeing_spirit/validate_external_evidence_transition.py
+          --contract boeing_spirit/external_evidence_transition_contract.v1.json
+          --confidence boeing_spirit/confidence.v1.json
+          --output boeing_spirit/evidence/external-evidence-transition-report.json
+
+      - name: Verify current state closes nothing
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/external-evidence-transition-report.json').read_text())
+          assert r['result'] == 'PASS'
+          assert r['transition_request_count'] == 0
+          assert r['current_expected_result'] == 'NO_TRANSITIONS_REQUESTED'
+          assert r['required_gate_count'] == 5
+          assert r['closed_gate_transitions_authorized_by_this_report'] == 0
+          assert r['contact_gate_effect'] == 'NONE'
+          assert 'closes no Boeing/Spirit external gate' in r['claims_boundary']
+          print(json.dumps(r, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: |
+          sha256sum boeing_spirit/evidence/external-evidence-transition-report.json > boeing_spirit/evidence/EXTERNAL_EVIDENCE_TRANSITION_SHA256SUMS.txt
+          cat boeing_spirit/evidence/EXTERNAL_EVIDENCE_TRANSITION_SHA256SUMS.txt
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-external-evidence-transition-guard
+          path: |
+            boeing_spirit/evidence/external-evidence-transition-report.json
+            boeing_spirit/evidence/EXTERNAL_EVIDENCE_TRANSITION_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error
