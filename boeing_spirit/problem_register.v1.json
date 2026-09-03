@@ -1,0 +1,105 @@
+{
+  "schema": "WS-BOEING-SPIRIT-PROBLEM-REGISTER-V1",
+  "as_of": "2026-09-03",
+  "program": "Boeing-Spirit Quality Integration Assurance",
+  "claims_boundary": "Public signals define candidate problem classes only. They do not establish Boeing root cause, Worldshepherd adoption, or real-world solution effectiveness.",
+  "public_sources": [
+    {
+      "id": "SRC-APQP-2026-17330",
+      "title": "Mid-Level - Quality Assurance Supplier - APQP Rep",
+      "organization": "Boeing / Spirit Commercial",
+      "date": "2026-08-31",
+      "url": "https://jobs.boeing.com/job/wichita/mid-level-quality-assurance-supplier-apqp-rep/185/99976298128",
+      "signal": "APQP/PPAP, Process Flow, PFMEA, Control Plan, SPC, MSA, FAI, supplier QMS, audits, NOE and 8D closure"
+    },
+    {
+      "id": "SRC-PPV-2026-17331",
+      "title": "Mid-Level - Quality Assurance Supplier - Product and Process Verification Representative",
+      "organization": "Boeing / Spirit Commercial",
+      "date": "2026-08-31",
+      "url": "https://jobs.boeing.com/job/wichita/mid-level-quality-assurance-supplier-product-and-process-verification-representative/185/99976298080",
+      "signal": "supplier planning versus engineering requirements, product/process audits, RCCA closure, SAP/MES"
+    },
+    {
+      "id": "SRC-CFG-2026-16906",
+      "title": "Mid-Level - Quality Assurance Configuration Verification",
+      "organization": "Boeing / Spirit Commercial",
+      "date": "2026-06-15",
+      "url": "https://jobs.boeing.com/job/wichita/mid-level-quality-assurance-configuration-verification/185/96470002256",
+      "signal": "customer configuration requirements, BOM analysis, engineering changes, build records, open work and shipping documents"
+    }
+  ],
+  "problem_classes": [
+    {
+      "id": "BSQIA-P01",
+      "name": "Requirement flow-down gap",
+      "severity": "critical",
+      "public_basis": ["SRC-PPV-2026-17331", "SRC-APQP-2026-17330"],
+      "worldshepherd_control": "SARA requirement-to-evidence graph with PRIME fail-closed release gate",
+      "acceptance_metric": "Every predeclared applicable engineering/customer/contract requirement resolves to supplier planning evidence or an approved exception"
+    },
+    {
+      "id": "BSQIA-P02",
+      "name": "Configuration / revision inconsistency",
+      "severity": "critical",
+      "public_basis": ["SRC-CFG-2026-16906", "SRC-PPV-2026-17331"],
+      "worldshepherd_control": "Configuration lineage reconciler across engineering revision, supplier planning revision, BOM and build record",
+      "acceptance_metric": "No release when a controlled revision mismatch or unresolved configuration inconsistency is present"
+    },
+    {
+      "id": "BSQIA-P03",
+      "name": "Incomplete APQP/PPAP evidence",
+      "severity": "major",
+      "public_basis": ["SRC-APQP-2026-17330"],
+      "worldshepherd_control": "APQP evidence compiler for Process Flow, PFMEA, Control Plan, SPC, MSA and FAI",
+      "acceptance_metric": "All applicable APQP evidence objects are present, current, source-bound and reviewable"
+    },
+    {
+      "id": "BSQIA-P04",
+      "name": "Supplier product/process verification gap",
+      "severity": "critical",
+      "public_basis": ["SRC-PPV-2026-17331"],
+      "worldshepherd_control": "Product/process verification record with audit finding and requirement lineage",
+      "acceptance_metric": "Unresolved major/critical PPV findings block release"
+    },
+    {
+      "id": "BSQIA-P05",
+      "name": "Open escape / RCCA / 8D",
+      "severity": "critical",
+      "public_basis": ["SRC-APQP-2026-17330", "SRC-PPV-2026-17331"],
+      "worldshepherd_control": "Escape-to-containment-to-RCCA evidence graph with effectiveness and closure gates",
+      "acceptance_metric": "A required escape/RCCA record cannot be treated as closed without retained closure evidence"
+    },
+    {
+      "id": "BSQIA-P06",
+      "name": "Open work or incomplete shipment evidence",
+      "severity": "critical",
+      "public_basis": ["SRC-CFG-2026-16906"],
+      "worldshepherd_control": "Build-record and shipment-readiness gate",
+      "acceptance_metric": "Open work and required shipment-document gaps are visible and block release unless formally dispositioned"
+    },
+    {
+      "id": "BSQIA-P07",
+      "name": "Stale or untrusted quality evidence",
+      "severity": "major",
+      "public_basis": ["SRC-APQP-2026-17330", "SRC-PPV-2026-17331", "SRC-CFG-2026-16906"],
+      "worldshepherd_control": "ECHO source/timestamp/digest custody plus evidence-debt monitoring",
+      "acceptance_metric": "Every decision-driving evidence object carries provenance, time, integrity and review status"
+    },
+    {
+      "id": "BSQIA-P08",
+      "name": "Schedule pressure bypasses quality gate",
+      "severity": "critical",
+      "public_basis": ["SRC-APQP-2026-17330", "SRC-CFG-2026-16906"],
+      "worldshepherd_control": "PRIME policy gate and human-authority separation",
+      "acceptance_metric": "A schedule/production override cannot silently convert a blocked record to releasable"
+    }
+  ],
+  "non_target_problems": [
+    "Off-market customer-contract economics and acquisition purchase-price allocation",
+    "Aircraft certification or airworthiness determinations",
+    "Physical manufacturing defects not observable from available evidence",
+    "Corporate financial restructuring",
+    "Replacement of Boeing/Spirit authoritative production systems"
+  ]
+}
