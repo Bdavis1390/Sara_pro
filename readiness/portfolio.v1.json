@@ -1,0 +1,156 @@
+{
+  "schema": "WS-READINESS-PORTFOLIO-V1",
+  "as_of": "2026-09-03",
+  "target_internal_partner_readiness_pct": 98.7,
+  "claims_rule": "Internal/partner readiness does not elevate physical, clinical, flight, RF, propulsion, regulatory, certification, or independent-validation maturity.",
+  "status_values": ["verified", "complete", "documented", "partial", "planned", "missing"],
+  "gate_weights": {
+    "requirements_use_case": 10,
+    "models_engineering_basis": 10,
+    "assumptions_uncertainty_limits": 10,
+    "hazards_regulatory_dependencies": 10,
+    "data_provenance_custody": 10,
+    "simulation_baseline": 10,
+    "test_plan_acceptance": 10,
+    "partner_facility_interface": 10,
+    "claims_release_controls": 10,
+    "reproducibility_evidence_package": 10
+  },
+  "evidence_maturity_caps_pct": {
+    "architecture": 20,
+    "simulated": 35,
+    "implemented_software": 60,
+    "internal_test": 65,
+    "partner_test": 80,
+    "independently_replicated": 92,
+    "qualified_or_certified": 100
+  },
+  "workstreams": [
+    {
+      "id": "WS-CORE",
+      "name": "Worldshepherd governance and coordination core",
+      "evidence_maturity": "implemented_software",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"verified","assumptions_uncertainty_limits":"complete","hazards_regulatory_dependencies":"complete","data_provenance_custody":"verified","simulation_baseline":"verified","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"verified"},
+      "open_external_gates": ["CRE1AWS integrated release acceptance", "continued independent operational review"]
+    },
+    {
+      "id": "SARA",
+      "name": "SARA / SSPADAWANZZ governed command platform",
+      "evidence_maturity": "internal_test",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"verified","assumptions_uncertainty_limits":"complete","hazards_regulatory_dependencies":"complete","data_provenance_custody":"verified","simulation_baseline":"verified","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"verified"},
+      "open_external_gates": ["off-host/replacement-host recovery evidence", "production secrets management", "integrated CRE1AWS release review"]
+    },
+    {
+      "id": "OVERWATCH-ECHO",
+      "name": "OVERWATCH / ECHO evidence-bearing observability",
+      "evidence_maturity": "implemented_software",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"complete","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"complete","data_provenance_custody":"verified","simulation_baseline":"verified","test_plan_acceptance":"documented","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"partial"},
+      "open_external_gates": ["registered calibrated-source demonstration", "multi-source timing/corroboration validation"]
+    },
+    {
+      "id": "PRE",
+      "name": "Predictive Requirements Engine / opportunity intelligence",
+      "evidence_maturity": "implemented_software",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"verified","assumptions_uncertainty_limits":"complete","hazards_regulatory_dependencies":"complete","data_provenance_custody":"verified","simulation_baseline":"complete","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"verified"},
+      "open_external_gates": ["continuous opportunity-source freshness", "award/win-rate calibration against outcomes"]
+    },
+    {
+      "id": "WS-ENERGY",
+      "name": "Energy storage, microgrid, Grid PACE and Sandia-derived validation work",
+      "evidence_maturity": "simulated",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"documented","data_provenance_custody":"complete","simulation_baseline":"partial","test_plan_acceptance":"documented","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"partial"},
+      "open_external_gates": ["PyMDT/MDT Windows execution", "HIL microgrid campaign", "thermal/electrical fault testing", "independent review"]
+    },
+    {
+      "id": "WS-ALTI",
+      "name": "WS-AlTi / multi-feed DED programmable materials",
+      "evidence_maturity": "architecture",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"documented","data_provenance_custody":"complete","simulation_baseline":"partial","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["CALPHAD/phase-risk review", "coupon fabrication", "microscopy/XRD/EBSD/CT", "mechanical/thermal tests", "independent replication"]
+    },
+    {
+      "id": "WS-MS",
+      "name": "Adaptive programmable metasurfaces / RF",
+      "evidence_maturity": "simulated",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"verified","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"complete","data_provenance_custody":"verified","simulation_baseline":"verified","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"verified"},
+      "open_external_gates": ["external 3-D solver correlation", "fabricated coupon", "calibrated VNA measurement", "environmental repeatability", "independent review"]
+    },
+    {
+      "id": "RESONANCE",
+      "name": "Applied Resonance sensing, structural, acoustic and control research",
+      "evidence_maturity": "simulated",
+      "internal_gates": {"requirements_use_case":"documented","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"documented","data_provenance_custody":"complete","simulation_baseline":"partial","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["blind conventional diagnostic benchmarks", "five-repeat instrumented tests", "independent review"]
+    },
+    {
+      "id": "TIDELENS",
+      "name": "TIDELENS sensing and mission-assurance annex",
+      "evidence_maturity": "implemented_software",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"documented","data_provenance_custody":"verified","simulation_baseline":"verified","test_plan_acceptance":"documented","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["representative recorded data", "HIL", "controlled field test", "qualification partner"]
+    },
+    {
+      "id": "AEROSHEPHERD",
+      "name": "AEROSHEPHERD aircraft digital engineering and mission assurance",
+      "evidence_maturity": "simulated",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"verified","data_provenance_custody":"complete","simulation_baseline":"partial","test_plan_acceptance":"documented","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["representative vehicle integration", "structural/flutter/EMC validation", "flight test", "airworthiness/certification"]
+    },
+    {
+      "id": "HELIOS-LINK",
+      "name": "HELIOS-LINK bounded power-transfer architecture",
+      "evidence_maturity": "simulated",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"verified","data_provenance_custody":"complete","simulation_baseline":"partial","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["low-power bench transfer", "calibrated range test", "safety review", "measured end-to-end efficiency"]
+    },
+    {
+      "id": "BAROS",
+      "name": "BAROS radiotherapy optimization research",
+      "evidence_maturity": "architecture",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"verified","data_provenance_custody":"documented","simulation_baseline":"partial","test_plan_acceptance":"documented","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["qualified medical-physics review", "dose-engine verification", "retrospective validation", "institutional/regulatory pathway"]
+    },
+    {
+      "id": "LIFT-X10-X40-X400",
+      "name": "Lift architecture and complete mass-energy-range closure program",
+      "evidence_maturity": "simulated",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"verified","assumptions_uncertainty_limits":"verified","hazards_regulatory_dependencies":"documented","data_provenance_custody":"verified","simulation_baseline":"verified","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"verified"},
+      "open_external_gates": ["component dyno/coupon tests", "subscale integration", "independent mass-energy audit", "flight evidence"]
+    },
+    {
+      "id": "ION-EP",
+      "name": "Ion and electric propulsion integration research",
+      "evidence_maturity": "architecture",
+      "internal_gates": {"requirements_use_case":"documented","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"documented","data_provenance_custody":"complete","simulation_baseline":"partial","test_plan_acceptance":"documented","partner_facility_interface":"planned","claims_release_controls":"verified","reproducibility_evidence_package":"partial"},
+      "open_external_gates": ["component/plasma model", "calibrated thrust measurement", "endurance/plume/charging test", "spacecraft integration"]
+    },
+    {
+      "id": "WS-LAB-BOONE",
+      "name": "Worldshepherd laboratory / Boone equipment reuse planning",
+      "evidence_maturity": "architecture",
+      "internal_gates": {"requirements_use_case":"documented","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"verified","data_provenance_custody":"documented","simulation_baseline":"planned","test_plan_acceptance":"documented","partner_facility_interface":"planned","claims_release_controls":"verified","reproducibility_evidence_package":"partial"},
+      "open_external_gates": ["lawful equipment inventory", "ownership/disposition authorization", "condition/calibration", "facility/utilities review"]
+    },
+    {
+      "id": "STEG",
+      "name": "Stegriage digital-media forensic triage",
+      "evidence_maturity": "implemented_software",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"complete","data_provenance_custody":"verified","simulation_baseline":"complete","test_plan_acceptance":"documented","partner_facility_interface":"complete","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["consolidated scanner", "known-clean/known-embedded fixture corpus", "false-positive benchmark"]
+    },
+    {
+      "id": "REVENUE-E2E",
+      "name": "Revenue Engine / Evidence-to-Execution service",
+      "evidence_maturity": "implemented_software",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"complete","assumptions_uncertainty_limits":"complete","hazards_regulatory_dependencies":"verified","data_provenance_custody":"verified","simulation_baseline":"complete","test_plan_acceptance":"verified","partner_facility_interface":"complete","claims_release_controls":"verified","reproducibility_evidence_package":"verified"},
+      "open_external_gates": ["completed paid engagement evidence", "repeatable conversion/outcome metrics"]
+    },
+    {
+      "id": "MEISSNER-COLLAB",
+      "name": "Meissner candidate-to-device evidence and optimization collaboration lane",
+      "evidence_maturity": "architecture",
+      "internal_gates": {"requirements_use_case":"verified","models_engineering_basis":"documented","assumptions_uncertainty_limits":"documented","hazards_regulatory_dependencies":"documented","data_provenance_custody":"verified","simulation_baseline":"planned","test_plan_acceptance":"verified","partner_facility_interface":"documented","claims_release_controls":"verified","reproducibility_evidence_package":"documented"},
+      "open_external_gates": ["Meissner substantive engagement", "candidate dataset", "fabrication/characterization data", "device-level validation"]
+    }
+  ]
+}
