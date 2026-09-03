@@ -1,0 +1,94 @@
+name: Boeing-Spirit Quality Integration Assurance
+
+on:
+  push:
+    paths:
+      - 'boeing_spirit/**'
+      - '.github/workflows/boeing-spirit-qia.yml'
+  pull_request:
+    paths:
+      - 'boeing_spirit/**'
+      - '.github/workflows/boeing-spirit-qia.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bsqia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile bounded assurance modules
+        run: |
+          python -m py_compile boeing_spirit/quality_assurance.py boeing_spirit/contact_gate.py
+
+      - name: Run regression tests
+        run: python -m unittest discover -s boeing_spirit/tests -v
+
+      - name: Execute deterministic synthetic assurance corpus
+        run: |
+          python boeing_spirit/quality_assurance.py \
+            --input boeing_spirit/fixtures/synthetic_supplier_records.v1.json \
+            --output boeing_spirit/evidence/synthetic-quality-report.json
+
+      - name: Evaluate 98.7 external-contact gate
+        run: |
+          python boeing_spirit/contact_gate.py \
+            --evidence boeing_spirit/evidence/current_contact_evidence.v1.json \
+            --output boeing_spirit/evidence/contact-gate-report.json
+
+      - name: Verify current evidence remains fail-closed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          quality = json.loads(Path('boeing_spirit/evidence/synthetic-quality-report.json').read_text())
+          gate = json.loads(Path('boeing_spirit/evidence/contact-gate-report.json').read_text())
+          assert quality['schema'] == 'WS-BSQIA-ASSURANCE-REPORT-V1'
+          assert quality['result'] == 'PASS'
+          assert quality['confusion'] == {'tp_block': 10, 'tn_pass': 2, 'fp_block': 0, 'fn_pass': 0}
+          assert quality['external_solution_probability_pct'] is None
+          assert quality['contact_decision'] == 'NO_CONTACT'
+          assert gate['schema'] == 'WS-BSQIA-CONTACT-GATE-REPORT-V1'
+          assert gate['target_probability'] == 0.987
+          assert gate['decision'] == 'NO_CONTACT'
+          assert 'external_independent_evidence' in gate['failed_gates']
+          assert 'statistical_lower_bound_98_7' in gate['failed_gates']
+          print('BS-QIA internal synthetic gate PASS; external contact remains blocked')
+          PY
+
+      - name: Hash retained candidate evidence
+        run: |
+          sha256sum \
+            boeing_spirit/problem_register.v1.json \
+            boeing_spirit/quality_assurance.py \
+            boeing_spirit/contact_gate.py \
+            boeing_spirit/fixtures/synthetic_supplier_records.v1.json \
+            boeing_spirit/evidence/current_contact_evidence.v1.json \
+            boeing_spirit/evidence/synthetic-quality-report.json \
+            boeing_spirit/evidence/contact-gate-report.json \
+            | sort > boeing_spirit/evidence/SHA256SUMS.txt
+          cat boeing_spirit/evidence/SHA256SUMS.txt
+
+      - name: Upload bounded evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-qia-internal-evidence
+          path: |
+            boeing_spirit/evidence/synthetic-quality-report.json
+            boeing_spirit/evidence/contact-gate-report.json
+            boeing_spirit/evidence/SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error
