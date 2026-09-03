@@ -1,0 +1,143 @@
+{
+  "schema": "WS-MARKETPLACE-REUSABLE-SOLUTION-PATTERNS-V1",
+  "as_of": "2026-09-03",
+  "purpose": "Reuse validated Worldshepherd evidence-control architecture across public marketplace targets while keeping each target's real requirements, data, authority and validation gates separate.",
+  "patterns": [
+    {
+      "id": "PATTERN-A",
+      "name": "Acquisition / merger control integration",
+      "target_examples": ["AeroVironment / BlueHalo", "Air Industries / Tenax", "AMSC / Comtrafo", "BOXABL"],
+      "components": ["SARA", "PRIME", "ECHO", "OVERWATCH"],
+      "controls": [
+        "identity/role/access lineage across predecessor environments",
+        "segregation-of-duties conflict detection",
+        "program/configuration change approval lineage",
+        "source-to-report/data-transformation provenance",
+        "post-close dependency invalidation when systems/processes change"
+      ],
+      "precontact_tests": [
+        "synthetic access-role merger conflicts",
+        "synthetic orphaned privileged account detection",
+        "change-approval missing/stale dependency tests",
+        "data-source/version provenance break tests",
+        "rollback and negative-authorization tests"
+      ],
+      "external_success_metrics": [
+        "unauthorized/stale access escape rate",
+        "change-control exception closure latency",
+        "evidence retrieval latency",
+        "false-positive/false-negative rates against partner ground truth"
+      ]
+    },
+    {
+      "id": "PATTERN-B",
+      "name": "Aerostructure / MRO / flight-critical integration",
+      "target_examples": ["Boeing / Spirit", "Airbus / former Spirit sites", "Bombardier / MHI Canada Aerospace", "AAR / HAECO Americas", "Howmet / CAM / Brunner"],
+      "components": ["SARA", "ECHO", "OVERWATCH", "AEROSHEPHERD"],
+      "controls": [
+        "drawing/model/work-instruction revision custody",
+        "FAI/inspection/acceptance evidence lineage",
+        "tooling/calibration/measurement-system state",
+        "work-transfer and process-change dependency propagation",
+        "supplier/part/material provenance and nonconformance lineage"
+      ],
+      "precontact_tests": [
+        "configuration-change propagation stress",
+        "stale FAI/inspection evidence rejection",
+        "tool/calibration expiry cases",
+        "work-transfer APQP restart cases",
+        "synthetic NCR/RCCA/CAPA recurrence cases"
+      ],
+      "external_success_metrics": [
+        "stale-revision escape rate",
+        "quality evidence completeness",
+        "repeat nonconformance rate",
+        "quality-action closure latency",
+        "evidence retrieval latency"
+      ]
+    },
+    {
+      "id": "PATTERN-C",
+      "name": "Supplier-platform federation",
+      "target_examples": ["Siemens Energy / Siemens Gamesa", "Moog", "RTX / Pratt & Whitney", "L3Harris Missile Solutions"],
+      "components": ["SARA", "PRE", "ECHO", "OVERWATCH"],
+      "controls": [
+        "federated supplier evidence without replacing source systems",
+        "qualification/certification applicability state",
+        "supplier risk and surveillance provenance",
+        "NCR/CAPA and change-notification lineage",
+        "policy-controlled evidence release and export"
+      ],
+      "precontact_tests": [
+        "multi-source record conflict cases",
+        "unknown-applicability fail-closed tests",
+        "supplier status expiry cases",
+        "duplicate/contradictory quality-action cases",
+        "evidence export redaction and access tests"
+      ],
+      "external_success_metrics": [
+        "supplier evidence reconciliation latency",
+        "overdue action detection recall",
+        "qualification-state accuracy",
+        "manual evidence-handling time",
+        "false escalation rate"
+      ]
+    },
+    {
+      "id": "PATTERN-D",
+      "name": "Additive / semiconductor vertical-integration digital thread",
+      "target_examples": ["Stratasys / Markforged", "IonQ / SkyWater / Fab 25"],
+      "components": ["SARA", "ECHO", "OVERWATCH", "WS-AlTi"],
+      "controls": [
+        "design-to-process-to-material lineage",
+        "recipe/process/configuration revision custody",
+        "measurement/characterization evidence",
+        "change-impact propagation across product/process/fab states",
+        "data-rights and controlled-information boundary"
+      ],
+      "precontact_tests": [
+        "recipe/config mismatch fixtures",
+        "material lot/provenance gaps",
+        "measurement system expiry/invalid-state cases",
+        "process-change downstream invalidation",
+        "synthetic controlled-data boundary tests"
+      ],
+      "external_success_metrics": [
+        "traceability completeness",
+        "stale process/config escape rate",
+        "change-impact identification latency",
+        "evidence retrieval latency",
+        "partner-defined yield/quality endpoint only when authorized"
+      ]
+    },
+    {
+      "id": "PATTERN-E",
+      "name": "Defense production scale-up / mission-assurance evidence",
+      "target_examples": ["L3Harris Missile Solutions", "Air Industries / Tenax", "Howmet / CAM", "AeroVironment / BlueHalo"],
+      "components": ["SARA", "PRIME", "ECHO", "OVERWATCH", "PRE"],
+      "controls": [
+        "multi-site production-readiness evidence",
+        "mission-critical supplier/configuration lineage",
+        "capacity-change and work-transfer governance",
+        "controlled-information applicability boundary",
+        "audit-ready approval/release provenance"
+      ],
+      "precontact_tests": [
+        "capacity/rate-change dependency stress",
+        "work-transfer evidence invalidation",
+        "negative authorization and release tests",
+        "CUI/export applicability fail-closed cases",
+        "supplier quality escape synthetic scenarios"
+      ],
+      "external_success_metrics": [
+        "readiness evidence completeness",
+        "release exception rate",
+        "change-impact closure latency",
+        "supplier quality escape rate",
+        "audit/evidence retrieval latency"
+      ]
+    }
+  ],
+  "deployment_rule": "Patterns are reusable hypotheses and software/control test templates only. A target does not inherit Boeing/Spirit readiness or evidence. Each target requires its own source/requirements map, security/data boundary, partner-authorized evidence, pilot, measured effect and independent review before any 98.7 contact gate can close.",
+  "claims_boundary": "Internal pattern completeness, synthetic tests or public-source fit do not establish customer-specific root cause, remediation effectiveness, compliance, certification, adoption, contracting probability or permission to contact."
+}
