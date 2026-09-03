@@ -1,0 +1,123 @@
+{
+  "schema": "WS-BSQIA-SYNTHETIC-FIXTURE-V1",
+  "evidence_class": "SYNTHETIC_ONLY",
+  "claims_boundary": "These invented records exercise software behavior only and are not Boeing, Spirit, supplier, FAA, or production data.",
+  "records": [
+    {
+      "record_id": "CLEAN-001",
+      "provenance": {"source_system": "SYNTHETIC_MES", "observed_at_utc": "2026-09-03T20:00:00Z", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+      "required_requirements": ["ENG-A", "CUST-1", "PO-Q1"], "planned_requirements": ["ENG-A", "CUST-1", "PO-Q1"],
+      "expected_revision": "R7", "planning_revision": "R7", "bom_revision": "R7", "build_record_revision": "R7",
+      "apqp_required": true, "apqp": {"process_flow": true, "pfmea": true, "control_plan": true, "spc": true, "msa": true, "fai": true},
+      "fai_required": true, "fai_status": "APPROVED", "supplier_qms_status": "APPROVED",
+      "special_processes": [{"name": "bonding", "qualification_valid": true}], "calibrations": [{"id": "CAL-1", "valid": true}],
+      "ppv_findings": [], "escapes": [], "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "PASS_RELEASE_ASSURANCE"
+    },
+    {
+      "record_id": "CLEAN-002",
+      "provenance": {"source_system": "SYNTHETIC_QMS", "observed_at_utc": "2026-09-03T20:01:00Z", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+      "required_requirements": ["ENG-B"], "planned_requirements": ["ENG-B"],
+      "expected_revision": "R2", "planning_revision": "R2", "bom_revision": "R2", "build_record_revision": "R2",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [{"id": "PPV-1", "severity": "major", "status": "CLOSED"}],
+      "escapes": [{"id": "NOE-1", "closure_status": "CLOSED", "effectiveness_verified": true}], "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "PASS_RELEASE_ASSURANCE"
+    },
+    {
+      "record_id": "FLOWDOWN-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_MES", "observed_at_utc": "2026-09-03T20:02:00Z", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+      "required_requirements": ["ENG-A", "CUST-CRIT"], "planned_requirements": ["ENG-A"],
+      "expected_revision": "R1", "planning_revision": "R1", "bom_revision": "R1", "build_record_revision": "R1",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [], "escapes": [], "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "CONFIG-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_PLM", "observed_at_utc": "2026-09-03T20:03:00Z", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
+      "required_requirements": ["ENG-A"], "planned_requirements": ["ENG-A"],
+      "expected_revision": "R8", "planning_revision": "R8", "bom_revision": "R7", "build_record_revision": "R8",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [], "escapes": [], "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "APQP-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_QMS", "observed_at_utc": "2026-09-03T20:04:00Z", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+      "required_requirements": ["ENG-C"], "planned_requirements": ["ENG-C"],
+      "expected_revision": "R3", "planning_revision": "R3", "bom_revision": "R3", "build_record_revision": "R3",
+      "apqp_required": true, "apqp": {"process_flow": true, "pfmea": false, "control_plan": true, "spc": true, "msa": true, "fai": true},
+      "fai_required": true, "fai_status": "APPROVED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [], "escapes": [], "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "PPV-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_QMS", "observed_at_utc": "2026-09-03T20:05:00Z", "sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"},
+      "required_requirements": ["ENG-D"], "planned_requirements": ["ENG-D"],
+      "expected_revision": "R4", "planning_revision": "R4", "bom_revision": "R4", "build_record_revision": "R4",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [{"id": "PPV-OPEN", "severity": "critical", "status": "OPEN"}], "escapes": [],
+      "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "RCCA-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_QMS", "observed_at_utc": "2026-09-03T20:06:00Z", "sha256": "1111111111111111111111111111111111111111111111111111111111111111"},
+      "required_requirements": ["ENG-E"], "planned_requirements": ["ENG-E"],
+      "expected_revision": "R1", "planning_revision": "R1", "bom_revision": "R1", "build_record_revision": "R1",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [], "escapes": [{"id": "NOE-OPEN", "closure_status": "OPEN", "effectiveness_verified": false}],
+      "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "SHIP-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_MES", "observed_at_utc": "2026-09-03T20:07:00Z", "sha256": "2222222222222222222222222222222222222222222222222222222222222222"},
+      "required_requirements": ["ENG-F"], "planned_requirements": ["ENG-F"],
+      "expected_revision": "R6", "planning_revision": "R6", "bom_revision": "R6", "build_record_revision": "R6",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [], "escapes": [], "open_work_count": 2, "shipping_documents_complete": false, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "PROVENANCE-FAIL",
+      "provenance": {"source_system": "", "observed_at_utc": "", "sha256": "not-a-digest"},
+      "required_requirements": ["ENG-G"], "planned_requirements": ["ENG-G"],
+      "expected_revision": "R1", "planning_revision": "R1", "bom_revision": "R1", "build_record_revision": "R1",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [], "escapes": [], "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "SPECIAL-PROCESS-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_QMS", "observed_at_utc": "2026-09-03T20:09:00Z", "sha256": "3333333333333333333333333333333333333333333333333333333333333333"},
+      "required_requirements": ["ENG-H"], "planned_requirements": ["ENG-H"],
+      "expected_revision": "R9", "planning_revision": "R9", "bom_revision": "R9", "build_record_revision": "R9",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [{"name": "heat_treat", "qualification_valid": false}], "calibrations": [], "ppv_findings": [], "escapes": [],
+      "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "CALIBRATION-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_QMS", "observed_at_utc": "2026-09-03T20:10:00Z", "sha256": "4444444444444444444444444444444444444444444444444444444444444444"},
+      "required_requirements": ["ENG-I"], "planned_requirements": ["ENG-I"],
+      "expected_revision": "R5", "planning_revision": "R5", "bom_revision": "R5", "build_record_revision": "R5",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [{"id": "CAL-EXPIRED", "valid": false}], "ppv_findings": [], "escapes": [],
+      "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": false,
+      "expected_disposition": "BLOCK_RELEASE"
+    },
+    {
+      "record_id": "OVERRIDE-FAIL",
+      "provenance": {"source_system": "SYNTHETIC_MES", "observed_at_utc": "2026-09-03T20:11:00Z", "sha256": "5555555555555555555555555555555555555555555555555555555555555555"},
+      "required_requirements": ["ENG-J"], "planned_requirements": ["ENG-J"],
+      "expected_revision": "R3", "planning_revision": "R3", "bom_revision": "R3", "build_record_revision": "R3",
+      "apqp_required": false, "apqp": {}, "fai_required": false, "fai_status": "NOT_REQUIRED", "supplier_qms_status": "APPROVED",
+      "special_processes": [], "calibrations": [], "ppv_findings": [], "escapes": [], "open_work_count": 0, "shipping_documents_complete": true, "schedule_override_attempted": true,
+      "expected_disposition": "BLOCK_RELEASE"
+    }
+  ]
+}
