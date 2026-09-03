@@ -48,11 +48,11 @@ SOURCES = [
         "authority_note": "Official DARPA R&D-opportunities surface.",
     },
     {
-        "id": "grants-search",
-        "url": "https://www.grants.gov/grants/search-grants.html",
+        "id": "grants-database-extract",
+        "url": "https://www.grants.gov/xml-extract",
         "official_domain": "grants.gov",
-        "expected_any": ["Search funding opportunities", "Search Grants", "Opportunities"],
-        "authority_note": "Official Grants.gov federal funding-opportunity search surface.",
+        "expected_any": ["XML EXTRACT", "GRANTS DATABASE EXTRACTS", "GrantsDBExtract"],
+        "authority_note": "Official Grants.gov daily grants-database extract surface; used as a stable freshness/provenance anchor because the interactive search page is client-rendered.",
     },
 ]
 
