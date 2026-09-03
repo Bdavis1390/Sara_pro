@@ -1,0 +1,13 @@
+{
+  "schema": "WS-EXTERNAL-EVIDENCE-CLOSURES-V1",
+  "as_of": "2026-09-03",
+  "policy": "External gates fail closed. Documentation, simulation, internal/partner-readiness scoring, or visual presentation never closes a measured, partner, clinical, field, certification, commercial-outcome, or regulatory gate.",
+  "closures": [],
+  "synthetic_baselines": [
+    {"workstream":"WS-ENERGY","path":"evidence/synthetic-baselines/energy.json","status":"PENDING_CI"},
+    {"workstream":"RESONANCE","path":"evidence/synthetic-baselines/resonance.json","status":"PENDING_CI"},
+    {"workstream":"HELIOS-LINK","path":"evidence/synthetic-baselines/helios.json","status":"PENDING_CI"},
+    {"workstream":"ION-EP","path":"evidence/synthetic-baselines/ion.json","status":"PENDING_CI"},
+    {"workstream":"WS-MS","path":"evidence/synthetic-baselines/metasurface.json","status":"PENDING_CI"}
+  ]
+}
