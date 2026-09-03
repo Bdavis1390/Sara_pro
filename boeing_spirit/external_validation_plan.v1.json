@@ -1,0 +1,52 @@
+{
+  "schema": "WS-BSQIA-EXTERNAL-VALIDATION-PLAN-V1",
+  "as_of": "2026-09-03",
+  "target": "Earn evidence sufficient for the bounded 98.7 external-contact gate; do not substitute internal readiness, simulation, outreach, or architecture scores.",
+  "stages": [
+    {
+      "stage": 0,
+      "name": "Internal deterministic baseline",
+      "status": "ACTIVE",
+      "required_evidence": ["12-case labeled fixture", "256-case combinatorial adversarial campaign", "zero critical synthetic false negatives", "fail-closed contact gate"],
+      "promotion_limit": "INTERNAL_TEST_ONLY"
+    },
+    {
+      "stage": 1,
+      "name": "Independent public/synthetic replay",
+      "status": "PLANNED",
+      "required_evidence": ["independent reviewer", "independently generated fixture family", "malformed/OOD/degraded-input campaign", "replay package digest"],
+      "promotion_limit": "INDEPENDENT_SOFTWARE_REPLICATION_ONLY"
+    },
+    {
+      "stage": 2,
+      "name": "Aerospace-representative non-customer data",
+      "status": "PLANNED",
+      "required_evidence": ["authorized de-identified aerospace quality records", "predeclared outcome metric", "ground-truth dispositions", "stratified failure-mode coverage", "interface mapping to SAP/MES/QMS/PLM-equivalent exports"],
+      "promotion_limit": "REPRESENTATIVE_NON_CUSTOMER_VALIDATION"
+    },
+    {
+      "stage": 3,
+      "name": "Customer-representative shadow pilot",
+      "status": "BLOCKED_PENDING_PARTNER_ACCESS",
+      "required_evidence": ["written data/usage authorization", "read-only shadow-mode interface", "customer-representative record set", "ground-truth human/QMS dispositions", "red-team bypass/OOD campaign", "security/data-rights/export/legal review"],
+      "promotion_limit": "PARTNER_TEST"
+    },
+    {
+      "stage": 4,
+      "name": "Independent replication and 98.7 statistical closure",
+      "status": "BLOCKED_PENDING_STAGE_3",
+      "required_evidence": ["at least two independent contexts", "independent replication", "zero unresolved safety-critical false negatives", "predeclared binary metric", "one-sided 95% exact lower bound >=0.987", "at least 229 zero-failure independent trials in the special zero-failure case", "false-positive rate <=0.05", "all contact-gate reviews complete"],
+      "promotion_limit": "GO_CONTACT_FOR_FROZEN_SCOPED_CLAIM"
+    }
+  ],
+  "stop_conditions": [
+    "Any critical false negative",
+    "Ground truth is ambiguous or post-hoc relabeled to improve results",
+    "Evidence provenance/custody cannot be reproduced",
+    "Required data authorization is absent",
+    "Schedule pressure requests bypass of a quality gate",
+    "Performance is dependent on Boeing/Spirit confidential data not lawfully available",
+    "The proposed claim broadens beyond the validated frozen scope"
+  ],
+  "claims_boundary": "Reaching a later stage requires retained evidence. This plan itself does not increase external solution probability."
+}
