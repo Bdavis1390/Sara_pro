@@ -9,6 +9,7 @@ on:
       - 'boeing_spirit/confidence.v1.json'
       - 'boeing_spirit/external_evidence_transition_contract.v1.json'
       - 'boeing_spirit/validate_external_evidence_transition.py'
+      - 'boeing_spirit/test_external_evidence_transition_guard.py'
       - '.github/workflows/boeing-spirit-external-evidence-transition.yml'
   pull_request:
     branches:
@@ -17,6 +18,7 @@ on:
       - 'boeing_spirit/confidence.v1.json'
       - 'boeing_spirit/external_evidence_transition_contract.v1.json'
       - 'boeing_spirit/validate_external_evidence_transition.py'
+      - 'boeing_spirit/test_external_evidence_transition_guard.py'
       - '.github/workflows/boeing-spirit-external-evidence-transition.yml'
   workflow_dispatch:
 
@@ -36,8 +38,10 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Compile validator
-        run: python -m py_compile boeing_spirit/validate_external_evidence_transition.py
+      - name: Compile guard and negative corpus
+        run: |
+          python -m py_compile boeing_spirit/validate_external_evidence_transition.py
+          python -m py_compile boeing_spirit/test_external_evidence_transition_guard.py
 
       - name: Validate external evidence transition contract
         run: >-
@@ -62,9 +66,36 @@ jobs:
           print(json.dumps(r, indent=2))
           PY
 
+      - name: Prove invalid transition substitutes are rejected
+        run: python boeing_spirit/test_external_evidence_transition_guard.py | tee boeing_spirit/evidence/external-evidence-transition-negative-test.json
+
+      - name: Verify negative corpus result
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/external-evidence-transition-negative-test.json').read_text())
+          assert r['schema'] == 'WS-BOEING-SPIRIT-EXTERNAL-EVIDENCE-TRANSITION-NEGATIVE-TEST-V1'
+          assert r['result'] == 'PASS'
+          assert r['fixture_count'] >= 7
+          assert r['all_invalid_transitions_rejected'] is True
+          assert r['all_expected_rejection_reasons_observed'] is True
+          assert r['contact_gate_effect'] == 'NONE'
+          print(json.dumps({
+              'result': r['result'],
+              'fixture_count': r['fixture_count'],
+              'all_invalid_transitions_rejected': r['all_invalid_transitions_rejected'],
+              'all_expected_rejection_reasons_observed': r['all_expected_rejection_reasons_observed'],
+              'contact_gate_effect': r['contact_gate_effect'],
+          }, indent=2))
+          PY
+
       - name: Hash evidence
         run: |
-          sha256sum boeing_spirit/evidence/external-evidence-transition-report.json > boeing_spirit/evidence/EXTERNAL_EVIDENCE_TRANSITION_SHA256SUMS.txt
+          sha256sum \
+            boeing_spirit/evidence/external-evidence-transition-report.json \
+            boeing_spirit/evidence/external-evidence-transition-negative-test.json \
+            | sort > boeing_spirit/evidence/EXTERNAL_EVIDENCE_TRANSITION_SHA256SUMS.txt
           cat boeing_spirit/evidence/EXTERNAL_EVIDENCE_TRANSITION_SHA256SUMS.txt
 
       - name: Upload evidence
@@ -73,6 +104,7 @@ jobs:
           name: boeing-spirit-external-evidence-transition-guard
           path: |
             boeing_spirit/evidence/external-evidence-transition-report.json
+            boeing_spirit/evidence/external-evidence-transition-negative-test.json
             boeing_spirit/evidence/EXTERNAL_EVIDENCE_TRANSITION_SHA256SUMS.txt
           retention-days: 90
           if-no-files-found: error
