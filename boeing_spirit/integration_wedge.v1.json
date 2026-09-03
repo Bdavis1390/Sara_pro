@@ -1,0 +1,63 @@
+{
+  "schema": "WS-BSQIA-INTEGRATION-WEDGE-V1",
+  "as_of": "2026-09-03",
+  "positioning": "Complement Boeing/Spirit authoritative systems with a read-only, replayable cross-system evidence-assurance layer; do not pitch another generic manufacturing dashboard or replacement MES/QMS/PLM stack.",
+  "public_existing_controls": [
+    {
+      "source": "https://www.boeing.com/strengthening-safety-and-quality",
+      "updated": "2026-07-27",
+      "observed_capability": "Boeing reports guided manufacturing data entry, built-in validation checks, easier engineering-information access, improved parts/completed-work tracking, expanded inspections, work-in-process tracking, RFID tool control, work-instruction adherence checks, safety/quality training, and six production-health KPIs."
+    },
+    {
+      "source": "https://www.faa.gov/newsroom/after-months-safety-review-faa-allows-boeing-resume-issuing-certificates-new-airplanes",
+      "date": "2026-07-17",
+      "observed_capability": "FAA reported eight months of data demonstrating consistent production quality and continues inspections, audits, production-quality trend monitoring, approved-design compliance oversight, SMS and safety-culture oversight."
+    }
+  ],
+  "do_not_duplicate": [
+    "generic KPI dashboard",
+    "basic guided manufacturing data entry",
+    "generic parts tracking",
+    "generic final-product inspection",
+    "replacement SAP/MES/QMS/PLM",
+    "airworthiness or certification decision authority"
+  ],
+  "preferred_wedge": [
+    {
+      "id": "WEDGE-1",
+      "name": "Cross-system requirement-to-evidence lineage",
+      "value": "Reconcile engineering/customer/contract requirements against supplier planning, APQP evidence, inspection, NCR/RCCA and shipment records while retaining source and revision provenance."
+    },
+    {
+      "id": "WEDGE-2",
+      "name": "Independent replay and assurance",
+      "value": "Recreate why a record was allowed, blocked or escalated without silently changing the authoritative production system."
+    },
+    {
+      "id": "WEDGE-3",
+      "name": "Supplier APQP evidence debt",
+      "value": "Expose missing, stale, contradictory or weakly supported Process Flow/PFMEA/Control Plan/SPC/MSA/FAI and verification evidence before release."
+    },
+    {
+      "id": "WEDGE-4",
+      "name": "Configuration and open-work closure graph",
+      "value": "Tie engineering revision, BOM, supplier plan, build record, open work and shipment evidence into one auditable release path."
+    },
+    {
+      "id": "WEDGE-5",
+      "name": "Quality-gate anti-bypass controls",
+      "value": "Keep schedule/production pressure separate from evidence disposition and record any override request as a visible governed event."
+    }
+  ],
+  "initial_integration_mode": "READ_ONLY_SHADOW_MODE",
+  "initial_data_boundary": "Sanitized, authorized, export-controlled-as-required representative data only; no production write authority.",
+  "initial_success_metrics": [
+    "critical defect/assurance-condition recall",
+    "false-positive rate and reviewer burden",
+    "time to identify requirement/configuration/evidence discrepancies",
+    "percentage of decisions with complete replayable lineage",
+    "RCCA/open-work closure visibility",
+    "robustness to missing, stale, contradictory and out-of-order inputs"
+  ],
+  "claims_boundary": "This positioning is a technical hypothesis derived from public signals and existing Worldshepherd capabilities. It is not Boeing/Spirit validation, adoption, or a measured productivity/safety improvement claim."
+}
