@@ -1,0 +1,95 @@
+{
+  "schema": "WS-BOEING-SPIRIT-CONFIDENCE-V1",
+  "as_of": "2026-09-03",
+  "score_kind": "evidence_backed_remediation_confidence_not_statistical_probability",
+  "target_contact_threshold_pct": 98.7,
+  "claims_boundary": "This score is a fail-closed internal evidence/fit gate. It must not be represented as a statistical probability of fixing Boeing or Spirit enterprise problems unless calibrated against sufficient partner-authorized outcomes. Public sources define a bounded target problem; synthetic tests do not establish production effectiveness, savings, defect reduction, certification, airworthiness, or adoption.",
+  "status_factors": {
+    "verified": 1.0,
+    "complete": 1.0,
+    "documented": 0.9,
+    "partial": 0.6,
+    "planned": 0.35,
+    "missing": 0.0
+  },
+  "gates": {
+    "public_problem_evidence": {"weight": 8, "status": "verified"},
+    "requirements_mapping": {"weight": 8, "status": "complete"},
+    "solution_architecture": {"weight": 10, "status": "complete"},
+    "data_contracts": {"weight": 8, "status": "complete"},
+    "internal_software_evidence": {"weight": 10, "status": "complete"},
+    "synthetic_pilot": {"weight": 8, "status": "planned"},
+    "security_compliance_fit": {"weight": 10, "status": "partial"},
+    "partner_data_access": {"weight": 5, "status": "missing"},
+    "partner_pilot": {"weight": 15, "status": "missing"},
+    "measured_effect_size": {"weight": 10, "status": "missing"},
+    "independent_review": {"weight": 8, "status": "missing"}
+  },
+  "hard_caps": [
+    {"when_gate": "partner_data_access", "unless_status_in": ["complete", "verified"], "cap_pct": 55.0, "reason": "No partner-authorized Boeing/Spirit data."},
+    {"when_gate": "partner_pilot", "unless_status_in": ["complete", "verified"], "cap_pct": 70.0, "reason": "No controlled partner pilot."},
+    {"when_gate": "measured_effect_size", "unless_status_in": ["complete", "verified"], "cap_pct": 80.0, "reason": "No measured effect against an agreed baseline."},
+    {"when_gate": "security_compliance_fit", "unless_status_in": ["complete", "verified"], "cap_pct": 85.0, "reason": "Security/compliance fit is not closed."},
+    {"when_gate": "independent_review", "unless_status_in": ["complete", "verified"], "cap_pct": 92.0, "reason": "No independent review of partner evidence and analysis."}
+  ],
+  "required_for_contact": [
+    "security_compliance_fit",
+    "partner_data_access",
+    "partner_pilot",
+    "measured_effect_size",
+    "independent_review"
+  ],
+  "official_contact_route": {
+    "status": "verified",
+    "route": "Boeing Enterprise Supplier LifeCycle (ESLC) Supplier Capability Assessment",
+    "mailbox": "boeingassessment@boeing.com",
+    "required_registration_fields": [
+      "contact name",
+      "contact title",
+      "contact email",
+      "contact phone number",
+      "full company name",
+      "full company address",
+      "business size"
+    ],
+    "boundary": "Registration or outreach does not create a contract. Boeing states that procurement commitments are made through authorized procurement representatives."
+  },
+  "public_sources": [
+    {
+      "title": "Spirit Commercial Supplier Quality Manager",
+      "url": "https://jobs.boeing.com/job/wichita/supplier-quality-manager/185/100076087008",
+      "retrieved": "2026-09-03",
+      "bounded_relevance": "Supplier Quality Representatives oversee performance and quality of Spirit suppliers globally."
+    },
+    {
+      "title": "Spirit Commercial Quality Assurance Supplier - APQP Rep",
+      "url": "https://jobs.boeing.com/job/wichita/mid-level-quality-assurance-supplier-apqp-rep/185/99976298128",
+      "retrieved": "2026-09-03",
+      "bounded_relevance": "APQP/PPAP execution for launches, work transfers and process changes; Process Flow, PFMEA, Control Plan, SPC, MSA and FAI are named tools."
+    },
+    {
+      "title": "Boeing Supplier Quality",
+      "url": "https://www.boeingsuppliers.com/become/quality",
+      "retrieved": "2026-09-03",
+      "bounded_relevance": "Boeing publishes supplier requirements/resources for digital product definition, APQP/PPAP, FAI, QMS and corrective-action-related quality controls."
+    },
+    {
+      "title": "Boeing Supplier Quality Surveillance",
+      "url": "https://www.boeingsuppliers.com/become/quality/sqs",
+      "retrieved": "2026-09-03",
+      "bounded_relevance": "Supplier surveillance is proactive/preventive and risk-based, including QMS approvals, quality requirement review, surveillance and product verification."
+    },
+    {
+      "title": "Boeing Quality",
+      "url": "https://www.boeing.com/safety/quality",
+      "retrieved": "2026-09-03",
+      "bounded_relevance": "Boeing states its QMS is based on AS9100 and flows quality requirements to suppliers."
+    },
+    {
+      "title": "Become a Boeing Supplier",
+      "url": "https://www.boeingsuppliers.com/become",
+      "retrieved": "2026-09-03",
+      "bounded_relevance": "Defines ESLC Supplier Capability Assessment registration route and required fields."
+    }
+  ]
+}

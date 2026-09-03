@@ -1,0 +1,94 @@
+name: Boeing Spirit Solution Confidence
+
+on:
+  push:
+    paths:
+      - 'boeing_spirit/**'
+      - '.github/workflows/boeing-spirit-solution-confidence.yml'
+  pull_request:
+    paths:
+      - 'boeing_spirit/**'
+      - '.github/workflows/boeing-spirit-solution-confidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-boeing-spirit-lane:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile lane validators
+        run: |
+          python -m py_compile boeing_spirit/synthetic_quality_pilot.py
+          python -m py_compile boeing_spirit/validate_solution_confidence.py
+
+      - name: Run deterministic synthetic quality-control pilot
+        run: >-
+          python boeing_spirit/synthetic_quality_pilot.py
+          --output boeing_spirit/evidence/synthetic-quality-report.json
+
+      - name: Calculate fail-closed solution confidence
+        run: >-
+          python boeing_spirit/validate_solution_confidence.py
+          --config boeing_spirit/confidence.v1.json
+          --synthetic-report boeing_spirit/evidence/synthetic-quality-report.json
+          --output boeing_spirit/evidence/solution-confidence-report.json
+
+      - name: Verify evidence and contact boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          synthetic = json.loads(Path('boeing_spirit/evidence/synthetic-quality-report.json').read_text())
+          confidence = json.loads(Path('boeing_spirit/evidence/solution-confidence-report.json').read_text())
+
+          assert synthetic['schema'] == 'WS-BOEING-SPIRIT-SYNTHETIC-QUALITY-PILOT-V1'
+          assert synthetic['evidence_class'] == 'INTERNAL SYNTHETIC QUALITY CONTROL TEST ONLY'
+          assert synthetic['result'] == 'PASS'
+          assert synthetic['fixture_count'] >= 11
+          assert all(row['pass'] for row in synthetic['results'])
+
+          assert confidence['schema'] == 'WS-BOEING-SPIRIT-CONFIDENCE-REPORT-V1'
+          assert confidence['score_kind'] == 'evidence_backed_remediation_confidence_not_statistical_probability'
+          assert confidence['target_contact_threshold_pct'] == 98.7
+          assert 0 <= confidence['evidence_backed_remediation_confidence_pct'] <= 100
+          assert 'not a statistical probability' in confidence['claims_boundary']
+          if confidence['contact_gate_pass']:
+              assert confidence['evidence_backed_remediation_confidence_pct'] >= 98.7
+              assert all(v in {'complete', 'verified'} for v in confidence['required_contact_gate_states'].values())
+              assert confidence['official_contact_route_verified'] is True
+          else:
+              assert confidence['contact_action'].startswith('DO NOT CONTACT')
+
+          print(json.dumps({
+              'synthetic_result': synthetic['result'],
+              'confidence_pct': confidence['evidence_backed_remediation_confidence_pct'],
+              'contact_gate_pass': confidence['contact_gate_pass']
+          }, indent=2))
+          PY
+
+      - name: Hash evidence reports
+        run: |
+          sha256sum \
+            boeing_spirit/evidence/synthetic-quality-report.json \
+            boeing_spirit/evidence/solution-confidence-report.json \
+            | sort > boeing_spirit/evidence/SHA256SUMS.txt
+          cat boeing_spirit/evidence/SHA256SUMS.txt
+
+      - name: Upload Boeing Spirit evidence package
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-solution-confidence
+          path: boeing_spirit/evidence/
+          retention-days: 90
