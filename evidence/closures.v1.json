@@ -45,6 +45,34 @@
       "evidence_digest": "sha256:5336222f53573352edce7d3d298fe023633b4c3d6204eebf20f127d6cf24db37",
       "approved": true,
       "scope_boundary": "Closes the controlled fixture-scoped false-positive benchmark: TP=1, TN=1, FP=0, FN=0, FPR=0.0 and FNR=0.0 for the included two deterministic fixtures only. No general detection-rate claim is authorized."
+    },
+    {
+      "workstream": "RESONANCE",
+      "gate": "blind conventional diagnostic benchmarks",
+      "gate_class": "measured_internal_test",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797819672",
+        "github-artifact:9909862829",
+        "sha256:fa36a7433d88b63de00cb9dbfd7ec9d0e010aebeebfce8aa1b41eb7144deccbc:blind-benchmark-report.json"
+      ],
+      "evidence_digest": "sha256:f8c7b5375d3f4f32ac1d3f6f3e4df86788945782d0f8859e810df5403ae124b7",
+      "approved": true,
+      "scope_boundary": "Closes only the fixture-scoped blind conventional frequency-diagnostic software benchmark: five synthetic hidden-frequency cases, five passes, maximum absolute frequency error 0.0 Hz at 0.25 Hz tolerance. It is not a five-repeat instrumented physical test, structural qualification, anomalous-effect result, or independent review."
+    },
+    {
+      "workstream": "ION-EP",
+      "gate": "component/plasma model",
+      "gate_class": "simulated_component_model",
+      "evidence_class": "simulated",
+      "evidence_refs": [
+        "github-actions:33797867935",
+        "github-artifact:9909877445",
+        "sha256:5de7dab3d15a1a4ba67cbd24c9b7504edc4c0fae5d85510f0b5f884f2a241961:component-plasma-report.json"
+      ],
+      "evidence_digest": "sha256:81def6847505ef4e541812471edfa5f873be1882210000f5d81360d47ddd6e87",
+      "approved": true,
+      "scope_boundary": "Closes only a bounded simulated 0-D component/plasma extraction-model gate. The retained model passes mass conservation, beam-energy consistency, positive-current, bounded ionization/transmission and Child-Langmuir extraction-limit checks. It does not establish calibrated thrust, detailed discharge fidelity, grid erosion, neutralization, endurance, plume/charging behavior, thermal qualification, validated efficiency or spacecraft integration."
     }
   ],
   "partial_evidence": [
@@ -141,6 +169,19 @@
       "evidence_digest": "sha256:5336222f53573352edce7d3d298fe023633b4c3d6204eebf20f127d6cf24db37",
       "approved": true,
       "scope_boundary": "Promotes Stegriage from implemented software to internal test only for the retained deterministic fixture benchmark. It does not establish generalized forensic sensitivity/specificity or admissibility."
+    },
+    {
+      "workstream": "RESONANCE",
+      "to": "internal_test",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797819672",
+        "github-artifact:9909862829",
+        "sha256:fa36a7433d88b63de00cb9dbfd7ec9d0e010aebeebfce8aa1b41eb7144deccbc:blind-benchmark-report.json"
+      ],
+      "evidence_digest": "sha256:f8c7b5375d3f4f32ac1d3f6f3e4df86788945782d0f8859e810df5403ae124b7",
+      "approved": true,
+      "scope_boundary": "Promotes Applied Resonance from simulated to internal test only for the blind conventional frequency-diagnostic software benchmark on five synthetic signals. Five-repeat instrumented physical tests and independent review remain open."
     }
   ]
 }
