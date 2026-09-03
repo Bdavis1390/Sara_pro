@@ -3,7 +3,7 @@
   "as_of": "2026-09-03",
   "score_kind": "evidence_backed_remediation_confidence_not_statistical_probability",
   "target_contact_threshold_pct": 98.7,
-  "claims_boundary": "This score is a fail-closed internal evidence/fit gate. It must not be represented as a statistical probability of fixing Boeing or Spirit enterprise problems unless calibrated against sufficient partner-authorized outcomes. Public sources define a bounded target problem; synthetic tests do not establish production effectiveness, savings, defect reduction, certification, airworthiness, or adoption.",
+  "claims_boundary": "This score is a fail-closed internal evidence/fit gate. It is not a statistical probability of fixing Boeing or Spirit enterprise problems and must not be represented as one unless calibrated against sufficient partner-authorized outcomes. Public sources define a bounded target problem; synthetic tests do not establish production effectiveness, savings, defect reduction, certification, airworthiness, or adoption.",
   "status_factors": {
     "verified": 1.0,
     "complete": 1.0,
@@ -84,6 +84,12 @@
       "url": "https://www.boeing.com/safety/quality",
       "retrieved": "2026-09-03",
       "bounded_relevance": "Boeing states its QMS is based on AS9100 and flows quality requirements to suppliers."
+    },
+    {
+      "title": "Strengthening Safety & Quality",
+      "url": "https://www.boeing.com/strengthening-safety-and-quality",
+      "retrieved": "2026-09-03",
+      "bounded_relevance": "Boeing reports end-of-line final product verification at Wichita reduced 737 fuselage defects by about 45 percent, providing a public benchmark pattern for closed-loop inspection and faster feedback without implying Worldshepherd caused or can reproduce that result."
     },
     {
       "title": "Become a Boeing Supplier",
