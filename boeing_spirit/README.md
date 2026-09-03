@@ -1,138 +1,157 @@
 # Boeing–Spirit Quality & Integration Remediation Lane
 
-**Status:** ACTIVE — internal synthetic validation and partner-preparation only
+**Status:** ACTIVE — internal synthetic validation, independent public manufacturing-analog benchmarking, and partner-preparation only
 
 **Target:** build an evidence-backed remediation package for Boeing/Spirit supplier-quality and integration problems. The contact threshold is **98.7% evidence-backed remediation confidence**, but this score is deliberately **not a statistical probability of fixing Boeing** unless and until it is calibrated against sufficient real partner outcomes.
 
-## Public problem signals
+## Current fail-closed state
 
-Official Boeing/Spirit and SEC sources currently support a bounded need model around supplier quality, APQP/PPAP, configuration/digital-product lineage, risk-based surveillance, quality-action closure, work transfers/process changes, and acquisition/program-integration pressure. Public financial disclosures are used only as signals for operational evidence-control design; they do not establish Boeing-specific operational root causes.
+Latest machine validation on run `33810030596` remains:
 
-- Spirit Commercial is actively staffing supplier-quality leadership and APQP/PPAP execution for new launches, work transfers, and process changes.
-- The APQP role explicitly references Process Flow, PFMEA, Control Plan, SPC, MSA, and FAI.
-- Boeing supplier surveillance is proactive/preventive and risk-based, including QMS approvals, quality-requirement review, surveillance, and product verification.
-- Boeing's QMS is based on AS9100, and Boeing publishes supplier requirements for digital product definition, APQP/PPAP, FAI, corrective action, and other quality controls.
-- Boeing's supplier-registration route is the Enterprise Supplier LifeCycle (ESLC) process; only an authorized procurement representative can create a contractual commitment.
-- Boeing's 2026 Q2 Form 10-Q records large preliminary Spirit acquisition/accounting balances and long-term program estimate changes. Worldshepherd treats these as integration-risk signals only, not as accounting, valuation, legal, or Boeing root-cause conclusions.
+- raw weighted score: **58.0%**;
+- evidence-backed remediation confidence: **55.0%**;
+- `contact_gate_pass=false`;
+- action: **DO NOT CONTACT — EXTERNAL VALIDATION GATES REMAIN OPEN**;
+- solution-confidence report SHA-256: `97fd7b80d709236b4150b6f7fd6642d8e9f71960600513d66ca9261dbc114cd2`.
 
-Source URLs and bounded claims are retained in `confidence.v1.json`; operational program-risk mappings are in `program_risk_requirements.v1.json`.
+The score remains capped at 55% because there is no partner-authorized Boeing/Spirit data. None of the internal synthetic, public-source, public-analog, protocol, or preparation work below is allowed to bypass that cap.
+
+## Public problem and requirement signals
+
+Official Boeing/Spirit and SEC sources support a bounded need model around supplier quality, APQP/PPAP, configuration/digital-product lineage, risk-based surveillance, quality-action closure, work transfers/process changes, cybersecurity applicability, and acquisition/program-integration pressure. Public sources define preparation targets; they do not establish Boeing-specific operational root causes or solution effectiveness.
+
+- Spirit Commercial public roles identify supplier-quality and APQP/PPAP work involving Process Flow, PFMEA, Control Plan, SPC, MSA and FAI.
+- Boeing publishes supplier-quality/QMS resources, D6-82479, Q017 APQP/PPAP materials, Supplier Quality Surveillance resources, digital-product-definition requirements and supplier registration information.
+- `public_quality_crosswalk.v1.json` maps public D6-82479/Q017/SQS material into internal evidence-control records while preserving contract applicability and Boeing authority.
+- `public_cybersecurity_crosswalk.v1.json` maps public Boeing supplier cybersecurity material into a fail-closed applicability table for public/synthetic, Boeing proprietary, FCI, CUI/CDI, export-controlled and classified information. It does not infer contract applicability or compliance.
+- Boeing's ESLC route is retained as the official public supplier-capability registration path; supplier registration is not acceptance, adoption, validation or a contractual commitment.
+- Boeing's 2026 Q2 Form 10-Q signals large Spirit acquisition/integration and long-term-program accounting exposure. Worldshepherd treats those disclosures only as bounded integration-risk signals, not as accounting, valuation, legal or Boeing root-cause conclusions.
 
 ## Integrated Worldshepherd solution
 
 ### 1. SARA — supplier-quality evidence graph
 
-Create a governed lineage from requirement -> supplier/process -> APQP artifact -> configuration -> inspection/measurement -> nonconformance -> RCCA/CAPA -> approval -> release.
+Create governed lineage from requirement -> supplier/process -> APQP artifact -> configuration -> inspection/measurement -> nonconformance -> RCCA/CAPA -> approval -> release.
 
-Core records:
+Core records include APQP/PPAP project state, Process Flow/PFMEA/Control Plan revision lineage, SPC/MSA evidence, FAI/FAIR evidence, NCR/MRB/RCCA/CAPA, supplier surveillance findings, work-transfer/process-change approvals, calibration and measurement-system state, and authoritative release authority.
 
-- APQP/PPAP project and schedule
-- Process Flow / PFMEA / Control Plan revision lineage
-- SPC and MSA evidence
-- FAI status and evidence digest
-- nonconformance / MRB / RCCA / CAPA
-- supplier surveillance / assessment findings
-- work-transfer and process-change approvals
-- calibration and measurement-system evidence
-
-Fail-closed behavior: stale, missing, contradictory, expired, or unapproved dependencies cannot support a release-ready state.
+Fail-closed rule: stale, missing, contradictory, expired, unapproved or applicability-unknown dependencies cannot support release-ready evidence.
 
 ### 2. OVERWATCH / ECHO — evidence-bearing quality observability
 
-Expose operational quality signals without silently elevating evidence state:
-
-- supplier-caused NCR/rework trends
-- first-pass yield and escape indicators
-- overdue RCCA/CAPA
-- FAI completion and change-trigger status
-- SPC out-of-control signals
-- calibration expiry / MSA exceptions
-- configuration-revision mismatches
-- stale or provenance-deficient evidence
-
-Every alert must retain source, timestamp, revision, evidence digest, uncertainty/quality state, and responsible workflow owner.
+Expose quality signals without silently elevating evidence state: NCR/rework trends, first-pass-yield/escape indicators, overdue RCCA/CAPA, FAI/change-trigger state, SPC signals, calibration/MSA exceptions, configuration mismatches, and provenance-deficient evidence. Every alert retains source, timestamp, revision, evidence digest, quality/uncertainty state and workflow owner.
 
 ### 3. AEROSHEPHERD — aerostructure configuration/digital thread
 
-Apply configuration governance to aircraft/aerostructure production interfaces:
-
-- frozen configuration baselines
-- drawing / model / work-instruction revision lineage
-- process-change and work-transfer dependency checks
-- digital-product-definition custody
-- manufacturing / inspection readiness state
-- acceptance evidence and release authority
-
-This lane does **not** claim airworthiness, flight qualification, or Boeing process approval.
+Apply configuration governance to design/model/work-instruction lineage, work transfers, process changes, digital-product-definition custody, manufacturing/inspection readiness and acceptance-evidence authority. This lane does **not** claim airworthiness, production release authority, MRB authority, flight qualification or Boeing process approval.
 
 ### 4. PRE — official-source and opportunity intelligence
 
-Track official Boeing/Spirit supplier, quality, procurement, integration, and capability-assessment surfaces. Preserve freshness, source provenance, and outcome calibration. Public-source evidence may define a target problem; it cannot prove Boeing-specific root cause or solution effectiveness.
+Track official Boeing/Spirit supplier, quality, procurement, integration, cybersecurity and capability-assessment surfaces with source provenance and freshness. PRE source-freshness CI is fail-closed and does not claim exhaustive market coverage.
 
 ### 5. Revenue-E2E — controlled pilot and value proof
 
-If Boeing/Spirit engages, convert the lane into a bounded Evidence-to-Execution pilot with predeclared metrics, a baseline period, a read-only replay/shadow stage, any approved intervention period, acceptance criteria, data-handling controls, rollback, and a closeout evidence package.
-
-Candidate metrics include APQP milestone evidence completeness, time-to-close quality actions, repeat nonconformance rate, stale-document escapes, FAI readiness discrepancies, evidence retrieval latency, false-positive/false-negative rates, and only where the partner approves the attribution model, preventable rework/inspection hours and schedule impact. Final metrics must be agreed with the partner before the pilot.
+If a legitimate Boeing/Spirit sponsor later authorizes a scoped evaluation, `partner_pilot_protocol.v1.json` defines the transition from read-only replay to shadow mode and only then to an authorized controlled intervention. `effect_measurement_protocol.v1.json` predeclares how operational effect must be measured before any effect-size or savings claim can close.
 
 ### 6. Operational program-risk evidence controls
 
-`program_risk_requirements.v1.json` and `synthetic_program_risk_pilot.py` extend the lane without entering accounting/valuation scope. They test controls for:
+`program_risk_requirements.v1.json` and `synthetic_program_risk_pilot.py` test bounded operational controls for contract/program-baseline mismatch, stale rate/cost assumptions, quality-cost evidence linkage, forecast governance, cost-to-complete evidence, work-transfer/process-change reassessment, unexplained variance, and partner-identified off-market-contract operational-risk review. These controls do not issue accounting, valuation, audit, legal, contract-pricing or internal-financial-control opinions.
 
-- contract/program-baseline revision mismatch;
-- stale production-rate/cost-estimate assumptions;
-- unlinked quality-cost evidence;
-- forecast ownership, approval, and rationale;
-- cost-to-complete evidence;
-- work-transfer supplier-risk reassessment;
-- process-change quality-readiness reassessment;
-- unexplained estimate variance;
-- partner-identified off-market-contract operational-risk review.
+### 7. Security and controlled-information boundary
 
-These controls are operational evidence lineage only. Worldshepherd does not issue accounting, valuation, audit, legal, contract-pricing, or internal-financial-control opinions from this lane.
+`security_data_boundary.v1.json` defaults to **PUBLIC_OR_SYNTHETIC_ONLY**. Boeing proprietary, FCI, CUI/CDI and export-controlled information remain blocked until actual procurement applicability, contractual clauses, data classification, authorized environment and required assessment/certification evidence are known and verified. Classified information is out of scope for the current environment.
 
-### 7. Applied Resonance / WS-AlTi — optional bounded extensions
+The public cybersecurity crosswalk explicitly preserves:
 
-Use only where the partner supplies an appropriate article, process, and validation authority:
+- no CMMC certification claim;
+- no NIST SP 800-171 compliance claim;
+- no SPRS assessed-score claim;
+- no Boeing C-SCRM approval claim;
+- no FCI/CUI/CDI/export authorization claim;
+- `security_compliance_fit=partial`.
 
-- Applied Resonance: conventional condition monitoring for equipment/process diagnostics with blind controls and calibrated sensors.
-- WS-AlTi: process-to-material evidence architecture for additive/materials research, remaining design/lab-stage until coupon and characterization evidence exists.
+### 8. Applied Resonance / WS-AlTi — optional bounded extensions
 
-These are optional technical extensions, not part of the initial supplier-quality claim.
+Applied Resonance may support conventional equipment/process condition monitoring only with appropriate controls and calibrated sensors. WS-AlTi remains design/lab-stage process-to-material evidence work until coupon and characterization evidence exists. Neither is part of the initial Boeing/Spirit quality-remediation claim.
 
-## Internal synthetic evidence
+## Machine-verified internal and public-analog evidence
 
-### Quality-control pilot
+### Synthetic quality-control pilot — PASS
 
-`synthetic_quality_pilot.py` creates 11 deterministic fixtures for missing/stale APQP-quality evidence, SPC/MSA/FAI issues, NCR/RCCA/CAPA, configuration mismatch, expired calibration, traveled-work approval, and a clean control. The pilot passes only if every seeded defect is detected exactly and the clean case remains clean.
+`synthetic_quality_pilot.py`: **11/11** deterministic fixtures exact, including APQP-quality evidence, SPC/MSA/FAI, NCR/RCCA/CAPA, configuration mismatch, calibration and traveled-work controls.
 
-### Program-risk pilot
+### Synthetic program-risk pilot — PASS
 
-`synthetic_program_risk_pilot.py` creates 12 deterministic operational-control fixtures covering program-baseline, rate/estimate, quality-cost linkage, forecast governance, cost-to-complete evidence, work-transfer/process-change reassessment, estimate variance, off-market-contract risk review, and a clean control.
+`synthetic_program_risk_pilot.py`: **12/12** deterministic fixtures exact. Fixture-set SHA-256: `39111aaa65b88f42c248b9e984968bc8f69f148acc7134fb3f18f6c8de98a6d2`.
 
-Both are **internal synthetic tests only**. They do not establish that Boeing's actual defects would be prevented, program estimates improved, or financial losses reduced.
+### APQP/PPAP applicability crosswalk pilot — PASS
 
-## Partner-pilot preparation
+`synthetic_ppap_crosswalk_pilot.py`: **13/13** deterministic contract-applicability-aware fixtures exact. Fixture-set SHA-256: `de65444fb613318f39e4fe5798d38677906ee254fc815605a132d39d5475b04d`.
 
-`partner_pilot_protocol.v1.json` defines a five-phase validation ladder:
+### Change-propagation stress pilot — PASS
 
-1. scope/data contract;
-2. historical/read-only replay;
-3. shadow-mode prospective observation;
-4. controlled intervention only if authorized;
-5. independent review/closeout.
+`change_propagation_stress_pilot.py`: **2,000/2,000** deterministic scenarios exact across design, process, supplier, work-transfer, tooling, measurement-system and calibration changes.
 
-The protocol requires a named authorized sponsor, partner-authorized data, data classification/use rights, applicable partner quality requirements, predeclared metrics, rollback, and independent review before effect claims are accepted. Preparing this protocol has **zero external gate effect**.
+- stale release escapes: **0**;
+- false release blocks: **0**;
+- clean control released: **true**;
+- scenario digest: `42d3f544f2cfc8b89f8b8bade22c55a370ac730edc961a548d82e58d1951754d`;
+- results digest: `d0c7771fa952bc3f724e236316b63cafbc5e43dbe172e7f14e6fccbb050b6256`;
+- report SHA-256: `79ea209c17cef641316fd9ff271e9b1b0da0c6f38a7e8c0ad724bbcd3a8eedde`.
 
-`security_data_boundary.v1.json` defaults the lane to **PUBLIC_OR_SYNTHETIC_ONLY**. Partner-proprietary, CUI/CDI, export-controlled, classified, personal/workforce, and safety/airworthiness-critical information remain blocked or specially constrained until the applicable authority, environment, contractual requirements, and handling controls are established. No CMMC, NIST 800-171, AS9100, FAA, Boeing, or Spirit approval/certification is currently claimed.
+This validates only encoded dependency-invalidation logic; `contact_gate_effect=NONE`.
+
+### Independent public manufacturing analog — PASS, with weakness retained
+
+`public_manufacturing_analog_benchmark.py` reproducibly evaluates two independently published UCI manufacturing datasets:
+
+- **Steel Plates Faults (UCI 198):** 1,941 instances, 27 features, seven defect classes; accuracy `0.560536`, macro recall `0.686274`.
+- **SECOM (UCI 179):** 1,567 semiconductor process examples with missing data and severe class imbalance; overall accuracy `0.826420`, balanced accuracy `0.581028`, fail-class recall `0.298077`, fail false-negative rate `0.701923`.
+
+The weak SECOM fail recall is deliberately retained as disconfirming evidence rather than hidden behind overall accuracy. This benchmark establishes reproducible ingestion/preprocessing/measurement behavior on public manufacturing data; it does **not** establish Boeing/Spirit detection performance, production effect or remediation probability. `contact_gate_effect=NONE`.
+
+## Partner-preparation package — V2 PASS, zero external-gate movement
+
+Latest `Boeing Spirit Partner Preparation` run `33810030463` validates four internal preparation artifacts:
+
+1. `partner_pilot_protocol.v1.json`;
+2. `security_data_boundary.v1.json`;
+3. `effect_measurement_protocol.v1.json`;
+4. `independent_review_protocol.v1.json`.
+
+Partner-preparation report SHA-256: `203cf98c922a26bce7fc421fe34c2b4b0f879458015bd39e9b39375768bb1f77`.
+
+The V2 report deliberately leaves external gates unchanged:
+
+- `partner_data_access = missing`;
+- `partner_pilot = missing`;
+- `measured_effect_size = missing`;
+- `security_compliance_fit = partial`;
+- `independent_review = missing`;
+- `contact_gate_effect = NONE`.
+
+### Effect-measurement protocol
+
+`effect_measurement_protocol.v1.json` predeclares primary endpoints such as stale/missing quality-evidence escape rate, repeat nonconformance rate, quality-action closure latency, evidence-retrieval latency and false-negative rate. Rework-hours, schedule-impact and financial-savings claims require stricter partner-approved attribution. Preparing the protocol is **not measured effect evidence**.
+
+### Independent-review protocol
+
+`independent_review_protocol.v1.json` requires a genuinely independent reviewer, conflict disclosure, digest-bound source/evidence, reproducibility, methodological leakage/imbalance review, claim-by-claim partner-evidence checks, independent contact-gate recomputation, and the ability to issue adverse or inconclusive findings. Worldshepherd cannot close its own independent-review gate by self-review.
+
+## Public cybersecurity crosswalk — PASS, security gate still partial
+
+The public Boeing cybersecurity applicability validator passes with five retained official Boeing source classes and six applicability conditions. Latest retained report SHA-256: `9865807cfe3cdff7ac0aacfbf630346cc2f2126024dada54d5e720a4845dcd31`.
+
+A PASS means the public-source applicability artifact is structurally fail-closed. It does **not** establish contractual applicability, CMMC/NIST compliance, SPRS status, Boeing approval or authorization to process controlled information.
 
 ## Five-task routing
 
-`task_routing.v1.json` folds this lane into the five existing Worldshepherd task lanes rather than creating a sixth ChatGPT automation:
+`task_routing.v1.json` folds WS-BOEING-01 into the five existing Worldshepherd task lanes rather than creating a sixth automation:
 
 1. public technical-intelligence / requirements cross-feed;
 2. weekly executive reconciliation;
 3. defense/dual-use and Spirit Defense opportunity/qualification watch;
-4. aerospace sensing/telemetry/provenance lesson cross-feed only when the underlying source already qualifies;
+4. aerospace sensing/telemetry/provenance lesson cross-feed only when the underlying source qualifies;
 5. Revenue/Partner Oversight as the canonical contact-gate and relationship owner.
 
 No task may bypass the machine contact gate or duplicate Boeing/Spirit outreach.
@@ -141,14 +160,14 @@ No task may bypass the machine contact gate or duplicate Boeing/Spirit outreach.
 
 The confidence validator applies hard caps:
 
-- no authorized partner data -> max 55%;
-- no controlled partner pilot -> max 70%;
-- no measured effect size against an agreed baseline -> max 80%;
-- no independent review -> max 92%;
-- unresolved security/compliance fit -> max 85%.
+- no authorized partner data -> max **55%**;
+- no controlled partner pilot -> max **70%**;
+- no measured effect size against an agreed baseline -> max **80%**;
+- unresolved security/compliance fit -> max **85%**;
+- no independent review -> max **92%**.
 
-Contact is permitted only when the machine report reaches >=98.7 **and** partner-data access, partner pilot, measured effect, independent review, and security/compliance gates are verified/complete. Until then the machine action is **DO NOT CONTACT — EXTERNAL VALIDATION GATES REMAIN OPEN** and the system must not describe the score as a probability of enterprise remediation.
+Contact is permitted only when the machine report reaches >=98.7 **and** every required external state is verified/complete. Current machine state is 55.0%, contact false, **DO NOT CONTACT**.
 
 ## Claims boundary
 
-This lane currently demonstrates architecture, evidence controls, internal synthetic rule behavior, and internal partner-preparation completeness only. It does not establish Boeing/Spirit engagement, root cause, production effectiveness, regulatory/contractual compliance, certification, airworthiness, financial savings, defect reduction, adoption, partner-data access, pilot success, independent replication, or a statistical probability of remediation. Those states require the specific partner-authorized evidence and approvals recorded by the fail-closed gates.
+This lane currently demonstrates architecture, evidence controls, synthetic rule behavior, deterministic stress behavior, reproducible independent public-manufacturing analog measurement, public requirement crosswalking, and internal partner-preparation completeness. It does not establish Boeing/Spirit engagement, root cause, production effectiveness, regulatory/contractual compliance, certification, airworthiness, savings, defect reduction, adoption, partner-data access, pilot success, measured partner effect, independent partner-relevant replication or a statistical probability of remediation. Those states require the specific partner-authorized evidence and qualified independent review recorded by the fail-closed gates.
