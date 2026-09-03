@@ -1,0 +1,92 @@
+{
+  "schema": "WS-BOEING-SPIRIT-SECURITY-DATA-BOUNDARY-V1",
+  "as_of": "2026-09-03",
+  "status": "INTERNAL PREPARATION ONLY — PARTNER SECURITY/COMPLIANCE FIT NOT CLOSED",
+  "default_posture": "PUBLIC_OR_SYNTHETIC_ONLY",
+  "principles": [
+    "data minimization",
+    "least privilege",
+    "read-only/sandbox first",
+    "explicit provenance and use rights",
+    "no secret values in logs or evidence bundles",
+    "no silent evidence-state promotion",
+    "partner requirements override generic internal mappings",
+    "fail closed on unresolved classification or authorization"
+  ],
+  "data_classes": [
+    {
+      "class": "PUBLIC",
+      "handling": "May be used subject to source terms and provenance requirements."
+    },
+    {
+      "class": "SYNTHETIC",
+      "handling": "May be used for internal development; must remain visibly synthetic."
+    },
+    {
+      "class": "PARTNER_PROPRIETARY",
+      "handling": "Blocked until written authorization, purpose limitation, retention, access, incident, and deletion terms are defined."
+    },
+    {
+      "class": "CUI_OR_CDI",
+      "handling": "Blocked. No processing claim is authorized until applicable contractual requirements, system boundary, assessment evidence, and authorized environment are established."
+    },
+    {
+      "class": "EXPORT_CONTROLLED",
+      "handling": "Blocked until qualified export-control review establishes eligibility, access restrictions, storage/transfer rules, and personnel/location constraints."
+    },
+    {
+      "class": "CLASSIFIED",
+      "handling": "Out of scope for the current Worldshepherd environment."
+    },
+    {
+      "class": "PERSONAL_OR_WORKFORCE_DATA",
+      "handling": "Minimize or deidentify unless specifically required and authorized; define purpose, access, retention, and privacy obligations first."
+    },
+    {
+      "class": "SAFETY_OR_AIRWORTHINESS_CRITICAL",
+      "handling": "Analysis may support authorized reviewers only; Worldshepherd does not inherit design, release, MRB, airworthiness, or certification authority."
+    }
+  ],
+  "required_partner_decisions": [
+    "authoritative data classification",
+    "contractual cybersecurity clauses and flowdowns",
+    "CUI/CDI applicability",
+    "export-control applicability",
+    "approved system/environment boundary",
+    "identity/access requirements",
+    "retention and deletion requirements",
+    "logging and audit requirements",
+    "incident notification requirements",
+    "subprocessor/tool restrictions",
+    "data residency/location restrictions",
+    "IP/data-rights markings and use restrictions"
+  ],
+  "internal_controls_to_demonstrate_before_partner_data": [
+    "role separation and negative authorization tests",
+    "TLS/private binding appropriate to deployment mode",
+    "secrets excluded from source/logs/evidence packages",
+    "backup and restore evidence",
+    "tamper-evident or digest-bound evidence exports",
+    "SBOM/dependency provenance",
+    "vulnerability/dependency review process",
+    "incident-response procedure",
+    "least-privilege service accounts",
+    "sanitized machine-readable evidence bundle",
+    "data import/export allowlist",
+    "deletion/retention test",
+    "audit lineage for access and release actions"
+  ],
+  "prohibited_current_claims": [
+    "CMMC certified",
+    "NIST SP 800-171 compliant",
+    "SPRS assessed score",
+    "CUI authorized",
+    "ATO granted",
+    "AS9100 certified",
+    "FAA approved",
+    "Boeing approved",
+    "Spirit approved"
+  ],
+  "contact_gate_effect": "security_compliance_fit remains PARTIAL. This boundary closes preparation gaps but cannot become COMPLETE/VERIFIED until partner-specific requirements and the authorized data/environment boundary are reviewed and tested.",
+  "claims_boundary": "This is a security/data-handling preparation artifact. It does not establish regulatory or contractual compliance, certification, authorization to process Boeing/Spirit information, CUI capability, export eligibility, or partner approval."
+}
