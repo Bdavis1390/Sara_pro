@@ -1,0 +1,51 @@
+name: Marketplace Remaining High Priority Synthetic Stress
+
+on:
+  push:
+    paths:
+      - 'marketplace/synthetic_remaining_high_priority_stress.py'
+      - '.github/workflows/marketplace-remaining-target-stress.yml'
+  pull_request:
+    paths:
+      - 'marketplace/synthetic_remaining_high_priority_stress.py'
+      - '.github/workflows/marketplace-remaining-target-stress.yml'
+  workflow_dispatch:
+
+jobs:
+  synthetic-remaining-high-priority:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile suite
+        run: python -m py_compile marketplace/synthetic_remaining_high_priority_stress.py
+      - name: Run deterministic remaining-target stress
+        run: python marketplace/synthetic_remaining_high_priority_stress.py --output marketplace/evidence/remaining-high-priority-synthetic-stress-report.json
+      - name: Verify exact results and zero external gate effect
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('marketplace/evidence/remaining-high-priority-synthetic-stress-report.json').read_text())
+          assert r['result']=='PASS'
+          assert r['target_count']==5
+          assert r['fixture_count']==45
+          assert r['pass_count']==45
+          assert all(v=='none' for v in r['external_gate_updates'].values())
+          assert r['contact_gate_effect']=='NONE'
+          assert all(v['fixture_count']==9 and v['pass_count']==9 for v in r['by_target'].values())
+          print(json.dumps(r,indent=2))
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum marketplace/evidence/remaining-high-priority-synthetic-stress-report.json > marketplace/evidence/REMAINING_HIGH_PRIORITY_STRESS_SHA256SUMS.txt
+          cat marketplace/evidence/REMAINING_HIGH_PRIORITY_STRESS_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-remaining-high-priority-synthetic-stress
+          path: |
+            marketplace/evidence/remaining-high-priority-synthetic-stress-report.json
+            marketplace/evidence/REMAINING_HIGH_PRIORITY_STRESS_SHA256SUMS.txt
+          retention-days: 90
