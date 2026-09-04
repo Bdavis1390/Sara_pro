@@ -13,7 +13,7 @@ def test_cli_exports_and_verifies_simulation_report(tmp_path, capsys):
 
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["qualification_id"] == "WS-QE-2026-EMB-001"
-    assert payload["capability_status"] == "SIMULATED ONLY"
+    assert payload["capability_status"] == "SIMULATED_ONLY"
     assert payload["summary"]["expected_control_behavior_observed"] is True
     assert payload["laboratory_validation_performed"] is False
     assert payload["stealth_or_cloaking_validated"] is False
