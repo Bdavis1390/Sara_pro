@@ -124,29 +124,29 @@ def record_human_acceptance(
         blocking = ["human acceptance decision is deferred"]
         claimable = ["IMPLEMENTED IN SOFTWARE", "REQUIRES PARTNER VALIDATION"]
 
-    body = {
-        "record_version": HMAA_HUMAN_ACCEPTANCE_VERSION,
-        "state": state.value,
-        "decision_id": decision.decision_id,
-        "decision_by": decision.decision_by,
-        "decided_at": decision.decided_at.isoformat(),
-        "action": decision.action.value,
-        "rationale": decision.rationale,
-        "request_package_sha256": assessment.request_package_sha256,
-        "response_sha256": assessment.response_sha256,
-        "verifier_id": assessment.verifier_id,
-        "partner_attestation_accepted": partner_attestation_accepted,
-        "accepted_scope_limited_to_request": scope_limited,
-        "partner_validated": False,
-        "live_environment_validated": False,
-        "flight_validated": False,
-        "operationally_validated": False,
-        "claimable_labels": claimable,
-        "blocking_reasons": blocking,
-    }
-    return HMAAHumanAcceptanceRecord(
-        **body,
-        record_sha256=_sha256_json(body),
+    provisional = HMAAHumanAcceptanceRecord(
+        state=state,
+        decision_id=decision.decision_id,
+        decision_by=decision.decision_by,
+        decided_at=decision.decided_at,
+        action=decision.action,
+        rationale=decision.rationale,
+        request_package_sha256=assessment.request_package_sha256,
+        response_sha256=assessment.response_sha256,
+        verifier_id=assessment.verifier_id,
+        partner_attestation_accepted=partner_attestation_accepted,
+        accepted_scope_limited_to_request=scope_limited,
+        partner_validated=False,
+        live_environment_validated=False,
+        flight_validated=False,
+        operationally_validated=False,
+        claimable_labels=claimable,
+        blocking_reasons=blocking,
+        record_sha256="sha256:" + "0" * 64,
+    )
+    canonical_body = provisional.model_dump(mode="json", exclude={"record_sha256"})
+    return provisional.model_copy(
+        update={"record_sha256": _sha256_json(canonical_body)}
     )
 
 
