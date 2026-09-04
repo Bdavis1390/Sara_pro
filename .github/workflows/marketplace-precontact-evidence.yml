@@ -1,0 +1,57 @@
+name: Marketplace Precontact Evidence Acquisition
+
+on:
+  push:
+    paths:
+      - 'marketplace/precontact_evidence_acquisition_matrix.v1.json'
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_precontact_evidence_acquisition.py'
+      - '.github/workflows/marketplace-precontact-evidence.yml'
+  pull_request:
+    paths:
+      - 'marketplace/precontact_evidence_acquisition_matrix.v1.json'
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_precontact_evidence_acquisition.py'
+      - '.github/workflows/marketplace-precontact-evidence.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-precontact-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_precontact_evidence_acquisition.py
+      - name: Validate matrix and gate linkage
+        run: python marketplace/validate_precontact_evidence_acquisition.py --matrix marketplace/precontact_evidence_acquisition_matrix.v1.json --gates marketplace/high_priority_contact_gates.v1.json --output marketplace/evidence/precontact-evidence-acquisition-report.json
+      - name: Verify fail-closed state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('marketplace/evidence/precontact-evidence-acquisition-report.json').read_text())
+          assert r['result']=='PASS'
+          assert r['target_count']==18
+          assert r['gate_registry_target_count']==18
+          assert r['precontact_evidence_class_count']==5
+          assert r['required_external_gate_count']==5
+          assert r['verified_external_gate_count']==0
+          assert r['contact_authorizations']==0
+          assert r['precontact_evidence_cap_pct']==55.0
+          assert r['target_contact_threshold_pct']==98.7
+          print(json.dumps(r,indent=2))
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum marketplace/evidence/precontact-evidence-acquisition-report.json > marketplace/evidence/PRECONTACT_EVIDENCE_ACQUISITION_SHA256SUMS.txt
+          cat marketplace/evidence/PRECONTACT_EVIDENCE_ACQUISITION_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-precontact-evidence-acquisition
+          path: |
+            marketplace/evidence/precontact-evidence-acquisition-report.json
+            marketplace/evidence/PRECONTACT_EVIDENCE_ACQUISITION_SHA256SUMS.txt
+          retention-days: 90
