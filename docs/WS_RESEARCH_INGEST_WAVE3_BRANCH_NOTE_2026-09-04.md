@@ -1,0 +1,1 @@
+Branch review note: this increment is documentation/evidence governance only; runtime remains unchanged.
