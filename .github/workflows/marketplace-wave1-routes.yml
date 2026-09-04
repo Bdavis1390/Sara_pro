@@ -15,6 +15,9 @@ on:
       - '.github/workflows/marketplace-wave1-routes.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate-wave1-routes:
     runs-on: ubuntu-latest
