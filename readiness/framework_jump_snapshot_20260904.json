@@ -1,7 +1,7 @@
 {
   "schema": "WS-FRAMEWORK-JUMP-SNAPSHOT-V1",
-  "as_of": "2026-09-04T00:49:49Z",
-  "purpose": "Machine-readable snapshot of current Worldshepherd readiness, evidence maturity, marketplace, contact-gate and security movement under the claims-controlled framework.",
+  "as_of": "2026-09-04T18:22:22Z",
+  "purpose": "Machine-readable snapshot of current Worldshepherd readiness, evidence maturity, marketplace, contact-gate, next-external-jump and security movement under the claims-controlled framework.",
   "historical_pre_baseline": {
     "as_of": "2026-08-30",
     "scale": "controlled_readiness_0_to_10",
@@ -63,6 +63,29 @@
     "verified_synthetic_baselines": "5/5",
     "boundary": "A low external-gate closure percentage alongside high internal readiness is expected and desirable under fail-closed evidence separation; it prevents preparation from being mislabeled as validation."
   },
+  "next_external_jump_program": {
+    "validated": true,
+    "validation_run_id": 33905509258,
+    "validation_result": "PASS",
+    "report_sha256": "d86b32f7196bd33fa9d8843fdd17c7b541f9a7bb6fcbb6d496cdac8e4da22988",
+    "artifact_id": 9949289153,
+    "artifact_zip_sha256": "e6149ed480f22ff4dee5e5458450a3d26dfb839c0417b01e04dbdf1e8c3a25f1",
+    "prioritized_lane_count": 6,
+    "potential_partner_test_lanes": ["SARA", "STEG", "RESONANCE", "OVERWATCH-ECHO", "PRE", "REVENUE-E2E"],
+    "current_partner_test_or_higher_count": 0,
+    "potential_cap_jumps_after_valid_external_evidence_pp": {
+      "SARA": 15,
+      "STEG": 15,
+      "RESONANCE": 15,
+      "OVERWATCH-ECHO": 20,
+      "PRE": 20,
+      "REVENUE-E2E": 20
+    },
+    "partner_test_contract_required_field_count": 24,
+    "contact_authority_created": false,
+    "external_gate_closures_created": 0,
+    "boundary": "The validated jump program is preparation only. No workstream is promoted until target-specific externally authorized evidence satisfies the partner-test contract and existing external gate."
+  },
   "marketplace": {
     "high_priority_target_count": 18,
     "synthetic_target_coverage": "18/18",
@@ -91,8 +114,13 @@
   },
   "security_premerge": {
     "merge_allowed": false,
-    "codeql_new_medium_alerts": 8,
+    "latest_completed_codeql_head_sha": "26f5ea7e63d2085e2ff4f4fef5ada10c9bd8cdaf",
+    "latest_completed_codeql_check_run_id": 101126559708,
+    "latest_completed_codeql_new_medium_alerts": 8,
+    "snapshot_branch_head_sha": "091c0a2a4ecc7340417f827a064e0327d6b5cc01",
+    "snapshot_head_codeql_state": "not_yet_observed_at_snapshot_time",
     "supplemental_static_audit": {
+      "run_id": 33904596688,
       "scanned_python_files": 151,
       "findings": 52,
       "high_review": 0,
@@ -101,10 +129,10 @@
       "dynamic_network_calls": 2,
       "findings_sha256": "8a3f032e1ec461178c9c07cca72cd70784df3c94a06640ba539f6bab323b36b6"
     },
-    "boundary": "The supplemental audit is diagnostic and does not resolve CodeQL alerts. PR #62 remains blocked from merge under the zero-open-medium/high/critical policy."
+    "boundary": "The supplemental audit is diagnostic and does not resolve CodeQL alerts. PR #62 remains blocked from merge under the zero-open-medium/high/critical policy; the last completed CodeQL result still reported eight medium alerts."
   },
   "interpretation": {
-    "largest_positive_jump": "Internal execution/governance and marketplace preparation are near-saturated under the current readiness model.",
+    "largest_positive_jump": "Internal execution/governance and marketplace preparation are near-saturated under the current readiness model, and six workstreams now have validated fail-closed partner-test transition packages.",
     "largest_remaining_gap": "External evidence maturity: 58 of 63 registered gates remain open and no portfolio workstream has yet reached partner_test or higher effective maturity.",
     "current_bottleneck": "Partner-authorized data/tests, independent review, measured outcomes, qualification/certification where applicable, and resolution of the PR #62 security gate.",
     "next_jump_rule": "Further internal documentation alone cannot be counted as partner/field/physical/certification maturity. Each next jump must be bound to the required evidence class."
