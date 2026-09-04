@@ -1,1 +1,0 @@
-Review scope: documentation and claims-governance intake only; no runtime behavior changed.
