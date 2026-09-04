@@ -1,0 +1,112 @@
+{
+  "schema": "WS-FRAMEWORK-JUMP-SNAPSHOT-V1",
+  "as_of": "2026-09-04T00:49:49Z",
+  "purpose": "Machine-readable snapshot of current Worldshepherd readiness, evidence maturity, marketplace, contact-gate and security movement under the claims-controlled framework.",
+  "historical_pre_baseline": {
+    "as_of": "2026-08-30",
+    "scale": "controlled_readiness_0_to_10",
+    "average": 6.4,
+    "minimum": 5.0,
+    "dimensions": {
+      "opportunity_intelligence": 8,
+      "pre_schema_governance": 7,
+      "data_integrity": 8,
+      "technical_evidence": 5,
+      "proposal_development": 5,
+      "administrative_workstream": 5,
+      "governance_approval": 7
+    },
+    "boundary": "Historical PRE score measured ability to execute the next controlled step; it did not override evidence, eligibility or approval gates."
+  },
+  "portfolio_internal_partner_readiness": {
+    "workstream_count": 18,
+    "target_pct": 98.7,
+    "minimum_pct": 99.0,
+    "maximum_pct": 100.0,
+    "average_pct": 99.3889,
+    "workstreams_at_or_above_target": 18,
+    "boundary": "Internal/partner readiness is preparation readiness and is not physical, partner, field, clinical, flight, certification or independent-validation maturity."
+  },
+  "effective_evidence_maturity": {
+    "source_of_truth_logic": "readiness/portfolio.v1.json base states plus approved evidence/closures.v1.json maturity_updates",
+    "distribution": {
+      "architecture": 4,
+      "simulated": 6,
+      "implemented_software": 5,
+      "internal_test": 3,
+      "partner_test": 0,
+      "independently_replicated": 0,
+      "qualified_or_certified": 0
+    },
+    "approved_maturity_promotions": [
+      {"workstream": "ION-EP", "from": "architecture", "to": "simulated"},
+      {"workstream": "STEG", "from": "implemented_software", "to": "internal_test"},
+      {"workstream": "RESONANCE", "from": "simulated", "to": "internal_test"}
+    ],
+    "maturity_cap_scale_pct": {
+      "architecture": 20,
+      "simulated": 35,
+      "implemented_software": 60,
+      "internal_test": 65,
+      "partner_test": 80,
+      "independently_replicated": 92,
+      "qualified_or_certified": 100
+    },
+    "effective_average_maturity_cap_pct": 43.6111
+  },
+  "external_evidence": {
+    "registered_gate_count": 63,
+    "closed_with_bound_evidence": 5,
+    "partial_evidence_records": 1,
+    "remaining_open_gate_count": 58,
+    "closure_pct": 7.9365,
+    "verified_synthetic_baselines": "5/5",
+    "boundary": "A low external-gate closure percentage alongside high internal readiness is expected and desirable under fail-closed evidence separation; it prevents preparation from being mislabeled as validation."
+  },
+  "marketplace": {
+    "high_priority_target_count": 18,
+    "synthetic_target_coverage": "18/18",
+    "deterministic_fixture_result": "162/162 PASS",
+    "per_target_fixture_count": 9,
+    "official_public_routes_verified": 18,
+    "official_routes_used": 0,
+    "default_precontact_external_evidence_cap_pct": 55.0,
+    "target_contact_threshold_pct": 98.7,
+    "contact_authorizations": 0,
+    "boundary": "Synthetic coverage and route verification do not establish target interest, operational effectiveness, remediation probability, supplier qualification or contact authorization."
+  },
+  "boeing_spirit": {
+    "evidence_backed_remediation_confidence_pct": 55.0,
+    "target_contact_threshold_pct": 98.7,
+    "contact_gate_pass": false,
+    "contact_action": "DO NOT CONTACT — EXTERNAL VALIDATION GATES REMAIN OPEN",
+    "required_external_gates": [
+      "partner_data_access",
+      "partner_pilot",
+      "measured_effect_size",
+      "security_compliance_fit",
+      "independent_review"
+    ],
+    "boundary": "The 55.0 value is an internal evidence/fit score and is not a statistical probability of fixing Boeing or Spirit."
+  },
+  "security_premerge": {
+    "merge_allowed": false,
+    "codeql_new_medium_alerts": 8,
+    "supplemental_static_audit": {
+      "scanned_python_files": 151,
+      "findings": 52,
+      "high_review": 0,
+      "cli_derived_filesystem_sinks": 50,
+      "cli_derived_network_sinks": 0,
+      "dynamic_network_calls": 2,
+      "findings_sha256": "8a3f032e1ec461178c9c07cca72cd70784df3c94a06640ba539f6bab323b36b6"
+    },
+    "boundary": "The supplemental audit is diagnostic and does not resolve CodeQL alerts. PR #62 remains blocked from merge under the zero-open-medium/high/critical policy."
+  },
+  "interpretation": {
+    "largest_positive_jump": "Internal execution/governance and marketplace preparation are near-saturated under the current readiness model.",
+    "largest_remaining_gap": "External evidence maturity: 58 of 63 registered gates remain open and no portfolio workstream has yet reached partner_test or higher effective maturity.",
+    "current_bottleneck": "Partner-authorized data/tests, independent review, measured outcomes, qualification/certification where applicable, and resolution of the PR #62 security gate.",
+    "next_jump_rule": "Further internal documentation alone cannot be counted as partner/field/physical/certification maturity. Each next jump must be bound to the required evidence class."
+  }
+}
