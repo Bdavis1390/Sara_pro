@@ -1,6 +1,13 @@
-# Copy the variable names into a local, ignored environment file or shell.
+# Copy only the variable names/mode you need into a local, ignored environment file or shell.
 # Never commit real credential values.
 
+# Common Sandbox endpoint and account-level Sandbox token.
 LATTICE_ENDPOINT=
-ENVIRONMENT_TOKEN=
 SANDBOXES_TOKEN=
+
+# Option A — pre-provisioned environment bearer token.
+ENVIRONMENT_TOKEN=
+
+# Option B — OAuth 2.0 client credentials for short-lived environment bearer tokens.
+LATTICE_CLIENT_ID=
+LATTICE_CLIENT_SECRET=
