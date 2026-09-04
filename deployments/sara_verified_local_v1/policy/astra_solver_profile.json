@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "profile_id": "WS-ASTRA-SOLVER-READ-ONLY",
+  "status": "DESIGN_INTEGRATION",
+  "model": "gpt-6-astra",
+  "authority": "CRE1AWS",
+  "orchestrator": "SARA",
+  "default_mode": "SOLVER_READ_ONLY",
+  "network": {
+    "read": false,
+    "write": false,
+    "requires_explicit_sara_authorization": true
+  },
+  "external_actions": {
+    "email_send": false,
+    "message_send": false,
+    "publish": false,
+    "purchase": false,
+    "account_change": false,
+    "third_party_security_testing": false,
+    "production_change": false,
+    "physical_control": false
+  },
+  "allowed_baseline_capabilities": [
+    "authorized_project_read",
+    "analysis",
+    "scientific_reasoning",
+    "mathematical_reasoning",
+    "code_review",
+    "patch_proposal",
+    "test_generation",
+    "simulation_plan_generation",
+    "requirement_extraction",
+    "requirement_delta_generation",
+    "claims_red_team",
+    "evidence_gap_analysis"
+  ],
+  "required_output_fields": [
+    "task_id",
+    "evidence_refs",
+    "claims_control_labels",
+    "uncertainty_notes",
+    "disconfirming_evidence",
+    "output_digest",
+    "recommended_follow_on"
+  ],
+  "claims_control": {
+    "model_output_may_upgrade_maturity": false,
+    "evidence_required_for_upgrade": true
+  },
+  "cyber": {
+    "owned_or_explicitly_authorized_targets_only": true,
+    "defensive_baseline_only": true,
+    "autonomous_third_party_scanning": false,
+    "persistence_or_evasion": false
+  },
+  "promotion_gates": [
+    "model_access_verified",
+    "secret_storage_verified",
+    "sara_adapter_implemented",
+    "provenance_logging_verified",
+    "read_only_tests_pass",
+    "timeout_cancel_rollback_verified",
+    "tool_allowlist_verified",
+    "claims_tagging_verified",
+    "cyber_boundary_tests_pass",
+    "cre1aws_approval_for_elevated_mode"
+  ]
+}
