@@ -13,6 +13,9 @@ on:
       - '.github/workflows/marketplace-round6.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate-round6:
     runs-on: ubuntu-latest
