@@ -15,6 +15,9 @@ on:
       - '.github/workflows/marketplace-high-priority-coverage.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate-high-priority-coverage:
     runs-on: ubuntu-latest
