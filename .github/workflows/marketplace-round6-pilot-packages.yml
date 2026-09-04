@@ -13,6 +13,9 @@ on:
       - '.github/workflows/marketplace-round6-pilot-packages.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate-round6-pilot-packages:
     runs-on: ubuntu-latest
