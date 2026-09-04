@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Callable, Iterable, Iterator, Mapping
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
@@ -27,9 +27,14 @@ class LatticeSandboxReadError(RuntimeError):
     """Sanitized read-only Sandbox transport error."""
 
 
+@runtime_checkable
+class EnvironmentTokenProvider(Protocol):
+    def get_token(self) -> SecretStr: ...
+
+
 class SandboxReadConfig(BaseModel):
     endpoint: str = Field(min_length=1)
-    environment_token: SecretStr
+    environment_token: SecretStr | None = None
     sandboxes_token: SecretStr
     timeout_seconds: float = Field(default=30.0, gt=0, le=300)
     max_sse_event_bytes: int = Field(default=1_048_576, ge=1024, le=8_388_608)
@@ -85,7 +90,8 @@ class SandboxReadConfig(BaseModel):
         return {
             "endpoint": self.endpoint,
             "environment_token_present": bool(
-                self.environment_token.get_secret_value()
+                self.environment_token
+                and self.environment_token.get_secret_value()
             ),
             "sandboxes_token_present": bool(self.sandboxes_token.get_secret_value()),
             "timeout_seconds": self.timeout_seconds,
@@ -145,23 +151,51 @@ class SandboxReadOnlySSETransport(LatticeReadTransport):
     """Read-only REST SSE transport for an authorized Lattice Sandbox.
 
     Construction does not perform a network call. Only the two documented
-    stream endpoints are reachable through public methods.
+    stream endpoints are reachable through public methods. The environment
+    bearer can be static or supplied on demand by an in-memory token provider.
     """
 
     def __init__(
         self,
         config: SandboxReadConfig,
         *,
+        environment_token_provider: EnvironmentTokenProvider | None = None,
         open_request: OpenCallable | None = None,
     ) -> None:
+        if environment_token_provider is None and not (
+            config.environment_token
+            and config.environment_token.get_secret_value()
+        ):
+            raise ValueError(
+                "Sandbox read transport requires a static environment token or token provider"
+            )
         self._config = config
+        self._environment_token_provider = environment_token_provider
         self._open_request = open_request or _default_open
 
     def __repr__(self) -> str:
+        mode = "provider" if self._environment_token_provider else "static"
         return (
             "SandboxReadOnlySSETransport("
-            f"endpoint={self._config.endpoint!r}, credentials=<redacted>)"
+            f"endpoint={self._config.endpoint!r}, token_mode={mode!r}, "
+            "credentials=<redacted>)"
         )
+
+    def _environment_token_value(self) -> str:
+        if self._environment_token_provider is not None:
+            token = self._environment_token_provider.get_token()
+            value = token.get_secret_value()
+            if not value:
+                raise LatticeSandboxReadError(
+                    "environment token provider returned an unusable token"
+                )
+            return value
+        if self._config.environment_token is None:
+            raise LatticeSandboxReadError("environment token is unavailable")
+        value = self._config.environment_token.get_secret_value()
+        if not value:
+            raise LatticeSandboxReadError("environment token is unavailable")
+        return value
 
     def _build_stream_request(
         self,
@@ -180,9 +214,7 @@ class SandboxReadOnlySSETransport(LatticeReadTransport):
             data=body,
             method="POST",
             headers={
-                "Authorization": (
-                    "Bearer " + self._config.environment_token.get_secret_value()
-                ),
+                "Authorization": "Bearer " + self._environment_token_value(),
                 "Anduril-Sandbox-Authorization": (
                     "Bearer " + self._config.sandboxes_token.get_secret_value()
                 ),
