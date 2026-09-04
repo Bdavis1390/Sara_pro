@@ -9,6 +9,7 @@ on:
     paths:
       - 'marketplace/synthetic_round6_target_stress.py'
       - '.github/workflows/marketplace-round6-stress.yml'
+  workflow_dispatch:
 
 jobs:
   synthetic-stress-round6:
