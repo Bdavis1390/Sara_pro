@@ -12,6 +12,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from . import __version__
 from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
+from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
 from .storage import DurableStore
@@ -82,6 +83,7 @@ async def lifespan(app: FastAPI):
     os.umask(0o077)
     validate_runtime_secrets()
     app.state.store = DurableStore()
+    app.state.hmaa_store = HMAAEvidenceStore()
     app.state.store.append_audit(
         AuditRecord.create(
             event="service_started",
@@ -120,6 +122,10 @@ def store(request: Request) -> DurableStore:
     return request.app.state.store
 
 
+def hmaa_store(request: Request) -> HMAAEvidenceStore:
+    return request.app.state.hmaa_store
+
+
 @app.get("/health")
 def health() -> dict[str, object]:
     return {
@@ -132,6 +138,8 @@ def health() -> dict[str, object]:
             "liveness": "/livez",
             "readiness": "/readyz",
             "audit": "/v1/audit?limit=50",
+            "hmaa_status": "/v1/hmaa/status",
+            "hmaa_evidence": "/v1/hmaa/evidence?limit=50",
             "registry": "/admin/registry",
             "relay": "/v1/relay",
             "selftest": "/admin/selftest",
@@ -164,9 +172,41 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/admin/registry</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. Use Bearer authentication from an approved local client.</p></div>
 </body></html>"""
+
+
+@app.get("/v1/hmaa/status")
+def hmaa_status(
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+) -> dict[str, object]:
+    require_admin(role)
+    evidence_store = hmaa_store(request)
+    storage_ok, storage_detail = evidence_store.check_storage()
+    return {
+        "ok": storage_ok,
+        "storage": storage_detail,
+        "status": evidence_store.status(),
+    }
+
+
+@app.get("/v1/hmaa/evidence")
+def hmaa_evidence(
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+    mission_id: Annotated[str | None, Query(min_length=1, max_length=128)] = None,
+) -> dict[str, object]:
+    require_admin(role)
+    records = hmaa_store(request).read_recent(
+        limit=limit,
+        mission_id=mission_id,
+    )
+    return {
+        "records": [record.model_dump(mode="json") for record in records]
+    }
 
 
 @app.post("/v1/relay", response_model=RelayResponse)

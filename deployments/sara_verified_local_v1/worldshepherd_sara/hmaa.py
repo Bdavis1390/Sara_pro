@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 from datetime import datetime, timezone
 from enum import Enum
@@ -72,6 +73,35 @@ def seal_event(event: HMAAEvent, previous_event_hash: str | None = None) -> HMAA
     return candidate.model_copy(update={"event_hash": f"sha256:{digest}"})
 
 
+def verify_event_seal(event: HMAAEvent) -> bool:
+    if event.event_hash is None:
+        return False
+    candidate = event.model_copy(update={"event_hash": None})
+    expected_hash = "sha256:" + hashlib.sha256(canonical_event_bytes(candidate)).hexdigest()
+    return hmac.compare_digest(event.event_hash, expected_hash)
+
+
+def event_identity_key(event: HMAAEvent) -> str:
+    identity = "\x1f".join(
+        (event.mission_id, event.source_system, event.event_id)
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(identity).hexdigest()
+
+
+def event_source_fingerprint(event: HMAAEvent) -> str:
+    body = event.model_dump(
+        mode="json",
+        exclude={"ingest_timestamp", "previous_event_hash", "event_hash"},
+    )
+    encoded = json.dumps(
+        body,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
 def verify_chain(events: list[HMAAEvent]) -> tuple[bool, list[str]]:
     errors: list[str] = []
     expected_previous: str | None = None
@@ -104,6 +134,7 @@ def evaluate_event_assurance(
     connection_healthy: bool = True,
     policy_engine_available: bool = True,
     duplicate_event: bool = False,
+    conflicting_replay: bool = False,
     out_of_order_event: bool = False,
     checksum_valid: bool = True,
 ) -> AssuranceAssessment:
@@ -118,6 +149,8 @@ def evaluate_event_assurance(
 
     if not checksum_valid:
         review_reasons.append("evidence checksum validation failed")
+    if conflicting_replay:
+        review_reasons.append("event identity replayed with conflicting source content")
     if out_of_order_event:
         review_reasons.append("event chronology is out of order")
     if duplicate_event:
