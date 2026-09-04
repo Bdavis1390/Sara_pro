@@ -11,6 +11,9 @@ on:
       - '.github/workflows/marketplace-remaining-target-stress.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   synthetic-remaining-high-priority:
     runs-on: ubuntu-latest
