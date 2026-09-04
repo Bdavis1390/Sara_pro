@@ -1,10 +1,10 @@
 {
   "schema": "WS-PREMERGE-SECURITY-GATE-V1",
-  "as_of": "2026-09-04T00:49:49Z",
+  "as_of": "2026-09-04T18:12:29Z",
   "scope": "PR #62 readiness/98-7-program-20260903 -> main",
   "codeql": {
-    "head_sha": "20b4b15f7e2658b90ad6323d060c468c30b924e1",
-    "check_run_id": 100869690967,
+    "head_sha": "26f5ea7e63d2085e2ff4f4fef5ada10c9bd8cdaf",
+    "check_run_id": 101126559708,
     "conclusion": "success_with_open_security_alerts",
     "new_alert_count": 8,
     "severity_counts": {
@@ -12,11 +12,12 @@
       "high": 0,
       "medium": 8,
       "low": 0
-    }
+    },
+    "reported_summary": "8 new alerts including 8 medium severity security vulnerabilities"
   },
   "supplemental_static_sink_audit": {
-    "run_id": 33823262459,
-    "job_id": 100870336302,
+    "run_id": 33904596688,
+    "job_id": 101126432340,
     "conclusion": "success_diagnostic_only",
     "scanned_python_file_count": 151,
     "finding_count": 52,
@@ -26,8 +27,8 @@
     "dynamic_network_call_count": 2,
     "findings_sha256": "8a3f032e1ec461178c9c07cca72cd70784df3c94a06640ba539f6bab323b36b6",
     "report_sha256": "a42cc23707fb855e5ad228b99097183d706db78dc90d2efefc6675815ef4cae6",
-    "artifact_id": 9919014133,
-    "artifact_zip_sha256": "7af0cecea975cffe9703f27653dc0536e57e107742632a8ee1d35a4196e17eda",
+    "artifact_id": 9948954821,
+    "artifact_zip_sha256": "45f11eb55812afff3573fe9107778eef056e874613074ed52f82563de4ae623e",
     "effect": "Diagnostic prioritization only; does not resolve or dismiss CodeQL alerts."
   },
   "merge_security_policy": {
@@ -39,7 +40,7 @@
   },
   "merge_allowed": false,
   "blockers": [
-    "Eight medium-severity CodeQL alerts are reported in code changed by PR #62 and have not yet been individually triaged or resolved.",
+    "The latest CodeQL check on head 26f5ea7e63d2085e2ff4f4fef5ada10c9bd8cdaf still reports eight medium-severity alerts in code changed by PR #62.",
     "The supplemental static sink audit found 52 review/diagnostic sink observations across 151 Python files; none were classified high_review, but 50 CLI-derived filesystem sinks and 2 dynamic network calls still require correlation against the actual CodeQL dataflows before disposition."
   ],
   "next_actions": [
@@ -49,5 +50,5 @@
     "Document any false-positive disposition with rule, source, sink, reason, reproducer/negative test and reviewer evidence.",
     "Re-run CodeQL and require zero unresolved medium/high/critical alerts before merge."
   ],
-  "claims_boundary": "A successful CodeQL check run or static sink audit does not mean zero vulnerabilities. CodeQL explicitly reports eight new medium-severity alerts in changed code. The supplemental audit is diagnostic only and cannot dismiss those alerts; this gate therefore remains merge_allowed=false until each alert is resolved or independently justified as a false positive under the recorded policy."
+  "claims_boundary": "A successful CodeQL check run or static sink audit does not mean zero vulnerabilities. The latest CodeQL check still reports eight medium-severity alerts. The supplemental audit is diagnostic only and cannot dismiss those alerts; this gate remains merge_allowed=false until each alert is resolved or independently justified as a false positive under the recorded policy."
 }
