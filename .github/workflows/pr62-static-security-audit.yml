@@ -28,22 +28,35 @@ jobs:
         run: python -m py_compile security/audit_changed_python_sinks.py
       - name: Run audit
         run: python security/audit_changed_python_sinks.py --output security/evidence/changed-python-sink-audit.json
-      - name: Verify security gate remains blocked while CodeQL alerts are open
+      - name: Verify security-gate consistency
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
+
           gate=json.loads(Path('security/premerge_security_gate.v1.json').read_text())
           audit=json.loads(Path('security/evidence/changed-python-sink-audit.json').read_text())
-          assert gate['merge_allowed'] is False
-          assert gate['codeql']['new_alert_count'] == 8
-          assert gate['codeql']['severity_counts']['medium'] == 8
+
           assert audit['merge_gate_effect'] == 'NONE_DIAGNOSTIC_ONLY'
+          assert audit['high_review_count'] == 0, 'high-review dangerous API findings require manual security disposition'
+
+          sev=gate['codeql']['severity_counts']
+          blocking=int(sev.get('critical',0))+int(sev.get('high',0))+int(sev.get('medium',0))
+          assert int(gate['codeql']['new_alert_count']) == sum(int(v) for v in sev.values())
+          assert gate['codeql']['status'] == 'completed'
+          assert gate['codeql']['conclusion'] == 'success'
+
+          if blocking == 0:
+              assert gate['merge_allowed'] is True, 'zero blocking CodeQL alerts must agree with cleared changed-code gate'
+          else:
+              assert gate['merge_allowed'] is False, 'blocking CodeQL alerts must keep changed-code gate closed'
+
           print(json.dumps({
             'merge_allowed': gate['merge_allowed'],
-            'codeql_medium_alerts': gate['codeql']['severity_counts']['medium'],
+            'codeql_blocking_alerts': blocking,
             'audit_finding_count': audit['finding_count'],
             'cli_derived_filesystem_sink_count': audit['cli_derived_filesystem_sink_count'],
+            'dynamic_network_call_count': audit['dynamic_network_call_count'],
             'high_review_count': audit['high_review_count'],
             'findings_sha256': audit['findings_sha256']
           }, indent=2))
