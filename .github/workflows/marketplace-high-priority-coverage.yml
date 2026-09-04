@@ -1,0 +1,57 @@
+name: Marketplace High Priority Synthetic Coverage
+
+on:
+  push:
+    paths:
+      - 'marketplace/high_priority_synthetic_coverage.v1.json'
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_high_priority_synthetic_coverage.py'
+      - '.github/workflows/marketplace-high-priority-coverage.yml'
+  pull_request:
+    paths:
+      - 'marketplace/high_priority_synthetic_coverage.v1.json'
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_high_priority_synthetic_coverage.py'
+      - '.github/workflows/marketplace-high-priority-coverage.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-high-priority-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_high_priority_synthetic_coverage.py
+      - name: Validate coverage and fail-closed gate linkage
+        run: python marketplace/validate_high_priority_synthetic_coverage.py --coverage marketplace/high_priority_synthetic_coverage.v1.json --gates marketplace/high_priority_contact_gates.v1.json --output marketplace/evidence/high-priority-synthetic-coverage-report.json
+      - name: Verify exact coverage totals
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('marketplace/evidence/high-priority-synthetic-coverage-report.json').read_text())
+          assert r['result']=='PASS'
+          assert r['target_count']==18
+          assert r['covered_target_count']==18
+          assert r['fixture_count']==162
+          assert r['pass_count']==162
+          assert r['coverage_pct']==100.0
+          assert r['external_gate_closures']==0
+          assert r['contact_authorizations']==0
+          assert r['contact_gate_effect']=='NONE'
+          print(json.dumps(r,indent=2))
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum marketplace/evidence/high-priority-synthetic-coverage-report.json > marketplace/evidence/HIGH_PRIORITY_SYNTHETIC_COVERAGE_SHA256SUMS.txt
+          cat marketplace/evidence/HIGH_PRIORITY_SYNTHETIC_COVERAGE_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-high-priority-synthetic-coverage
+          path: |
+            marketplace/evidence/high-priority-synthetic-coverage-report.json
+            marketplace/evidence/HIGH_PRIORITY_SYNTHETIC_COVERAGE_SHA256SUMS.txt
+          retention-days: 90
