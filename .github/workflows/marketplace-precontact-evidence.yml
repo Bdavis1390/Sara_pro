@@ -15,6 +15,9 @@ on:
       - '.github/workflows/marketplace-precontact-evidence.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate-precontact-evidence:
     runs-on: ubuntu-latest
