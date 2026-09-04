@@ -11,6 +11,9 @@ on:
       - '.github/workflows/marketplace-round6-stress.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   synthetic-stress-round6:
     runs-on: ubuntu-latest
