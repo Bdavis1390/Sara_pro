@@ -1,0 +1,51 @@
+{
+  "schema": "WS-MARKETPLACE-HIGH-PRIORITY-SYNTHETIC-COVERAGE-V1",
+  "as_of": "2026-09-03",
+  "purpose": "Prove deterministic internal adversarial fixture coverage across all 18 high-priority marketplace targets while preserving zero external-gate effect.",
+  "contact_gate_effect": "NONE",
+  "external_gate_closures": 0,
+  "suites": [
+    {
+      "suite_id": "TOP8",
+      "source": "marketplace/synthetic_top_target_stress.py",
+      "run_id": 33813622828,
+      "target_ids": ["WS-MKT-025","WS-MKT-001","WS-MKT-030","WS-MKT-031","WS-MKT-002","WS-MKT-019","WS-MKT-026","WS-MKT-032"],
+      "fixture_count": 72,
+      "pass_count": 72,
+      "fixtures_sha256": "502253b6434e1fc386a702c73c31c0bd0ecb9129589f8f8b0b1ab41c17eeaed7",
+      "results_sha256": "cc16398c263e503fc39f05ef7fa9c754db03ed0ae1bd0c0a57d86d9b5f9b38a9",
+      "report_sha256": "ef260bd3536f4e90169c3184436954c2929e08b547ba23d07cf94fd99d66bb75"
+    },
+    {
+      "suite_id": "ROUND6",
+      "source": "marketplace/synthetic_round6_target_stress.py",
+      "run_id": 33822037449,
+      "target_ids": ["WS-MKT-035","WS-MKT-036","WS-MKT-037","WS-MKT-038","WS-MKT-039"],
+      "fixture_count": 45,
+      "pass_count": 45,
+      "fixtures_sha256": "17fc3861076ec8982d38273b05c7bfb0d0180f125615d9e3271cde2b852fdfe5",
+      "results_sha256": "8e80a5c23c943378260b17e2b2aa45936d45ee631f34aebc8ecd14d5be8d12e8",
+      "report_sha256": "5791afdd294b76af0d6af3728f2678fa051ef4d9e6c665a34ea4e421ced2e1ab"
+    },
+    {
+      "suite_id": "REMAINING5",
+      "source": "marketplace/synthetic_remaining_high_priority_stress.py",
+      "run_id": 33822747006,
+      "target_ids": ["WS-MKT-003","WS-MKT-020","WS-MKT-021","WS-MKT-027","WS-MKT-016"],
+      "fixture_count": 45,
+      "pass_count": 45,
+      "fixtures_sha256": "4a25c900ec1053ab3bfbd02813e03c2db3cf8f4729684c572551d74520fe17d4",
+      "results_sha256": "cf520c1b5c8e7770f960baf9e18ffa44753051ec99e3692a219c7d587fcb7552",
+      "report_sha256": "61ef09840cda5ebc87a632fd2694dc562fa708b490bb602d01d517981cd30666"
+    }
+  ],
+  "summary": {
+    "target_count": 18,
+    "covered_target_count": 18,
+    "fixture_count": 162,
+    "pass_count": 162,
+    "per_target_fixture_count": 9,
+    "coverage_pct": 100.0
+  },
+  "claims_boundary": "100% here means every registered high-priority target has nine deterministic internal fixtures with expected fail-closed behavior. It is not target-system test coverage, operational effectiveness, physical validation, remediation probability, product quality, safety, compliance, independent validation, customer interest or contact authorization."
+}
