@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -35,7 +35,7 @@ class MobilitySource(BaseModel):
 
 
 class WmafEvent(BaseModel):
-    schema_id: str = "WS-WMAF-EVENT-V0.1"
+    schema_id: Literal["WS-WMAF-EVENT-V0.1"] = "WS-WMAF-EVENT-V0.1"
     event_id: str = Field(min_length=1)
     observed_utc: str = Field(min_length=1)
     asset: MobilityAsset
@@ -48,7 +48,7 @@ class WmafEvent(BaseModel):
 
 
 class WmafAssessment(BaseModel):
-    schema_id: str = "WS-WMAF-ASSESSMENT-V0.1"
+    schema_id: Literal["WS-WMAF-ASSESSMENT-V0.1"] = "WS-WMAF-ASSESSMENT-V0.1"
     event_id: str
     normalized_pnt: NormalizedPntSource
     risk_flags: list[str] = Field(default_factory=list)
@@ -104,8 +104,16 @@ def _risk_flags(event: WmafEvent, pnt: NormalizedPntSource) -> list[str]:
         flags.append("TELEMETRY_LOSS")
     else:
         telemetry_age = event.vehicle_state.get("telemetry_age_seconds")
-        if telemetry_age is not None and float(telemetry_age) > 5.0:
-            flags.append("TELEMETRY_STALE")
+        if telemetry_age is not None:
+            try:
+                age_seconds = float(telemetry_age)
+            except (TypeError, ValueError):
+                flags.append("TELEMETRY_AGE_INVALID")
+            else:
+                if age_seconds < 0.0:
+                    flags.append("TELEMETRY_AGE_INVALID")
+                elif age_seconds > 5.0:
+                    flags.append("TELEMETRY_STALE")
 
     return flags
 
@@ -137,7 +145,7 @@ def _overall_disposition(
 def assess_event(
     event: WmafEvent,
     *,
-    policy: AutonomyPolicy = DEFAULT_WMAF_POLICY,
+    policy: AutonomyPolicy | None = None,
     pnt_adapter: SyntheticPntAdapter | None = None,
 ) -> WmafAssessment:
     """Assess one synthetic/replay mobility event without executing any action.
@@ -148,6 +156,7 @@ def assess_event(
     """
 
     adapter = pnt_adapter or SyntheticPntAdapter()
+    effective_policy = policy or DEFAULT_WMAF_POLICY
     normalized_pnt = adapter.normalize(event.pnt_payload)
     flags = _risk_flags(event, normalized_pnt)
 
@@ -156,7 +165,7 @@ def assess_event(
     if event.requested_action is not None:
         action_disposition, action_reasons = evaluate_candidate(
             event.requested_action,
-            policy,
+            effective_policy,
         )
 
     disposition = _overall_disposition(
