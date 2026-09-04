@@ -1,0 +1,54 @@
+name: Marketplace Wave 2 and 3 Official Route Verification
+
+on:
+  push:
+    paths:
+      - 'marketplace/wave23_official_route_registry.v1.json'
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_wave23_official_routes.py'
+      - '.github/workflows/marketplace-wave23-routes.yml'
+  pull_request:
+    paths:
+      - 'marketplace/wave23_official_route_registry.v1.json'
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_wave23_official_routes.py'
+      - '.github/workflows/marketplace-wave23-routes.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-wave23-routes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_wave23_official_routes.py
+      - name: Validate official routes and non-use
+        run: python marketplace/validate_wave23_official_routes.py --registry marketplace/wave23_official_route_registry.v1.json --gates marketplace/high_priority_contact_gates.v1.json --output marketplace/evidence/wave23-official-route-report.json
+      - name: Verify fail-closed state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('marketplace/evidence/wave23-official-route-report.json').read_text())
+          assert r['result']=='PASS'
+          assert r['route_target_count']==8
+          assert r['verified_official_route_count']==8
+          assert r['route_used_count']==0
+          assert r['external_gate_closures']==0
+          assert r['contact_gate_effect']=='NONE'
+          print(json.dumps(r,indent=2))
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum marketplace/evidence/wave23-official-route-report.json > marketplace/evidence/WAVE23_OFFICIAL_ROUTE_SHA256SUMS.txt
+          cat marketplace/evidence/WAVE23_OFFICIAL_ROUTE_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-wave23-official-route-verification
+          path: |
+            marketplace/evidence/wave23-official-route-report.json
+            marketplace/evidence/WAVE23_OFFICIAL_ROUTE_SHA256SUMS.txt
+          retention-days: 90
