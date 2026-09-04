@@ -15,6 +15,9 @@ on:
       - '.github/workflows/marketplace-wave23-routes.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   validate-wave23-routes:
     runs-on: ubuntu-latest
