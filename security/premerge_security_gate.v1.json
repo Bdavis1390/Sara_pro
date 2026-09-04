@@ -1,19 +1,39 @@
 {
   "schema": "WS-PREMERGE-SECURITY-GATE-V1",
-  "as_of": "2026-09-04T18:12:29Z",
+  "as_of": "2026-09-04T18:37:52Z",
   "scope": "PR #62 readiness/98-7-program-20260903 -> main",
   "codeql": {
-    "head_sha": "26f5ea7e63d2085e2ff4f4fef5ada10c9bd8cdaf",
-    "check_run_id": 101126559708,
-    "conclusion": "success_with_open_security_alerts",
-    "new_alert_count": 8,
+    "head_sha": "2b4a6747d34e91569a13cb85db16754ce8936e7b",
+    "check_run_id": 101133922737,
+    "status": "completed",
+    "conclusion": "success",
+    "new_alert_count": 0,
     "severity_counts": {
       "critical": 0,
       "high": 0,
-      "medium": 8,
+      "medium": 0,
       "low": 0
     },
-    "reported_summary": "8 new alerts including 8 medium severity security vulnerabilities"
+    "reported_summary": "No new alerts in code changed by this pull request"
+  },
+  "resolved_changed_code_findings": {
+    "prior_alert_count": 8,
+    "prior_severity": "medium",
+    "rule": "Workflow does not contain permissions",
+    "root_cause": "Eight marketplace GitHub Actions workflows did not explicitly restrict GITHUB_TOKEN permissions.",
+    "remediation": "Added an explicit top-level permissions block limiting GITHUB_TOKEN to contents: read in each affected workflow.",
+    "affected_workflows": [
+      ".github/workflows/marketplace-round6-stress.yml",
+      ".github/workflows/marketplace-round6.yml",
+      ".github/workflows/marketplace-round6-pilot-packages.yml",
+      ".github/workflows/marketplace-precontact-evidence.yml",
+      ".github/workflows/marketplace-high-priority-coverage.yml",
+      ".github/workflows/marketplace-remaining-target-stress.yml",
+      ".github/workflows/marketplace-wave1-routes.yml",
+      ".github/workflows/marketplace-wave23-routes.yml"
+    ],
+    "disposition": "REMEDIATED_AND_RESCANNED",
+    "false_positive_count": 0
   },
   "supplemental_static_sink_audit": {
     "run_id": 33904596688,
@@ -29,7 +49,7 @@
     "report_sha256": "a42cc23707fb855e5ad228b99097183d706db78dc90d2efefc6675815ef4cae6",
     "artifact_id": 9948954821,
     "artifact_zip_sha256": "45f11eb55812afff3573fe9107778eef056e874613074ed52f82563de4ae623e",
-    "effect": "Diagnostic prioritization only; does not resolve or dismiss CodeQL alerts."
+    "effect": "Diagnostic only. Its 52 observations were not the eight CodeQL findings; no high_review dangerous-API finding was recorded."
   },
   "merge_security_policy": {
     "max_open_critical": 0,
@@ -38,17 +58,16 @@
     "require_codeql_completed": true,
     "require_all_changed_code_alerts_resolved_or_documented_false_positive": true
   },
-  "merge_allowed": false,
-  "blockers": [
-    "The latest CodeQL check on head 26f5ea7e63d2085e2ff4f4fef5ada10c9bd8cdaf still reports eight medium-severity alerts in code changed by PR #62.",
-    "The supplemental static sink audit found 52 review/diagnostic sink observations across 151 Python files; none were classified high_review, but 50 CLI-derived filesystem sinks and 2 dynamic network calls still require correlation against the actual CodeQL dataflows before disposition."
+  "merge_allowed": true,
+  "blockers": [],
+  "remaining_non_security_dependencies": [
+    "PR #62 remains draft and must not be interpreted as approved for production deployment merely because this changed-code security gate is clear.",
+    "External partner, physical, regulatory, certification, measured-effect and marketplace-contact gates remain governed separately."
   ],
   "next_actions": [
-    "Map each CodeQL alert to file, line, rule and dataflow before remediation or false-positive disposition.",
-    "Correlate the eight CodeQL alerts against the 50 CLI-derived filesystem sink observations and 2 dynamic network calls; do not infer equivalence without matching file/line/dataflow evidence.",
-    "Patch true positives with path confinement, allowlisting, least privilege, explicit network allowlists or other sink-specific fail-closed controls and add negative tests.",
-    "Document any false-positive disposition with rule, source, sink, reason, reproducer/negative test and reviewer evidence.",
-    "Re-run CodeQL and require zero unresolved medium/high/critical alerts before merge."
+    "Keep least-privilege workflow permissions as a standing requirement for new workflows.",
+    "Continue ordinary dependency, configuration and code review before any production deployment.",
+    "Do not use this security-gate closure to promote external evidence maturity or marketplace contact authorization."
   ],
-  "claims_boundary": "A successful CodeQL check run or static sink audit does not mean zero vulnerabilities. The latest CodeQL check still reports eight medium-severity alerts. The supplemental audit is diagnostic only and cannot dismiss those alerts; this gate remains merge_allowed=false until each alert is resolved or independently justified as a false positive under the recorded policy."
+  "claims_boundary": "This gate now records that CodeQL found no new alerts in code changed by PR #62 at head 2b4a6747d34e91569a13cb85db16754ce8936e7b after the eight workflow-permission findings were remediated. It does not prove the repository is vulnerability-free, does not certify compliance, does not authorize production deployment, and does not close any partner, physical, regulatory, commercial or marketplace-contact gate."
 }
