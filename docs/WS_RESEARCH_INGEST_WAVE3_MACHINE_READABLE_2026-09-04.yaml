@@ -1,0 +1,87 @@
+intake_id: WS-RI-2026-0904-W3
+baseline_commit: e65841863bc66bf48c6ed2c61986896d5b52d7f7
+status: GOVERNED_INTAKE_NO_AUTOMATIC_MATURITY_UPGRADE
+records:
+  - id: WS-RI-2026-0904-W3-EMB
+    lane: RF_METASURFACE
+    source_sha256: e85ac4be1a98b7ad194d0fd2cc9e8f6cfe145feb3c642a964227c99f19947c76
+    source_status: PRIMARY_TECHNICAL_SOURCE
+    capability_status:
+      - HYPOTHESIS
+      - REQUIRES_LAB_VALIDATION
+    evidence_target:
+      - finite_array_simulation
+      - calibrated_field_or_sparameter_measurement
+      - thermal_state_record
+      - repeatability
+      - uncertainty_budget
+      - passive_control_comparison
+    prohibited_inference:
+      - stealth_validated
+      - cloaking_validated
+      - broadband_validated
+      - operational_validated
+  - id: WS-RI-2026-0904-W3-ALT
+    lane: PROGRAMMABLE_MATERIALS_ADDITIVE_MANUFACTURING
+    source_sha256: e504b6f366c5574f4da724dac3c03b305e17cff1b0b441f83d205b13db1a955c
+    source_status: PRIMARY_TECHNICAL_SOURCE
+    capability_status:
+      - HYPOTHESIS
+      - REQUIRES_LAB_VALIDATION
+      - REQUIRES_LEGAL_REVIEW
+    evidence_target:
+      - prior_art_and_ip_review
+      - process_window_model
+      - manufactured_coupon
+      - chemistry_and_microstructure
+      - measured_properties
+      - repeatability
+      - partner_validation
+    prohibited_inference:
+      - patentability_established
+      - valuation_established
+      - alloy_properties_validated
+  - id: WS-RI-2026-0904-W3-PRI
+    lane: SOLVER_AI_SURROGATE
+    source_sha256: 177448916e023af31ea1c7b0a8baed59a936767afd0d52c36f696fec146de7bd
+    source_status: PRIMARY_TECHNICAL_SOURCE
+    capability_status:
+      - HYPOTHESIS
+    evidence_target:
+      - prime_basis_ablation
+      - standard_basis_control
+      - convergence_metrics
+      - conditioning_metrics
+      - energy_residual
+      - thermal_residual
+      - compute_cost
+    prohibited_inference:
+      - new_quantum_law
+      - physical_quantum_number_validation
+  - id: WS-RI-2026-0904-W3-ADM
+    lane: SARA_GOVERNANCE_OPERATOR_INTERFACE
+    source_sha256: 22501b5f01fed3a436c3a567d60ad9b47e047c3bb5204fbd255126d540ee642a
+    source_status: PRIMARY_TECHNICAL_SOURCE
+    capability_status:
+      - IMPLEMENTED_IN_SOFTWARE_HISTORICAL_REPORT
+    evidence_target:
+      - current_main_differential_audit
+      - role_separation_test
+      - admin_audit_access_test
+      - registry_mutation_authorization_test
+      - secret_redaction_test
+    prohibited_inference:
+      - current_main_contains_historical_bundle
+      - current_main_admin_validation
+qualification_queue:
+  - WS-QE-2026-PRI-001
+  - WS-QE-2026-ADM-001
+  - WS-QE-2026-EMB-001
+  - WS-QE-2026-ALT-001
+fail_closed:
+  - no_physical_trl_upgrade_from_source_only
+  - no_stealth_or_cloaking_claim_from_equations
+  - no_alloy_property_or_valuation_claim_without_evidence
+  - no_quantum_physics_claim_from_prime_indexing
+  - no_historical_admin_claim_generalized_to_current_main
+  - retain_negative_and_null_results
