@@ -11,6 +11,7 @@ on:
       - 'marketplace/market_scan_round6_20260903.json'
       - 'marketplace/validate_marketplace_round6.py'
       - '.github/workflows/marketplace-round6.yml'
+  workflow_dispatch:
 
 jobs:
   validate-round6:
