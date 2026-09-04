@@ -1,0 +1,35 @@
+{
+  "schema": "WS-PREMERGE-SECURITY-GATE-V1",
+  "as_of": "2026-09-04T00:45:15Z",
+  "scope": "PR #62 readiness/98-7-program-20260903 -> main",
+  "codeql": {
+    "head_sha": "20b4b15f7e2658b90ad6323d060c468c30b924e1",
+    "check_run_id": 100869690967,
+    "conclusion": "success_with_open_security_alerts",
+    "new_alert_count": 8,
+    "severity_counts": {
+      "critical": 0,
+      "high": 0,
+      "medium": 8,
+      "low": 0
+    }
+  },
+  "merge_security_policy": {
+    "max_open_critical": 0,
+    "max_open_high": 0,
+    "max_open_medium": 0,
+    "require_codeql_completed": true,
+    "require_all_changed_code_alerts_resolved_or_documented_false_positive": true
+  },
+  "merge_allowed": false,
+  "blockers": [
+    "Eight medium-severity CodeQL alerts are reported in code changed by PR #62 and have not yet been individually triaged or resolved."
+  ],
+  "next_actions": [
+    "Inventory likely security-sensitive sinks in changed Python files.",
+    "Map each CodeQL alert to file, line, rule and dataflow before remediation or false-positive disposition.",
+    "Patch true positives with least-privilege/fail-closed controls and add negative tests.",
+    "Re-run CodeQL and require zero unresolved medium/high/critical alerts before merge."
+  ],
+  "claims_boundary": "A successful CodeQL check run does not mean zero vulnerabilities. The current CodeQL output explicitly reports eight new medium-severity alerts in changed code, so this gate blocks merge until those alerts are triaged and resolved or independently justified as false positives."
+}
