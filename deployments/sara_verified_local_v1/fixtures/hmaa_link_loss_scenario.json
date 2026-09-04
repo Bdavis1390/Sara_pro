@@ -1,0 +1,43 @@
+[
+  {
+    "kind": "entity",
+    "payload": {
+      "entityId": "AIRCRAFT-SIM-1",
+      "eventType": "update",
+      "timestamp": "2026-09-04T20:00:00Z",
+      "health": "nominal"
+    }
+  },
+  {
+    "kind": "task",
+    "payload": {
+      "taskId": "TASK-SIM-1",
+      "agentId": "AIRCRAFT-SIM-1",
+      "status": "in_progress",
+      "timestamp": "2026-09-04T20:00:01Z"
+    }
+  },
+  {
+    "kind": "heartbeat",
+    "payload": {"stream": "entities"}
+  },
+  {
+    "kind": "heartbeat",
+    "payload": {"stream": "entities"},
+    "connection_healthy": false
+  },
+  {
+    "kind": "reconnect",
+    "payload": {"stream": "entities", "attempt": 1}
+  },
+  {
+    "kind": "observation",
+    "payload": {"object_id": "evidence-object-sim-1"},
+    "checksum_valid": false
+  },
+  {
+    "kind": "observation",
+    "payload": {"reason": "policy-service-outage"},
+    "policy_engine_available": false
+  }
+]
