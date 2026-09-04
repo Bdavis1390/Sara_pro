@@ -1,6 +1,6 @@
 {
   "schema": "WS-PREMERGE-SECURITY-GATE-V1",
-  "as_of": "2026-09-04T00:45:15Z",
+  "as_of": "2026-09-04T00:49:49Z",
   "scope": "PR #62 readiness/98-7-program-20260903 -> main",
   "codeql": {
     "head_sha": "20b4b15f7e2658b90ad6323d060c468c30b924e1",
@@ -14,6 +14,22 @@
       "low": 0
     }
   },
+  "supplemental_static_sink_audit": {
+    "run_id": 33823262459,
+    "job_id": 100870336302,
+    "conclusion": "success_diagnostic_only",
+    "scanned_python_file_count": 151,
+    "finding_count": 52,
+    "high_review_count": 0,
+    "cli_derived_filesystem_sink_count": 50,
+    "cli_derived_network_sink_count": 0,
+    "dynamic_network_call_count": 2,
+    "findings_sha256": "8a3f032e1ec461178c9c07cca72cd70784df3c94a06640ba539f6bab323b36b6",
+    "report_sha256": "a42cc23707fb855e5ad228b99097183d706db78dc90d2efefc6675815ef4cae6",
+    "artifact_id": 9919014133,
+    "artifact_zip_sha256": "7af0cecea975cffe9703f27653dc0536e57e107742632a8ee1d35a4196e17eda",
+    "effect": "Diagnostic prioritization only; does not resolve or dismiss CodeQL alerts."
+  },
   "merge_security_policy": {
     "max_open_critical": 0,
     "max_open_high": 0,
@@ -23,13 +39,15 @@
   },
   "merge_allowed": false,
   "blockers": [
-    "Eight medium-severity CodeQL alerts are reported in code changed by PR #62 and have not yet been individually triaged or resolved."
+    "Eight medium-severity CodeQL alerts are reported in code changed by PR #62 and have not yet been individually triaged or resolved.",
+    "The supplemental static sink audit found 52 review/diagnostic sink observations across 151 Python files; none were classified high_review, but 50 CLI-derived filesystem sinks and 2 dynamic network calls still require correlation against the actual CodeQL dataflows before disposition."
   ],
   "next_actions": [
-    "Inventory likely security-sensitive sinks in changed Python files.",
     "Map each CodeQL alert to file, line, rule and dataflow before remediation or false-positive disposition.",
-    "Patch true positives with least-privilege/fail-closed controls and add negative tests.",
+    "Correlate the eight CodeQL alerts against the 50 CLI-derived filesystem sink observations and 2 dynamic network calls; do not infer equivalence without matching file/line/dataflow evidence.",
+    "Patch true positives with path confinement, allowlisting, least privilege, explicit network allowlists or other sink-specific fail-closed controls and add negative tests.",
+    "Document any false-positive disposition with rule, source, sink, reason, reproducer/negative test and reviewer evidence.",
     "Re-run CodeQL and require zero unresolved medium/high/critical alerts before merge."
   ],
-  "claims_boundary": "A successful CodeQL check run does not mean zero vulnerabilities. The current CodeQL output explicitly reports eight new medium-severity alerts in changed code, so this gate blocks merge until those alerts are triaged and resolved or independently justified as false positives."
+  "claims_boundary": "A successful CodeQL check run or static sink audit does not mean zero vulnerabilities. CodeQL explicitly reports eight new medium-severity alerts in changed code. The supplemental audit is diagnostic only and cannot dismiss those alerts; this gate therefore remains merge_allowed=false until each alert is resolved or independently justified as a false positive under the recorded policy."
 }
