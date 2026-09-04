@@ -1,0 +1,84 @@
+{
+  "schema": "WS-MARKETPLACE-ROUND6-PARTNER-PILOT-PACKAGES-V1",
+  "as_of": "2026-09-03",
+  "status": "INTERNAL_PREPARATION_ONLY",
+  "contact_gate_effect": "NONE",
+  "claims_boundary": "These packages define bounded partner-pilot data contracts, controls and acceptance criteria. They are not evidence that a target has the stated operational root cause, that Worldshepherd fixes it, that any acceptance target has been achieved in a target environment, or that contact is authorized.",
+  "common_acceptance_targets": {
+    "injected_failure_detection_recall_pct": {"target": 100.0, "status": "TARGET_DEFINITION_NOT_ACHIEVED_CLAIM"},
+    "false_release_pct": {"target": 0.0, "status": "TARGET_DEFINITION_NOT_ACHIEVED_CLAIM"},
+    "in_scope_trace_coverage_pct": {"target_min": 99.0, "status": "TARGET_DEFINITION_NOT_ACHIEVED_CLAIM"},
+    "evidence_retrieval_p95_seconds": {"target_max": 60.0, "status": "TARGET_DEFINITION_NOT_ACHIEVED_CLAIM"},
+    "known_discrepancy_detection_pct": {"target": 100.0, "status": "TARGET_DEFINITION_NOT_ACHIEVED_CLAIM"},
+    "clean_environment_reproduction_pct": {"target": 100.0, "status": "TARGET_DEFINITION_NOT_ACHIEVED_CLAIM"}
+  },
+  "required_external_gate_evidence": [
+    "target_authorized_data_access_record",
+    "target_authorized_bounded_pilot_record",
+    "measured_effect_size_against_partner_defined_ground_truth",
+    "security_compliance_applicability_review",
+    "independent_reproduction_or_review"
+  ],
+  "packages": [
+    {
+      "target_id": "WS-MKT-035",
+      "organization": "inTEST Corporation / Alfamation",
+      "public_problem_hypothesis": "An acquired manufacturing operation may benefit from stronger change-controlled inventory/WIP/process evidence and reconciliation lineage; public reporting does not establish test-system product defects.",
+      "partner_data_minimum": ["sanitized item/WIP identifiers", "inventory count/reconciliation events", "process-change approvals", "test-system configuration/version identifiers", "source timestamps and reviewer identities", "release/disposition records"],
+      "control_mapping": {"SARA": "inventory/WIP/process evidence graph", "PRIME": "change approval, SoD and release authority", "ECHO": "item/WIP/test/process provenance", "OVERWATCH": "reconciliation and exception observability"},
+      "pilot_scope": "One bounded product/process family or sanitized historical sample; no accounting opinion, calibration certification, product qualification or safety release authority.",
+      "injected_failures": ["unapproved process change", "duplicate inventory event", "stale WIP status", "count-to-ledger mismatch", "missing reviewer", "unknown test-system version", "invalid release authority"],
+      "target_specific_metrics": ["inventory/WIP lineage completeness", "count-to-record discrepancy detection", "process-change approval trace completeness", "release evidence retrieval time"],
+      "no_go": ["no live production writes", "no financial-statement assurance", "no product-quality certification", "no calibration certification"],
+      "current_external_gate_state": "OPEN"
+    },
+    {
+      "target_id": "WS-MKT-036",
+      "organization": "Quantum Computing Inc. / NHanced / LSI / NuCrypt",
+      "public_problem_hypothesis": "Multi-acquisition photonics/semiconductor expansion may benefit from federated access/change/manufacturing provenance and Fab 1/Fab 2 evidence custody; public reporting does not establish quantum-performance or foundry-yield defects.",
+      "partner_data_minimum": ["sanitized fab/entity identifiers", "wafer/package/lot lineage", "program/change approvals", "privileged-access events", "test/source metadata", "third-party service dependencies", "release/disposition records"],
+      "control_mapping": {"SARA": "multi-entity fab/manufacturing evidence federation", "PRIME": "privileged access, program change and release authority", "ECHO": "wafer/package/photonics/test provenance", "OVERWATCH": "Fab 1/Fab 2/acquired-entity exception observability", "PRE": "government/export/security applicability matrix"},
+      "pilot_scope": "Sanitized non-enabling manufacturing/control evidence slice; no quantum benchmark, semiconductor yield, defense qualification, export determination or cybersecurity certification.",
+      "injected_failures": ["orphan privileged account", "unauthorized program change", "stale package configuration", "unknown lot source", "missing third-party dependency record", "missing approval", "invalid release authority"],
+      "target_specific_metrics": ["privileged-access exception detection", "program-change authorization traceability", "lot/package provenance coverage", "cross-fab evidence retrieval time"],
+      "no_go": ["no enabling process recipes", "no controlled technical data without authority", "no quantum-performance claims", "no export/compliance certification"],
+      "current_external_gate_state": "OPEN"
+    },
+    {
+      "target_id": "WS-MKT-037",
+      "organization": "ADTRAN Holdings / Adtran Networks",
+      "public_problem_hypothesis": "A cross-border combined networking group may benefit from federated requirement/configuration/change evidence and entity-specific authority boundaries; public reporting does not establish network reliability or cybersecurity defects.",
+      "partner_data_minimum": ["sanitized entity/system identifiers", "software/configuration versions", "requirement/change records", "approval/release identities", "source manifests", "inter-entity dependency records", "exception events"],
+      "control_mapping": {"SARA": "cross-entity requirement/configuration federation", "PRIME": "U.S./European approval/change/release authority", "ECHO": "optical-network/software/source provenance", "OVERWATCH": "multi-entity evidence health", "HELIOS-LINK": "communications interface evidence"},
+      "pilot_scope": "One sanitized product/software/configuration change chain across bounded entities; no live network control, interoperability certification, security assessment or service-level guarantee.",
+      "injected_failures": ["unauthorized cross-entity change", "stale configuration", "missing source manifest", "invalid approver jurisdiction", "dependency contradiction", "missing release record", "out-of-date requirement"],
+      "target_specific_metrics": ["cross-entity change trace completeness", "configuration contradiction detection", "authority-boundary violation detection", "evidence retrieval time"],
+      "no_go": ["no network control-plane writes", "no cybersecurity certification", "no interoperability guarantee", "no telecom regulatory conclusion"],
+      "current_external_gate_state": "OPEN"
+    },
+    {
+      "target_id": "WS-MKT-038",
+      "organization": "Super Micro Computer / Supermicro",
+      "public_problem_hypothesis": "Rapid multi-site AI-infrastructure manufacturing may benefit from rack/build/component/cooling configuration provenance and privileged change/release evidence; public reporting does not establish hardware, cooling or cybersecurity defects.",
+      "partner_data_minimum": ["sanitized rack/build identifiers", "component and supplier lineage", "firmware/software versions", "cooling configuration/test metadata", "user/change/release approvals", "inspection/acceptance records", "exception records"],
+      "control_mapping": {"SARA": "rack/build/configuration evidence graph", "PRIME": "privileged access/change/release authority", "ECHO": "component/rack/cooling/test provenance", "OVERWATCH": "multi-site manufacturing/deployment exceptions"},
+      "pilot_scope": "One sanitized rack/build or historical acceptance sample; no live BMC/control-plane access, product qualification, thermal certification or cybersecurity assurance.",
+      "injected_failures": ["component/config mismatch", "stale firmware", "unknown supplier source", "unauthorized privileged change", "missing cooling test record", "missing acceptance approval", "invalid release authority"],
+      "target_specific_metrics": ["rack/build trace coverage", "configuration mismatch detection", "privileged-change authorization detection", "acceptance evidence retrieval time"],
+      "no_go": ["no live infrastructure control", "no thermal/cooling performance guarantee", "no product certification", "no cybersecurity certification"],
+      "current_external_gate_state": "OPEN"
+    },
+    {
+      "target_id": "WS-MKT-039",
+      "organization": "Cyngn Inc.",
+      "public_problem_hypothesis": "Multi-OEM industrial autonomy deployments may benefit from vehicle/software/sensor/calibration provenance and explicit operational/release authority evidence; public risk disclosures do not establish an actual safety or reliability failure.",
+      "partner_data_minimum": ["sanitized vehicle/OEM identifiers", "software/model/configuration versions", "sensor/calibration records", "change/release approvals", "ODD/operational-authority records", "lost-link/fail-safe test evidence", "deployment exception records"],
+      "control_mapping": {"SARA": "vehicle/software/sensor requirement and configuration graph", "PRIME": "change/release/operational authority", "ECHO": "vehicle/sensor/software/calibration provenance", "OVERWATCH": "fleet/source-health exceptions", "AEROSHEPHERD": "bounded autonomy acceptance and fail-safe evidence"},
+      "pilot_scope": "Offline sanitized historical or simulation-derived evidence for one vehicle integration; no vehicle command, safety certification, ODD approval or autonomous deployment authority.",
+      "injected_failures": ["stale sensor calibration", "software/config mismatch", "unknown OEM component source", "unauthorized release", "missing ODD approval", "missing lost-link evidence", "contradictory source timestamp"],
+      "target_specific_metrics": ["vehicle/configuration trace coverage", "calibration freshness violation detection", "release-authority violation detection", "fail-safe evidence retrieval time"],
+      "no_go": ["no live vehicle control", "no safety certification", "no autonomous deployment approval", "no incident or defect inference"],
+      "current_external_gate_state": "OPEN"
+    }
+  ]
+}
