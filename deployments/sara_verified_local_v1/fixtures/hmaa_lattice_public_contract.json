@@ -1,0 +1,59 @@
+{
+  "entity_request": {
+    "heartbeatIntervalMS": 30000,
+    "preExistingOnly": false,
+    "componentsToInclude": ["aliases", "locationUncertainty"]
+  },
+  "task_request": {
+    "heartbeatIntervalMs": 30000,
+    "rateLimit": 250,
+    "excludePreexistingTasks": true
+  },
+  "stream_items": [
+    {
+      "stream": "entities",
+      "message": {
+        "heartbeat": {
+          "timestamp": "2026-09-04T22:30:00Z",
+          "sequence": 1
+        }
+      }
+    },
+    {
+      "stream": "entities",
+      "message": {
+        "entity": {
+          "eventType": "UPDATE",
+          "entity": {
+            "entityId": "AIRCRAFT-SIM-1",
+            "timestamp": "2026-09-04T22:30:01Z",
+            "aliases": {"name": "Synthetic Contract Entity"}
+          }
+        }
+      }
+    },
+    {
+      "stream": "tasks",
+      "message": {
+        "heartbeat": {
+          "timestamp": "2026-09-04T22:30:02Z",
+          "sequence": 1
+        }
+      }
+    },
+    {
+      "stream": "tasks",
+      "message": {
+        "task_event": {
+          "eventType": "UPDATE",
+          "task": {
+            "taskId": "TASK-SIM-1",
+            "agentId": "AIRCRAFT-SIM-1",
+            "status": "in_progress",
+            "updateTime": "2026-09-04T22:30:03Z"
+          }
+        }
+      }
+    }
+  ]
+}
