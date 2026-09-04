@@ -1,0 +1,6 @@
+# Copy the variable names into a local, ignored environment file or shell.
+# Never commit real credential values.
+
+LATTICE_ENDPOINT=
+ENVIRONMENT_TOKEN=
+SANDBOXES_TOKEN=
