@@ -1,0 +1,50 @@
+qualification_id: WS-QE-2026-ADM-001
+parent_intake: WS-RI-2026-0904-W3
+inspected_baseline: e091054354da9963835dbba34b2a9cc9ed6145c3
+scope: CURRENT_MAIN_SOFTWARE_DIFFERENTIAL
+runtime_change: false
+classifications:
+  IMPLEMENTED_CURRENT:
+    - browser_ui_localhost_9530
+    - admin_only_audit
+  SUPERSEDED_ENHANCED:
+    - separate_relay_admin_tokens
+    - admin_registry_control
+    - start_interface_script
+    - admin_smoke_test
+  CHANGED_SEMANTICS:
+    - sspadawanzz_service_identity_wording
+    - sspadawanzz_admin_role_label
+    - historical_integration_ok_interpretation
+  HISTORICAL_ONLY:
+    - historical_six_passed
+    - historical_integration_ok_as_prior_package_evidence
+  MISSING: []
+current_contract:
+  relay_status: recorded_local_only
+  relay_external_execution_claimed: false
+  admin_role_primitive: Role.ADMIN
+  relay_role_primitive: Role.RELAY
+  ui_present: true
+  admin_audit_present: true
+  admin_registry_get_present: true
+  admin_registry_patch_present: true
+  admin_selftest_present: true
+  startup_secret_validation_present: true
+  equal_tokens_rejected: true
+  minimum_token_length: 24
+  env_excluded_from_git: true
+  env_excluded_from_docker_context: true
+  deployment_compose_token_redaction: true
+  smoke_test_before_restart: true
+  smoke_test_after_restart: true
+claims_boundary:
+  implemented_in_software: true
+  external_network_integration_validated: false
+  partner_validated: false
+  cui_authorized: false
+  certified: false
+  field_validated: false
+  flight_validated: false
+  operationally_validated: false
+promotion_rule: protected_current_head_ci_and_security_review_required
