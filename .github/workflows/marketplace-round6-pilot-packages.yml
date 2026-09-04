@@ -50,3 +50,5 @@ jobs:
             marketplace/evidence/round6-partner-pilot-packages-report.json
             marketplace/evidence/ROUND6_PARTNER_PILOT_PACKAGES_SHA256SUMS.txt
           retention-days: 90
+
+# CI refresh marker: 2026-09-03
