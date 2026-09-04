@@ -1,20 +1,53 @@
 # Worldshepherd Astra Integration
 
-Status: DESIGN/INTEGRATION PROFILE — not production authorization
+Status: IMPLEMENTATION PROFILE — not production authorization
 Date: 2026-09-04
 Owner/authority: CRE1AWS
 Orchestrator: SARA
 
+## Verification correction
+
+`Astra` is the Worldshepherd solver profile/codename. It is **not** treated as an OpenAI model identifier.
+
+As verified against OpenAI's official model catalog on 2026-09-04, the documented flagship model for complex reasoning and coding is `gpt-5.6-sol`. No official `gpt-6-astra` model identifier was found. The earlier draft assumption that `gpt-6-astra` was a released model is therefore retracted and must not be used for runtime configuration or capability claims.
+
+Runtime model selection is intentionally separated from the Astra profile so the provider model can be changed only to a verified, available model identifier.
+
+Official model catalog: https://platform.openai.com/docs/models
+
 ## Purpose
 
-Integrate OpenAI GPT-6 Astra as a bounded high-capability solver for Worldshepherd while preserving SARA as the policy, authorization, provenance, and execution authority.
+Use Astra as a bounded high-capability solver profile for Worldshepherd while preserving SARA as the policy, authorization, provenance, and execution authority.
 
 Astra is not granted independent authority to perform network writes, external communications, procurement, deployment, security testing against third-party systems, or physical-control actions.
+
+## Current implementation
+
+The initial implementation lives in:
+
+- `deployments/sara_verified_local_v1/worldshepherd_sara/astra_solver.py`
+- `deployments/sara_verified_local_v1/tests/test_astra_solver.py`
+- `deployments/sara_verified_local_v1/policy/astra_solver_profile.json`
+
+Implemented controls:
+
+- default runtime model: `gpt-5.6-sol`
+- default mode: `SOLVER_READ_ONLY`
+- network inference disabled by default
+- no provider network client embedded in the adapter
+- explicit transport injection required for any model call
+- explicit SARA inference authorization required
+- model-id authorization enforced
+- tool allowlist enforced and empty by default
+- remote response storage disabled by default
+- canonical SHA-256 input/output provenance digests
+- Worldshepherd claims-control labels preserved in the result record
 
 ## Role separation
 
 - **SARA**: authoritative workflow/orchestration layer; enforces authorization, claims-control, evidence capture, rollback, and operator approval.
-- **GPT-6 Astra**: solver/research/review node; produces analyses, candidate designs, code, test plans, simulations, counterexamples, and evidence requests.
+- **Astra profile**: solver/research/review role; produces analyses, candidate designs, code, test plans, simulations, counterexamples, and evidence requests.
+- **Runtime model**: provider model selected from an independently verified model catalog. Initial verified default: `gpt-5.6-sol`.
 - **ECHO SENTINEL LINK**: provenance/telemetry record for Astra requests, outputs, tool use, evidence references, configuration, and disposition.
 - **PRIME SENTINEL**: policy gate for requested actions and tool access.
 - **OVERWATCH**: monitors performance, anomalies, drift, task duration, resource use, and policy events.
@@ -73,7 +106,9 @@ Allowed by default:
 - produce structured provenance and confidence records
 
 Disallowed by default:
-- network writes
+- network inference unless separately enabled and authorized
+- model/tool calls outside the configured allowlist
+- network writes to external systems
 - sending email/messages
 - creating external accounts
 - publishing
@@ -83,11 +118,11 @@ Disallowed by default:
 - changing physical-control parameters on live hardware
 - bypassing SARA/PRIME authorization
 
-Any expansion beyond read-only requires an explicit SARA authorization record and must be bounded to the named resource, action, and time window.
+Any expansion beyond read-only requires an explicit SARA authorization record bounded to the named model/tool/resource/action.
 
 ## Cybersecurity handling
 
-Because Astra is a cyber-critical-capability model, Worldshepherd treats cyber work as a separate high-risk lane.
+No special cybersecurity capability is inferred from the Astra profile name.
 
 Permitted baseline:
 - defensive review of Worldshepherd-owned code and configuration
@@ -104,17 +139,19 @@ Never inferred from general project authority:
 
 ## Evidence contract
 
-Every Astra task record should include:
+Every Astra task/result record should include:
 
 - task_id
 - timestamp_utc
 - requester/authority
-- model = `gpt-6-astra`
+- profile_id
+- provider
+- verified runtime model id
 - mode
 - input/evidence references
-- allowed tools
-- prohibited actions
-- output digest
+- allowed/requested tools
+- authorization id
+- input/output digests
 - claims-control labels
 - uncertainty/confidence notes
 - disconfirming evidence
@@ -141,7 +178,7 @@ Astra may recommend an upgrade; only evidence and the existing approval workflow
 
 ## Routing policy
 
-Route a task to Astra when one or more of these conditions hold:
+Route a task to the Astra profile when one or more of these conditions hold:
 - long-horizon/multistep reasoning is the bottleneck
 - repository-scale code understanding is required
 - deep scientific/mathematical reasoning is required
@@ -149,7 +186,7 @@ Route a task to Astra when one or more of these conditions hold:
 - PRE/opportunity analysis spans many interdependent requirements
 - a complex tool workflow benefits from persistent context
 
-Do not route routine low-risk work to Astra merely because it is available.
+Do not route routine low-risk work to Astra merely because the profile exists.
 
 ## First application lanes
 
@@ -169,16 +206,16 @@ Use Astra to review SARA changes, generate tests, and identify contradictions be
 
 Astra integration is not operationally complete until:
 
-1. model access is available to the chosen runtime/API account;
+1. target runtime model access is verified for the selected account;
 2. credentials are stored outside the repository;
-3. SARA adapter is implemented;
-4. request/response provenance is logged;
+3. provider transport is implemented and separately reviewed;
+4. request/response provenance is persisted through the designated evidence path;
 5. read-only tests pass;
-6. timeout/cancellation/rollback behavior is verified;
+6. timeout/cancellation behavior is verified;
 7. tool allow-list enforcement is verified;
 8. claims-control tagging is verified;
 9. cyber-specific boundary tests pass;
-10. CRE1AWS approves any mode beyond `SOLVER_READ_ONLY`.
+10. CRE1AWS approves any network-enabled or elevated mode.
 
 ## Non-negotiable architectural principle
 
