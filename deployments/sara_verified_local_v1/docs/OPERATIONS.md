@@ -69,3 +69,6 @@ Until a CI rollback drill against a frozen prior release is green, full deployme
 
 ## Escalation / claims rule
 When uncertainty exists, classify the state as `UNVERIFIED` or the applicable `REQUIRES_*` category and escalate. No operational procedure may convert internal evidence into external certification, physical validation, government acceptance, or legal eligibility.
+
+## Research intake governance reference
+Worldshepherd Research Intake Wave 3 is governed by the repository-level intake record, claims matrix, machine-readable ledger, and execution queue under `../../../docs/WS_RESEARCH_INGEST_WAVE3_*`. These records are evidence-governance inputs only; they do not authorize external network activity, controlled-data handling, physical capability claims, partner validation, or operational use.
