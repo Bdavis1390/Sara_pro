@@ -82,6 +82,28 @@ def test_execute_requires_explicit_authorization() -> None:
         solver.execute(task, None)
 
 
+def test_execute_rejects_model_outside_authorization() -> None:
+    called = False
+
+    def transport(_: dict) -> dict:
+        nonlocal called
+        called = True
+        return {"id": "resp_fake", "output_text": "should not be reached"}
+
+    solver = AstraSolver(AstraRuntimeConfig(network_enabled=True), transport=transport)
+    task = AstraTask(task_id="WS-ASTRA-TEST-0005", prompt="Analyze only.")
+    authorization = AstraInferenceAuthorization(
+        authorization_id="AUTH-0005",
+        authorized_by="CRE1AWS",
+        allow_model_inference=True,
+        allowed_model_ids=["gpt-5.6-terra"],
+    )
+
+    with pytest.raises(PermissionError, match="configured model is outside"):
+        solver.execute(task, authorization)
+    assert called is False
+
+
 def test_authorized_injected_transport_returns_digest_bearing_result() -> None:
     calls: list[dict] = []
 
@@ -104,13 +126,13 @@ def test_authorized_injected_transport_returns_digest_bearing_result() -> None:
         transport=transport,
     )
     task = AstraTask(
-        task_id="WS-ASTRA-TEST-0005",
+        task_id="WS-ASTRA-TEST-0006",
         prompt="Identify the strongest disconfirming evidence requirement.",
         evidence_refs=["fixture://meta-alloy-synthetic"],
         claims_control_labels=[CapabilityStatus.REQUIRES_LAB_VALIDATION],
     )
     authorization = AstraInferenceAuthorization(
-        authorization_id="AUTH-0005",
+        authorization_id="AUTH-0006",
         authorized_by="CRE1AWS",
         allow_model_inference=True,
         allowed_model_ids=["gpt-5.6-sol"],
