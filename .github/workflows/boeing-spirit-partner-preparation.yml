@@ -1,0 +1,99 @@
+name: Boeing Spirit Partner Preparation
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/partner_pilot_protocol.v1.json'
+      - 'boeing_spirit/security_data_boundary.v1.json'
+      - 'boeing_spirit/effect_measurement_protocol.v1.json'
+      - 'boeing_spirit/independent_review_protocol.v1.json'
+      - 'boeing_spirit/validate_partner_preparation.py'
+      - '.github/workflows/boeing-spirit-partner-preparation.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/partner_pilot_protocol.v1.json'
+      - 'boeing_spirit/security_data_boundary.v1.json'
+      - 'boeing_spirit/effect_measurement_protocol.v1.json'
+      - 'boeing_spirit/independent_review_protocol.v1.json'
+      - 'boeing_spirit/validate_partner_preparation.py'
+      - '.github/workflows/boeing-spirit-partner-preparation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-partner-preparation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile validator
+        run: python -m py_compile boeing_spirit/validate_partner_preparation.py
+
+      - name: Validate partner-preparation artifacts
+        run: >-
+          python boeing_spirit/validate_partner_preparation.py
+          --protocol boeing_spirit/partner_pilot_protocol.v1.json
+          --security boeing_spirit/security_data_boundary.v1.json
+          --effect boeing_spirit/effect_measurement_protocol.v1.json
+          --independent-review boeing_spirit/independent_review_protocol.v1.json
+          --output boeing_spirit/evidence/partner-preparation-report.json
+
+      - name: Verify fail-closed external gate state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/partner-preparation-report.json').read_text())
+          assert r['schema'] == 'WS-BOEING-SPIRIT-PARTNER-PREPARATION-REPORT-V2'
+          assert r['result'] == 'PASS'
+          assert r['contact_gate_effect'] == 'NONE'
+          assert set(r['validated_internal_artifacts']) == {
+              'partner_pilot_protocol',
+              'security_data_boundary',
+              'effect_measurement_protocol',
+              'independent_review_protocol',
+          }
+          assert r['external_gate_updates'] == {
+              'partner_data_access': 'missing',
+              'partner_pilot': 'missing',
+              'measured_effect_size': 'missing',
+              'security_compliance_fit': 'partial',
+              'independent_review': 'missing',
+          }
+          assert 'does not authorize Boeing/Spirit contact' in r['claims_boundary']
+          print(json.dumps({
+              'result': r['result'],
+              'validated_internal_artifacts': r['validated_internal_artifacts'],
+              'contact_gate_effect': r['contact_gate_effect'],
+              'external_gate_updates': r['external_gate_updates'],
+          }, indent=2))
+          PY
+
+      - name: Hash preparation evidence
+        run: |
+          sha256sum boeing_spirit/evidence/partner-preparation-report.json > boeing_spirit/evidence/PARTNER_PREPARATION_SHA256SUMS.txt
+          cat boeing_spirit/evidence/PARTNER_PREPARATION_SHA256SUMS.txt
+
+      - name: Upload preparation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-partner-preparation
+          path: |
+            boeing_spirit/evidence/partner-preparation-report.json
+            boeing_spirit/evidence/PARTNER_PREPARATION_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

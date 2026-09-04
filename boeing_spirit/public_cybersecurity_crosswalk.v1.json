@@ -1,0 +1,113 @@
+{
+  "schema": "WS-BOEING-SPIRIT-PUBLIC-CYBERSECURITY-CROSSWALK-V1",
+  "as_of": "2026-09-03",
+  "status": "PUBLIC REQUIREMENT PREPARATION ONLY — NO BOEING/SPIRIT CYBER APPROVAL OR CONTRACT APPLICABILITY ESTABLISHED",
+  "default_data_posture": "PUBLIC_OR_SYNTHETIC_ONLY",
+  "official_sources": [
+    {
+      "id": "BOEING-SUPPLIER-CYBER",
+      "title": "Boeing Supplier Cybersecurity",
+      "url": "https://www.boeingsuppliers.com/become/cybersecurity",
+      "bounded_signal": "Boeing identifies NIST/ISO-aligned cybersecurity practices for suppliers; Defense & Space materials identify NIST SP 800-171 Rev. 3, Boeing cybersecurity supplement SP5, FAR 52.204-21 and DFARS 252.204-7012 among relevant requirements."
+    },
+    {
+      "id": "BOEING-M-CLAUSES",
+      "title": "Boeing Terms Clause Index — Section M",
+      "url": "https://www.boeingsuppliers.com/become/terms/clause-index/clause-m",
+      "bounded_signal": "Boeing publishes M201-M204 clauses for CMMC Level 1 Self, Level 2 Self, Level 2 C3PAO and Level 3 DIBCAC states; actual applicability is solicitation/contract-specific."
+    },
+    {
+      "id": "BOEING-A001",
+      "title": "BDS Terms and Conditions Guide A001",
+      "url": "https://www.boeingsuppliers.com/content/dam/boeing/boeingsuppliers/boeing-suppliers/becoming/terms/clause-index/axxx/A001_11-10-2025.pdf",
+      "bounded_signal": "When specified CMMC clauses are incorporated, Boeing requires the applicable current CMMC level report from SPRS for award eligibility; where DFARS 252.204-7012 and/or -7020 apply, bidder cyber representations and Boeing C-SCRM assessment requirements may apply."
+    },
+    {
+      "id": "BOEING-ESLC",
+      "title": "Boeing ESLC External User Guide",
+      "url": "https://www.boeingsuppliers.com/content/dam/boeing/boeingsuppliers/boeing-suppliers/becoming/ESLC_UserGuide_Boeing_External.FINAL.pdf",
+      "bounded_signal": "The supplier lifecycle process includes CMMC-related supplier information; if a company states an assessment is complete, supporting certificate/date information is requested."
+    },
+    {
+      "id": "BOEING-SUPPLIER-PRINCIPLES",
+      "title": "Boeing Supplier Principles — Cybersecurity",
+      "url": "https://www.boeingsuppliers.com/supplier-principles",
+      "bounded_signal": "Boeing expects suppliers to adopt industry-leading cybersecurity practices; this general expectation does not itself establish a particular contract's CMMC/CUI requirements."
+    }
+  ],
+  "applicability_decision_table": [
+    {
+      "condition": "PUBLIC_OR_SYNTHETIC_ONLY",
+      "required_state": "No Boeing proprietary/FCI/CUI authorization inferred; retain public/synthetic boundary.",
+      "worldshepherd_action": "Continue internal security engineering and evidence preparation only."
+    },
+    {
+      "condition": "BOEING_PROPRIETARY_WITHOUT_FCI_CUI",
+      "required_state": "Written Boeing authorization, contractual security supplement/terms, purpose/use rights, identity/access, retention/deletion, incident and subprocessor requirements must be known.",
+      "worldshepherd_action": "Do not ingest until the authorized environment and exact contractual controls are verified."
+    },
+    {
+      "condition": "FCI_APPLIES",
+      "required_state": "Determine the incorporated FAR/DFARS/CMMC clauses and required CMMC level from the solicitation/contract; do not infer level from public pages.",
+      "worldshepherd_action": "Block FCI processing until award/eligibility and system-boundary evidence required by the actual procurement is satisfied."
+    },
+    {
+      "condition": "CUI_OR_CDI_APPLIES",
+      "required_state": "Determine incorporated DFARS/CMMC clauses, NIST SP 800-171 requirements, SPRS/CMMC evidence, Boeing C-SCRM requirements and flowdowns from the actual procurement.",
+      "worldshepherd_action": "Block CUI/CDI processing until authorized system scope and required assessments/certifications are evidenced."
+    },
+    {
+      "condition": "EXPORT_CONTROLLED_APPLIES",
+      "required_state": "Qualified export-control review must establish eligible persons, locations, systems, transfers and markings in addition to cybersecurity requirements.",
+      "worldshepherd_action": "Block ingestion and access until export-control authorization is documented."
+    },
+    {
+      "condition": "CLASSIFIED_APPLIES",
+      "required_state": "Current Worldshepherd environment is not an authorized classified environment.",
+      "worldshepherd_action": "OUT_OF_SCOPE — do not process."
+    }
+  ],
+  "pre_contact_internal_evidence_targets": [
+    "NIST SP 800-171 Rev. 3 SSP precursor remains explicitly NOT_ASSESSED",
+    "defined system boundary and data-flow diagram for any future controlled environment",
+    "role/privilege matrix with negative-authorization tests",
+    "TLS/private-service binding evidence",
+    "secrets-management and secret-scanning evidence",
+    "software bill of materials and dependency provenance",
+    "vulnerability/dependency review procedure",
+    "incident-response and notification procedure template",
+    "audit/access logging and evidence-digest retention",
+    "backup/restore and rollback evidence",
+    "data import/export allowlist",
+    "retention/deletion test",
+    "subprocessor/tool inventory",
+    "CUI/FCI/export-controlled/classified hard-block tests"
+  ],
+  "contract_specific_fields_required_before_security_gate_closure": [
+    "Boeing business unit/program",
+    "solicitation/contract identifier",
+    "incorporated Boeing cybersecurity terms/clauses",
+    "FAR clauses",
+    "DFARS clauses",
+    "CMMC clause and required level if applicable",
+    "FCI/CUI/CDI determination",
+    "export-control determination",
+    "Boeing proprietary data markings/use rights",
+    "required SPRS/CMMC evidence if applicable",
+    "Boeing C-SCRM assessment requirement if applicable",
+    "approved environment/system boundary",
+    "sub-tier flowdown requirements",
+    "incident reporting contacts/timing",
+    "data retention/deletion/sanitization requirements"
+  ],
+  "prohibited_inferences": [
+    "Public Boeing cybersecurity pages do not make Worldshepherd CMMC certified.",
+    "An internal NIST mapping does not establish NIST SP 800-171 compliance.",
+    "A passing CI security test does not create an SPRS score or CMMC status.",
+    "ESLC registration does not authorize Boeing proprietary, FCI, CUI, CDI or export-controlled data access.",
+    "General Boeing supplier expectations do not determine contract-specific clause applicability.",
+    "No public-source preparation artifact establishes Boeing C-SCRM approval."
+  ],
+  "contact_gate_effect": "NONE. Public cybersecurity crosswalking improves preparation but security_compliance_fit remains PARTIAL until an actual partner/contract scope, data classification, required clauses, authorized environment and required assessment/certification evidence are available and verified.",
+  "claims_boundary": "This crosswalk is an internal interpretation of public Boeing supplier cybersecurity materials for preparation and fail-closed applicability logic. It is not legal advice, a contract interpretation, CMMC certification, NIST SP 800-171 compliance, an SPRS assessment, Boeing C-SCRM approval, authorization to handle FCI/CUI/CDI/export-controlled data, or Boeing/Spirit security approval."
+}

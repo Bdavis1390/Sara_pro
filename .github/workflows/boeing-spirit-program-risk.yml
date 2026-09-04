@@ -1,0 +1,71 @@
+name: Boeing Spirit Program Risk Controls
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/synthetic_program_risk_pilot.py'
+      - '.github/workflows/boeing-spirit-program-risk.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/synthetic_program_risk_pilot.py'
+      - '.github/workflows/boeing-spirit-program-risk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  program-risk-controls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile pilot
+        run: python -m py_compile boeing_spirit/synthetic_program_risk_pilot.py
+
+      - name: Run deterministic synthetic program-risk pilot
+        run: >-
+          python boeing_spirit/synthetic_program_risk_pilot.py
+          --output boeing_spirit/evidence/synthetic-program-risk-report.json
+
+      - name: Verify evidence boundary and exact detection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('boeing_spirit/evidence/synthetic-program-risk-report.json').read_text())
+          assert report['schema'] == 'WS-BOEING-SPIRIT-SYNTHETIC-PROGRAM-RISK-PILOT-V1'
+          assert report['evidence_class'] == 'INTERNAL SYNTHETIC PROGRAM RISK CONTROL TEST ONLY'
+          assert report['result'] == 'PASS'
+          assert report['fixture_count'] >= 12
+          assert all(row['pass'] for row in report['results'])
+          boundary = report['claims_boundary'].lower()
+          for term in ['does not use boeing/spirit data', 'does not constitute accounting', 'production-effectiveness']:
+              assert term in boundary
+          print(json.dumps({'result': report['result'], 'fixture_count': report['fixture_count']}, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: sha256sum boeing_spirit/evidence/synthetic-program-risk-report.json > boeing_spirit/evidence/PROGRAM_RISK_SHA256SUMS.txt
+
+      - name: Upload program-risk evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-program-risk-controls
+          path: |
+            boeing_spirit/evidence/synthetic-program-risk-report.json
+            boeing_spirit/evidence/PROGRAM_RISK_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

@@ -1,0 +1,55 @@
+name: PRE Official Opportunity Source Freshness
+
+on:
+  push:
+    paths:
+      - 'pre/source_freshness.py'
+      - '.github/workflows/pre-source-freshness.yml'
+  pull_request:
+    paths:
+      - 'pre/source_freshness.py'
+      - '.github/workflows/pre-source-freshness.yml'
+  schedule:
+    - cron: '17 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch official public opportunity surfaces
+        run: python pre/source_freshness.py --output pre/evidence/source-freshness-report.json --timeout 30
+      - name: Validate evidence contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('pre/evidence/source-freshness-report.json').read_text())
+          assert r['schema']=='WS-PRE-SOURCE-FRESHNESS-V1'
+          assert r['evidence_class']=='LIVE_PUBLIC_SOURCE_CHECK'
+          assert r['source_count']==5
+          assert r['passing_source_count']==5
+          assert r['all_sources_pass'] is True
+          assert all(s['sha256'] for s in r['sources'])
+          assert all(s['retrieved_at_utc'] for s in r['sources'])
+          assert 'does not prove exhaustive market coverage' in r['claims_boundary']
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum pre/source_freshness.py pre/evidence/source-freshness-report.json | sort > pre/evidence/SHA256SUMS.txt
+          cat pre/evidence/SHA256SUMS.txt
+      - name: Upload PRE freshness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pre-official-source-freshness-evidence
+          path: pre/evidence/
+          retention-days: 90

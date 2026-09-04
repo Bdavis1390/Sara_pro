@@ -1,0 +1,65 @@
+name: Marketplace High Priority Contact Gates
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_high_priority_contact_gates.py'
+      - '.github/workflows/marketplace-high-priority-gates.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'marketplace/high_priority_contact_gates.v1.json'
+      - 'marketplace/validate_high_priority_contact_gates.py'
+      - '.github/workflows/marketplace-high-priority-gates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-high-priority-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_high_priority_contact_gates.py
+      - name: Validate high-priority contact gates
+        run: python marketplace/validate_high_priority_contact_gates.py --output marketplace/evidence/high-priority-contact-gates-report.json
+      - name: Verify zero contact authorizations
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('marketplace/evidence/high-priority-contact-gates-report.json').read_text())
+          assert r['result']=='PASS'
+          assert r['target_count']>=10
+          assert r['required_external_gate_count']==5
+          assert r['contact_authorized_target_count']==0
+          assert r['precontact_cap_pct']==55.0
+          assert r['threshold_pct']==98.7
+          print(json.dumps(r,indent=2))
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum marketplace/evidence/high-priority-contact-gates-report.json > marketplace/evidence/HIGH_PRIORITY_CONTACT_GATES_SHA256SUMS.txt
+          cat marketplace/evidence/HIGH_PRIORITY_CONTACT_GATES_SHA256SUMS.txt
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-high-priority-contact-gates
+          path: |
+            marketplace/evidence/high-priority-contact-gates-report.json
+            marketplace/evidence/HIGH_PRIORITY_CONTACT_GATES_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

@@ -1,0 +1,71 @@
+{
+  "schema": "WS-BOEING-SPIRIT-EXTERNAL-EVIDENCE-TRANSITION-CONTRACT-V1",
+  "as_of": "2026-09-03",
+  "purpose": "Define the minimum machine-verifiable evidence envelope required before any WS-BOEING-01 external gate may transition from missing/partial to complete/verified.",
+  "default_rule": "DENY_TRANSITION_WITHOUT_EXTERNAL_EVIDENCE",
+  "evidence_envelope_required_fields": [
+    "gate",
+    "proposed_state",
+    "evidence_class",
+    "external_authority",
+    "authority_role",
+    "authorization_or_review_date",
+    "source_identifier",
+    "source_digest_sha256",
+    "scope",
+    "claims_allowed",
+    "claims_not_allowed"
+  ],
+  "global_transition_rules": [
+    "Only complete or verified are closed states.",
+    "A closed-state transition requires an external evidence envelope; internal CI success alone is insufficient.",
+    "The evidence source must be externally authorized or independently produced as required by the specific gate.",
+    "Every retained source artifact must have an immutable identifier and SHA-256 digest or equivalent cryptographic content digest.",
+    "The external authority and its role must be recorded; Worldshepherd author/operator cannot act as the independent reviewer.",
+    "Claims allowed by the evidence must be explicitly bounded and claims not allowed must remain explicit.",
+    "A single evidence envelope cannot close a broader gate than its documented scope.",
+    "If provenance, authority, scope, or digest cannot be verified, the transition is denied.",
+    "Preparation artifacts have contact_gate_effect=NONE and cannot be promoted into external evidence by relabeling."
+  ],
+  "gate_contracts": [
+    {
+      "gate": "partner_data_access",
+      "allowed_evidence_classes": ["AUTHORIZED_PARTNER_DATA_ACCESS"],
+      "required_scope_terms": ["partner authorization", "dataset or sandbox", "use rights", "classification", "handling boundary"],
+      "required_additional_fields": ["data_owner", "data_classification", "authorized_environment", "retention_or_deletion_terms"],
+      "forbidden_substitutes": ["public dataset", "synthetic dataset", "public Boeing webpage", "internal authorization", "self-attestation"]
+    },
+    {
+      "gate": "partner_pilot",
+      "allowed_evidence_classes": ["AUTHORIZED_PARTNER_PILOT"],
+      "required_scope_terms": ["partner sponsor", "pilot scope", "execution record", "ground truth", "closeout"],
+      "required_additional_fields": ["pilot_identifier", "partner_sponsor", "pilot_start", "pilot_end", "ground_truth_owner"],
+      "forbidden_substitutes": ["synthetic pilot", "public analog benchmark", "internal replay without partner authorization", "protocol template"]
+    },
+    {
+      "gate": "measured_effect_size",
+      "allowed_evidence_classes": ["PARTNER_MEASURED_EFFECT"],
+      "required_scope_terms": ["predeclared endpoint", "baseline or comparator", "effect estimate", "uncertainty", "confounder review"],
+      "required_additional_fields": ["endpoint_id", "baseline_definition", "effect_estimate", "uncertainty_statement", "ground_truth_owner", "independent_review_reference"],
+      "forbidden_substitutes": ["synthetic accuracy", "public analog accuracy", "engineering estimate", "financial projection", "unreviewed correlation"]
+    },
+    {
+      "gate": "security_compliance_fit",
+      "allowed_evidence_classes": ["PARTNER_SECURITY_FIT_VALIDATION", "CONTRACTUAL_SECURITY_REQUIREMENT_AND_ASSESSMENT_EVIDENCE"],
+      "required_scope_terms": ["actual procurement or program", "applicable clauses", "data classification", "authorized environment", "assessment evidence"],
+      "required_additional_fields": ["procurement_or_program_id", "applicable_security_requirements", "data_classification", "authorized_environment", "assessment_or_partner_validation_reference"],
+      "forbidden_substitutes": ["public cybersecurity crosswalk", "SSP precursor", "CI security test", "unassessed NIST mapping", "self-attested CMMC status"]
+    },
+    {
+      "gate": "independent_review",
+      "allowed_evidence_classes": ["QUALIFIED_INDEPENDENT_REVIEW"],
+      "required_scope_terms": ["independent reviewer", "conflict disclosure", "reproducibility", "methodological review", "disposition"],
+      "required_additional_fields": ["reviewer_identity", "reviewer_organization", "reviewer_qualifications", "conflict_disclosure", "review_disposition", "review_report_reference"],
+      "forbidden_substitutes": ["Worldshepherd self-review", "LLM self-review", "CI pass", "peer discussion without retained report", "review of protocol without relevant evidence"]
+    }
+  ],
+  "current_transition_requests": [],
+  "current_expected_result": "NO_TRANSITIONS_REQUESTED",
+  "contact_gate_effect": "NONE. Defining a transition contract closes no external gate; it only prevents unsupported future gate promotion.",
+  "claims_boundary": "This contract is governance logic, not Boeing/Spirit engagement, authorization, data access, partner pilot evidence, measured effect, security/compliance validation, independent review, certification, adoption, savings, defect reduction, or remediation probability."
+}

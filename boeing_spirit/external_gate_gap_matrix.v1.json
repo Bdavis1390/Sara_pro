@@ -1,0 +1,144 @@
+{
+  "schema": "WS-BOEING-SPIRIT-EXTERNAL-GATE-GAP-MATRIX-V1",
+  "as_of": "2026-09-03",
+  "purpose": "Separate pre-contact preparation from evidence that can only be closed through legitimate external Boeing/Spirit engagement and qualified independent review.",
+  "current_contact_score_pct": 55.0,
+  "target_contact_threshold_pct": 98.7,
+  "pre_contact_max_contact_score_pct_under_current_policy": 55.0,
+  "external_dependency_barrier": "Under the current fail-closed policy, the 98.7 contact threshold cannot be reached solely through internal, synthetic, public-source, public-analog, protocol, or self-review work. Partner-authorized data is a required external state and its absence imposes a 55% hard cap.",
+  "gates": [
+    {
+      "gate": "partner_data_access",
+      "current_state": "missing",
+      "hard_cap_pct_if_not_closed": 55.0,
+      "pre_contact_work_can_do": [
+        "prepare data dictionary and import contract",
+        "prepare PUBLIC_OR_SYNTHETIC_ONLY sandbox",
+        "prepare provenance, retention, deletion and deny-path controls",
+        "prepare authorization and data-classification checklist"
+      ],
+      "pre_contact_work_cannot_do": [
+        "create Boeing/Spirit authorization",
+        "create representative Boeing/Spirit partner data",
+        "establish data use rights",
+        "establish actual FCI/CUI/CDI/export classification"
+      ],
+      "minimum_external_evidence_to_close": [
+        "written authorization from a legitimate partner authority",
+        "identified dataset/sandbox with provenance and use rights",
+        "data classification and handling scope",
+        "authorized transfer/access record"
+      ],
+      "self_close_allowed": false
+    },
+    {
+      "gate": "partner_pilot",
+      "current_state": "missing",
+      "hard_cap_pct_if_not_closed": 70.0,
+      "pre_contact_work_can_do": [
+        "prepare five-phase pilot protocol",
+        "prepare rollback/stop conditions",
+        "prepare read-only replay and shadow-mode test plans",
+        "prepare acceptance and ground-truth requirements"
+      ],
+      "pre_contact_work_cannot_do": [
+        "perform a Boeing/Spirit partner pilot",
+        "create partner operational ground truth",
+        "claim shadow or intervention performance on partner workflow"
+      ],
+      "minimum_external_evidence_to_close": [
+        "authorized partner sponsor and scope",
+        "controlled pilot execution record",
+        "partner-authorized ground truth",
+        "pilot closeout evidence with source/configuration digests"
+      ],
+      "self_close_allowed": false
+    },
+    {
+      "gate": "measured_effect_size",
+      "current_state": "missing",
+      "hard_cap_pct_if_not_closed": 80.0,
+      "pre_contact_work_can_do": [
+        "predeclare primary endpoints",
+        "prepare comparator/baseline designs",
+        "prepare uncertainty and confounder reporting",
+        "retain public analog weaknesses as method evidence"
+      ],
+      "pre_contact_work_cannot_do": [
+        "measure Boeing/Spirit operational effect",
+        "claim defect reduction",
+        "claim schedule improvement",
+        "claim rework reduction or financial savings"
+      ],
+      "minimum_external_evidence_to_close": [
+        "completed controlled partner pilot",
+        "predeclared baseline/comparator",
+        "partner-authorized endpoint ground truth",
+        "effect estimate with uncertainty and confounder review",
+        "independent verification of the effect analysis"
+      ],
+      "self_close_allowed": false
+    },
+    {
+      "gate": "security_compliance_fit",
+      "current_state": "partial",
+      "hard_cap_pct_if_not_closed": 85.0,
+      "pre_contact_work_can_do": [
+        "maintain PUBLIC_OR_SYNTHETIC_ONLY default",
+        "prepare NIST SP 800-171 SSP precursor",
+        "prepare public Boeing cybersecurity applicability crosswalk",
+        "test role separation, TLS, rollback, secrets and deny paths",
+        "prepare FCI/CUI/CDI/export/classified block logic"
+      ],
+      "pre_contact_work_cannot_do": [
+        "determine actual solicitation/contract clause applicability",
+        "create a CMMC certification or SPRS score",
+        "create Boeing C-SCRM approval",
+        "authorize controlled information processing"
+      ],
+      "minimum_external_evidence_to_close": [
+        "actual program/procurement scope",
+        "incorporated Boeing/FAR/DFARS/CMMC requirements",
+        "authoritative FCI/CUI/CDI/export determination",
+        "approved system/environment boundary",
+        "required assessment/certification evidence",
+        "partner verification of security fit"
+      ],
+      "self_close_allowed": false
+    },
+    {
+      "gate": "independent_review",
+      "current_state": "missing",
+      "hard_cap_pct_if_not_closed": 92.0,
+      "pre_contact_work_can_do": [
+        "prepare immutable review package",
+        "prepare reproducibility instructions",
+        "define independence/conflict rules",
+        "invite a genuinely independent methodology review when appropriate"
+      ],
+      "pre_contact_work_cannot_do": [
+        "self-declare independent review",
+        "use a methodology-only review to validate unobserved Boeing/Spirit production effects",
+        "review partner-specific evidence that does not yet exist"
+      ],
+      "minimum_external_evidence_to_close": [
+        "qualified reviewer independent of Worldshepherd implementation/authorship",
+        "completed reproducibility and methodological review",
+        "partner-relevant evidence included for partner-specific claims",
+        "attributed review disposition and retained evidence digests"
+      ],
+      "self_close_allowed": false
+    }
+  ],
+  "pre_contact_completion_definition": [
+    "all internal synthetic tests pass within their stated scope",
+    "public-source crosswalks are current and fail-closed",
+    "public manufacturing analog benchmark is reproducible and adverse metrics are retained",
+    "change-propagation stress corpus passes",
+    "partner-pilot, effect-measurement, security and independent-review protocols are structurally complete",
+    "external gates remain explicitly missing/partial rather than promoted",
+    "no Boeing/Spirit outreach occurs while contact_gate_pass=false"
+  ],
+  "decision_rule": "Do not increase the Boeing/Spirit evidence-backed remediation confidence above the hard-cap result by counting preparation artifacts as substitutes for external evidence. Any future gate transition must cite the exact externally authorized evidence that caused the transition.",
+  "claims_boundary": "This matrix describes evidence dependencies and policy constraints. It is not evidence of Boeing/Spirit engagement, authorization, data access, pilot performance, measured effect, security/compliance approval, independent review, adoption, savings, defect reduction, or remediation probability."
+}

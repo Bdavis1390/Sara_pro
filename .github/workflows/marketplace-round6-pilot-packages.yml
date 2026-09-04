@@ -1,0 +1,57 @@
+name: Marketplace Round 6 Partner Pilot Packages
+
+on:
+  push:
+    paths:
+      - 'marketplace/round6_partner_pilot_packages.v1.json'
+      - 'marketplace/validate_round6_partner_pilot_packages.py'
+      - '.github/workflows/marketplace-round6-pilot-packages.yml'
+  pull_request:
+    paths:
+      - 'marketplace/round6_partner_pilot_packages.v1.json'
+      - 'marketplace/validate_round6_partner_pilot_packages.py'
+      - '.github/workflows/marketplace-round6-pilot-packages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-round6-pilot-packages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_round6_partner_pilot_packages.py
+      - name: Validate pilot packages
+        run: python marketplace/validate_round6_partner_pilot_packages.py --registry marketplace/round6_partner_pilot_packages.v1.json --output marketplace/evidence/round6-partner-pilot-packages-report.json
+      - name: Verify fail-closed package state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('marketplace/evidence/round6-partner-pilot-packages-report.json').read_text())
+          assert r['result']=='PASS'
+          assert r['target_count']==5
+          assert r['common_acceptance_target_count']==6
+          assert r['required_external_gate_evidence_count']==5
+          assert r['external_gate_closures']==0
+          assert r['contact_gate_effect']=='NONE'
+          print(json.dumps(r,indent=2))
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum marketplace/evidence/round6-partner-pilot-packages-report.json > marketplace/evidence/ROUND6_PARTNER_PILOT_PACKAGES_SHA256SUMS.txt
+          cat marketplace/evidence/ROUND6_PARTNER_PILOT_PACKAGES_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-round6-partner-pilot-packages
+          path: |
+            marketplace/evidence/round6-partner-pilot-packages-report.json
+            marketplace/evidence/ROUND6_PARTNER_PILOT_PACKAGES_SHA256SUMS.txt
+          retention-days: 90
+
+# CI refresh marker: 2026-09-03

@@ -1,0 +1,138 @@
+name: Next External Evidence Jump Gate
+
+on:
+  pull_request:
+    paths:
+      - 'readiness/next_external_jump_matrix.v1.json'
+      - 'evidence/partner_test_evidence_contract.v1.json'
+      - 'readiness/portfolio.v1.json'
+      - 'evidence/closures.v1.json'
+      - 'security/premerge_security_gate.v1.json'
+      - '.github/workflows/next-external-jump-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-next-external-jumps:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate jump matrix and evidence contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          matrix = json.loads(Path('readiness/next_external_jump_matrix.v1.json').read_text())
+          contract = json.loads(Path('evidence/partner_test_evidence_contract.v1.json').read_text())
+          portfolio = json.loads(Path('readiness/portfolio.v1.json').read_text())
+          closures = json.loads(Path('evidence/closures.v1.json').read_text())
+          security = json.loads(Path('security/premerge_security_gate.v1.json').read_text())
+
+          errors = []
+          scale = matrix['maturity_cap_scale_pct']
+          expected_scale = {
+              'architecture': 20,
+              'simulated': 35,
+              'implemented_software': 60,
+              'internal_test': 65,
+              'partner_test': 80,
+              'independently_replicated': 92,
+              'qualified_or_certified': 100,
+          }
+          if scale != expected_scale:
+              errors.append('maturity cap scale mismatch')
+
+          effective = {w['id']: w['evidence_maturity'] for w in portfolio['workstreams']}
+          for u in closures.get('maturity_updates', []):
+              if u.get('approved'):
+                  effective[u['workstream']] = u['to']
+
+          lanes = matrix['lanes']
+          if len(lanes) != 6:
+              errors.append(f'expected 6 prioritized lanes, found {len(lanes)}')
+          if sorted(x['priority'] for x in lanes) != list(range(1, 7)):
+              errors.append('priorities must be exactly 1..6')
+          if len({x['workstream'] for x in lanes}) != len(lanes):
+              errors.append('duplicate workstream in jump matrix')
+
+          for lane in lanes:
+              ws = lane['workstream']
+              if ws not in effective:
+                  errors.append(f'{ws}: unknown workstream')
+                  continue
+              if lane['current_effective_maturity'] != effective[ws]:
+                  errors.append(f"{ws}: current maturity {lane['current_effective_maturity']} != evidence-effective {effective[ws]}")
+              if lane['current_maturity_cap_pct'] != scale[lane['current_effective_maturity']]:
+                  errors.append(f'{ws}: current cap mismatch')
+              if lane['next_target_maturity'] != 'partner_test':
+                  errors.append(f'{ws}: next target must be partner_test for this matrix')
+              if lane['next_target_cap_pct'] != scale['partner_test']:
+                  errors.append(f'{ws}: target cap mismatch')
+              if lane['potential_cap_jump_pp_after_valid_evidence'] != lane['next_target_cap_pct'] - lane['current_maturity_cap_pct']:
+                  errors.append(f'{ws}: potential jump arithmetic mismatch')
+              for field in ('entry_prerequisites','test_campaign','predeclared_metrics','minimum_closure_evidence','stop_conditions'):
+                  if not lane.get(field):
+                      errors.append(f'{ws}: missing {field}')
+              if not lane.get('claims_boundary'):
+                  errors.append(f'{ws}: missing claims boundary')
+
+          policy = matrix['policy']
+          if policy.get('contact_authority_created_by_this_matrix') is not False:
+              errors.append('matrix must create zero contact authority')
+          if policy.get('internal_work_may_prepare_but_not_close_external_gates') is not True:
+              errors.append('fail-closed external-gate policy missing')
+          if policy.get('negative_null_and_failed_results_must_be_retained') is not True:
+              errors.append('negative/null/failure retention is required')
+          if policy.get('no_retrospective_threshold_change') is not True:
+              errors.append('retrospective threshold changes must be prohibited')
+
+          required = set(contract['required_fields'])
+          must_have = {
+              'workstream','partner_organization','partner_authority_role','written_scope_ref','written_scope_sha256',
+              'data_use_rights_state','classification_or_sensitivity_state','test_protocol_sha256','predeclared_metrics',
+              'acceptance_thresholds','environment_manifest_sha256','input_or_dataset_sha256','raw_results_sha256',
+              'negative_null_failed_results_retained','partner_review_sha256','claims_boundary'
+          }
+          missing = sorted(must_have - required)
+          if missing:
+              errors.append('partner-test contract missing required fields: ' + ', '.join(missing))
+          if contract.get('required_evidence_class') != 'partner_test':
+              errors.append('partner-test contract evidence class mismatch')
+          if 'No envelope alone changes maturity automatically' not in contract.get('promotion_rule',''):
+              errors.append('automatic maturity promotion must remain prohibited')
+
+          report = {
+              'schema': 'WS-NEXT-EXTERNAL-JUMP-GATE-REPORT-V1',
+              'lane_count': len(lanes),
+              'effective_maturity_checked': {x['workstream']: effective.get(x['workstream']) for x in lanes},
+              'potential_partner_test_lane_count': len(lanes),
+              'partner_test_contract_required_field_count': len(contract['required_fields']),
+              'security_merge_allowed_at_validation_time': security.get('merge_allowed'),
+              'contact_authority_created': False,
+              'external_gate_closures_created': 0,
+              'errors': errors,
+              'claims_boundary': 'PASS validates preparation structure only. It closes no partner, physical, independent-review, commercial-outcome, certification or marketplace contact gate.'
+          }
+          out = Path('readiness/next-external-jump-gate-report.json')
+          out.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(report, indent=2, sort_keys=True))
+          if errors:
+              raise SystemExit(2)
+          PY
+      - name: Hash evidence
+        run: sha256sum readiness/next-external-jump-gate-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: next-external-evidence-jump-gate
+          path: readiness/next-external-jump-gate-report.json
+          retention-days: 90
