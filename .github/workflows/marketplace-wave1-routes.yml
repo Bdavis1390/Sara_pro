@@ -52,3 +52,5 @@ jobs:
             marketplace/evidence/wave1-official-route-report.json
             marketplace/evidence/WAVE1_OFFICIAL_ROUTE_SHA256SUMS.txt
           retention-days: 90
+
+# CI refresh marker: 2026-09-03-wave1-route-verification
