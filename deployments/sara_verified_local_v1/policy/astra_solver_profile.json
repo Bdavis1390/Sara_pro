@@ -1,14 +1,22 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "profile_id": "WS-ASTRA-SOLVER-READ-ONLY",
-  "status": "DESIGN_INTEGRATION",
-  "model": "gpt-6-astra",
+  "status": "IMPLEMENTATION_PROFILE",
+  "profile_name": "Astra",
+  "profile_type": "WORLDSHEPHERD_SOLVER_CODENAME",
+  "provider": "openai",
+  "runtime_model": {
+    "default": "gpt-5.6-sol",
+    "verification_source": "https://platform.openai.com/docs/models",
+    "verified_date": "2026-09-04",
+    "astra_is_provider_model_id": false
+  },
   "authority": "CRE1AWS",
   "orchestrator": "SARA",
   "default_mode": "SOLVER_READ_ONLY",
   "network": {
-    "read": false,
-    "write": false,
+    "inference_enabled_by_default": false,
+    "provider_transport_embedded": false,
     "requires_explicit_sara_authorization": true
   },
   "external_actions": {
@@ -35,13 +43,24 @@
     "claims_red_team",
     "evidence_gap_analysis"
   ],
+  "tool_policy": {
+    "default_allowlist": [],
+    "deny_unlisted_tools": true,
+    "authorization_must_cover_requested_tools": true
+  },
   "required_output_fields": [
     "task_id",
+    "profile_id",
+    "provider",
+    "model_id",
     "evidence_refs",
     "claims_control_labels",
+    "input_digest",
+    "output_digest",
+    "authorization_id",
+    "network_call_performed",
     "uncertainty_notes",
     "disconfirming_evidence",
-    "output_digest",
     "recommended_follow_on"
   ],
   "claims_control": {
@@ -52,18 +71,19 @@
     "owned_or_explicitly_authorized_targets_only": true,
     "defensive_baseline_only": true,
     "autonomous_third_party_scanning": false,
-    "persistence_or_evasion": false
+    "persistence_or_evasion": false,
+    "no_special_capability_inferred_from_profile_name": true
   },
   "promotion_gates": [
-    "model_access_verified",
+    "target_model_access_verified",
     "secret_storage_verified",
-    "sara_adapter_implemented",
-    "provenance_logging_verified",
+    "provider_transport_reviewed",
+    "provenance_persistence_verified",
     "read_only_tests_pass",
-    "timeout_cancel_rollback_verified",
+    "timeout_cancel_behavior_verified",
     "tool_allowlist_verified",
     "claims_tagging_verified",
     "cyber_boundary_tests_pass",
-    "cre1aws_approval_for_elevated_mode"
+    "cre1aws_approval_for_network_or_elevated_mode"
   ]
 }
