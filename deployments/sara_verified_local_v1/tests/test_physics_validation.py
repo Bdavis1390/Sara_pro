@@ -5,6 +5,7 @@ from worldshepherd_sara.claims_linter_physics import LintSeverity, lint_physics_
 from worldshepherd_sara.physics_validation import (
     ApprovalState,
     ConfounderStatus,
+    EvidenceProvenance,
     EvidenceScore,
     ExperimentRecord,
     GoverningEquation,
@@ -21,6 +22,21 @@ from worldshepherd_sara.physics_validation import (
 
 DIGEST_A = "sha256:" + "a" * 64
 DIGEST_B = "sha256:" + "b" * 64
+DIGEST_C = "sha256:" + "c" * 64
+DIGEST_D = "sha256:" + "d" * 64
+
+
+def provenance(**overrides):
+    payload = {
+        "source_manifest_digest": DIGEST_C,
+        "configuration_digest": DIGEST_D,
+        "acquisition_time_utc": "2026-09-06T22:00:00Z",
+        "time_reference": "UTC",
+        "coordinate_frame": "laboratory/device frame",
+        "custody_events": ["acquired by test operator", "raw evidence hash-bound"],
+    }
+    payload.update(overrides)
+    return EvidenceProvenance(**payload)
 
 
 def concept_record(**overrides):
@@ -93,10 +109,30 @@ def test_physical_test_requires_calibrated_raw_evidence():
                 "environment": {"temperature_c": 22.0},
                 "operator": "SSPADAWANZZ",
                 "measurement_equipment_used": True,
+                "provenance": provenance().model_dump(mode="json"),
             },
         }
     )
     with pytest.raises(ValidationError):
+        concept_record(**payload)
+
+
+def test_physical_test_requires_echo_grade_provenance():
+    payload = simulation_fields()
+    payload.update(
+        {
+            "validation_state": "internal_test",
+            "failure_modes": ["sensor drift"],
+            "experiment": ExperimentRecord(
+                setup_id="SETUP-PROV-MISSING",
+                calibration_record_ids=["CAL-PROV-1"],
+                raw_data_digests=[DIGEST_A],
+                environment={"temperature_c": 22.0},
+                operator="SSPADAWANZZ",
+            ),
+        }
+    )
+    with pytest.raises(ValidationError, match="ECHO-grade evidence provenance"):
         concept_record(**payload)
 
 
@@ -132,6 +168,7 @@ def test_high_score_does_not_confirm_new_physics_without_replication():
                 operator="SSPADAWANZZ",
                 confounders={"thermal": ConfounderStatus.TESTED_PASS},
                 replication_state=ReplicationState.R1_INTERNAL,
+                provenance=provenance(),
             ),
         }
     )
@@ -149,6 +186,7 @@ def test_high_score_does_not_confirm_new_physics_without_replication():
     assert result["weighted_score"] == 100
     assert result["new_physics_confirmed"] is False
     assert "NO_INDEPENDENT_REPLICATION" in result["hard_gate_blocks"]
+    assert "VALIDATION_STATE_TOO_LOW_FOR_EXTERNAL_RELEASE" in result["hard_gate_blocks"]
     assert result["external_claim_allowed"] is False
 
 
@@ -166,6 +204,12 @@ def test_independent_state_requires_review_evidence_and_approval():
                 operator="EXTERNAL-LAB",
                 confounders={"thermal": ConfounderStatus.TESTED_PASS},
                 replication_state=ReplicationState.R3_INDEPENDENT,
+                provenance=provenance(
+                    custody_events=[
+                        "acquired by independent laboratory",
+                        "raw evidence hash-bound by independent laboratory",
+                    ]
+                ),
             ),
             "independent_review_state": IndependentReviewState.COMPLETED,
             "independent_evidence_refs": ["EXT-EVID-1"],
