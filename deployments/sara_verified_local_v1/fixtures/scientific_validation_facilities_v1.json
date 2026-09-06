@@ -1,0 +1,87 @@
+{
+  "schema_version": "ws-scientific-validation-facilities-1",
+  "as_of": "2026-09-06",
+  "status": "CANDIDATE_FACILITIES_NOT_CONFIRMED_ENGAGEMENTS",
+  "facilities": [
+    {
+      "facility_id": "ORNL-MDF",
+      "organization": "Oak Ridge National Laboratory",
+      "facility": "Manufacturing Demonstration Facility",
+      "project_fit": ["WS-ALTI", "ADDITIVE_MANUFACTURING", "DIGITAL_TWIN"],
+      "capabilities_supported_by_public_source": [
+        "metal additive-manufacturing process and materials R&D",
+        "materials development",
+        "in-situ sensing and feedback",
+        "metrology and characterization",
+        "physics-based simulation and 3D tomography",
+        "industry collaboration through user/collaborative mechanisms"
+      ],
+      "validation_role": "candidate manufacturing + process/metrology partner for coupon production and simulation-to-test work",
+      "access_status": "NOT_CONFIRMED",
+      "source": "https://www.ornl.gov/content/additive",
+      "notes": "Public capability fit does not establish project acceptance, cost, schedule, or agreement eligibility."
+    },
+    {
+      "facility_id": "ORNL-MATERIALS-CHAR",
+      "organization": "Oak Ridge National Laboratory",
+      "facility": "Materials Characterization capabilities / associated user facilities",
+      "project_fit": ["WS-ALTI", "ADVANCED_MATERIALS"],
+      "capabilities_supported_by_public_source": [
+        "electron microscopy and spectroscopy",
+        "atom probe tomography",
+        "mechanical stress/strain characterization",
+        "nanoindentation",
+        "neutron-based materials characterization"
+      ],
+      "validation_role": "candidate high-end independent characterization pathway after initial coupon screening",
+      "access_status": "NOT_CONFIRMED",
+      "source": "https://www.ornl.gov/project/materials-characterization",
+      "notes": "Specific instrument access may be through ORNL user facilities and requires proposal/agreement approval."
+    },
+    {
+      "facility_id": "NCSU-AIF",
+      "organization": "North Carolina State University",
+      "facility": "Analytical Instrumentation Facility",
+      "project_fit": ["WS-ALTI", "ADVANCED_MATERIALS"],
+      "capabilities_supported_by_public_source": [
+        "SEM",
+        "TEM",
+        "EDS",
+        "EBSD",
+        "XRD",
+        "XRF",
+        "nanoindentation",
+        "sample preparation",
+        "academic and industry user access"
+      ],
+      "validation_role": "candidate lower-friction characterization route for chemistry/microstructure/phase/property screening",
+      "access_status": "NOT_CONFIRMED",
+      "source": "https://research.ncsu.edu/analytical-instrumentation-facility-aif/",
+      "secondary_source": "https://aif.ncsu.edu/characterization-of-materials-2/",
+      "notes": "Confirm exact sample form, desired detection limits, pricing, IP handling, and external-user agreement before sending material."
+    },
+    {
+      "facility_id": "NIST-CTL-EM",
+      "organization": "National Institute of Standards and Technology",
+      "facility": "Communications Technology Laboratory electromagnetic metrology capabilities",
+      "project_fit": ["ADAPTIVE_METASURFACE", "RF_METROLOGY", "ANTENNA_MEASUREMENT"],
+      "capabilities_supported_by_public_source": [
+        "SI-traceable RF free-field metrology",
+        "antenna and field-probe calibration",
+        "S-parameter characterization with VNAs",
+        "over-the-air metrology",
+        "robotic antenna/field-strength measurement research"
+      ],
+      "validation_role": "candidate traceability/independent-metrology reference for later-stage metasurface RF validation",
+      "access_status": "NOT_CONFIRMED",
+      "source": "https://www.nist.gov/programs-projects/fundamental-electromagnetic-technologies-and-standards",
+      "secondary_source": "https://www.nist.gov/news-events/news/2025/06/metrology-and-calibration-services-nist-ctl-past-present-and-future",
+      "notes": "NIST capability does not imply NIST will test a specific Worldshepherd article; service scope and engagement must be confirmed."
+    }
+  ],
+  "recommended_sequence": [
+    "Use a practical characterization lab first to establish whether a measurable Worldshepherd-specific effect exists.",
+    "Use a national-lab or traceability-grade facility only after the internal/preliminary signal and evidence package justify the cost and access burden.",
+    "Keep manufacturing, characterization, analysis, and independent replication separable so one organization does not become the sole source of the claimed result."
+  ]
+}
