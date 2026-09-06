@@ -91,6 +91,28 @@ class SimulationRecord(BaseModel):
     verification_notes: list[str] = Field(default_factory=list)
 
 
+class EvidenceProvenance(BaseModel):
+    """ECHO-grade provenance required before physical evidence can raise maturity."""
+
+    source_manifest_digest: str = Field(pattern=r"^sha256:[0-9a-fA-F]{64}$")
+    configuration_digest: str = Field(pattern=r"^sha256:[0-9a-fA-F]{64}$")
+    acquisition_time_utc: str = Field(min_length=1)
+    time_reference: str = Field(min_length=1)
+    coordinate_frame: str | None = None
+    environment_record_id: str | None = None
+    custody_events: list[str] = Field(min_length=1)
+    analysis_artifact_digests: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_analysis_digests(self) -> "EvidenceProvenance":
+        for digest in self.analysis_artifact_digests:
+            if not digest.startswith("sha256:") or len(digest) != 71:
+                raise ValueError(
+                    "analysis_artifact_digests must contain sha256:<64 hex> values"
+                )
+        return self
+
+
 class ExperimentRecord(BaseModel):
     setup_id: str = Field(min_length=1)
     calibration_record_ids: list[str] = Field(default_factory=list)
@@ -101,6 +123,7 @@ class ExperimentRecord(BaseModel):
     preregistered_prediction_ids: list[str] = Field(default_factory=list)
     confounders: dict[str, ConfounderStatus] = Field(default_factory=dict)
     replication_state: ReplicationState = ReplicationState.R0_REPEAT
+    provenance: EvidenceProvenance | None = None
 
     @model_validator(mode="after")
     def validate_evidence_chain(self) -> "ExperimentRecord":
@@ -204,6 +227,10 @@ class PhysicsVerificationRecord(BaseModel):
                 raise ValueError("physical-test-or-higher state requires experiment metadata")
             if not self.experiment.raw_data_digests:
                 raise ValueError("physical-test-or-higher state requires raw-data digests")
+            if self.experiment.provenance is None:
+                raise ValueError(
+                    "physical-test-or-higher state requires ECHO-grade evidence provenance"
+                )
             if not self.failure_modes:
                 raise ValueError("physical-test-or-higher state requires failure/off-nominal review")
 
@@ -280,16 +307,28 @@ def apply_hard_gates(
             for name, state in record.experiment.confounders.items()
             if state != ConfounderStatus.NOT_APPLICABLE
         }
+        if record.experiment.provenance is None:
+            blocks.append("INCOMPLETE_PROVENANCE")
         if any(state == ConfounderStatus.NOT_TESTED for state in relevant.values()):
             blocks.append("UNTESTED_CONFOUNDERS")
         if record.experiment.replication_state != ReplicationState.R3_INDEPENDENT:
             blocks.append("NO_INDEPENDENT_REPLICATION")
 
+    release_states = {
+        ValidationState.INDEPENDENTLY_REPLICATED,
+        ValidationState.QUALIFIED,
+        ValidationState.CERTIFIED,
+    }
+    if record.validation_state not in release_states:
+        blocks.append("VALIDATION_STATE_TOO_LOW_FOR_EXTERNAL_RELEASE")
+
     if record.physics_layer == PhysicsLayer.P4_BEYOND_STANDARD_MODEL:
         if record.validation_state != ValidationState.INDEPENDENTLY_REPLICATED:
             blocks.append("BSM_NOT_INDEPENDENTLY_REPLICATED")
 
-    external_claim_allowed = not blocks and record.cre1aws_approval_state == ApprovalState.APPROVED
+    external_claim_allowed = (
+        not blocks and record.cre1aws_approval_state == ApprovalState.APPROVED
+    )
     return {
         "weighted_score": score.weighted_score(),
         "raw_classification": raw_classification,
