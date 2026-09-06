@@ -107,6 +107,8 @@ curl --fail --silent --show-error \
   -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" \
   "${base_url}/v1/physics/status" > "${evidence_dir}/physics-status.initial.json"
 
+# Use a concept-stage record only to prove the PVK store and API persist state.
+# Host software acceptance is deliberately not represented as scientific internal-test maturity.
 record_id="PHYS-HOST-${stamp}"
 python3 - "$record_id" "$stamp" > "${evidence_dir}/host-record.json" <<'PY_RECORD'
 import json
@@ -119,46 +121,28 @@ print(json.dumps({
     "project_id": "SARA",
     "physics_domain": ["governance", "evidence"],
     "physics_layer": "P2_ESTABLISHED_ENGINEERING",
-    "model_scope": "Actual-host shadow-deployment persistence and claims-control verification",
-    "assumptions": ["This record verifies software behavior only and does not validate a physical-science claim."],
+    "model_scope": "PVK store/API persistence probe executed during actual-host shadow acceptance",
+    "assumptions": [
+        "This record is a persistence probe only.",
+        "It does not establish experimental validation of any Worldshepherd physical concept."
+    ],
     "boundary_conditions": ["Loopback-only shadow deployment on the current Worldshepherd host"],
     "initial_conditions": [],
     "parameters": [],
     "unit_system": "SI",
-    "failure_modes": ["PVK persistence failure", "authorization boundary failure", "claims-linter failure", "restart persistence failure"],
+    "failure_modes": [
+        "PVK persistence failure",
+        "authorization boundary failure",
+        "claims-linter failure",
+        "restart persistence failure"
+    ],
     "hazard_controls": ["Shadow Compose project uses a separate port and volume; cleanup removes the shadow project."],
-    "validation_state": "internal_test",
-    "governing_equations": [{
-        "expression": "state_after_restart = state_before_restart",
-        "name": "persistence invariant",
-        "domain_of_validity": "bounded local software persistence test"
-    }],
-    "uncertainty_method": "not applicable to deterministic software acceptance checks",
-    "simulation": {
-        "solver": "deterministic software acceptance harness",
-        "version": "1",
-        "mesh_or_resolution": "not applicable",
-        "convergence_status": "passed",
-        "input_digest": "sha256:" + "0" * 64,
-        "output_digest": "sha256:" + "1" * 64,
-        "verification_notes": ["Placeholder software-harness digests are not scientific-data digests; host evidence is separately hashed by this script."]
-    },
-    "experiment": {
-        "setup_id": "ACTUAL-HOST-SHADOW-PVK",
-        "calibration_record_ids": [],
-        "raw_data_digests": ["sha256:" + "2" * 64],
-        "environment": {"deployment": "loopback-shadow"},
-        "operator": "SSPADAWANZZ",
-        "measurement_equipment_used": False,
-        "preregistered_prediction_ids": ["PVK-HOST-PERSISTENCE-1"],
-        "confounders": {"port_collision": "TESTED_PASS", "role_confusion": "TESTED_PASS"},
-        "replication_state": "R0_REPEAT"
-    },
+    "validation_state": "concept",
     "independent_review_state": "none",
     "independent_evidence_refs": [],
     "claim_label": "IMPLEMENTED IN SOFTWARE",
     "claim_class": 2,
-    "external_safe_statement": "PVK host acceptance is a bounded local software verification and does not validate any underlying physical-science claim.",
+    "external_safe_statement": "PVK actual-host acceptance is bounded software evidence; it does not validate any underlying physical-science claim.",
     "cre1aws_approval_state": "not_requested",
     "evidence_package_refs": [],
     "audit_event_ids": [],
