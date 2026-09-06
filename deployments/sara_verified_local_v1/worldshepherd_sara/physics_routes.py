@@ -8,6 +8,10 @@ from pydantic import BaseModel, Field
 
 from .auth import Role, require_admin, resolve_role
 from .claims_linter_physics import lint_physics_claim
+from .external_lab_evidence import (
+    ExternalLaboratoryEvidencePackage,
+    assess_lab_package,
+)
 from .models import AuditRecord
 from .physics_storage import PhysicsEvidenceStore
 from .physics_validation import (
@@ -154,6 +158,38 @@ def physics_metrics(
             ),
         },
     }
+
+
+@router.post("/admin/physics/lab-packages/validate")
+def physics_lab_package_validate(
+    body: ExternalLaboratoryEvidencePackage,
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+) -> dict[str, object]:
+    """Validate external-lab evidence structure; never promotes physics maturity."""
+    require_admin(role)
+    result = assess_lab_package(body)
+    request.app.state.store.append_audit(
+        AuditRecord.create(
+            event="physics_lab_package_validated",
+            actor=role.value,
+            payload={
+                "package_id": body.package_id,
+                "campaign_id": body.campaign_id,
+                "project_id": body.project_id,
+                "artifact_id": body.artifact_id,
+                "laboratory_organization": body.laboratory_organization,
+                "facility": body.facility,
+                "independence": body.independence.value,
+                "package_digest": result["package_digest"],
+                "evidence_complete": result["evidence_complete"],
+                "blockers": result["blockers"],
+                "warnings": result["warnings"],
+                "maturity_promoted": False,
+            },
+        )
+    )
+    return result
 
 
 @router.post("/admin/physics/records")
