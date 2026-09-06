@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
@@ -30,6 +30,32 @@ class PhysicsEvidenceEvaluationRequest(BaseModel):
 
 def _physics_store() -> PhysicsEvidenceStore:
     return PhysicsEvidenceStore()
+
+
+def _provenance_audit_fields(record: PhysicsVerificationRecord) -> dict[str, Any]:
+    experiment = record.experiment
+    provenance = experiment.provenance if experiment is not None else None
+    return {
+        "claim_label": record.claim_label,
+        "claim_class": record.claim_class,
+        "approval_state": record.cre1aws_approval_state.value,
+        "evidence_package_refs": sorted(record.evidence_package_refs),
+        "raw_data_digests": sorted(experiment.raw_data_digests) if experiment else [],
+        "calibration_record_ids": (
+            sorted(experiment.calibration_record_ids) if experiment else []
+        ),
+        "source_manifest_digest": (
+            provenance.source_manifest_digest if provenance else None
+        ),
+        "configuration_digest": (
+            provenance.configuration_digest if provenance else None
+        ),
+        "acquisition_time_utc": (
+            provenance.acquisition_time_utc if provenance else None
+        ),
+        "time_reference": provenance.time_reference if provenance else None,
+        "coordinate_frame": provenance.coordinate_frame if provenance else None,
+    }
 
 
 @router.get("/v1/physics/status")
@@ -70,18 +96,19 @@ def physics_record_append(
 ) -> dict[str, object]:
     require_admin(role)
     _physics_store().append(body)
+    payload = {
+        "record_id": body.record_id,
+        "artifact_id": body.artifact_id,
+        "project_id": body.project_id,
+        "physics_layer": body.physics_layer.value,
+        "validation_state": body.validation_state.value,
+        **_provenance_audit_fields(body),
+    }
     request.app.state.store.append_audit(
         AuditRecord.create(
             event="physics_record_appended",
             actor=role.value,
-            payload={
-                "record_id": body.record_id,
-                "artifact_id": body.artifact_id,
-                "project_id": body.project_id,
-                "physics_layer": body.physics_layer.value,
-                "validation_state": body.validation_state.value,
-                "claim_class": body.claim_class,
-            },
+            payload=payload,
         )
     )
     return {
@@ -99,12 +126,21 @@ def physics_claim_lint(
     require_admin(role)
     findings = lint_physics_claim(body.text, record=body.record)
     blocked = any(item.severity.value == "BLOCK" for item in findings)
+    record_fields: dict[str, Any] = {}
+    if body.record is not None:
+        record_fields = {
+            "record_id": body.record.record_id,
+            "artifact_id": body.record.artifact_id,
+            "project_id": body.record.project_id,
+            "validation_state": body.record.validation_state.value,
+            **_provenance_audit_fields(body.record),
+        }
     request.app.state.store.append_audit(
         AuditRecord.create(
             event="physics_claim_linted",
             actor=role.value,
             payload={
-                "record_id": body.record.record_id if body.record else None,
+                **record_fields,
                 "finding_count": len(findings),
                 "blocked": blocked,
                 "rule_ids": sorted({item.rule_id for item in findings}),
@@ -131,7 +167,10 @@ def physics_evaluate(
             actor=role.value,
             payload={
                 "record_id": body.record.record_id,
+                "artifact_id": body.record.artifact_id,
                 "project_id": body.record.project_id,
+                "validation_state": body.record.validation_state.value,
+                **_provenance_audit_fields(body.record),
                 "weighted_score": result["weighted_score"],
                 "raw_classification": result["raw_classification"],
                 "hard_gate_blocks": result["hard_gate_blocks"],
