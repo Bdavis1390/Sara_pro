@@ -1,0 +1,265 @@
+{
+  "schema_version": "ws-scientific-validation-campaigns-1",
+  "as_of": "2026-09-06",
+  "policy": {
+    "foundation_evidence_is_not_system_validation": true,
+    "simulation_is_not_physical_validation": true,
+    "independent_replication_required_for_extraordinary_claims": true,
+    "negative_results_are_preserved": true
+  },
+  "campaigns": [
+    {
+      "campaign_id": "SV-WSALTI-001",
+      "project_id": "WS-ALTI",
+      "concept": "Al-Mg-Sc-Zr / Al-Ti-family additive-manufacturing metallurgy and programmable deposited zoning",
+      "foundation_status": "LITERATURE_SUPPORTED",
+      "worldshepherd_specific_status": "REQUIRES_LAB_VALIDATION",
+      "supported_foundation": [
+        "Sc/Zr microalloying and Al3(Sc,Zr) precipitation strengthening are established in additively manufactured aluminum alloys.",
+        "DED and LPBF can produce materially different microstructures and strengthening behavior.",
+        "Titanium can contribute grain-refinement/nucleation effects in aluminum alloy processing."
+      ],
+      "not_yet_supported": [
+        "WS-AlTi M1-MSZ-Prime composition-specific mechanical properties",
+        "repeatable programmed property zoning in the Worldshepherd process",
+        "aerospace qualification, fatigue life, corrosion performance, or production economics"
+      ],
+      "external_evidence": [
+        {
+          "type": "peer_reviewed_review",
+          "title": "AlMgScZr alloys for laser powder bed fusion additive manufacturing. A review",
+          "journal": "Materials & Design",
+          "year": 2025,
+          "doi": "10.1016/j.matdes.2025.114080"
+        },
+        {
+          "type": "peer_reviewed_experiment",
+          "title": "Microstructural evolution and strengthening mechanisms of additively-manufactured Al-Mg-Sc-Zr alloys: Laser directed energy deposition versus laser powder bed fusion",
+          "journal": "Journal of Alloys and Compounds",
+          "year": 2024,
+          "doi": "10.1016/j.jallcom.2024.173946"
+        },
+        {
+          "type": "peer_reviewed_experiment",
+          "title": "Synthesis of precipitation-strengthened Al-Sc, Al-Zr and Al-Sc-Zr alloys via selective laser melting of elemental powder blends",
+          "journal": "Additive Manufacturing",
+          "year": 2020,
+          "doi": "10.1016/j.addma.2020.101461"
+        }
+      ],
+      "next_experiments": [
+        "freeze composition/process-window hypotheses before manufacturing",
+        "manufacture baseline and candidate coupons with full powder/wire and process provenance",
+        "measure chemistry and zoning by appropriate compositional mapping",
+        "characterize porosity, grain structure, precipitates, and phase content",
+        "perform hardness and tensile testing in multiple orientations",
+        "repeat across independently manufactured coupons",
+        "compare measured properties with preregistered baseline and simulation predictions"
+      ],
+      "minimum_evidence_to_advance": [
+        "calibrated characterization records",
+        "raw-data digests",
+        "coupon provenance",
+        "repeatability across builds",
+        "uncertainty and failure analysis"
+      ]
+    },
+    {
+      "campaign_id": "SV-META-001",
+      "project_id": "ADAPTIVE_METASURFACE",
+      "concept": "Reconfigurable electromagnetic boundary conditions using phase, amplitude, and material-state control",
+      "foundation_status": "LITERATURE_SUPPORTED",
+      "worldshepherd_specific_status": "REQUIRES_LAB_VALIDATION",
+      "supported_foundation": [
+        "Active metasurfaces can dynamically manipulate scattered electromagnetic wavefronts by controlling phase and amplitude across subwavelength elements.",
+        "Reconfigurable metasurfaces have experimentally demonstrated beam steering and other wavefront-control functions.",
+        "Electrical, phase-change, mechanical, thermal, and other tuning mechanisms are established research approaches."
+      ],
+      "not_yet_supported": [
+        "Worldshepherd-specific measured beam/null performance",
+        "broadband 195 nm to 9675 nm control by one architecture",
+        "stealth, cloaking, or cancellation performance",
+        "field-control performance under aerospace thermal, vibration, and EMC environments"
+      ],
+      "external_evidence": [
+        {
+          "type": "peer_reviewed_review",
+          "title": "Reconfigurable metasurfaces towards commercial success",
+          "journal": "Nature Photonics",
+          "year": 2023,
+          "doi": "10.1038/s41566-022-01099-4"
+        },
+        {
+          "type": "peer_reviewed_experiment",
+          "title": "Electrically tunable space-time metasurfaces at optical frequencies",
+          "journal": "Nature Nanotechnology",
+          "year": 2024,
+          "doi": "10.1038/s41565-024-01728-9"
+        }
+      ],
+      "next_experiments": [
+        "select one bounded operating band and unit-cell architecture",
+        "simulate S-parameters, phase range, loss, mutual coupling, and thermal sensitivity",
+        "fabricate a small coupon/array",
+        "measure S-parameters with calibrated instrumentation",
+        "measure phase/amplitude control versus command state",
+        "demonstrate beam steering or null placement against a preregistered target",
+        "repeat after thermal cycling and orientation changes"
+      ],
+      "minimum_evidence_to_advance": [
+        "calibration kit records",
+        "VNA or equivalent raw data",
+        "geometry/material provenance",
+        "simulation-to-test correlation",
+        "uncertainty bounds"
+      ]
+    },
+    {
+      "campaign_id": "SV-ION-001",
+      "project_id": "ION_PROPULSION",
+      "concept": "Electrostatic acceleration of ions for spacecraft propulsion",
+      "foundation_status": "PROVEN_EXTERNALLY",
+      "worldshepherd_specific_status": "REQUIRES_LAB_VALIDATION",
+      "supported_foundation": [
+        "Ion propulsion is a flight-proven spacecraft propulsion method.",
+        "Known ion-thruster physics links propellant mass flow, accelerating voltage, beam current, thrust, specific impulse, efficiency, and lifetime."
+      ],
+      "not_yet_supported": [
+        "Worldshepherd-specific thruster thrust, efficiency, lifetime, plume behavior, or flight readiness"
+      ],
+      "external_evidence": [
+        {
+          "type": "government_flight_evidence",
+          "title": "Ion Propulsion - Dawn",
+          "organization": "NASA",
+          "url": "https://science.nasa.gov/mission/dawn/technology/ion-propulsion/"
+        },
+        {
+          "type": "government_technology_state_of_art",
+          "title": "4.0 In-Space Propulsion",
+          "organization": "NASA Small Spacecraft Systems Virtual Institute",
+          "url": "https://www.nasa.gov/smallsat-institute/sst-soa/in-space_propulsion/"
+        }
+      ],
+      "next_experiments": [
+        "define propellant, grid geometry, voltage/current envelope, neutralization scheme, and thermal limits",
+        "perform vacuum electrical checkout",
+        "measure thrust on a calibrated thrust stand",
+        "close mass-flow and electrical-power budgets",
+        "measure plume current/energy and spacecraft-charging implications",
+        "run endurance testing before any lifetime claim"
+      ],
+      "minimum_evidence_to_advance": [
+        "vacuum-chamber conditions",
+        "calibrated thrust measurement",
+        "mass-flow calibration",
+        "power telemetry",
+        "plume diagnostics",
+        "repeatability"
+      ]
+    },
+    {
+      "campaign_id": "SV-EMPROP-001",
+      "project_id": "RESONANT_EM_PROPULSION",
+      "concept": "Resonant electromagnetic cavities or field configurations investigated for anomalous net force",
+      "foundation_status": "KNOWN_PHYSICS_BASELINE_ESTABLISHED",
+      "worldshepherd_specific_status": "NO_VALIDATED_ANOMALOUS_THRUST_EVIDENCE_LOCATED",
+      "supported_foundation": [
+        "Electromagnetic resonance, radiation pressure, thermal expansion, magnetic coupling, and conventional momentum transfer are established physics.",
+        "High-accuracy published testing of EMDrive-type cavities found no anomalous thrust above the photon-thrust limit under improved controls."
+      ],
+      "not_yet_supported": [
+        "reactionless propulsion",
+        "closed-cavity thrust exceeding radiation-pressure limits without an external momentum channel",
+        "electrogravitic or gravity-control interpretation of an electromagnetic force signal"
+      ],
+      "external_evidence": [
+        {
+          "type": "peer_reviewed_experiment",
+          "title": "High-accuracy thrust measurements of the EMDrive and elimination of false-positive effects",
+          "journal": "CEAS Space Journal",
+          "year": 2022,
+          "doi": "10.1007/s12567-021-00385-1"
+        }
+      ],
+      "next_experiments": [
+        "preregister the predicted force scaling, sign, frequency dependence, and falsification condition",
+        "establish photon-thrust baseline Fc/P",
+        "use calibrated force instrumentation with sensitivity below the claimed residual",
+        "separate thermal, magnetic, cable, electrostatic, vibration, outgassing, and gas-flow effects",
+        "perform resonance/off-resonance and dummy-load controls",
+        "repeat in vacuum when atmosphere-dependent forces are plausible",
+        "require independent replication before any beyond-standard-model interpretation"
+      ],
+      "minimum_evidence_to_advance": [
+        "raw force and environmental telemetry",
+        "calibration records",
+        "complete confounder matrix",
+        "uncertainty budget",
+        "orientation reversal",
+        "blind or automated run labels",
+        "independent replication for extraordinary claims"
+      ]
+    },
+    {
+      "campaign_id": "SV-HELIOS-001",
+      "project_id": "HELIOS_LINK",
+      "concept": "Directed electromagnetic power transfer / power beaming",
+      "foundation_status": "ESTABLISHED_PHYSICS",
+      "worldshepherd_specific_status": "REQUIRES_LAB_VALIDATION",
+      "next_experiments": [
+        "freeze transmitter, frequency, aperture, receiver, distance, and safety assumptions",
+        "validate link budget and thermal model",
+        "perform low-power calibrated range test",
+        "measure end-to-end efficiency, pointing error, sidelobes, and thermal response",
+        "scale only after safety and EMC review"
+      ],
+      "minimum_evidence_to_advance": ["calibrated input/output power", "distance/geometry record", "thermal telemetry", "beam-profile measurement", "safety review"]
+    },
+    {
+      "campaign_id": "SV-TIDELENS-001",
+      "project_id": "TIDELENS_SPECULAR_MIST",
+      "concept": "Radar/electromagnetic sensing and inference under complex scattering",
+      "foundation_status": "ESTABLISHED_PHYSICS_WITH_SYSTEM_HYPOTHESES",
+      "worldshepherd_specific_status": "REQUIRES_HARDWARE_AND_DATA_VALIDATION",
+      "next_experiments": [
+        "separate synthetic-data performance from measured-data performance",
+        "define radar equation and propagation assumptions",
+        "collect calibrated target/background datasets",
+        "measure detection and identification performance separately",
+        "test across geometry, weather, clutter, and sensor perturbations"
+      ],
+      "minimum_evidence_to_advance": ["sensor calibration", "ground truth", "dataset provenance", "false-alarm statistics", "held-out evaluation"]
+    },
+    {
+      "campaign_id": "SV-AERO-001",
+      "project_id": "AEROSHEPHERD",
+      "concept": "Integrated aerospace vehicle, controls, autonomy, energy, and propulsion architecture",
+      "foundation_status": "ENGINEERING_INTEGRATION_HYPOTHESIS",
+      "worldshepherd_specific_status": "REQUIRES_SUBSYSTEM_AND_SYSTEM_TEST",
+      "next_experiments": [
+        "freeze mass, power, thermal, structural, propulsion, and control budgets",
+        "validate each subsystem independently",
+        "run hardware-in-the-loop control and lost-link testing",
+        "perform structural/vibration and EMC tests",
+        "progress from tethered/ground tests to bounded flight tests only after safety review"
+      ],
+      "minimum_evidence_to_advance": ["mass/power ledger", "testable control requirements", "HIL logs", "safety case", "configuration custody"]
+    },
+    {
+      "campaign_id": "SV-BAROS-001",
+      "project_id": "BAROS",
+      "concept": "Medical-physics / dose-optimization computational system",
+      "foundation_status": "REQUIRES_QUALIFIED_DOMAIN_REVIEW",
+      "worldshepherd_specific_status": "NOT_CLINICALLY_VALIDATED",
+      "next_experiments": [
+        "verify dose-engine mathematics against accepted reference cases",
+        "establish dataset governance and de-identification",
+        "propagate uncertainty through optimization",
+        "run retrospective comparison against accepted baselines",
+        "obtain qualified medical-physics review before clinical claims"
+      ],
+      "minimum_evidence_to_advance": ["reference-case agreement", "dataset provenance", "uncertainty analysis", "qualified reviewer sign-off"]
+    }
+  ]
+}
