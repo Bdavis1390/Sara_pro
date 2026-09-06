@@ -15,6 +15,7 @@ from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
 from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
+from .physics_routes import router as physics_router
 from .storage import DurableStore
 
 
@@ -105,6 +106,7 @@ app = FastAPI(
     redoc_url=None,
 )
 app.add_middleware(RequestSizeLimitMiddleware)
+app.include_router(physics_router)
 
 
 @app.middleware("http")
@@ -143,6 +145,11 @@ def health() -> dict[str, object]:
             "registry": "/admin/registry",
             "relay": "/v1/relay",
             "selftest": "/admin/selftest",
+            "physics_status": "/v1/physics/status",
+            "physics_records": "/v1/physics/records?limit=50",
+            "physics_append": "/admin/physics/records",
+            "physics_lint": "/admin/physics/lint",
+            "physics_evaluate": "/admin/physics/evaluate",
         },
     }
 
@@ -172,7 +179,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/v1/physics/status</code>, <code>/v1/physics/records</code>, <code>/admin/physics/records</code>, <code>/admin/physics/lint</code>, <code>/admin/physics/evaluate</code>, <code>/admin/registry</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. Use Bearer authentication from an approved local client.</p></div>
 </body></html>"""
 
