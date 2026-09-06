@@ -1,0 +1,107 @@
+{
+  "schema_version": "ws-pvk-representative-records-1",
+  "source_note": "Representative bounded records derived from Worldshepherd project working documents; they are test/intake fixtures, not maturity upgrades.",
+  "records": [
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-WSALTI-0001",
+      "artifact_id": "WS-ALTI-M1-MSZ-PRIME",
+      "project_id": "WS-ALTI",
+      "physics_domain": ["materials", "additive_manufacturing"],
+      "physics_layer": "P2_ESTABLISHED_ENGINEERING",
+      "model_scope": "Programmable deposited aluminum meta-alloy platform concept and validation pathway",
+      "assumptions": [
+        "Current technical-commercial value remains IP-stage",
+        "Property and production claims require modeling and coupon validation",
+        "Partner interest is a commercialization milestone, not technical proof"
+      ],
+      "boundary_conditions": [],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "composition/process window does not produce target microstructure",
+        "coupon properties fail to exceed selected baseline",
+        "process variability prevents repeatable zoning or deposition"
+      ],
+      "hazard_controls": [
+        "No manufacturing parameter is treated as qualified until coupon evidence exists"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "WS-AlTi M1-MSZ-Prime is presently an IP-stage programmable deposited aluminum meta-alloy platform concept; no coupon-validated property or production-performance claim is made by this record.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-06T23:20:00Z",
+      "updated_at": "2026-09-06T23:20:00Z"
+    },
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-META-0001",
+      "artifact_id": "ADAPTIVE-METASURFACE-CONTROL",
+      "project_id": "ADAPTIVE_METASURFACE",
+      "physics_domain": ["electromagnetics", "materials", "thermal", "controls"],
+      "physics_layer": "P2_ESTABLISHED_ENGINEERING",
+      "model_scope": "Reconfigurable electromagnetic tiles using phase/amplitude/material tuning for bounded field shaping",
+      "reference_frame": "laboratory/device frame",
+      "governing_equations": [
+        {
+          "expression": "E_i = A_i exp(j theta_i)",
+          "name": "complex tile response",
+          "domain_of_validity": "phasor representation of a bounded harmonic electromagnetic tile state"
+        },
+        {
+          "expression": "E(r) = sum_i A_i exp(j theta_i) G_i(r)",
+          "name": "array field superposition",
+          "domain_of_validity": "linear superposition model for a specified operating band and tile response"
+        },
+        {
+          "expression": "curl(E) = -dB/dt; curl(H) = J + dD/dt",
+          "name": "Maxwell curl equations",
+          "domain_of_validity": "classical electromagnetics"
+        },
+        {
+          "expression": "rho c_p dT/dt = div(k grad(T)) + Q",
+          "name": "thermal balance",
+          "domain_of_validity": "continuum heat-transfer model with specified material properties and heat source"
+        }
+      ],
+      "conservation_constraints": ["energy", "momentum"],
+      "assumptions": [
+        "Positive and negative coupling describe constructive/destructive field shaping rather than exotic force generation",
+        "Prime-indexed modes, when used, are a mathematical decomposition basis and not evidence of quantum behavior",
+        "Physical admissibility requires finite energy, bounded coupling, stable thermal response, and convergent state evolution"
+      ],
+      "boundary_conditions": [
+        "Operating band, geometry, material state, and incident-field conditions must be specified before simulation"
+      ],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "thermal drift changes material response",
+        "mutual coupling invalidates simplified tile independence",
+        "loss and dispersion prevent target phase/amplitude state",
+        "sensor or calibration error produces false null/beam estimate"
+      ],
+      "hazard_controls": [
+        "No stealth, cloaking, cancellation, or RF-performance claim without measured hardware evidence"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "This record describes a concept-stage programmable electromagnetic boundary-condition architecture using established field, thermal, and control models; no measured Worldshepherd-specific RF, stealth, cloaking, or cancellation performance is claimed.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-06T23:20:00Z",
+      "updated_at": "2026-09-06T23:20:00Z"
+    }
+  ]
+}
