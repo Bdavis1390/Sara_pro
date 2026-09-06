@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, Request
@@ -12,6 +13,7 @@ from .physics_storage import PhysicsEvidenceStore
 from .physics_validation import (
     EvidenceScore,
     PhysicsVerificationRecord,
+    ValidationState,
     apply_hard_gates,
 )
 
@@ -86,6 +88,72 @@ def physics_records(
         artifact_id=artifact_id,
     )
     return {"records": [record.model_dump(mode="json") for record in records]}
+
+
+@router.get("/v1/physics/metrics")
+def physics_metrics(
+    role: Annotated[Role, Depends(resolve_role)],
+) -> dict[str, object]:
+    """OVERWATCH-ready validation/provenance counters from the local PVK store."""
+    require_admin(role)
+    records = _physics_store().read_recent(limit=500)
+    validation_states = Counter(record.validation_state.value for record in records)
+    replication_states = Counter(
+        record.experiment.replication_state.value
+        for record in records
+        if record.experiment is not None
+    )
+    convergence_states = Counter(
+        record.simulation.convergence_status.value
+        for record in records
+        if record.simulation is not None
+    )
+    physical_records = [
+        record
+        for record in records
+        if record.validation_state
+        in {
+            ValidationState.INTERNAL_TEST,
+            ValidationState.INDEPENDENTLY_REPLICATED,
+            ValidationState.QUALIFIED,
+            ValidationState.CERTIFIED,
+        }
+    ]
+    return {
+        "records_considered": len(records),
+        "validation_states": dict(sorted(validation_states.items())),
+        "replication_states": dict(sorted(replication_states.items())),
+        "convergence_states": dict(sorted(convergence_states.items())),
+        "quality_gates": {
+            "physical_records": len(physical_records),
+            "missing_provenance": sum(
+                1
+                for record in physical_records
+                if record.experiment is None or record.experiment.provenance is None
+            ),
+            "missing_calibration": sum(
+                1
+                for record in physical_records
+                if record.experiment is not None
+                and record.experiment.measurement_equipment_used
+                and not record.experiment.calibration_record_ids
+            ),
+            "failed_or_partial_convergence": sum(
+                1
+                for record in records
+                if record.simulation is not None
+                and record.simulation.convergence_status.value in {"failed", "partial"}
+            ),
+            "pending_independent_review": sum(
+                1
+                for record in records
+                if record.independent_review_state.value in {"requested", "in_progress"}
+            ),
+            "p4_records": sum(
+                1 for record in records if record.physics_layer.value == "P4_BEYOND_STANDARD_MODEL"
+            ),
+        },
+    }
 
 
 @router.post("/admin/physics/records")
