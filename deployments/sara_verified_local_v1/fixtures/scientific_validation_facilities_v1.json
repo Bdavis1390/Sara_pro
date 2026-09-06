@@ -61,6 +61,42 @@
       "notes": "Confirm exact sample form, desired detection limits, pricing, IP handling, and external-user agreement before sending material."
     },
     {
+      "facility_id": "NCSU-NNF-RF",
+      "organization": "North Carolina State University",
+      "facility": "NCSU Nanofabrication Facility characterization anechoic chamber",
+      "project_fit": ["ADAPTIVE_METASURFACE", "RF_COUPON", "ANTENNA_MEASUREMENT"],
+      "capabilities_supported_by_public_source": [
+        "low-reflection anechoic environment",
+        "antenna radiation-pattern measurement",
+        "gain measurement",
+        "reflection-coefficient measurement",
+        "published operating range of 0.7 to 18 GHz",
+        "shielded-room wireless testing"
+      ],
+      "validation_role": "candidate practical first-wave RF range for bounded metasurface/antenna pattern and reflection testing within supported band",
+      "access_status": "NOT_CONFIRMED",
+      "source": "https://nnf.ncsu.edu/characterization/",
+      "notes": "Confirm current operational frequency limits, fixture/interface requirements, calibration practice, external-user access, pricing, and IP terms."
+    },
+    {
+      "facility_id": "NCSU-AEL",
+      "organization": "North Carolina State University",
+      "facility": "Antennas and Electromagnetics Lab",
+      "project_fit": ["ADAPTIVE_METASURFACE", "DYNAMIC_RF_APERTURE", "EM_SIMULATION"],
+      "capabilities_supported_by_public_source": [
+        "Agilent E5071C vector network analyzer listed to 20 GHz",
+        "on-campus automated anechoic radiation-pattern measurement access",
+        "mmWave measurement equipment",
+        "HFSS, FEKO, CST, XFDTD and related EM simulation tools",
+        "research mission focused on dynamic RF apertures that adapt to the electromagnetic environment"
+      ],
+      "validation_role": "candidate research collaboration/measurement pathway closely aligned to adaptive RF-aperture physics",
+      "access_status": "NOT_CONFIRMED",
+      "source": "https://research.ece.ncsu.edu/ael/",
+      "secondary_source": "https://research.ece.ncsu.edu/ael/facilities/",
+      "notes": "Research capability alignment does not imply availability or willingness to test Worldshepherd hardware; collaboration terms must be established first."
+    },
+    {
       "facility_id": "NIST-CTL-EM",
       "organization": "National Institute of Standards and Technology",
       "facility": "Communications Technology Laboratory electromagnetic metrology capabilities",
@@ -80,7 +116,9 @@
     }
   ],
   "recommended_sequence": [
-    "Use a practical characterization lab first to establish whether a measurable Worldshepherd-specific effect exists.",
+    "Use a practical characterization or RF lab first to establish whether a measurable Worldshepherd-specific effect exists.",
+    "For WS-AlTi, use accessible chemistry/microstructure/phase/property screening before escalating to national-laboratory manufacturing or high-end characterization.",
+    "For the adaptive metasurface, choose one band inside an available calibrated range and establish S-parameter plus pattern behavior before asking for traceability-grade metrology.",
     "Use a national-lab or traceability-grade facility only after the internal/preliminary signal and evidence package justify the cost and access burden.",
     "Keep manufacturing, characterization, analysis, and independent replication separable so one organization does not become the sole source of the claimed result."
   ]
