@@ -1,0 +1,136 @@
+{
+  "schema_version": "ws-wave1-facility-routing-1",
+  "as_of": "2026-09-07",
+  "status": "CANDIDATE_ROUTES_AND_DRAFTS_NOT_ENGAGEMENTS",
+  "source_candidate_commit": "9165fcae4b82277e050b76f606687f1179c31021",
+  "engagement_or_validation_claimed": false,
+  "routes": [
+    {
+      "route_id": "WSALTI-MFG-ORNL-MDF",
+      "campaign_id": "SV-WSALTI-001-P1",
+      "measurement_lane": "manufacturing_process",
+      "facility_id": "ORNL-MDF",
+      "organization": "Oak Ridge National Laboratory",
+      "facility": "Manufacturing Demonstration Facility",
+      "candidate_role": "multi-feedstock/additive-manufacturing process development, build provenance, process data, and model-to-process-to-microstructure work",
+      "public_source": "https://www.ornl.gov/content/additive",
+      "outreach_status": "DRAFT_UNSENT",
+      "prior_contact_status": "INITIAL_EMAIL_SENT_2026-08-10_NO_REPLY_FOUND_IN_CONNECTED_GMAIL_AS_OF_2026-09-07",
+      "evidence_request_focus": [
+        "build/sample identity",
+        "feedstock lot identity where available",
+        "machine/configuration history",
+        "native/raw process data where agreement permits",
+        "method deviations",
+        "uncertainty/limitations",
+        "traceability from reported result to source data"
+      ],
+      "boundary": "Capability fit and draft follow-up do not establish project acceptance, schedule, cost, eligibility, partnership, or scientific validation."
+    },
+    {
+      "route_id": "WSALTI-CHAR-NCSU-AIF",
+      "campaign_id": "SV-WSALTI-001-P1",
+      "measurement_lane": "chemistry_microstructure_local_property",
+      "facility_id": "NCSU-AIF",
+      "organization": "North Carolina State University",
+      "facility": "Analytical Instrumentation Facility",
+      "candidate_role": "SEM/EDS, EBSD where useful, XRD/XRF where appropriate, nanoindentation/local-property mapping, and sample preparation",
+      "public_source": "https://aif.ncsu.edu/characterization-of-materials-2/",
+      "outreach_status": "DRAFT_UNSENT",
+      "planned_nonconfidential_scope": "six independent build sets; approximately twelve initial chemistry/metallography plus local-property sections, subject to facility preparation recommendations",
+      "evidence_request_focus": [
+        "immutable sample IDs",
+        "instrument/model identity",
+        "calibration or verification references",
+        "native/raw spectra and measurement data",
+        "processed results separated from raw data",
+        "uncertainty or documented limitations",
+        "method deviations",
+        "result-to-source-file traceability"
+      ],
+      "boundary": "The facility is being asked to perform/route measurements, not to endorse a Worldshepherd material claim."
+    },
+    {
+      "route_id": "WSALTI-TENSILE-NCSU-MSE",
+      "campaign_id": "SV-WSALTI-001-P1",
+      "measurement_lane": "metallic_tensile",
+      "facility_id": "NCSU-MSE-MECH",
+      "organization": "North Carolina State University",
+      "facility": "Department of Materials Science and Engineering mechanical-properties equipment",
+      "candidate_role": "research tensile/tension measurement or routing for the pilot metallic-tensile lane",
+      "public_source": "https://mse.ncsu.edu/research/equipment-facilities/",
+      "public_capability_basis": [
+        "Instron Model 4201 tensile tester",
+        "RSL tension and compression tester",
+        "Shimadzu AGS-X tension and compression tester with listed 500 N and 50 kN load cells",
+        "facilities described as available for independent use or supported measurements"
+      ],
+      "outreach_status": "DRAFT_UNSENT",
+      "planned_nonconfidential_scope": "up to eighteen tensile specimens: three specimens per build across three baseline plus three candidate builds when material volume permits",
+      "method_anchor": "ASTM E8/E8M applicability/conformity to be confirmed by the facility; no accreditation or standards-conformance claim is assumed",
+      "evidence_request_focus": [
+        "specimen/build identity, geometry, orientation and extraction location",
+        "test machine/load cell and strain-measurement identity",
+        "calibration or verification references",
+        "test rate, temperature and fracture location",
+        "complete force-displacement and stress-strain data",
+        "yield where valid, UTS, elongation and reduction of area where applicable",
+        "exclusions/failures and deviations",
+        "uncertainty or documented limitations",
+        "result-to-native-data traceability"
+      ],
+      "boundary": "Public equipment availability does not establish that the setup is appropriate, accredited, available, or able to claim ASTM conformity for this campaign."
+    },
+    {
+      "route_id": "META-RF-NCSU-AEL",
+      "campaign_id": "SV-META-001-P1",
+      "measurement_lane": "rf_coupon_array_research",
+      "facility_id": "NCSU-AEL",
+      "organization": "North Carolina State University",
+      "facility": "Antennas and Electromagnetics Lab",
+      "candidate_role": "research-aligned VNA/EM measurement and bounded coupon/array validation routing",
+      "public_source": "https://research.ece.ncsu.edu/ael/",
+      "outreach_status": "DRAFT_UNSENT",
+      "planned_nonconfidential_scope": "one reference coupon, one unit-cell/small-periodic coupon, and three independent active coupon/small-array replicas within one frozen RF band",
+      "evidence_request_focus": [
+        "device/configuration identity",
+        "calibration kit/method/reference-plane information",
+        "VNA and instrument metadata",
+        "native complex S-parameter data",
+        "command and temperature logs",
+        "setup geometry/alignment/polarization",
+        "raw angular pattern data if chamber testing proceeds",
+        "uncertainty/limitations",
+        "traceability to source files"
+      ],
+      "boundary": "Research alignment and an unsent draft do not establish collaboration, availability, acceptance, or measured metasurface performance."
+    },
+    {
+      "route_id": "META-RANGE-NCSU-NNF",
+      "campaign_id": "SV-META-001-P1",
+      "measurement_lane": "bounded_anechoic_pattern_or_scattering",
+      "facility_id": "NCSU-NNF-RF",
+      "organization": "North Carolina State University",
+      "facility": "Nanofabrication Facility characterization / anechoic and shielded RF resources",
+      "candidate_role": "possible practical range/facility path for bounded pattern/reflection measurements if routing and band compatibility are confirmed",
+      "public_source": "https://nnf.ncsu.edu/characterization/",
+      "outreach_status": "NOT_SEPARATELY_CONTACTED_ROUTING_REQUESTED_THROUGH_NCSU_AEL_DRAFT",
+      "evidence_request_focus": [
+        "range/chamber background",
+        "measurement geometry",
+        "calibration practice",
+        "raw angular pattern/scattering data",
+        "alignment/polarization metadata",
+        "uncertainty/limitations"
+      ],
+      "boundary": "Facility routing, current operating limits, external-user access, pricing, and method suitability must be confirmed before scheduling or performance claims."
+    }
+  ],
+  "sequencing_rule": [
+    "Do not collapse manufacturing, characterization, tensile testing, and independent replication into one evidence source when separable routes are available.",
+    "Use quote/scoping responses to refine the preregistration before protected parameters are disclosed.",
+    "Do not label a route ENGAGED until a facility affirmatively accepts scoping or work.",
+    "Do not label a campaign SCHEDULED until scope, method, sample/device requirements, cost/authorization path, and evidence-return terms are mutually understood.",
+    "No route may promote scientific maturity before calibrated raw evidence is ingested and reviewed under PVK."
+  ]
+}
