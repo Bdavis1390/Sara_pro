@@ -1,0 +1,76 @@
+{
+  "schema_version": "ws-scientific-validation-protocol-index-1",
+  "as_of": "2026-09-07",
+  "policy": {
+    "protocol_presence_does_not_promote_maturity": true,
+    "external_foundation_does_not_validate_worldshepherd_artifact": true,
+    "raw_evidence_and_provenance_required_for_physical_test": true,
+    "independent_replication_required_for_extraordinary_claims": true
+  },
+  "entries": [
+    {
+      "campaign_id": "SV-WSALTI-001",
+      "project_id": "WS-ALTI",
+      "protocol_path": "docs/validation/WS_ALTI_COUPON_VALIDATION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "REQUIRES_LAB_VALIDATION",
+      "next_gate": "CALIBRATED_MULTI_BUILD_COUPON_EVIDENCE",
+      "minimum_evidence": ["composition_and_zoning_characterization", "metallography", "hardness_mapping", "tensile_data", "raw_data_digests", "calibration_records", "build_provenance", "uncertainty", "repeatability"]
+    },
+    {
+      "campaign_id": "SV-META-001",
+      "project_id": "ADAPTIVE_METASURFACE",
+      "protocol_path": "docs/validation/ADAPTIVE_METASURFACE_VALIDATION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "REQUIRES_LAB_VALIDATION",
+      "next_gate": "CALIBRATED_BOUNDED_BAND_RF_EVIDENCE",
+      "minimum_evidence": ["complex_s_parameters", "calibration_kit_records", "geometry_material_provenance", "beam_or_null_measurement", "thermal_and_fixture_controls", "simulation_to_test_correlation", "uncertainty"]
+    },
+    {
+      "campaign_id": "SV-ION-001",
+      "project_id": "ION_PROPULSION",
+      "protocol_path": "docs/validation/ION_PROPULSION_VALIDATION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "REQUIRES_LAB_VALIDATION",
+      "next_gate": "DIRECT_CALIBRATED_THRUST_AND_POWER_FLOW_EVIDENCE",
+      "minimum_evidence": ["vacuum_conditions", "calibrated_direct_thrust", "mass_flow_calibration", "electrical_power_boundary", "thermal_and_facility_background", "uncertainty", "repeatability", "raw_data_digests"]
+    },
+    {
+      "campaign_id": "SV-EMPROP-001",
+      "project_id": "RESONANT_EM_PROPULSION",
+      "protocol_path": "docs/validation/ANOMALOUS_FORCE_EM_PROPULSION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "NO_VALIDATED_ANOMALOUS_THRUST_EVIDENCE_LOCATED",
+      "next_gate": "PREREGISTERED_RESIDUAL_SURVIVES_CONFOUNDER_CLOSURE",
+      "minimum_evidence": ["calibrated_force_data", "photon_force_baseline", "null_and_dummy_controls", "orientation_reversal", "thermal_control", "magnetic_control", "electrostatic_control", "gas_and_outgassing_control", "rf_leakage_accounting", "vibration_and_cable_control", "uncertainty", "independent_replication_for_p4"]
+    },
+    {
+      "campaign_id": "SV-HELIOS-001",
+      "project_id": "HELIOS_LINK",
+      "protocol_path": "docs/validation/HELIOS_LINK_POWER_BEAMING_VALIDATION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "REQUIRES_LAB_VALIDATION",
+      "next_gate": "CALIBRATED_END_TO_END_POWER_TRANSFER_EVIDENCE",
+      "minimum_evidence": ["source_input_power", "radiated_or_optical_power", "beam_or_field_profile", "received_power", "load_output_power", "range_and_geometry", "pointing_error", "thermal_telemetry", "uncertainty", "safety_review"]
+    },
+    {
+      "campaign_id": "SV-TIDELENS-001",
+      "project_id": "TIDELENS_SPECULAR_MIST",
+      "protocol_path": "docs/validation/TIDELENS_SPECULAR_MIST_SENSING_VALIDATION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "REQUIRES_HARDWARE_AND_DATA_VALIDATION",
+      "next_gate": "CALIBRATED_HELD_OUT_MEASURED_DATA_PERFORMANCE",
+      "minimum_evidence": ["sensor_calibration", "background_measurements", "ground_truth", "raw_complex_or_native_data", "dataset_provenance", "held_out_evaluation", "false_alarm_statistics", "geometry_and_environment", "uncertainty"]
+    },
+    {
+      "campaign_id": "SV-AERO-001",
+      "project_id": "AEROSHEPHERD",
+      "protocol_path": "docs/validation/AEROSHEPHERD_SYSTEM_VALIDATION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "REQUIRES_SUBSYSTEM_AND_SYSTEM_TEST",
+      "next_gate": "REQUIREMENTS_LINKED_SUBSYSTEM_INTERFACE_HIL_GROUND_EVIDENCE",
+      "minimum_evidence": ["requirements_verification_matrix", "mass_and_cg_ledger", "power_and_thermal_ledgers", "subsystem_evidence", "interface_tests", "hil_logs", "configuration_custody", "hazard_log", "bounded_test_plan"]
+    },
+    {
+      "campaign_id": "SV-BAROS-001",
+      "project_id": "BAROS",
+      "protocol_path": "docs/validation/BAROS_MEDICAL_PHYSICS_VALIDATION_PROTOCOL_V1.md",
+      "current_worldshepherd_state": "NOT_CLINICALLY_VALIDATED",
+      "next_gate": "NON_CLINICAL_REFERENCE_AND_MEASUREMENT_VALIDATION",
+      "minimum_evidence": ["mathematical_verification", "reference_case_comparison", "solver_and_dataset_digests", "uncertainty_and_sensitivity", "calibrated_measurement_where_applicable", "qualified_medical_physics_review", "data_governance"]
+    }
+  ]
+}
