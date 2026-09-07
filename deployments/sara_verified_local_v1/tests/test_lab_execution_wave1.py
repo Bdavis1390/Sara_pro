@@ -3,11 +3,16 @@ from pathlib import Path
 
 
 MANIFEST = Path("fixtures/lab_execution_campaigns_wave1_v1.json")
+ROUTING = Path("fixtures/wave1_facility_routing_v1.json")
 FROZEN_PVK_HEAD = "9165fcae4b82277e050b76f606687f1179c31021"
 
 
 def _load():
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
+
+
+def _load_routing():
+    return json.loads(ROUTING.read_text(encoding="utf-8"))
 
 
 def test_wave1_manifest_is_preregistration_only():
@@ -71,3 +76,39 @@ def test_both_campaigns_require_raw_and_uncertainty_evidence():
         assert "raw" in text
         assert "uncertainty" in text or "limitations" in text
         assert "calibration" in text
+
+
+def test_facility_routing_is_not_an_engagement_registry():
+    payload = _load_routing()
+    assert payload["schema_version"] == "ws-wave1-facility-routing-1"
+    assert payload["status"] == "CANDIDATE_ROUTES_AND_DRAFTS_NOT_ENGAGEMENTS"
+    assert payload["source_candidate_commit"] == FROZEN_PVK_HEAD
+    assert payload["engagement_or_validation_claimed"] is False
+
+    allowed = {
+        "DRAFT_UNSENT",
+        "NOT_SEPARATELY_CONTACTED_ROUTING_REQUESTED_THROUGH_NCSU_AEL_DRAFT",
+    }
+    assert all(route["outreach_status"] in allowed for route in payload["routes"])
+
+
+def test_ws_alti_measurement_lanes_are_separable():
+    payload = _load_routing()
+    ws = [route for route in payload["routes"] if route["campaign_id"] == "SV-WSALTI-001-P1"]
+    lanes = {route["measurement_lane"] for route in ws}
+    assert {
+        "manufacturing_process",
+        "chemistry_microstructure_local_property",
+        "metallic_tensile",
+    } <= lanes
+    assert len({route["facility_id"] for route in ws}) >= 3
+
+
+def test_metasurface_routes_do_not_claim_performance():
+    payload = _load_routing()
+    meta = [route for route in payload["routes"] if route["campaign_id"] == "SV-META-001-P1"]
+    assert {route["facility_id"] for route in meta} >= {"NCSU-AEL", "NCSU-NNF-RF"}
+    for route in meta:
+        text = (route["boundary"] + " " + route["candidate_role"]).lower()
+        assert "validated performance" not in text
+        assert "confirmed performance" not in text
