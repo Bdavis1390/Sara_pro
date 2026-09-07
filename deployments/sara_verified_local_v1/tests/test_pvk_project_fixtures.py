@@ -40,7 +40,7 @@ def test_ion_fixture_does_not_inherit_external_thruster_performance():
 
     assert record.physics_layer == PhysicsLayer.P2_ESTABLISHED_ENGINEERING
     assert {"energy", "momentum", "mass"}.issubset(set(record.conservation_constraints))
-    assert "no Worldshepherd-specific ion-thruster" in record.external_safe_statement.lower()
+    assert "no worldshepherd-specific ion-thruster" in record.external_safe_statement.lower()
     assert any("does not inherit" in item for item in record.assumptions)
 
 
