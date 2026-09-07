@@ -1,0 +1,183 @@
+{
+  "schema_version": "ws-pvk-representative-records-1",
+  "source_note": "Wave-2 bounded records for HELIOS-LINK, TIDELENS/Specular MIST, AEROSHEPHERD and BAROS. These are concept/intake fixtures and do not elevate maturity.",
+  "records": [
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-HELIOS-0001",
+      "artifact_id": "HELIOS-LINK-POWER-BEAMING",
+      "project_id": "HELIOS_LINK",
+      "physics_domain": ["electromagnetics", "power", "thermal", "controls"],
+      "physics_layer": "P2_ESTABLISHED_ENGINEERING",
+      "model_scope": "Bounded transmitter-propagation-receiver wireless power-transfer validation pathway",
+      "reference_frame": "transmitter-receiver laboratory frame",
+      "governing_equations": [
+        {
+          "expression": "eta_e2e = P_load_out / P_source_in",
+          "name": "end-to-end efficiency",
+          "domain_of_validity": "declared transmitter-through-load power boundaries with calibrated input and output measurements"
+        }
+      ],
+      "conservation_constraints": ["energy", "momentum"],
+      "assumptions": [
+        "Wireless power transfer is established externally, but HELIOS-LINK-specific range and efficiency require measurement",
+        "Power boundaries, beam/field profile, pointing, thermal state, and receiver capture must be measured separately where practical",
+        "Facility safety authorization is required for RF, optical, laser, electrical, and thermal hazards"
+      ],
+      "boundary_conditions": [
+        "Any test must declare frequency or wavelength, source/aperture/receiver geometry, range, power boundary, and environment"
+      ],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "apparent efficiency is inflated by incomplete power boundaries",
+        "detector nonlinearity or thermal drift biases received-power measurement",
+        "pointing or geometry uncertainty dominates the claimed link performance"
+      ],
+      "hazard_controls": [
+        "No hazardous power-beaming operation is authorized by this record; approved facility safety controls are required"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "Wireless power transfer is established physics, but no HELIOS-LINK-specific efficiency, range, pointing, thermal, or operational performance is claimed as measured by this record.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-07T00:35:00Z",
+      "updated_at": "2026-09-07T00:35:00Z"
+    },
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-TIDELENS-0001",
+      "artifact_id": "TIDELENS-SPECULAR-MIST",
+      "project_id": "TIDELENS_SPECULAR_MIST",
+      "physics_domain": ["electromagnetics", "radar", "sensing", "signal_processing", "metrology"],
+      "physics_layer": "P2_ESTABLISHED_ENGINEERING",
+      "model_scope": "Calibrated measured-data validation pathway for radar/electromagnetic detection, localization, classification, and scattering inference",
+      "reference_frame": "sensor-target measurement frame",
+      "governing_equations": [],
+      "conservation_constraints": ["energy"],
+      "assumptions": [
+        "Synthetic-data performance and measured-data performance remain separate evidence classes",
+        "RCS/scattering inference requires calibration, background separation, geometry, drift and uncertainty control",
+        "Near-field or partial-illumination conditions cannot be silently represented as intrinsic far-field RCS"
+      ],
+      "boundary_conditions": [
+        "Sensor configuration, waveform, geometry, calibration target, background, environment and ground-truth method must be frozen for confirmatory evaluation"
+      ],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "performance depends on train-test leakage",
+        "background or calibration leakage creates false detection gain",
+        "ground-truth uncertainty dominates claimed localization or classification performance",
+        "close-range scattering is misinterpreted using invalid far-field assumptions"
+      ],
+      "hazard_controls": [
+        "No fielded surveillance, safety-critical detection, or low-observable performance claim without calibrated measured-data evidence and applicable legal/safety review"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "Radar/electromagnetic sensing is established physics, but no Worldshepherd-specific TIDELENS/Specular MIST detection, identification, localization, RCS, or low-observable performance is claimed as validated by this record.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-07T00:35:00Z",
+      "updated_at": "2026-09-07T00:35:00Z"
+    },
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-AERO-0001",
+      "artifact_id": "AEROSHEPHERD-INTEGRATED-SYSTEM",
+      "project_id": "AEROSHEPHERD",
+      "physics_domain": ["aerospace", "controls", "structures", "thermal", "propulsion", "autonomy", "systems_engineering"],
+      "physics_layer": "P2_ESTABLISHED_ENGINEERING",
+      "model_scope": "Requirements-linked subsystem, interface, HIL, integrated-ground, environmental and bounded-flight validation pathway",
+      "reference_frame": "vehicle/body and declared navigation frames",
+      "governing_equations": [],
+      "conservation_constraints": ["energy", "momentum", "mass"],
+      "assumptions": [
+        "Component maturity does not silently become vehicle maturity",
+        "Verification of specified requirements and validation of mission/stakeholder needs are distinct activities",
+        "Speculative propulsion, materials, or energy assumptions cannot close baseline vehicle range/endurance requirements until physically validated"
+      ],
+      "boundary_conditions": [
+        "Mission/ConOps, requirements, mass/CG, power, thermal, structural, propulsion, controls, autonomy, communications and hazard baselines must be version-controlled"
+      ],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "subsystem interfaces fail despite component-level pass results",
+        "HIL or ground-test behavior does not reproduce in the integrated article",
+        "mass, power, thermal or control margin is consumed by unvalidated assumptions",
+        "configuration drift invalidates the evidence chain"
+      ],
+      "hazard_controls": [
+        "No free-flight or hazardous integrated test is authorized by this record; approved safety, range/airspace, environmental and test-control requirements apply"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "AEROSHEPHERD is an integrated-system development architecture; no complete-vehicle flight performance, qualification, certification, endurance, range, or mission-readiness claim is established by this record.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-07T00:35:00Z",
+      "updated_at": "2026-09-07T00:35:00Z"
+    },
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-BAROS-0001",
+      "artifact_id": "BAROS-MEDICAL-PHYSICS",
+      "project_id": "BAROS",
+      "physics_domain": ["medical_physics", "dosimetry", "optimization", "numerical_methods"],
+      "physics_layer": "P2_ESTABLISHED_ENGINEERING",
+      "model_scope": "Non-clinical staged verification and validation of BAROS dose calculation, optimization and uncertainty workflows",
+      "reference_frame": "declared image/dose coordinate frame",
+      "governing_equations": [],
+      "conservation_constraints": ["energy"],
+      "assumptions": [
+        "Mathematical verification, reference calculation comparison, calibrated physical measurement where applicable, and qualified domain review are separate gates",
+        "Public or institutional reference datasets do not by themselves establish BAROS clinical performance",
+        "No patient-specific clinical use is authorized by this record"
+      ],
+      "boundary_conditions": [
+        "Software/model commit, solver settings, material/tissue parameters, image transforms, reference dataset and acceptance criteria must be frozen before confirmatory evaluation"
+      ],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "held-out cases are contaminated by tuning or implementation leakage",
+        "aggregate metrics hide clinically meaningful local discrepancies",
+        "coordinate, heterogeneity or interpolation handling is incorrect",
+        "measurement uncertainty or qualified medical-physics review is absent"
+      ],
+      "hazard_controls": [
+        "Research-only status; no patient treatment, dose prescription, clinical deployment, or radiation-delivery settings are authorized by this record"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "BAROS remains a research-stage medical-physics computational system; no patient-specific clinical validity, treatment accuracy, regulatory clearance, or clinical-use claim is established by this record.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-07T00:35:00Z",
+      "updated_at": "2026-09-07T00:35:00Z"
+    }
+  ]
+}
