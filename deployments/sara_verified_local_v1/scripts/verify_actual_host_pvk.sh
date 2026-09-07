@@ -17,6 +17,11 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+if ! [[ "$shadow_port" =~ ^[0-9]+$ ]] || (( shadow_port < 1024 || shadow_port > 65535 )); then
+  echo "ERROR: WS_PVK_SHADOW_PORT must be an integer from 1024 through 65535." >&2
+  exit 1
+fi
+
 current_branch="$(git branch --show-current)"
 if [[ "$current_branch" != "$expected_branch" ]]; then
   echo "ERROR: Expected branch '$expected_branch' but found '$current_branch'." >&2
@@ -29,6 +34,23 @@ if ! git diff --quiet -- . || ! git diff --cached --quiet -- .; then
 fi
 
 git_head="$(git rev-parse HEAD)"
+
+# Refuse to start if another process is already listening on the selected loopback port.
+python3 - "$shadow_port" <<'PY_PORT'
+import socket
+import sys
+port = int(sys.argv[1])
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+try:
+    s.bind(("127.0.0.1", port))
+except OSError as exc:
+    raise SystemExit(f"ERROR: shadow port 127.0.0.1:{port} is not available: {exc}")
+finally:
+    s.close()
+print(f"shadow_port_available={port}")
+PY_PORT
+
 mkdir -p "$evidence_dir"
 chmod 0700 "$evidence_root" "$evidence_dir"
 
@@ -218,14 +240,7 @@ PY_AUDIT
 
 docker compose -p "$project_name" ps > "${evidence_dir}/compose.ps.txt"
 
-# Hash all evidence except the checksum file itself.
-(
-  cd "$evidence_dir"
-  find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \
-    | sort -z \
-    | xargs -0 sha256sum > SHA256SUMS
-)
-
+# RESULT is written before SHA256SUMS so the final acceptance statement is itself hash-bound.
 cat > "${evidence_dir}/RESULT.txt" <<EOF
 ACTUAL_HOST_PVK_SHADOW_ACCEPTANCE=PASS
 branch=${current_branch}
@@ -238,5 +253,13 @@ pvk_restart_persistence=PASS
 pvk_audit_presence=PASS
 scientific_validation_claim=NOT_ESTABLISHED_BY_THIS_TEST
 EOF
+
+# Hash all evidence except the checksum file itself. This includes RESULT.txt.
+(
+  cd "$evidence_dir"
+  find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \
+    | sort -z \
+    | xargs -0 sha256sum > SHA256SUMS
+)
 
 echo "PASS: actual-host PVK shadow acceptance evidence: ${evidence_dir}"
