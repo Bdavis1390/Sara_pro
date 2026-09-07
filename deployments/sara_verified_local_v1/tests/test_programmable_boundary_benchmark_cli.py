@@ -34,3 +34,22 @@ def test_cli_rejects_tampered_report(tmp_path, capsys):
 
     assert main(["--verify", str(output)]) == 1
     assert capsys.readouterr().out.strip() == "INVALID"
+
+
+def test_cli_rejects_unknown_and_missing_signed_fields(tmp_path, capsys):
+    output = tmp_path / "programmable-boundary.json"
+    assert main(["--output", str(output)]) == 0
+    capsys.readouterr()
+    original = json.loads(output.read_text(encoding="utf-8"))
+
+    with_unknown = dict(original)
+    with_unknown["unsigned_extra"] = "must invalidate the raw digest"
+    output.write_text(json.dumps(with_unknown), encoding="utf-8")
+    assert main(["--verify", str(output)]) == 1
+    assert capsys.readouterr().out.strip() == "INVALID"
+
+    with_missing_default = dict(original)
+    del with_missing_default["benchmark_version"]
+    output.write_text(json.dumps(with_missing_default), encoding="utf-8")
+    assert main(["--verify", str(output)]) == 1
+    assert capsys.readouterr().out.strip() == "INVALID"
