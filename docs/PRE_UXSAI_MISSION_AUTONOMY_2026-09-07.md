@@ -13,7 +13,7 @@ Status: CONFIRMED DEMAND; current-cycle submission gate NOT MET
 - Q&A transcript: https://swx-strapi-events-images.s3.us-east-1.amazonaws.com/Ux_SAI_Mission_Autonomy_AE_QA_Telecon_Transcript_Ux_SAI_Responses_8ea3dd6b04.pdf
 - Solicitation/event identifier: UxSAI Mission Autonomy Assessment Event
 - Source status: OFFICIAL_SOURCE_VERIFIED
-- Retrieved UTC: 2026-09-07T12:55:00Z
+- Retrieved UTC: 2026-09-07T12:50:00Z
 - Submission deadline: 2026-09-08 23:59 ET
 
 ## Requirement statement
