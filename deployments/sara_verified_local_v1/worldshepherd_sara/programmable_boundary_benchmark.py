@@ -238,7 +238,9 @@ def _pattern(
     angles: tuple[float, ...],
     spacing: float,
 ) -> tuple[float, ...]:
-    normalization = max(1e-15, sum(abs(weight) for weight in weights))
+    # Use the passive/equal-power aperture as the common reference. Self-normalizing
+    # each scenario would erase modeled amplitude derating from the reported field.
+    normalization = max(1e-15, float(len(weights)))
     return tuple(
         abs(
             _field(
@@ -261,7 +263,8 @@ def _at_angle(
     angle: float,
     spacing: float,
 ) -> float:
-    normalization = max(1e-15, sum(abs(weight) for weight in weights))
+    # Keep a fixed aperture reference across passive, controlled, and thermal cases.
+    normalization = max(1e-15, float(len(weights)))
     return abs(
         _field(
             weights,
@@ -485,3 +488,14 @@ def verify_programmable_boundary_benchmark_report(
 ) -> bool:
     expected = canonical_digest(report.model_dump(mode="json", exclude={"report_digest"}))
     return report.report_digest == expected
+
+
+def verify_programmable_boundary_benchmark_payload(payload: object) -> bool:
+    """Verify the exact raw JSON payload before any lossy model parsing."""
+    if not isinstance(payload, dict):
+        return False
+    unsigned_payload = dict(payload)
+    provided_digest = unsigned_payload.pop("report_digest", None)
+    return isinstance(provided_digest, str) and provided_digest == canonical_digest(
+        unsigned_payload
+    )

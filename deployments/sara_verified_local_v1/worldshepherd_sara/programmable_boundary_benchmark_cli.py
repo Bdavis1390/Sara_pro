@@ -7,6 +7,7 @@ from pathlib import Path
 from .programmable_boundary_benchmark import (
     ProgrammableBoundaryBenchmarkReport,
     run_programmable_boundary_benchmark,
+    verify_programmable_boundary_benchmark_payload,
     verify_programmable_boundary_benchmark_report,
 )
 
@@ -35,9 +36,14 @@ def _serialize(report: ProgrammableBoundaryBenchmarkReport) -> str:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.verify is not None:
-        payload = json.loads(args.verify.read_text(encoding="utf-8"))
-        report = ProgrammableBoundaryBenchmarkReport.model_validate(payload)
-        if not verify_programmable_boundary_benchmark_report(report):
+        try:
+            payload = json.loads(args.verify.read_text(encoding="utf-8"))
+            if not verify_programmable_boundary_benchmark_payload(payload):
+                raise ValueError("raw report digest mismatch")
+            report = ProgrammableBoundaryBenchmarkReport.model_validate(payload)
+            if not verify_programmable_boundary_benchmark_report(report):
+                raise ValueError("validated report digest mismatch")
+        except (OSError, TypeError, ValueError):
             print("INVALID")
             return 1
         print("VALID")

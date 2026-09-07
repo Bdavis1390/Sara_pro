@@ -5,6 +5,9 @@ import pytest
 from worldshepherd_sara.programmable_boundary_benchmark import (
     BoundaryControlMode,
     ProgrammableBoundaryBenchmarkReport,
+    _apply_thermal_drift,
+    _at_angle,
+    _coherent_weights,
     run_programmable_boundary_benchmark,
     verify_programmable_boundary_benchmark_report,
 )
@@ -138,3 +141,23 @@ def test_invalid_geometry_and_angles_fail_closed():
         run_programmable_boundary_benchmark(tile_spacing_wavelengths=0.75)
     with pytest.raises(ValueError):
         run_programmable_boundary_benchmark(coherent_target_angle_degrees=80.0)
+
+
+def test_common_reference_preserves_amplitude_only_thermal_derating():
+    tile_count = 8
+    spacing = 0.5
+    target_angle = 20.0
+    coherent = _coherent_weights(
+        angle_degrees=target_angle,
+        tile_count=tile_count,
+        spacing=spacing,
+    )
+    amplitude_only_drift = _apply_thermal_drift(
+        coherent,
+        phase_edge_radians=0.0,
+        edge_amplitude_derating=0.25,
+    )
+    reference = _at_angle(coherent, angle=target_angle, spacing=spacing)
+    degraded = _at_angle(amplitude_only_drift, angle=target_angle, spacing=spacing)
+    assert reference == pytest.approx(1.0)
+    assert degraded < reference
