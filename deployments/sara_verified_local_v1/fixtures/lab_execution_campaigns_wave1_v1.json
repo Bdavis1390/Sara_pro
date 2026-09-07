@@ -1,0 +1,226 @@
+{
+  "schema_version": "ws-lab-execution-wave1-1",
+  "status": "PREREGISTRATION_TEMPLATE_NOT_EXPERIMENTAL_EVIDENCE",
+  "source_candidate_commit": "9165fcae4b82277e050b76f606687f1179c31021",
+  "maturity_promoted": false,
+  "campaigns": [
+    {
+      "campaign_id": "SV-WSALTI-001-P1",
+      "project_id": "WS-ALTI",
+      "protocol_path": "docs/validation/WS_ALTI_COUPON_VALIDATION_PROTOCOL_V1.md",
+      "current_claim_boundary": "REQUIRES_LAB_VALIDATION",
+      "objective": "Test whether the frozen candidate material/process state produces a repeatable spatial composition-microstructure-property relationship above combined measurement uncertainty relative to a declared baseline.",
+      "freeze_before_manufacture": [
+        "protected candidate material/process identifier",
+        "declared baseline/control material and process",
+        "feedstock/powder/wire lot identifiers and certificates where available",
+        "build machine identity and maintenance/calibration state",
+        "geometry revision",
+        "specimen extraction map and selected orientation",
+        "intended zoning or homogeneous control locations",
+        "primary and secondary endpoints",
+        "exclusion rules and failure conditions",
+        "statistical analysis plan",
+        "sample count and stopping rule"
+      ],
+      "conditions": [
+        {
+          "condition_id": "BASELINE",
+          "build_ids": ["WSALTI-BASE-B01", "WSALTI-BASE-B02", "WSALTI-BASE-B03"]
+        },
+        {
+          "condition_id": "CANDIDATE",
+          "build_ids": ["WSALTI-CAND-B01", "WSALTI-CAND-B02", "WSALTI-CAND-B03"]
+        }
+      ],
+      "specimen_plan_per_build": [
+        {
+          "specimen_role": "MET-CHEM",
+          "count": 1,
+          "purpose": "Metallography plus local/spatial chemistry at preregistered locations."
+        },
+        {
+          "specimen_role": "HARD-MAP",
+          "count": 1,
+          "purpose": "Microhardness/local property mapping with enough valid indents to report distribution and spatial gradient."
+        },
+        {
+          "specimen_role": "TEN",
+          "count": 3,
+          "purpose": "Tensile specimens in the preregistered selected orientation when material volume permits."
+        }
+      ],
+      "sample_id_rule": "<build_id>-<specimen_role>-NN",
+      "minimum_expected_specimen_ids": [
+        "WSALTI-BASE-B01-MET-CHEM-01", "WSALTI-BASE-B01-HARD-MAP-01", "WSALTI-BASE-B01-TEN-01", "WSALTI-BASE-B01-TEN-02", "WSALTI-BASE-B01-TEN-03",
+        "WSALTI-BASE-B02-MET-CHEM-01", "WSALTI-BASE-B02-HARD-MAP-01", "WSALTI-BASE-B02-TEN-01", "WSALTI-BASE-B02-TEN-02", "WSALTI-BASE-B02-TEN-03",
+        "WSALTI-BASE-B03-MET-CHEM-01", "WSALTI-BASE-B03-HARD-MAP-01", "WSALTI-BASE-B03-TEN-01", "WSALTI-BASE-B03-TEN-02", "WSALTI-BASE-B03-TEN-03",
+        "WSALTI-CAND-B01-MET-CHEM-01", "WSALTI-CAND-B01-HARD-MAP-01", "WSALTI-CAND-B01-TEN-01", "WSALTI-CAND-B01-TEN-02", "WSALTI-CAND-B01-TEN-03",
+        "WSALTI-CAND-B02-MET-CHEM-01", "WSALTI-CAND-B02-HARD-MAP-01", "WSALTI-CAND-B02-TEN-01", "WSALTI-CAND-B02-TEN-02", "WSALTI-CAND-B02-TEN-03",
+        "WSALTI-CAND-B03-MET-CHEM-01", "WSALTI-CAND-B03-HARD-MAP-01", "WSALTI-CAND-B03-TEN-01", "WSALTI-CAND-B03-TEN-02", "WSALTI-CAND-B03-TEN-03"
+      ],
+      "requested_measurement_classes": [
+        "bulk chemistry where method-applicable",
+        "spatial/local chemistry mapping",
+        "metallography/microstructure",
+        "microhardness/local property mapping",
+        "metallic-material tensile testing",
+        "defect/porosity characterization sufficient to bound confounding"
+      ],
+      "method_anchors_to_confirm_with_lab": [
+        "ASTM E8/E8M-25 or applicable current revision",
+        "ASTM E384-22 or applicable current revision",
+        "ASTM E1251-25 where applicable",
+        "ASTM E3-26 or applicable current revision",
+        "ASTM E407-23 where etching is applicable"
+      ],
+      "required_return_evidence": [
+        "sample/build custody log",
+        "instrument make/model/asset or serial identifiers",
+        "calibration/reference-material identifiers and validity",
+        "raw native spectra/data files",
+        "raw microscopy acquisition files or highest-fidelity native exports available",
+        "complete stress-strain data, not summary-only tensile values",
+        "hardness indent-level data with locations, load, dwell, rejected indents and reasons",
+        "measurement coordinate/location map",
+        "analysis software/version and any processing scripts",
+        "uncertainty statement or laboratory measurement limitations",
+        "method deviations",
+        "report linking each result to source files"
+      ],
+      "advancement_gate": {
+        "target_state": "INTERNAL_TEST",
+        "requirements": [
+          "candidate state analytically distinguishable from baseline/neighboring zone above combined uncertainty",
+          "effect repeats across at least three independent builds",
+          "preregistered property/microstructure endpoint follows the predicted direction or null is explicitly retained",
+          "defect and sampling/orientation effects are quantified sufficiently to prevent false attribution",
+          "raw data/calibration/exclusion/analysis chain is recoverable",
+          "blinded or recoded reanalysis/independent internal review where practical"
+        ]
+      },
+      "blocked_claims_until_gate_closes": [
+        "superior alloy",
+        "aerospace-qualified material",
+        "validated fatigue life",
+        "validated corrosion resistance",
+        "programmable zoning established"
+      ]
+    },
+    {
+      "campaign_id": "SV-META-001-P1",
+      "project_id": "ADAPTIVE_METASURFACE",
+      "protocol_path": "docs/validation/ADAPTIVE_METASURFACE_VALIDATION_PROTOCOL_V1.md",
+      "current_claim_boundary": "REQUIRES_LAB_VALIDATION",
+      "objective": "Test whether frozen command states produce repeatable phase/amplitude response and corresponding bounded array-level field redistribution consistent with the preregistered electromagnetic model within uncertainty.",
+      "freeze_before_fabrication": [
+        "single operating band [f_low, f_high]",
+        "polarization set",
+        "incidence angle set",
+        "unit-cell periodicity and geometry revision",
+        "substrate/material stack and property-source uncertainty",
+        "actuator/tuning mechanism",
+        "command-state set",
+        "predicted phase/amplitude per state",
+        "array size and aperture geometry",
+        "primary beam/scattering endpoint",
+        "thermal/power envelope",
+        "pass/fail and exclusion rules"
+      ],
+      "device_plan": [
+        {
+          "device_id": "META-REF-01",
+          "role": "reference_coupon",
+          "purpose": "Substrate/feed/fixture reference without active metasurface function where practical."
+        },
+        {
+          "device_id": "META-UC-01",
+          "role": "unit_cell_or_small_periodic_coupon",
+          "purpose": "Resonance and unit-cell complex S-parameter response."
+        },
+        {
+          "device_id": "META-ACT-01",
+          "role": "active_coupon_or_small_array_replica_1",
+          "purpose": "Independent active fabrication/assembly replicate."
+        },
+        {
+          "device_id": "META-ACT-02",
+          "role": "active_coupon_or_small_array_replica_2",
+          "purpose": "Independent active fabrication/assembly replicate."
+        },
+        {
+          "device_id": "META-ACT-03",
+          "role": "active_coupon_or_small_array_replica_3",
+          "purpose": "Independent active fabrication/assembly replicate."
+        }
+      ],
+      "command_state_template": [
+        "STATE-REF",
+        "STATE-A-PREREGISTERED",
+        "STATE-B-PREREGISTERED"
+      ],
+      "coupon_measurement_sequence": [
+        "reference/control measurement",
+        "complex S11 and applicable S21 for each frozen state",
+        "return to reference state",
+        "at least three full command-state cycles",
+        "temperature recorded throughout",
+        "full power-cycle repeat",
+        "fixture reversal/rotation where practical to expose systematic asymmetry"
+      ],
+      "array_test_minimum": [
+        "State A reference/broadside or declared baseline pattern",
+        "State B commanded beam-steering or null state with preregistered angle/level",
+        "normalized radiation/scattering pattern over declared angular region",
+        "beam peak angle",
+        "half-power beamwidth where meaningful",
+        "sidelobe levels where meaningful",
+        "null angle/depth for null experiment",
+        "cross-polarization where relevant",
+        "efficiency only where the setup supports a defensible measurement"
+      ],
+      "method_anchors_to_confirm_with_lab": [
+        "IEEE 149-2021 principles where antenna/radiation-pattern measurement is applicable",
+        "instrument/vendor calibration procedures for the selected VNA, fixture, band and calibration method",
+        "laboratory-confirmed near-field/far-field applicability for aperture and frequency"
+      ],
+      "required_return_evidence": [
+        "device/geometry/material revision and configuration digest",
+        "solver/model revision and frozen prediction digest",
+        "VNA/instrument make/model/serial/firmware/software",
+        "calibration kit and calibration-record identity/validity",
+        "calibration method and reference plane",
+        "fixture/cable configuration",
+        "source power, IF bandwidth, averaging and sweep settings",
+        "raw complex Touchstone or equivalent native S-parameter files",
+        "command logs with timing/state identity",
+        "temperature logs",
+        "raw pattern/scattering data for array test",
+        "range/chamber background measurement",
+        "alignment/polarization geometry",
+        "analysis scripts/version",
+        "uncertainty budget or laboratory limitations",
+        "method deviations",
+        "report linking every derived result to raw source files"
+      ],
+      "advancement_gate": {
+        "target_state": "INTERNAL_TEST",
+        "requirements": [
+          "command-state phase/amplitude change exceeds combined measurement uncertainty",
+          "state ordering/sign agrees with preregistered prediction or disagreement is retained",
+          "effect repeats across power cycles and independent devices where available",
+          "measured S-parameter features correlate with frozen model within reported error",
+          "predicted beam/null reaches preregistered region within range uncertainty",
+          "thermal/fixture/cable/background controls are insufficient to explain result",
+          "raw S-parameters, pattern data, calibrations, command logs, temperature and analysis remain recoverable"
+        ]
+      },
+      "blocked_claims_until_later_application_specific_validation": [
+        "stealth",
+        "cloaking",
+        "broad-spectrum cancellation",
+        "aerospace-qualified metasurface performance"
+      ]
+    }
+  ]
+}
