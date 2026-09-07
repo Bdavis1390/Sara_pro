@@ -83,6 +83,15 @@ export WS_PVK_SHADOW_PORT=19531
 
 ## 5. Execute the current-branch acceptance harness
 
+Record the candidate commit immediately before execution:
+
+```bash
+candidate_commit="$(git rev-parse HEAD)"
+printf 'candidate_commit=%s\n' "$candidate_commit"
+```
+
+Then execute:
+
 ```bash
 bash scripts/verify_actual_host_pvk.sh
 ```
@@ -118,7 +127,45 @@ pvk_audit_presence=PASS
 scientific_validation_claim=NOT_ESTABLISHED_BY_THIS_TEST
 ```
 
-## 7. Confirm the historical service was not disturbed
+## 7. Run the independent machine evidence assessor
+
+The repository contains a second verifier that independently checks the evidence manifest and acceptance relationships instead of trusting `RESULT.txt` alone.
+
+From `deployments/sara_verified_local_v1`:
+
+```bash
+python3 scripts/assess_actual_host_pvk_evidence.py \
+  "$latest" \
+  --expected-branch worldshepherd/pvk-v0.5-cross-project-20260906 \
+  --expected-commit "$candidate_commit"
+```
+
+Expected exit code: `0`.
+
+Expected top-level output includes:
+
+```json
+{
+  "accepted": true,
+  "blockers": [],
+  "scientific_validation_claim": "NOT_ESTABLISHED_BY_HOST_ACCEPTANCE"
+}
+```
+
+The assessor independently verifies, among other checks:
+
+- every required evidence object is present and included in `SHA256SUMS`;
+- no hashed evidence file was modified after manifest creation;
+- branch and commit agree between `baseline.txt`, `RESULT.txt`, and the expected command-line values;
+- relay access to the PVK admin status path returned HTTP 403;
+- the persistence probe remained at `concept` maturity and `IMPLEMENTED IN SOFTWARE` claim scope;
+- the reactionless-propulsion linter test returned a `PROP-01` BLOCK;
+- the same persistence-probe record is present after restart;
+- required audit events are present.
+
+Any blocker keeps host acceptance OPEN. Do not manually override an assessor failure by editing the evidence directory; rerun the controlled acceptance after resolving the cause.
+
+## 8. Confirm the historical service was not disturbed
 
 If it was running before the test:
 
@@ -129,7 +176,7 @@ sha256sum /tmp/ws-sara-health-after.json
 
 The exact health JSON digest may change if runtime version/time-dependent fields differ; the acceptance criterion is that the historical service remains reachable on the intended loopback endpoint and its persistent state was not replaced by the shadow project.
 
-## 8. Preserve, but do not publicly expose, the evidence
+## 9. Preserve, but do not publicly expose, the evidence
 
 The evidence directory intentionally contains files marked `PRIVATE`, including potentially sensitive runtime configuration/audit information. Keep it owner-readable only and do not attach the full directory to a public GitHub issue.
 
@@ -139,7 +186,7 @@ Recommended next custody step:
 2. record only the evidence-directory identity, final SHA-256 manifest digest, branch, commit, timestamp, and PASS/FAIL state in the governance register;
 3. retain the full private package for audit/review.
 
-## 9. Acceptance interpretation
+## 10. Acceptance interpretation
 
 ### PASS establishes
 
@@ -147,7 +194,8 @@ Recommended next custody step:
 - the PVK authorization boundary behaves as tested;
 - PVK record persistence survives the tested container restart;
 - the claims linter blocks the selected unsupported reactionless-propulsion claim;
-- required PVK/audit evidence exists for the run.
+- required PVK/audit evidence exists for the run;
+- the independently assessed evidence package has not been modified relative to its SHA-256 manifest.
 
 ### PASS does not establish
 
