@@ -33,6 +33,7 @@ ws-vulnerability-evidence = "worldshepherd_sara.vulnerability_cli:main"
 ws-human-triage-ledger = "worldshepherd_sara.human_triage_cli:main"
 ws-intake-minimum-ledger = "worldshepherd_sara.intake_minimum_cli:main"
 ws-prime-basis-ablation = "worldshepherd_sara.prime_basis_ablation_cli:main"
+ws-programmable-boundary-benchmark = "worldshepherd_sara.programmable_boundary_benchmark_cli:main"
 
 [tool.setuptools]
 packages = ["worldshepherd_sara"]
