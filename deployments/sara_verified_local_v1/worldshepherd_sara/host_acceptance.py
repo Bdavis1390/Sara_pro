@@ -36,6 +36,17 @@ REQUIRED_AUDIT_EVENTS = {
     "service_started",
 }
 
+REQUIRED_BASELINE_FIELDS = {
+    "hostname",
+    "kernel",
+    "git_branch",
+    "git_head",
+    "docker_version",
+    "compose_version",
+    "shadow_project",
+    "shadow_base_url",
+}
+
 
 @dataclass(frozen=True)
 class HostEvidenceAssessment:
@@ -147,6 +158,7 @@ def assess_actual_host_evidence(
     branch: str | None = None
     commit: str | None = None
     record_id: str | None = None
+    shadow_port: int | None = None
 
     try:
         result = _parse_key_values(root / "RESULT.txt")
@@ -155,6 +167,13 @@ def assess_actual_host_evidence(
                 blockers.append(f"RESULT_GATE_FAILED:{key}")
         branch = result.get("branch")
         commit = result.get("commit")
+        try:
+            shadow_port = int(result.get("shadow_port", ""))
+        except ValueError:
+            blockers.append("SHADOW_PORT_INVALID")
+        else:
+            if shadow_port < 1024 or shadow_port > 65535:
+                blockers.append("SHADOW_PORT_INVALID")
     except (OSError, UnicodeError):
         blockers.append("RESULT_UNREADABLE")
         result = {}
@@ -163,17 +182,41 @@ def assess_actual_host_evidence(
         baseline = _parse_key_values(root / "baseline.txt")
         if baseline.get("schema") != "WS-ACTUAL-HOST-PVK-ACCEPTANCE-V1":
             blockers.append("BASELINE_SCHEMA_MISMATCH")
+        for field in sorted(REQUIRED_BASELINE_FIELDS):
+            if not baseline.get(field):
+                blockers.append(f"BASELINE_FIELD_MISSING:{field}")
         if branch and baseline.get("git_branch") != branch:
             blockers.append("BRANCH_EVIDENCE_MISMATCH")
         if commit and baseline.get("git_head") != commit:
             blockers.append("COMMIT_EVIDENCE_MISMATCH")
+        if shadow_port is not None:
+            expected_url = f"http://127.0.0.1:{shadow_port}"
+            if baseline.get("shadow_base_url") != expected_url:
+                blockers.append("SHADOW_BASE_URL_NOT_LOOPBACK")
     except (OSError, UnicodeError):
         blockers.append("BASELINE_UNREADABLE")
+        baseline = {}
 
     if expected_branch is not None and branch != expected_branch:
         blockers.append("UNEXPECTED_BRANCH")
     if expected_commit is not None and commit != expected_commit:
         blockers.append("UNEXPECTED_COMMIT")
+
+    try:
+        compose_ps = (root / "compose.ps.txt").read_text(encoding="utf-8")
+        if shadow_port is not None:
+            expected_mapping = f"127.0.0.1:{shadow_port}->9530/tcp"
+            if expected_mapping not in compose_ps:
+                blockers.append("SHADOW_LOOPBACK_BINDING_NOT_PROVEN")
+            wildcard_markers = (
+                f"0.0.0.0:{shadow_port}",
+                f":::{shadow_port}",
+                f"[::]:{shadow_port}",
+            )
+            if any(marker in compose_ps for marker in wildcard_markers):
+                blockers.append("SHADOW_WILDCARD_BINDING_DETECTED")
+    except (OSError, UnicodeError):
+        blockers.append("COMPOSE_PS_UNREADABLE")
 
     try:
         authorization = _parse_key_values(root / "authorization.txt")
