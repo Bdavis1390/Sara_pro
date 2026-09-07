@@ -102,6 +102,114 @@
       "audit_event_ids": [],
       "created_at": "2026-09-06T23:20:00Z",
       "updated_at": "2026-09-06T23:20:00Z"
+    },
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-ION-0001",
+      "artifact_id": "WORLDSHEPHERD-ION-PROPULSION",
+      "project_id": "ION_PROPULSION",
+      "physics_domain": ["plasma", "electrostatics", "propulsion", "power"],
+      "physics_layer": "P2_ESTABLISHED_ENGINEERING",
+      "model_scope": "Worldshepherd-specific gridded-ion or related electrostatic propulsion article validation pathway",
+      "reference_frame": "laboratory thrust-stand frame",
+      "governing_equations": [
+        {
+          "expression": "Isp = T / (m_dot * g0)",
+          "name": "specific impulse",
+          "domain_of_validity": "conventional propellant-expelling propulsion with a declared mass-flow system boundary"
+        },
+        {
+          "expression": "T_over_P = T / P",
+          "name": "thrust-to-power ratio",
+          "domain_of_validity": "declared electrical power boundary and calibrated thrust measurement"
+        }
+      ],
+      "conservation_constraints": ["energy", "momentum", "mass"],
+      "assumptions": [
+        "Ion propulsion is externally established, but Worldshepherd-specific performance does not inherit external thruster values",
+        "Direct calibrated thrust, mass flow, power, facility background, and uncertainty are required for Worldshepherd-specific performance claims",
+        "Facility SOPs govern high-voltage, vacuum, plasma, RF, thermal, and propellant hazards"
+      ],
+      "boundary_conditions": [
+        "Any future simulation or test must declare article geometry, propellant, power boundary, facility pressure, and thrust-stand configuration"
+      ],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "thrust signal is not separable from stand drift or facility effects",
+        "electrical or propellant measurement boundaries are incomplete",
+        "repeatability fails across independently prepared sessions",
+        "derived performance exceeds the evidence-supported operating envelope"
+      ],
+      "hazard_controls": [
+        "No powered thruster experiment is authorized by this record; approved facility SOP and hazard review are required"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "Ion propulsion is an established propulsion class; no Worldshepherd-specific ion-thruster thrust, efficiency, specific impulse, lifetime, or flight performance is claimed by this record.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-07T00:25:00Z",
+      "updated_at": "2026-09-07T00:25:00Z"
+    },
+    {
+      "schema_version": "ws-physics-record-1",
+      "record_id": "PHYS-AFEM-0001",
+      "artifact_id": "WORLDSHEPHERD-ANOMALOUS-EM-FORCE",
+      "project_id": "RESONANT_EM_PROPULSION",
+      "physics_domain": ["electromagnetics", "mechanics", "thermal", "metrology", "propulsion"],
+      "physics_layer": "P4_BEYOND_STANDARD_MODEL",
+      "model_scope": "Falsification-first validation pathway for any Worldshepherd anomalous-force interpretation that would require momentum exchange beyond the quantitatively closed conventional system boundary",
+      "reference_frame": "laboratory force-balance frame",
+      "governing_equations": [
+        {
+          "expression": "F_photon = P / c",
+          "name": "ideal one-way photon-force baseline",
+          "domain_of_validity": "directed electromagnetic radiation carrying momentum away from the system"
+        },
+        {
+          "expression": "R_photon = F_measured * c / P",
+          "name": "photon-force ratio",
+          "domain_of_validity": "diagnostic comparison only; values above unity do not establish anomalous propulsion"
+        }
+      ],
+      "conservation_constraints": ["energy", "momentum"],
+      "assumptions": [
+        "Balance deflection alone is not a propulsion measurement",
+        "Thermal, magnetic, electrostatic, gas-flow, RF/photon, cable/feedthrough, center-of-mass, vibration, and calibration effects must be quantitatively bounded",
+        "Published high-accuracy EMDrive null testing is a minimum control baseline for cavity-type anomalous-force experiments, not a universal proof about every conceivable future hypothesis"
+      ],
+      "boundary_conditions": [
+        "Any claimed residual must be defined only after all declared conventional momentum-transfer paths are included in the bookkeeping boundary"
+      ],
+      "initial_conditions": [],
+      "parameters": [],
+      "unit_system": "SI",
+      "failure_modes": [
+        "apparent force disappears under null or reversal control",
+        "signal tracks thermal or center-of-mass drift",
+        "magnetic, electrostatic, cable, gas, vibration, or RF leakage coupling is not bounded below the residual",
+        "effect fails independent setup or external replication"
+      ],
+      "hazard_controls": [
+        "No anomalous-force experiment is authorized by this record; facility-specific RF, high-voltage, vacuum, thermal, stored-energy, and mechanical controls are required"
+      ],
+      "validation_state": "concept",
+      "independent_review_state": "none",
+      "independent_evidence_refs": [],
+      "claim_label": "Hypothesis",
+      "claim_class": 1,
+      "external_safe_statement": "Worldshepherd anomalous-force and electrogravitic interpretations remain hypotheses. No reactionless, propellantless, gravity-control, or beyond-standard-model propulsion effect is currently claimed as experimentally established.",
+      "cre1aws_approval_state": "not_requested",
+      "evidence_package_refs": [],
+      "audit_event_ids": [],
+      "created_at": "2026-09-07T00:25:00Z",
+      "updated_at": "2026-09-07T00:25:00Z"
     }
   ]
 }
