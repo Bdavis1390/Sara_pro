@@ -16,3 +16,13 @@ def test_actual_host_pvk_script_preserves_scientific_boundary():
     assert '"validation_state": "concept"' in text
     assert "down -v --remove-orphans" in text
     assert "WS_PVK_SHADOW_PORT" in text
+
+
+def test_actual_host_assessor_binds_to_checkout_by_default():
+    text = Path("scripts/assess_actual_host_pvk_evidence.py").read_text(
+        encoding="utf-8"
+    )
+    assert '"branch", "--show-current"' in text
+    assert '"rev-parse", "HEAD"' in text
+    assert "ASSESSMENT_NOT_BOUND_TO_BRANCH_AND_COMMIT" in text
+    assert "--allow-unbound" in text
