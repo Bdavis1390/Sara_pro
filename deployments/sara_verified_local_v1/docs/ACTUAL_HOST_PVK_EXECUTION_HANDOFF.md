@@ -131,7 +131,15 @@ scientific_validation_claim=NOT_ESTABLISHED_BY_THIS_TEST
 
 The repository contains a second verifier that independently checks the evidence manifest and acceptance relationships instead of trusting `RESULT.txt` alone.
 
-From `deployments/sara_verified_local_v1`:
+From `deployments/sara_verified_local_v1`, the normal command is now deliberately simple:
+
+```bash
+python3 scripts/assess_actual_host_pvk_evidence.py "$latest"
+```
+
+By default the assessor binds the package to **the branch and exact Git HEAD of the checkout in which the assessor is run**. This prevents an old but internally valid package from being accepted accidentally against a newer candidate.
+
+Explicit expectations remain available when reviewing from another checkout:
 
 ```bash
 python3 scripts/assess_actual_host_pvk_evidence.py \
@@ -140,13 +148,16 @@ python3 scripts/assess_actual_host_pvk_evidence.py \
   --expected-commit "$candidate_commit"
 ```
 
-Expected exit code: `0`.
+`--allow-unbound` exists only for diagnostic/offline inspection when Git context is unavailable. An unbound assessment is **not** sufficient to close Worldshepherd host acceptance.
+
+Expected exit code for the normal bound assessment: `0`.
 
 Expected top-level output includes:
 
 ```json
 {
   "accepted": true,
+  "assessment_binding": "BOUND",
   "blockers": [],
   "scientific_validation_claim": "NOT_ESTABLISHED_BY_HOST_ACCEPTANCE"
 }
@@ -156,7 +167,11 @@ The assessor independently verifies, among other checks:
 
 - every required evidence object is present and included in `SHA256SUMS`;
 - no hashed evidence file was modified after manifest creation;
-- branch and commit agree between `baseline.txt`, `RESULT.txt`, and the expected command-line values;
+- branch and commit agree between `baseline.txt`, `RESULT.txt`, and the bound expected revision;
+- the baseline contains non-empty host/runtime identity fields including hostname, kernel, Docker and Compose versions;
+- the shadow base URL is the expected `127.0.0.1:<port>` loopback URL;
+- `docker compose ps` recorded the live shadow mapping as `127.0.0.1:<shadow_port>->9530/tcp`;
+- wildcard exposure such as `0.0.0.0:<shadow_port>` or `[::]:<shadow_port>` is rejected;
 - relay access to the PVK admin status path returned HTTP 403;
 - the persistence probe remained at `concept` maturity and `IMPLEMENTED IN SOFTWARE` claim scope;
 - the reactionless-propulsion linter test returned a `PROP-01` BLOCK;
@@ -191,6 +206,7 @@ Recommended next custody step:
 ### PASS establishes
 
 - this exact Git commit can build and run in a shadow deployment on the physical Worldshepherd host;
+- the recorded runtime port mapping is loopback-only for the tested shadow service;
 - the PVK authorization boundary behaves as tested;
 - PVK record persistence survives the tested container restart;
 - the claims linter blocks the selected unsupported reactionless-propulsion claim;
