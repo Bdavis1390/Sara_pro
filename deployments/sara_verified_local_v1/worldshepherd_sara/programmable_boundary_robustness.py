@@ -298,7 +298,7 @@ def run_programmable_boundary_robustness() -> ProgrammableBoundaryRobustnessRepo
     thermal_retentions = tuple(case.target_retention_fraction for case in thermal)
     thermal_monotonic = all(
         later <= earlier + 1e-12
-        for earlier, later in zip(thermal_retentions, thermal_retentions[1:], strict=True)
+        for earlier, later in zip(thermal_retentions, thermal_retentions[1:])
     )
 
     failed: list[str] = []
