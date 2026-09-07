@@ -6,6 +6,10 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field
 
+from .anomalous_force_analysis import (
+    AnomalousForceEvidenceSummary,
+    assess_anomalous_force_summary,
+)
 from .auth import Role, require_admin, resolve_role
 from .claims_linter_physics import lint_physics_claim
 from .external_lab_evidence import (
@@ -186,6 +190,42 @@ def physics_lab_package_validate(
                 "blockers": result["blockers"],
                 "warnings": result["warnings"],
                 "maturity_promoted": False,
+            },
+        )
+    )
+    return result
+
+
+@router.post("/admin/physics/anomalous-force/assess")
+def physics_anomalous_force_assess(
+    body: AnomalousForceEvidenceSummary,
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+) -> dict[str, object]:
+    """Apply AF-0..AF-7 interpretation gates; never confirms extraordinary physics."""
+    require_admin(role)
+    result = assess_anomalous_force_summary(body)
+    request.app.state.store.append_audit(
+        AuditRecord.create(
+            event="physics_anomalous_force_assessed",
+            actor=role.value,
+            payload={
+                "campaign_id": body.campaign_id,
+                "article_id": body.article_id,
+                "preregistered": body.preregistered,
+                "classification": result["classification"],
+                "photon_ratio_abs": result["photon_ratio_abs"],
+                "conservative_residual_lower_bound_n": result[
+                    "conservative_residual_lower_bound_n"
+                ],
+                "failed_gates": result["failed_gates"],
+                "open_gates": result["open_gates"],
+                "bounded_effect_claim_candidate": result[
+                    "bounded_effect_claim_candidate"
+                ],
+                "reactionless_claim_allowed": False,
+                "electrogravitic_claim_allowed": False,
+                "new_physics_confirmed": False,
             },
         )
     )
