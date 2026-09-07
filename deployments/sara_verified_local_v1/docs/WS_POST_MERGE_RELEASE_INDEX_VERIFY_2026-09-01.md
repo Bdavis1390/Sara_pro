@@ -18,7 +18,7 @@ This patch adds explicit release-state separation so the post-merge `main` run c
 
 ```text
 PR_CANDIDATE_UNMERGED
-MERGED_MAIN_PUSH
+MAIN_BRANCH_PUSH
 MANUAL_OR_NON_MAIN_RUN
 ```
 
@@ -28,7 +28,7 @@ MANUAL_OR_NON_MAIN_RUN
 if GITHUB_EVENT_NAME == pull_request:
     merge_state = PR_CANDIDATE_UNMERGED
 elif GITHUB_EVENT_NAME == push and GITHUB_REF == refs/heads/main:
-    merge_state = MERGED_MAIN_PUSH
+    merge_state = MAIN_BRANCH_PUSH
 else:
     merge_state = MANUAL_OR_NON_MAIN_RUN
 ```
@@ -41,7 +41,7 @@ Examples:
 
 ```text
 pull_request + refs/pull/<n>/merge => PR_CANDIDATE_UNMERGED
-push + refs/heads/main            => MERGED_MAIN_PUSH
+push + refs/heads/main            => MAIN_BRANCH_PUSH
 workflow_dispatch                 => MANUAL_OR_NON_MAIN_RUN
 push + non-main branch            => MANUAL_OR_NON_MAIN_RUN
 ```
@@ -71,7 +71,7 @@ After this PR merges, the push-triggered run on `main` must produce a `sara-rele
     "event_name": "push",
     "ref": "refs/heads/main",
     "pull_request_number": null,
-    "merge_state": "MERGED_MAIN_PUSH"
+    "merge_state": "MAIN_BRANCH_PUSH"
   }
 }
 ```

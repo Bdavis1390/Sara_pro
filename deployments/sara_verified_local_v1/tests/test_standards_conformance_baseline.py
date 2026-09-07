@@ -63,7 +63,9 @@ def test_no_target_standard_is_self_certified_by_baseline() -> None:
 
     for record in baseline["standard_sources"]:
         status = record["current_status"].upper()
-        assert not any(status == term for term in PROHIBITED_CURRENT_STATUS_TERMS)
+        for term in PROHIBITED_CURRENT_STATUS_TERMS:
+            non_claim_status = status.replace(f"NOT_{term}", "").replace(f"{term}_NOT_CLAIMED", "")
+            assert term not in non_claim_status, (record["id"], record["current_status"], term)
         assert "NOT_CLAIMED" in status or "REQUIRED" in status or "TARGET" in status or "PARTIAL" in status
 
 

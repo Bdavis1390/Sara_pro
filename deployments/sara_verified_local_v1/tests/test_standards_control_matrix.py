@@ -109,6 +109,9 @@ def test_external_claim_status_requires_reviewer_and_evidence_ids() -> None:
             assert record["implementation_evidence_ids"], record["control_id"]
             assert "reviewer" in record["reviewer_role"].lower() or "assessor" in record["reviewer_role"].lower()
             assert record["latest_check_result"] not in {"NOT_RUN_FOR_THIS_CONTROL", "PARTIAL_PASS_INTERNAL_ONLY"}
+            if record["current_status"] in {"FORMALLY_ASSESSED", "MET", "EXCEEDED"}:
+                assert record["latest_check_result"] in {"PASS", "FORMAL_PASS"}, record["control_id"]
+                assert record.get("formal_assessment_reference_when_required"), record["control_id"]
 
 
 def test_status_counts_match_records_and_do_not_claim_formal_readiness() -> None:
@@ -128,11 +131,14 @@ def test_status_counts_match_records_and_do_not_claim_formal_readiness() -> None
 
 def test_matrix_blocks_false_readiness_language() -> None:
     matrix = _load(MATRIX_PATH)
-    text = json.dumps(matrix, sort_keys=True).lower()
+    claim_surface = dict(matrix)
+    meet_or_exceed_gate = dict(claim_surface.get("meet_or_exceed_gate", {}))
+    meet_or_exceed_gate.pop("prohibited_self_assertions", None)
+    claim_surface["meet_or_exceed_gate"] = meet_or_exceed_gate
+    text = json.dumps(claim_surface, sort_keys=True).lower()
 
     for assertion in PROHIBITED_ASSERTIONS:
-        if assertion in text:
-            assert assertion in {item.lower() for item in matrix["meet_or_exceed_gate"]["prohibited_self_assertions"]}
+        assert assertion not in text
 
 
 def test_next_priority_moves_toward_actual_controls() -> None:

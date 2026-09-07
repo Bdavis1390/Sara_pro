@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -71,8 +72,14 @@ def _optional_file_digest(path: Path | None) -> dict[str, Any] | None:
 
 
 def _normalize_name(value: str) -> str:
-    cleaned = value.strip().replace("_", "-")
+    cleaned = re.sub(r"[-_.]+", "-", value.strip())
     return cleaned.lower()
+
+
+def _set_summary_digest(summary: dict[str, Any]) -> None:
+    digest_input = dict(summary)
+    digest_input.pop("summary_digest", None)
+    summary["summary_digest"] = canonical_digest(digest_input)
 
 
 def _split_requirement_name(raw: str) -> tuple[str, str | None, str]:
@@ -100,7 +107,7 @@ def _parse_freeze_line(line: str, index: int) -> dict[str, Any] | None:
         source = "editable"
         editable = raw[3:].strip()
         if "#egg=" in editable:
-            name = editable.rsplit("#egg=", 1)[1].strip()
+            name = editable.rsplit("#egg=", 1)[1].split("&", 1)[0].strip()
         else:
             name = f"editable-{index}"
         version = None
@@ -240,7 +247,7 @@ def build_sbom_evidence(
         "claims_boundary": CLAIMS_BOUNDARY,
         "not_claimed": NOT_CLAIMED,
     }
-    summary["summary_digest"] = canonical_digest(summary)
+    _set_summary_digest(summary)
     return sbom, summary
 
 
@@ -273,7 +280,7 @@ def write_sbom_evidence(
 
     summary["software_sbom_path"] = str(sbom_path)
     summary["software_sbom_sha256"] = _sha256_file(sbom_path)
-    summary["summary_digest"] = canonical_digest(summary)
+    _set_summary_digest(summary)
     _write_json(summary_path, summary)
     return summary
 
