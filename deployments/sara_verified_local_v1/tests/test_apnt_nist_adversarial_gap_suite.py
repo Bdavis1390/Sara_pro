@@ -20,7 +20,7 @@ def test_fixture_is_synthetic_negative_evidence_not_capability_claim():
     assert "not derived from real" in boundary
     assert "failing current baseline" in boundary
     assert "anti-spoofing" in boundary
-    assert "promotion" in payload["promotion_gate"].lower()
+    assert payload["promotion_gate"].lower().startswith("do not promote")
 
 
 def test_current_baseline_intentionally_misses_profile_relevant_blind_spots():
