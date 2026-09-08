@@ -103,7 +103,7 @@ def test_readiness_bundle_is_machine_readable_and_fail_closed(tmp_path) -> None:
     report = json.loads((out / "readiness-report.json").read_text(encoding="utf-8"))
     assert report["internal_preparation_gate_pass"] is True
     assert report["integrity_adversarial_campaign"]["pass"] is True
-    assert report["integrity_adversarial_campaign"]["check_count"] == 14
+    assert report["integrity_adversarial_campaign"]["check_count"] == 18
     assert report["external_operational_gate_pass"] is False
     assert report["external_operational_readiness_cap_pct"] == 55.0
     assert report["software_commit"] == "test-commit"
