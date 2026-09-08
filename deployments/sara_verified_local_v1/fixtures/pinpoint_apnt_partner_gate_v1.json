@@ -1,0 +1,111 @@
+{
+  "schema": "ws-pinpoint-apnt-partner-gate-1",
+  "topic": {
+    "id": "HR001126S0016",
+    "title": "Precision Inertial Navigation & Positioning On an Integrated Tesseract (PINPOINT)",
+    "office": "DARPA Defense Sciences Office",
+    "proposal_deadline": "2026-09-25T16:00:00-04:00",
+    "question_deadline": "2026-09-15T16:00:00-04:00",
+    "abstract_deadline": "2026-08-27T16:00:00-04:00",
+    "abstract_required_for_full_proposal": true,
+    "phase_i_months": 24,
+    "phase_ii_months_planning_only": 24,
+    "source_urls": [
+      "https://www.darpa.mil/research/programs/pinpoint",
+      "https://www.darpa.mil/sites/default/files/attachment/2026-08/darpa-program-pinpoint-proposers-day-presentation.pdf",
+      "https://www.darpa.mil/sites/default/files/attachment/2026-08/FAQ_PINPOINT_20260827.pdf"
+    ]
+  },
+  "worldshepherd_capture_state": {
+    "abstract_submission_evidence": "NONE_FOUND_IN_CONNECTED_GMAIL_OR_GOOGLE_DRIVE",
+    "prime_status_current_cycle": "NO_GO_ABSENT_TIMELY_CONFORMING_ABSTRACT_EVIDENCE",
+    "partner_status_current_cycle": "HIGH_PRIORITY_PARTNER_OR_SUBCONTRACTOR_LANE",
+    "full_proposal_submitted": false,
+    "partner_outreach_performed": false,
+    "core_sensor_physics_claimed": false,
+    "nonlinear_imu_hardware_claimed": false,
+    "gps_quality_inertial_performance_claimed": false
+  },
+  "darpa_boundary": {
+    "core_research_must_focus_on": [
+      "microscale inertial-sensor physics",
+      "nonlinear controls",
+      "modeling",
+      "six-degree-of-freedom IMU development"
+    ],
+    "teaming_allowed_for": [
+      "platform-derived auxiliary sensing",
+      "integration architecture",
+      "system-level evaluation",
+      "testing and validation"
+    ],
+    "worldshepherd_must_not_substitute": "External or alternate sensing for the required nonlinear inertial-sensor research"
+  },
+  "worldshepherd_contribution": [
+    "Synthetic degraded-PNT mission scenarios and confidence-state fusion logic",
+    "Policy-gated recovery and retasking under source degradation",
+    "Deterministic mission replay and evidence provenance",
+    "ECHO-style timing/source lineage and uncertainty records",
+    "SARA test orchestration and fault-injection campaigns",
+    "WS-OMEGA contradiction, negative-space, and falsification generation",
+    "Independent verification/validation evidence packaging around a partner-developed IMU"
+  ],
+  "current_evidence": [
+    {
+      "artifact": "apnt_destroyer_strait_v1.json",
+      "status": "SYNTHETIC_SOFTWARE_EVIDENCE_ONLY",
+      "supports": "degraded-GNSS state handling, alternate-source cross-checking, policy-gated recovery"
+    },
+    {
+      "artifact": "mission_replay_synthetic_v1.json",
+      "status": "SYNTHETIC_SOFTWARE_EVIDENCE_ONLY",
+      "supports": "communications degradation, stale-sensor handling, replay and proposal-only follow-on actions"
+    },
+    {
+      "artifact": "hmaa_link_loss_scenario.json",
+      "status": "SYNTHETIC_SOFTWARE_EVIDENCE_ONLY",
+      "supports": "link-loss, reconnect, evidence-integrity, and policy-service failure handling"
+    }
+  ],
+  "physics_partner_screening": [
+    {
+      "rank": 1,
+      "name": "University of California, Irvine MicroSystems Laboratory",
+      "public_relevance": "Active LeviTAS work using diamagnetic levitation for anchor-loss reduction in inertial resonators; broader inertial-navigation research portfolio.",
+      "worldshepherd_complement": "Platform integration, APNT mission assurance, fault injection, provenance, replay, and IV&V around partner sensor physics.",
+      "interest_or_pinpoint_participation": "UNVERIFIED",
+      "outreach_status": "NOT_PERFORMED"
+    },
+    {
+      "rank": 2,
+      "name": "University of Central Florida + University of Florida FLi-MaSS / LeviTAS collaboration",
+      "public_relevance": "DARPA-funded LeviTAS work on magnetically stabilized levitation of a comparatively large mass for precision sensing.",
+      "worldshepherd_complement": "Integration/test architecture, mission-level validation, uncertainty/provenance, and degraded-navigation evaluation.",
+      "interest_or_pinpoint_participation": "UNVERIFIED",
+      "outreach_status": "NOT_PERFORMED"
+    },
+    {
+      "rank": 3,
+      "name": "Other HALOVS / nonlinear MEMS teams",
+      "public_relevance": "PINPOINT explicitly builds on HALOVS technologies including LeviTAS, high-velocity microsystems, nonlinear resonators, and control methods.",
+      "worldshepherd_complement": "Independent system assurance and platform-specific evaluation rather than core sensor-physics replacement.",
+      "interest_or_pinpoint_participation": "REQUIRES_PUBLIC_TEAMING_DILIGENCE",
+      "outreach_status": "NOT_PERFORMED"
+    }
+  ],
+  "next_validation_steps": [
+    "Do not attempt a new prime full proposal unless independently verifiable evidence of an on-time conforming abstract is found.",
+    "Identify PINPOINT primes or teams that submitted abstracts and have credible nonlinear MEMS/IMU physics capability before any outreach.",
+    "Prepare a non-confidential Worldshepherd integration/IV&V contribution that explicitly leaves core sensor physics with the prime.",
+    "Extend the APNT synthetic fixture to consume a generic six-DOF IMU error-state stream, including bias, scale-factor, cross-axis, shock, and drift terms.",
+    "Measure whether SARA/ECHO can detect injected sensor-model inconsistency and preserve uncertainty/replay without claiming improved physical IMU accuracy.",
+    "Use PINPOINT questions deadline only for genuinely unresolved BAA interpretation; do not ask DARPA to waive the expired abstract requirement."
+  ],
+  "claims_boundary": [
+    "No timely PINPOINT abstract submission by Worldshepherd or Curious nerdworX has been established in connected records.",
+    "No PINPOINT full-proposal eligibility is claimed for the current cycle.",
+    "No Worldshepherd nonlinear MEMS IMU, levitated proof mass, high-velocity microsystem, GPS-quality inertial navigation, or multi-hour unaided navigation capability is claimed.",
+    "Public LeviTAS/HALOVS relevance does not establish partner interest, availability, PINPOINT participation, or teaming commitment.",
+    "Worldshepherd software assurance cannot substitute for the core sensor physics and nonlinear-control research required by DARPA."
+  ]
+}
