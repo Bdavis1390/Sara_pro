@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 
 import pytest
 from fastapi import HTTPException
@@ -75,6 +76,7 @@ def test_authenticated_capability_is_bearer_validated_and_target_scoped(monkeypa
     )
     assert capability.actor == "SARA_AUTHENTICATED_ADMIN"
     assert capability.target_id == packages[0].package_id
+    assert capability.action == "CONFIGURATION_CHANGE"
 
     state = PackageState(package=packages[0], current_baseline="BL-001")
     allowed = authorize_configuration_change(
@@ -98,6 +100,30 @@ def test_authenticated_capability_is_bearer_validated_and_target_scoped(monkeypa
     assert denied.decision == "DENY"
     assert other_state.current_baseline == "BL-001"
 
+    # Regression for the P1 copy/retarget exploit: dataclasses.replace preserves the
+    # original signature, but changing the target makes that signature invalid.
+    retargeted = replace(capability, target_id=packages[1].package_id)
+    retarget_denied = authorize_configuration_change(
+        other_state,
+        actor=retargeted.actor,
+        role=packages[1].authority_required,
+        new_baseline="BL-003",
+        capability=retargeted,
+    )
+    assert retarget_denied.decision == "DENY"
+    assert other_state.current_baseline == "BL-001"
+    assert other_state.config_mutations == 0
+
+    # Action is part of the signed payload as well; a configuration capability cannot
+    # be repurposed as an issue-resolution capability.
+    action_replaced = replace(capability, action="ISSUE_RESOLUTION")
+    assert action_replaced.valid_for(
+        actor=action_replaced.actor,
+        role=action_replaced.role,
+        target_id=action_replaced.target_id,
+        action="ISSUE_RESOLUTION",
+    ) is False
+
     with pytest.raises(HTTPException):
         issue_authorization_capability(
             authorization="Bearer " + "x" * 32,
@@ -110,6 +136,8 @@ def test_authorization_and_evidence_hardening_selftests_pass() -> None:
     evidence = run_evidence_immutability_selftest()
     assert len(authorization) == 5
     assert all(authorization.values())
+    assert authorization["capability_retarget_tamper_rejected"] is True
+    assert authorization["capability_action_binding_enforced"] is True
     assert len(evidence) == 3
     assert all(evidence.values())
 
@@ -131,6 +159,76 @@ def test_closure_requires_complete_clean_authoritative_evidence() -> None:
     assert closed is True
     assert blockers == ()
     assert state.package.state == "CLOSED"
+
+
+def test_closure_rejects_never_ingested_authoritative_replacement() -> None:
+    package = build_synthetic_packages(1)[0]
+    state = PackageState(package=package, current_baseline="BL-001")
+    for evidence_type in package.required_evidence_types:
+        accepted, findings = ingest_evidence(
+            state,
+            _valid_evidence(
+                state,
+                evidence_id=f"ACCEPTED-{evidence_type}",
+                evidence_type=evidence_type,
+            ),
+        )
+        assert accepted is True
+        assert findings == ()
+
+    forged_replacement = _valid_evidence(
+        state,
+        evidence_id="NEVER-INGESTED-DESIGN",
+        evidence_type="design",
+        version=99,
+    )
+    state.authoritative_evidence["design"] = forged_replacement
+
+    closed, blockers = close_package(state)
+    assert closed is False
+    assert "INVALID_AUTHORITATIVE_EVIDENCE:design" in blockers
+
+
+def test_closure_rejects_authoritative_downgrade_after_valid_supersession() -> None:
+    package = build_synthetic_packages(1)[0]
+    state = PackageState(package=package, current_baseline="BL-001")
+
+    design_v1 = _valid_evidence(
+        state,
+        evidence_id="DESIGN-V1",
+        evidence_type="design",
+        version=1,
+    )
+    accepted_v1, _ = ingest_evidence(state, design_v1)
+    assert accepted_v1 is True
+
+    design_v2 = _valid_evidence(
+        state,
+        evidence_id="DESIGN-V2",
+        evidence_type="design",
+        version=2,
+        supersedes="DESIGN-V1",
+    )
+    accepted_v2, findings_v2 = ingest_evidence(state, design_v2)
+    assert accepted_v2 is True
+    assert findings_v2 == ()
+
+    for evidence_type in ("inspection", "as_built"):
+        accepted, findings = ingest_evidence(
+            state,
+            _valid_evidence(
+                state,
+                evidence_id=f"ACCEPTED-{evidence_type}",
+                evidence_type=evidence_type,
+            ),
+        )
+        assert accepted is True
+        assert findings == ()
+
+    state.authoritative_evidence["design"] = design_v1
+    closed, blockers = close_package(state)
+    assert closed is False
+    assert "INVALID_AUTHORITATIVE_EVIDENCE:design" in blockers
 
 
 def test_stale_evidence_blocks_authoritative_acceptance_and_closure() -> None:
