@@ -7,6 +7,8 @@ from typing import Any, Iterable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .auth import Role, require_admin
+
 
 EVIDENCE_STATUS = "INTERNAL_SYNTHETIC_SOFTWARE_EVIDENCE"
 CLAIMS_BOUNDARY = (
@@ -14,6 +16,8 @@ CLAIMS_BOUNDARY = (
     "USACE/Air Force acceptance, construction performance, field integration, CMMC/NIST "
     "conformity, clearance, NC3 access, weapon-control capability, or operational effectiveness."
 )
+
+_AUTH_CAPABILITY_MARKER = object()
 
 
 class WorkPackage(BaseModel):
@@ -27,6 +31,8 @@ class WorkPackage(BaseModel):
 
 
 class EvidenceRecord(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     evidence_id: str = Field(min_length=1)
     package_id: str = Field(min_length=1)
     evidence_type: str = Field(min_length=1)
@@ -37,6 +43,28 @@ class EvidenceRecord(BaseModel):
     digest: str | None = None
     supersedes: str | None = None
     valid: bool = True
+
+
+@dataclass(frozen=True)
+class AuthorizationCapability:
+    actor: str
+    role: str
+    _marker: object = field(repr=False, compare=False)
+
+    def valid_for(self, *, actor: str, role: str) -> bool:
+        return self._marker is _AUTH_CAPABILITY_MARKER and self.actor == actor and self.role == role
+
+
+def issue_authorization_capability(
+    *, actor: str, role: str, authenticated_role: Role
+) -> AuthorizationCapability:
+    """Issue a short-lived in-process capability after the SARA auth layer resolved ADMIN.
+
+    Callers must pass the Role returned by the authenticated request boundary. This helper does not
+    authenticate bearer tokens itself and therefore is not an external identity provider.
+    """
+    require_admin(authenticated_role)
+    return AuthorizationCapability(actor=actor, role=role, _marker=_AUTH_CAPABILITY_MARKER)
 
 
 class AuthorizationEvent(BaseModel):
@@ -128,17 +156,22 @@ def authorize_configuration_change(
     role: str,
     new_baseline: str,
     approval_actor: str | None = None,
+    capability: AuthorizationCapability | None = None,
 ) -> AuthorizationEvent:
+    verified_authority = (
+        capability is not None
+        and capability.valid_for(actor=actor, role=state.package.authority_required)
+    )
     if state.package.state == "CLOSED" and new_baseline != state.current_baseline:
         decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"] = "DENY"
         state.record(
             "configuration_change_denied",
             actor=actor,
-            role=role,
+            claimed_role=role,
             baseline=new_baseline,
             reason="closed_package_requires_reopen_workflow",
         )
-    elif role == state.package.authority_required:
+    elif verified_authority:
         decision = "ALLOW"
         if new_baseline != state.current_baseline:
             invalidated_count = len(state.authoritative_evidence)
@@ -150,23 +183,36 @@ def authorize_configuration_change(
                 invalidated_count=invalidated_count,
                 baseline=new_baseline,
             )
-        state.record("configuration_change_allowed", actor=actor, role=role, baseline=new_baseline)
+        state.record(
+            "configuration_change_allowed",
+            actor=actor,
+            verified_role=capability.role,
+            claimed_role=role,
+            baseline=new_baseline,
+        )
     elif approval_actor is not None:
         decision = "REQUIRE_APPROVAL"
         state.record(
             "configuration_change_requires_approval",
             actor=actor,
-            role=role,
+            claimed_role=role,
             proposed_approver=approval_actor,
             baseline=new_baseline,
+            reason="verified_authorization_capability_required",
         )
     else:
         decision = "DENY"
-        state.record("configuration_change_denied", actor=actor, role=role, baseline=new_baseline)
+        state.record(
+            "configuration_change_denied",
+            actor=actor,
+            claimed_role=role,
+            baseline=new_baseline,
+            reason="verified_authorization_capability_required",
+        )
     return AuthorizationEvent(
         event_id=f"AUTH-{len(state.events):04d}",
         actor=actor,
-        role=role,
+        role=capability.role if verified_authority and capability is not None else role,
         requested_action="CONFIGURATION_CHANGE",
         target_id=state.package.package_id,
         decision=decision,
@@ -221,11 +267,16 @@ def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, 
         findings.append("ORPHAN_SUPERSESSION")
         accepted = False
 
+    snapshot = record.model_copy(deep=True)
     if not duplicate_identity:
-        state.all_evidence[record.evidence_id] = record
+        state.all_evidence[snapshot.evidence_id] = snapshot
     if accepted:
-        state.authoritative_evidence[record.evidence_type] = record
-        state.record("evidence_accepted", evidence_id=record.evidence_id, evidence_type=record.evidence_type)
+        state.authoritative_evidence[snapshot.evidence_type] = snapshot
+        state.record(
+            "evidence_accepted",
+            evidence_id=snapshot.evidence_id,
+            evidence_type=snapshot.evidence_type,
+        )
     else:
         for finding in findings:
             _append_issue(state, finding)
@@ -240,14 +291,19 @@ def resolve_issue(
     actor: str,
     role: str,
     rationale: str,
+    capability: AuthorizationCapability | None = None,
 ) -> bool:
-    if role != state.package.authority_required:
+    verified_authority = (
+        capability is not None
+        and capability.valid_for(actor=actor, role=state.package.authority_required)
+    )
+    if not verified_authority:
         state.record(
             "issue_resolution_denied",
             issue=issue,
             actor=actor,
-            role=role,
-            reason="authority_required",
+            claimed_role=role,
+            reason="verified_authorization_capability_required",
         )
         return False
     if not rationale.strip():
@@ -255,7 +311,7 @@ def resolve_issue(
             "issue_resolution_denied",
             issue=issue,
             actor=actor,
-            role=role,
+            verified_role=capability.role,
             reason="rationale_required",
         )
         return False
@@ -264,7 +320,7 @@ def resolve_issue(
             "issue_resolution_denied",
             issue=issue,
             actor=actor,
-            role=role,
+            verified_role=capability.role,
             reason="issue_not_open",
         )
         return False
@@ -273,10 +329,25 @@ def resolve_issue(
         "issue_resolved",
         issue=issue,
         actor=actor,
-        role=role,
+        verified_role=capability.role,
         rationale=rationale,
     )
     return True
+
+
+def _authoritative_record_valid_for_closure(
+    state: PackageState, evidence_type: str, record: EvidenceRecord
+) -> bool:
+    return (
+        evidence_type == record.evidence_type
+        and record.package_id == state.package.package_id
+        and record.valid
+        and bool(record.source_org)
+        and bool(record.source_actor)
+        and bool(record.digest)
+        and record.digest == _make_digest(record)
+        and record.baseline_id == state.current_baseline
+    )
 
 
 def close_package(state: PackageState) -> tuple[bool, tuple[str, ...]]:
@@ -288,6 +359,15 @@ def close_package(state: PackageState) -> tuple[bool, tuple[str, ...]]:
     ]
     if missing:
         blockers.append("MISSING_REQUIRED_EVIDENCE:" + ",".join(sorted(missing)))
+
+    invalid_authoritative = sorted(
+        evidence_type
+        for evidence_type, record in state.authoritative_evidence.items()
+        if not _authoritative_record_valid_for_closure(state, evidence_type, record)
+    )
+    if invalid_authoritative:
+        blockers.append("INVALID_AUTHORITATIVE_EVIDENCE:" + ",".join(invalid_authoritative))
+
     if state.issues:
         blockers.append("UNRESOLVED_ISSUES")
     if blockers:
