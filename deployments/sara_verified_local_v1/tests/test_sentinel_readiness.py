@@ -44,9 +44,14 @@ def test_scale_campaign_closes_clean_packages_and_denies_unauthorized_mutation()
 def test_integrity_adversarial_campaign_closes_all_encoded_failures() -> None:
     report = run_integrity_adversarial_campaign()
     assert report["pass"] is True
-    assert report["check_count"] == 8
-    assert report["passed_count"] == 8
+    assert report["schema"] == "WS-SENTINEL-INTEGRITY-ADVERSARIAL-CAMPAIGN-V2"
+    assert report["check_count"] == 14
+    assert report["passed_count"] == report["check_count"]
     assert all(report["checks"].values())
+    assert report["checks"]["authorization_claim_only_authority_denied"] is True
+    assert report["checks"]["authorization_capability_target_binding_enforced"] is True
+    assert report["checks"]["immutability_accepted_record_is_frozen"] is True
+    assert report["checks"]["immutability_closure_revalidates_authoritative_evidence"] is True
 
 
 def test_internal_preparation_can_pass_without_promoting_external_readiness() -> None:
@@ -94,6 +99,7 @@ def test_readiness_bundle_is_machine_readable_and_fail_closed(tmp_path) -> None:
     report = json.loads((out / "readiness-report.json").read_text(encoding="utf-8"))
     assert report["internal_preparation_gate_pass"] is True
     assert report["integrity_adversarial_campaign"]["pass"] is True
+    assert report["integrity_adversarial_campaign"]["check_count"] == 14
     assert report["external_operational_gate_pass"] is False
     assert report["external_operational_readiness_cap_pct"] == 55.0
     assert report["software_commit"] == "test-commit"
