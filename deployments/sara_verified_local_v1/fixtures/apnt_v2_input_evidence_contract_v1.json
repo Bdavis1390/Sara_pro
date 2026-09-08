@@ -1,0 +1,101 @@
+{
+  "schema": "ws-apnt-v2-input-evidence-contract-1",
+  "status": "DRAFT_INTERFACE_CONTRACT_NOT_IMPLEMENTED",
+  "purpose": "Define the minimum additional evidence categories required before revising the bounded APNT-awareness decision logic to address preserved NIST-profile-derived blind spots.",
+  "claims_boundary": [
+    "This contract does not implement detection, navigation, sensor fusion, anti-spoofing, timing integrity, or physical PNT resilience.",
+    "Thresholds and residual models must be justified by separately reviewed simulation, partner, laboratory, manufacturer, standards, or field evidence; they are not invented by this contract.",
+    "No source is considered independent merely because it has a different source_id or technology label.",
+    "Missing or invalid provenance must reduce trust or force explicit unknown state in a future design; this contract does not decide the operational response.",
+    "Physical sensor accuracy, integrity, susceptibility, common-mode behavior, and recovery thresholds require physical/partner validation."
+  ],
+  "evidence_categories": [
+    {
+      "category": "SOURCE_IDENTITY_AND_PROVENANCE",
+      "required_fields": [
+        "source_id",
+        "source_type",
+        "provenance_state",
+        "configuration_digest",
+        "data_freshness_state",
+        "time_basis_id"
+      ],
+      "allowed_unknowns": true,
+      "future_use": "Prevent a nominal confidence score from overriding missing lineage/configuration/freshness evidence."
+    },
+    {
+      "category": "SOURCE_HEALTH_AND_DECLARED_CONFIDENCE",
+      "required_fields": ["health", "declared_confidence"],
+      "allowed_unknowns": true,
+      "future_use": "Retain the existing bounded health/confidence awareness signal without treating it as sufficient evidence by itself."
+    },
+    {
+      "category": "CROSS_SOURCE_CONSISTENCY",
+      "required_fields": [
+        "comparison_id",
+        "source_ids",
+        "observable_family",
+        "residual_value",
+        "residual_units",
+        "threshold_reference",
+        "comparison_validity_state"
+      ],
+      "allowed_unknowns": true,
+      "future_use": "Expose disagreements that may indicate bad data, modeling error, drift, manipulation, or loss of source independence; no cause is inferred from disagreement alone."
+    },
+    {
+      "category": "TIMING_INTEGRITY",
+      "required_fields": [
+        "time_basis_id",
+        "offset_value",
+        "offset_units",
+        "drift_value",
+        "drift_units",
+        "threshold_reference",
+        "measurement_validity_state"
+      ],
+      "allowed_unknowns": true,
+      "future_use": "Permit timing degradation to be evaluated independently of position/navigation health."
+    },
+    {
+      "category": "DEPENDENCY_AND_INDEPENDENCE",
+      "required_fields": [
+        "dependency_graph_digest",
+        "source_ids",
+        "shared_dependency_ids",
+        "independence_assessment_state",
+        "assessment_evidence_refs"
+      ],
+      "allowed_unknowns": true,
+      "future_use": "Prevent multiple apparently healthy sources with a shared upstream dependency from being treated as automatically independent corroboration."
+    },
+    {
+      "category": "RECOVERY_AND_REENTRY",
+      "required_fields": [
+        "candidate_source_id",
+        "pre_failure_state_ref",
+        "recovery_evidence_refs",
+        "reentry_threshold_reference",
+        "cross_validation_state",
+        "human_review_state"
+      ],
+      "allowed_unknowns": true,
+      "future_use": "Require explicit evidence before a previously degraded/untrusted source is considered for re-entry."
+    }
+  ],
+  "future_decision_invariants": [
+    "Do not infer manipulation merely from disagreement; distinguish anomaly detection from cause attribution.",
+    "Do not infer source independence from source count or source labels.",
+    "Do not silently replace missing evidence with nominal values.",
+    "Do not derive physical thresholds from synthetic fixture convenience values.",
+    "Do not execute recovery actions automatically; PRIME/human authorization boundaries remain separate.",
+    "Retain the original bounded v1 decision as a comparison baseline during any v2 TEVV campaign."
+  ],
+  "required_preimplementation_reviews": [
+    "field-by-field privacy/security/export-control review before any real platform data",
+    "source/threshold provenance review",
+    "failure-mode and common-cause analysis",
+    "TEVV plan defining false-positive/false-negative and unknown-state behavior",
+    "partner/laboratory review for any physical-source integrity assertion"
+  ]
+}
