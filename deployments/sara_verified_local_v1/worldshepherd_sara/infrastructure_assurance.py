@@ -102,6 +102,7 @@ def _make_digest(record: EvidenceRecord) -> str:
         "version": record.version,
         "baseline_id": record.baseline_id,
         "supersedes": record.supersedes,
+        "valid": record.valid,
     }
     return canonical_digest(material)
 
@@ -128,14 +129,37 @@ def authorize_configuration_change(
     new_baseline: str,
     approval_actor: str | None = None,
 ) -> AuthorizationEvent:
-    allowed = role == state.package.authority_required or approval_actor is not None
-    decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"]
-    if allowed:
+    if state.package.state == "CLOSED" and new_baseline != state.current_baseline:
+        decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"] = "DENY"
+        state.record(
+            "configuration_change_denied",
+            actor=actor,
+            role=role,
+            baseline=new_baseline,
+            reason="closed_package_requires_reopen_workflow",
+        )
+    elif role == state.package.authority_required:
         decision = "ALLOW"
         if new_baseline != state.current_baseline:
+            invalidated_count = len(state.authoritative_evidence)
             state.current_baseline = new_baseline
+            state.authoritative_evidence.clear()
             state.config_mutations += 1
+            state.record(
+                "baseline_evidence_invalidated",
+                invalidated_count=invalidated_count,
+                baseline=new_baseline,
+            )
         state.record("configuration_change_allowed", actor=actor, role=role, baseline=new_baseline)
+    elif approval_actor is not None:
+        decision = "REQUIRE_APPROVAL"
+        state.record(
+            "configuration_change_requires_approval",
+            actor=actor,
+            role=role,
+            proposed_approver=approval_actor,
+            baseline=new_baseline,
+        )
     else:
         decision = "DENY"
         state.record("configuration_change_denied", actor=actor, role=role, baseline=new_baseline)
@@ -150,9 +174,28 @@ def authorize_configuration_change(
     )
 
 
+def _append_issue(state: PackageState, finding: str) -> None:
+    if finding not in state.issues:
+        state.issues.append(finding)
+
+
 def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, tuple[str, ...]]:
     findings: list[str] = []
     accepted = True
+
+    duplicate_identity = record.evidence_id in state.all_evidence
+    if duplicate_identity:
+        findings.append("DUPLICATE_EVIDENCE_ID")
+        accepted = False
+
+    if record.package_id != state.package.package_id:
+        findings.append("PACKAGE_ID_MISMATCH")
+        accepted = False
+
+    if not record.valid:
+        findings.append("SOURCE_MARKED_INVALID")
+        accepted = False
+
     if not record.source_org or not record.source_actor or not record.digest:
         findings.append("PROVENANCE_INCOMPLETE")
         accepted = False
@@ -171,15 +214,69 @@ def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, 
     elif existing and record.version == existing.version and record.evidence_id != existing.evidence_id:
         findings.append("CONFLICTING_EVIDENCE")
         accepted = False
+    elif existing and record.version > existing.version and record.supersedes != existing.evidence_id:
+        findings.append("SUPERSESSION_CHAIN_MISSING")
+        accepted = False
+    elif not existing and record.supersedes is not None:
+        findings.append("ORPHAN_SUPERSESSION")
+        accepted = False
 
-    state.all_evidence[record.evidence_id] = record
+    if not duplicate_identity:
+        state.all_evidence[record.evidence_id] = record
     if accepted:
         state.authoritative_evidence[record.evidence_type] = record
         state.record("evidence_accepted", evidence_id=record.evidence_id, evidence_type=record.evidence_type)
     else:
-        state.issues.extend(findings)
+        for finding in findings:
+            _append_issue(state, finding)
         state.record("evidence_quarantined", evidence_id=record.evidence_id, findings=list(findings))
     return accepted, tuple(findings)
+
+
+def resolve_issue(
+    state: PackageState,
+    *,
+    issue: str,
+    actor: str,
+    role: str,
+    rationale: str,
+) -> bool:
+    if role != state.package.authority_required:
+        state.record(
+            "issue_resolution_denied",
+            issue=issue,
+            actor=actor,
+            role=role,
+            reason="authority_required",
+        )
+        return False
+    if not rationale.strip():
+        state.record(
+            "issue_resolution_denied",
+            issue=issue,
+            actor=actor,
+            role=role,
+            reason="rationale_required",
+        )
+        return False
+    if issue not in state.issues:
+        state.record(
+            "issue_resolution_denied",
+            issue=issue,
+            actor=actor,
+            role=role,
+            reason="issue_not_open",
+        )
+        return False
+    state.issues.remove(issue)
+    state.record(
+        "issue_resolved",
+        issue=issue,
+        actor=actor,
+        role=role,
+        rationale=rationale,
+    )
+    return True
 
 
 def close_package(state: PackageState) -> tuple[bool, tuple[str, ...]]:
@@ -228,6 +325,7 @@ def _valid_evidence(
     source_org: str = "SYNTH-SUB-1",
     source_actor: str = "operator-1",
     supersedes: str | None = None,
+    valid: bool = True,
 ) -> EvidenceRecord:
     record = EvidenceRecord(
         evidence_id=evidence_id,
@@ -238,6 +336,7 @@ def _valid_evidence(
         version=version,
         baseline_id=baseline_id or state.current_baseline,
         supersedes=supersedes,
+        valid=valid,
         digest="placeholder",
     )
     return record.model_copy(update={"digest": _make_digest(record)})
