@@ -77,8 +77,8 @@ class RecursiveDiscoveryPolicy(BaseModel):
     """Finite execution policy for an intentionally non-terminal search.
 
     Worldshepherd's "infinite" objective is represented by no global depth
-    limit and by persistent frontier carry-forward. Each cycle remains bounded
-    so runtime, auditability, and human governance stay enforceable.
+    limit and persistent frontier/proposal carry-forward. Each individual
+    cycle is resource-bounded so auditability and governance remain enforceable.
     """
 
     parent_budget_per_cycle: int = Field(default=64, ge=1, le=10000)
@@ -88,6 +88,7 @@ class RecursiveDiscoveryPolicy(BaseModel):
     unbounded_global_depth: bool = True
     global_depth_limit: None = None
     preserve_negative_evidence: bool = True
+    preserve_deferred_proposals: bool = True
     human_review_required_for_promotion: bool = True
     allow_claim_promotion: bool = False
     allow_external_execution: bool = False
@@ -100,6 +101,8 @@ class RecursiveDiscoveryPolicy(BaseModel):
             raise ValueError("WS-OMEGA does not permit a terminal global depth")
         if not self.preserve_negative_evidence:
             raise ValueError("negative evidence must be preserved")
+        if not self.preserve_deferred_proposals:
+            raise ValueError("deferred recursive proposals must be preserved")
         if not self.human_review_required_for_promotion:
             raise ValueError("claim promotion requires human review")
         if self.allow_claim_promotion:
@@ -110,16 +113,17 @@ class RecursiveDiscoveryPolicy(BaseModel):
 
 
 class RecursiveDiscoveryState(BaseModel):
-    schema: str = "ws-omega-state-1"
+    schema: str = "ws-omega-state-2"
     cycle_index: int = Field(default=0, ge=0)
     frontier: list[DiscoveryNode] = Field(default_factory=list)
     backlog: list[DiscoveryNode] = Field(default_factory=list)
+    proposal_backlog: list[ExpansionProposal] = Field(default_factory=list)
     explored_node_ids: list[str] = Field(default_factory=list)
     prior_state_digest: str | None = None
 
 
 class RecursiveCycleReport(BaseModel):
-    schema: str = "ws-omega-cycle-report-1"
+    schema: str = "ws-omega-cycle-report-2"
     cycle_index: int
     state_before_digest: str
     state_after_digest: str
@@ -127,8 +131,10 @@ class RecursiveCycleReport(BaseModel):
     generated_node_ids: list[str]
     duplicate_node_ids: list[str]
     deferred_proposal_count: int
+    stale_proposal_count: int
     active_frontier_count: int
     backlog_count: int
+    proposal_backlog_count: int
     deepest_depth_seen: int
     global_depth_limit: None = None
     physical_infinity_claimed: bool = False
@@ -156,6 +162,10 @@ def _semantic_material(
 
 def _node_id(material: dict[str, object]) -> str:
     return "WS-OMEGA-" + canonical_digest(material).split(":", 1)[1][:16]
+
+
+def proposal_digest(proposal: ExpansionProposal) -> str:
+    return canonical_digest(proposal.model_dump(mode="json"))
 
 
 def route_node(kind: DiscoveryKind) -> list[str]:
@@ -275,15 +285,22 @@ def state_digest(state: RecursiveDiscoveryState) -> str:
 
 
 def _sort_nodes(nodes: Iterable[DiscoveryNode]) -> list[DiscoveryNode]:
+    unique = {node.node_id: node for node in nodes}
     return sorted(
-        nodes,
+        unique.values(),
         key=lambda node: (-priority_score(node), node.depth, node.node_id),
     )
 
 
-def initialize_state(seeds: Iterable[DiscoveryNode], *, max_active_frontier: int = 4096) -> RecursiveDiscoveryState:
-    unique = {seed.node_id: seed for seed in seeds}
-    ranked = _sort_nodes(unique.values())
+def _dedupe_proposals(proposals: Iterable[ExpansionProposal]) -> list[ExpansionProposal]:
+    unique = {proposal_digest(item): item for item in proposals}
+    return [unique[key] for key in sorted(unique)]
+
+
+def initialize_state(
+    seeds: Iterable[DiscoveryNode], *, max_active_frontier: int = 4096
+) -> RecursiveDiscoveryState:
+    ranked = _sort_nodes(seeds)
     return RecursiveDiscoveryState(
         frontier=ranked[:max_active_frontier],
         backlog=ranked[max_active_frontier:],
@@ -299,77 +316,115 @@ def run_recursive_cycle(
     active_policy = policy or RecursiveDiscoveryPolicy()
     before_digest = state_digest(state)
 
-    ranked_frontier = _sort_nodes(state.frontier)
-    processed = ranked_frontier[: active_policy.parent_budget_per_cycle]
-    unprocessed = ranked_frontier[active_policy.parent_budget_per_cycle :]
+    current_nodes = _sort_nodes([*state.frontier, *state.backlog])
+    current_by_id = {node.node_id: node for node in current_nodes}
+    explored_ids = set(state.explored_node_ids)
+
+    incoming = _dedupe_proposals([*state.proposal_backlog, *proposals])
+    valid: list[ExpansionProposal] = []
+    stale = 0
+    for proposal in incoming:
+        if proposal.parent_node_id in current_by_id:
+            valid.append(proposal)
+        else:
+            stale += 1
+
+    proposals_by_parent: dict[str, list[ExpansionProposal]] = {}
+    for proposal in valid:
+        proposals_by_parent.setdefault(proposal.parent_node_id, []).append(proposal)
+    for parent_id in proposals_by_parent:
+        proposals_by_parent[parent_id] = sorted(
+            proposals_by_parent[parent_id], key=proposal_digest
+        )
+
+    eligible_nodes = [
+        node for node in current_nodes if node.node_id in proposals_by_parent
+    ]
+    processed = eligible_nodes[: active_policy.parent_budget_per_cycle]
     processed_ids = {node.node_id for node in processed}
-    known_ids = {
-        node.node_id
-        for node in [*state.frontier, *state.backlog]
-    } | set(state.explored_node_ids)
 
-    grouped: dict[str, list[ExpansionProposal]] = {}
-    deferred = 0
-    for proposal in proposals:
-        if proposal.parent_node_id not in processed_ids:
-            deferred += 1
-            continue
-        grouped.setdefault(proposal.parent_node_id, []).append(proposal)
-
-    parent_by_id = {node.node_id: node for node in processed}
+    known_ids = set(current_by_id) | explored_ids
     generated: list[DiscoveryNode] = []
-    duplicates: list[str] = []
+    duplicate_ids: list[str] = []
+    deferred: list[ExpansionProposal] = []
+    parents_with_deferred: set[str] = set()
+    fully_processed: set[str] = set()
     new_budget = active_policy.max_new_nodes_per_cycle
 
     for parent in processed:
-        candidates = grouped.get(parent.node_id, [])[: active_policy.max_children_per_parent]
-        for proposal in candidates:
+        candidates = proposals_by_parent[parent.node_id]
+        accepted = candidates[: active_policy.max_children_per_parent]
+        excess = candidates[active_policy.max_children_per_parent :]
+        if excess:
+            deferred.extend(excess)
+            parents_with_deferred.add(parent.node_id)
+
+        for index, proposal in enumerate(accepted):
             if new_budget <= 0:
-                deferred += 1
-                continue
+                deferred.extend(accepted[index:])
+                parents_with_deferred.add(parent.node_id)
+                break
             child = make_child(parent, proposal)
             if child.node_id in known_ids:
-                duplicates.append(child.node_id)
+                duplicate_ids.append(child.node_id)
                 continue
             known_ids.add(child.node_id)
             generated.append(child)
             new_budget -= 1
 
-    candidate_active = _sort_nodes([*unprocessed, *generated])
-    carry_backlog = _sort_nodes(state.backlog)
-    active = candidate_active[: active_policy.max_active_frontier]
-    overflow = candidate_active[active_policy.max_active_frontier :]
+        if parent.node_id not in parents_with_deferred:
+            fully_processed.add(parent.node_id)
 
-    if len(active) < active_policy.max_active_frontier and carry_backlog:
-        room = active_policy.max_active_frontier - len(active)
-        active = _sort_nodes([*active, *carry_backlog[:room]])
-        carry_backlog = carry_backlog[room:]
+    for proposal in valid:
+        if proposal.parent_node_id not in processed_ids:
+            deferred.append(proposal)
 
-    backlog = _sort_nodes([*carry_backlog, *overflow])
-    explored = list(dict.fromkeys([*state.explored_node_ids, *[node.node_id for node in processed]]))
+    deferred = _dedupe_proposals(deferred)
+    deferred_parent_ids = {item.parent_node_id for item in deferred}
+
+    remaining_nodes: list[DiscoveryNode] = []
+    for node in current_nodes:
+        if node.node_id in fully_processed and node.node_id not in deferred_parent_ids:
+            continue
+        remaining_nodes.append(node)
+    remaining_nodes.extend(generated)
+
+    ranked_remaining = _sort_nodes(remaining_nodes)
+    active = ranked_remaining[: active_policy.max_active_frontier]
+    backlog = ranked_remaining[active_policy.max_active_frontier :]
+
+    explored = list(state.explored_node_ids)
+    for node in processed:
+        if node.node_id in fully_processed and node.node_id not in deferred_parent_ids:
+            if node.node_id not in explored_ids:
+                explored.append(node.node_id)
+                explored_ids.add(node.node_id)
 
     next_state = RecursiveDiscoveryState(
         cycle_index=state.cycle_index + 1,
         frontier=active,
         backlog=backlog,
+        proposal_backlog=deferred,
         explored_node_ids=explored,
         prior_state_digest=before_digest,
     )
     after_digest = state_digest(next_state)
-    all_depths = [node.depth for node in [*next_state.frontier, *next_state.backlog, *processed]]
+    all_depths = [node.depth for node in [*current_nodes, *generated]]
     deepest = max(all_depths, default=0)
 
     report_payload = {
-        "schema": "ws-omega-cycle-report-1",
+        "schema": "ws-omega-cycle-report-2",
         "cycle_index": next_state.cycle_index,
         "state_before_digest": before_digest,
         "state_after_digest": after_digest,
         "processed_parent_ids": [node.node_id for node in processed],
         "generated_node_ids": [node.node_id for node in generated],
-        "duplicate_node_ids": sorted(set(duplicates)),
-        "deferred_proposal_count": deferred,
+        "duplicate_node_ids": sorted(set(duplicate_ids)),
+        "deferred_proposal_count": len(deferred),
+        "stale_proposal_count": stale,
         "active_frontier_count": len(next_state.frontier),
         "backlog_count": len(next_state.backlog),
+        "proposal_backlog_count": len(next_state.proposal_backlog),
         "deepest_depth_seen": deepest,
         "global_depth_limit": None,
         "physical_infinity_claimed": False,
