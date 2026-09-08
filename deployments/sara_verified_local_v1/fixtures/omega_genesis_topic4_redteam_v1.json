@@ -1,0 +1,80 @@
+{
+  "schema": "ws-omega-proposals-1",
+  "cycle_label": "2026-09-07-genesis-topic4-redteam",
+  "claims_boundary": [
+    "These findings constrain Worldshepherd novelty claims; they do not promote capability maturity.",
+    "Existing DOE autonomous-science infrastructure must be treated as prior art and integration context.",
+    "No proposal authorizes submission, outreach, physical execution, or partner claims."
+  ],
+  "policy": {
+    "parent_budget_per_cycle": 64,
+    "max_children_per_parent": 8,
+    "max_new_nodes_per_cycle": 256,
+    "max_active_frontier": 4096,
+    "unbounded_global_depth": true,
+    "global_depth_limit": null,
+    "preserve_negative_evidence": true,
+    "human_review_required_for_promotion": true,
+    "allow_claim_promotion": false,
+    "allow_external_execution": false
+  },
+  "proposals": [
+    {
+      "parent_node_id": "WS-OMEGA-01472d646d068cdb",
+      "kind": "PRIOR_ART",
+      "domain": "DOE autonomous science infrastructure",
+      "statement": "The American Science Cloud already provides a federated environment connecting scientific data, workflows, computing resources, and AI/ML services; its Model Access Gateway already supports agentic workflows, data discovery, and model evaluations.",
+      "source_refs": [
+        "https://docs.amsc.energy.gov/",
+        "https://docs.amsc.energy.gov/model-access-gateway/"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["Genesis", "AmSC", "MAG", "agents", "workflow orchestration", "model evaluation"],
+      "falsification_tests": ["Reject any Worldshepherd novelty statement that depends only on providing AI model access, generic agentic workflows, data discovery, or model evaluation unless a measurable non-duplicative function is demonstrated."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-01472d646d068cdb",
+      "kind": "PRIOR_ART",
+      "domain": "autonomous laboratory orchestration",
+      "statement": "Argonne's Rapid Prototyping Laboratory integrates diverse instruments into the MADSci software ecosystem, and MADSci with Globus manages end-to-end autonomous scientific workflows including data collection, reduction, machine-learning training, experiment steering, coupled simulation, storage, and publication.",
+      "source_refs": [
+        "https://rpl.cels.anl.gov/"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["Argonne", "MADSci", "Globus", "robotics", "autonomous workflows"],
+      "falsification_tests": ["Compare Worldshepherd against MADSci/Globus-class orchestration on the same workflow and retain only capabilities that are independently measurable and not already supplied by the orchestration stack."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-01472d646d068cdb",
+      "kind": "OBSERVATION",
+      "domain": "physical autonomous laboratory maturity",
+      "statement": "ORNL reports operating more than a dozen self-driving laboratories and has demonstrated autonomous materials experiments, including AI-driven pulsed-laser-deposition workflows with reported 10-100x faster exploration and synthesis in that research context.",
+      "source_refs": [
+        "https://www.ornl.gov/news/operations-workforce-powers-ornls-autonomous-science-future",
+        "https://www.ornl.gov/research-highlight/first-ever-autonomous-material-synthesis-pulsed-laser-deposition"
+      ],
+      "confidence": 0.98,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["ORNL", "materials", "autonomous labs", "physical validation", "throughput"],
+      "falsification_tests": ["Do not claim autonomous experimentation itself as Worldshepherd novelty; benchmark assurance functions against a realistic self-driving-lab workflow and quantify added latency versus error-rejection benefit."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-573373c6a5f0249e",
+      "kind": "CONTRADICTION",
+      "domain": "Worldshepherd Genesis positioning",
+      "statement": "A generic claim that Worldshepherd is novel because it orchestrates AI-driven laboratory workflows is contradicted by existing DOE infrastructure including AmSC/MAG and MADSci/Globus. The defensible candidate differentiation is independent assurance: falsification, claims gating, evidence custody, deterministic replay, and cross-system auditability.",
+      "source_refs": [
+        "https://docs.amsc.energy.gov/model-access-gateway/",
+        "https://rpl.cels.anl.gov/",
+        "https://www.energy.gov/undersecretaryforscience/genesis-mission/achieving-ai-driven-autonomous-laboratories"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "CORROBORATED",
+      "cross_domain_tags": ["self-audit", "prior art", "claims control", "Genesis", "assurance"],
+      "falsification_tests": ["Attempt to map each proposed Worldshepherd pitch feature to an existing DOE capability; remove or narrow every feature with no measurable differentiation before external submission."
+      ]
+    }
+  ]
+}
