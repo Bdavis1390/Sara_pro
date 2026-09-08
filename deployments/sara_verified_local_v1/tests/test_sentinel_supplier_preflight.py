@@ -17,6 +17,7 @@ def test_default_profile_allows_internal_partner_packet_review_but_blocks_extern
     assert report["decision"] == "PARTNER_PACKET_READY_EXTERNAL_ACTION_BLOCKED"
     assert "exact_legal_entity" in report["missing_or_unverified_fields"]
     assert "does not independently authenticate" in report["claims_boundary"]
+    assert report["external_action_authority_source"] == "SEPARATE_AUTHENTICATED_CRE1AWS_WORKFLOW_REQUIRED"
 
 
 def test_documentary_entity_fields_are_required_for_registration_ready() -> None:
@@ -34,16 +35,17 @@ def test_documentary_entity_fields_are_required_for_registration_ready() -> None
     assert report["external_supplier_submission_authorized"] is False
 
 
-def test_cre1aws_approval_cannot_replace_missing_entity_evidence() -> None:
+def test_cre1aws_profile_flag_cannot_replace_missing_entity_evidence() -> None:
     profile = default_unverified_profile().model_copy(
         update={"cre1aws_external_action_approval": True}
     )
     report = evaluate_supplier_preflight(profile)
     assert report["supplier_registration_ready"] is False
     assert report["external_supplier_submission_authorized"] is False
+    assert report["caller_asserted_approval_ignored"] is True
 
 
-def test_external_submission_requires_both_documentary_readiness_and_approval() -> None:
+def test_caller_authored_verified_profile_cannot_authorize_external_submission() -> None:
     profile = SupplierReadinessInput(
         profile_id="verified-test",
         exact_legal_entity=VerificationState.VERIFIED,
@@ -59,8 +61,10 @@ def test_external_submission_requires_both_documentary_readiness_and_approval() 
     )
     report = evaluate_supplier_preflight(profile)
     assert report["supplier_registration_ready"] is True
-    assert report["external_supplier_submission_authorized"] is True
-    assert report["decision"] == "EXTERNAL_SUPPLIER_SUBMISSION_AUTHORIZED"
+    assert report["external_supplier_submission_authorized"] is False
+    assert report["caller_asserted_approval_ignored"] is True
+    assert report["external_action_authority_source"] == "SEPARATE_AUTHENTICATED_CRE1AWS_WORKFLOW_REQUIRED"
+    assert report["decision"] == "PARTNER_PACKET_READY_EXTERNAL_ACTION_BLOCKED"
 
 
 def test_direct_prime_route_requires_two_comparable_projects_and_construction_qualifications() -> None:
