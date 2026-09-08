@@ -1,11 +1,17 @@
 import json
 
+import pytest
+from fastapi import HTTPException
+
 from worldshepherd_sara.infrastructure_assurance import (
     PackageState,
     authorize_configuration_change,
     build_synthetic_packages,
     close_package,
     ingest_evidence,
+    issue_authorization_capability,
+    run_authorization_integrity_selftest,
+    run_evidence_immutability_selftest,
     run_gate,
 )
 from worldshepherd_sara.infrastructure_assurance import _valid_evidence
@@ -39,6 +45,73 @@ def test_unauthorized_configuration_change_is_denied_without_mutation() -> None:
     assert state.current_baseline == "BL-001"
     assert state.config_mutations == 0
     assert state.events[-1]["event_type"] == "configuration_change_denied"
+
+
+def test_claimed_authority_role_without_capability_is_denied() -> None:
+    package = build_synthetic_packages(1)[0]
+    state = PackageState(package=package, current_baseline="BL-001")
+    event = authorize_configuration_change(
+        state,
+        actor="unverified-caller",
+        role=package.authority_required,
+        new_baseline="BL-002",
+    )
+    assert event.decision == "DENY"
+    assert state.current_baseline == "BL-001"
+    assert state.config_mutations == 0
+
+
+def test_authenticated_capability_is_bearer_validated_and_target_scoped(monkeypatch) -> None:
+    admin_token = "admin-token-" + "a" * 24
+    relay_token = "relay-token-" + "b" * 24
+    monkeypatch.setenv("SARA_ADMIN_TOKEN", admin_token)
+    monkeypatch.setenv("SARA_RELAY_TOKEN", relay_token)
+
+    packages = build_synthetic_packages(2)
+    capability = issue_authorization_capability(
+        authorization=f"Bearer {admin_token}",
+        target_id=packages[0].package_id,
+        authority_role=packages[0].authority_required,
+    )
+    assert capability.actor == "SARA_AUTHENTICATED_ADMIN"
+    assert capability.target_id == packages[0].package_id
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    allowed = authorize_configuration_change(
+        state,
+        actor=capability.actor,
+        role=packages[0].authority_required,
+        new_baseline="BL-002",
+        capability=capability,
+    )
+    assert allowed.decision == "ALLOW"
+    assert state.current_baseline == "BL-002"
+
+    other_state = PackageState(package=packages[1], current_baseline="BL-001")
+    denied = authorize_configuration_change(
+        other_state,
+        actor=capability.actor,
+        role=packages[1].authority_required,
+        new_baseline="BL-002",
+        capability=capability,
+    )
+    assert denied.decision == "DENY"
+    assert other_state.current_baseline == "BL-001"
+
+    with pytest.raises(HTTPException):
+        issue_authorization_capability(
+            authorization="Bearer " + "x" * 32,
+            target_id=packages[0].package_id,
+        )
+
+
+def test_authorization_and_evidence_hardening_selftests_pass() -> None:
+    authorization = run_authorization_integrity_selftest()
+    evidence = run_evidence_immutability_selftest()
+    assert len(authorization) == 5
+    assert all(authorization.values())
+    assert len(evidence) == 3
+    assert all(evidence.values())
 
 
 def test_closure_requires_complete_clean_authoritative_evidence() -> None:
