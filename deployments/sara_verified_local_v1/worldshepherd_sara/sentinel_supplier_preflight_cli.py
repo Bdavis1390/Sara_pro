@@ -44,13 +44,13 @@ def main() -> None:
         args.out.write_text(text, encoding="utf-8")
     print(json.dumps(report, sort_keys=True))
 
-    if args.require_registration_ready and not report["supplier_registration_ready"]:
-        raise SystemExit(2)
-
-    # Deliberately unconditional. This CLI reports evidence status only; actual external-action
-    # permission must be evaluated by a separate authenticated SARA action workflow.
+    # Deliberately unconditional and checked first. This CLI reports evidence status only;
+    # actual external-action permission requires a separate authenticated SARA workflow.
     if args.require_external_authorized:
         raise SystemExit(3)
+
+    if args.require_registration_ready and not report["supplier_registration_ready"]:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":
