@@ -98,6 +98,12 @@ def test_every_block_requires_event_coverage():
             system_attributes=["valid"],
             blocks=[
                 MetrologyBlock(
+                    block_id="covered",
+                    name="Covered",
+                    definition="Block with event coverage.",
+                    evidence_required=["evidence"],
+                ),
+                MetrologyBlock(
                     block_id="orphan",
                     name="Orphan",
                     definition="Block without event coverage.",
@@ -117,7 +123,7 @@ def test_every_block_requires_event_coverage():
                     event_id="e",
                     name="Event",
                     description="Event",
-                    block_ids=["unknown"],
+                    block_ids=["covered"],
                     tool_ids=["t"],
                     expected_evidence=["evidence"],
                 )
