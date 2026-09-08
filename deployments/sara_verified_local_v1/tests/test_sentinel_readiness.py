@@ -45,13 +45,17 @@ def test_integrity_adversarial_campaign_closes_all_encoded_failures() -> None:
     report = run_integrity_adversarial_campaign()
     assert report["pass"] is True
     assert report["schema"] == "WS-SENTINEL-INTEGRITY-ADVERSARIAL-CAMPAIGN-V2"
-    assert report["check_count"] == 14
+    assert report["check_count"] == 18
     assert report["passed_count"] == report["check_count"]
     assert all(report["checks"].values())
     assert report["checks"]["authorization_claim_only_authority_denied"] is True
     assert report["checks"]["authorization_capability_target_binding_enforced"] is True
     assert report["checks"]["immutability_accepted_record_is_frozen"] is True
     assert report["checks"]["immutability_closure_revalidates_authoritative_evidence"] is True
+    assert report["checks"]["immutability_history_key_not_on_caller_state"] is True
+    assert report["checks"]["immutability_engine_chain_tip_blocks_prefix_rollback"] is True
+    assert report["checks"]["immutability_engine_requirements_block_policy_erasure"] is True
+    assert report["checks"]["immutability_engine_issue_ledger_blocks_public_clear"] is True
 
 
 def test_internal_preparation_can_pass_without_promoting_external_readiness() -> None:
