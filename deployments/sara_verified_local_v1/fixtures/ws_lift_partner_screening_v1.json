@@ -1,0 +1,86 @@
+{
+  "schema": "ws-lift-partner-screening-1",
+  "source_urls": [
+    "https://www.darpa.mil/research/challenges/lift/scoreboard",
+    "https://www.darpa.mil/news/2026/lift-challenge-awards",
+    "https://avidrone.com/",
+    "https://eng.umd.edu/news/story/umd-lauded-at-darpa-lift-challenge"
+  ],
+  "claims_boundary": [
+    "Partner candidates are screening targets only; no interest, availability, commitment, eligibility, nontraditional status, or teaming agreement is claimed.",
+    "DARPA challenge results establish bounded public performance evidence, not suitability for a specific future proposal.",
+    "Potential competitive and IP conflicts must be assessed before technical disclosure.",
+    "Scores below are internal screening scores, not probabilities of partnership or award."
+  ],
+  "screening_dimensions": {
+    "physical_evidence": 25,
+    "worldshepherd_complementarity": 20,
+    "2028_relevance": 15,
+    "dp2_relevance": 15,
+    "integration_path_clarity": 10,
+    "public_contactability": 5,
+    "competitive_ip_risk_inverse": 10
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "name": "DefendTex",
+      "public_evidence": "DARPA recorded a 12-lb aircraft lifting a 112-lb payload for a 9.63:1 attempted ratio, the highest ratio attempted in the 2026 challenge, but the aircraft did not complete a scored run. DARPA awarded Most Promising Technology and described string-based support to individual motors that reduced hub structure and disk loading.",
+      "best_worldshepherd_role": "High-ratio structural/aerodynamic architecture partner; Worldshepherd contributes failure analysis, telemetry provenance, safety-state capture, deterministic mission replay, and completion/reliability test design.",
+      "principal_gap_or_risk": "The public evidence is an incomplete run; repeatability, control margins, failure mode, endurance, and 2028 220-lb/10-nm scalability require validation. High direct competitive/IP overlap is possible.",
+      "internal_score": 86,
+      "outreach_status": "NOT_AUTHORIZED_OR_PERFORMED"
+    },
+    {
+      "rank": 2,
+      "name": "AVIDrone, Inc.",
+      "public_evidence": "DARPA's official best completed 2026 scored run was 3.84:1 using a 29-lb aircraft and 112-lb payload. AVIDrone publicly describes heavy-lift aircraft, automated flight, proprietary autopilot, long-range cruise, cargo delivery, and BVLOS-oriented autonomy.",
+      "best_worldshepherd_role": "Completed-flight baseline and integrated airframe/autonomy partner; Worldshepherd contributes governed autonomy assurance, mission evidence, APNT/degraded-state test orchestration, and 2028 scaling analysis.",
+      "principal_gap_or_risk": "Current official ratio is below 4:1 and far below the Worldshepherd 10:1 research target; proprietary autopilot and direct market overlap may reduce complementarity.",
+      "internal_score": 84,
+      "outreach_status": "NOT_AUTHORIZED_OR_PERFORMED"
+    },
+    {
+      "rank": 3,
+      "name": "University of Maryland Autonomous Micro Air Vehicle Team / UAS Research and Operations Center",
+      "public_evidence": "DARPA awarded UMD Most Revolutionary Aerodynamic Design for a tri-rotor/propeller-driven-rotor aircraft using servo-controlled blade and motor angles to take off as a multirotor and transition after takeoff. UMD reports the team also uses UROC personnel and facilities for UAS design and testing.",
+      "best_worldshepherd_role": "Aerodynamics, transition-flight, controls, and independent academic validation partner; Worldshepherd contributes evidence governance, simulation-to-flight discrepancy tracking, and falsification-oriented test campaigns.",
+      "principal_gap_or_risk": "Subjective innovation award does not itself establish a high completed payload ratio. University contracting, IP, publication, and schedule terms require screening.",
+      "internal_score": 82,
+      "outreach_status": "NOT_AUTHORIZED_OR_PERFORMED"
+    },
+    {
+      "rank": 4,
+      "name": "Portal Aircraft Company",
+      "public_evidence": "DARPA awarded Portal Most Revolutionary Powertrain Design for a scalable concept using hot or cold turbine exhaust to drive rotors while replacing driveshafts and mechanical linkages, with potential reliability benefit from fewer mechanical components.",
+      "best_worldshepherd_role": "Track-B-style powertrain architecture partner; Worldshepherd contributes instrumentation, provenance, mass/thermal/efficiency accounting, lifecycle test orchestration, and system-level assurance.",
+      "principal_gap_or_risk": "The public award establishes design novelty, not the >=4:1 DP2 empirical proof required for a prime. Thermal efficiency, exhaust distribution, controls, manufacturability, and IP require validation.",
+      "internal_score": 79,
+      "outreach_status": "NOT_AUTHORIZED_OR_PERFORMED"
+    },
+    {
+      "rank": 5,
+      "name": "MTech Operations, LLC",
+      "public_evidence": "DARPA recorded the second-best completed 2026 scored run at 3.64:1 using a 32-lb aircraft and 117-lb payload.",
+      "best_worldshepherd_role": "Completed-flight systems baseline partner for reliability, repeatability, mission replay, and incremental 4:1-to-higher scaling studies.",
+      "principal_gap_or_risk": "Public evidence is below 4:1 and limited detail is available on architecture and commercial readiness; additional company and IP diligence is required.",
+      "internal_score": 74,
+      "outreach_status": "NOT_AUTHORIZED_OR_PERFORMED"
+    },
+    {
+      "rank": 6,
+      "name": "Xtreme Aerial Concepts",
+      "public_evidence": "DARPA recorded the third-best completed 2026 scored run at 3.45:1 and awarded third place in the objective performance category.",
+      "best_worldshepherd_role": "Independent completed-flight comparison article for benchmarking mass efficiency, test repeatability, and mission-assurance methods.",
+      "principal_gap_or_risk": "Public technical detail and integration fit are limited; ratio remains below 4:1. Partner value cannot be inferred from competition placement alone.",
+      "internal_score": 68,
+      "outreach_status": "NOT_AUTHORIZED_OR_PERFORMED"
+    }
+  ],
+  "recommended_sequence": [
+    "Perform public IP/prior-art and company-status diligence on DefendTex, AVIDrone, UMD/UROC, Portal, MTech, and Xtreme before outreach.",
+    "For 2028 research, prioritize complementary evidence: DefendTex high-ratio structure + UMD transition aerodynamics + Portal powertrain + one completed-run system baseline.",
+    "For the September 2026 DP2 topic, do not represent Worldshepherd as prime without its own qualifying empirical evidence; identify whether any candidate already has the topic-specific >=4:1 proof and is seeking assurance/autonomy/integration support.",
+    "Use a non-confidential one-page interface/evidence contribution description before any proprietary Worldshepherd disclosure."
+  ]
+}
