@@ -1,0 +1,76 @@
+{
+  "schema": "ws-doe-genesis-submission-readiness-1",
+  "assessed_utc": "2026-09-08T02:41:00Z",
+  "deadline": "2026-09-10T14:00:00-04:00",
+  "source_urls": [
+    "https://sbir-sttr.connectwerx.org/portfolio-items/fy26genesismission/",
+    "https://sbir-sttr.connectwerx.org/resources/",
+    "https://sbir-sttr.connectwerx.org/eligibility-criteria/"
+  ],
+  "connected_record_checks": {
+    "gmail_query": "newer_than:365d (from:ati.org OR from:connectwerx.org OR from:sbir-sttr.connectwerx.org OR Acquisition Management Portal OR AMP access OR ConnectWerx)",
+    "gmail_result": "NO_MATCHING_RECORD_FOUND",
+    "drive_query": "ConnectWerx AMP ATI Genesis Mission",
+    "drive_result": "NO_MATCHING_RECORD_FOUND",
+    "interpretation": "Absence of a connected record does not prove no account exists elsewhere; it means AMP access is not evidenced in the connected records available to this workflow."
+  },
+  "gates": [
+    {
+      "gate_id": "G1_PRIME_IDENTITY",
+      "status": "BLOCKED_PENDING_USER_CONFIRMATION",
+      "requirement": "Select the Prime small business identity that will remain fixed from pitch to invited full application.",
+      "current_evidence": "Curious nerdworX LLC is recorded in project materials as IN_FORMATION.",
+      "reason": "DOE states that the Topic and Prime small business may not change after pitch submission."
+    },
+    {
+      "gate_id": "G2_AMP_ACCESS",
+      "status": "NOT_EVIDENCED",
+      "requirement": "Obtain access to the SBIR/STTR Acquisition Management Portal (AMP).",
+      "current_evidence": "No connected Gmail or Drive record found for ATI/ConnectWerx/AMP access.",
+      "reason": "The pitch must be submitted through AMP."
+    },
+    {
+      "gate_id": "G3_FORMATION_AT_PITCH",
+      "status": "ALLOWED_WITH_DOWNSTREAM_REGISTRATION_GAP",
+      "requirement": "A company being formed may pitch even if all registrations are not yet complete.",
+      "current_evidence": "ConnectWerx FAQ explicitly permits this at pitch stage.",
+      "reason": "Company registrations are required by the applicable award stage; formation status does not itself bar the pitch."
+    },
+    {
+      "gate_id": "G4_SAM_SBA_REGISTRATIONS",
+      "status": "UNVERIFIED_NOT_PITCH_BLOCKER_BY_ITSELF",
+      "requirement": "Complete required registrations for award/full-application compliance, including SAM and SBA Company Registry as applicable.",
+      "current_evidence": "No current project evidence establishes completed SAM, UEI, or SBA Company Registry status.",
+      "reason": "DOE identifies these registrations as essential for award participation and warns applicants to start early."
+    },
+    {
+      "gate_id": "G5_PITCH_CONTENT",
+      "status": "READY_FOR_FINAL_HUMAN_REVIEW",
+      "requirement": "Four open-text responses within 100/200/200/200 word limits, responsive to Topic 4 and evaluation criteria.",
+      "current_evidence": "doe_genesis_topic4_pitch_candidate_v2.json contains a red-teamed version below the verified limits.",
+      "reason": "Content is prepared but must be reviewed by the applicant before submission."
+    },
+    {
+      "gate_id": "G6_PROPRIETARY_CONTENT",
+      "status": "PASS_INTERNAL_REVIEW_REQUIRED",
+      "requirement": "Pitch should not contain proprietary or business-sensitive information.",
+      "current_evidence": "V2 pitch uses architecture-level descriptions and public repository evidence; no secret implementation details are intentionally included.",
+      "reason": "DOE explicitly advises against proprietary/business-sensitive information in pitches."
+    },
+    {
+      "gate_id": "G7_SUBMISSION_AUTHORITY",
+      "status": "BLOCKED_PENDING_EXPLICIT_USER_ACTION_OR_AUTHORIZATION",
+      "requirement": "Applicant reviews and submits the pitch through AMP.",
+      "current_evidence": "No submission has been performed or claimed by Worldshepherd.",
+      "reason": "External application submission is a consequential action and remains outside WS-OMEGA's self-authority."
+    }
+  ],
+  "overall_status": "CONTENT_READY_ADMIN_ACCESS_NOT_READY",
+  "next_actions_in_order": [
+    "Confirm the exact Prime small-business identity to use for the pitch.",
+    "Request or verify ATI/ConnectWerx AMP access immediately.",
+    "Open the live Genesis application in AMP and verify all required non-pitch metadata fields.",
+    "Paste the red-teamed Topic 4 responses and perform final applicant review.",
+    "Submit before September 10, 2026 at 2:00 PM ET and retain the ConnectWerx receipt email as ECHO evidence."
+  ]
+}
