@@ -172,9 +172,10 @@ def test_backlog_nodes_can_reenter_active_frontier_by_priority():
     state = initialize_state([low, high], max_active_frontier=1)
     assert state.frontier[0].node_id == high.node_id
     # Force the lower-priority node into the active slot and the high-priority node into backlog,
-    # then prove the global rerank removes backlog starvation on the next cycle.
+    # then prove the global rerank removes backlog starvation while preserving the same one-slot budget.
     state = state.model_copy(update={"frontier": [low], "backlog": [high]})
-    next_state, _ = run_recursive_cycle(state, [])
+    policy = RecursiveDiscoveryPolicy(max_active_frontier=1)
+    next_state, _ = run_recursive_cycle(state, [], policy=policy)
     assert next_state.frontier[0].node_id == high.node_id
     assert next_state.backlog[0].node_id == low.node_id
 
