@@ -116,6 +116,8 @@ jobs:
           assert all(integrity['checks'].values())
           assert integrity['checks']['authorization_claim_only_authority_denied'] is True
           assert integrity['checks']['authorization_capability_target_binding_enforced'] is True
+          assert integrity['checks']['authorization_capability_retarget_tamper_rejected'] is True
+          assert integrity['checks']['authorization_capability_action_binding_enforced'] is True
           assert integrity['checks']['immutability_accepted_record_is_frozen'] is True
           assert integrity['checks']['immutability_closure_revalidates_authoritative_evidence'] is True
           assert all(item['self_close_allowed'] is False for item in matrix['gates'])
@@ -136,12 +138,14 @@ jobs:
           from pathlib import Path
 
           report = json.loads(Path('sentinel_supplier_preflight_ci/default-unverified-report.json').read_text())
-          assert report['schema'] == 'WS-SENTINEL-SUPPLIER-PREFLIGHT-V1'
+          assert report['schema'] == 'WS-SENTINEL-SUPPLIER-PREFLIGHT-V2'
           assert report['technical_review_ready'] is True
           assert report['partner_route'] == 'READY_FOR_INTERNAL_REVIEW'
           assert report['federal_entity_ready'] is False
           assert report['supplier_registration_ready'] is False
           assert report['external_supplier_submission_authorized'] is False
+          assert report['external_action_authority_source'] == 'SEPARATE_AUTHENTICATED_CRE1AWS_WORKFLOW_REQUIRED'
+          assert report['caller_asserted_approval_ignored'] is False
           assert report['direct_prime_route'] == 'NO_GO'
           assert report['decision'] == 'PARTNER_PACKET_READY_EXTERNAL_ACTION_BLOCKED'
           assert 'exact_legal_entity' in report['missing_or_unverified_fields']
