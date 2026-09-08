@@ -100,3 +100,35 @@ WORLDSHEPHERD_FORECAST: Government demand is converging on testable software/har
 - DP2/STTR physical/domain gates cannot be self-closed by simulation or documentation.
 - Official-source deadline conflicts are retained until the controlling solicitation/DSIP record resolves them.
 - BAE teaming scores are planning aids, not evidence of bilateral interest or partnership.
+
+
+## PRE-RD-2026-0068 — CHIPS Quantum Manufacturing Awards
+- Demand: EMERGING_DEMAND / VALIDATION_AND_SUPPLY_CHAIN_SIGNAL
+- Official sources: https://www.nist.gov/news-events/news/2026/09/department-commerce-announces-finalization-chips-rd-award-quantinuum ; https://www.nist.gov/news-events/news/2026/09/department-commerce-announces-finalization-chips-rd-award-rigetti
+- Released: 2026-09-08
+- Funding status: two finalized CHIPS R&D awards, each up to $100 million; these are not open Worldshepherd solicitations.
+- Requirement signal: trapped-ion scaling requires low-loss integrated photonics, cryogenic-specialized semiconductors and reliable optical components at critical wavelengths; superconducting scaling requires readout electronics, cryostat architectures and fabrication for high-connectivity chip architectures.
+- Recurrence: HIGH across quantum manufacturing, metrology, configuration custody, component qualification, supply-chain provenance and independent verification.
+- Horizon: 3-12M / 12-24M_PLUS
+- Existing Worldshepherd capability: provider-neutral quantum evidence contracts, configuration/provenance concepts and QPU-access preparation — INTERNAL SOFTWARE/PROCESS EVIDENCE ONLY where retained.
+- Missing: semiconductor/photonic fabrication, cryogenic test infrastructure, device metrology, component qualification, recognized independent-validator standing, Quantinuum/Rigetti/Commerce acceptance and any verified partner relationship.
+- Build now: extend the quantum IV&V evidence schema to distinguish architecture-specific physical stacks while preserving a common evidence core: device/wafer/lot identity, fabrication route, cryogenic configuration, optical/readout chain, calibration lineage, raw-result custody, error budget, yield/reliability and independent reproduction.
+- Cheapest useful falsification test: run the same provider-neutral evidence package against one public trapped-ion benchmark dataset and one public superconducting benchmark dataset; measure which fields remain genuinely common and which require architecture-specific extensions.
+- Prime/partner: PARTNER/VALIDATION-INFRASTRUCTURE only; no direct award route or recipient interest is claimed.
+
+## PRE-RD-2026-0069 — NIST IR 8615 Secure-Hardware Assurance Convergence
+- Demand: EMERGING_DEMAND / STANDARD
+- Official source: https://www.nist.gov/news-events/news/2026/09/workshop-report-rolling-next-generation-secure-hardware-standards-nist-ir
+- Released: 2026-09-01
+- Requirement signal: lifecycle-wide hardware security using interoperable trust models, tiered assurance, cryptographic identities, SBOMs, attestation, verification, provenance/traceability, resilient evaluation, formal methods and fuzzing.
+- Recurrence: HIGH across BAE supplier readiness, defense software/hardware supply chains, AI hardware, chiplets, quantum hardware and Sentinel digital infrastructure.
+- Horizon: 0-90D / 3-12M / 12-24M_PLUS
+- Current Worldshepherd capability: software-side provenance, audit, claims-control and synthetic integrity tests where retained; not hardware-rooted attestation, semiconductor traceability, conformity, certification or NIST acceptance.
+- Build now: add a hardware-assurance evidence profile linking component identity, firmware/SBOM, build/fabrication lot, attestation evidence, vulnerability state, configuration changes, incident response and end-of-life custody.
+- Evidence target: tamper-evident lifecycle lineage, negative/adversarial tests, rollback resistance, dependency disclosure, reproducible verification and independent review.
+- BAE/Sentinel relevance: strengthens the supplier-readiness and governed-infrastructure proposition, but does not establish BAE acceptance, DFARS/CMMC conformity, facility clearance or operational deployment.
+- Cheapest useful falsification test: attempt to represent a synthetic component swap, vulnerable firmware rollback and missing provenance event; the profile must fail closed without converting synthetic evidence into an external compliance claim.
+
+## 2026-09-08 intake boundary
+- A WEF Strategic Intelligence newsletter highlighted accelerated glacier loss and downstream water-security risk. Treat as DISCOVERY_ONLY until underlying WMO/ICIMOD primary sources are independently ingested; no funding, endorsement, partnership or validated Worldshepherd climate capability is inferred.
+- AARO's official UAP Records page showed no content newer than 2026-07-08 at this check. No new UAP technical release was promoted.
