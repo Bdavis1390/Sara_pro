@@ -1,0 +1,97 @@
+{
+  "schema": "ws-doe-genesis-pitch-candidate-2",
+  "opportunity": {
+    "name": "FY26 Phase I - Genesis Mission",
+    "topic": "Achieving AI-Driven Autonomous Laboratories",
+    "deadline": "2026-09-10T14:00:00-04:00",
+    "pitch_required_before_full_application": true,
+    "max_company_pitches": 3,
+    "verified_pitch_word_limits": {
+      "summary_topic_mission_alignment": 100,
+      "technical_promise": 200,
+      "commercialization_potential": 200,
+      "team_qualifications": 200
+    },
+    "source_urls": [
+      "https://sbir-sttr.connectwerx.org/portfolio-items/fy26genesismission/",
+      "https://sbir-sttr.connectwerx.org/wp-content/uploads/2026/08/SBIR-Pitch-Example.pdf",
+      "https://www.energy.gov/undersecretaryforscience/genesis-mission/achieving-ai-driven-autonomous-laboratories",
+      "https://docs.amsc.energy.gov/",
+      "https://docs.amsc.energy.gov/model-access-gateway/",
+      "https://rpl.cels.anl.gov/",
+      "https://www.ornl.gov/news/operations-workforce-powers-ornls-autonomous-science-future",
+      "https://www.ornl.gov/research-highlight/first-ever-autonomous-material-synthesis-pulsed-laser-deposition"
+    ]
+  },
+  "applicant": {
+    "working_name": "Curious nerdworX LLC",
+    "formation_status": "IN_FORMATION",
+    "sam_status": "UNVERIFIED",
+    "uei_status": "UNVERIFIED",
+    "sba_company_registry_status": "UNVERIFIED",
+    "doe_application_hub_status": "UNVERIFIED",
+    "award_eligibility_claimed": false
+  },
+  "red_team_findings": [
+    {
+      "kind": "PRIOR_ART",
+      "finding": "DOE's American Science Cloud already provides a unified scientific-workflow environment, and its Model Access Gateway already supports agentic workflows, data discovery, and model evaluations.",
+      "implication": "Do not claim generic AI workflow orchestration, model access, or model evaluation as Worldshepherd novelty."
+    },
+    {
+      "kind": "PRIOR_ART",
+      "finding": "Argonne's MADSci ecosystem with Globus already manages end-to-end autonomous workflows including data collection, reduction, machine-learning training, experiment steering, coupled simulation, storage, and publication.",
+      "implication": "Position Worldshepherd as an assurance plane that complements existing orchestration rather than replacing MADSci/Globus-class infrastructure."
+    },
+    {
+      "kind": "PRIOR_ART",
+      "finding": "ORNL operates more than a dozen self-driving laboratories and has reported autonomous materials experiments with large throughput gains.",
+      "implication": "Do not frame autonomous experimentation itself as novel; frame falsification, claims gating, evidence custody, deterministic replay, and cross-system auditability as the testable differentiation."
+    },
+    {
+      "kind": "MISSION_ALIGNMENT",
+      "finding": "DOE's Topic 4 challenge explicitly targets AI integrated into experimental workflows with robotics, edge AI, real-time analysis, intelligent feedback, hypothesis generation, and data curation/sharing to increase repeatability and discovery rate.",
+      "implication": "Measure assurance overhead against autonomous throughput so governance is evaluated as an enabling control, not a drag on mission productivity."
+    }
+  ],
+  "claims_boundary": [
+    "This is an internal pitch candidate, not a submitted application.",
+    "Worldshepherd does not claim an operational physical autonomous laboratory, National Laboratory integration, or validated scientific hardware.",
+    "Worldshepherd does not claim invention of autonomous laboratories, agentic scientific workflows, data orchestration, or model gateways; substantial DOE prior art exists.",
+    "Repository CI establishes bounded software behavior only and cannot substitute for physical scientific validation.",
+    "No partner commitment, DOE endorsement, eligibility determination, award probability, commercialization validation, or customer willingness-to-pay evidence is claimed."
+  ],
+  "responses": {
+    "summary_topic_mission_alignment": "Worldshepherd proposes an independent experiment-assurance layer for AI-driven autonomous laboratories. Rather than duplicating DOE workflow platforms, it sits above existing orchestration and instruments to preserve falsification, authorization, configuration lineage, uncertainty, and replayable evidence as AI proposes and executes experimental steps. This directly supports Genesis Topic 4’s goals of faster discovery, improved repeatability, and richer datasets. Phase I will demonstrate the approach in a controlled autonomous-experiment testbed and measure whether rigorous claims gating and provenance can reduce false conclusions and reconstruction time without materially slowing experimental throughput.",
+    "technical_promise": "DOE laboratories already operate advanced autonomous-science infrastructure, including agentic workflow services and end-to-end experiment orchestration. The unresolved technical risk is assurance: when AI changes hypotheses, parameters, models, or actions, can investigators later prove what happened, reproduce why it happened, and reject convincing false discoveries?\n\nWorldshepherd addresses that gap as an assurance plane, not another laboratory scheduler. SARA enforces bounded workflow state; ECHO-style records bind telemetry, configuration, model, and calibration lineage; PRIME prevents unsupported claim promotion; PVK compares physical or domain models; and WS-OMEGA generates contradictions, negative-space questions, and falsification tests without self-authorizing consequential execution.\n\nPhase I will connect these controls to a hardware-interface-in-the-loop testbed. We will inject drift, missing data, stale models, conflicting measurements, unsafe requests, and synthetic anomalies. Metrics will include provenance completeness, deterministic replay success, false-promotion rate, anomaly discrimination, human-intervention burden, and experiment-cycle overhead. Success requires measurable assurance gains while maintaining useful autonomous throughput.",
+    "commercialization_potential": "Autonomous laboratories are moving from isolated demonstrations to shared scientific infrastructure across DOE facilities, universities, biotechnology, advanced manufacturing, quantum research, and industrial R&D. Existing platforms increasingly automate instruments, data movement, model access, and experiment steering. Worldshepherd targets the adjacent problem those systems do not eliminate: independent assurance that autonomous decisions, model versions, calibrations, interventions, and conclusions remain reconstructable and claims-controlled.\n\nThe product would deploy as an on-premises or facility-hosted assurance layer through adapters to existing laboratory and workflow systems. Initial customers are operators of expensive, safety-sensitive, regulated, or qualification-intensive experiments where a bad autonomous decision or irreproducible result has material cost. Phase I customer discovery will test willingness to pay, integration burden, and which evidence functions must be standardized.\n\nRevenue paths include enterprise software licensing, validated adapters, deployment/support, and domain-specific assurance modules. Competitive differentiation will be evaluated against DOE orchestration stacks, laboratory automation products, ELNs, workflow engines, and MLOps tools using measurable replay, falsification, authorization, provenance, and false-promotion performance rather than generic automation claims.",
+    "team_qualifications": "Worldshepherd is being developed through Curious nerdworX LLC (in formation), led by Brandon Ray Davis. The public SARA software base already includes governed workflow execution, role-separated administration, audit logging, configuration custody, qualification records, synthetic engineering testbeds, rollback and recovery exercises, and the merged WS-OMEGA recursive-discovery layer. Protected CI has verified these software behaviors across recovery, resilience, TLS, evidence-closure, and deployment checks.\n\nThe team’s relevant strength is systems integration across AI proposals, authorization, evidence capture, reproducible analysis, and falsification-oriented validation. The project deliberately does not claim an operational physical autonomous laboratory, validated scientific hardware, or National Laboratory integration today.\n\nPhase I would close that gap through a bounded hardware-interface-in-the-loop demonstration and independent technical review, while preserving existing DOE orchestration rather than replacing it. Award funds would support interface adapters, test instrumentation, assurance metrics, independent validation, and customer discovery. Corporate registrations and any required research-institution participation would be completed under DOE SBIR/STTR requirements before applicable award/full-application gates."
+  },
+  "phase_i_go_no_go_metrics": [
+    {
+      "metric": "provenance_completeness",
+      "target": ">=99% of required experiment-state fields present in qualified synthetic runs",
+      "scope": "SOFTWARE_AND_SYNTHETIC_ONLY"
+    },
+    {
+      "metric": "deterministic_replay",
+      "target": ">=99% exact terminal-state reconstruction for replay-qualified workflows",
+      "scope": "SOFTWARE_AND_SYNTHETIC_ONLY"
+    },
+    {
+      "metric": "false_promotion_rate",
+      "target": "<=1% on preregistered synthetic anomaly and systematic-injection suite",
+      "scope": "SOFTWARE_AND_SYNTHETIC_ONLY"
+    },
+    {
+      "metric": "unsafe_action_block_rate",
+      "target": "100% on preregistered prohibited-action test set",
+      "scope": "SOFTWARE_AND_SYNTHETIC_ONLY"
+    },
+    {
+      "metric": "experiment_cycle_overhead",
+      "target": "quantify added latency and demonstrate a bounded operating region where assurance controls remain compatible with useful autonomous throughput",
+      "scope": "MEASUREMENT_REQUIRED; NO PRESET PERFORMANCE CLAIM"
+    }
+  ]
+}
