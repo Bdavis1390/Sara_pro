@@ -180,7 +180,7 @@ def test_authorization_and_evidence_hardening_selftests_pass() -> None:
     assert all(authorization.values())
     assert authorization["capability_retarget_tamper_rejected"] is True
     assert authorization["capability_action_binding_enforced"] is True
-    assert len(evidence) == 3
+    assert len(evidence) == 7
     assert all(evidence.values())
 
 
