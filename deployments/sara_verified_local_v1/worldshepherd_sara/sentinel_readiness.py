@@ -3,8 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .infrastructure_assurance import CLAIMS_BOUNDARY, build_synthetic_packages, close_package, run_gate
-from .infrastructure_assurance import _valid_evidence, ingest_evidence
+from .infrastructure_assurance import (
+    CLAIMS_BOUNDARY,
+    PackageState,
+    authorize_configuration_change,
+    build_synthetic_packages,
+    close_package,
+    ingest_evidence,
+    resolve_issue,
+    run_gate,
+)
+from .infrastructure_assurance import _valid_evidence
 
 
 INTERNAL_TARGET_PCT = 98.7
@@ -55,10 +64,7 @@ def run_scale_campaign(package_count: int = 2000) -> dict[str, Any]:
     unauthorized_mutations = 0
     packages = build_synthetic_packages(package_count)
     for package in packages:
-        state = __import__(
-            "worldshepherd_sara.infrastructure_assurance",
-            fromlist=["PackageState"],
-        ).PackageState(package=package, current_baseline=package.baseline_id)
+        state = PackageState(package=package, current_baseline=package.baseline_id)
         for evidence_type in package.required_evidence_types:
             record = _valid_evidence(
                 state,
@@ -78,10 +84,7 @@ def run_scale_campaign(package_count: int = 2000) -> dict[str, Any]:
 
         unauthorized_attempts += 1
         before = state.config_mutations
-        event = __import__(
-            "worldshepherd_sara.infrastructure_assurance",
-            fromlist=["authorize_configuration_change"],
-        ).authorize_configuration_change(
+        event = authorize_configuration_change(
             state,
             actor="synthetic-field-operator",
             role="FIELD_OPERATOR",
@@ -100,6 +103,114 @@ def run_scale_campaign(package_count: int = 2000) -> dict[str, Any]:
         "unauthorized_authoritative_mutations": unauthorized_mutations,
         "pass": closed == package_count and false_blocks == 0 and unauthorized_mutations == 0,
         "claims_boundary": CLAIMS_BOUNDARY,
+    }
+
+
+def run_integrity_adversarial_campaign() -> dict[str, Any]:
+    checks: dict[str, bool] = {}
+
+    packages = build_synthetic_packages(2)
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    cross_package = _valid_evidence(state, evidence_id="ADV-XPKG", evidence_type="design")
+    cross_package = cross_package.model_copy(update={"package_id": packages[1].package_id})
+    accepted, findings = ingest_evidence(state, cross_package)
+    checks["cross_package_rejected"] = not accepted and "PACKAGE_ID_MISMATCH" in findings
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    invalid = _valid_evidence(state, evidence_id="ADV-INVALID", evidence_type="design", valid=False)
+    accepted, findings = ingest_evidence(state, invalid)
+    checks["source_invalid_rejected"] = not accepted and "SOURCE_MARKED_INVALID" in findings
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    first = _valid_evidence(state, evidence_id="ADV-DUP", evidence_type="inspection")
+    accepted_first, _ = ingest_evidence(state, first)
+    accepted_second, findings_second = ingest_evidence(state, first)
+    checks["duplicate_identity_rejected"] = (
+        accepted_first and not accepted_second and "DUPLICATE_EVIDENCE_ID" in findings_second
+    )
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    v1 = _valid_evidence(state, evidence_id="ADV-V1", evidence_type="as_built", version=1)
+    ingest_evidence(state, v1)
+    v2_bad = _valid_evidence(state, evidence_id="ADV-V2-BAD", evidence_type="as_built", version=2)
+    accepted_bad, findings_bad = ingest_evidence(state, v2_bad)
+    checks["supersession_chain_required"] = (
+        not accepted_bad and "SUPERSESSION_CHAIN_MISSING" in findings_bad
+    )
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    v1 = _valid_evidence(state, evidence_id="ADV-V1-GOOD", evidence_type="as_built", version=1)
+    ingest_evidence(state, v1)
+    v2_good = _valid_evidence(
+        state,
+        evidence_id="ADV-V2-GOOD",
+        evidence_type="as_built",
+        version=2,
+        supersedes="ADV-V1-GOOD",
+    )
+    accepted_good, findings_good = ingest_evidence(state, v2_good)
+    checks["valid_supersession_accepted"] = accepted_good and not findings_good
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    design = _valid_evidence(state, evidence_id="ADV-BASELINE", evidence_type="design")
+    ingest_evidence(state, design)
+    before = len(state.authoritative_evidence)
+    event = authorize_configuration_change(
+        state,
+        actor="program-authority",
+        role=state.package.authority_required,
+        new_baseline="BL-002",
+    )
+    checks["baseline_change_invalidates_prior_authority"] = (
+        before == 1
+        and event.decision == "ALLOW"
+        and state.current_baseline == "BL-002"
+        and len(state.authoritative_evidence) == 0
+    )
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    event = authorize_configuration_change(
+        state,
+        actor="field-operator",
+        role="FIELD_OPERATOR",
+        new_baseline="BL-002",
+        approval_actor="claimed-approver",
+    )
+    checks["approver_name_cannot_bypass_role"] = (
+        event.decision == "REQUIRE_APPROVAL"
+        and state.current_baseline == "BL-001"
+        and state.config_mutations == 0
+    )
+
+    state = PackageState(package=packages[0], current_baseline="BL-001")
+    invalid = _valid_evidence(state, evidence_id="ADV-ISSUE", evidence_type="design", valid=False)
+    ingest_evidence(state, invalid)
+    denied = resolve_issue(
+        state,
+        issue="SOURCE_MARKED_INVALID",
+        actor="field-operator",
+        role="FIELD_OPERATOR",
+        rationale="not authorized",
+    )
+    allowed = resolve_issue(
+        state,
+        issue="SOURCE_MARKED_INVALID",
+        actor="program-authority",
+        role=state.package.authority_required,
+        rationale="synthetic review disposition for readiness test",
+    )
+    checks["issue_resolution_authority_enforced"] = (
+        not denied and allowed and "SOURCE_MARKED_INVALID" not in state.issues
+    )
+
+    return {
+        "schema": "WS-SENTINEL-INTEGRITY-ADVERSARIAL-CAMPAIGN-V1",
+        "evidence_status": "INTERNAL_SYNTHETIC_SOFTWARE_EVIDENCE",
+        "check_count": len(checks),
+        "passed_count": sum(checks.values()),
+        "checks": checks,
+        "pass": all(checks.values()),
+        "claims_boundary": READINESS_CLAIMS_BOUNDARY,
     }
 
 
@@ -171,6 +282,7 @@ def external_gate_matrix() -> dict[str, Any]:
 def build_readiness_report(*, scale_package_count: int = 2000) -> dict[str, Any]:
     gate = run_gate(campaign_id="WS-SENTINEL-READINESS-G1")
     scale = run_scale_campaign(scale_package_count)
+    integrity = run_integrity_adversarial_campaign()
     boundary_results = [
         evaluate_data_boundary(item)
         for item in (
@@ -196,6 +308,7 @@ def build_readiness_report(*, scale_package_count: int = 2000) -> dict[str, Any]
         "safe_state_preserved": gate.metrics.get("safe_state_preserved_count") == 10,
         "zero_unauthorized_mutations_g1": gate.metrics.get("unauthorized_authoritative_mutations") == 0,
         "scale_campaign": bool(scale["pass"]),
+        "integrity_adversarial_campaign": bool(integrity["pass"]),
         "data_boundary_fail_closed": boundary_pass,
         "claims_boundary_present": "does not establish" in READINESS_CLAIMS_BOUNDARY.lower(),
     }
@@ -212,6 +325,7 @@ def build_readiness_report(*, scale_package_count: int = 2000) -> dict[str, Any]
         "internal_preparation_gate_pass": internal_gate_pass,
         "internal_controls": controls,
         "scale_campaign": scale,
+        "integrity_adversarial_campaign": integrity,
         "data_boundary": [result.__dict__ for result in boundary_results],
         "external_gate_matrix": external_gate_matrix(),
         "external_operational_readiness_cap_pct": EXTERNAL_PREAUTH_CAP_PCT,
