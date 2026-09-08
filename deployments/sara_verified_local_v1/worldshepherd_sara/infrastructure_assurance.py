@@ -7,7 +7,7 @@ from typing import Any, Iterable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .auth import Role, require_admin
+from .auth import require_admin, resolve_role
 
 
 EVIDENCE_STATUS = "INTERNAL_SYNTHETIC_SOFTWARE_EVIDENCE"
@@ -18,6 +18,7 @@ CLAIMS_BOUNDARY = (
 )
 
 _AUTH_CAPABILITY_MARKER = object()
+_AUTHENTICATED_ADMIN_ACTOR = "SARA_AUTHENTICATED_ADMIN"
 
 
 class WorkPackage(BaseModel):
@@ -49,22 +50,44 @@ class EvidenceRecord(BaseModel):
 class AuthorizationCapability:
     actor: str
     role: str
+    target_id: str
     _marker: object = field(repr=False, compare=False)
 
-    def valid_for(self, *, actor: str, role: str) -> bool:
-        return self._marker is _AUTH_CAPABILITY_MARKER and self.actor == actor and self.role == role
+    def valid_for(self, *, actor: str, role: str, target_id: str) -> bool:
+        return (
+            self._marker is _AUTH_CAPABILITY_MARKER
+            and self.actor == actor
+            and self.role == role
+            and self.target_id == target_id
+        )
 
 
 def issue_authorization_capability(
-    *, actor: str, role: str, authenticated_role: Role
+    *,
+    authorization: str,
+    target_id: str,
+    authority_role: str = "PROGRAM_INTEGRATION_AUTHORITY",
 ) -> AuthorizationCapability:
-    """Issue a short-lived in-process capability after the SARA auth layer resolved ADMIN.
+    """Issue a package-scoped authority capability after validating the SARA admin bearer token.
 
-    Callers must pass the Role returned by the authenticated request boundary. This helper does not
-    authenticate bearer tokens itself and therefore is not an external identity provider.
+    Caller-supplied actor and role strings are not accepted as authentication. The authenticated
+    SARA admin boundary authorizes issuance; the returned capability is then bound to one package
+    target and one authority role. The current static-token auth layer does not establish a human
+    identity, so the actor is deliberately recorded as SARA_AUTHENTICATED_ADMIN rather than a
+    caller-supplied personal identity.
     """
+    authenticated_role = resolve_role(authorization)
     require_admin(authenticated_role)
-    return AuthorizationCapability(actor=actor, role=role, _marker=_AUTH_CAPABILITY_MARKER)
+    if not target_id.strip():
+        raise ValueError("target_id must be non-empty")
+    if not authority_role.strip():
+        raise ValueError("authority_role must be non-empty")
+    return AuthorizationCapability(
+        actor=_AUTHENTICATED_ADMIN_ACTOR,
+        role=authority_role,
+        target_id=target_id,
+        _marker=_AUTH_CAPABILITY_MARKER,
+    )
 
 
 class AuthorizationEvent(BaseModel):
@@ -160,7 +183,11 @@ def authorize_configuration_change(
 ) -> AuthorizationEvent:
     verified_authority = (
         capability is not None
-        and capability.valid_for(actor=actor, role=state.package.authority_required)
+        and capability.valid_for(
+            actor=actor,
+            role=state.package.authority_required,
+            target_id=state.package.package_id,
+        )
     )
     if state.package.state == "CLOSED" and new_baseline != state.current_baseline:
         decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"] = "DENY"
@@ -189,6 +216,7 @@ def authorize_configuration_change(
             verified_role=capability.role,
             claimed_role=role,
             baseline=new_baseline,
+            capability_target=capability.target_id,
         )
     elif approval_actor is not None:
         decision = "REQUIRE_APPROVAL"
@@ -295,7 +323,11 @@ def resolve_issue(
 ) -> bool:
     verified_authority = (
         capability is not None
-        and capability.valid_for(actor=actor, role=state.package.authority_required)
+        and capability.valid_for(
+            actor=actor,
+            role=state.package.authority_required,
+            target_id=state.package.package_id,
+        )
     )
     if not verified_authority:
         state.record(
@@ -330,6 +362,7 @@ def resolve_issue(
         issue=issue,
         actor=actor,
         verified_role=capability.role,
+        capability_target=capability.target_id,
         rationale=rationale,
     )
     return True
@@ -420,6 +453,155 @@ def _valid_evidence(
         digest="placeholder",
     )
     return record.model_copy(update={"digest": _make_digest(record)})
+
+
+def run_authorization_integrity_selftest() -> dict[str, bool]:
+    """Synthetic-only self-test of capability binding without exposing a reusable capability."""
+    package = build_synthetic_packages(1)[0]
+
+    state = PackageState(package=package.model_copy(deep=True), current_baseline="BL-001")
+    claimed_role = state.package.authority_required
+    impersonation = authorize_configuration_change(
+        state,
+        actor="synthetic-impostor",
+        role=claimed_role,
+        new_baseline="BL-002",
+    )
+    claim_only_denied = (
+        impersonation.decision == "DENY"
+        and state.current_baseline == "BL-001"
+        and state.config_mutations == 0
+    )
+
+    correct_capability = AuthorizationCapability(
+        actor="SYNTHETIC_VERIFIED_AUTHORITY",
+        role=claimed_role,
+        target_id=state.package.package_id,
+        _marker=_AUTH_CAPABILITY_MARKER,
+    )
+    wrong_actor = authorize_configuration_change(
+        state,
+        actor="synthetic-impostor",
+        role=claimed_role,
+        new_baseline="BL-002",
+        capability=correct_capability,
+    )
+    actor_binding_enforced = (
+        wrong_actor.decision == "DENY"
+        and state.current_baseline == "BL-001"
+        and state.config_mutations == 0
+    )
+
+    wrong_target_capability = AuthorizationCapability(
+        actor="SYNTHETIC_VERIFIED_AUTHORITY",
+        role=claimed_role,
+        target_id="WP-NOT-THIS-PACKAGE",
+        _marker=_AUTH_CAPABILITY_MARKER,
+    )
+    wrong_target = authorize_configuration_change(
+        state,
+        actor="SYNTHETIC_VERIFIED_AUTHORITY",
+        role=claimed_role,
+        new_baseline="BL-002",
+        capability=wrong_target_capability,
+    )
+    target_binding_enforced = (
+        wrong_target.decision == "DENY"
+        and state.current_baseline == "BL-001"
+        and state.config_mutations == 0
+    )
+
+    design = _valid_evidence(state, evidence_id="AUTH-BASELINE", evidence_type="design")
+    ingest_evidence(state, design)
+    prior_authority_count = len(state.authoritative_evidence)
+    authorized = authorize_configuration_change(
+        state,
+        actor=correct_capability.actor,
+        role=claimed_role,
+        new_baseline="BL-002",
+        capability=correct_capability,
+    )
+    authenticated_capability_allows = (
+        prior_authority_count == 1
+        and authorized.decision == "ALLOW"
+        and state.current_baseline == "BL-002"
+        and state.config_mutations == 1
+        and len(state.authoritative_evidence) == 0
+    )
+
+    issue_state = PackageState(package=package.model_copy(deep=True), current_baseline="BL-001")
+    issue_state.issues.append("SYNTHETIC_REVIEW_FINDING")
+    denied_resolution = resolve_issue(
+        issue_state,
+        issue="SYNTHETIC_REVIEW_FINDING",
+        actor="synthetic-impostor",
+        role=issue_state.package.authority_required,
+        rationale="claim-only path must fail",
+    )
+    issue_capability = AuthorizationCapability(
+        actor="SYNTHETIC_VERIFIED_AUTHORITY",
+        role=issue_state.package.authority_required,
+        target_id=issue_state.package.package_id,
+        _marker=_AUTH_CAPABILITY_MARKER,
+    )
+    allowed_resolution = resolve_issue(
+        issue_state,
+        issue="SYNTHETIC_REVIEW_FINDING",
+        actor=issue_capability.actor,
+        role=issue_capability.role,
+        rationale="synthetic capability-bound disposition",
+        capability=issue_capability,
+    )
+    issue_resolution_binding_enforced = (
+        not denied_resolution
+        and allowed_resolution
+        and "SYNTHETIC_REVIEW_FINDING" not in issue_state.issues
+    )
+
+    return {
+        "claim_only_authority_denied": claim_only_denied,
+        "capability_actor_binding_enforced": actor_binding_enforced,
+        "capability_target_binding_enforced": target_binding_enforced,
+        "authenticated_capability_path_allows_authorized_change": authenticated_capability_allows,
+        "issue_resolution_capability_binding_enforced": issue_resolution_binding_enforced,
+    }
+
+
+def run_evidence_immutability_selftest() -> dict[str, bool]:
+    """Synthetic-only self-test for accepted-evidence freezing, snapshotting and closure revalidation."""
+    package = build_synthetic_packages(1)[0]
+    state = PackageState(package=package, current_baseline="BL-001")
+    record = _valid_evidence(state, evidence_id="IMMUTABLE-DESIGN", evidence_type="design")
+    accepted, findings = ingest_evidence(state, record)
+    snapshot = state.authoritative_evidence.get("design")
+
+    mutation_blocked = False
+    try:
+        record.valid = False
+    except Exception:
+        mutation_blocked = True
+
+    snapshot_isolated = (
+        accepted
+        and not findings
+        and snapshot is not None
+        and snapshot is not record
+        and snapshot.valid
+    )
+
+    if snapshot is not None:
+        state.authoritative_evidence["design"] = snapshot.model_copy(update={"valid": False})
+    closed, blockers = close_package(state)
+    closure_revalidation_blocks_tampering = (
+        not closed
+        and any(item == "INVALID_AUTHORITATIVE_EVIDENCE:design" for item in blockers)
+    )
+
+    return {
+        "accepted_record_is_frozen": mutation_blocked,
+        "authoritative_snapshot_isolated_from_caller": snapshot_isolated,
+        "closure_revalidates_authoritative_evidence": closure_revalidation_blocks_tampering,
+    }
 
 
 def run_failure_campaign() -> tuple[FailureResult, ...]:
