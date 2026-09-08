@@ -1,0 +1,119 @@
+name: SARA Sentinel Infrastructure Readiness
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/infrastructure_assurance.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_infrastructure_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_infrastructure_assurance.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/sara-sentinel-readiness.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/infrastructure_assurance.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_infrastructure_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_infrastructure_assurance.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/sara-sentinel-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  sentinel-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+          command -v ws-sentinel-infrastructure
+          command -v ws-sentinel-readiness
+          ws-sentinel-infrastructure --help >/dev/null
+          ws-sentinel-readiness --help >/dev/null
+
+      - name: Run Sentinel regression tests
+        run: |
+          pytest -q tests/test_infrastructure_assurance.py tests/test_sentinel_readiness.py
+
+      - name: Build G1 infrastructure evidence
+        run: |
+          rm -rf sentinel_g1_evidence_ci
+          ws-sentinel-infrastructure \
+            --out sentinel_g1_evidence_ci \
+            --campaign-id WS-SENTINEL-DEMO-G1-CI \
+            --software-commit "$GITHUB_SHA" \
+            --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --operator github-actions
+          test -s sentinel_g1_evidence_ci/evidence-index.json
+          test -s sentinel_g1_evidence_ci/gate-report.json
+          test -s sentinel_g1_evidence_ci/claims-boundary.md
+
+      - name: Build readiness evidence
+        run: |
+          rm -rf sentinel_readiness_evidence_ci
+          ws-sentinel-readiness \
+            --out sentinel_readiness_evidence_ci \
+            --software-commit "$GITHUB_SHA" \
+            --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --operator github-actions \
+            --scale-package-count 2000
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('sentinel_readiness_evidence_ci')
+          report = json.loads((root / 'readiness-report.json').read_text())
+          matrix = json.loads((root / 'external-gate-matrix.json').read_text())
+          index = json.loads((root / 'readiness-evidence-index.json').read_text())
+
+          assert report['schema'] == 'WS-SENTINEL-READINESS-REPORT-V1'
+          assert report['internal_preparation_score_pct'] >= 98.7
+          assert report['internal_preparation_gate_pass'] is True
+          assert report['external_operational_gate_pass'] is False
+          assert report['external_operational_readiness_cap_pct'] == 55.0
+          assert report['scale_campaign']['package_count'] == 2000
+          assert report['scale_campaign']['false_blocks'] == 0
+          assert report['scale_campaign']['unauthorized_authoritative_mutations'] == 0
+          assert all(item['self_close_allowed'] is False for item in matrix['gates'])
+          assert index['internal_preparation_gate_pass'] is True
+          assert index['external_operational_gate_pass'] is False
+          assert index['index_digest'].startswith('sha256:')
+          assert 'does not establish' in report['claims_boundary'].lower()
+          PY
+
+      - name: Upload Sentinel G1 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-g1-infrastructure-evidence
+          path: deployments/sara_verified_local_v1/sentinel_g1_evidence_ci
+          if-no-files-found: error
+
+      - name: Upload Sentinel readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-readiness-evidence
+          path: deployments/sara_verified_local_v1/sentinel_readiness_evidence_ci
+          if-no-files-found: error
