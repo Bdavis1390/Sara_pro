@@ -1,0 +1,139 @@
+{
+  "schema": "ws-qvos-eli-call9-gate-1",
+  "call": {
+    "name": "9th ELI User Call",
+    "launch_date": "2026-09-15",
+    "close_date": "2026-10-20",
+    "planned_experimental_period": "2027-05_to_2027-10",
+    "full_offer_status": "PENDING_CALL_LAUNCH",
+    "preliminary_offer_available": true,
+    "evaluation": [
+      "technical_and_safety_feasibility",
+      "international_excellence_based_peer_review"
+    ],
+    "source_urls": [
+      "https://www.eli-beams.eu/news-and-events/pre-announcement-eli-to-launch-9th-user-call-on-15-september/",
+      "https://up.eli-laser.eu/",
+      "https://up.eli-laser.eu/calls",
+      "https://up.eli-laser.eu/user-guide"
+    ]
+  },
+  "access_state": {
+    "eli_user_registry_account": "UNVERIFIED_IN_CONNECTED_GMAIL_AND_GOOGLE_DRIVE",
+    "uos_access": "UNVERIFIED",
+    "proposal_created": false,
+    "proposal_submitted": false,
+    "instrument_scientist_contacted": false,
+    "user_office_contacted": false,
+    "co_proposers_registered": "NOT_APPLICABLE_YET",
+    "administrative_gate": "OPEN_ACCOUNT_OR_RECOVER_EXISTING_ELI_ID_BEFORE_SUBMISSION"
+  },
+  "lead_instrument_candidate": {
+    "name": "ELBA - Electron Beamline for fundamental science",
+    "facility": "ELI Beamlines",
+    "call9_availability": "NOT_YET_CONFIRMED",
+    "listed_science_fit": [
+      "laser_electron_interactions",
+      "nonlinear_QED",
+      "laser_wakefield_acceleration"
+    ],
+    "listed_contact": {
+      "name": "Michal Nevrkla",
+      "email": "michal.nevrkla@eli-beams.eu",
+      "contact_status": "NOT_CONTACTED"
+    },
+    "current_portal_operating_context": {
+      "relativistic_intensity_order_W_cm2": "~5e18",
+      "repetition_rate_hz": 3.3,
+      "commissioning_electron_energy_up_to_GeV": 1.0,
+      "additional_in_air_user_diagnostics": "SUPPORTED_WITH_TRIGGER_SYNCHRONIZATION",
+      "additional_in_vacuum_user_diagnostics": "POSSIBLE_IF_VACUUM_CLEANLINESS_COMPATIBLE",
+      "portal_call_association": "September_2024_5th_ELI_Call_for_Users"
+    },
+    "interpretation": "ELBA is a strong scientific candidate but its current instrument page does not establish availability in the 9th User Call. Do not select it until the September 15 full offer confirms access."
+  },
+  "laser_context": {
+    "system": "L3 HAPLS",
+    "portal_user_parameters": {
+      "repetition_rate_hz": 3.333333,
+      "guaranteed_peak_power_PW": 0.37,
+      "best_effort_peak_power_PW": 0.55,
+      "guaranteed_max_pulse_energy_J": 10.0,
+      "best_effort_max_pulse_energy_J": 15.0,
+      "pulse_duration_fs": 27.0
+    },
+    "august_2026_commissioning_milestone": {
+      "peak_power_PW": 0.95,
+      "pulse_energy_J": 26.6,
+      "pulse_duration_fs": 28.0,
+      "status": "COMMISSIONING_MILESTONE_NOT_USER_GUARANTEED_PARAMETER"
+    },
+    "rule": "Never substitute commissioning maximums for the guaranteed or call-specific user offer."
+  },
+  "qvos_scientific_position": {
+    "lead_positioning": "PHYSICS_CONSTRAINED_EXPERIMENT_ASSURANCE_AND_SYNTHETIC_DIAGNOSTICS_FOR_STRONG_FIELD_QED",
+    "do_not_pitch_as": [
+      "guaranteed_quantum_vacuum_discovery",
+      "new_fundamental_physics_already_observed",
+      "zero_point_energy_extraction",
+      "reactionless_propulsion",
+      "gravity_control"
+    ],
+    "existing_worldshepherd_evidence": [
+      "software_governance_and_provenance_patterns",
+      "PVK_style_model_comparison_and_claims_controls",
+      "WS_OMEGA_falsification_and_negative_space_generation",
+      "synthetic_experiment_and_blind_challenge_designs"
+    ],
+    "physical_strong_field_experiment_evidence": "NONE",
+    "eli_integration_evidence": "NONE",
+    "novel_physics_claimed": false
+  },
+  "proposed_qvos_contribution": [
+    "Shot-level provenance linking laser, electron-beam, detector, calibration, environmental, and analysis states.",
+    "Physics-constrained synthetic diagnostics estimating latent shot parameters with explicit uncertainty rather than replacing primary diagnostics.",
+    "Preregistered null tests and controlled parameter transformations for intensity, polarization, timing, and geometry.",
+    "Blind synthetic-signal injection to measure false-promotion and recovery behavior before analyzing discovery-sensitive observables.",
+    "Competing instrument, classical-background, standard-QED, vacuum-polarization, and optional BSM residual models with increasing evidence burden.",
+    "Deterministic analysis replay and evidence custody suitable for independent reanalysis."
+  ],
+  "call9_launch_checklist": [
+    "Confirm whether ELBA is explicitly offered in Call 9.",
+    "Record exact Call-9 guaranteed laser/electron-beam parameters instead of carrying older portal values forward.",
+    "Confirm allowable user diagnostics, vacuum cleanliness, trigger/timing interfaces, physical envelope, power/data interfaces, and safety constraints.",
+    "Confirm what raw and processed shot metadata can be made available to a user diagnostics/assurance layer.",
+    "Confirm whether a methodological strong-field-QED assurance proposal is scientifically appropriate for the instrument and experimental period.",
+    "Contact the listed instrument scientist before submission only after the full offer establishes the relevant configuration.",
+    "Register/recover an ELI user account and verify UOS access.",
+    "Re-score all Call-9 instruments rather than forcing ELBA if another offered configuration provides a better falsifiable experiment.",
+    "Freeze publication/IP strategy before disclosing proprietary Worldshepherd implementation details."
+  ],
+  "instrument_selection_scorecard": {
+    "technical_fit_weight": 30,
+    "diagnostic_compatibility_weight": 20,
+    "scientific_novelty_weight": 15,
+    "access_feasibility_weight": 15,
+    "evidence_readiness_weight": 10,
+    "follow_on_value_weight": 10,
+    "selection_threshold_internal": 80,
+    "status": "DO_NOT_SCORE_UNTIL_FULL_CALL9_OFFER_IS_PUBLISHED",
+    "note": "Internal score is a prioritization tool, not beamtime acceptance probability."
+  },
+  "evidence_promotion_gates": [
+    "E0 concept and synthetic methodology",
+    "E1 software/replay validation on synthetic strong-field data",
+    "E2 independent domain-expert review and facility-interface feasibility",
+    "E3 accepted facility proposal or equivalent authorized experiment plan",
+    "E4 instrument-integrated calibration and null tests",
+    "E5 physical experiment with complete uncertainty and provenance",
+    "E6 independent replication for extraordinary or beyond-Standard-Model claims"
+  ],
+  "claims_boundary": [
+    "The 9th ELI User Call full offer is not yet published as of September 7, 2026; launch is September 15.",
+    "ELBA scientific relevance does not establish Call-9 availability.",
+    "No ELI User Registry account, UOS access, instrument-scientist engagement, proposal submission, or beamtime award is established in connected records.",
+    "The August 2026 HAPLS 0.95-PW commissioning milestone is not represented as a guaranteed ELBA or Call-9 user parameter.",
+    "Worldshepherd does not claim physical strong-field-QED validation, quantum-vacuum detection, new physics, or facility integration.",
+    "Any BSM result remains a residual-search hypothesis requiring exclusion of instrument, background, and standard-QED explanations plus independent replication."
+  ]
+}
