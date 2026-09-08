@@ -1,0 +1,172 @@
+{
+  "schema": "ws-omega-seeds-1",
+  "claims_boundary": [
+    "Seeds define search domains and questions, not validated capabilities.",
+    "No seed authorizes external execution, claim promotion, partner engagement, or physical validation.",
+    "Negative and contradictory evidence must be retained."
+  ],
+  "seeds": [
+    {
+      "kind": "DOMAIN",
+      "domain": "quantum vacuum and strong-field QED",
+      "statement": "Continuously search for reproducible observations, improved measurement architectures, systematics controls, facility-access paths, and disconfirming evidence relevant to QVOS.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["photonics", "quantum sensing", "metrology", "materials"],
+      "falsification_tests": ["separate Standard Model predictions from instrumental or material effects"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "quantum sensing and timing",
+      "statement": "Search for advances in optical clocks, quantum RF sensing, spin ensembles, Rydberg sensors, distributed timing, and loss-tolerant metrology that can strengthen ECHO-TIME and APNT.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["APNT", "RF", "distributed systems", "metrology"],
+      "falsification_tests": ["compare claimed sensitivity and robustness against independent benchmarks"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "photonics metasurfaces and programmable electromagnetic boundaries",
+      "statement": "Search for full-wave, materials, plasma, thermal, fabrication, broadband, and measured-device evidence that can validate or falsify Worldshepherd programmable-boundary hypotheses.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["RF", "optics", "plasma", "materials"],
+      "falsification_tests": ["prefer calibrated measured controls over simulation-only improvement"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "propulsion and aerospace",
+      "statement": "Search across conventional, electric, plasma, thermal, chemical, nuclear, beamed-energy, and emerging propulsion for validated performance, failure modes, integration gaps, test facilities, and opportunity demand.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["aerospace", "energy", "materials", "thermal"],
+      "falsification_tests": ["require complete momentum and energy accounting for anomalous-force claims"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "autonomous systems robotics and humanoids",
+      "statement": "Search for measured improvements and persistent limitations in locomotion, manipulation, perception, energy, reliability, safety, autonomy, and governed physical interaction.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["AI", "sensing", "mobility", "safety"],
+      "falsification_tests": ["separate benchmark wins from general physical competence"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "resilient communications PNT and spectrum",
+      "statement": "Search for contested-spectrum, DDIL, assured-PNT, coherent timing, RF classification, networking, synchronization, and degraded-state evidence relevant to Worldshepherd mission assurance.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["APNT", "cyber", "RF", "autonomy"],
+      "falsification_tests": ["test graceful degradation and recovery under explicit denial and deception"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "AI governance agent assurance and TEVV",
+      "statement": "Search for standards, evaluations, failure taxonomies, red-team methods, agent security, post-deployment monitoring, and independent benchmarks that can strengthen PRIME, SARA, ECHO, and OVERWATCH.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["NIST", "cybersecurity", "agents", "verification"],
+      "falsification_tests": ["prefer independent blind evaluation over self-reported model performance"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "cybersecurity hardware trust and provenance",
+      "statement": "Search for secure hardware, firmware, SBOM, attestation, supply-chain identity, cryptographic provenance, recovery, and tamper-evidence methods applicable to ECHO-HW.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["hardware", "firmware", "supply chain", "ECHO"],
+      "falsification_tests": ["verify provenance controls against tamper and rollback scenarios"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "advanced materials and additive manufacturing",
+      "statement": "Search for composition-process-structure-property relationships, DED and additive-manufacturing evidence, degradation models, autonomous materials experiments, and independent validation routes for Worldshepherd materials lanes.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["DED", "metallurgy", "autonomous labs", "aerospace"],
+      "falsification_tests": ["preserve baseline and candidate builds with independent characterization and uncertainty"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "energy generation storage conversion and transmission",
+      "statement": "Search for validated advances in generation, storage, thermal management, power electronics, beamed energy, grid resilience, and energy conversion relevant to Worldshepherd systems.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["power", "thermal", "materials", "infrastructure"],
+      "falsification_tests": ["require complete input-output energy boundaries and uncertainty"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "medical biotechnology genetics and programmable cells",
+      "statement": "Search for validated advances in sequencing, gene regulation, cell programming, therapeutics, diagnostics, medical physics, and autonomous biotechnology while preserving research-only and clinical-governance boundaries.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["genomics", "mRNA", "cell engineering", "diagnostics"],
+      "falsification_tests": ["separate preclinical, clinical, and regulatory evidence levels"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "environmental sensing restoration and infrastructure",
+      "statement": "Search for sensing, remediation, water, air, ecosystem, disaster-recovery, climate-resilience, and infrastructure technologies that can reuse Worldshepherd provenance and autonomous experimentation.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["sensors", "infrastructure", "energy", "autonomy"],
+      "falsification_tests": ["compare intervention outcomes against preregistered baselines"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "manufacturing autonomy and digital twins",
+      "statement": "Search for closed-loop manufacturing, autonomous laboratories, digital twins, model-predictive control, metrology, and qualification workflows that can connect SARA to physical experimentation.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["DOE Genesis", "manufacturing", "AI", "metrology"],
+      "falsification_tests": ["quantify sim-to-real error and retain discrepancies"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "mission assurance MBSE and digital engineering",
+      "statement": "Search for requirements, architecture, verification, model-based systems engineering, digital-thread, configuration-custody, and evidence-packaging advances that improve cross-project Worldshepherd assurance.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["MBSE", "configuration", "verification", "evidence"],
+      "falsification_tests": ["trace each promoted requirement or capability to source and test evidence"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "government programs funding standards and procurement demand",
+      "statement": "Continuously discover current and predicted government requirements, funding paths, standards, testbeds, user facilities, consortiums, OTAs, SBIR/STTR topics, and transition signals relevant to PRE.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["PRE", "capture", "standards", "partners"],
+      "falsification_tests": ["verify opportunity facts against official sources before capture-ready classification"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "commercial marketplace partners competitors and prior art",
+      "statement": "Search for commercial capabilities, partner complementarity, competitive conflicts, prior art, supplier readiness, pricing signals, market gaps, and transition paths across all Worldshepherd lanes.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["partners", "prior art", "market", "commercialization"],
+      "falsification_tests": ["actively search for existing products or patents that remove claimed novelty"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "fundamental science anomaly and negative-space search",
+      "statement": "Search across credible scientific domains for reproducible anomalies, failed predictions, unexpected nulls, cross-domain mathematical structures, and measurements that warrant new bounded hypotheses.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["physics", "chemistry", "biology", "information science"],
+      "falsification_tests": ["seek conventional explanations and independent replication before new-physics interpretation"]
+    },
+    {
+      "kind": "DOMAIN",
+      "domain": "Worldshepherd self-audit and contradiction search",
+      "statement": "Continuously search Worldshepherd evidence, claims, tests, failures, open pull requests, external responses, and requirements for contradictions, stale assumptions, missing evidence, and cheaper disconfirming tests.",
+      "evidence_state": "UNVERIFIED",
+      "confidence": 0.0,
+      "cross_domain_tags": ["SARA", "ECHO", "PRIME", "OVERWATCH"],
+      "falsification_tests": ["treat internal claims as hypotheses until their current evidence chain is verified"]
+    }
+  ]
+}
