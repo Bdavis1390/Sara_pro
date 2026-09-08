@@ -1,0 +1,186 @@
+{
+  "schema": "ws-omega-proposals-1",
+  "cycle_label": "2026-09-07-cycle-2",
+  "claims_boundary": [
+    "These are source-grounded discovery proposals, not capability promotions.",
+    "Official program statements are preserved separately from Worldshepherd-specific capability claims.",
+    "No proposal authorizes submission, outreach, purchasing, external execution, or physical-validation claims."
+  ],
+  "policy": {
+    "parent_budget_per_cycle": 64,
+    "max_children_per_parent": 8,
+    "max_new_nodes_per_cycle": 256,
+    "max_active_frontier": 4096,
+    "unbounded_global_depth": true,
+    "global_depth_limit": null,
+    "preserve_negative_evidence": true,
+    "human_review_required_for_promotion": true,
+    "allow_claim_promotion": false,
+    "allow_external_execution": false
+  },
+  "proposals": [
+    {
+      "parent_node_id": "WS-OMEGA-5837f67e5220aaf2",
+      "kind": "OPPORTUNITY",
+      "domain": "DOE Genesis SBIR/STTR",
+      "statement": "DOE announced a $10M Phase I SBIR/STTR opportunity supporting approximately 40 awards across biotechnology, AI for quantum systems, predictable materials, and AI-driven autonomous laboratories, with small-business pitches due September 10, 2026.",
+      "source_refs": [
+        "https://www.energy.gov/technologycommercialization/doe-small-business-innovation-research-sbir-and-small-business",
+        "https://www.energy.gov/undersecretaryforscience/genesis-mission/genesis-mission-national-science-and-technology-challenges"
+      ],
+      "confidence": 0.98,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["PRE", "autonomous labs", "quantum", "materials", "biotechnology"],
+      "falsification_tests": ["Verify applicant eligibility and map one bounded Worldshepherd software capability to a single topic without relying on unvalidated physical claims."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "PRIOR_ART",
+      "domain": "heavy-lift UAS",
+      "statement": "DARPA Lift Challenge results show DefendTex attempted a 9.63:1 payload-to-aircraft-weight ratio using string-based motor support, but the aircraft did not complete a scored run; the official best completed score was AVIDrone at 3.84:1.",
+      "source_refs": [
+        "https://www.darpa.mil/research/challenges/lift/scoreboard",
+        "https://www.darpa.mil/news/2026/lift-challenge-awards"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["UAS", "structures", "propulsion", "prior art", "falsification"],
+      "falsification_tests": ["Any Worldshepherd 10:1 claim must complete a defined flight course with calibrated pre-flight aircraft and payload weighing; static or incomplete-run ratios do not qualify."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA ultra-high payload-to-weight UAS",
+      "statement": "DARPA topic DPA26BZ05-DV022 seeks commercialization of UAS subsystems capable of breaking the 4:1 payload-to-weight ratio and closes September 23, 2026; transition use cases include contested logistics and casualty evacuation.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz05-dv022",
+        "https://www.darpa.mil/research/programs/commercialization-ultra-high-payload-to-weight-uas-subsystems"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["PRE", "UAS", "propulsion", "materials", "commercialization"],
+      "falsification_tests": ["Compare each existing Worldshepherd lift concept against the topic's 24-month hardware and commercialization path and reject prime positioning where current evidence cannot support it."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OBSERVATION",
+      "domain": "DARPA Lift Challenge 2028",
+      "statement": "DARPA has announced a second Lift Challenge for summer 2028 with aircraft still limited to 55 lb, a 220 lb minimum payload, and a 10-nautical-mile course; the future target ratio has not yet been announced.",
+      "source_refs": [
+        "https://www.darpa.mil/research/challenges/lift"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["UAS", "future requirement", "PRE", "flight validation"],
+      "falsification_tests": ["Do not infer the 2028 ratio target until DARPA publishes it; model Worldshepherd designs against only the announced mass, payload, and course constraints."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-5837f67e5220aaf2",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA open-architecture AUV",
+      "statement": "DARPA topic DPA26BZ05-DV021 seeks a two-person-portable open-architecture AUV supporting up to 24-hour operations, rapid payload adaptation, collaborative fleet sensing, resilient navigation, dynamic retasking, deconfliction, mesh data offload, and at-sea testing; proposals close September 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz05-dv021",
+        "https://www.darpa.mil/research/programs/open-architecture-platform-underwater-vehicles"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["PRE", "AUV", "APNT", "autonomy", "mission replay", "open architecture"],
+      "falsification_tests": ["Map current SARA/APNT/HMAA functions to the explicit AUV milestones and identify the minimum missing physical platform, acoustic communications, endurance, and at-sea evidence."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-cbc5eefbc5136fa3",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA PINPOINT",
+      "statement": "DARPA PINPOINT seeks orders-of-magnitude improvements in tactical inertial navigation using nonlinear electromechanics, including levitated proof masses and high-velocity tethered microsystems co-designed with adaptive real-time control; proposals close September 25, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/pinpoint"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["APNT", "MEMS", "nonlinear dynamics", "adaptive control", "PRE"],
+      "falsification_tests": ["Benchmark any Worldshepherd inertial-navigation concept against conventional MEMS and nonlinear-sensor baselines and preserve drift/error growth over multi-hour GPS-denied simulations."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-133e0581fd109c02",
+      "kind": "STANDARD",
+      "domain": "NIST TEVV-Athlon",
+      "statement": "NIST AI 200-2 initial public draft defines an extensible TEVV-Athlon framework for conventional ML, LLMs, multimodal models, and agentic systems, with public input due October 6, 2026.",
+      "source_refs": [
+        "https://www.nist.gov/artificial-intelligence/ai-research/tevv-athlon-framework-evaluating-ai-systems"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["NIST", "PRIME-TEVV", "AI assurance", "agents", "standards"],
+      "falsification_tests": ["Crosswalk existing SARA/PRIME/ECHO assurance records against TEVV-Athlon and identify unsupported or missing TEVV stages before claiming alignment."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-cd76d5c39a03bf59",
+      "kind": "STANDARD",
+      "domain": "NIST secure hardware lifecycle",
+      "statement": "NIST IR 8615 identifies unified trust models, cryptographic identities, SBOMs, attestation, verification, lifecycle traceability, scalable validation, and resilience evaluation as priorities for next-generation hardware security standards.",
+      "source_refs": [
+        "https://www.nist.gov/news-events/news/2026/09/workshop-report-rolling-next-generation-secure-hardware-standards-nist-ir",
+        "https://csrc.nist.gov/pubs/ir/8615/final"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["ECHO-HW", "SBOM", "attestation", "hardware provenance", "supply chain"],
+      "falsification_tests": ["Create a lifecycle provenance test for one Worldshepherd hardware article and attempt tamper, rollback, component substitution, and firmware-lineage failures."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA Firefox",
+      "statement": "DARPA Firefox is planning a 36-month program around non-invasive coherent optical neural recording at cortical depth, dynamic optical scanning across multiple brain regions, and analog computing for high-volume neural data; Proposers Day registration closes September 11, 2026 and the event is September 21.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/firefox",
+        "https://www.darpa.mil/events/2026/proposer-day-firefox"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["biomedical optics", "analog computing", "sensing", "BCI", "PRE"],
+      "falsification_tests": ["Separate Worldshepherd optical-compute or sensing components that have measured performance from purely conceptual overlap before any partner or prime positioning."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "PRIOR_ART",
+      "domain": "distributed RNA medicine manufacturing",
+      "statement": "ARPA-H GIVE has selected teams developing distributed automated RNA manufacturing and integrated quality-control platforms, including continuous-flow and optofluidic approaches, establishing a strong prior-art and partner landscape for Worldshepherd autonomous biomanufacturing concepts.",
+      "source_refs": [
+        "https://arpa-h.gov/explore-funding/programs/give",
+        "https://arpa-h.gov/explore-funding/awards"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["RNA", "automation", "quality control", "digital process", "prior art", "partners"],
+      "falsification_tests": ["Benchmark any Worldshepherd biomanufacturing novelty claim against GIVE awardee architectures and retain only differentiated provenance, governance, sensing, or control functions."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-e7772c13bc4aed80",
+      "kind": "OPPORTUNITY",
+      "domain": "ELI 9th User Call",
+      "statement": "The ELI User Portal confirms that the 9th User Call launches September 15, 2026, providing an upcoming facility-access checkpoint for strong-field and quantum-vacuum-adjacent experiments; specific instrument fit must be evaluated after the final offer is published.",
+      "source_refs": [
+        "https://up.eli-laser.eu/"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["QVOS", "strong-field QED", "facility access", "PRE", "PVK"],
+      "falsification_tests": ["On September 15, score every offered instrument against QVOS technical requirements and reject forced fit below the predeclared facility-fit threshold."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OPPORTUNITY",
+      "domain": "fuel-flexible spacecraft electric propulsion",
+      "statement": "DARPA STTR topic DPA26TZ06-DV005 seeks a fuel-flexible spacecraft electric propulsion system operating on air, water, water/carbon-dioxide mixtures, or nitrogen/hydrogen mixtures at greater than 30% electrical efficiency, with transition paths including vLEO, multimode propulsion, servicing, and ISRU; the topic opens September 23 and closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/fuel-flexible-spacecraft-electric-propulsion-system"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["electric propulsion", "vLEO", "ISRU", "PRE", "partner"],
+      "falsification_tests": ["Keep partner-only unless calibrated vacuum thrust, efficiency, propellant-flexibility, and endurance evidence exist at a maturity compatible with the Direct-to-Phase-II STTR requirements."]
+    }
+  ]
+}

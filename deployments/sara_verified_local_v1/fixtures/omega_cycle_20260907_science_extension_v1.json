@@ -1,0 +1,49 @@
+{
+  "schema": "ws-omega-proposals-1",
+  "cycle_label": "2026-09-07-cycle-2-science-extension",
+  "claims_boundary": [
+    "Peer-reviewed single studies are preserved as SINGLE_SOURCE until independently corroborated for the specific claimed effect.",
+    "NASA mission observations are bounded to the reported demonstration and do not imply docking, servicing success, or broader operational qualification."
+  ],
+  "proposals": [
+    {
+      "parent_node_id": "WS-OMEGA-512d548fb8c99b67",
+      "kind": "OBSERVATION",
+      "domain": "embodied robot long-term navigation memory",
+      "statement": "A peer-reviewed Communications Engineering paper published September 2, 2026 reports a human-like memory approach for embodied robots performing long-term object navigation, providing a candidate architecture for persistent world-state memory in Worldshepherd humanoids and mobile robots.",
+      "source_refs": [
+        "https://www.nature.com/articles/s44172-026-00767-5"
+      ],
+      "confidence": 0.82,
+      "evidence_state": "SINGLE_SOURCE",
+      "cross_domain_tags": ["humanoids", "embodied AI", "navigation", "memory", "mission replay"],
+      "falsification_tests": ["Reproduce the reported memory approach or an equivalent baseline on a held-out long-horizon navigation benchmark and compare success, memory growth, recovery after occlusion, and compute cost against map-only and recurrent baselines."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-512d548fb8c99b67",
+      "kind": "OBSERVATION",
+      "domain": "physics-filtered robot learning",
+      "statement": "A peer-reviewed npj Robotics paper published September 4, 2026 reports that physics filtering can improve robot-learning generalization, reinforcing a Worldshepherd design direction in which learned policies are constrained or filtered by explicit physical structure rather than treated as unconstrained end-to-end control.",
+      "source_refs": [
+        "https://www.nature.com/articles/s44182-026-00114-y"
+      ],
+      "confidence": 0.82,
+      "evidence_state": "SINGLE_SOURCE",
+      "cross_domain_tags": ["robot learning", "physics constraints", "generalization", "PRIME", "safety"],
+      "falsification_tests": ["Compare a physics-filtered policy against an unconstrained learned policy on unseen contact, payload, friction, and terrain conditions while tracking constraint violations and task performance."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OBSERVATION",
+      "domain": "in-space robotic servicing and electric propulsion",
+      "statement": "NASA reported on September 4, 2026 that Katalyst's LINK spacecraft deployed all three robotic arms and fired all three xenon electric-propulsion thrusters simultaneously during the Swift Boost technology demonstration; LINK approached to roughly 12-15 km but will not make a closer approach, so this is bounded subsystem/in-space operations evidence rather than a completed servicing or docking demonstration.",
+      "source_refs": [
+        "https://science.nasa.gov/blogs/swift/2026/09/04/commercial-spacecraft-for-nasas-swift-boost-continues-tech-demo/"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["space robotics", "electric propulsion", "servicing", "autonomy", "mission assurance"],
+      "falsification_tests": ["Use this only as an external benchmark for simultaneous arm/propulsion operations; do not infer rendezvous, capture, docking, or servicing performance that NASA did not report."]
+    }
+  ]
+}
