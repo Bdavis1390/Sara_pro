@@ -32,6 +32,8 @@ class SupplierReadinessInput(BaseModel):
     design_builder_qualification: VerificationState = VerificationState.UNVERIFIED
     construction_bonding_capacity: VerificationState = VerificationState.UNVERIFIED
     construction_execution_capacity: VerificationState = VerificationState.UNVERIFIED
+    # Legacy/import compatibility only. This caller-authored boolean is deliberately
+    # non-authoritative and can never grant external-action permission.
     cre1aws_external_action_approval: bool = False
 
 
@@ -60,7 +62,8 @@ CLAIMS_BOUNDARY = (
     "Supplier preflight is an internal evidence-control decision aid. VERIFIED means only that documentary "
     "evidence was supplied to the preflight for the named field; it does not independently authenticate the "
     "document, establish government registration, prime approval, eligibility, certification, clearance, "
-    "award probability, or operational readiness."
+    "award probability, operational readiness, or external-action authority. External submission authority "
+    "must come from a separate authenticated CRE1AWS-controlled workflow and cannot be asserted in this profile."
 )
 
 
@@ -84,29 +87,34 @@ def evaluate_supplier_preflight(profile: SupplierReadinessInput) -> dict[str, An
 
     partner_packet_review_ready = technical_review_ready
     supplier_registration_ready = technical_review_ready and federal_entity_ready
-    external_supplier_submission_authorized = (
-        supplier_registration_ready and profile.cre1aws_external_action_approval
-    )
+
+    # Fail closed: profile data is caller-authored, so it cannot grant permission to
+    # submit externally even when every documentary field is marked VERIFIED. A
+    # separate authenticated approval mechanism must bind approver, action, target,
+    # and current evidence state before any external submission can be authorized.
+    external_supplier_submission_authorized = False
+    external_action_authority_source = "SEPARATE_AUTHENTICATED_CRE1AWS_WORKFLOW_REQUIRED"
+    caller_asserted_approval_ignored = bool(profile.cre1aws_external_action_approval)
 
     direct_prime_route = "NO_GO" if not direct_prime_evidence_ready else "EVIDENCE_REVIEW_REQUIRED"
     partner_route = "READY_FOR_INTERNAL_REVIEW" if partner_packet_review_ready else "NOT_READY"
 
     return {
-        "schema": "WS-SENTINEL-SUPPLIER-PREFLIGHT-V1",
+        "schema": "WS-SENTINEL-SUPPLIER-PREFLIGHT-V2",
         "profile_id": profile.profile_id,
         "technical_review_ready": technical_review_ready,
         "federal_entity_ready": federal_entity_ready,
         "supplier_registration_ready": supplier_registration_ready,
         "external_supplier_submission_authorized": external_supplier_submission_authorized,
+        "external_action_authority_source": external_action_authority_source,
+        "caller_asserted_approval_ignored": caller_asserted_approval_ignored,
         "direct_prime_evidence_ready": direct_prime_evidence_ready,
         "direct_prime_route": direct_prime_route,
         "partner_route": partner_route,
         "missing_or_unverified_fields": missing_or_unverified,
         "decision": (
             "PARTNER_PACKET_READY_EXTERNAL_ACTION_BLOCKED"
-            if partner_packet_review_ready and not external_supplier_submission_authorized
-            else "EXTERNAL_SUPPLIER_SUBMISSION_AUTHORIZED"
-            if external_supplier_submission_authorized
+            if partner_packet_review_ready
             else "INTERNAL_PREPARATION_INCOMPLETE"
         ),
         "claims_boundary": CLAIMS_BOUNDARY,
