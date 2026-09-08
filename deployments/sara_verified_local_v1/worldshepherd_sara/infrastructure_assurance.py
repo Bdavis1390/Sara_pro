@@ -943,10 +943,59 @@ def run_evidence_immutability_selftest() -> dict[str, bool]:
         and "INVALID_AUTHORITATIVE_EVIDENCE:design" in downgrade_blockers
     )
 
+    rollback_state = PackageState(package=build_synthetic_packages(1)[0], current_baseline="BL-001")
+    rollback_v1 = _valid_evidence(
+        rollback_state, evidence_id="ROLLBACK-V1", evidence_type="design", version=1
+    )
+    ingest_evidence(rollback_state, rollback_v1)
+    rollback_v2 = _valid_evidence(
+        rollback_state,
+        evidence_id="ROLLBACK-V2",
+        evidence_type="design",
+        version=2,
+        supersedes="ROLLBACK-V1",
+    )
+    ingest_evidence(rollback_state, rollback_v2)
+    for evidence_type in ("inspection", "as_built"):
+        ingest_evidence(
+            rollback_state,
+            _valid_evidence(
+                rollback_state,
+                evidence_id=f"ROLLBACK-{evidence_type}",
+                evidence_type=evidence_type,
+            ),
+        )
+    rollback_state.authoritative_evidence["design"] = rollback_v1
+    rollback_state._accepted_history["design"] = rollback_state._accepted_history["design"][:1]
+    rollback_closed, rollback_blockers = close_package(rollback_state)
+
+    requirements_state = PackageState(
+        package=build_synthetic_packages(1)[0], current_baseline="BL-001"
+    )
+    requirements_state.package.required_evidence_types = ()
+    requirements_closed, requirements_blockers = close_package(requirements_state)
+
+    issue_state = _build_complete_state("ISSUE-CUSTODY")
+    _append_issue(issue_state, "SYNTHETIC_AUTHORITY_BLOCKER")
+    issue_state.issues.clear()
+    issue_closed, issue_blockers = close_package(issue_state)
+
     return {
         "accepted_record_is_frozen": mutation_blocked,
         "authoritative_snapshot_isolated_from_caller": snapshot_isolated,
         "closure_revalidates_authoritative_evidence": closure_revalidation_blocks_tampering,
+        "history_key_not_on_caller_state": not hasattr(state, "_accepted_history_key"),
+        "engine_chain_tip_blocks_prefix_rollback": (
+            not rollback_closed
+            and "INVALID_AUTHORITATIVE_EVIDENCE:design" in rollback_blockers
+        ),
+        "engine_requirements_block_policy_erasure": (
+            not requirements_closed
+            and any(item.startswith("MISSING_REQUIRED_EVIDENCE:") for item in requirements_blockers)
+        ),
+        "engine_issue_ledger_blocks_public_clear": (
+            not issue_closed and "UNRESOLVED_ISSUES" in issue_blockers
+        ),
     }
 
 
