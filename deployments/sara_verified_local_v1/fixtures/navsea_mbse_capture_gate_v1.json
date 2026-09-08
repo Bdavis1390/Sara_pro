@@ -1,0 +1,103 @@
+{
+  "schema": "ws-navsea-mbse-capture-gate-1",
+  "topic": {
+    "id": "DON26BX05-NP003",
+    "title": "NAVSEA Open Topic for Model-Based Systems Engineering (MBSE) Acceleration via Artificial Intelligence or Machine Learning Data Ingestion",
+    "open_date": "2026-08-26",
+    "close_date": "2026-09-23T12:00:00-04:00",
+    "phase_i_type": "CONCEPT_FEASIBILITY_ANALYSIS_AND_MODELING",
+    "source_urls": [
+      "https://www.sbir.gov/topics/12921",
+      "https://navysbir.com/n26_5/DON26BX05-NP003.htm",
+      "https://www.dodsbirsttr.mil/submissions/solicitation-documents/active-solicitations"
+    ],
+    "controlling_source_note": "DSIP/DoW solicitation and amendments control. SBIR.gov and NavySBIR copies must be rechecked before submission."
+  },
+  "capture_state": {
+    "phase_i_prime_position": "CONDITIONAL_CANDIDATE_PENDING_ADMIN_ELIGIBILITY",
+    "phase_ii_position": "NO_GO_UNTIL_SECURITY_AND_CAMEO_GATES_VERIFIED",
+    "partner_lane": "HIGH_PRIORITY_FOR_CAMEO_AND_CLASSIFIED_TRANSITION",
+    "dsip_registration_status": "UNVERIFIED_IN_CONNECTED_RECORDS",
+    "sbir_small_business_eligibility": "UNVERIFIED",
+    "us_owned_operated_no_foreign_influence": "UNVERIFIED",
+    "facility_clearance_path": "UNVERIFIED",
+    "personnel_clearance_path": "UNVERIFIED",
+    "cmmc_level_2_self_status": "NOT_ASSESSED",
+    "cameo_license_environment_access": "UNVERIFIED",
+    "cameo_openapi_integration": "NOT_IMPLEMENTED",
+    "proposal_submitted": false
+  },
+  "requirement_mapping": [
+    {
+      "requirement": "Ingest heterogeneous legacy technical artifacts and reconstruct model entities/relationships",
+      "current_evidence": "Synthetic legacy corpus with ground truth plus deterministic rules baseline",
+      "status": "PARTIAL_INTERNAL_SOFTWARE_EVIDENCE",
+      "gap": "No images/OCR corpus, no large heterogeneous held-out corpus, no AEGIS/Navy data, and no AI/ML generalization evidence"
+    },
+    {
+      "requirement": "High degree of accuracy with minimal manual model validation",
+      "current_evidence": "Precision/recall targets exist on synthetic corpus; adversarial paraphrase fixture intentionally exposes deterministic baseline brittleness",
+      "status": "REQUIRES_AI_ML_AND_HELD_OUT_VALIDATION",
+      "gap": "Need preregistered held-out corpus, error taxonomy, confidence calibration, unsupported-inference rate, and correction burden measurement"
+    },
+    {
+      "requirement": "Direct conversion into Cameo MagicDraw SysML models",
+      "current_evidence": "2026x Cameo/SysML documentation confirms supported OpenAPI and SysML OpenAPI classes exist",
+      "status": "SUPPORTED_INTEGRATION_PATH_NOT_IMPLEMENTED",
+      "gap": "Need licensed Cameo environment, version target, OpenAPI adapter, model creation tests, round-trip validation, and Government environment compatibility"
+    },
+    {
+      "requirement": "Support cyber assessment, configuration, interfaces, reliability, testing, and certification use cases",
+      "current_evidence": "Worldshepherd evidence graph, provenance, configuration custody, MBSE synthetic graph, and qualification framework",
+      "status": "PARTIAL_SOFTWARE_FOUNDATION",
+      "gap": "No operational Navy model, cyber authorization evidence, certification evidence, or government SME validation"
+    },
+    {
+      "requirement": "Phase II classified transition capability",
+      "current_evidence": "None established",
+      "status": "HARD_EXTERNAL_GATE",
+      "gap": "U.S.-ownership/foreign-influence determination, facility and personnel clearance path, classified safeguarding, and DCSA/NAVSEA requirements"
+    }
+  ],
+  "phase_i_measurement_plan": [
+    "Establish a heterogeneous unclassified/synthetic legacy corpus with technical prose, BOMs, interface tables, network configuration, cable records, drawings represented through structured surrogates, and deliberately conflicting artifacts.",
+    "Freeze training/development and held-out test partitions before model tuning.",
+    "Benchmark the deterministic rules baseline and retain its failures as negative evidence.",
+    "Develop AI/ML extraction only if it demonstrably improves held-out entity and relationship precision/recall without increasing unsupported inference beyond the preregistered ceiling.",
+    "Attach source-level provenance and confidence to every generated element and relationship.",
+    "Measure human correction burden rather than claiming no-human-input from synthetic accuracy alone.",
+    "Implement a Cameo OpenAPI adapter only in a licensed compatible environment and validate created SysML elements by machine and human inspection.",
+    "Perform round-trip/reopen validation in Cameo and preserve import warnings, rejected elements, and semantic mismatches as evidence.",
+    "Keep all Phase I work unclassified unless the Government explicitly provides and authorizes a different environment."
+  ],
+  "go_no_go_metrics": {
+    "held_out_entity_precision_min": 0.95,
+    "held_out_entity_recall_min": 0.95,
+    "held_out_relationship_precision_min": 0.90,
+    "held_out_relationship_recall_min": 0.90,
+    "unsupported_relationship_fraction_max": 0.01,
+    "source_provenance_completeness_min": 0.99,
+    "cameo_round_trip_semantic_match_min": 0.98,
+    "manual_correction_burden_target": "MEASURE_AND_MINIMIZE_NOT_PRECLAIM_ZERO",
+    "metric_status": "INTERNAL_PHASE_I_TARGETS_NOT_GOVERNMENT_ACCEPTANCE_THRESHOLDS"
+  },
+  "q_and_a_candidate": {
+    "deadline_from_topic_copy": "2026-09-09T12:00:00-04:00",
+    "dsip_access_required": true,
+    "dsip_access_verified": false,
+    "submitted": false,
+    "questions": [
+      "May Phase I feasibility be performed entirely with unclassified synthetic/public legacy-system data, with classified access and facility/personnel clearance becoming an advanced-phase gate rather than a Phase I prerequisite?",
+      "Which Cameo/MagicDraw and SysML version should offerors target for Phase I interface design, and is a supported MagicDraw OpenAPI/SysML plugin adapter an acceptable direct-conversion architecture for the required Cameo environment?",
+      "For the requirement of high-accuracy automated model generation with minimal human input, does NAVSEA have preferred quantitative Phase II evaluation measures for element/relationship correctness, unsupported inference, and manual correction burden?"
+    ]
+  },
+  "claims_boundary": [
+    "No AEGIS, Navy, CUI, export-controlled, or classified data has been ingested or evaluated.",
+    "No Cameo/MagicDraw interoperability is currently claimed.",
+    "The deterministic baseline is not AI/ML and is not proposed as the final topic solution.",
+    "Passing a synthetic fixture does not establish general legacy-document reconstruction accuracy.",
+    "Phase II security eligibility and clearance capability are not established.",
+    "No CMMC assessment, certification, proposal submission, Navy endorsement, partner interest, award probability, or government validation is claimed."
+  ]
+}
