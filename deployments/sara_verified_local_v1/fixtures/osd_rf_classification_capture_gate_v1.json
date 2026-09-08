@@ -1,0 +1,77 @@
+{
+  "schema": "ws-osd-rf-classification-capture-gate-1",
+  "topic": {
+    "id": "OSW26BZ05-DV022",
+    "title": "Signal Classification and Anomaly Detection in Contested Spectral Environments",
+    "open_date": "2026-08-26",
+    "close_date": "2026-09-23T12:00:00-04:00",
+    "award_path": "DIRECT_TO_PHASE_II",
+    "source_urls": [
+      "https://www.sbir.gov/topics/12849",
+      "https://www.dodsbirsttr.mil/submissions/solicitation-documents/active-solicitations"
+    ]
+  },
+  "current_worldshepherd_state": {
+    "rf_signal_classifier_implemented": false,
+    "rf_classifier_benchmark_evidence": "NONE_FOUND_IN_CURRENT_MAIN_REPOSITORY",
+    "expert_sigint_comparison_evidence": "NONE",
+    "cpu_inference_benchmark": "NONE",
+    "interpretable_modular_classifier_evidence": "NONE",
+    "c5isr_integration_evidence": "NONE",
+    "containerized_deployment_foundation": "PRESENT_IN_SARA_SOFTWARE_STACK_BUT_NOT_RF_CLASSIFIER_VALIDATION",
+    "metasurface_or_rf_physics_work_relevance": "ADJACENT_ONLY_NOT_CLASSIFICATION_MATURITY"
+  },
+  "capture_decision": {
+    "prime_status": "NO_GO_WITH_CURRENT_EVIDENCE",
+    "partner_status": "CONDITIONAL_PARTNER_LANE_IF_CLASSIFIER_PRIME_HAS_RF_DATA_AND_MODEL",
+    "future_status": "BUILD_BENCHMARK_BEFORE_NEXT_RECURRING_SPECTRUM_OPPORTUNITY",
+    "reason": "The topic is Direct to Phase II and explicitly expects significant existing maturity and existing capabilities available for demonstration. Current repository evidence does not establish the requested RF classifier."
+  },
+  "requirement_mapping": [
+    {
+      "requirement": "Run-time RF identification/classification faster than expert SIGINT analysts",
+      "status": "GAP",
+      "minimum_evidence": "Preregistered timed comparison on representative held-out RF scenarios against an expert or documented expert-analysis baseline"
+    },
+    {
+      "requirement": "Transparent, human-interpretable, modular results",
+      "status": "GAP",
+      "minimum_evidence": "Modular feature/evidence attribution with repeatable why-output and analyst review"
+    },
+    {
+      "requirement": "Scale from tactical to thousands of assets across domains/time horizons",
+      "status": "GAP",
+      "minimum_evidence": "Load test with explicit event rate, asset count, latency, memory, and degradation curves"
+    },
+    {
+      "requirement": "Operate on modest CPU-based compute footprint",
+      "status": "GAP",
+      "minimum_evidence": "CPU-only training/inference or approved split benchmark with latency, throughput, memory, and energy measurements"
+    },
+    {
+      "requirement": "Improve accuracy over time as additional data/resources are used",
+      "status": "GAP",
+      "minimum_evidence": "Versioned continual-learning or update protocol with held-out regression, catastrophic-forgetting checks, and provenance"
+    },
+    {
+      "requirement": "CI/CD, automated testing, and containerized deployment",
+      "status": "PARTIAL_FOUNDATION_ONLY",
+      "minimum_evidence": "RF-specific pipeline built on existing SARA container/CI controls with classifier regression and security tests"
+    }
+  ],
+  "lowest_cost_future_validation_path": [
+    "Select a legally usable public RF modulation/signal dataset and freeze a train/validation/held-out split.",
+    "Implement an intentionally simple interpretable baseline such as engineered spectral features plus a small classical classifier.",
+    "Measure accuracy, unknown/anomaly detection, calibration, CPU latency, memory footprint, and explanation stability.",
+    "Add corrupted, novel, low-SNR, frequency-shifted, and distribution-shift challenge sets; retain failures as negative evidence.",
+    "Benchmark against a stronger model only after the simple baseline is reproducible.",
+    "Do not use simulated or public-data performance to claim SIGINT analyst superiority or operational contested-spectrum performance.",
+    "Seek a hardware/data partner with lawful representative RF capture and domain expertise before any D2P2 prime claim."
+  ],
+  "claims_boundary": [
+    "No SIGINT data, classified RF data, operational C5ISR data, or government-provided RF corpus has been used.",
+    "No Worldshepherd RF signal classifier is currently claimed as implemented or validated.",
+    "Metasurface, S-parameter, RF propagation, or spectrum-adjacent research does not establish signal-classification maturity.",
+    "No expert-analyst speed advantage, operational accuracy, CPU-footprint compliance, C5ISR integration, D2P2 eligibility, partner interest, proposal submission, award probability, or government validation is claimed."
+  ]
+}
