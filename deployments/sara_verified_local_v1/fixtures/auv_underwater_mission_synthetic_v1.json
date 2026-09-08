@@ -1,0 +1,70 @@
+{
+  "fixture_id": "WS-AUV-SYNTH-001",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic underwater mission assurance scenario only.",
+    "No data is derived from an operational AUV, acoustic modem, DVL, INS, pressure sensor, ocean trial, or DARPA performer.",
+    "The fixture does not validate navigation accuracy, acoustic range, hydrodynamics, endurance, formation stability, stationkeeping, signature, or at-sea performance.",
+    "All retasking and recovery actions remain proposals subject to policy authorization."
+  ],
+  "scenario": {
+    "name": "heterogeneous_auv_degraded_acoustic_mesh",
+    "objective": "Exercise evidence and policy behavior during underwater navigation drift, intermittent acoustic communications, stale collaborative-sensing data, and delayed surface-channel recovery."
+  },
+  "vehicles": [
+    {"id": "AUV-SIM-1", "role": "survey", "synthetic": true},
+    {"id": "AUV-SIM-2", "role": "relay", "synthetic": true},
+    {"id": "AUV-SIM-3", "role": "inspection", "synthetic": true}
+  ],
+  "timeline": [
+    {
+      "t_seconds": 0,
+      "depth_m": 20,
+      "navigation": {"ins_confidence": 0.96, "dvl_confidence": 0.95, "position_uncertainty_m": 2.0},
+      "communications": {"acoustic_mesh": "NOMINAL", "rf": "UNAVAILABLE_SUBMERGED", "cellular": "UNAVAILABLE_SUBMERGED", "satcom": "UNAVAILABLE_SUBMERGED"},
+      "expected_state": "NORMAL"
+    },
+    {
+      "t_seconds": 600,
+      "depth_m": 80,
+      "navigation": {"ins_confidence": 0.88, "dvl_confidence": 0.72, "position_uncertainty_m": 8.0, "indicator": "bottom_lock_degraded"},
+      "communications": {"acoustic_mesh": "DEGRADED", "packet_loss_fraction": 0.35, "latency_seconds": 6.0},
+      "expected_state": "DEGRADED_NAV_AND_COMMS",
+      "proposed_actions": ["increase_navigation_uncertainty", "reduce_tasking_dependence_on_stale_peer_data", "request_relay_geometry_adjustment"]
+    },
+    {
+      "t_seconds": 1200,
+      "depth_m": 100,
+      "navigation": {"ins_confidence": 0.74, "dvl_confidence": 0.25, "position_uncertainty_m": 24.0, "indicator": "dvl_untrusted"},
+      "communications": {"acoustic_mesh": "INTERMITTENT", "packet_loss_fraction": 0.70, "latency_seconds": 18.0},
+      "collaborative_sensor_data": {"age_seconds": 75, "freshness_state": "STALE"},
+      "expected_state": "LOCAL_AUTONOMY_ONLY",
+      "proposed_actions": ["exclude_untrusted_dvl", "hold_or_replan_with_local_constraints", "defer_collaborative_target_update", "log_policy_decision"]
+    },
+    {
+      "t_seconds": 1800,
+      "depth_m": 15,
+      "navigation": {"ins_confidence": 0.69, "dvl_confidence": 0.60, "position_uncertainty_m": 30.0},
+      "communications": {"acoustic_mesh": "RECOVERING", "rf": "STANDBY", "cellular": "STANDBY", "satcom": "STANDBY"},
+      "expected_state": "RECOVERY_PRE_SURFACE",
+      "proposed_actions": ["cross_validate_peer_state_before_rejoin", "retain_uncertainty_history", "prepare_surface_data_offload"]
+    },
+    {
+      "t_seconds": 2100,
+      "depth_m": 0,
+      "navigation": {"ins_confidence": 0.67, "dvl_confidence": 0.0, "position_uncertainty_m": 32.0},
+      "communications": {"acoustic_mesh": "AVAILABLE", "rf": "AVAILABLE", "cellular": "AVAILABLE", "satcom": "AVAILABLE"},
+      "expected_state": "SURFACE_RECONCILIATION",
+      "proposed_actions": ["offload_complete_mission_log", "reconcile_vehicle_timelines", "flag_conflicting_observations", "require_review_before_model_update"]
+    }
+  ],
+  "qualification_metrics": [
+    "source_lineage_complete",
+    "uncertainty_monotonic_under_sensor_loss",
+    "stale_peer_data_not_silently_used",
+    "degraded_link_detected",
+    "retasking_remains_policy_gated",
+    "surface_reconciliation_preserves_conflicts",
+    "mission_replay_complete"
+  ]
+}
