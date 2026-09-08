@@ -10,7 +10,8 @@ from .infrastructure_assurance import (
     build_synthetic_packages,
     close_package,
     ingest_evidence,
-    resolve_issue,
+    run_authorization_integrity_selftest,
+    run_evidence_immutability_selftest,
     run_gate,
 )
 from .infrastructure_assurance import _valid_evidence
@@ -152,23 +153,6 @@ def run_integrity_adversarial_campaign() -> dict[str, Any]:
     checks["valid_supersession_accepted"] = accepted_good and not findings_good
 
     state = PackageState(package=packages[0], current_baseline="BL-001")
-    design = _valid_evidence(state, evidence_id="ADV-BASELINE", evidence_type="design")
-    ingest_evidence(state, design)
-    before = len(state.authoritative_evidence)
-    event = authorize_configuration_change(
-        state,
-        actor="program-authority",
-        role=state.package.authority_required,
-        new_baseline="BL-002",
-    )
-    checks["baseline_change_invalidates_prior_authority"] = (
-        before == 1
-        and event.decision == "ALLOW"
-        and state.current_baseline == "BL-002"
-        and len(state.authoritative_evidence) == 0
-    )
-
-    state = PackageState(package=packages[0], current_baseline="BL-001")
     event = authorize_configuration_change(
         state,
         actor="field-operator",
@@ -176,35 +160,22 @@ def run_integrity_adversarial_campaign() -> dict[str, Any]:
         new_baseline="BL-002",
         approval_actor="claimed-approver",
     )
-    checks["approver_name_cannot_bypass_role"] = (
+    checks["approver_name_cannot_bypass_capability"] = (
         event.decision == "REQUIRE_APPROVAL"
         and state.current_baseline == "BL-001"
         and state.config_mutations == 0
     )
 
-    state = PackageState(package=packages[0], current_baseline="BL-001")
-    invalid = _valid_evidence(state, evidence_id="ADV-ISSUE", evidence_type="design", valid=False)
-    ingest_evidence(state, invalid)
-    denied = resolve_issue(
-        state,
-        issue="SOURCE_MARKED_INVALID",
-        actor="field-operator",
-        role="FIELD_OPERATOR",
-        rationale="not authorized",
-    )
-    allowed = resolve_issue(
-        state,
-        issue="SOURCE_MARKED_INVALID",
-        actor="program-authority",
-        role=state.package.authority_required,
-        rationale="synthetic review disposition for readiness test",
-    )
-    checks["issue_resolution_authority_enforced"] = (
-        not denied and allowed and "SOURCE_MARKED_INVALID" not in state.issues
-    )
+    authorization_checks = run_authorization_integrity_selftest()
+    for name, passed in authorization_checks.items():
+        checks[f"authorization_{name}"] = passed
+
+    evidence_immutability_checks = run_evidence_immutability_selftest()
+    for name, passed in evidence_immutability_checks.items():
+        checks[f"immutability_{name}"] = passed
 
     return {
-        "schema": "WS-SENTINEL-INTEGRITY-ADVERSARIAL-CAMPAIGN-V1",
+        "schema": "WS-SENTINEL-INTEGRITY-ADVERSARIAL-CAMPAIGN-V2",
         "evidence_status": "INTERNAL_SYNTHETIC_SOFTWARE_EVIDENCE",
         "check_count": len(checks),
         "passed_count": sum(checks.values()),
