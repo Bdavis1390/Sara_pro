@@ -1,0 +1,52 @@
+{
+  "schema": "ws-doe-genesis-pitch-candidate-1",
+  "opportunity": {
+    "name": "FY26 Phase I - Genesis Mission",
+    "topic": "Achieving AI-Driven Autonomous Laboratories",
+    "deadline": "2026-09-10T14:00:00-04:00",
+    "pitch_required_before_full_application": true,
+    "max_company_pitches": 3,
+    "source_urls": [
+      "https://sbir-sttr.connectwerx.org/portfolio-items/fy26genesismission/",
+      "https://www.energy.gov/technologycommercialization/doe-small-business-innovation-research-sbir-and-small-business",
+      "https://sbir-sttr.connectwerx.org/resources/"
+    ]
+  },
+  "applicant": {
+    "working_name": "Curious nerdworX LLC",
+    "formation_status": "IN_FORMATION",
+    "pitch_stage_formation_note": "DOE/ConnectWerx FAQ states a company being formed that has not completed all registrations may submit at the pitch stage, with company registrations required by the applicable award gate.",
+    "sam_status": "UNVERIFIED",
+    "uei_status": "UNVERIFIED",
+    "sba_company_registry_status": "UNVERIFIED",
+    "doe_application_hub_status": "UNVERIFIED",
+    "award_eligibility_claimed": false
+  },
+  "claims_boundary": [
+    "This is a draft pitch candidate and is not a submitted application.",
+    "Worldshepherd does not claim an operational physical autonomous laboratory, National Laboratory integration, or validated scientific hardware.",
+    "Repository CI establishes bounded software behavior only and cannot substitute for physical scientific validation.",
+    "No partner commitment, DOE endorsement, eligibility determination, award probability, or commercialization validation is claimed.",
+    "The application portal and current DOE Pitch Development Guide control final wording and word limits."
+  ],
+  "working_word_limits": {
+    "summary_topic_mission_alignment": 100,
+    "technical_promise": 200,
+    "commercialization_potential": 200,
+    "team_qualifications": 200,
+    "status": "CONSERVATIVE_WORKING_LIMITS_PENDING_FINAL_PORTAL_CHECK"
+  },
+  "responses": {
+    "summary_topic_mission_alignment": "Worldshepherd proposes an evidence-governed AI orchestration layer for DOE autonomous laboratories. The project aligns with Genesis Mission Topic 4 by integrating AI into experimental workflows while preserving repeatability, traceability, and bounded human authority. The system will connect instrument telemetry, experiment configuration, AI-generated candidate experiments, physics- or domain-specific validation, and immutable provenance into one auditable loop. Phase I will demonstrate the approach in reproducible synthetic and hardware-interface-compatible testbeds, measuring whether it can accelerate experimental iteration without sacrificing data lineage, uncertainty accounting, safety gates, or the ability to reproduce why an experiment was proposed, authorized, executed, and interpreted.",
+    "technical_promise": "Autonomous laboratories can accelerate discovery, but their scientific value depends on whether experiment selection, configuration changes, measurements, and conclusions remain auditable and reproducible. Worldshepherd’s approach combines four existing software primitives: SARA for governed workflow orchestration, ECHO-style evidence provenance, PRIME for fail-closed authorization, and a Physics Validation Kernel for claims-controlled model comparison. WS-OMEGA adds a recursive discovery frontier that generates hypotheses, contradictions, negative-space questions, and falsification tests without self-authorizing physical execution or claim promotion.\n\nPhase I will build a facility-neutral autonomous-experiment interface and evaluate it in a controlled synthetic campaign. The testbed will inject instrument drift, missing data, conflicting measurements, model error, unsafe action requests, and false anomaly signals. Metrics will include experiment-cycle latency, recovery of hidden ground truth, false promotion rate, provenance completeness, replay reproducibility, and human-intervention burden. A final hardware-interface-in-the-loop demonstration will show how an external instrument or robot can remain behind explicit authorization boundaries. The technical risk is whether governance and provenance can remain rigorous without erasing the speed advantage of AI-directed experimentation; Phase I is designed to measure that trade directly.",
+    "commercialization_potential": "DOE laboratories, university core facilities, advanced-manufacturing centers, quantum testbeds, biotechnology laboratories, and industrial R&D groups increasingly combine AI, robotics, remote handling, and high-throughput instruments. Their common commercialization problem is not merely automating equipment; it is establishing that autonomous decisions, data transformations, model versions, calibrations, and interventions can be reconstructed and trusted after the experiment.\n\nWorldshepherd would be offered as a facility-neutral assurance and orchestration layer that sits above existing instruments and laboratory-control software rather than replacing them. Initial customers would be organizations running expensive or safety-constrained experiments where provenance, repeatability, and approval boundaries have direct operational value. The Phase I commercialization objective is to validate three assumptions: laboratories will pay for independent experiment-assurance infrastructure; integration can be achieved through adapters rather than bespoke rewrites; and the same core can serve multiple domains. Revenue paths include licensed on-premises software, integration/support, validated domain adapters, and enterprise deployments. Differentiation will be tested against laboratory automation platforms, workflow engines, electronic laboratory notebooks, and MLOps systems using measurable provenance, replay, authorization, and falsification capabilities rather than unsupported feature claims.",
+    "team_qualifications": "Worldshepherd is being developed through Curious nerdworX LLC (in formation), led by Brandon Ray Davis. The current software base includes a public Worldshepherd SARA repository with governed workflow execution, role-separated administration, audit logging, configuration custody, synthetic mission and engineering testbeds, qualification records, partner/opportunity screening, recovery testing, and claims-control mechanisms. Recent protected CI exercises verify rollback, replacement-environment restoration, operational resilience, TLS architecture, evidence closure, and the WS-OMEGA recursive-discovery layer in the software test environment.\n\nThe team’s Phase I strength is systems integration: connecting AI-generated proposals to explicit authorization, evidence capture, reproducible analysis, and falsification-oriented validation instead of treating model output as experimental truth. Current limitations are also explicit: Worldshepherd does not claim an operational physical autonomous laboratory, validated scientific hardware, or National Laboratory integration today. Phase I would close that gap through a bounded interface-in-the-loop demonstration and external technical collaboration where available. Award funds would support software hardening, domain adapters, test instrumentation/interface work, independent validation, and commercialization discovery. Corporate registrations and any required research-institution participation would be completed under DOE SBIR/STTR requirements before the applicable award/full-application gates."
+  },
+  "phase_i_measurement_plan": [
+    "Demonstrate deterministic experiment replay from configuration, telemetry, model, and authorization records.",
+    "Inject drift, missing data, conflicting measurements, unsafe requests, model mismatch, and synthetic false anomalies.",
+    "Measure provenance completeness, false promotion rate, hidden-ground-truth recovery, cycle latency, and human-intervention burden.",
+    "Demonstrate a bounded hardware-interface-in-the-loop adapter without granting the AI autonomous consequential execution authority.",
+    "Produce an integration and commercialization evidence package suitable for an invited full application."
+  ]
+}
