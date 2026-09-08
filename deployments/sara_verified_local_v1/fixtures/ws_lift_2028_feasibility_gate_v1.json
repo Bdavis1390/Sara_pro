@@ -1,0 +1,94 @@
+{
+  "schema": "ws-lift-feasibility-gate-1",
+  "official_sources": [
+    "https://www.darpa.mil/research/challenges/lift",
+    "https://www.darpa.mil/research/challenges/lift/scoreboard",
+    "https://www.darpa.mil/research/programs/commercialization-ultra-high-payload-to-weight-uas-subsystems"
+  ],
+  "claims_boundary": [
+    "Worldshepherd 10:1, 40:1, 400:1, and >=4000 nautical mile values are design targets, not demonstrated capabilities.",
+    "The >=4000 nautical mile range target is a Worldshepherd mission requirement, not a DARPA Lift Challenge requirement.",
+    "No empirical Worldshepherd flight or prototype evidence exceeding 4:1 is established by this fixture.",
+    "DARPA's 2028 ratio target is not yet published; do not invent it.",
+    "Challenge and long-range variants may require different aircraft architectures and must not be silently conflated."
+  ],
+  "darpa_2026_baseline": {
+    "official_best_completed_ratio": 3.84,
+    "official_best_completed_team": "AVIDrone, Inc.",
+    "highest_attempted_ratio": 9.63,
+    "highest_attempted_team": "DefendTex",
+    "highest_attempt_completed_scored_run": false,
+    "interpretation": "A 9.63:1 ratio was physically attempted but not completed as an official scored run; a Worldshepherd 10:1 target must therefore be judged on completion, repeatability, control, and mission performance rather than ratio alone."
+  },
+  "darpa_2028_announced_constraints": {
+    "aircraft_weight_max_lb": 55.0,
+    "minimum_payload_lb": 220.0,
+    "course_nm_total": 10.0,
+    "loaded_course_nm": 8.0,
+    "unloaded_course_nm": 2.0,
+    "ratio_target": "TBD_BY_DARPA",
+    "preparation_horizon_years": 2
+  },
+  "darpa_dp2_capture_gate": {
+    "topic": "DPA26BZ05-DV022",
+    "deadline": "2026-09-23T12:00:00-04:00",
+    "direct_to_phase_ii_only": true,
+    "proof_of_concept_requirement": "Existing empirical data, flight logs, or prototype test results proving baseline capability at or above 4:1 payload-to-weight, plus first-order analysis.",
+    "track_a": "Revolutionary Aerodynamic Design",
+    "track_b": "Revolutionary Powertrain Design",
+    "worldshepherd_prime_status": "NO_GO_UNTIL_EMPIRICAL_4_TO_1_EVIDENCE_EXISTS",
+    "worldshepherd_partner_status": "SCREEN_TRACK_A_AUTONOMY_SAFETY_ASSURANCE_AND_TRACK_B_TELEMETRY_PROVENANCE_SUPPORT",
+    "reason": "Conceptual design targets and software assurance do not satisfy a DP2 working-proof-of-concept requirement."
+  },
+  "worldshepherd_targets": [
+    {
+      "target_ratio": 10.0,
+      "minimum_payload_lb": 220.0,
+      "maximum_aircraft_weight_for_ratio_lb": 22.0,
+      "loaded_gross_weight_at_minimum_payload_lb": 242.0,
+      "status": "ASPIRATIONAL_REQUIRES_PHYSICAL_VALIDATION"
+    },
+    {
+      "target_ratio": 40.0,
+      "minimum_payload_lb": 220.0,
+      "maximum_aircraft_weight_for_ratio_lb": 5.5,
+      "loaded_gross_weight_at_minimum_payload_lb": 225.5,
+      "status": "ASPIRATIONAL_HIGH_RISK_REQUIRES_PHYSICAL_VALIDATION"
+    },
+    {
+      "target_ratio": 400.0,
+      "minimum_payload_lb": 220.0,
+      "maximum_aircraft_weight_for_ratio_lb": 0.55,
+      "loaded_gross_weight_at_minimum_payload_lb": 220.55,
+      "status": "EXTREME_TARGET_REQUIRES_FUNDAMENTAL_MASS_ENERGY_AND_STRUCTURE_FEASIBILITY_PROOF"
+    }
+  ],
+  "long_range_requirement": {
+    "minimum_range_nm": 4000.0,
+    "relationship_to_darpa_2028": "SEPARATE_WORLDSHEPHERD_MISSION_REQUIREMENT",
+    "mandatory_first_tests": [
+      "Mass budget including energy source, propulsion, structure, controls, communications, landing gear, and safety systems.",
+      "Energy and propulsive-efficiency lower-bound analysis for hover, transition, cruise, reserve, and landing.",
+      "Compare multirotor-only, compound/wingborne, tilt/transition, hybrid-electric, turbine, fuel-cell, and other conventional momentum-conserving architectures.",
+      "Reject any architecture whose required stored or supplied energy, structure, thermal load, or stability margin violates the declared mass budget.",
+      "Keep 4000-nm mission optimization separate from the 10-nm DARPA challenge optimization until a common feasible architecture is demonstrated."
+    ]
+  },
+  "validation_ladder": [
+    "V0: analytic mass, momentum, energy, thermal, structural, stability, and control bounds",
+    "V1: component bench evidence with calibrated uncertainty",
+    "V2: subscale tethered and untethered lift tests",
+    "V3: repeatable loaded hover and maneuver tests",
+    "V4: completed mission-course demonstration with calibrated pre/post weights and logged telemetry",
+    "V5: manufacturing repeatability across at least three articles",
+    "V6: environmental/endurance testing and failure analysis",
+    "V7: certification and production-readiness evidence"
+  ],
+  "near_term_decisions": [
+    "Do not submit Worldshepherd as a DP2 prime absent existing >=4:1 empirical proof-of-concept evidence.",
+    "Screen DefendTex first for high-ratio aerodynamic/structural teaming because DARPA records the 9.63:1 attempted result, while independently verifying availability and fit before any outreach.",
+    "Use the 2028 challenge as the principal physical-validation runway for a Worldshepherd-owned 10:1+ aircraft concept.",
+    "Treat 40:1 and 400:1 as successive research gates that cannot inherit readiness from the 10:1 vehicle.",
+    "Run the >=4000-nm requirement through a separate long-range architecture trade before requiring one vehicle to satisfy both extreme lift ratio and extreme range."
+  ]
+}
