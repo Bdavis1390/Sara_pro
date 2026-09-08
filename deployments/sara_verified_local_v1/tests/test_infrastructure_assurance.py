@@ -11,6 +11,7 @@ from worldshepherd_sara.infrastructure_assurance import (
     close_package,
     ingest_evidence,
     issue_authorization_capability,
+    resolve_issue,
     run_authorization_integrity_selftest,
     run_evidence_immutability_selftest,
     run_gate,
@@ -60,6 +61,47 @@ def test_claimed_authority_role_without_capability_is_denied() -> None:
     assert event.decision == "DENY"
     assert state.current_baseline == "BL-001"
     assert state.config_mutations == 0
+
+
+class _DuckTypedForgedCapability:
+    actor = "SARA_AUTHENTICATED_ADMIN"
+    role = "PROGRAM_INTEGRATION_AUTHORITY"
+
+    def __init__(self, target_id: str, action: str) -> None:
+        self.target_id = target_id
+        self.action = action
+
+    def valid_for(self, **_kwargs) -> bool:
+        return True
+
+
+def test_duck_typed_capability_cannot_dispatch_attacker_verifier() -> None:
+    package = build_synthetic_packages(1)[0]
+    state = PackageState(package=package, current_baseline="BL-001")
+    forged_change = _DuckTypedForgedCapability(package.package_id, "CONFIGURATION_CHANGE")
+    event = authorize_configuration_change(
+        state,
+        actor=forged_change.actor,
+        role=forged_change.role,
+        new_baseline="BL-999",
+        capability=forged_change,
+    )
+    assert event.decision == "DENY"
+    assert state.current_baseline == "BL-001"
+    assert state.config_mutations == 0
+
+    state.issues.append("SYNTHETIC_OPEN_ISSUE")
+    forged_resolution = _DuckTypedForgedCapability(package.package_id, "ISSUE_RESOLUTION")
+    resolved = resolve_issue(
+        state,
+        issue="SYNTHETIC_OPEN_ISSUE",
+        actor=forged_resolution.actor,
+        role=forged_resolution.role,
+        rationale="attacker-controlled verifier",
+        capability=forged_resolution,
+    )
+    assert resolved is False
+    assert "SYNTHETIC_OPEN_ISSUE" in state.issues
 
 
 def test_authenticated_capability_is_bearer_validated_and_target_scoped(monkeypatch) -> None:
@@ -183,6 +225,16 @@ def test_closure_rejects_never_ingested_authoritative_replacement() -> None:
         version=99,
     )
     state.authoritative_evidence["design"] = forged_replacement
+    state.all_evidence[forged_replacement.evidence_id] = forged_replacement
+    accepted_binding = state._accepted_history["design"][-1]
+    state._accepted_history["design"] = (
+        replace(
+            accepted_binding,
+            evidence_id=forged_replacement.evidence_id,
+            version=forged_replacement.version,
+            digest=forged_replacement.digest,
+        ),
+    )
 
     closed, blockers = close_package(state)
     assert closed is False
