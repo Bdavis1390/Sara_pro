@@ -1,3 +1,5 @@
+import json
+
 from worldshepherd_sara.infrastructure_assurance import (
     PackageState,
     authorize_configuration_change,
@@ -7,6 +9,7 @@ from worldshepherd_sara.infrastructure_assurance import (
     run_gate,
 )
 from worldshepherd_sara.infrastructure_assurance import _valid_evidence
+from worldshepherd_sara.sentinel_infrastructure_cli import build_evidence_bundle
 
 
 def test_sentinel_g1_campaign_passes_all_ten_failure_classes() -> None:
@@ -75,3 +78,38 @@ def test_stale_evidence_blocks_authoritative_acceptance_and_closure() -> None:
     assert closed is False
     assert state.package.state == "BLOCKED"
     assert "UNRESOLVED_ISSUES" in blockers
+
+
+def test_evidence_bundle_is_machine_readable_and_claims_controlled(tmp_path) -> None:
+    out = tmp_path / "sentinel-g1"
+    index = build_evidence_bundle(
+        out=out,
+        campaign_id="WS-SENTINEL-DEMO-G1-TEST",
+        software_commit="test-commit",
+        executed_utc="2026-09-08T00:00:00Z",
+        operator="pytest",
+    )
+    assert index["pass_gate"] is True
+    assert index["index_digest"].startswith("sha256:")
+    expected = {
+        "scenario-manifest.json",
+        "gate-report.json",
+        "failure-results.json",
+        "software-provenance.json",
+        "evidence-index.json",
+        "claims-boundary.md",
+    }
+    assert {path.name for path in out.iterdir()} == expected
+
+    gate = json.loads((out / "gate-report.json").read_text(encoding="utf-8"))
+    assert gate["schema"] == "WS-SENTINEL-G1-REPORT-V1"
+    assert gate["pass_gate"] is True
+    assert gate["metrics"]["failure_class_count"] == 10
+    assert gate["evidence_status"] == "INTERNAL_SYNTHETIC_SOFTWARE_EVIDENCE"
+    assert "does not establish Sentinel fitness" in gate["claims_boundary"]
+
+    scenario = json.loads((out / "scenario-manifest.json").read_text(encoding="utf-8"))
+    assert scenario["synthetic_only"] is True
+    assert scenario["segment_count"] == 12
+    assert scenario["work_package_count"] == 24
+    assert len(scenario["failure_classes"]) == 10
