@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import secrets
+import weakref
 from dataclasses import dataclass, field, replace
 from typing import Any, Iterable, Literal
 
@@ -119,7 +120,7 @@ class GateReport(BaseModel):
     bundle_digest: str
 
 
-@dataclass
+@dataclass(eq=False)
 class PackageState:
     package: WorkPackage
     current_baseline: str
@@ -132,15 +133,42 @@ class PackageState:
     _accepted_history: dict[str, tuple[_AcceptedEvidenceBinding, ...]] = field(
         default_factory=dict, init=False, repr=False
     )
-    _accepted_history_key: bytes = field(
-        default_factory=lambda: secrets.token_bytes(32),
-        init=False,
-        repr=False,
-        compare=False,
-    )
+    def __post_init__(self) -> None:
+        _ENGINE_CUSTODY[self] = _EngineCustody(
+            package_id=self.package.package_id,
+            authority_required=self.package.authority_required,
+            required_evidence_types=tuple(self.package.required_evidence_types),
+            current_baseline=self.current_baseline,
+            history_key=secrets.token_bytes(32),
+        )
 
     def record(self, event_type: str, **payload: Any) -> None:
         self.events.append({"event_type": event_type, **payload})
+
+
+@dataclass
+class _EngineCustody:
+    package_id: str
+    authority_required: str
+    required_evidence_types: tuple[str, ...]
+    current_baseline: str
+    history_key: bytes = field(repr=False)
+    accepted_history: dict[str, tuple[_AcceptedEvidenceBinding, ...]] = field(default_factory=dict)
+    accepted_chain_tips: dict[str, str] = field(default_factory=dict)
+    authoritative_evidence: dict[str, EvidenceRecord] = field(default_factory=dict)
+    all_evidence: dict[str, EvidenceRecord] = field(default_factory=dict)
+    open_issues: list[str] = field(default_factory=list)
+    closed: bool = False
+
+
+_ENGINE_CUSTODY: weakref.WeakKeyDictionary[PackageState, _EngineCustody] = weakref.WeakKeyDictionary()
+
+
+def _custody(state: PackageState) -> _EngineCustody:
+    custody = _ENGINE_CUSTODY.get(state)
+    if custody is None:
+        raise RuntimeError("package state is not registered with engine custody")
+    return custody
 
 
 def canonical_digest(value: Any) -> str:
@@ -325,14 +353,15 @@ def authorize_configuration_change(
     approval_actor: str | None = None,
     capability: AuthorizationCapability | None = None,
 ) -> AuthorizationEvent:
+    custody = _custody(state)
     verified_authority = _capability_valid_for_current_secret(
         capability,
         actor=actor,
-        role=state.package.authority_required,
-        target_id=state.package.package_id,
+        role=custody.authority_required,
+        target_id=custody.package_id,
         action="CONFIGURATION_CHANGE",
     )
-    if state.package.state == "CLOSED" and new_baseline != state.current_baseline:
+    if custody.closed and new_baseline != custody.current_baseline:
         decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"] = "DENY"
         state.record(
             "configuration_change_denied",
@@ -343,8 +372,12 @@ def authorize_configuration_change(
         )
     elif verified_authority:
         decision = "ALLOW"
-        if new_baseline != state.current_baseline:
-            invalidated_count = len(state.authoritative_evidence)
+        if new_baseline != custody.current_baseline:
+            invalidated_count = len(custody.authoritative_evidence)
+            custody.current_baseline = new_baseline
+            custody.authoritative_evidence.clear()
+            custody.accepted_history.clear()
+            custody.accepted_chain_tips.clear()
             state.current_baseline = new_baseline
             state.authoritative_evidence.clear()
             state._accepted_history.clear()
@@ -387,13 +420,16 @@ def authorize_configuration_change(
         actor=actor,
         role=capability.role if verified_authority and capability is not None else role,
         requested_action="CONFIGURATION_CHANGE",
-        target_id=state.package.package_id,
+        target_id=custody.package_id,
         decision=decision,
         approving_actor=approval_actor,
     )
 
 
 def _append_issue(state: PackageState, finding: str) -> None:
+    custody = _custody(state)
+    if finding not in custody.open_issues:
+        custody.open_issues.append(finding)
     if finding not in state.issues:
         state.issues.append(finding)
 
@@ -440,7 +476,7 @@ def _accepted_binding_signature(
         previous_chain_tag=binding.previous_chain_tag,
     )
     return "hmac-sha256:" + hmac.new(
-        state._accepted_history_key, payload, hashlib.sha256
+        _custody(state).history_key, payload, hashlib.sha256
     ).hexdigest()
 
 
@@ -464,15 +500,16 @@ def _binding_from_record(
 
 
 def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, tuple[str, ...]]:
+    custody = _custody(state)
     findings: list[str] = []
     accepted = True
 
-    duplicate_identity = record.evidence_id in state.all_evidence
+    duplicate_identity = record.evidence_id in custody.all_evidence
     if duplicate_identity:
         findings.append("DUPLICATE_EVIDENCE_ID")
         accepted = False
 
-    if record.package_id != state.package.package_id:
+    if record.package_id != custody.package_id:
         findings.append("PACKAGE_ID_MISMATCH")
         accepted = False
 
@@ -487,11 +524,11 @@ def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, 
         findings.append("DIGEST_MISMATCH")
         accepted = False
 
-    if record.baseline_id != state.current_baseline:
+    if record.baseline_id != custody.current_baseline:
         findings.append("STALE_BASELINE")
         accepted = False
 
-    existing = state.authoritative_evidence.get(record.evidence_type)
+    existing = custody.authoritative_evidence.get(record.evidence_type)
     if existing and record.version < existing.version:
         findings.append("SUPERSEDED_VERSION")
         accepted = False
@@ -507,14 +544,18 @@ def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, 
 
     snapshot = record.model_copy(deep=True)
     if not duplicate_identity:
+        custody.all_evidence[snapshot.evidence_id] = snapshot
         state.all_evidence[snapshot.evidence_id] = snapshot
     if accepted:
+        custody.authoritative_evidence[snapshot.evidence_type] = snapshot
         state.authoritative_evidence[snapshot.evidence_type] = snapshot
-        prior = state._accepted_history.get(snapshot.evidence_type, ())
+        prior = custody.accepted_history.get(snapshot.evidence_type, ())
         previous_chain_tag = prior[-1].chain_tag if prior else "GENESIS"
         binding = _binding_from_record(
             state, snapshot, previous_chain_tag=previous_chain_tag
         )
+        custody.accepted_history[snapshot.evidence_type] = (*prior, binding)
+        custody.accepted_chain_tips[snapshot.evidence_type] = binding.chain_tag
         state._accepted_history[snapshot.evidence_type] = (*prior, binding)
         state.record(
             "evidence_accepted",
@@ -539,11 +580,12 @@ def resolve_issue(
     rationale: str,
     capability: AuthorizationCapability | None = None,
 ) -> bool:
+    custody = _custody(state)
     verified_authority = _capability_valid_for_current_secret(
         capability,
         actor=actor,
-        role=state.package.authority_required,
-        target_id=state.package.package_id,
+        role=custody.authority_required,
+        target_id=custody.package_id,
         action="ISSUE_RESOLUTION",
     )
     if not verified_authority:
@@ -564,7 +606,7 @@ def resolve_issue(
             reason="rationale_required",
         )
         return False
-    if issue not in state.issues:
+    if issue not in custody.open_issues:
         state.record(
             "issue_resolution_denied",
             issue=issue,
@@ -573,7 +615,9 @@ def resolve_issue(
             reason="issue_not_open",
         )
         return False
-    state.issues.remove(issue)
+    custody.open_issues.remove(issue)
+    if issue in state.issues:
+        state.issues.remove(issue)
     state.record(
         "issue_resolved",
         issue=issue,
@@ -591,13 +635,13 @@ def _standalone_record_valid_for_closure(
 ) -> bool:
     return (
         evidence_type == record.evidence_type
-        and record.package_id == state.package.package_id
+        and record.package_id == _custody(state).package_id
         and record.valid
         and bool(record.source_org)
         and bool(record.source_actor)
         and bool(record.digest)
         and record.digest == _make_digest(record)
-        and record.baseline_id == state.current_baseline
+        and record.baseline_id == _custody(state).current_baseline
     )
 
 
@@ -616,8 +660,14 @@ def _binding_matches_record(binding: _AcceptedEvidenceBinding, record: EvidenceR
 def _accepted_history_valid_for_closure(
     state: PackageState, evidence_type: str, record: EvidenceRecord
 ) -> bool:
-    history = state._accepted_history.get(evidence_type, ())
-    if not history or not _binding_matches_record(history[-1], record):
+    custody = _custody(state)
+    history = custody.accepted_history.get(evidence_type, ())
+    if (
+        not history
+        or custody.accepted_chain_tips.get(evidence_type) != history[-1].chain_tag
+        or state._accepted_history.get(evidence_type, ()) != history
+        or not _binding_matches_record(history[-1], record)
+    ):
         return False
 
     previous: _AcceptedEvidenceBinding | None = None
@@ -629,12 +679,12 @@ def _accepted_history_valid_for_closure(
         if not hmac.compare_digest(binding.chain_tag, expected_chain_tag):
             return False
         if (
-            binding.package_id != state.package.package_id
+            binding.package_id != custody.package_id
             or binding.evidence_type != evidence_type
-            or binding.baseline_id != state.current_baseline
+            or binding.baseline_id != custody.current_baseline
         ):
             return False
-        accepted_snapshot = state.all_evidence.get(binding.evidence_id)
+        accepted_snapshot = custody.all_evidence.get(binding.evidence_id)
         if accepted_snapshot is None or not _binding_matches_record(binding, accepted_snapshot):
             return False
         if not _standalone_record_valid_for_closure(state, evidence_type, accepted_snapshot):
@@ -659,29 +709,35 @@ def _authoritative_record_valid_for_closure(
 
 
 def close_package(state: PackageState) -> tuple[bool, tuple[str, ...]]:
+    custody = _custody(state)
     blockers: list[str] = []
     missing = [
         evidence_type
-        for evidence_type in state.package.required_evidence_types
-        if evidence_type not in state.authoritative_evidence
+        for evidence_type in custody.required_evidence_types
+        if evidence_type not in custody.authoritative_evidence
     ]
     if missing:
         blockers.append("MISSING_REQUIRED_EVIDENCE:" + ",".join(sorted(missing)))
 
     invalid_authoritative = sorted(
         evidence_type
-        for evidence_type, record in state.authoritative_evidence.items()
-        if not _authoritative_record_valid_for_closure(state, evidence_type, record)
+        for evidence_type, record in custody.authoritative_evidence.items()
+        if (
+            state.authoritative_evidence.get(evidence_type) != record
+            or state.all_evidence.get(record.evidence_id) != record
+            or not _authoritative_record_valid_for_closure(state, evidence_type, record)
+        )
     )
     if invalid_authoritative:
         blockers.append("INVALID_AUTHORITATIVE_EVIDENCE:" + ",".join(invalid_authoritative))
 
-    if state.issues:
+    if custody.open_issues or state.issues:
         blockers.append("UNRESOLVED_ISSUES")
     if blockers:
         state.package.state = "BLOCKED"
         state.record("closure_blocked", blockers=blockers)
         return False, tuple(blockers)
+    custody.closed = True
     state.package.state = "CLOSED"
     state.record("package_closed")
     return True, ()
