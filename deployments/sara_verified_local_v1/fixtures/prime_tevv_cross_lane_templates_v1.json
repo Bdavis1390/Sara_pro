@@ -1,0 +1,204 @@
+{
+  "schema": "ws-prime-tevv-cross-lane-templates-1",
+  "reference": {
+    "document": "NIST AI 200-2 ipd - The TEVV-Athlon Framework for Evaluating AI Systems",
+    "status": "INITIAL_PUBLIC_DRAFT_AUGUST_2026",
+    "comment_deadline": "2026-10-06",
+    "source": "https://doi.org/10.6028/NIST.AI.200-2.ipd",
+    "stages": [
+      "Articulate & Organize",
+      "Define & Construct",
+      "Apply & Measure",
+      "Synthesize & Interrogate"
+    ]
+  },
+  "alignment_boundary": [
+    "These are Worldshepherd templates informed by the NIST initial public draft, not a claim of NIST conformance, certification, accreditation, approval, or endorsement.",
+    "The NIST draft is subject to revision; Worldshepherd mappings must be rechecked when the document changes or becomes final.",
+    "Each domain must define its own Metrology Blocks, Events, Toolbox, evidence, operational context, and decision use; cross-domain reuse cannot erase domain-specific risks.",
+    "TEVV evidence may support an internal decision but cannot substitute for physical, regulatory, clinical, classified, flight, or facility validation where those are required."
+  ],
+  "templates": [
+    {
+      "lane": "SARA_AGENT_GOVERNANCE",
+      "system": "SARA governed agent workflow",
+      "goal": "Measure whether bounded agents obey authorization and preserve attributable evidence under adversarial and degraded conditions.",
+      "decision_use": "Advance, hold, or restrict an agent workflow deployment boundary.",
+      "blocks": [
+        {
+          "name": "Unauthorized action blocking",
+          "evidence": ["proposed action", "policy decision", "execution state"],
+          "example_metric": "blocked_prohibited_actions / prohibited_action_attempts"
+        },
+        {
+          "name": "Evidence lineage completeness",
+          "evidence": ["source lineage", "policy lineage", "configuration/version lineage"],
+          "example_metric": "complete_lineage_records / evaluated_records"
+        },
+        {
+          "name": "Recovery behavior",
+          "evidence": ["fault injection", "degraded mode", "recovery trace"],
+          "example_metric": "policy_compliant_recoveries / recovery_scenarios"
+        }
+      ],
+      "events": ["prohibited-action campaign", "policy-service outage", "evidence tamper injection", "recovery/replay campaign"],
+      "toolbox": ["synthetic fault injector", "audit verifier", "policy trace comparator", "human review"],
+      "physical_validation_required": false
+    },
+    {
+      "lane": "NAVSEA_MBSE_EXTRACTION",
+      "system": "Legacy-document-to-model extraction pipeline",
+      "goal": "Measure correctness, unsupported inference, provenance, robustness to paraphrase/layout variation, and human correction burden.",
+      "decision_use": "Determine whether an extraction method may advance from deterministic baseline to AI/ML and later Cameo integration testing.",
+      "blocks": [
+        {
+          "name": "Entity reconstruction",
+          "evidence": ["ground truth entities", "predicted entities"],
+          "example_metric": "precision and recall"
+        },
+        {
+          "name": "Relationship reconstruction",
+          "evidence": ["ground truth relationships", "predicted relationships"],
+          "example_metric": "precision and recall"
+        },
+        {
+          "name": "Unsupported inference",
+          "evidence": ["predictions without source support"],
+          "example_metric": "unsupported_relationship_fraction"
+        },
+        {
+          "name": "Human correction burden",
+          "evidence": ["correction actions", "elapsed review time"],
+          "example_metric": "corrections and reviewer-minutes per model element"
+        }
+      ],
+      "events": ["canonical synthetic corpus", "paraphrase challenge", "conflicting-artifact challenge", "held-out corpus", "future Cameo round-trip"],
+      "toolbox": ["ground-truth scorer", "provenance verifier", "adversarial fixture generator", "future Cameo OpenAPI verifier"],
+      "physical_validation_required": false
+    },
+    {
+      "lane": "RF_CLASSIFICATION_FUTURE",
+      "system": "Future Worldshepherd RF classification pipeline",
+      "goal": "Measure classification/anomaly performance, interpretability, calibration, CPU footprint, distribution-shift robustness, and update safety before any D2P2 maturity claim.",
+      "decision_use": "Determine whether the classifier has sufficient evidence for a future recurring spectrum opportunity.",
+      "blocks": [
+        {
+          "name": "Held-out classification performance",
+          "evidence": ["frozen test labels", "predictions"],
+          "example_metric": "class-balanced accuracy, precision, recall"
+        },
+        {
+          "name": "Unknown/anomaly detection",
+          "evidence": ["novel-signal challenge set", "confidence scores"],
+          "example_metric": "AUROC/AUPRC plus false-alarm rate"
+        },
+        {
+          "name": "CPU resource footprint",
+          "evidence": ["CPU model", "latency", "memory", "throughput"],
+          "example_metric": "latency and memory at declared load"
+        },
+        {
+          "name": "Explanation stability",
+          "evidence": ["feature/evidence attribution under perturbation"],
+          "example_metric": "attribution stability with error cases retained"
+        }
+      ],
+      "events": ["clean held-out benchmark", "low-SNR challenge", "frequency-shift challenge", "novel-signal challenge", "continual-update regression"],
+      "toolbox": ["public lawful RF corpus", "CPU benchmark harness", "calibration scorer", "interpretability checker"],
+      "physical_validation_required": false,
+      "current_capability_status": "NOT_IMPLEMENTED_OR_VALIDATED"
+    },
+    {
+      "lane": "APNT_PARTNER_INTEGRATION",
+      "system": "Worldshepherd APNT mission-assurance layer around partner sensor hardware",
+      "goal": "Measure whether source confidence, timing lineage, degraded-mode transitions, policy gates, and replay remain correct under injected navigation faults.",
+      "decision_use": "Determine readiness for partner hardware-in-the-loop testing; never infer physical IMU accuracy from software-only results.",
+      "blocks": [
+        {
+          "name": "Source confidence consistency",
+          "evidence": ["sensor error state", "declared confidence", "fusion decision"],
+          "example_metric": "inconsistency detection rate"
+        },
+        {
+          "name": "Unsafe recovery blocking",
+          "evidence": ["fault state", "proposed recovery", "policy result"],
+          "example_metric": "unsafe recovery blocked fraction"
+        },
+        {
+          "name": "Replay determinism",
+          "evidence": ["input event stream", "replayed terminal state"],
+          "example_metric": "identical terminal-state fraction"
+        }
+      ],
+      "events": ["GNSS degradation", "IMU bias/drift injection", "link loss", "source disagreement", "recovery/reentry"],
+      "toolbox": ["synthetic six-DOF error-state generator", "SARA replay", "ECHO provenance verifier", "policy trace comparator"],
+      "physical_validation_required": true,
+      "physical_validation_scope": "Partner-developed sensor and platform performance"
+    },
+    {
+      "lane": "QVOS_STRONG_FIELD_INFERENCE",
+      "system": "QVOS experiment-assurance and inference layer",
+      "goal": "Measure false-promotion resistance, signal-recovery behavior, uncertainty propagation, and provenance before facility integration.",
+      "decision_use": "Determine whether the analysis stack may advance from synthetic data to facility-specific interface work.",
+      "blocks": [
+        {
+          "name": "False discovery resistance",
+          "evidence": ["null and systematic-only trials", "inference output"],
+          "example_metric": "false promotion rate"
+        },
+        {
+          "name": "Blind signal recovery",
+          "evidence": ["hidden synthetic injections", "estimated hypothesis and parameters"],
+          "example_metric": "recovery rate and parameter error"
+        },
+        {
+          "name": "Uncertainty propagation",
+          "evidence": ["input uncertainty", "posterior/prediction uncertainty"],
+          "example_metric": "coverage/calibration"
+        },
+        {
+          "name": "Shot provenance completeness",
+          "evidence": ["laser", "beam", "detector", "calibration", "analysis lineage"],
+          "example_metric": "complete shot-evidence fraction"
+        }
+      ],
+      "events": ["QED-only blind campaign", "instrument-systematic campaign", "synthetic BSM residual injection", "timing/polarization/intensity transformation campaign"],
+      "toolbox": ["PVK models", "blind generator", "RED-QED adversary", "provenance verifier", "statistical model comparison"],
+      "physical_validation_required": true,
+      "physical_validation_scope": "Actual strong-field measurements and facility integration"
+    },
+    {
+      "lane": "AUTONOMOUS_LAB_ASSURANCE",
+      "system": "Worldshepherd assurance plane for autonomous experimentation",
+      "goal": "Measure whether AI-directed experimental iteration remains auditable, bounded, replayable, and resistant to false scientific promotion.",
+      "decision_use": "Determine whether the assurance layer adds measurable scientific trust without unacceptable experiment-cycle overhead.",
+      "blocks": [
+        {
+          "name": "Experiment decision lineage",
+          "evidence": ["hypothesis", "selected experiment", "authorization", "configuration"],
+          "example_metric": "complete decision-lineage fraction"
+        },
+        {
+          "name": "False promotion rate",
+          "evidence": ["known null/systematic trials", "claim state"],
+          "example_metric": "incorrect claim promotions / challenge trials"
+        },
+        {
+          "name": "Governance overhead",
+          "evidence": ["baseline cycle latency", "assured cycle latency"],
+          "example_metric": "absolute and relative cycle-time overhead"
+        }
+      ],
+      "events": ["instrument drift", "conflicting measurement", "unsafe request", "false anomaly", "model mismatch", "missing metadata"],
+      "toolbox": ["synthetic lab", "SARA", "ECHO", "PRIME", "PVK", "WS-OMEGA", "human reviewer"],
+      "physical_validation_required": true,
+      "physical_validation_scope": "Any claim about real laboratory throughput, instruments, or scientific outcomes"
+    }
+  ],
+  "public_comment_state": {
+    "draft_comment_prepared": false,
+    "comment_submitted": false,
+    "proprietary_information_allowed": false,
+    "note": "NIST states comments may be publicly released and requests that comments not contain proprietary information."
+  }
+}
