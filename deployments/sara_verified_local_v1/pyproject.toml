@@ -37,6 +37,7 @@ ws-programmable-boundary-benchmark = "worldshepherd_sara.programmable_boundary_b
 ws-omega-recursion = "worldshepherd_sara.recursive_discovery_cli:main"
 ws-sentinel-infrastructure = "worldshepherd_sara.sentinel_infrastructure_cli:main"
 ws-sentinel-readiness = "worldshepherd_sara.sentinel_readiness_cli:main"
+ws-sentinel-supplier-preflight = "worldshepherd_sara.sentinel_supplier_preflight_cli:main"
 
 [tool.setuptools]
 packages = ["worldshepherd_sara"]
