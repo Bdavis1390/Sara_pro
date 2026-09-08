@@ -86,6 +86,7 @@ jobs:
 
           root = Path('sentinel_readiness_evidence_ci')
           report = json.loads((root / 'readiness-report.json').read_text())
+          integrity = json.loads((root / 'integrity-adversarial-campaign.json').read_text())
           matrix = json.loads((root / 'external-gate-matrix.json').read_text())
           index = json.loads((root / 'readiness-evidence-index.json').read_text())
 
@@ -97,10 +98,15 @@ jobs:
           assert report['scale_campaign']['package_count'] == 2000
           assert report['scale_campaign']['false_blocks'] == 0
           assert report['scale_campaign']['unauthorized_authoritative_mutations'] == 0
+          assert integrity['pass'] is True
+          assert integrity['check_count'] == 8
+          assert integrity['passed_count'] == 8
+          assert all(integrity['checks'].values())
           assert all(item['self_close_allowed'] is False for item in matrix['gates'])
           assert index['internal_preparation_gate_pass'] is True
           assert index['external_operational_gate_pass'] is False
           assert index['index_digest'].startswith('sha256:')
+          assert 'integrity-adversarial-campaign.json' in index['artifacts']
           assert 'does not establish' in report['claims_boundary'].lower()
           PY
 
