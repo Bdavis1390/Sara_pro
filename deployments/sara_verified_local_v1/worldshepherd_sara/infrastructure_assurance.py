@@ -82,6 +82,8 @@ class _AcceptedEvidenceBinding:
     baseline_id: str
     digest: str
     supersedes: str | None
+    previous_chain_tag: str
+    chain_tag: str = field(repr=False)
 
 
 class AuthorizationEvent(BaseModel):
@@ -129,6 +131,12 @@ class PackageState:
     duplicate_mutations: int = 0
     _accepted_history: dict[str, tuple[_AcceptedEvidenceBinding, ...]] = field(
         default_factory=dict, init=False, repr=False
+    )
+    _accepted_history_key: bytes = field(
+        default_factory=lambda: secrets.token_bytes(32),
+        init=False,
+        repr=False,
+        compare=False,
     )
 
     def record(self, event_type: str, **payload: Any) -> None:
@@ -224,6 +232,8 @@ def _capability_valid_for_secret(
     action: str,
     secret: str,
 ) -> bool:
+    if type(capability) is not AuthorizationCapability:
+        return False
     if (
         capability.actor != actor
         or capability.role != role
@@ -240,6 +250,31 @@ def _capability_valid_for_secret(
         secret=secret,
     )
     return hmac.compare_digest(capability.signature, expected)
+
+
+def _capability_valid_for_current_secret(
+    capability: object | None,
+    *,
+    actor: str,
+    role: str,
+    target_id: str,
+    action: str,
+) -> bool:
+    """Validate only the module-owned capability type; never dispatch to caller code."""
+    if type(capability) is not AuthorizationCapability:
+        return False
+    try:
+        secret = _required_secret("SARA_ADMIN_TOKEN")
+    except RuntimeError:
+        return False
+    return _capability_valid_for_secret(
+        capability,
+        actor=actor,
+        role=role,
+        target_id=target_id,
+        action=action,
+        secret=secret,
+    )
 
 
 def issue_authorization_capability(
@@ -290,14 +325,12 @@ def authorize_configuration_change(
     approval_actor: str | None = None,
     capability: AuthorizationCapability | None = None,
 ) -> AuthorizationEvent:
-    verified_authority = (
-        capability is not None
-        and capability.valid_for(
-            actor=actor,
-            role=state.package.authority_required,
-            target_id=state.package.package_id,
-            action="CONFIGURATION_CHANGE",
-        )
+    verified_authority = _capability_valid_for_current_secret(
+        capability,
+        actor=actor,
+        role=state.package.authority_required,
+        target_id=state.package.package_id,
+        action="CONFIGURATION_CHANGE",
     )
     if state.package.state == "CLOSED" and new_baseline != state.current_baseline:
         decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"] = "DENY"
@@ -365,10 +398,58 @@ def _append_issue(state: PackageState, finding: str) -> None:
         state.issues.append(finding)
 
 
-def _binding_from_record(record: EvidenceRecord) -> _AcceptedEvidenceBinding:
+def _accepted_binding_payload(
+    *,
+    evidence_id: str,
+    package_id: str,
+    evidence_type: str,
+    version: int,
+    baseline_id: str,
+    digest: str,
+    supersedes: str | None,
+    previous_chain_tag: str,
+) -> bytes:
+    return json.dumps(
+        {
+            "schema": "WS-SENTINEL-ACCEPTED-EVIDENCE-CHAIN-V1",
+            "evidence_id": evidence_id,
+            "package_id": package_id,
+            "evidence_type": evidence_type,
+            "version": version,
+            "baseline_id": baseline_id,
+            "digest": digest,
+            "supersedes": supersedes,
+            "previous_chain_tag": previous_chain_tag,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
+def _accepted_binding_signature(
+    *, state: PackageState, binding: _AcceptedEvidenceBinding
+) -> str:
+    payload = _accepted_binding_payload(
+        evidence_id=binding.evidence_id,
+        package_id=binding.package_id,
+        evidence_type=binding.evidence_type,
+        version=binding.version,
+        baseline_id=binding.baseline_id,
+        digest=binding.digest,
+        supersedes=binding.supersedes,
+        previous_chain_tag=binding.previous_chain_tag,
+    )
+    return "hmac-sha256:" + hmac.new(
+        state._accepted_history_key, payload, hashlib.sha256
+    ).hexdigest()
+
+
+def _binding_from_record(
+    state: PackageState, record: EvidenceRecord, *, previous_chain_tag: str
+) -> _AcceptedEvidenceBinding:
     if record.digest is None:
         raise ValueError("accepted evidence must have a digest")
-    return _AcceptedEvidenceBinding(
+    unsigned = _AcceptedEvidenceBinding(
         evidence_id=record.evidence_id,
         package_id=record.package_id,
         evidence_type=record.evidence_type,
@@ -376,7 +457,10 @@ def _binding_from_record(record: EvidenceRecord) -> _AcceptedEvidenceBinding:
         baseline_id=record.baseline_id,
         digest=record.digest,
         supersedes=record.supersedes,
+        previous_chain_tag=previous_chain_tag,
+        chain_tag="pending",
     )
+    return replace(unsigned, chain_tag=_accepted_binding_signature(state=state, binding=unsigned))
 
 
 def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, tuple[str, ...]]:
@@ -427,7 +511,11 @@ def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, 
     if accepted:
         state.authoritative_evidence[snapshot.evidence_type] = snapshot
         prior = state._accepted_history.get(snapshot.evidence_type, ())
-        state._accepted_history[snapshot.evidence_type] = (*prior, _binding_from_record(snapshot))
+        previous_chain_tag = prior[-1].chain_tag if prior else "GENESIS"
+        binding = _binding_from_record(
+            state, snapshot, previous_chain_tag=previous_chain_tag
+        )
+        state._accepted_history[snapshot.evidence_type] = (*prior, binding)
         state.record(
             "evidence_accepted",
             evidence_id=snapshot.evidence_id,
@@ -451,14 +539,12 @@ def resolve_issue(
     rationale: str,
     capability: AuthorizationCapability | None = None,
 ) -> bool:
-    verified_authority = (
-        capability is not None
-        and capability.valid_for(
-            actor=actor,
-            role=state.package.authority_required,
-            target_id=state.package.package_id,
-            action="ISSUE_RESOLUTION",
-        )
+    verified_authority = _capability_valid_for_current_secret(
+        capability,
+        actor=actor,
+        role=state.package.authority_required,
+        target_id=state.package.package_id,
+        action="ISSUE_RESOLUTION",
     )
     if not verified_authority:
         state.record(
@@ -535,7 +621,13 @@ def _accepted_history_valid_for_closure(
         return False
 
     previous: _AcceptedEvidenceBinding | None = None
+    expected_previous_chain_tag = "GENESIS"
     for binding in history:
+        if binding.previous_chain_tag != expected_previous_chain_tag:
+            return False
+        expected_chain_tag = _accepted_binding_signature(state=state, binding=binding)
+        if not hmac.compare_digest(binding.chain_tag, expected_chain_tag):
+            return False
         if (
             binding.package_id != state.package.package_id
             or binding.evidence_type != evidence_type
@@ -554,6 +646,7 @@ def _accepted_history_valid_for_closure(
             if binding.version <= previous.version or binding.supersedes != previous.evidence_id:
                 return False
         previous = binding
+        expected_previous_chain_tag = binding.chain_tag
     return True
 
 
