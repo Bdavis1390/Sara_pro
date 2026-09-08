@@ -1,0 +1,64 @@
+{
+  "schema": "ws-apnt-nist-pnt-profile-alignment-1",
+  "reference": {
+    "document": "NIST IR 8323 Rev. 2 ipd - Foundational PNT Profile",
+    "published": "2026-05-06",
+    "comment_deadline": "2026-07-06",
+    "comment_period_state": "CLOSED",
+    "source": "https://doi.org/10.6028/NIST.IR.8323r2.ipd",
+    "status": "INITIAL_PUBLIC_DRAFT"
+  },
+  "alignment_state": "DRAFT_ALIGNMENT_ONLY_NOT_CONFORMANCE",
+  "claims_boundary": [
+    "This is an internal Worldshepherd alignment artifact, not NIST conformance, certification, approval, accreditation, or endorsement.",
+    "The current APNT evidence is synthetic software evidence and does not validate physical PNT source accuracy, shipboard integration, GPNTS, ASPN, pntOS, GNSS receivers, timing hardware, or operator performance.",
+    "The NIST public comment period is closed; no comment submission or NIST engagement is claimed.",
+    "Third-party, supplier, service-provider, and real-world PNT data dependencies remain unvalidated unless separately evidenced."
+  ],
+  "profile_functions": [
+    {
+      "function": "GOVERN",
+      "worldshepherd_existing": ["PRIME policy gate for proposed recovery actions", "claims-controlled qualification records", "human authority required for consequential recovery"],
+      "missing_or_unverified": ["PNT-specific dependency ownership and risk-accountability matrix", "third-party and supplier risk register for PNT services/data"]
+    },
+    {
+      "function": "IDENTIFY",
+      "worldshepherd_existing": ["synthetic GNSS/INS/alternate-PNT source inventory", "source health and confidence representation", "source lineage in synthetic qualification"],
+      "missing_or_unverified": ["production inventory of PNT-dependent systems and downstream mission dependencies", "authoritative source-selection rationale and criticality classification", "external timing-service and data dependency inventory"]
+    },
+    {
+      "function": "PROTECT",
+      "worldshepherd_existing": ["bounded exclusion/fusion/recovery proposals", "policy-gated recovery options", "cross-check concept using independent sources"],
+      "missing_or_unverified": ["validated receiver/equipment hardening", "secure configuration baseline for physical PNT user equipment", "validated anti-jam/anti-spoof protections and supplier controls"]
+    },
+    {
+      "function": "DETECT",
+      "worldshepherd_existing": ["synthetic degradation detection", "source disagreement and confidence-state handling", "interference-suspected and persistent-interference states"],
+      "missing_or_unverified": ["spoofing/manipulation-specific challenge set", "timing-offset and time-transfer anomaly challenge set", "production false-positive/false-negative characterization"]
+    },
+    {
+      "function": "RESPOND",
+      "worldshepherd_existing": ["exclude untrusted source proposal", "fuse alternate sources proposal", "operator alert/approval proposal", "attributable proposed actions"],
+      "missing_or_unverified": ["validated incident communications and escalation workflow", "partner/platform response interoperability", "field response timing and workload evidence"]
+    },
+    {
+      "function": "RECOVER",
+      "worldshepherd_existing": ["cross-validate GNSS before re-entry", "retain alternate-PNT during recovery", "operator review requirement", "deterministic replay concept"],
+      "missing_or_unverified": ["validated re-entry thresholds for physical PNT sources", "post-incident root-cause and lessons-learned workflow", "field recovery time objective and mission-impact evidence"]
+    }
+  ],
+  "next_tevv_events": [
+    "third-party PNT service loss and stale-data dependency",
+    "coherent spoofing/manipulation challenge with apparently healthy GNSS confidence",
+    "timing offset/drift challenge independent of position degradation",
+    "multiple-source common-mode failure",
+    "recovery re-entry with a partially recovered but still biased source",
+    "source provenance or configuration lineage missing/tampered"
+  ],
+  "promotion_gates": [
+    "Do not claim NIST alignment beyond documented draft mapping.",
+    "Do not claim production PNT cybersecurity readiness from synthetic software tests.",
+    "Do not claim physical APNT accuracy, resilience, anti-spoofing, or shipboard integration without partner/lab/field evidence.",
+    "Require independent evidence for third-party service, supplier, and data dependency controls."
+  ]
+}
