@@ -32,6 +32,7 @@ def build_readiness_bundle(
 
     external = report["external_gate_matrix"]
     scale = report["scale_campaign"]
+    integrity = report["integrity_adversarial_campaign"]
     boundary = {
         "schema": "WS-SENTINEL-DATA-BOUNDARY-REPORT-V1",
         "results": report["data_boundary"],
@@ -42,6 +43,7 @@ def build_readiness_bundle(
         "readiness-report.json": report,
         "external-gate-matrix.json": external,
         "scale-campaign.json": scale,
+        "integrity-adversarial-campaign.json": integrity,
         "data-boundary-report.json": boundary,
     }
     for name, payload in files.items():
