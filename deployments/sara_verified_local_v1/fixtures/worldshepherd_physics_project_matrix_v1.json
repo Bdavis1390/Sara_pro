@@ -1,0 +1,22 @@
+{
+  "schema_version": "ws-pvk-project-matrix-1",
+  "status": "IMPLEMENTATION_CANDIDATE_NOT_RUNTIME_VERIFIED",
+  "projects": [
+    {"project_id": "SARA", "domains": ["governance", "evidence"], "pvk_controls": ["physics_record", "claims_linter", "audit_events", "approval_gate"]},
+    {"project_id": "PRIME_SENTINEL", "domains": ["governance"], "pvk_controls": ["claim_gate", "hazard_gate", "cre1aws_release_gate"]},
+    {"project_id": "OVERWATCH", "domains": ["telemetry", "observability"], "pvk_controls": ["validation_state_metrics", "calibration_status", "convergence_status", "review_status"]},
+    {"project_id": "ECHO_SENTINEL_LINK", "domains": ["telemetry", "provenance"], "pvk_controls": ["raw_data_digest", "source_manifest", "time_reference", "coordinate_frame", "uncertainty"]},
+    {"project_id": "WS-ALTI", "domains": ["materials", "additive_manufacturing"], "pvk_controls": ["phase_risk", "sample_provenance", "characterization_chain", "property_claim_gate"]},
+    {"project_id": "ADAPTIVE_METASURFACE", "domains": ["electromagnetics", "materials"], "pvk_controls": ["operating_band", "unit_cell_model", "convergence", "coupon_measurement", "simulation_test_correlation"]},
+    {"project_id": "TIDELENS_SPECULAR_MIST", "domains": ["radar", "electromagnetics", "sensing"], "pvk_controls": ["radar_assumptions", "synthetic_data_label", "hardware_dependency", "detection_identification_boundary"]},
+    {"project_id": "AEROSHEPHERD", "domains": ["aviation", "controls", "autonomy"], "pvk_controls": ["mass_power_thermal", "structural_dynamics", "emc", "lost_link", "qualification_boundary"]},
+    {"project_id": "HELIOS_LINK", "domains": ["power_beaming", "electromagnetics", "space"], "pvk_controls": ["link_budget", "pointing", "thermal", "safety", "physical_test_gate"]},
+    {"project_id": "ION_PROPULSION", "domains": ["plasma", "space_propulsion"], "pvk_controls": ["mass_flow", "power_budget", "thrust_measurement", "plume_charging", "lifetime"]},
+    {"project_id": "RESONANCE_RESEARCH", "domains": ["structural", "acoustic", "electromagnetic", "thermal", "controls"], "pvk_controls": ["mode_classification", "damping", "energy_accounting", "confounder_matrix", "replication"]},
+    {"project_id": "ENERGY_STORAGE", "domains": ["electrical", "thermal", "controls"], "pvk_controls": ["hazards", "thermal_management", "fault_testing", "digital_twin_correlation"]},
+    {"project_id": "BAROS", "domains": ["medical_physics", "optimization"], "pvk_controls": ["dose_transport", "dose_engine_verification", "uncertainty", "qualified_review", "clinical_boundary"]},
+    {"project_id": "STEGriage", "domains": ["digital_forensics", "imaging"], "pvk_controls": ["file_hash", "acquisition_provenance", "sensor_vs_rgb_boundary", "reproducible_extraction"]},
+    {"project_id": "WS-LAB_BOONE", "domains": ["laboratory", "equipment"], "pvk_controls": ["inventory", "ownership", "condition", "calibration", "hazard_review"]},
+    {"project_id": "REVENUE_ENGINE", "domains": ["commercialization"], "pvk_controls": ["external_safe_statement", "evidence_dependency", "claims_lint", "release_gate"]}
+  ]
+}
