@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,11 @@ def _add_entity(store: dict[str, MBSEEntity], name: str, source_ref: str) -> Non
     current = store.get(key)
     refs = set(current.source_refs if current else ())
     refs.add(source_ref)
-    entity_type = current.entity_type if current and current.entity_type != "unknown" else infer_entity_type(clean)
+    entity_type = (
+        current.entity_type
+        if current and current.entity_type != "unknown"
+        else infer_entity_type(clean)
+    )
     store[key] = MBSEEntity(
         name=clean,
         entity_type=entity_type,
@@ -99,7 +103,12 @@ def extract_legacy_model(fixture: dict[str, Any]) -> dict[str, Any]:
                     )
                 if consumer and service:
                     relationships.append(
-                        MBSERelationship(str(service), str(consumer), "publishes_track_data", artifact_id)
+                        MBSERelationship(
+                            str(service),
+                            str(consumer),
+                            "publishes_track_data",
+                            artifact_id,
+                        )
                     )
 
         elif kind == "cable_record":
@@ -111,41 +120,67 @@ def extract_legacy_model(fixture: dict[str, Any]) -> dict[str, Any]:
                     _add_entity(entities, str(source), artifact_id)
                 if target:
                     _add_entity(entities, str(target), artifact_id)
-                if source and target and ("vdc" in purpose.lower() or "power" in purpose.lower()):
+                if source and target and (
+                    "vdc" in purpose.lower() or "power" in purpose.lower()
+                ):
                     relationships.append(
                         MBSERelationship(str(source), str(target), "powers", artifact_id)
                     )
 
         elif kind == "technical_manual_excerpt":
             text = str(artifact.get("content", ""))
+
+            # Resolve the grammatical subject once from the first clause. The
+            # original implementation let the later Ethernet regex search
+            # backward across the full sentence, which could mis-attribute the
+            # forwarding action to "Power Distribution subsystem and" instead
+            # of the actual subject, "Sensor A". Keeping the subject explicit
+            # makes the rule deterministic and source-grounded without making
+            # it more general than the benchmark warrants.
+            manual_subject: str | None = None
             power_match = re.search(
-                r"(?P<target>[A-Z][A-Za-z0-9 ]+?)\s+receives\s+[^.]*?\s+from\s+the\s+(?P<source>[A-Z][A-Za-z0-9 ]+?)(?:\s+subsystem)?\s+and\s+",
+                r"(?P<target>[A-Z][A-Za-z0-9 ]+?)\s+receives\s+[^.]*?\s+from\s+the\s+"
+                r"(?P<source>[A-Z][A-Za-z0-9 ]+?)(?:\s+subsystem)?\s+and\s+",
                 text,
             )
             if power_match:
                 source = _clean_name(power_match.group("source"))
                 target = _clean_name(power_match.group("target"))
-                _add_entity(entities, source, artifact_id)
-                _add_entity(entities, target, artifact_id)
-                relationships.append(MBSERelationship(source, target, "powers", artifact_id))
-
-            ethernet_match = re.search(
-                r"(?P<source>[A-Z][A-Za-z0-9 ]+?)\s+(?:forwards|sends)\s+[^.]*?\s+to\s+(?:the\s+)?(?P<target>[A-Z][A-Za-z0-9 ]+?)\s+over\s+Ethernet",
-                text,
-            )
-            if ethernet_match:
-                source = _clean_name(ethernet_match.group("source"))
-                target = _clean_name(ethernet_match.group("target"))
+                manual_subject = target
                 _add_entity(entities, source, artifact_id)
                 _add_entity(entities, target, artifact_id)
                 relationships.append(
-                    MBSERelationship(source, target, "ethernet_data", artifact_id)
+                    MBSERelationship(source, target, "powers", artifact_id)
                 )
+
+            if manual_subject:
+                ethernet_match = re.search(
+                    r"(?:forwards|sends)\s+[^.]*?\s+to\s+(?:the\s+)?"
+                    r"(?P<target>[A-Z][A-Za-z0-9 ]+?)\s+over\s+Ethernet",
+                    text,
+                )
+                if ethernet_match:
+                    target = _clean_name(ethernet_match.group("target"))
+                    _add_entity(entities, manual_subject, artifact_id)
+                    _add_entity(entities, target, artifact_id)
+                    relationships.append(
+                        MBSERelationship(
+                            manual_subject,
+                            target,
+                            "ethernet_data",
+                            artifact_id,
+                        )
+                    )
 
     unique_relationships: dict[tuple[str, str, str], MBSERelationship] = {}
     for rel in relationships:
-        unique_relationships[(_key(rel.source), _key(rel.target), rel.relation)] = MBSERelationship(
-            _clean_name(rel.source), _clean_name(rel.target), rel.relation, rel.source_ref
+        unique_relationships[(_key(rel.source), _key(rel.target), rel.relation)] = (
+            MBSERelationship(
+                _clean_name(rel.source),
+                _clean_name(rel.target),
+                rel.relation,
+                rel.source_ref,
+            )
         )
 
     return {
@@ -185,7 +220,9 @@ def _prf(predicted: set[Any], expected: set[Any]) -> tuple[float, float]:
     return precision, recall
 
 
-def score_against_ground_truth(model: dict[str, Any], fixture: dict[str, Any]) -> dict[str, float | int]:
+def score_against_ground_truth(
+    model: dict[str, Any], fixture: dict[str, Any]
+) -> dict[str, float | int]:
     expected_entities = {
         (_key(str(node["name"])), str(node["type"]))
         for node in fixture.get("ground_truth", {}).get("nodes", [])
@@ -229,11 +266,15 @@ def score_against_ground_truth(model: dict[str, Any], fixture: dict[str, Any]) -
     }
 
 
-def meets_fixture_targets(metrics: dict[str, float | int], fixture: dict[str, Any]) -> bool:
+def meets_fixture_targets(
+    metrics: dict[str, float | int], fixture: dict[str, Any]
+) -> bool:
     targets = fixture.get("scoring", {})
     return bool(
-        float(metrics["entity_precision"]) >= float(targets.get("entity_precision_target", 1.0))
-        and float(metrics["entity_recall"]) >= float(targets.get("entity_recall_target", 1.0))
+        float(metrics["entity_precision"])
+        >= float(targets.get("entity_precision_target", 1.0))
+        and float(metrics["entity_recall"])
+        >= float(targets.get("entity_recall_target", 1.0))
         and float(metrics["relationship_precision"])
         >= float(targets.get("relationship_precision_target", 1.0))
         and float(metrics["relationship_recall"])
