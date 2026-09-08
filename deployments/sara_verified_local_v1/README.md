@@ -48,3 +48,20 @@ ws-pre-bloom \
 The compiler exits nonzero if a qualification record fails or ECHO-style custody verification fails. Expected outputs include `qualification_index.json`, domain qualification bundles, `capability_readiness_ledger.json`, `capability_horizons.json`, `software_provenance.json`, and the local hash-addressed `echo_store/`.
 
 See [`docs/PRE_FULL_BLOOM.md`](docs/PRE_FULL_BLOOM.md) for operation and evidence interpretation, and [`docs/COMPLIANCE_BOUNDARY.md`](docs/COMPLIANCE_BOUNDARY.md) for the exact distinction between internal software conformance and external regulatory, contractual, physical, partner, and government validation.
+
+## Astra solver profile
+
+`Astra` is a Worldshepherd solver codename/profile, not a provider model identifier.
+
+The current verified default OpenAI runtime target is `gpt-5.6-sol`, while model inference remains disabled by default. The implementation is in `worldshepherd_sara/astra_solver.py` and requires both an injected provider transport and explicit SARA model-inference authorization before a call can occur.
+
+Fail-closed defaults:
+
+- `SARA_ASTRA_MODEL=gpt-5.6-sol`
+- `SARA_ASTRA_NETWORK_ENABLED=false`
+- tool allowlist empty
+- remote response storage disabled
+- no embedded provider credentials
+- no maturity upgrade from model output alone
+
+See [`../../docs/ASTRA_INTEGRATION.md`](../../docs/ASTRA_INTEGRATION.md) for the architecture and promotion gates.
