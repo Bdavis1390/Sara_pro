@@ -1,0 +1,93 @@
+{
+  "schema": "ws-omega-proposals-1",
+  "cycle_label": "2026-09-07-cycle-2-release6-extension",
+  "claims_boundary": [
+    "Official opportunity descriptions are demand signals, not Worldshepherd maturity evidence.",
+    "Medical topics remain research/capture observations only and do not authorize patient-specific use or clinical claims.",
+    "No entry authorizes proposal submission, external engagement, purchasing, or physical actuation."
+  ],
+  "proposals": [
+    {
+      "parent_node_id": "WS-OMEGA-6536656dbaf4f6d0",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA SHIELDER nanofabrication",
+      "statement": "DARPA STTR topic DPA26TZ06-DV004 seeks novel nanofabrication hard-mask materials that can enable scalable high-resolution features across semiconductor, photonic, MEMS, and quantum-device platforms; the topic opens September 23 and closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26tz06-dv004",
+        "https://www.darpa.mil/research/programs/shielder"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["nanofabrication", "photonics", "MEMS", "quantum devices", "materials", "PRE"],
+      "falsification_tests": ["Identify whether any current Worldshepherd material has measured etch selectivity, resolution, defectivity, process compatibility, or scale-up evidence; if not, keep this as a partner/materials-learning route rather than a prime claim."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OPPORTUNITY",
+      "domain": "hypersonic wind-tunnel disturbance localization",
+      "statement": "DARPA STTR topic DPA26TZ06-DV006 seeks non-optical diagnostics and modeling to localize and characterize hard-to-access upstream flow and acoustic disturbances in hypersonic wind tunnels; the topic closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26tz06-dv006",
+        "https://www.darpa.mil/research/programs/localization-characterization-modeling-freestream-disturbances-hypersonic-wind-tunnels"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["hypersonics", "sensing", "digital twin", "acoustics", "fiber optics", "PRE"],
+      "falsification_tests": ["Test whether the Worldshepherd sensing/digital-twin stack can localize synthetic upstream disturbances from sparse sensor data before claiming relevance to a physical hypersonic tunnel."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "OPPORTUNITY",
+      "domain": "noninvasive occult hemorrhage detection",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV025 seeks a capability to noninvasively detect and localize occult non-compressible hemorrhage outside a hospital, providing actionable routing information in austere environments; the topic closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz06-dv025",
+        "https://www.darpa.mil/research/programs/noninvasive-detection-localization-occult-hemorrhage"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["medical sensing", "austere medicine", "decision support", "BAROS", "PRE"],
+      "falsification_tests": ["Keep Worldshepherd involvement software/sensing-assurance only unless a clinically appropriate sensor modality and independently validated dataset exist; measure false-negative and localization error on held-out data before any medical-performance claim."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "OPPORTUNITY",
+      "domain": "autonomous chemical-toxidrome triage",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV028 seeks autonomous medical triage systems that recognize chemical toxidromes and physically deliver the corresponding antidote or life-saving intervention; the topic closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz06-dv028"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["medical autonomy", "robotics", "decision support", "PRIME", "safety", "PRE"],
+      "falsification_tests": ["Model the recognition and authorization chain with synthetic cases and require explicit human/safety interlocks; do not implement or test antidote delivery without appropriate clinical, regulatory, and laboratory authority."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-512d548fb8c99b67",
+      "kind": "OPPORTUNITY",
+      "domain": "autonomous ICU life-support systems",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV029 (ICU-in-a-Box) targets autonomous systems for life support, resuscitation, trauma, shock, ARDS, and multiple-organ-failure scenarios, creating a direct demand signal for governed medical autonomy and fail-safe human-machine interfaces.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/icu-in-a-box"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["medical robotics", "autonomy", "human-machine interface", "PRIME", "BAROS", "PRE"],
+      "falsification_tests": ["Restrict initial Worldshepherd work to simulation, alarm logic, provenance, and fault-injection; require medical-device and clinical validation before any real patient-control path exists."]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-bcd6b42ed6096617",
+      "kind": "OPPORTUNITY",
+      "domain": "networked biological pest surveillance",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV024 seeks real-time networked automated New World screwworm detection, identification, and surveillance, providing a cross-domain route for distributed sensing, edge classification, provenance, and environmental response systems.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz06-dv024",
+        "https://www.darpa.mil/research/programs/new-world-screwworm-networked-detection-identification-surveillance-system"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": ["environmental sensing", "edge AI", "networked surveillance", "ECHO", "PRE"],
+      "falsification_tests": ["Benchmark false-positive/false-negative rates and provenance completeness on a labeled non-sensitive image/sensor dataset before generalizing Worldshepherd distributed-sensing claims."]
+    }
+  ]
+}
