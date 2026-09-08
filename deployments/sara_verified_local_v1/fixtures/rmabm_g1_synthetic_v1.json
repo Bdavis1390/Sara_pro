@@ -1,0 +1,90 @@
+{
+  "scenario_id": "WS-RMABM-G1-SYNTH-001",
+  "scenario_time_seconds": 20.0,
+  "requested_action": "advisory_dissemination",
+  "human_authority": "identified-human-test-authority",
+  "max_spatial_distance": 2.0,
+  "max_time_delta_seconds": 3.0,
+  "policy": {
+    "min_track_confidence": 0.75,
+    "min_independent_sensors": 2,
+    "max_observation_age_seconds": 8.0,
+    "require_identified_human_authority": true,
+    "permitted_action": "advisory_dissemination"
+  },
+  "observations": [
+    {
+      "observation_id": "OBS-A",
+      "sensor_id": "SYN-EOIR-1",
+      "t_seconds": 15.0,
+      "x": 10.0,
+      "y": 10.0,
+      "confidence": 0.92,
+      "source_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "source_status": "synthetic"
+    },
+    {
+      "observation_id": "OBS-B",
+      "sensor_id": "SYN-RADAR-2",
+      "t_seconds": 15.5,
+      "x": 10.4,
+      "y": 9.8,
+      "confidence": 0.88,
+      "source_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_status": "synthetic"
+    },
+    {
+      "observation_id": "OBS-C",
+      "sensor_id": "SYN-EOIR-3",
+      "t_seconds": 16.0,
+      "x": 50.0,
+      "y": 50.0,
+      "confidence": 0.55,
+      "source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "source_status": "synthetic_fault_injected"
+    },
+    {
+      "observation_id": "OBS-D",
+      "sensor_id": "SYN-RADAR-4",
+      "t_seconds": 5.0,
+      "x": 10.2,
+      "y": 10.1,
+      "confidence": 0.95,
+      "source_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "source_status": "synthetic_fault_injected"
+    }
+  ],
+  "events": [
+    {
+      "sequence": 3,
+      "t_seconds": 12.0,
+      "source": "SYN-LINK-1",
+      "event_type": "comms_degraded",
+      "payload": {"loss_percent": 35}
+    },
+    {
+      "sequence": 1,
+      "t_seconds": 1.0,
+      "source": "SYN-MISSION",
+      "event_type": "scenario_started",
+      "payload": {}
+    },
+    {
+      "sequence": 2,
+      "t_seconds": 6.0,
+      "source": "SYN-RADAR-4",
+      "event_type": "sensor_stale",
+      "payload": {"observation_id": "OBS-D"}
+    }
+  ],
+  "expected": {
+    "authorized_advisory_count": 1,
+    "hold_count": 1,
+    "stale_observation_ids": ["OBS-D"],
+    "ordered_event_sequences": [1, 2, 3],
+    "provenance_completeness": 1.0,
+    "policy_enforcement_rate": 1.0,
+    "stale_observation_traceability": 1.0,
+    "degraded_state_continuity": true
+  }
+}
