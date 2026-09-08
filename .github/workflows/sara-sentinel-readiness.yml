@@ -7,8 +7,11 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_infrastructure_cli.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight_cli.py'
       - 'deployments/sara_verified_local_v1/tests/test_infrastructure_assurance.py'
       - 'deployments/sara_verified_local_v1/tests/test_sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_supplier_preflight.py'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/sara-sentinel-readiness.yml'
   push:
@@ -17,8 +20,11 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_infrastructure_cli.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight_cli.py'
       - 'deployments/sara_verified_local_v1/tests/test_infrastructure_assurance.py'
       - 'deployments/sara_verified_local_v1/tests/test_sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_supplier_preflight.py'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/sara-sentinel-readiness.yml'
   workflow_dispatch:
@@ -51,12 +57,17 @@ jobs:
           python -m pip check
           command -v ws-sentinel-infrastructure
           command -v ws-sentinel-readiness
+          command -v ws-sentinel-supplier-preflight
           ws-sentinel-infrastructure --help >/dev/null
           ws-sentinel-readiness --help >/dev/null
+          ws-sentinel-supplier-preflight --help >/dev/null
 
       - name: Run Sentinel regression tests
         run: |
-          pytest -q tests/test_infrastructure_assurance.py tests/test_sentinel_readiness.py
+          pytest -q \
+            tests/test_infrastructure_assurance.py \
+            tests/test_sentinel_readiness.py \
+            tests/test_sentinel_supplier_preflight.py
 
       - name: Build G1 infrastructure evidence
         run: |
@@ -110,6 +121,28 @@ jobs:
           assert 'does not establish' in report['claims_boundary'].lower()
           PY
 
+      - name: Build fail-closed supplier onboarding preflight
+        run: |
+          mkdir -p sentinel_supplier_preflight_ci
+          ws-sentinel-supplier-preflight \
+            --out sentinel_supplier_preflight_ci/default-unverified-report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path('sentinel_supplier_preflight_ci/default-unverified-report.json').read_text())
+          assert report['schema'] == 'WS-SENTINEL-SUPPLIER-PREFLIGHT-V1'
+          assert report['technical_review_ready'] is True
+          assert report['partner_route'] == 'READY_FOR_INTERNAL_REVIEW'
+          assert report['federal_entity_ready'] is False
+          assert report['supplier_registration_ready'] is False
+          assert report['external_supplier_submission_authorized'] is False
+          assert report['direct_prime_route'] == 'NO_GO'
+          assert report['decision'] == 'PARTNER_PACKET_READY_EXTERNAL_ACTION_BLOCKED'
+          assert 'exact_legal_entity' in report['missing_or_unverified_fields']
+          assert 'does not independently authenticate' in report['claims_boundary']
+          PY
+
       - name: Upload Sentinel G1 evidence
         uses: actions/upload-artifact@v4
         with:
@@ -122,4 +155,11 @@ jobs:
         with:
           name: sentinel-readiness-evidence
           path: deployments/sara_verified_local_v1/sentinel_readiness_evidence_ci
+          if-no-files-found: error
+
+      - name: Upload Sentinel supplier preflight evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: sentinel-supplier-preflight-evidence
+          path: deployments/sara_verified_local_v1/sentinel_supplier_preflight_ci
           if-no-files-found: error
