@@ -1,0 +1,57 @@
+{
+  "schema": "ws-apnt-nist-adversarial-gap-suite-1",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "purpose": "Preserve known negative evidence where the bounded APNT demonstrator does not detect NIST-profile-relevant failure modes that are not encoded in its current decision inputs.",
+  "claims_boundary": [
+    "Synthetic adversarial metadata only; not derived from real GNSS, INS, timing, Navy, GPNTS, ASPN, pntOS, or shipboard data.",
+    "Expected safe-awareness states are internal test expectations, not government requirements or validated operational thresholds.",
+    "A failing current baseline is retained as negative evidence and must not be represented as anti-spoofing, timing-integrity, or common-mode-failure capability."
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "coherent_spoofing_nominal_health",
+      "source_state": {
+        "gnss_primary": {"health": "NOMINAL", "confidence": 0.98, "measurement_consistency": "CONFLICT_WITH_INDEPENDENT_SOURCES"},
+        "ins_primary": {"health": "NOMINAL", "confidence": 0.92, "measurement_consistency": "CONFLICT_WITH_GNSS"},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.88, "measurement_consistency": "CONFLICT_WITH_GNSS"}
+      },
+      "expected_safe_awareness_state": "DEGRADED_PNT",
+      "required_future_signal": "cross-source consistency/residual evidence",
+      "current_baseline_expected_to_detect": false
+    },
+    {
+      "scenario_id": "timing_offset_only",
+      "source_state": {
+        "gnss_primary": {"health": "NOMINAL", "confidence": 0.98, "timing_offset_ns": 1000000},
+        "ins_primary": {"health": "NOMINAL", "confidence": 0.91},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.85}
+      },
+      "expected_safe_awareness_state": "DEGRADED_PNT",
+      "required_future_signal": "timing offset/drift integrity evidence with declared thresholds",
+      "current_baseline_expected_to_detect": false
+    },
+    {
+      "scenario_id": "common_mode_failure_indicator",
+      "source_state": {
+        "gnss_primary": {"health": "NOMINAL", "confidence": 0.96, "common_mode_dependency": "SUSPECTED"},
+        "ins_primary": {"health": "NOMINAL", "confidence": 0.93, "common_mode_dependency": "SUSPECTED"},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.90, "common_mode_dependency": "SUSPECTED"}
+      },
+      "expected_safe_awareness_state": "DEGRADED_PNT",
+      "required_future_signal": "independence/dependency graph and common-mode risk evidence",
+      "current_baseline_expected_to_detect": false
+    },
+    {
+      "scenario_id": "missing_source_provenance",
+      "source_state": {
+        "gnss_primary": {"health": "NOMINAL", "confidence": 0.97, "provenance_complete": false},
+        "ins_primary": {"health": "NOMINAL", "confidence": 0.92, "provenance_complete": true},
+        "alt_pnt_1": {"health": "AVAILABLE", "confidence": 0.87, "provenance_complete": true}
+      },
+      "expected_safe_awareness_state": "DEGRADED_PNT",
+      "required_future_signal": "source provenance/configuration lineage gate",
+      "current_baseline_expected_to_detect": false
+    }
+  ],
+  "promotion_gate": "Do not promote APNT demonstrator readiness for manipulation detection, timing integrity, common-mode resilience, or provenance-aware source trust until these failure cases are detected by a separately reviewed design and then validated beyond synthetic software evidence."
+}
