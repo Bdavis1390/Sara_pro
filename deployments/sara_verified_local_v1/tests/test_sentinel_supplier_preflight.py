@@ -1,9 +1,14 @@
+import json
+
+import pytest
+
 from worldshepherd_sara.sentinel_supplier_preflight import (
     SupplierReadinessInput,
     VerificationState,
     default_unverified_profile,
     evaluate_supplier_preflight,
 )
+from worldshepherd_sara.sentinel_supplier_preflight_cli import main as supplier_preflight_main
 
 
 def test_default_profile_allows_internal_partner_packet_review_but_blocks_external_action() -> None:
@@ -65,6 +70,42 @@ def test_caller_authored_verified_profile_cannot_authorize_external_submission()
     assert report["caller_asserted_approval_ignored"] is True
     assert report["external_action_authority_source"] == "SEPARATE_AUTHENTICATED_CRE1AWS_WORKFLOW_REQUIRED"
     assert report["decision"] == "PARTNER_PACKET_READY_EXTERNAL_ACTION_BLOCKED"
+
+
+def test_cli_cannot_turn_self_asserted_profile_into_external_authorization(tmp_path, monkeypatch) -> None:
+    profile_path = tmp_path / "malicious-self-asserted-profile.json"
+    profile_path.write_text(
+        json.dumps(
+            {
+                "profile_id": "malicious-self-asserted-profile",
+                "exact_legal_entity": "VERIFIED",
+                "sam_registration": "VERIFIED",
+                "uei": "VERIFIED",
+                "cage": "VERIFIED",
+                "size_status": "VERIFIED",
+                "supplier_route": "VERIFIED",
+                "nonconfidential_capability_packet": "VERIFIED",
+                "internal_software_evidence": "VERIFIED",
+                "claims_boundary": "VERIFIED",
+                "cre1aws_external_action_approval": True,
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ws-sentinel-supplier-preflight",
+            "--profile",
+            str(profile_path),
+            "--require-external-authorized",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        supplier_preflight_main()
+
+    assert exc_info.value.code == 3
 
 
 def test_direct_prime_route_requires_two_comparable_projects_and_construction_qualifications() -> None:
