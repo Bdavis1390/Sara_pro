@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 from pathlib import Path
 
@@ -48,7 +49,7 @@ class OmegaStateStore:
             descriptor = DurableStore._open_read_descriptor(
                 self.path, "WS-OMEGA state file"
             )
-            with __import__("os").fdopen(descriptor, "r", encoding="utf-8") as handle:
+            with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
                 try:
                     payload = json.load(handle)
                 except json.JSONDecodeError as exc:
