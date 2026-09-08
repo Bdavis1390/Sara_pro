@@ -108,6 +108,22 @@ def test_cli_cannot_turn_self_asserted_profile_into_external_authorization(tmp_p
     assert exc_info.value.code == 3
 
 
+def test_external_authorization_flag_has_stable_fail_closed_exit_when_combined(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "ws-sentinel-supplier-preflight",
+            "--require-registration-ready",
+            "--require-external-authorized",
+        ],
+    )
+    with pytest.raises(SystemExit) as exc_info:
+        supplier_preflight_main()
+    assert exc_info.value.code == 3
+
+
 def test_direct_prime_route_requires_two_comparable_projects_and_construction_qualifications() -> None:
     profile = default_unverified_profile().model_copy(
         update={
