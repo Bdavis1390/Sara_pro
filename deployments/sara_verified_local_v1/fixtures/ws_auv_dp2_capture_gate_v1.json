@@ -1,0 +1,110 @@
+{
+  "schema": "ws-auv-dp2-capture-gate-1",
+  "opportunity": {
+    "topic": "DPA26BZ05-DV021",
+    "title": "Open Architecture Platform for Underwater Vehicles for Rapid Adaptation, Collaborative Sensing, Navigation, and Autonomy",
+    "deadline": "2026-09-23T12:00:00-04:00",
+    "direct_to_phase_ii_only": true,
+    "source_urls": [
+      "https://www.darpa.mil/work-with-us/opportunities/dpa26bz05-dv021",
+      "https://www.darpa.mil/research/programs/open-architecture-platform-underwater-vehicles"
+    ]
+  },
+  "claims_boundary": [
+    "Worldshepherd does not claim an operational AUV, flooded-hull platform, underwater propulsion system, acoustic modem, hydrodynamic test article, 24-hour underwater endurance, or at-sea validation.",
+    "Existing APNT, link-loss, and mission-replay fixtures are synthetic software evidence only and do not satisfy DARPA's physical AUV feasibility requirements.",
+    "No partner interest, DP2 eligibility, award probability, or proposal submission is claimed.",
+    "Any underwater navigation or communication capability must be validated separately from surface, air, or generic synthetic scenarios."
+  ],
+  "darpa_required_feasibility_domains": [
+    {
+      "domain": "vehicle_dynamics_and_hydrodynamic_modeling",
+      "darpa_requirement": "Data demonstrating capability to model propulsion performance, vehicle dynamics, and hydrodynamic signatures of underwater platforms.",
+      "worldshepherd_status": "GAP_NO_QUALIFYING_EVIDENCE_IDENTIFIED",
+      "route": "PHYSICAL_PLATFORM_PARTNER_AND_PVK"
+    },
+    {
+      "domain": "acoustic_characterization_and_localization",
+      "darpa_requirement": "Data demonstrating ability to characterize, localize, and estimate acoustic signatures of individual platforms or multi-vehicle formations.",
+      "worldshepherd_status": "GAP_NO_QUALIFYING_EVIDENCE_IDENTIFIED",
+      "route": "ACOUSTICS_PARTNER_AND_LAB_OR_AT_SEA_VALIDATION"
+    },
+    {
+      "domain": "formation_stability_and_communication_resilience",
+      "darpa_requirement": "Analytical or algorithmic proof supporting stable formation control and consensus under degraded communications or platform performance.",
+      "worldshepherd_status": "PARTIAL_SYNTHETIC_SOFTWARE_RELEVANCE_ONLY",
+      "route": "SARA_HMAA_MISSION_REPLAY_PLUS_PLATFORM_VALIDATION"
+    }
+  ],
+  "existing_worldshepherd_evidence": [
+    {
+      "artifact": "apnt_destroyer_strait_v1.json",
+      "status": "SYNTHETIC_ONLY",
+      "relevance": "Models progressive GNSS degradation, alternate-PNT cross-check, confidence states, policy-gated recovery, and mission replay; useful as a software assurance pattern but not underwater-navigation validation."
+    },
+    {
+      "artifact": "hmaa_link_loss_scenario.json",
+      "status": "SYNTHETIC_ONLY",
+      "relevance": "Exercises connection loss, reconnect behavior, checksum failure, and policy-service outage; useful for DDIL software assurance but not proof of underwater mesh performance."
+    },
+    {
+      "artifact": "mission_replay_synthetic_v1.json",
+      "status": "SYNTHETIC_ONLY",
+      "relevance": "Exercises communications degradation, stale sensor dependencies, task failure, operator override, and replayable follow-on proposals; useful for fleet evidence and post-mission analysis."
+    },
+    {
+      "artifact": "WS-OMEGA / SARA governance",
+      "status": "IMPLEMENTED_SOFTWARE_WITH_CI_EVIDENCE",
+      "relevance": "Can route hypotheses, contradictions, mission events, provenance, and policy-gated actions without self-authorizing consequential execution."
+    }
+  ],
+  "phase_ii_milestone_fit": [
+    {
+      "month": 2,
+      "darpa_milestone": "Hardware/software interface standards, mesh baseline, external battery architecture, and AI-driven mission planning ecosystem.",
+      "worldshepherd_role": "Open interface/evidence schema, mission-planning governance, configuration custody, and verification hooks; hardware and battery architecture require platform partner."
+    },
+    {
+      "month": 10,
+      "darpa_milestone": "Physics-based pre-deployment simulation plus core autonomy including objective-based mission planning and market-based task allocation.",
+      "worldshepherd_role": "PVK/SARA integration, scenario generation, mission replay, confidence/provenance, and red-team injection; hydrodynamic truth model requires validated domain model and data."
+    },
+    {
+      "month": 18,
+      "darpa_milestone": "Multimodal acoustic/RF/cellular/SATCOM mesh and initial in-water validation of stationkeeping, propulsion endurance, and connectivity.",
+      "worldshepherd_role": "Mesh-state provenance, degraded-link policy, failover/recovery verification, and evidence replay; physical modem/network and in-water evidence require partner."
+    },
+    {
+      "month": 22,
+      "darpa_milestone": "Heterogeneous fleet with retasking, deconfliction, collaborative sensing, and automated data offload.",
+      "worldshepherd_role": "Task/action provenance, policy-gated retasking, conflict detection, multi-vehicle replay, and auditability; physical fleet and collaborative sensing remain partner-led."
+    }
+  ],
+  "capture_decision": {
+    "prime_status": "NO_GO_WITH_CURRENT_EVIDENCE",
+    "partner_status": "HIGH_PRIORITY_PARTNER_LANE",
+    "reason": "The DP2 feasibility gate requires physical/domain evidence not present in the current Worldshepherd repository, while several software-assurance and mission-lifecycle functions are directly complementary to a qualified AUV platform team.",
+    "minimum_partner_evidence_needed": [
+      "AUV hydrodynamic/propulsion model validated against experimental or in-water data.",
+      "Acoustic signature characterization/localization data.",
+      "Formation-control and degraded-communications evidence applicable to underwater vehicles.",
+      "Physical open-architecture AUV development path compatible with two-person portability and up-to-24-hour operation.",
+      "Ability to execute in-water and at-sea demonstrations on the required schedule."
+    ]
+  },
+  "worldshepherd_partner_contribution_package": [
+    "SARA mission-state orchestration with bounded authority and policy gates.",
+    "ECHO-style configuration, sensor, communications, task, and model provenance.",
+    "APNT confidence/recovery logic adapted only after underwater sensor/navigation validation.",
+    "DDIL link-loss/failover test orchestration across acoustic, RF, cellular, and SATCOM interfaces.",
+    "Mission replay and post-mission causal analysis for retasking, stale data, deconfliction, and task failure.",
+    "WS-OMEGA contradiction, negative-space, and falsification test generation for predeployment simulation campaigns.",
+    "PRIME claims/authorization gates preventing software test results from being promoted to physical AUV capability without evidence."
+  ],
+  "next_actions": [
+    "Screen at least five AUV platform/acoustics teams against the three DP2 feasibility domains before outreach.",
+    "Build an underwater-specific synthetic mission fixture with acoustic-link intermittency, INS/DVL drift, depth/pressure state, delayed surfacing communications, and heterogeneous-vehicle retasking; label it synthetic and do not treat it as physical evidence.",
+    "Create a partner evidence checklist that requires hydrodynamic, acoustic, formation-control, endurance, modular payload, and at-sea evidence before Worldshepherd recommends teaming.",
+    "Keep prime status NO-GO unless qualifying physical/domain evidence is added and independently reviewed."
+  ]
+}
