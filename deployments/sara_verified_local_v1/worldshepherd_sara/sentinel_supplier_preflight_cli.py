@@ -19,12 +19,22 @@ def _load(path: Path | None) -> SupplierReadinessInput:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Evaluate fail-closed Sentinel supplier/subcontractor onboarding readiness without exposing identifiers."
+        description=(
+            "Evaluate status-only, fail-closed Sentinel supplier/subcontractor onboarding readiness. "
+            "This preflight cannot authorize registration, outreach, or external supplier submission."
+        )
     )
     parser.add_argument("--profile", type=Path)
     parser.add_argument("--out", type=Path)
     parser.add_argument("--require-registration-ready", action="store_true")
-    parser.add_argument("--require-external-authorized", action="store_true")
+    parser.add_argument(
+        "--require-external-authorized",
+        action="store_true",
+        help=(
+            "Negative-control/legacy compatibility flag. Supplier preflight is not an authorization "
+            "boundary, so this request always fails closed with exit status 3."
+        ),
+    )
     args = parser.parse_args()
 
     report = evaluate_supplier_preflight(_load(args.profile))
@@ -36,7 +46,10 @@ def main() -> None:
 
     if args.require_registration_ready and not report["supplier_registration_ready"]:
         raise SystemExit(2)
-    if args.require_external_authorized and not report["external_supplier_submission_authorized"]:
+
+    # Deliberately unconditional. This CLI reports evidence status only; actual external-action
+    # permission must be evaluated by a separate authenticated SARA action workflow.
+    if args.require_external_authorized:
         raise SystemExit(3)
 
 
