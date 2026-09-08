@@ -111,8 +111,8 @@ jobs:
           assert report['scale_campaign']['unauthorized_authoritative_mutations'] == 0
           assert integrity['schema'] == 'WS-SENTINEL-INTEGRITY-ADVERSARIAL-CAMPAIGN-V2'
           assert integrity['pass'] is True
-          assert integrity['check_count'] == 14
-          assert integrity['passed_count'] == 14
+          assert integrity['check_count'] == 18
+          assert integrity['passed_count'] == 18
           assert all(integrity['checks'].values())
           assert integrity['checks']['authorization_claim_only_authority_denied'] is True
           assert integrity['checks']['authorization_capability_target_binding_enforced'] is True
@@ -120,6 +120,10 @@ jobs:
           assert integrity['checks']['authorization_capability_action_binding_enforced'] is True
           assert integrity['checks']['immutability_accepted_record_is_frozen'] is True
           assert integrity['checks']['immutability_closure_revalidates_authoritative_evidence'] is True
+          assert integrity['checks']['immutability_history_key_not_on_caller_state'] is True
+          assert integrity['checks']['immutability_engine_chain_tip_blocks_prefix_rollback'] is True
+          assert integrity['checks']['immutability_engine_requirements_block_policy_erasure'] is True
+          assert integrity['checks']['immutability_engine_issue_ledger_blocks_public_clear'] is True
           assert all(item['self_close_allowed'] is False for item in matrix['gates'])
           assert index['internal_preparation_gate_pass'] is True
           assert index['external_operational_gate_pass'] is False
