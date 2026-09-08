@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
-from dataclasses import dataclass, field
+import secrets
+from dataclasses import dataclass, field, replace
 from typing import Any, Iterable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .auth import require_admin, resolve_role
+from .auth import _required_secret, require_admin, resolve_role
 
 
 EVIDENCE_STATUS = "INTERNAL_SYNTHETIC_SOFTWARE_EVIDENCE"
@@ -17,8 +19,9 @@ CLAIMS_BOUNDARY = (
     "conformity, clearance, NC3 access, weapon-control capability, or operational effectiveness."
 )
 
-_AUTH_CAPABILITY_MARKER = object()
 _AUTHENTICATED_ADMIN_ACTOR = "SARA_AUTHENTICATED_ADMIN"
+_CAPABILITY_CONTEXT = b"worldshepherd:sentinel:authorization-capability:v2"
+_ALLOWED_CAPABILITY_ACTIONS = {"CONFIGURATION_CHANGE", "ISSUE_RESOLUTION"}
 
 
 class WorkPackage(BaseModel):
@@ -51,43 +54,34 @@ class AuthorizationCapability:
     actor: str
     role: str
     target_id: str
-    _marker: object = field(repr=False, compare=False)
+    action: str
+    nonce: str
+    signature: str = field(repr=False)
 
-    def valid_for(self, *, actor: str, role: str, target_id: str) -> bool:
-        return (
-            self._marker is _AUTH_CAPABILITY_MARKER
-            and self.actor == actor
-            and self.role == role
-            and self.target_id == target_id
+    def valid_for(self, *, actor: str, role: str, target_id: str, action: str) -> bool:
+        try:
+            secret = _required_secret("SARA_ADMIN_TOKEN")
+        except RuntimeError:
+            return False
+        return _capability_valid_for_secret(
+            self,
+            actor=actor,
+            role=role,
+            target_id=target_id,
+            action=action,
+            secret=secret,
         )
 
 
-def issue_authorization_capability(
-    *,
-    authorization: str,
-    target_id: str,
-    authority_role: str = "PROGRAM_INTEGRATION_AUTHORITY",
-) -> AuthorizationCapability:
-    """Issue a package-scoped authority capability after validating the SARA admin bearer token.
-
-    Caller-supplied actor and role strings are not accepted as authentication. The authenticated
-    SARA admin boundary authorizes issuance; the returned capability is then bound to one package
-    target and one authority role. The current static-token auth layer does not establish a human
-    identity, so the actor is deliberately recorded as SARA_AUTHENTICATED_ADMIN rather than a
-    caller-supplied personal identity.
-    """
-    authenticated_role = resolve_role(authorization)
-    require_admin(authenticated_role)
-    if not target_id.strip():
-        raise ValueError("target_id must be non-empty")
-    if not authority_role.strip():
-        raise ValueError("authority_role must be non-empty")
-    return AuthorizationCapability(
-        actor=_AUTHENTICATED_ADMIN_ACTOR,
-        role=authority_role,
-        target_id=target_id,
-        _marker=_AUTH_CAPABILITY_MARKER,
-    )
+@dataclass(frozen=True)
+class _AcceptedEvidenceBinding:
+    evidence_id: str
+    package_id: str
+    evidence_type: str
+    version: int
+    baseline_id: str
+    digest: str
+    supersedes: str | None
 
 
 class AuthorizationEvent(BaseModel):
@@ -133,6 +127,9 @@ class PackageState:
     events: list[dict[str, Any]] = field(default_factory=list)
     config_mutations: int = 0
     duplicate_mutations: int = 0
+    _accepted_history: dict[str, tuple[_AcceptedEvidenceBinding, ...]] = field(
+        default_factory=dict, init=False, repr=False
+    )
 
     def record(self, event_type: str, **payload: Any) -> None:
         self.events.append({"event_type": event_type, **payload})
@@ -156,6 +153,118 @@ def _make_digest(record: EvidenceRecord) -> str:
         "valid": record.valid,
     }
     return canonical_digest(material)
+
+
+def _capability_payload(
+    *, actor: str, role: str, target_id: str, action: str, nonce: str
+) -> bytes:
+    return json.dumps(
+        {
+            "schema": "WS-SENTINEL-AUTHZ-CAPABILITY-V2",
+            "actor": actor,
+            "role": role,
+            "target_id": target_id,
+            "action": action,
+            "nonce": nonce,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
+def _capability_key(secret: str) -> bytes:
+    return hmac.new(secret.encode("utf-8"), _CAPABILITY_CONTEXT, hashlib.sha256).digest()
+
+
+def _capability_signature(
+    *, actor: str, role: str, target_id: str, action: str, nonce: str, secret: str
+) -> str:
+    return "hmac-sha256:" + hmac.new(
+        _capability_key(secret),
+        _capability_payload(
+            actor=actor,
+            role=role,
+            target_id=target_id,
+            action=action,
+            nonce=nonce,
+        ),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def _build_capability_for_secret(
+    *, actor: str, role: str, target_id: str, action: str, secret: str
+) -> AuthorizationCapability:
+    if action not in _ALLOWED_CAPABILITY_ACTIONS:
+        raise ValueError("unsupported authorization capability action")
+    nonce = secrets.token_hex(24)
+    return AuthorizationCapability(
+        actor=actor,
+        role=role,
+        target_id=target_id,
+        action=action,
+        nonce=nonce,
+        signature=_capability_signature(
+            actor=actor,
+            role=role,
+            target_id=target_id,
+            action=action,
+            nonce=nonce,
+            secret=secret,
+        ),
+    )
+
+
+def _capability_valid_for_secret(
+    capability: AuthorizationCapability,
+    *,
+    actor: str,
+    role: str,
+    target_id: str,
+    action: str,
+    secret: str,
+) -> bool:
+    if (
+        capability.actor != actor
+        or capability.role != role
+        or capability.target_id != target_id
+        or capability.action != action
+    ):
+        return False
+    expected = _capability_signature(
+        actor=capability.actor,
+        role=capability.role,
+        target_id=capability.target_id,
+        action=capability.action,
+        nonce=capability.nonce,
+        secret=secret,
+    )
+    return hmac.compare_digest(capability.signature, expected)
+
+
+def issue_authorization_capability(
+    *,
+    authorization: str,
+    target_id: str,
+    authority_role: str = "PROGRAM_INTEGRATION_AUTHORITY",
+    action: str = "CONFIGURATION_CHANGE",
+) -> AuthorizationCapability:
+    """Issue a signed, package- and action-scoped capability after SARA admin authentication."""
+    authenticated_role = resolve_role(authorization)
+    require_admin(authenticated_role)
+    if not target_id.strip():
+        raise ValueError("target_id must be non-empty")
+    if not authority_role.strip():
+        raise ValueError("authority_role must be non-empty")
+    if action not in _ALLOWED_CAPABILITY_ACTIONS:
+        raise ValueError("unsupported authorization capability action")
+    return _build_capability_for_secret(
+        actor=_AUTHENTICATED_ADMIN_ACTOR,
+        role=authority_role,
+        target_id=target_id,
+        action=action,
+        secret=_required_secret("SARA_ADMIN_TOKEN"),
+    )
 
 
 def build_synthetic_packages(count: int = 24) -> list[WorkPackage]:
@@ -187,6 +296,7 @@ def authorize_configuration_change(
             actor=actor,
             role=state.package.authority_required,
             target_id=state.package.package_id,
+            action="CONFIGURATION_CHANGE",
         )
     )
     if state.package.state == "CLOSED" and new_baseline != state.current_baseline:
@@ -204,6 +314,7 @@ def authorize_configuration_change(
             invalidated_count = len(state.authoritative_evidence)
             state.current_baseline = new_baseline
             state.authoritative_evidence.clear()
+            state._accepted_history.clear()
             state.config_mutations += 1
             state.record(
                 "baseline_evidence_invalidated",
@@ -217,6 +328,7 @@ def authorize_configuration_change(
             claimed_role=role,
             baseline=new_baseline,
             capability_target=capability.target_id,
+            capability_action=capability.action,
         )
     elif approval_actor is not None:
         decision = "REQUIRE_APPROVAL"
@@ -251,6 +363,20 @@ def authorize_configuration_change(
 def _append_issue(state: PackageState, finding: str) -> None:
     if finding not in state.issues:
         state.issues.append(finding)
+
+
+def _binding_from_record(record: EvidenceRecord) -> _AcceptedEvidenceBinding:
+    if record.digest is None:
+        raise ValueError("accepted evidence must have a digest")
+    return _AcceptedEvidenceBinding(
+        evidence_id=record.evidence_id,
+        package_id=record.package_id,
+        evidence_type=record.evidence_type,
+        version=record.version,
+        baseline_id=record.baseline_id,
+        digest=record.digest,
+        supersedes=record.supersedes,
+    )
 
 
 def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, tuple[str, ...]]:
@@ -300,10 +426,14 @@ def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, 
         state.all_evidence[snapshot.evidence_id] = snapshot
     if accepted:
         state.authoritative_evidence[snapshot.evidence_type] = snapshot
+        prior = state._accepted_history.get(snapshot.evidence_type, ())
+        state._accepted_history[snapshot.evidence_type] = (*prior, _binding_from_record(snapshot))
         state.record(
             "evidence_accepted",
             evidence_id=snapshot.evidence_id,
             evidence_type=snapshot.evidence_type,
+            version=snapshot.version,
+            supersedes=snapshot.supersedes,
         )
     else:
         for finding in findings:
@@ -327,6 +457,7 @@ def resolve_issue(
             actor=actor,
             role=state.package.authority_required,
             target_id=state.package.package_id,
+            action="ISSUE_RESOLUTION",
         )
     )
     if not verified_authority:
@@ -363,12 +494,13 @@ def resolve_issue(
         actor=actor,
         verified_role=capability.role,
         capability_target=capability.target_id,
+        capability_action=capability.action,
         rationale=rationale,
     )
     return True
 
 
-def _authoritative_record_valid_for_closure(
+def _standalone_record_valid_for_closure(
     state: PackageState, evidence_type: str, record: EvidenceRecord
 ) -> bool:
     return (
@@ -381,6 +513,56 @@ def _authoritative_record_valid_for_closure(
         and record.digest == _make_digest(record)
         and record.baseline_id == state.current_baseline
     )
+
+
+def _binding_matches_record(binding: _AcceptedEvidenceBinding, record: EvidenceRecord) -> bool:
+    return (
+        binding.evidence_id == record.evidence_id
+        and binding.package_id == record.package_id
+        and binding.evidence_type == record.evidence_type
+        and binding.version == record.version
+        and binding.baseline_id == record.baseline_id
+        and binding.digest == record.digest
+        and binding.supersedes == record.supersedes
+    )
+
+
+def _accepted_history_valid_for_closure(
+    state: PackageState, evidence_type: str, record: EvidenceRecord
+) -> bool:
+    history = state._accepted_history.get(evidence_type, ())
+    if not history or not _binding_matches_record(history[-1], record):
+        return False
+
+    previous: _AcceptedEvidenceBinding | None = None
+    for binding in history:
+        if (
+            binding.package_id != state.package.package_id
+            or binding.evidence_type != evidence_type
+            or binding.baseline_id != state.current_baseline
+        ):
+            return False
+        accepted_snapshot = state.all_evidence.get(binding.evidence_id)
+        if accepted_snapshot is None or not _binding_matches_record(binding, accepted_snapshot):
+            return False
+        if not _standalone_record_valid_for_closure(state, evidence_type, accepted_snapshot):
+            return False
+        if previous is None:
+            if binding.supersedes is not None:
+                return False
+        else:
+            if binding.version <= previous.version or binding.supersedes != previous.evidence_id:
+                return False
+        previous = binding
+    return True
+
+
+def _authoritative_record_valid_for_closure(
+    state: PackageState, evidence_type: str, record: EvidenceRecord
+) -> bool:
+    return _standalone_record_valid_for_closure(
+        state, evidence_type, record
+    ) and _accepted_history_valid_for_closure(state, evidence_type, record)
 
 
 def close_package(state: PackageState) -> tuple[bool, tuple[str, ...]]:
@@ -456,11 +638,11 @@ def _valid_evidence(
 
 
 def run_authorization_integrity_selftest() -> dict[str, bool]:
-    """Synthetic-only self-test of capability binding without exposing a reusable capability."""
+    """Synthetic-only algorithm checks; no runtime bearer token is created or exposed."""
     package = build_synthetic_packages(1)[0]
-
     state = PackageState(package=package.model_copy(deep=True), current_baseline="BL-001")
     claimed_role = state.package.authority_required
+
     impersonation = authorize_configuration_change(
         state,
         actor="synthetic-impostor",
@@ -473,104 +655,85 @@ def run_authorization_integrity_selftest() -> dict[str, bool]:
         and state.config_mutations == 0
     )
 
-    correct_capability = AuthorizationCapability(
+    synthetic_secret = "synthetic-selftest-secret-" + "s" * 32
+    capability = _build_capability_for_secret(
         actor="SYNTHETIC_VERIFIED_AUTHORITY",
         role=claimed_role,
         target_id=state.package.package_id,
-        _marker=_AUTH_CAPABILITY_MARKER,
+        action="CONFIGURATION_CHANGE",
+        secret=synthetic_secret,
     )
-    wrong_actor = authorize_configuration_change(
-        state,
+    actor_binding_enforced = not _capability_valid_for_secret(
+        capability,
         actor="synthetic-impostor",
         role=claimed_role,
-        new_baseline="BL-002",
-        capability=correct_capability,
+        target_id=state.package.package_id,
+        action="CONFIGURATION_CHANGE",
+        secret=synthetic_secret,
     )
-    actor_binding_enforced = (
-        wrong_actor.decision == "DENY"
-        and state.current_baseline == "BL-001"
-        and state.config_mutations == 0
-    )
-
-    wrong_target_capability = AuthorizationCapability(
-        actor="SYNTHETIC_VERIFIED_AUTHORITY",
+    target_binding_enforced = not _capability_valid_for_secret(
+        capability,
+        actor=capability.actor,
         role=claimed_role,
         target_id="WP-NOT-THIS-PACKAGE",
-        _marker=_AUTH_CAPABILITY_MARKER,
+        action="CONFIGURATION_CHANGE",
+        secret=synthetic_secret,
     )
-    wrong_target = authorize_configuration_change(
-        state,
-        actor="SYNTHETIC_VERIFIED_AUTHORITY",
-        role=claimed_role,
-        new_baseline="BL-002",
-        capability=wrong_target_capability,
+    retargeted = replace(capability, target_id="WP-NOT-THIS-PACKAGE")
+    retarget_tamper_rejected = not _capability_valid_for_secret(
+        retargeted,
+        actor=retargeted.actor,
+        role=retargeted.role,
+        target_id=retargeted.target_id,
+        action=retargeted.action,
+        secret=synthetic_secret,
     )
-    target_binding_enforced = (
-        wrong_target.decision == "DENY"
-        and state.current_baseline == "BL-001"
-        and state.config_mutations == 0
-    )
-
-    design = _valid_evidence(state, evidence_id="AUTH-BASELINE", evidence_type="design")
-    ingest_evidence(state, design)
-    prior_authority_count = len(state.authoritative_evidence)
-    authorized = authorize_configuration_change(
-        state,
-        actor=correct_capability.actor,
-        role=claimed_role,
-        new_baseline="BL-002",
-        capability=correct_capability,
-    )
-    authenticated_capability_allows = (
-        prior_authority_count == 1
-        and authorized.decision == "ALLOW"
-        and state.current_baseline == "BL-002"
-        and state.config_mutations == 1
-        and len(state.authoritative_evidence) == 0
-    )
-
-    issue_state = PackageState(package=package.model_copy(deep=True), current_baseline="BL-001")
-    issue_state.issues.append("SYNTHETIC_REVIEW_FINDING")
-    denied_resolution = resolve_issue(
-        issue_state,
-        issue="SYNTHETIC_REVIEW_FINDING",
-        actor="synthetic-impostor",
-        role=issue_state.package.authority_required,
-        rationale="claim-only path must fail",
-    )
-    issue_capability = AuthorizationCapability(
-        actor="SYNTHETIC_VERIFIED_AUTHORITY",
-        role=issue_state.package.authority_required,
-        target_id=issue_state.package.package_id,
-        _marker=_AUTH_CAPABILITY_MARKER,
-    )
-    allowed_resolution = resolve_issue(
-        issue_state,
-        issue="SYNTHETIC_REVIEW_FINDING",
-        actor=issue_capability.actor,
-        role=issue_capability.role,
-        rationale="synthetic capability-bound disposition",
-        capability=issue_capability,
-    )
-    issue_resolution_binding_enforced = (
-        not denied_resolution
-        and allowed_resolution
-        and "SYNTHETIC_REVIEW_FINDING" not in issue_state.issues
+    action_binding_enforced = (
+        _capability_valid_for_secret(
+            capability,
+            actor=capability.actor,
+            role=capability.role,
+            target_id=capability.target_id,
+            action="CONFIGURATION_CHANGE",
+            secret=synthetic_secret,
+        )
+        and not _capability_valid_for_secret(
+            capability,
+            actor=capability.actor,
+            role=capability.role,
+            target_id=capability.target_id,
+            action="ISSUE_RESOLUTION",
+            secret=synthetic_secret,
+        )
     )
 
     return {
         "claim_only_authority_denied": claim_only_denied,
         "capability_actor_binding_enforced": actor_binding_enforced,
         "capability_target_binding_enforced": target_binding_enforced,
-        "authenticated_capability_path_allows_authorized_change": authenticated_capability_allows,
-        "issue_resolution_capability_binding_enforced": issue_resolution_binding_enforced,
+        "capability_retarget_tamper_rejected": retarget_tamper_rejected,
+        "capability_action_binding_enforced": action_binding_enforced,
     }
 
 
-def run_evidence_immutability_selftest() -> dict[str, bool]:
-    """Synthetic-only self-test for accepted-evidence freezing, snapshotting and closure revalidation."""
+def _build_complete_state(prefix: str) -> PackageState:
     package = build_synthetic_packages(1)[0]
     state = PackageState(package=package, current_baseline="BL-001")
+    for evidence_type in package.required_evidence_types:
+        record = _valid_evidence(
+            state,
+            evidence_id=f"{prefix}-{evidence_type}",
+            evidence_type=evidence_type,
+        )
+        accepted, findings = ingest_evidence(state, record)
+        if not accepted or findings:
+            raise RuntimeError("synthetic selftest could not build clean state")
+    return state
+
+
+def run_evidence_immutability_selftest() -> dict[str, bool]:
+    """Synthetic-only checks for freezing, accepted history, and closure-time tamper rejection."""
+    state = PackageState(package=build_synthetic_packages(1)[0], current_baseline="BL-001")
     record = _valid_evidence(state, evidence_id="IMMUTABLE-DESIGN", evidence_type="design")
     accepted, findings = ingest_evidence(state, record)
     snapshot = state.authoritative_evidence.get("design")
@@ -580,21 +743,55 @@ def run_evidence_immutability_selftest() -> dict[str, bool]:
         record.valid = False
     except Exception:
         mutation_blocked = True
-
     snapshot_isolated = (
-        accepted
-        and not findings
-        and snapshot is not None
-        and snapshot is not record
-        and snapshot.valid
+        accepted and not findings and snapshot is not None and snapshot is not record and snapshot.valid
     )
 
-    if snapshot is not None:
-        state.authoritative_evidence["design"] = snapshot.model_copy(update={"valid": False})
-    closed, blockers = close_package(state)
+    invalid_state = _build_complete_state("IMMUTABLE-INVALID")
+    accepted_design = invalid_state.authoritative_evidence["design"]
+    invalid_state.authoritative_evidence["design"] = accepted_design.model_copy(update={"valid": False})
+    invalid_closed, invalid_blockers = close_package(invalid_state)
+
+    injected_state = _build_complete_state("IMMUTABLE-INJECT")
+    injected = _valid_evidence(
+        injected_state,
+        evidence_id="NEVER-INGESTED-DESIGN",
+        evidence_type="design",
+        version=99,
+    )
+    injected_state.authoritative_evidence["design"] = injected
+    injected_closed, injected_blockers = close_package(injected_state)
+
+    downgrade_state = PackageState(package=build_synthetic_packages(1)[0], current_baseline="BL-001")
+    design_v1 = _valid_evidence(downgrade_state, evidence_id="DOWNGRADE-V1", evidence_type="design", version=1)
+    ingest_evidence(downgrade_state, design_v1)
+    design_v2 = _valid_evidence(
+        downgrade_state,
+        evidence_id="DOWNGRADE-V2",
+        evidence_type="design",
+        version=2,
+        supersedes="DOWNGRADE-V1",
+    )
+    ingest_evidence(downgrade_state, design_v2)
+    for evidence_type in ("inspection", "as_built"):
+        ingest_evidence(
+            downgrade_state,
+            _valid_evidence(
+                downgrade_state,
+                evidence_id=f"DOWNGRADE-{evidence_type}",
+                evidence_type=evidence_type,
+            ),
+        )
+    downgrade_state.authoritative_evidence["design"] = design_v1
+    downgrade_closed, downgrade_blockers = close_package(downgrade_state)
+
     closure_revalidation_blocks_tampering = (
-        not closed
-        and any(item == "INVALID_AUTHORITATIVE_EVIDENCE:design" for item in blockers)
+        not invalid_closed
+        and "INVALID_AUTHORITATIVE_EVIDENCE:design" in invalid_blockers
+        and not injected_closed
+        and "INVALID_AUTHORITATIVE_EVIDENCE:design" in injected_blockers
+        and not downgrade_closed
+        and "INVALID_AUTHORITATIVE_EVIDENCE:design" in downgrade_blockers
     )
 
     return {
