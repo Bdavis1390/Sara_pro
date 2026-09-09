@@ -1,0 +1,359 @@
+from __future__ import annotations
+
+import argparse
+import hashlib
+import hmac
+import json
+import os
+import secrets
+import socket
+import sqlite3
+import struct
+from pathlib import Path
+from typing import Any
+
+SCHEMA_VERSION = "WS-SENTINEL-CUSTODY-V1"
+
+
+def _canonical(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+class AuthorityStore:
+    """Authoritative state owned only by the isolated authority process."""
+
+    def __init__(self, db_path: str, authorized_resolution_uid: int):
+        self._db_path = db_path
+        self._authorized_resolution_uid = authorized_resolution_uid
+        self._resolution_key = secrets.token_bytes(32)
+        self._db = sqlite3.connect(db_path)
+        self._db.row_factory = sqlite3.Row
+        self._initialize()
+
+    def _initialize(self) -> None:
+        self._db.executescript(
+            """
+            PRAGMA journal_mode=WAL;
+            CREATE TABLE IF NOT EXISTS packages (
+                package_id TEXT PRIMARY KEY,
+                authority_required TEXT NOT NULL,
+                required_types TEXT NOT NULL,
+                baseline_id TEXT NOT NULL,
+                closed INTEGER NOT NULL DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS evidence (
+                package_id TEXT NOT NULL,
+                evidence_id TEXT NOT NULL,
+                evidence_type TEXT NOT NULL,
+                version INTEGER NOT NULL,
+                baseline_id TEXT NOT NULL,
+                digest TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                PRIMARY KEY (package_id, evidence_id)
+            );
+            CREATE TABLE IF NOT EXISTS issues (
+                package_id TEXT NOT NULL,
+                issue TEXT NOT NULL,
+                open INTEGER NOT NULL DEFAULT 1,
+                PRIMARY KEY (package_id, issue)
+            );
+            CREATE TABLE IF NOT EXISTS resolutions (
+                package_id TEXT NOT NULL,
+                seq INTEGER NOT NULL,
+                issue TEXT NOT NULL,
+                actor TEXT NOT NULL,
+                role TEXT NOT NULL,
+                rationale TEXT NOT NULL,
+                previous_tag TEXT NOT NULL,
+                tag TEXT NOT NULL,
+                PRIMARY KEY (package_id, seq)
+            );
+            CREATE TABLE IF NOT EXISTS requests (
+                request_id TEXT PRIMARY KEY,
+                request_digest TEXT NOT NULL,
+                response_json TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS audit (
+                seq INTEGER PRIMARY KEY AUTOINCREMENT,
+                request_id TEXT NOT NULL,
+                peer_uid INTEGER NOT NULL,
+                operation TEXT NOT NULL,
+                accepted INTEGER NOT NULL,
+                detail TEXT NOT NULL
+            );
+            """
+        )
+        self._db.commit()
+
+    def close(self) -> None:
+        self._db.close()
+
+    def _audit(self, request_id: str, peer_uid: int, operation: str, accepted: bool, detail: str) -> None:
+        self._db.execute(
+            "INSERT INTO audit(request_id, peer_uid, operation, accepted, detail) VALUES(?,?,?,?,?)",
+            (request_id, peer_uid, operation, int(accepted), detail),
+        )
+
+    def _snapshot(self, package_id: str) -> dict[str, Any]:
+        package = self._db.execute(
+            "SELECT package_id, authority_required, required_types, baseline_id, closed FROM packages WHERE package_id=?",
+            (package_id,),
+        ).fetchone()
+        if package is None:
+            raise KeyError("unknown_package")
+        evidence = [
+            dict(row)
+            for row in self._db.execute(
+                "SELECT evidence_id, evidence_type, version, baseline_id, digest FROM evidence WHERE package_id=? ORDER BY evidence_type, version, evidence_id",
+                (package_id,),
+            )
+        ]
+        issues = [
+            row["issue"]
+            for row in self._db.execute(
+                "SELECT issue FROM issues WHERE package_id=? AND open=1 ORDER BY issue",
+                (package_id,),
+            )
+        ]
+        resolutions = [
+            {
+                "seq": row["seq"],
+                "issue": row["issue"],
+                "actor": row["actor"],
+                "role": row["role"],
+                "rationale": row["rationale"],
+                "previous_tag": row["previous_tag"],
+                "tag": row["tag"],
+            }
+            for row in self._db.execute(
+                "SELECT seq, issue, actor, role, rationale, previous_tag, tag FROM resolutions WHERE package_id=? ORDER BY seq",
+                (package_id,),
+            )
+        ]
+        return {
+            "package_id": package["package_id"],
+            "authority_required": package["authority_required"],
+            "required_evidence_types": json.loads(package["required_types"]),
+            "baseline_id": package["baseline_id"],
+            "closed": bool(package["closed"]),
+            "evidence": evidence,
+            "open_issues": issues,
+            "resolutions": resolutions,
+        }
+
+    def _resolution_tag(self, package_id: str, seq: int, issue: str, actor: str, role: str, rationale: str, previous_tag: str) -> str:
+        payload = {
+            "schema": SCHEMA_VERSION,
+            "package_id": package_id,
+            "seq": seq,
+            "issue": issue,
+            "actor": actor,
+            "role": role,
+            "rationale": rationale,
+            "previous_tag": previous_tag,
+        }
+        return "hmac-sha256:" + hmac.new(self._resolution_key, _canonical(payload), hashlib.sha256).hexdigest()
+
+    def handle(self, request: dict[str, Any], peer_uid: int) -> dict[str, Any]:
+        request_id = str(request.get("request_id", ""))
+        operation = str(request.get("operation", ""))
+        if request.get("schema") != SCHEMA_VERSION:
+            return {"ok": False, "error": "schema_mismatch", "schema": SCHEMA_VERSION}
+        if not request_id:
+            return {"ok": False, "error": "request_id_required", "schema": SCHEMA_VERSION}
+
+        digest = hashlib.sha256(_canonical(request)).hexdigest()
+        prior = self._db.execute(
+            "SELECT request_digest, response_json FROM requests WHERE request_id=?", (request_id,)
+        ).fetchone()
+        if prior is not None:
+            if prior["request_digest"] != digest:
+                return {"ok": False, "error": "request_id_reuse_mismatch", "schema": SCHEMA_VERSION}
+            return json.loads(prior["response_json"])
+
+        try:
+            response = self._dispatch(operation, request.get("payload") or {}, peer_uid)
+        except KeyError as exc:
+            response = {"ok": False, "error": str(exc.args[0]), "schema": SCHEMA_VERSION}
+        except ValueError as exc:
+            response = {"ok": False, "error": str(exc), "schema": SCHEMA_VERSION}
+        except sqlite3.IntegrityError:
+            response = {"ok": False, "error": "conflict", "schema": SCHEMA_VERSION}
+
+        self._audit(request_id, peer_uid, operation, bool(response.get("ok")), str(response.get("error") or "accepted"))
+        self._db.execute(
+            "INSERT INTO requests(request_id, request_digest, response_json) VALUES(?,?,?)",
+            (request_id, digest, json.dumps(response, sort_keys=True)),
+        )
+        self._db.commit()
+        return response
+
+    def _dispatch(self, operation: str, payload: dict[str, Any], peer_uid: int) -> dict[str, Any]:
+        if operation == "health":
+            return {"ok": True, "schema": SCHEMA_VERSION, "status": "ready"}
+        if operation == "register_package":
+            package_id = str(payload["package_id"])
+            self._db.execute(
+                "INSERT INTO packages(package_id, authority_required, required_types, baseline_id, closed) VALUES(?,?,?,?,0)",
+                (
+                    package_id,
+                    str(payload["authority_required"]),
+                    json.dumps(sorted(set(payload.get("required_evidence_types") or []))),
+                    str(payload["baseline_id"]),
+                ),
+            )
+            return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
+        if operation == "get_snapshot":
+            return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(str(payload["package_id"]))}
+        if operation == "ingest_evidence":
+            package_id = str(payload["package_id"])
+            package = self._db.execute("SELECT closed, baseline_id FROM packages WHERE package_id=?", (package_id,)).fetchone()
+            if package is None:
+                raise KeyError("unknown_package")
+            if package["closed"]:
+                raise ValueError("package_closed")
+            if str(payload["baseline_id"]) != package["baseline_id"]:
+                raise ValueError("stale_baseline")
+            record_payload = payload.get("record") or {}
+            record_digest = hashlib.sha256(_canonical(record_payload)).hexdigest()
+            if payload.get("digest") != record_digest:
+                raise ValueError("digest_mismatch")
+            self._db.execute(
+                "INSERT INTO evidence(package_id, evidence_id, evidence_type, version, baseline_id, digest, payload) VALUES(?,?,?,?,?,?,?)",
+                (
+                    package_id,
+                    str(payload["evidence_id"]),
+                    str(payload["evidence_type"]),
+                    int(payload["version"]),
+                    str(payload["baseline_id"]),
+                    record_digest,
+                    json.dumps(record_payload, sort_keys=True),
+                ),
+            )
+            return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
+        if operation == "open_issue":
+            package_id = str(payload["package_id"])
+            package = self._db.execute("SELECT closed FROM packages WHERE package_id=?", (package_id,)).fetchone()
+            if package is None:
+                raise KeyError("unknown_package")
+            if package["closed"]:
+                raise ValueError("package_closed")
+            self._db.execute("INSERT INTO issues(package_id, issue, open) VALUES(?,?,1)", (package_id, str(payload["issue"])))
+            return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
+        if operation == "resolve_issue":
+            package_id = str(payload["package_id"])
+            if peer_uid != self._authorized_resolution_uid:
+                raise ValueError("resolution_not_authorized_for_peer")
+            package = self._db.execute(
+                "SELECT closed, authority_required FROM packages WHERE package_id=?", (package_id,)
+            ).fetchone()
+            if package is None:
+                raise KeyError("unknown_package")
+            if package["closed"]:
+                raise ValueError("package_closed")
+            if str(payload["role"]) != package["authority_required"]:
+                raise ValueError("authority_role_mismatch")
+            issue = str(payload["issue"])
+            issue_row = self._db.execute(
+                "SELECT open FROM issues WHERE package_id=? AND issue=?", (package_id, issue)
+            ).fetchone()
+            if issue_row is None or not issue_row["open"]:
+                raise ValueError("issue_not_open")
+            rationale = str(payload.get("rationale") or "").strip()
+            if not rationale:
+                raise ValueError("rationale_required")
+            prior = self._db.execute(
+                "SELECT seq, tag FROM resolutions WHERE package_id=? ORDER BY seq DESC LIMIT 1", (package_id,)
+            ).fetchone()
+            seq = 1 if prior is None else int(prior["seq"]) + 1
+            previous_tag = "GENESIS" if prior is None else str(prior["tag"])
+            actor = str(payload["actor"])
+            role = str(payload["role"])
+            tag = self._resolution_tag(package_id, seq, issue, actor, role, rationale, previous_tag)
+            self._db.execute(
+                "INSERT INTO resolutions(package_id, seq, issue, actor, role, rationale, previous_tag, tag) VALUES(?,?,?,?,?,?,?,?)",
+                (package_id, seq, issue, actor, role, rationale, previous_tag, tag),
+            )
+            self._db.execute("UPDATE issues SET open=0 WHERE package_id=? AND issue=?", (package_id, issue))
+            return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
+        if operation == "close_package":
+            package_id = str(payload["package_id"])
+            package = self._db.execute(
+                "SELECT required_types, closed FROM packages WHERE package_id=?", (package_id,)
+            ).fetchone()
+            if package is None:
+                raise KeyError("unknown_package")
+            if package["closed"]:
+                return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
+            required = set(json.loads(package["required_types"]))
+            present = {
+                row["evidence_type"]
+                for row in self._db.execute("SELECT evidence_type FROM evidence WHERE package_id=?", (package_id,))
+            }
+            missing = sorted(required - present)
+            open_issues = self._db.execute(
+                "SELECT COUNT(*) AS n FROM issues WHERE package_id=? AND open=1", (package_id,)
+            ).fetchone()["n"]
+            if missing:
+                raise ValueError("missing_required_evidence:" + ",".join(missing))
+            if open_issues:
+                raise ValueError("unresolved_issues")
+            self._db.execute("UPDATE packages SET closed=1 WHERE package_id=?", (package_id,))
+            return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
+        raise ValueError("unknown_operation")
+
+
+class AuthorityServer:
+    def __init__(self, socket_path: str, db_path: str, authorized_resolution_uid: int):
+        self._socket_path = socket_path
+        self._store = AuthorityStore(db_path, authorized_resolution_uid)
+
+    def serve_forever(self) -> None:
+        path = Path(self._socket_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():
+            path.unlink()
+        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        server.bind(self._socket_path)
+        os.chmod(self._socket_path, 0o600)
+        server.listen(16)
+        try:
+            while True:
+                connection, _ = server.accept()
+                with connection:
+                    peer_uid = -1
+                    if hasattr(socket, "SO_PEERCRED"):
+                        raw = connection.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
+                        _pid, peer_uid, _gid = struct.unpack("3i", raw)
+                    request_bytes = b""
+                    while not request_bytes.endswith(b"\n"):
+                        chunk = connection.recv(65536)
+                        if not chunk:
+                            break
+                        request_bytes += chunk
+                        if len(request_bytes) > 2_000_000:
+                            break
+                    try:
+                        request = json.loads(request_bytes.decode("utf-8"))
+                        response = self._store.handle(request, peer_uid)
+                    except Exception as exc:  # fail closed at transport boundary
+                        response = {"ok": False, "error": "invalid_request", "detail": type(exc).__name__, "schema": SCHEMA_VERSION}
+                    connection.sendall(json.dumps(response, sort_keys=True).encode("utf-8") + b"\n")
+        finally:
+            server.close()
+            self._store.close()
+            if path.exists():
+                path.unlink()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--socket", required=True)
+    parser.add_argument("--db", required=True)
+    parser.add_argument("--authorized-resolution-uid", type=int, default=os.getuid())
+    args = parser.parse_args()
+    AuthorityServer(args.socket, args.db, args.authorized_resolution_uid).serve_forever()
+
+
+if __name__ == "__main__":
+    main()
