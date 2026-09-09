@@ -147,7 +147,11 @@ def test_closure_revalidates_stored_payload_and_authority_attestation(tmp_path):
         assert store.handle(_request("ingest_evidence", payload), os.getuid())["ok"]
         store._db.execute("UPDATE evidence SET payload=? WHERE package_id=? AND evidence_id=?", (json.dumps({"forged": True}), "pkg-1", "e-1"))
         store._db.commit()
-        closed = store.handle(_request("close_package", {"package_id": "pkg-1"}), os.getuid())
+        bound_close = {"package_id": "pkg-1"}
+        closed = store.handle(
+            _request("close_package", {**bound_close, "authorization": _cap(auth, "close_package", **bound_close)}),
+            os.getuid(),
+        )
         assert closed["error"] == "evidence_payload_integrity_failure"
     finally:
         store.close()
@@ -164,7 +168,11 @@ def test_closure_rejects_unattested_required_type_even_if_database_row_exists(tm
             ("pkg-1", "evil", "TEST", 1, "base-1", "evil-source", "GENESIS", digest, json.dumps(record, sort_keys=True), "hmac-sha256:forged"),
         )
         store._db.commit()
-        closed = store.handle(_request("close_package", {"package_id": "pkg-1"}), os.getuid())
+        bound_close = {"package_id": "pkg-1"}
+        closed = store.handle(
+            _request("close_package", {**bound_close, "authorization": _cap(auth, "close_package", **bound_close)}),
+            os.getuid(),
+        )
         assert closed["error"] == "evidence_attestation_failure"
     finally:
         store.close()
