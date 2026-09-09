@@ -140,6 +140,25 @@ def test_durable_restart_rejects_mutated_replay_and_audits_collision(tmp_path):
     assert "synthetic_mission_event_idempotency_collision" in audit_events
 
 
+def test_persisted_evidence_identity_tamper_fails_closed_on_reload(tmp_path):
+    fixture = _fixture()
+    contract = InterfaceContract.model_validate(fixture["contract"])
+    payload = fixture["events"][fixture["duplicate_event_index"]]
+    data_dir = tmp_path / "sara-data"
+    store = DurableStore(data_dir)
+
+    SyntheticMissionAdapter(contract=contract, store=store).ingest(payload)
+    registry = store.get_registry()
+    root = registry["ws_xos_ma_001_synthetic_adapter_v1"]
+    events = root["contracts"][contract.digest()]["events"]
+    persisted = next(iter(events.values()))
+    persisted["evidence"]["evidence_id"] = "sha256:" + ("f" * 64)
+    store.patch_registry({"ws_xos_ma_001_synthetic_adapter_v1": root})
+
+    with pytest.raises(ValueError, match="persisted evidence identity mismatch"):
+        SyntheticMissionAdapter(contract=contract, store=DurableStore(data_dir))
+
+
 def test_contract_rejects_missing_required_payload_field():
     adapter, fixture = _adapter()
     payload = dict(fixture["events"][1])
