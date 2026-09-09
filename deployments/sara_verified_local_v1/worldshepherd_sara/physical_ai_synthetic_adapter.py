@@ -139,7 +139,7 @@ class SyntheticMissionAdapter:
             raise ValueError(
                 "synthetic adapter cannot activate a partner-owned external interface"
             )
-        self._seen: set[str] = set()
+        self._seen: dict[str, tuple[str, SyntheticEvidenceRecord]] = {}
 
     def _validate_contract(self, event: NeutralMissionEvent) -> None:
         if (
@@ -182,14 +182,23 @@ class SyntheticMissionAdapter:
         self._validate_contract(event)
         evidence = self._evidence(event)
         key = event.idempotency_key()
-        if key in self._seen:
+
+        prior = self._seen.get(key)
+        if prior is not None:
+            prior_digest, prior_evidence = prior
+            if prior_digest != evidence.event_digest:
+                raise ValueError(
+                    "idempotency collision: the same event identity was reused with "
+                    "different event content"
+                )
             return AdapterObservation(
                 event=event,
-                evidence=evidence,
+                evidence=prior_evidence,
                 accepted=False,
                 duplicate=True,
             )
-        self._seen.add(key)
+
+        self._seen[key] = (evidence.event_digest, evidence)
         return AdapterObservation(
             event=event,
             evidence=evidence,
