@@ -166,9 +166,8 @@ class SyntheticMissionAdapter:
                 f"event payload missing contracted fields: {sorted(missing)}"
             )
 
-    def _evidence(self, event: NeutralMissionEvent) -> SyntheticEvidenceRecord:
-        event_digest = event.digest()
-        evidence_id = canonical_digest(
+    def _evidence_id(self, event_digest: str) -> str:
+        return canonical_digest(
             {
                 "event_digest": event_digest,
                 "contract_digest": self._contract_digest,
@@ -176,8 +175,11 @@ class SyntheticMissionAdapter:
                 "capability_status": "SIMULATED_ONLY",
             }
         )
+
+    def _evidence(self, event: NeutralMissionEvent) -> SyntheticEvidenceRecord:
+        event_digest = event.digest()
         return SyntheticEvidenceRecord(
-            evidence_id=evidence_id,
+            evidence_id=self._evidence_id(event_digest),
             event_digest=event_digest,
             contract_digest=self._contract_digest,
             mission_id=event.mission_id,
@@ -185,6 +187,14 @@ class SyntheticMissionAdapter:
             event_type=event.event_type,
             observed_utc=event.observed_utc,
         )
+
+    @staticmethod
+    def _validate_digest_key(value: str, *, label: str) -> None:
+        if not value.startswith("sha256:") or len(value) != 71:
+            raise ValueError(f"{label} must be sha256:<64 lowercase hex>")
+        hex_part = value.split(":", 1)[1]
+        if any(char not in "0123456789abcdef" for char in hex_part):
+            raise ValueError(f"{label} must be lowercase hexadecimal")
 
     def _load_seen(self) -> dict[str, tuple[str, SyntheticEvidenceRecord]]:
         if self.store is None:
@@ -207,6 +217,7 @@ class SyntheticMissionAdapter:
         for key, value in events.items():
             if not isinstance(key, str) or not isinstance(value, dict):
                 raise ValueError("synthetic adapter persisted event entry is invalid")
+            self._validate_digest_key(key, label="persisted idempotency key")
             digest = value.get("event_digest")
             evidence_payload = value.get("evidence")
             if not isinstance(digest, str) or not isinstance(evidence_payload, dict):
@@ -216,6 +227,8 @@ class SyntheticMissionAdapter:
                 raise ValueError("synthetic adapter persisted event digest mismatch")
             if evidence.contract_digest != self._contract_digest:
                 raise ValueError("synthetic adapter persisted contract digest mismatch")
+            if evidence.evidence_id != self._evidence_id(digest):
+                raise ValueError("synthetic adapter persisted evidence identity mismatch")
             seen[key] = (digest, evidence)
         return seen
 
