@@ -96,8 +96,15 @@ class CustodyClientV2:
             "authorization": copy.deepcopy(authorization),
         }, request_id=request_id)
 
-    def open_issue(self, *, package_id: str, issue: str) -> dict[str, Any]:
-        return self._request("open_issue", {"package_id": package_id, "issue": issue})
+    def open_issue(self, *, package_id: str, issue: str, authorization: dict[str, Any], request_id: str | None = None) -> dict[str, Any]:
+        return self._request("open_issue", {
+            "package_id": package_id,
+            "issue": issue,
+            "authorization": copy.deepcopy(authorization),
+        }, request_id=request_id)
 
-    def close_package(self, package_id: str, *, request_id: str | None = None) -> dict[str, Any]:
-        return self._request("close_package", {"package_id": package_id}, request_id=request_id)
+    def close_package(self, package_id: str, *, authorization: dict[str, Any], request_id: str | None = None) -> dict[str, Any]:
+        return self._request("close_package", {
+            "package_id": package_id,
+            "authorization": copy.deepcopy(authorization),
+        }, request_id=request_id)
