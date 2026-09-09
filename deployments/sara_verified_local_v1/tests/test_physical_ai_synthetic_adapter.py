@@ -109,6 +109,19 @@ def test_contract_rejects_unlisted_event_type():
         adapter.ingest(payload)
 
 
+def test_empty_message_type_allowlist_fails_closed():
+    fixture = _fixture()
+    contract = InterfaceContract(
+        contract_id="EMPTY-ALLOWLIST",
+        interface_name="Empty synthetic allowlist",
+        version="1",
+    )
+    adapter = SyntheticMissionAdapter(contract=contract)
+
+    with pytest.raises(ValueError, match="not allowed by synthetic contract"):
+        adapter.ingest(fixture["events"][0])
+
+
 def test_supervisory_policy_allows_only_bounded_worldshepherd_action_and_emits_no_command():
     adapter, fixture = _adapter()
     policy = AutonomyPolicy.model_validate(fixture["supervisory_policy"])
