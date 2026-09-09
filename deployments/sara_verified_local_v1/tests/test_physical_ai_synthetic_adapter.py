@@ -15,6 +15,7 @@ from worldshepherd_sara.physical_ai_synthetic_adapter import (
     ExternalInterfaceActivation,
     SyntheticMissionAdapter,
 )
+from worldshepherd_sara.storage import DurableStore
 
 
 FIXTURE_PATH = (
@@ -87,6 +88,56 @@ def test_same_event_identity_with_mutated_content_fails_closed():
 
     with pytest.raises(ValueError, match="idempotency collision"):
         adapter.ingest(mutated)
+
+
+def test_durable_store_preserves_duplicate_identity_across_adapter_restart(tmp_path):
+    fixture = _fixture()
+    contract = InterfaceContract.model_validate(fixture["contract"])
+    payload = fixture["events"][fixture["duplicate_event_index"]]
+    data_dir = tmp_path / "sara-data"
+
+    first_store = DurableStore(data_dir)
+    first_adapter = SyntheticMissionAdapter(contract=contract, store=first_store)
+    first = first_adapter.ingest(payload)
+    assert first.accepted is True
+
+    restarted_store = DurableStore(data_dir)
+    restarted_adapter = SyntheticMissionAdapter(
+        contract=contract, store=restarted_store
+    )
+    replay = restarted_adapter.ingest(payload)
+
+    assert replay.accepted is False
+    assert replay.duplicate is True
+    assert replay.evidence.evidence_id == first.evidence.evidence_id
+    assert replay.evidence.event_digest == first.evidence.event_digest
+    audit_events = [record.get("event") for record in restarted_store.read_audit(20)]
+    assert "synthetic_mission_event_persisted" in audit_events
+
+
+def test_durable_restart_rejects_mutated_replay_and_audits_collision(tmp_path):
+    fixture = _fixture()
+    contract = InterfaceContract.model_validate(fixture["contract"])
+    payload = fixture["events"][fixture["duplicate_event_index"]]
+    data_dir = tmp_path / "sara-data"
+
+    SyntheticMissionAdapter(
+        contract=contract, store=DurableStore(data_dir)
+    ).ingest(payload)
+
+    restarted_store = DurableStore(data_dir)
+    restarted_adapter = SyntheticMissionAdapter(
+        contract=contract, store=restarted_store
+    )
+    mutated = dict(payload)
+    mutated["payload"] = dict(payload["payload"])
+    mutated["payload"]["confidence"] = 0.51
+
+    with pytest.raises(ValueError, match="idempotency collision"):
+        restarted_adapter.ingest(mutated)
+
+    audit_events = [record.get("event") for record in restarted_store.read_audit(20)]
+    assert "synthetic_mission_event_idempotency_collision" in audit_events
 
 
 def test_contract_rejects_missing_required_payload_field():
