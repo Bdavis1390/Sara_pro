@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install test dependencies
-        run: python -m pip install --upgrade pip pytest
+      - name: Install project and test dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[test]'
       - name: Run isolated custody adversarial tests
         run: python -m pytest -q tests/test_isolated_custody_authority.py
