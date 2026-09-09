@@ -3,572 +3,128 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
-import secrets
 import weakref
-from dataclasses import dataclass, field, replace
-from typing import Any, Iterable, Literal
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from . import infrastructure_assurance_legacy as _legacy
 
-from .auth import _required_secret, require_admin, resolve_role
+# Re-export the legacy implementation surface first; the bounded hardening
+# overrides below replace only the four P1-affected state transitions.
+for _name in dir(_legacy):
+    if not _name.startswith("__"):
+        globals()[_name] = getattr(_legacy, _name)
 
+PackageState = _legacy.PackageState
+_EngineCustody = _legacy._EngineCustody
+AuthorizationCapability = _legacy.AuthorizationCapability
+EvidenceRecord = _legacy.EvidenceRecord
 
-EVIDENCE_STATUS = "INTERNAL_SYNTHETIC_SOFTWARE_EVIDENCE"
-CLAIMS_BOUNDARY = (
-    "Synthetic internal software evidence only; does not establish Sentinel fitness, "
-    "USACE/Air Force acceptance, construction performance, field integration, CMMC/NIST "
-    "conformity, clearance, NC3 access, weapon-control capability, or operational effectiveness."
-)
+_ORIGINAL_INGEST_EVIDENCE = _legacy.ingest_evidence
+_ORIGINAL_CLOSE_PACKAGE = _legacy.close_package
 
-_AUTHENTICATED_ADMIN_ACTOR = "SARA_AUTHENTICATED_ADMIN"
-_CAPABILITY_CONTEXT = b"worldshepherd:sentinel:authorization-capability:v2"
-_ALLOWED_CAPABILITY_ACTIONS = {"CONFIGURATION_CHANGE", "ISSUE_RESOLUTION"}
-
-
-class WorkPackage(BaseModel):
-    package_id: str = Field(min_length=1)
-    segment_id: str = Field(min_length=1)
-    baseline_id: str = Field(min_length=1)
-    owner_org: str = Field(min_length=1)
-    state: Literal["PLANNED", "AUTHORIZED", "IN_PROGRESS", "INSPECTION", "BLOCKED", "CLOSED"] = "PLANNED"
-    authority_required: str = "PROGRAM_INTEGRATION_AUTHORITY"
-    required_evidence_types: tuple[str, ...] = ("design", "inspection", "as_built")
+_IDENTITY_CUSTODY: dict[int, tuple[weakref.ReferenceType[PackageState], _EngineCustody]] = {}
 
 
-class EvidenceRecord(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    evidence_id: str = Field(min_length=1)
-    package_id: str = Field(min_length=1)
-    evidence_type: str = Field(min_length=1)
-    source_org: str | None = None
-    source_actor: str | None = None
-    version: int = Field(ge=1)
-    baseline_id: str = Field(min_length=1)
-    digest: str | None = None
-    supersedes: str | None = None
-    valid: bool = True
+def _cleanup_identity_custody(key: int, state_ref: weakref.ReferenceType[PackageState]) -> None:
+    current = _IDENTITY_CUSTODY.get(key)
+    if current is not None and current[0] is state_ref:
+        _IDENTITY_CUSTODY.pop(key, None)
 
 
-@dataclass(frozen=True)
-class AuthorizationCapability:
-    actor: str
-    role: str
-    target_id: str
-    action: str
-    nonce: str
-    signature: str = field(repr=False)
+def _register_package_state(state: PackageState) -> None:
+    if type(state) is not PackageState:
+        return
+    key = id(state)
+    existing = _IDENTITY_CUSTODY.get(key)
+    if existing is not None and existing[0]() is state:
+        raise RuntimeError("package state is already registered; custody cannot be reinitialized")
+    if existing is not None and existing[0]() is not None:
+        raise RuntimeError("package state identity collision")
 
-    def valid_for(self, *, actor: str, role: str, target_id: str, action: str) -> bool:
-        try:
-            secret = _required_secret("SARA_ADMIN_TOKEN")
-        except RuntimeError:
-            return False
-        return _capability_valid_for_secret(
-            self,
-            actor=actor,
-            role=role,
-            target_id=target_id,
-            action=action,
-            secret=secret,
-        )
-
-
-@dataclass(frozen=True)
-class _AcceptedEvidenceBinding:
-    evidence_id: str
-    package_id: str
-    evidence_type: str
-    version: int
-    baseline_id: str
-    digest: str
-    supersedes: str | None
-    previous_chain_tag: str
-    chain_tag: str = field(repr=False)
-
-
-class AuthorizationEvent(BaseModel):
-    event_id: str = Field(min_length=1)
-    actor: str = Field(min_length=1)
-    role: str = Field(min_length=1)
-    requested_action: str = Field(min_length=1)
-    target_id: str = Field(min_length=1)
-    decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"]
-    approving_actor: str | None = None
-
-
-class FailureResult(BaseModel):
-    failure_id: str = Field(min_length=1)
-    title: str = Field(min_length=1)
-    detected: bool
-    safe_state_preserved: bool
-    observations: tuple[str, ...] = ()
-    metrics: dict[str, float | int | str | bool] = Field(default_factory=dict)
-
-
-class GateReport(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    schema_name: Literal["WS-SENTINEL-G1-REPORT-V1"] = Field(
-        default="WS-SENTINEL-G1-REPORT-V1", alias="schema"
+    custody = _EngineCustody(
+        package_id=state.package.package_id,
+        authority_required=state.package.authority_required,
+        required_evidence_types=tuple(state.package.required_evidence_types),
+        current_baseline=state.current_baseline,
+        history_key=_legacy.secrets.token_bytes(32),
     )
-    evidence_status: str = EVIDENCE_STATUS
-    campaign_id: str
-    pass_gate: bool
-    failure_results: tuple[FailureResult, ...]
-    metrics: dict[str, float | int | str | bool]
-    claims_boundary: str = CLAIMS_BOUNDARY
-    bundle_digest: str
+    custody.issue_history = []
+    custody.resolved_issues = []
 
-
-@dataclass(eq=False)
-class PackageState:
-    package: WorkPackage
-    current_baseline: str
-    authoritative_evidence: dict[str, EvidenceRecord] = field(default_factory=dict)
-    all_evidence: dict[str, EvidenceRecord] = field(default_factory=dict)
-    issues: list[str] = field(default_factory=list)
-    events: list[dict[str, Any]] = field(default_factory=list)
-    config_mutations: int = 0
-    duplicate_mutations: int = 0
-    _accepted_history: dict[str, tuple[_AcceptedEvidenceBinding, ...]] = field(
-        default_factory=dict, init=False, repr=False
+    state_ref = weakref.ref(
+        state,
+        lambda ref, identity=key: _cleanup_identity_custody(identity, ref),
     )
-    def __post_init__(self) -> None:
-        _ENGINE_CUSTODY[self] = _EngineCustody(
-            package_id=self.package.package_id,
-            authority_required=self.package.authority_required,
-            required_evidence_types=tuple(self.package.required_evidence_types),
-            current_baseline=self.current_baseline,
-            history_key=secrets.token_bytes(32),
-        )
-
-    def record(self, event_type: str, **payload: Any) -> None:
-        self.events.append({"event_type": event_type, **payload})
+    _IDENTITY_CUSTODY[key] = (state_ref, custody)
 
 
-@dataclass
-class _EngineCustody:
-    package_id: str
-    authority_required: str
-    required_evidence_types: tuple[str, ...]
-    current_baseline: str
-    history_key: bytes = field(repr=False)
-    accepted_history: dict[str, tuple[_AcceptedEvidenceBinding, ...]] = field(default_factory=dict)
-    accepted_chain_tips: dict[str, str] = field(default_factory=dict)
-    authoritative_evidence: dict[str, EvidenceRecord] = field(default_factory=dict)
-    all_evidence: dict[str, EvidenceRecord] = field(default_factory=dict)
-    open_issues: list[str] = field(default_factory=list)
-    closed: bool = False
-
-
-_ENGINE_CUSTODY: weakref.WeakKeyDictionary[PackageState, _EngineCustody] = weakref.WeakKeyDictionary()
+PackageState.__post_init__ = _register_package_state
 
 
 def _custody(state: PackageState) -> _EngineCustody:
-    custody = _ENGINE_CUSTODY.get(state)
-    if custody is None:
-        raise RuntimeError("package state is not registered with engine custody")
-    return custody
+    if type(state) is not PackageState:
+        raise RuntimeError("engine custody requires exact module-owned PackageState")
+    entry = _IDENTITY_CUSTODY.get(id(state))
+    if entry is None or entry[0]() is not state:
+        raise RuntimeError("package state is not registered with identity-bound engine custody")
+    return entry[1]
 
 
-def canonical_digest(value: Any) -> str:
-    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-    return "sha256:" + hashlib.sha256(payload).hexdigest()
-
-
-def _make_digest(record: EvidenceRecord) -> str:
-    material = {
-        "evidence_id": record.evidence_id,
-        "package_id": record.package_id,
-        "evidence_type": record.evidence_type,
-        "source_org": record.source_org,
-        "source_actor": record.source_actor,
-        "version": record.version,
-        "baseline_id": record.baseline_id,
-        "supersedes": record.supersedes,
-        "valid": record.valid,
-    }
-    return canonical_digest(material)
-
-
-def _capability_payload(
-    *, actor: str, role: str, target_id: str, action: str, nonce: str
-) -> bytes:
-    return json.dumps(
-        {
-            "schema": "WS-SENTINEL-AUTHZ-CAPABILITY-V2",
-            "actor": actor,
-            "role": role,
-            "target_id": target_id,
-            "action": action,
-            "nonce": nonce,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-    ).encode("utf-8")
-
-
-def _capability_key(secret: str) -> bytes:
-    return hmac.new(secret.encode("utf-8"), _CAPABILITY_CONTEXT, hashlib.sha256).digest()
-
-
-def _capability_signature(
-    *, actor: str, role: str, target_id: str, action: str, nonce: str, secret: str
-) -> str:
-    return "hmac-sha256:" + hmac.new(
-        _capability_key(secret),
-        _capability_payload(
-            actor=actor,
-            role=role,
-            target_id=target_id,
-            action=action,
-            nonce=nonce,
-        ),
-        hashlib.sha256,
-    ).hexdigest()
-
-
-def _build_capability_for_secret(
-    *, actor: str, role: str, target_id: str, action: str, secret: str
-) -> AuthorizationCapability:
-    if action not in _ALLOWED_CAPABILITY_ACTIONS:
-        raise ValueError("unsupported authorization capability action")
-    nonce = secrets.token_hex(24)
-    return AuthorizationCapability(
-        actor=actor,
-        role=role,
-        target_id=target_id,
-        action=action,
-        nonce=nonce,
-        signature=_capability_signature(
-            actor=actor,
-            role=role,
-            target_id=target_id,
-            action=action,
-            nonce=nonce,
-            secret=secret,
-        ),
-    )
-
-
-def _capability_valid_for_secret(
-    capability: AuthorizationCapability,
-    *,
-    actor: str,
-    role: str,
-    target_id: str,
-    action: str,
-    secret: str,
-) -> bool:
-    if type(capability) is not AuthorizationCapability:
-        return False
-    if (
-        capability.actor != actor
-        or capability.role != role
-        or capability.target_id != target_id
-        or capability.action != action
-    ):
-        return False
-    expected = _capability_signature(
-        actor=capability.actor,
-        role=capability.role,
-        target_id=capability.target_id,
-        action=capability.action,
-        nonce=capability.nonce,
-        secret=secret,
-    )
-    return hmac.compare_digest(capability.signature, expected)
-
-
-def _capability_valid_for_current_secret(
-    capability: object | None,
-    *,
-    actor: str,
-    role: str,
-    target_id: str,
-    action: str,
-) -> bool:
-    """Validate only the module-owned capability type; never dispatch to caller code."""
-    if type(capability) is not AuthorizationCapability:
-        return False
-    try:
-        secret = _required_secret("SARA_ADMIN_TOKEN")
-    except RuntimeError:
-        return False
-    return _capability_valid_for_secret(
-        capability,
-        actor=actor,
-        role=role,
-        target_id=target_id,
-        action=action,
-        secret=secret,
-    )
-
-
-def issue_authorization_capability(
-    *,
-    authorization: str,
-    target_id: str,
-    authority_role: str = "PROGRAM_INTEGRATION_AUTHORITY",
-    action: str = "CONFIGURATION_CHANGE",
-) -> AuthorizationCapability:
-    """Issue a signed, package- and action-scoped capability after SARA admin authentication."""
-    authenticated_role = resolve_role(authorization)
-    require_admin(authenticated_role)
-    if not target_id.strip():
-        raise ValueError("target_id must be non-empty")
-    if not authority_role.strip():
-        raise ValueError("authority_role must be non-empty")
-    if action not in _ALLOWED_CAPABILITY_ACTIONS:
-        raise ValueError("unsupported authorization capability action")
-    return _build_capability_for_secret(
-        actor=_AUTHENTICATED_ADMIN_ACTOR,
-        role=authority_role,
-        target_id=target_id,
-        action=action,
-        secret=_required_secret("SARA_ADMIN_TOKEN"),
-    )
-
-
-def build_synthetic_packages(count: int = 24) -> list[WorkPackage]:
-    if count < 1:
-        raise ValueError("count must be positive")
-    return [
-        WorkPackage(
-            package_id=f"WP-{index:03d}",
-            segment_id=f"SEG-{((index - 1) % 12) + 1:02d}",
-            baseline_id="BL-001",
-            owner_org=f"SYNTH-SUB-{((index - 1) % 4) + 1}",
-        )
-        for index in range(1, count + 1)
-    ]
-
-
-def authorize_configuration_change(
-    state: PackageState,
-    *,
-    actor: str,
-    role: str,
-    new_baseline: str,
-    approval_actor: str | None = None,
-    capability: AuthorizationCapability | None = None,
-) -> AuthorizationEvent:
-    custody = _custody(state)
-    verified_authority = _capability_valid_for_current_secret(
-        capability,
-        actor=actor,
-        role=custody.authority_required,
-        target_id=custody.package_id,
-        action="CONFIGURATION_CHANGE",
-    )
-    if custody.closed and new_baseline != custody.current_baseline:
-        decision: Literal["ALLOW", "DENY", "REQUIRE_APPROVAL"] = "DENY"
-        state.record(
-            "configuration_change_denied",
-            actor=actor,
-            claimed_role=role,
-            baseline=new_baseline,
-            reason="closed_package_requires_reopen_workflow",
-        )
-    elif verified_authority:
-        decision = "ALLOW"
-        if new_baseline != custody.current_baseline:
-            invalidated_count = len(custody.authoritative_evidence)
-            custody.current_baseline = new_baseline
-            custody.authoritative_evidence.clear()
-            custody.accepted_history.clear()
-            custody.accepted_chain_tips.clear()
-            state.current_baseline = new_baseline
-            state.authoritative_evidence.clear()
-            state._accepted_history.clear()
-            state.config_mutations += 1
-            state.record(
-                "baseline_evidence_invalidated",
-                invalidated_count=invalidated_count,
-                baseline=new_baseline,
-            )
-        state.record(
-            "configuration_change_allowed",
-            actor=actor,
-            verified_role=capability.role,
-            claimed_role=role,
-            baseline=new_baseline,
-            capability_target=capability.target_id,
-            capability_action=capability.action,
-        )
-    elif approval_actor is not None:
-        decision = "REQUIRE_APPROVAL"
-        state.record(
-            "configuration_change_requires_approval",
-            actor=actor,
-            claimed_role=role,
-            proposed_approver=approval_actor,
-            baseline=new_baseline,
-            reason="verified_authorization_capability_required",
-        )
-    else:
-        decision = "DENY"
-        state.record(
-            "configuration_change_denied",
-            actor=actor,
-            claimed_role=role,
-            baseline=new_baseline,
-            reason="verified_authorization_capability_required",
-        )
-    return AuthorizationEvent(
-        event_id=f"AUTH-{len(state.events):04d}",
-        actor=actor,
-        role=capability.role if verified_authority and capability is not None else role,
-        requested_action="CONFIGURATION_CHANGE",
-        target_id=custody.package_id,
-        decision=decision,
-        approving_actor=approval_actor,
-    )
+_legacy._custody = _custody
 
 
 def _append_issue(state: PackageState, finding: str) -> None:
     custody = _custody(state)
     if finding not in custody.open_issues:
         custody.open_issues.append(finding)
+    if finding not in custody.issue_history:
+        custody.issue_history.append(finding)
     if finding not in state.issues:
         state.issues.append(finding)
 
 
-def _accepted_binding_payload(
-    *,
-    evidence_id: str,
-    package_id: str,
-    evidence_type: str,
-    version: int,
-    baseline_id: str,
-    digest: str,
-    supersedes: str | None,
-    previous_chain_tag: str,
-) -> bytes:
+_legacy._append_issue = _append_issue
+
+
+def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, tuple[str, ...]]:
+    custody = _custody(state)
+    if custody.closed:
+        findings = ("PACKAGE_CLOSED",)
+        state.record(
+            "evidence_rejected_after_closure",
+            evidence_id=record.evidence_id,
+            findings=list(findings),
+        )
+        return False, findings
+    return _ORIGINAL_INGEST_EVIDENCE(state, record)
+
+
+_legacy.ingest_evidence = ingest_evidence
+
+
+def _resolution_payload(entry: dict[str, Any]) -> bytes:
     return json.dumps(
         {
-            "schema": "WS-SENTINEL-ACCEPTED-EVIDENCE-CHAIN-V1",
-            "evidence_id": evidence_id,
-            "package_id": package_id,
-            "evidence_type": evidence_type,
-            "version": version,
-            "baseline_id": baseline_id,
-            "digest": digest,
-            "supersedes": supersedes,
-            "previous_chain_tag": previous_chain_tag,
+            "schema": "WS-SENTINEL-RESOLVED-ISSUE-CUSTODY-V1",
+            "issue": entry["issue"],
+            "actor": entry["actor"],
+            "role": entry["role"],
+            "target_id": entry["target_id"],
+            "action": entry["action"],
+            "rationale": entry["rationale"],
+            "previous_tag": entry["previous_tag"],
         },
         sort_keys=True,
         separators=(",", ":"),
     ).encode("utf-8")
 
 
-def _accepted_binding_signature(
-    *, state: PackageState, binding: _AcceptedEvidenceBinding
-) -> str:
-    payload = _accepted_binding_payload(
-        evidence_id=binding.evidence_id,
-        package_id=binding.package_id,
-        evidence_type=binding.evidence_type,
-        version=binding.version,
-        baseline_id=binding.baseline_id,
-        digest=binding.digest,
-        supersedes=binding.supersedes,
-        previous_chain_tag=binding.previous_chain_tag,
-    )
+def _resolution_tag(custody: _EngineCustody, entry: dict[str, Any]) -> str:
     return "hmac-sha256:" + hmac.new(
-        _custody(state).history_key, payload, hashlib.sha256
+        custody.history_key,
+        _resolution_payload(entry),
+        hashlib.sha256,
     ).hexdigest()
-
-
-def _binding_from_record(
-    state: PackageState, record: EvidenceRecord, *, previous_chain_tag: str
-) -> _AcceptedEvidenceBinding:
-    if record.digest is None:
-        raise ValueError("accepted evidence must have a digest")
-    unsigned = _AcceptedEvidenceBinding(
-        evidence_id=record.evidence_id,
-        package_id=record.package_id,
-        evidence_type=record.evidence_type,
-        version=record.version,
-        baseline_id=record.baseline_id,
-        digest=record.digest,
-        supersedes=record.supersedes,
-        previous_chain_tag=previous_chain_tag,
-        chain_tag="pending",
-    )
-    return replace(unsigned, chain_tag=_accepted_binding_signature(state=state, binding=unsigned))
-
-
-def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, tuple[str, ...]]:
-    custody = _custody(state)
-    findings: list[str] = []
-    accepted = True
-
-    duplicate_identity = record.evidence_id in custody.all_evidence
-    if duplicate_identity:
-        findings.append("DUPLICATE_EVIDENCE_ID")
-        accepted = False
-
-    if record.package_id != custody.package_id:
-        findings.append("PACKAGE_ID_MISMATCH")
-        accepted = False
-
-    if not record.valid:
-        findings.append("SOURCE_MARKED_INVALID")
-        accepted = False
-
-    if not record.source_org or not record.source_actor or not record.digest:
-        findings.append("PROVENANCE_INCOMPLETE")
-        accepted = False
-    elif record.digest != _make_digest(record):
-        findings.append("DIGEST_MISMATCH")
-        accepted = False
-
-    if record.baseline_id != custody.current_baseline:
-        findings.append("STALE_BASELINE")
-        accepted = False
-
-    existing = custody.authoritative_evidence.get(record.evidence_type)
-    if existing and record.version < existing.version:
-        findings.append("SUPERSEDED_VERSION")
-        accepted = False
-    elif existing and record.version == existing.version and record.evidence_id != existing.evidence_id:
-        findings.append("CONFLICTING_EVIDENCE")
-        accepted = False
-    elif existing and record.version > existing.version and record.supersedes != existing.evidence_id:
-        findings.append("SUPERSESSION_CHAIN_MISSING")
-        accepted = False
-    elif not existing and record.supersedes is not None:
-        findings.append("ORPHAN_SUPERSESSION")
-        accepted = False
-
-    snapshot = record.model_copy(deep=True)
-    if not duplicate_identity:
-        custody.all_evidence[snapshot.evidence_id] = snapshot
-        state.all_evidence[snapshot.evidence_id] = snapshot
-    if accepted:
-        custody.authoritative_evidence[snapshot.evidence_type] = snapshot
-        state.authoritative_evidence[snapshot.evidence_type] = snapshot
-        prior = custody.accepted_history.get(snapshot.evidence_type, ())
-        previous_chain_tag = prior[-1].chain_tag if prior else "GENESIS"
-        binding = _binding_from_record(
-            state, snapshot, previous_chain_tag=previous_chain_tag
-        )
-        custody.accepted_history[snapshot.evidence_type] = (*prior, binding)
-        custody.accepted_chain_tips[snapshot.evidence_type] = binding.chain_tag
-        state._accepted_history[snapshot.evidence_type] = (*prior, binding)
-        state.record(
-            "evidence_accepted",
-            evidence_id=snapshot.evidence_id,
-            evidence_type=snapshot.evidence_type,
-            version=snapshot.version,
-            supersedes=snapshot.supersedes,
-        )
-    else:
-        for finding in findings:
-            _append_issue(state, finding)
-        state.record("evidence_quarantined", evidence_id=record.evidence_id, findings=list(findings))
-    return accepted, tuple(findings)
 
 
 def resolve_issue(
@@ -581,7 +137,7 @@ def resolve_issue(
     capability: AuthorizationCapability | None = None,
 ) -> bool:
     custody = _custody(state)
-    verified_authority = _capability_valid_for_current_secret(
+    verified_authority = _legacy._capability_valid_for_current_secret(
         capability,
         actor=actor,
         role=custody.authority_required,
@@ -595,6 +151,15 @@ def resolve_issue(
             actor=actor,
             claimed_role=role,
             reason="verified_authorization_capability_required",
+        )
+        return False
+    if custody.closed:
+        state.record(
+            "issue_resolution_denied",
+            issue=issue,
+            actor=actor,
+            verified_role=capability.role,
+            reason="closed_package_requires_reopen_workflow",
         )
         return False
     if not rationale.strip():
@@ -615,6 +180,20 @@ def resolve_issue(
             reason="issue_not_open",
         )
         return False
+
+    previous_tag = custody.resolved_issues[-1]["tag"] if custody.resolved_issues else "GENESIS"
+    entry: dict[str, Any] = {
+        "issue": issue,
+        "actor": actor,
+        "role": capability.role,
+        "target_id": capability.target_id,
+        "action": capability.action,
+        "rationale": rationale,
+        "previous_tag": previous_tag,
+    }
+    entry["tag"] = _resolution_tag(custody, entry)
+    custody.resolved_issues.append(entry)
+
     custody.open_issues.remove(issue)
     if issue in state.issues:
         state.issues.remove(issue)
@@ -626,558 +205,66 @@ def resolve_issue(
         capability_target=capability.target_id,
         capability_action=capability.action,
         rationale=rationale,
+        resolution_tag=entry["tag"],
     )
     return True
 
 
-def _standalone_record_valid_for_closure(
-    state: PackageState, evidence_type: str, record: EvidenceRecord
-) -> bool:
-    return (
-        evidence_type == record.evidence_type
-        and record.package_id == _custody(state).package_id
-        and record.valid
-        and bool(record.source_org)
-        and bool(record.source_actor)
-        and bool(record.digest)
-        and record.digest == _make_digest(record)
-        and record.baseline_id == _custody(state).current_baseline
-    )
+_legacy.resolve_issue = resolve_issue
 
 
-def _binding_matches_record(binding: _AcceptedEvidenceBinding, record: EvidenceRecord) -> bool:
-    return (
-        binding.evidence_id == record.evidence_id
-        and binding.package_id == record.package_id
-        and binding.evidence_type == record.evidence_type
-        and binding.version == record.version
-        and binding.baseline_id == record.baseline_id
-        and binding.digest == record.digest
-        and binding.supersedes == record.supersedes
-    )
-
-
-def _accepted_history_valid_for_closure(
-    state: PackageState, evidence_type: str, record: EvidenceRecord
-) -> bool:
+def _resolved_issue_custody_valid(state: PackageState) -> bool:
     custody = _custody(state)
-    history = custody.accepted_history.get(evidence_type, ())
-    if (
-        not history
-        or custody.accepted_chain_tips.get(evidence_type) != history[-1].chain_tag
-        or state._accepted_history.get(evidence_type, ()) != history
-        or not _binding_matches_record(history[-1], record)
-    ):
-        return False
+    expected_previous = "GENESIS"
+    resolved_names: list[str] = []
+    for entry in custody.resolved_issues:
+        required = {
+            "issue",
+            "actor",
+            "role",
+            "target_id",
+            "action",
+            "rationale",
+            "previous_tag",
+            "tag",
+        }
+        if not isinstance(entry, dict) or not required.issubset(entry):
+            return False
+        if entry["previous_tag"] != expected_previous:
+            return False
+        expected_tag = _resolution_tag(custody, entry)
+        if not hmac.compare_digest(str(entry["tag"]), expected_tag):
+            return False
+        if entry["target_id"] != custody.package_id or entry["action"] != "ISSUE_RESOLUTION":
+            return False
+        if not str(entry["rationale"]).strip():
+            return False
+        expected_previous = str(entry["tag"])
+        resolved_names.append(str(entry["issue"]))
 
-    previous: _AcceptedEvidenceBinding | None = None
-    expected_previous_chain_tag = "GENESIS"
-    for binding in history:
-        if binding.previous_chain_tag != expected_previous_chain_tag:
+    for issue in custody.issue_history:
+        if issue not in custody.open_issues and issue not in resolved_names:
             return False
-        expected_chain_tag = _accepted_binding_signature(state=state, binding=binding)
-        if not hmac.compare_digest(binding.chain_tag, expected_chain_tag):
-            return False
-        if (
-            binding.package_id != custody.package_id
-            or binding.evidence_type != evidence_type
-            or binding.baseline_id != custody.current_baseline
-        ):
-            return False
-        accepted_snapshot = custody.all_evidence.get(binding.evidence_id)
-        if accepted_snapshot is None or not _binding_matches_record(binding, accepted_snapshot):
-            return False
-        if not _standalone_record_valid_for_closure(state, evidence_type, accepted_snapshot):
-            return False
-        if previous is None:
-            if binding.supersedes is not None:
-                return False
-        else:
-            if binding.version <= previous.version or binding.supersedes != previous.evidence_id:
-                return False
-        previous = binding
-        expected_previous_chain_tag = binding.chain_tag
     return True
-
-
-def _authoritative_record_valid_for_closure(
-    state: PackageState, evidence_type: str, record: EvidenceRecord
-) -> bool:
-    return _standalone_record_valid_for_closure(
-        state, evidence_type, record
-    ) and _accepted_history_valid_for_closure(state, evidence_type, record)
 
 
 def close_package(state: PackageState) -> tuple[bool, tuple[str, ...]]:
-    custody = _custody(state)
-    blockers: list[str] = []
-    missing = [
-        evidence_type
-        for evidence_type in custody.required_evidence_types
-        if evidence_type not in custody.authoritative_evidence
-    ]
-    if missing:
-        blockers.append("MISSING_REQUIRED_EVIDENCE:" + ",".join(sorted(missing)))
-
-    invalid_authoritative = sorted(
-        evidence_type
-        for evidence_type, record in custody.authoritative_evidence.items()
-        if (
-            state.authoritative_evidence.get(evidence_type) != record
-            or state.all_evidence.get(record.evidence_id) != record
-            or not _authoritative_record_valid_for_closure(state, evidence_type, record)
-        )
-    )
-    if invalid_authoritative:
-        blockers.append("INVALID_AUTHORITATIVE_EVIDENCE:" + ",".join(invalid_authoritative))
-
-    if custody.open_issues or state.issues:
-        blockers.append("UNRESOLVED_ISSUES")
-    if blockers:
+    if not _resolved_issue_custody_valid(state):
+        blockers = ("INVALID_RESOLVED_ISSUE_CUSTODY",)
         state.package.state = "BLOCKED"
-        state.record("closure_blocked", blockers=blockers)
-        return False, tuple(blockers)
-    custody.closed = True
-    state.package.state = "CLOSED"
-    state.record("package_closed")
-    return True, ()
+        state.record("closure_blocked", blockers=list(blockers))
+        return False, blockers
+    return _ORIGINAL_CLOSE_PACKAGE(state)
 
 
-def reconcile_delayed_events(state: PackageState, event_ids: Iterable[str]) -> dict[str, int]:
-    seen = {str(event.get("event_id")) for event in state.events if event.get("event_id")}
-    applied = 0
-    duplicates = 0
-    for event_id in event_ids:
-        if event_id in seen:
-            duplicates += 1
-            state.record("delayed_event_duplicate_ignored", delayed_event_id=event_id)
-        else:
-            seen.add(event_id)
-            applied += 1
-            state.record("delayed_event_reconciled", delayed_event_id=event_id)
-    state.duplicate_mutations += 0
-    return {"applied": applied, "duplicates": duplicates, "authoritative_duplicate_mutations": 0}
+_legacy.close_package = close_package
 
-
-def _valid_evidence(
-    state: PackageState,
-    *,
-    evidence_id: str,
-    evidence_type: str,
-    version: int = 1,
-    baseline_id: str | None = None,
-    source_org: str = "SYNTH-SUB-1",
-    source_actor: str = "operator-1",
-    supersedes: str | None = None,
-    valid: bool = True,
-) -> EvidenceRecord:
-    record = EvidenceRecord(
-        evidence_id=evidence_id,
-        package_id=state.package.package_id,
-        evidence_type=evidence_type,
-        source_org=source_org,
-        source_actor=source_actor,
-        version=version,
-        baseline_id=baseline_id or state.current_baseline,
-        supersedes=supersedes,
-        valid=valid,
-        digest="placeholder",
-    )
-    return record.model_copy(update={"digest": _make_digest(record)})
-
-
-def run_authorization_integrity_selftest() -> dict[str, bool]:
-    """Synthetic-only algorithm checks; no runtime bearer token is created or exposed."""
-    package = build_synthetic_packages(1)[0]
-    state = PackageState(package=package.model_copy(deep=True), current_baseline="BL-001")
-    claimed_role = state.package.authority_required
-
-    impersonation = authorize_configuration_change(
-        state,
-        actor="synthetic-impostor",
-        role=claimed_role,
-        new_baseline="BL-002",
-    )
-    claim_only_denied = (
-        impersonation.decision == "DENY"
-        and state.current_baseline == "BL-001"
-        and state.config_mutations == 0
-    )
-
-    synthetic_secret = "synthetic-selftest-secret-" + "s" * 32
-    capability = _build_capability_for_secret(
-        actor="SYNTHETIC_VERIFIED_AUTHORITY",
-        role=claimed_role,
-        target_id=state.package.package_id,
-        action="CONFIGURATION_CHANGE",
-        secret=synthetic_secret,
-    )
-    actor_binding_enforced = not _capability_valid_for_secret(
-        capability,
-        actor="synthetic-impostor",
-        role=claimed_role,
-        target_id=state.package.package_id,
-        action="CONFIGURATION_CHANGE",
-        secret=synthetic_secret,
-    )
-    target_binding_enforced = not _capability_valid_for_secret(
-        capability,
-        actor=capability.actor,
-        role=claimed_role,
-        target_id="WP-NOT-THIS-PACKAGE",
-        action="CONFIGURATION_CHANGE",
-        secret=synthetic_secret,
-    )
-    retargeted = replace(capability, target_id="WP-NOT-THIS-PACKAGE")
-    retarget_tamper_rejected = not _capability_valid_for_secret(
-        retargeted,
-        actor=retargeted.actor,
-        role=retargeted.role,
-        target_id=retargeted.target_id,
-        action=retargeted.action,
-        secret=synthetic_secret,
-    )
-    action_binding_enforced = (
-        _capability_valid_for_secret(
-            capability,
-            actor=capability.actor,
-            role=capability.role,
-            target_id=capability.target_id,
-            action="CONFIGURATION_CHANGE",
-            secret=synthetic_secret,
-        )
-        and not _capability_valid_for_secret(
-            capability,
-            actor=capability.actor,
-            role=capability.role,
-            target_id=capability.target_id,
-            action="ISSUE_RESOLUTION",
-            secret=synthetic_secret,
-        )
-    )
-
-    return {
-        "claim_only_authority_denied": claim_only_denied,
-        "capability_actor_binding_enforced": actor_binding_enforced,
-        "capability_target_binding_enforced": target_binding_enforced,
-        "capability_retarget_tamper_rejected": retarget_tamper_rejected,
-        "capability_action_binding_enforced": action_binding_enforced,
+globals().update(
+    {
+        "_custody": _custody,
+        "_append_issue": _append_issue,
+        "ingest_evidence": ingest_evidence,
+        "resolve_issue": resolve_issue,
+        "close_package": close_package,
     }
-
-
-def _build_complete_state(prefix: str) -> PackageState:
-    package = build_synthetic_packages(1)[0]
-    state = PackageState(package=package, current_baseline="BL-001")
-    for evidence_type in package.required_evidence_types:
-        record = _valid_evidence(
-            state,
-            evidence_id=f"{prefix}-{evidence_type}",
-            evidence_type=evidence_type,
-        )
-        accepted, findings = ingest_evidence(state, record)
-        if not accepted or findings:
-            raise RuntimeError("synthetic selftest could not build clean state")
-    return state
-
-
-def run_evidence_immutability_selftest() -> dict[str, bool]:
-    """Synthetic-only checks for freezing, accepted history, and closure-time tamper rejection."""
-    state = PackageState(package=build_synthetic_packages(1)[0], current_baseline="BL-001")
-    record = _valid_evidence(state, evidence_id="IMMUTABLE-DESIGN", evidence_type="design")
-    accepted, findings = ingest_evidence(state, record)
-    snapshot = state.authoritative_evidence.get("design")
-
-    mutation_blocked = False
-    try:
-        record.valid = False
-    except Exception:
-        mutation_blocked = True
-    snapshot_isolated = (
-        accepted and not findings and snapshot is not None and snapshot is not record and snapshot.valid
-    )
-
-    invalid_state = _build_complete_state("IMMUTABLE-INVALID")
-    accepted_design = invalid_state.authoritative_evidence["design"]
-    invalid_state.authoritative_evidence["design"] = accepted_design.model_copy(update={"valid": False})
-    invalid_closed, invalid_blockers = close_package(invalid_state)
-
-    injected_state = _build_complete_state("IMMUTABLE-INJECT")
-    injected = _valid_evidence(
-        injected_state,
-        evidence_id="NEVER-INGESTED-DESIGN",
-        evidence_type="design",
-        version=99,
-    )
-    injected_state.authoritative_evidence["design"] = injected
-    injected_closed, injected_blockers = close_package(injected_state)
-
-    downgrade_state = PackageState(package=build_synthetic_packages(1)[0], current_baseline="BL-001")
-    design_v1 = _valid_evidence(downgrade_state, evidence_id="DOWNGRADE-V1", evidence_type="design", version=1)
-    ingest_evidence(downgrade_state, design_v1)
-    design_v2 = _valid_evidence(
-        downgrade_state,
-        evidence_id="DOWNGRADE-V2",
-        evidence_type="design",
-        version=2,
-        supersedes="DOWNGRADE-V1",
-    )
-    ingest_evidence(downgrade_state, design_v2)
-    for evidence_type in ("inspection", "as_built"):
-        ingest_evidence(
-            downgrade_state,
-            _valid_evidence(
-                downgrade_state,
-                evidence_id=f"DOWNGRADE-{evidence_type}",
-                evidence_type=evidence_type,
-            ),
-        )
-    downgrade_state.authoritative_evidence["design"] = design_v1
-    downgrade_closed, downgrade_blockers = close_package(downgrade_state)
-
-    closure_revalidation_blocks_tampering = (
-        not invalid_closed
-        and "INVALID_AUTHORITATIVE_EVIDENCE:design" in invalid_blockers
-        and not injected_closed
-        and "INVALID_AUTHORITATIVE_EVIDENCE:design" in injected_blockers
-        and not downgrade_closed
-        and "INVALID_AUTHORITATIVE_EVIDENCE:design" in downgrade_blockers
-    )
-
-    rollback_state = PackageState(package=build_synthetic_packages(1)[0], current_baseline="BL-001")
-    rollback_v1 = _valid_evidence(
-        rollback_state, evidence_id="ROLLBACK-V1", evidence_type="design", version=1
-    )
-    ingest_evidence(rollback_state, rollback_v1)
-    rollback_v2 = _valid_evidence(
-        rollback_state,
-        evidence_id="ROLLBACK-V2",
-        evidence_type="design",
-        version=2,
-        supersedes="ROLLBACK-V1",
-    )
-    ingest_evidence(rollback_state, rollback_v2)
-    for evidence_type in ("inspection", "as_built"):
-        ingest_evidence(
-            rollback_state,
-            _valid_evidence(
-                rollback_state,
-                evidence_id=f"ROLLBACK-{evidence_type}",
-                evidence_type=evidence_type,
-            ),
-        )
-    rollback_state.authoritative_evidence["design"] = rollback_v1
-    rollback_state._accepted_history["design"] = rollback_state._accepted_history["design"][:1]
-    rollback_closed, rollback_blockers = close_package(rollback_state)
-
-    requirements_state = PackageState(
-        package=build_synthetic_packages(1)[0], current_baseline="BL-001"
-    )
-    requirements_state.package.required_evidence_types = ()
-    requirements_closed, requirements_blockers = close_package(requirements_state)
-
-    issue_state = _build_complete_state("ISSUE-CUSTODY")
-    _append_issue(issue_state, "SYNTHETIC_AUTHORITY_BLOCKER")
-    issue_state.issues.clear()
-    issue_closed, issue_blockers = close_package(issue_state)
-
-    return {
-        "accepted_record_is_frozen": mutation_blocked,
-        "authoritative_snapshot_isolated_from_caller": snapshot_isolated,
-        "closure_revalidates_authoritative_evidence": closure_revalidation_blocks_tampering,
-        "history_key_not_on_caller_state": not hasattr(state, "_accepted_history_key"),
-        "engine_chain_tip_blocks_prefix_rollback": (
-            not rollback_closed
-            and "INVALID_AUTHORITATIVE_EVIDENCE:design" in rollback_blockers
-        ),
-        "engine_requirements_block_policy_erasure": (
-            not requirements_closed
-            and any(item.startswith("MISSING_REQUIRED_EVIDENCE:") for item in requirements_blockers)
-        ),
-        "engine_issue_ledger_blocks_public_clear": (
-            not issue_closed and "UNRESOLVED_ISSUES" in issue_blockers
-        ),
-    }
-
-
-def run_failure_campaign() -> tuple[FailureResult, ...]:
-    results: list[FailureResult] = []
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    event = authorize_configuration_change(
-        state, actor="field-actor", role="FIELD_OPERATOR", new_baseline="BL-999"
-    )
-    results.append(FailureResult(
-        failure_id="F1",
-        title="Unauthorized configuration change",
-        detected=event.decision == "DENY",
-        safe_state_preserved=state.current_baseline == "BL-001" and state.config_mutations == 0,
-        observations=("denied action recorded",),
-        metrics={"unauthorized_mutations": state.config_mutations},
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-002")
-    stale = _valid_evidence(state, evidence_id="E-F2", evidence_type="inspection", baseline_id="BL-001")
-    accepted, findings = ingest_evidence(state, stale)
-    results.append(FailureResult(
-        failure_id="F2",
-        title="Stale inspection evidence",
-        detected="STALE_BASELINE" in findings,
-        safe_state_preserved=not accepted and "inspection" not in state.authoritative_evidence,
-        observations=findings,
-        metrics={"accepted": accepted},
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    first = _valid_evidence(state, evidence_id="E-F3-A", evidence_type="inspection", version=1)
-    ingest_evidence(state, first)
-    second = _valid_evidence(state, evidence_id="E-F3-B", evidence_type="inspection", version=1)
-    accepted, findings = ingest_evidence(state, second)
-    results.append(FailureResult(
-        failure_id="F3",
-        title="Conflicting inspection records",
-        detected="CONFLICTING_EVIDENCE" in findings,
-        safe_state_preserved=not accepted and state.authoritative_evidence["inspection"].evidence_id == "E-F3-A",
-        observations=findings,
-        metrics={"accepted": accepted},
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    missing = EvidenceRecord(
-        evidence_id="E-F4",
-        package_id=state.package.package_id,
-        evidence_type="design",
-        source_org=None,
-        source_actor=None,
-        version=1,
-        baseline_id="BL-001",
-        digest=None,
-    )
-    accepted, findings = ingest_evidence(state, missing)
-    results.append(FailureResult(
-        failure_id="F4",
-        title="Missing subcontractor provenance",
-        detected="PROVENANCE_INCOMPLETE" in findings,
-        safe_state_preserved=not accepted and "design" not in state.authoritative_evidence,
-        observations=findings,
-        metrics={"accepted": accepted},
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    state.events.append({"event_id": "EV-1", "event_type": "baseline"})
-    reconciliation = reconcile_delayed_events(state, ["EV-1", "EV-2", "EV-2"])
-    results.append(FailureResult(
-        failure_id="F5",
-        title="Communications interruption and delayed reconciliation",
-        detected=reconciliation["duplicates"] >= 1,
-        safe_state_preserved=reconciliation["authoritative_duplicate_mutations"] == 0,
-        observations=("delayed events reconciled with duplicate suppression",),
-        metrics=reconciliation,
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    v2 = _valid_evidence(state, evidence_id="E-F6-V2", evidence_type="as_built", version=2)
-    ingest_evidence(state, v2)
-    v1 = _valid_evidence(state, evidence_id="E-F6-V1", evidence_type="as_built", version=1)
-    accepted, findings = ingest_evidence(state, v1)
-    results.append(FailureResult(
-        failure_id="F6",
-        title="Duplicate or superseded document package",
-        detected="SUPERSEDED_VERSION" in findings,
-        safe_state_preserved=not accepted and state.authoritative_evidence["as_built"].version == 2,
-        observations=findings,
-        metrics={"authoritative_version": state.authoritative_evidence["as_built"].version},
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    corrupted = EvidenceRecord(
-        evidence_id="E-F7",
-        package_id=state.package.package_id,
-        evidence_type="design",
-        source_org="SYNTH-SUB-1",
-        source_actor="operator-1",
-        version=1,
-        baseline_id="BL-001",
-        digest="sha256:" + "0" * 64,
-    )
-    accepted, findings = ingest_evidence(state, corrupted)
-    results.append(FailureResult(
-        failure_id="F7",
-        title="Corrupted audit or evidence event",
-        detected="DIGEST_MISMATCH" in findings,
-        safe_state_preserved=not accepted and "design" not in state.authoritative_evidence,
-        observations=findings,
-        metrics={"accepted": accepted},
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    before = len(state.authoritative_evidence)
-    state.record("storage_write_failed", atomic=True)
-    after = len(state.authoritative_evidence)
-    results.append(FailureResult(
-        failure_id="F8",
-        title="Service or storage interruption",
-        detected=any(event["event_type"] == "storage_write_failed" for event in state.events),
-        safe_state_preserved=before == after == 0,
-        observations=("atomic failure left authoritative state unchanged",),
-        metrics={"orphan_authoritative_records": after - before},
-    ))
-
-    packages = build_synthetic_packages(3)
-    risk_values = [0.85, 0.9, 0.95]
-    escalated = sum(value >= 0.8 for value in risk_values) == len(risk_values)
-    results.append(FailureResult(
-        failure_id="F9",
-        title="Schedule and risk escalation",
-        detected=escalated,
-        safe_state_preserved=all(package.state == "PLANNED" for package in packages),
-        observations=("risk correlation detected; human decision remains required",),
-        metrics={"high_risk_package_count": len(risk_values), "autonomous_commitments": 0},
-    ))
-
-    state = PackageState(build_synthetic_packages(1)[0], "BL-001")
-    dependency_present = False
-    if not dependency_present:
-        state.package.state = "BLOCKED"
-        state.record("dependency_block", dependency="synthetic_permit_or_license")
-    results.append(FailureResult(
-        failure_id="F10",
-        title="Environmental or real-estate dependency block",
-        detected=state.package.state == "BLOCKED",
-        safe_state_preserved=state.package.state != "IN_PROGRESS",
-        observations=("missing dependency prevented authorized start",),
-        metrics={"unauthorized_dependent_starts": 0},
-    ))
-
-    return tuple(results)
-
-
-def run_gate(campaign_id: str = "WS-SENTINEL-DEMO-G1") -> GateReport:
-    failures = run_failure_campaign()
-    all_detected = all(item.detected for item in failures)
-    all_safe = all(item.safe_state_preserved for item in failures)
-    metrics: dict[str, float | int | str | bool] = {
-        "failure_class_count": len(failures),
-        "detected_failure_count": sum(item.detected for item in failures),
-        "safe_state_preserved_count": sum(item.safe_state_preserved for item in failures),
-        "unauthorized_authoritative_mutations": sum(
-            int(item.metrics.get("unauthorized_mutations", 0))
-            for item in failures
-            if isinstance(item.metrics.get("unauthorized_mutations", 0), (int, bool))
-        ),
-        "claims_scope": "SYNTHETIC_INTERNAL_ONLY",
-    }
-    body = {
-        "schema": "WS-SENTINEL-G1-REPORT-V1",
-        "campaign_id": campaign_id,
-        "failure_results": [item.model_dump(mode="json") for item in failures],
-        "metrics": metrics,
-        "claims_boundary": CLAIMS_BOUNDARY,
-    }
-    digest = canonical_digest(body)
-    return GateReport(
-        campaign_id=campaign_id,
-        pass_gate=all_detected and all_safe and len(failures) == 10,
-        failure_results=failures,
-        metrics=metrics,
-        bundle_digest=digest,
-    )
+)
