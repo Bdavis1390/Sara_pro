@@ -118,3 +118,34 @@ def test_resolved_issue_provenance_is_retained_in_engine_custody(monkeypatch) ->
     closed, blockers = close_package(state)
     assert closed is True
     assert blockers == ()
+
+
+def test_resolved_issue_custody_tamper_blocks_closure(monkeypatch) -> None:
+    admin_token = "admin-token-" + "c" * 24
+    relay_token = "relay-token-" + "d" * 24
+    monkeypatch.setenv("SARA_ADMIN_TOKEN", admin_token)
+    monkeypatch.setenv("SARA_RELAY_TOKEN", relay_token)
+
+    state = _complete_state("RESOLUTION-TAMPER")
+    issue = "SYNTHETIC_TAMPER_BLOCKER"
+    _append_issue(state, issue)
+    capability = issue_authorization_capability(
+        authorization=f"Bearer {admin_token}",
+        target_id=state.package.package_id,
+        authority_role=state.package.authority_required,
+        action="ISSUE_RESOLUTION",
+    )
+    assert resolve_issue(
+        state,
+        issue=issue,
+        actor=capability.actor,
+        role=capability.role,
+        rationale="authorized synthetic resolution",
+        capability=capability,
+    ) is True
+
+    custody = _custody(state)
+    custody.resolved_issues[-1]["rationale"] = "tampered rationale"
+    closed, blockers = close_package(state)
+    assert closed is False
+    assert "INVALID_RESOLVED_ISSUE_CUSTODY" in blockers
