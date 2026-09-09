@@ -56,6 +56,9 @@ class CustodyClient:
     def health(self) -> dict[str, Any]:
         return self._request("health", {})
 
+    def get_audit(self, *, limit: int = 100) -> dict[str, Any]:
+        return self._request("get_audit", {"limit": int(limit)})
+
     def register_package(self, *, package_id: str, authority_required: str, required_evidence_types: list[str] | tuple[str, ...], baseline_id: str, request_id: str | None = None) -> dict[str, Any]:
         return self._request("register_package", {"package_id": package_id, "authority_required": authority_required, "required_evidence_types": list(required_evidence_types), "baseline_id": baseline_id}, request_id=request_id)
 
