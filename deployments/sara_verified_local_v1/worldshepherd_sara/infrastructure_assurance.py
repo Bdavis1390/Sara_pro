@@ -4,7 +4,7 @@ import hashlib
 import hmac
 import json
 import weakref
-from typing import Any
+from typing import Any, Callable
 
 from . import infrastructure_assurance_legacy as _legacy
 
@@ -18,9 +18,6 @@ PackageState = _legacy.PackageState
 _EngineCustody = _legacy._EngineCustody
 AuthorizationCapability = _legacy.AuthorizationCapability
 EvidenceRecord = _legacy.EvidenceRecord
-
-_ORIGINAL_INGEST_EVIDENCE = _legacy.ingest_evidence
-_ORIGINAL_CLOSE_PACKAGE = _legacy.close_package
 
 _IDENTITY_CUSTODY: dict[int, tuple[weakref.ReferenceType[PackageState], _EngineCustody]] = {}
 
@@ -86,19 +83,27 @@ def _append_issue(state: PackageState, finding: str) -> None:
 _legacy._append_issue = _append_issue
 
 
-def ingest_evidence(state: PackageState, record: EvidenceRecord) -> tuple[bool, tuple[str, ...]]:
-    custody = _custody(state)
-    if custody.closed:
-        findings = ("PACKAGE_CLOSED",)
-        state.record(
-            "evidence_rejected_after_closure",
-            evidence_id=record.evidence_id,
-            findings=list(findings),
-        )
-        return False, findings
-    return _ORIGINAL_INGEST_EVIDENCE(state, record)
+def _build_hardened_ingest(
+    legacy_ingest: Callable[[PackageState, EvidenceRecord], tuple[bool, tuple[str, ...]]],
+) -> Callable[[PackageState, EvidenceRecord], tuple[bool, tuple[str, ...]]]:
+    def hardened_ingest(
+        state: PackageState, record: EvidenceRecord
+    ) -> tuple[bool, tuple[str, ...]]:
+        custody = _custody(state)
+        if custody.closed:
+            findings = ("PACKAGE_CLOSED",)
+            state.record(
+                "evidence_rejected_after_closure",
+                evidence_id=record.evidence_id,
+                findings=list(findings),
+            )
+            return False, findings
+        return legacy_ingest(state, record)
+
+    return hardened_ingest
 
 
+ingest_evidence = _build_hardened_ingest(_legacy.ingest_evidence)
 _legacy.ingest_evidence = ingest_evidence
 
 
@@ -248,15 +253,21 @@ def _resolved_issue_custody_valid(state: PackageState) -> bool:
     return True
 
 
-def close_package(state: PackageState) -> tuple[bool, tuple[str, ...]]:
-    if not _resolved_issue_custody_valid(state):
-        blockers = ("INVALID_RESOLVED_ISSUE_CUSTODY",)
-        state.package.state = "BLOCKED"
-        state.record("closure_blocked", blockers=list(blockers))
-        return False, blockers
-    return _ORIGINAL_CLOSE_PACKAGE(state)
+def _build_hardened_close(
+    legacy_close: Callable[[PackageState], tuple[bool, tuple[str, ...]]],
+) -> Callable[[PackageState], tuple[bool, tuple[str, ...]]]:
+    def hardened_close(state: PackageState) -> tuple[bool, tuple[str, ...]]:
+        if not _resolved_issue_custody_valid(state):
+            blockers = ("INVALID_RESOLVED_ISSUE_CUSTODY",)
+            state.package.state = "BLOCKED"
+            state.record("closure_blocked", blockers=list(blockers))
+            return False, blockers
+        return legacy_close(state)
+
+    return hardened_close
 
 
+close_package = _build_hardened_close(_legacy.close_package)
 _legacy.close_package = close_package
 
 globals().update(
