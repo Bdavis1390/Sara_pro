@@ -72,7 +72,21 @@ def test_duplicate_source_event_is_idempotently_rejected_without_command_output(
     assert second.accepted is False
     assert second.duplicate is True
     assert second.evidence.evidence_id == first.evidence.evidence_id
+    assert second.evidence.event_digest == first.evidence.event_digest
     assert second.external_command_emitted is False
+
+
+def test_same_event_identity_with_mutated_content_fails_closed():
+    adapter, fixture = _adapter()
+    payload = fixture["events"][fixture["duplicate_event_index"]]
+    adapter.ingest(payload)
+
+    mutated = dict(payload)
+    mutated["payload"] = dict(payload["payload"])
+    mutated["payload"]["confidence"] = 0.51
+
+    with pytest.raises(ValueError, match="idempotency collision"):
+        adapter.ingest(mutated)
 
 
 def test_contract_rejects_missing_required_payload_field():
