@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .isolated_custody_client import AuthorityUnavailable, CustodyClient
+from .isolated_custody_client_v2 import AuthorityUnavailable, CustodyClientV2
 
 CLAIMS_BOUNDARY = (
     "This command reports isolated Sentinel custody-authority availability and detached state only. "
@@ -14,9 +14,7 @@ CLAIMS_BOUNDARY = (
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Fail-closed Sentinel authority status/readiness client."
-    )
+    parser = argparse.ArgumentParser(description="Fail-closed Sentinel authority status/readiness client.")
     parser.add_argument("--authority-socket", required=True)
     parser.add_argument("--expected-authority-uid", type=int)
     parser.add_argument("--package-id")
@@ -26,15 +24,12 @@ def main() -> None:
     try:
         if args.expected_authority_uid is None:
             raise AuthorityUnavailable("expected authority uid required")
-        client = CustodyClient(
-            args.authority_socket,
-            expected_authority_uid=args.expected_authority_uid,
-        )
+        client = CustodyClientV2(args.authority_socket, expected_authority_uid=args.expected_authority_uid)
         health = client.health()
         if not health.get("ok"):
             raise AuthorityUnavailable(str(health.get("error") or "authority health failed"))
         result = {
-            "schema": "WS-SENTINEL-AUTHORITY-STATUS-V1",
+            "schema": "WS-SENTINEL-AUTHORITY-STATUS-V2",
             "authority_status": "READY",
             "authority_schema": health.get("schema"),
             "package_snapshot": None,
@@ -47,7 +42,7 @@ def main() -> None:
             result["package_snapshot"] = snapshot.get("snapshot")
     except AuthorityUnavailable as exc:
         result = {
-            "schema": "WS-SENTINEL-AUTHORITY-STATUS-V1",
+            "schema": "WS-SENTINEL-AUTHORITY-STATUS-V2",
             "authority_status": "FAIL_CLOSED",
             "error": str(exc),
             "claims_boundary": CLAIMS_BOUNDARY,
