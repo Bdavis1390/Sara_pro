@@ -5,6 +5,7 @@ on:
     branches:
       - sentinel-p1-blocker-hardening
     paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/__init__.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/infrastructure_assurance.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/infrastructure_assurance_legacy.py'
       - 'deployments/sara_verified_local_v1/tests/test_sentinel_p1_blockers.py'
