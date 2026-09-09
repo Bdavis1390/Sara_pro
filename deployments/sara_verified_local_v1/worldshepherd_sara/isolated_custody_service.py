@@ -32,12 +32,18 @@ def _read_once_secret(path: str) -> bytes:
 class AuthorityStore:
     """Authoritative state owned only by the isolated authority process."""
 
-    def __init__(self, db_path: str, authorization_key: bytes):
+    def __init__(self, db_path: str, authorization_key: bytes, allowed_client_uid: int | None = None):
         self._db_path = db_path
         self._authorization_key = bytes(authorization_key)
+        self._allowed_client_uid = os.getuid() if allowed_client_uid is None else int(allowed_client_uid)
         self._resolution_key = hmac.new(
             self._authorization_key,
             b"WS-SENTINEL-RESOLUTION-PROVENANCE-KEY-V1",
+            hashlib.sha256,
+        ).digest()
+        self._audit_key = hmac.new(
+            self._authorization_key,
+            b"WS-SENTINEL-AUDIT-PROVENANCE-KEY-V1",
             hashlib.sha256,
         ).digest()
         self._db = sqlite3.connect(db_path)
@@ -48,6 +54,10 @@ class AuthorityStore:
         self._db.executescript(
             """
             PRAGMA journal_mode=WAL;
+            CREATE TABLE IF NOT EXISTS meta (
+                name TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS packages (
                 package_id TEXT PRIMARY KEY,
                 authority_required TEXT NOT NULL,
@@ -100,22 +110,52 @@ class AuthorityStore:
                 peer_uid INTEGER NOT NULL,
                 operation TEXT NOT NULL,
                 accepted INTEGER NOT NULL,
-                detail TEXT NOT NULL
+                detail TEXT NOT NULL,
+                previous_tag TEXT NOT NULL DEFAULT 'GENESIS',
+                tag TEXT NOT NULL DEFAULT ''
             );
             """
         )
-        columns = {row["name"] for row in self._db.execute("PRAGMA table_info(requests)")}
-        if "peer_uid" not in columns:
+        request_columns = {row["name"] for row in self._db.execute("PRAGMA table_info(requests)")}
+        if "peer_uid" not in request_columns:
             self._db.execute("ALTER TABLE requests ADD COLUMN peer_uid INTEGER NOT NULL DEFAULT -1")
+        audit_columns = {row["name"] for row in self._db.execute("PRAGMA table_info(audit)")}
+        if "previous_tag" not in audit_columns:
+            self._db.execute("ALTER TABLE audit ADD COLUMN previous_tag TEXT NOT NULL DEFAULT 'GENESIS'")
+        if "tag" not in audit_columns:
+            self._db.execute("ALTER TABLE audit ADD COLUMN tag TEXT NOT NULL DEFAULT ''")
+
+        key_check = "hmac-sha256:" + hmac.new(
+            self._authorization_key,
+            b"WS-SENTINEL-AUTHORITY-KEY-CONTINUITY-V1",
+            hashlib.sha256,
+        ).hexdigest()
+        row = self._db.execute("SELECT value FROM meta WHERE name='authority_key_check'").fetchone()
+        if row is None:
+            self._db.execute("INSERT INTO meta(name, value) VALUES('authority_key_check', ?)", (key_check,))
+        elif not hmac.compare_digest(str(row["value"]), key_check):
+            raise RuntimeError("authority key continuity check failed")
         self._db.commit()
 
     def close(self) -> None:
         self._db.close()
 
     def _audit(self, request_id: str, peer_uid: int, operation: str, accepted: bool, detail: str) -> None:
+        prior = self._db.execute("SELECT tag FROM audit ORDER BY seq DESC LIMIT 1").fetchone()
+        previous_tag = "GENESIS" if prior is None or not prior["tag"] else str(prior["tag"])
+        payload = {
+            "schema": "WS-SENTINEL-AUDIT-CHAIN-V1",
+            "request_id": request_id,
+            "peer_uid": peer_uid,
+            "operation": operation,
+            "accepted": bool(accepted),
+            "detail": detail,
+            "previous_tag": previous_tag,
+        }
+        tag = "hmac-sha256:" + hmac.new(self._audit_key, _canonical(payload), hashlib.sha256).hexdigest()
         self._db.execute(
-            "INSERT INTO audit(request_id, peer_uid, operation, accepted, detail) VALUES(?,?,?,?,?)",
-            (request_id, peer_uid, operation, int(accepted), detail),
+            "INSERT INTO audit(request_id, peer_uid, operation, accepted, detail, previous_tag, tag) VALUES(?,?,?,?,?,?,?)",
+            (request_id, peer_uid, operation, int(accepted), detail, previous_tag, tag),
         )
 
     def _snapshot(self, package_id: str) -> dict[str, Any]:
@@ -146,6 +186,13 @@ class AuthorityStore:
             "open_issues": issues,
             "resolutions": resolutions,
         }
+
+    def _audit_snapshot(self, limit: int = 100) -> list[dict[str, Any]]:
+        safe_limit = max(1, min(int(limit), 1000))
+        return [dict(row) for row in self._db.execute(
+            "SELECT seq, request_id, peer_uid, operation, accepted, detail, previous_tag, tag FROM audit ORDER BY seq DESC LIMIT ?",
+            (safe_limit,),
+        )]
 
     def _resolution_tag(self, package_id: str, seq: int, issue: str, actor: str, role: str, rationale: str, previous_tag: str) -> str:
         payload = {
@@ -198,6 +245,11 @@ class AuthorityStore:
             return {"ok": False, "error": "schema_mismatch", "schema": SCHEMA_VERSION}
         if not request_id:
             return {"ok": False, "error": "request_id_required", "schema": SCHEMA_VERSION}
+        if peer_uid != self._allowed_client_uid:
+            self._audit(request_id, peer_uid, operation, False, "peer_not_authorized")
+            self._db.commit()
+            return {"ok": False, "error": "peer_not_authorized", "schema": SCHEMA_VERSION}
+
         digest = hashlib.sha256(_canonical(request)).hexdigest()
         prior = self._db.execute(
             "SELECT peer_uid, request_digest, response_json FROM requests WHERE request_id=?", (request_id,)
@@ -208,6 +260,8 @@ class AuthorityStore:
                 self._db.commit()
                 return {"ok": False, "error": "request_peer_mismatch", "schema": SCHEMA_VERSION}
             if prior["request_digest"] != digest:
+                self._audit(request_id, peer_uid, operation, False, "request_id_reuse_mismatch")
+                self._db.commit()
                 return {"ok": False, "error": "request_id_reuse_mismatch", "schema": SCHEMA_VERSION}
             return json.loads(prior["response_json"])
         try:
@@ -228,7 +282,10 @@ class AuthorityStore:
 
     def _dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
         if operation == "health":
-            return {"ok": True, "schema": SCHEMA_VERSION, "status": "ready"}
+            tip = self._db.execute("SELECT tag FROM audit ORDER BY seq DESC LIMIT 1").fetchone()
+            return {"ok": True, "schema": SCHEMA_VERSION, "status": "ready", "audit_tip": None if tip is None else tip["tag"]}
+        if operation == "get_audit":
+            return {"ok": True, "schema": SCHEMA_VERSION, "audit": self._audit_snapshot(int(payload.get("limit", 100)))}
         if operation == "register_package":
             package_id = str(payload["package_id"])
             self._db.execute(
@@ -314,9 +371,11 @@ class AuthorityStore:
 
 
 class AuthorityServer:
-    def __init__(self, socket_path: str, db_path: str, authorization_key_file: str):
+    def __init__(self, socket_path: str, db_path: str, authorization_key_file: str, *, allowed_client_uid: int, socket_mode: int = 0o600, socket_gid: int | None = None):
         self._socket_path = socket_path
-        self._store = AuthorityStore(db_path, _read_once_secret(authorization_key_file))
+        self._socket_mode = socket_mode
+        self._socket_gid = socket_gid
+        self._store = AuthorityStore(db_path, _read_once_secret(authorization_key_file), allowed_client_uid)
 
     def serve_forever(self) -> None:
         path = Path(self._socket_path)
@@ -325,7 +384,9 @@ class AuthorityServer:
             path.unlink()
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         server.bind(self._socket_path)
-        os.chmod(self._socket_path, 0o600)
+        if self._socket_gid is not None:
+            os.chown(self._socket_path, -1, self._socket_gid)
+        os.chmod(self._socket_path, self._socket_mode)
         server.listen(16)
         try:
             while True:
@@ -360,8 +421,18 @@ def main() -> None:
     parser.add_argument("--socket", required=True)
     parser.add_argument("--db", required=True)
     parser.add_argument("--authorization-key-file", required=True)
+    parser.add_argument("--allowed-client-uid", type=int, default=os.getuid())
+    parser.add_argument("--socket-mode", type=lambda value: int(value, 8), default=0o600)
+    parser.add_argument("--socket-gid", type=int)
     args = parser.parse_args()
-    AuthorityServer(args.socket, args.db, args.authorization_key_file).serve_forever()
+    AuthorityServer(
+        args.socket,
+        args.db,
+        args.authorization_key_file,
+        allowed_client_uid=args.allowed_client_uid,
+        socket_mode=args.socket_mode,
+        socket_gid=args.socket_gid,
+    ).serve_forever()
 
 
 if __name__ == "__main__":
