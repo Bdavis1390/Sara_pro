@@ -18,16 +18,18 @@ def main() -> None:
         description="Fail-closed Sentinel authority status/readiness client."
     )
     parser.add_argument("--authority-socket", required=True)
-    parser.add_argument("--expected-authority-uid", type=int, required=True)
+    parser.add_argument("--expected-authority-uid", type=int)
     parser.add_argument("--package-id")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
 
-    client = CustodyClient(
-        args.authority_socket,
-        expected_authority_uid=args.expected_authority_uid,
-    )
     try:
+        if args.expected_authority_uid is None:
+            raise AuthorityUnavailable("expected authority uid required")
+        client = CustodyClient(
+            args.authority_socket,
+            expected_authority_uid=args.expected_authority_uid,
+        )
         health = client.health()
         if not health.get("ok"):
             raise AuthorityUnavailable(str(health.get("error") or "authority health failed"))
