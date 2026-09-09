@@ -142,10 +142,7 @@ class SyntheticMissionAdapter:
         self._seen: dict[str, tuple[str, SyntheticEvidenceRecord]] = {}
 
     def _validate_contract(self, event: NeutralMissionEvent) -> None:
-        if (
-            self.contract.required_message_types
-            and event.event_type not in self.contract.required_message_types
-        ):
+        if event.event_type not in self.contract.required_message_types:
             raise ValueError(
                 f"event type {event.event_type!r} is not allowed by synthetic contract"
             )
