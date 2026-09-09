@@ -29,21 +29,37 @@ def _read_once_secret(path: str) -> bytes:
     return value
 
 
+def _key_check(key: bytes, label: bytes) -> str:
+    return "hmac-sha256:" + hmac.new(key, label, hashlib.sha256).hexdigest()
+
+
 class AuthorityStore:
     """Authoritative state owned only by the isolated authority process."""
 
-    def __init__(self, db_path: str, authorization_key: bytes, allowed_client_uid: int | None = None):
+    def __init__(
+        self,
+        db_path: str,
+        authorization_key: bytes,
+        allowed_client_uid: int | None = None,
+        *,
+        provenance_key: bytes | None = None,
+    ):
+        if provenance_key is None:
+            raise ValueError("distinct provenance key required")
+        if hmac.compare_digest(bytes(authorization_key), bytes(provenance_key)):
+            raise ValueError("authorization and provenance keys must be distinct")
         self._db_path = db_path
         self._authorization_key = bytes(authorization_key)
+        self._provenance_key = bytes(provenance_key)
         self._allowed_client_uid = os.getuid() if allowed_client_uid is None else int(allowed_client_uid)
         self._resolution_key = hmac.new(
-            self._authorization_key,
-            b"WS-SENTINEL-RESOLUTION-PROVENANCE-KEY-V1",
+            self._provenance_key,
+            b"WS-SENTINEL-RESOLUTION-PROVENANCE-KEY-V2",
             hashlib.sha256,
         ).digest()
         self._audit_key = hmac.new(
-            self._authorization_key,
-            b"WS-SENTINEL-AUDIT-PROVENANCE-KEY-V1",
+            self._provenance_key,
+            b"WS-SENTINEL-AUDIT-PROVENANCE-KEY-V2",
             hashlib.sha256,
         ).digest()
         self._db = sqlite3.connect(db_path)
@@ -125,16 +141,28 @@ class AuthorityStore:
         if "tag" not in audit_columns:
             self._db.execute("ALTER TABLE audit ADD COLUMN tag TEXT NOT NULL DEFAULT ''")
 
-        key_check = "hmac-sha256:" + hmac.new(
-            self._authorization_key,
-            b"WS-SENTINEL-AUTHORITY-KEY-CONTINUITY-V1",
-            hashlib.sha256,
-        ).hexdigest()
-        row = self._db.execute("SELECT value FROM meta WHERE name='authority_key_check'").fetchone()
-        if row is None:
-            self._db.execute("INSERT INTO meta(name, value) VALUES('authority_key_check', ?)", (key_check,))
-        elif not hmac.compare_digest(str(row["value"]), key_check):
-            raise RuntimeError("authority key continuity check failed")
+        populated = any(
+            int(self._db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]) > 0
+            for table in ("packages", "evidence", "issues", "resolutions", "requests", "used_authorizations", "audit")
+        )
+        expected_checks = {
+            "authorization_key_check": _key_check(
+                self._authorization_key,
+                b"WS-SENTINEL-AUTHORIZATION-KEY-CONTINUITY-V2",
+            ),
+            "provenance_key_check": _key_check(
+                self._provenance_key,
+                b"WS-SENTINEL-PROVENANCE-KEY-CONTINUITY-V2",
+            ),
+        }
+        for name, expected in expected_checks.items():
+            row = self._db.execute("SELECT value FROM meta WHERE name=?", (name,)).fetchone()
+            if row is None:
+                if populated:
+                    raise RuntimeError("continuity metadata missing for populated database")
+                self._db.execute("INSERT INTO meta(name, value) VALUES(?,?)", (name, expected))
+            elif not hmac.compare_digest(str(row["value"]), expected):
+                raise RuntimeError("authority key continuity check failed")
         self._db.commit()
 
     def close(self) -> None:
@@ -144,7 +172,7 @@ class AuthorityStore:
         prior = self._db.execute("SELECT tag FROM audit ORDER BY seq DESC LIMIT 1").fetchone()
         previous_tag = "GENESIS" if prior is None or not prior["tag"] else str(prior["tag"])
         payload = {
-            "schema": "WS-SENTINEL-AUDIT-CHAIN-V1",
+            "schema": "WS-SENTINEL-AUDIT-CHAIN-V2",
             "request_id": request_id,
             "peer_uid": peer_uid,
             "operation": operation,
@@ -194,7 +222,16 @@ class AuthorityStore:
             (safe_limit,),
         )]
 
-    def _resolution_tag(self, package_id: str, seq: int, issue: str, actor: str, role: str, rationale: str, previous_tag: str) -> str:
+    def _resolution_tag(
+        self,
+        package_id: str,
+        seq: int,
+        issue: str,
+        actor: str,
+        role: str,
+        rationale: str,
+        previous_tag: str,
+    ) -> str:
         payload = {
             "schema": SCHEMA_VERSION,
             "package_id": package_id,
@@ -207,7 +244,7 @@ class AuthorityStore:
         }
         return "hmac-sha256:" + hmac.new(self._resolution_key, _canonical(payload), hashlib.sha256).hexdigest()
 
-    def _verify_resolution_authorization(self, payload: dict[str, Any]) -> None:
+    def _verify_resolution_authorization(self, payload: dict[str, Any]) -> dict[str, Any]:
         auth = payload.get("authorization")
         if not isinstance(auth, dict) or auth.get("schema") != AUTH_SCHEMA:
             raise ValueError("resolution_authorization_required")
@@ -228,15 +265,16 @@ class AuthorityStore:
                 raise ValueError("resolution_authorization_scope_mismatch")
         if required["expires_at"] < int(time.time()):
             raise ValueError("resolution_authorization_expired")
-        expected = hmac.new(self._authorization_key, _canonical({"schema": AUTH_SCHEMA, **required}), hashlib.sha256).hexdigest()
+        expected = hmac.new(
+            self._authorization_key,
+            _canonical({"schema": AUTH_SCHEMA, **required}),
+            hashlib.sha256,
+        ).hexdigest()
         if not hmac.compare_digest(str(auth.get("tag", "")), "hmac-sha256:" + expected):
             raise ValueError("invalid_resolution_authorization")
         if self._db.execute("SELECT 1 FROM used_authorizations WHERE token_id=?", (required["token_id"],)).fetchone():
             raise ValueError("resolution_authorization_replayed")
-        self._db.execute(
-            "INSERT INTO used_authorizations(token_id, package_id, issue, used_at) VALUES(?,?,?,?)",
-            (required["token_id"], required["package_id"], required["issue"], int(time.time())),
-        )
+        return required
 
     def handle(self, request: dict[str, Any], peer_uid: int) -> dict[str, Any]:
         request_id = str(request.get("request_id", ""))
@@ -264,14 +302,22 @@ class AuthorityStore:
                 self._db.commit()
                 return {"ok": False, "error": "request_id_reuse_mismatch", "schema": SCHEMA_VERSION}
             return json.loads(prior["response_json"])
+
+        self._db.execute("SAVEPOINT authority_transition")
         try:
             response = self._dispatch(operation, request.get("payload") or {})
         except KeyError as exc:
+            self._db.execute("ROLLBACK TO authority_transition")
             response = {"ok": False, "error": str(exc.args[0]), "schema": SCHEMA_VERSION}
         except ValueError as exc:
+            self._db.execute("ROLLBACK TO authority_transition")
             response = {"ok": False, "error": str(exc), "schema": SCHEMA_VERSION}
         except sqlite3.IntegrityError:
+            self._db.execute("ROLLBACK TO authority_transition")
             response = {"ok": False, "error": "conflict", "schema": SCHEMA_VERSION}
+        finally:
+            self._db.execute("RELEASE authority_transition")
+
         self._audit(request_id, peer_uid, operation, bool(response.get("ok")), str(response.get("error") or "accepted"))
         self._db.execute(
             "INSERT INTO requests(request_id, peer_uid, request_digest, response_json) VALUES(?,?,?,?)",
@@ -290,7 +336,12 @@ class AuthorityStore:
             package_id = str(payload["package_id"])
             self._db.execute(
                 "INSERT INTO packages(package_id, authority_required, required_types, baseline_id, closed) VALUES(?,?,?,?,0)",
-                (package_id, str(payload["authority_required"]), json.dumps(sorted(set(payload.get("required_evidence_types") or []))), str(payload["baseline_id"])),
+                (
+                    package_id,
+                    str(payload["authority_required"]),
+                    json.dumps(sorted(set(payload.get("required_evidence_types") or []))),
+                    str(payload["baseline_id"]),
+                ),
             )
             return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
         if operation == "get_snapshot":
@@ -310,7 +361,15 @@ class AuthorityStore:
                 raise ValueError("digest_mismatch")
             self._db.execute(
                 "INSERT INTO evidence(package_id, evidence_id, evidence_type, version, baseline_id, digest, payload) VALUES(?,?,?,?,?,?,?)",
-                (package_id, str(payload["evidence_id"]), str(payload["evidence_type"]), int(payload["version"]), str(payload["baseline_id"]), record_digest, json.dumps(record_payload, sort_keys=True)),
+                (
+                    package_id,
+                    str(payload["evidence_id"]),
+                    str(payload["evidence_type"]),
+                    int(payload["version"]),
+                    str(payload["baseline_id"]),
+                    record_digest,
+                    json.dumps(record_payload, sort_keys=True),
+                ),
             )
             return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
         if operation == "open_issue":
@@ -324,7 +383,7 @@ class AuthorityStore:
             return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
         if operation == "resolve_issue":
             package_id = str(payload["package_id"])
-            self._verify_resolution_authorization(payload)
+            authorization = self._verify_resolution_authorization(payload)
             package = self._db.execute("SELECT closed, authority_required FROM packages WHERE package_id=?", (package_id,)).fetchone()
             if package is None:
                 raise KeyError("unknown_package")
@@ -339,11 +398,17 @@ class AuthorityStore:
             rationale = str(payload.get("rationale") or "").strip()
             if not rationale:
                 raise ValueError("rationale_required")
-            prior = self._db.execute("SELECT seq, tag FROM resolutions WHERE package_id=? ORDER BY seq DESC LIMIT 1", (package_id,)).fetchone()
+            prior = self._db.execute(
+                "SELECT seq, tag FROM resolutions WHERE package_id=? ORDER BY seq DESC LIMIT 1", (package_id,)
+            ).fetchone()
             seq = 1 if prior is None else int(prior["seq"]) + 1
             previous_tag = "GENESIS" if prior is None else str(prior["tag"])
             actor, role = str(payload["actor"]), str(payload["role"])
             tag = self._resolution_tag(package_id, seq, issue, actor, role, rationale, previous_tag)
+            self._db.execute(
+                "INSERT INTO used_authorizations(token_id, package_id, issue, used_at) VALUES(?,?,?,?)",
+                (authorization["token_id"], package_id, issue, int(time.time())),
+            )
             self._db.execute(
                 "INSERT INTO resolutions(package_id, seq, issue, actor, role, rationale, previous_tag, tag) VALUES(?,?,?,?,?,?,?,?)",
                 (package_id, seq, issue, actor, role, rationale, previous_tag, tag),
@@ -358,9 +423,14 @@ class AuthorityStore:
             if package["closed"]:
                 return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
             required = set(json.loads(package["required_types"]))
-            present = {row["evidence_type"] for row in self._db.execute("SELECT evidence_type FROM evidence WHERE package_id=?", (package_id,))}
+            present = {
+                row["evidence_type"]
+                for row in self._db.execute("SELECT evidence_type FROM evidence WHERE package_id=?", (package_id,))
+            }
             missing = sorted(required - present)
-            open_issues = self._db.execute("SELECT COUNT(*) AS n FROM issues WHERE package_id=? AND open=1", (package_id,)).fetchone()["n"]
+            open_issues = self._db.execute(
+                "SELECT COUNT(*) AS n FROM issues WHERE package_id=? AND open=1", (package_id,)
+            ).fetchone()["n"]
             if missing:
                 raise ValueError("missing_required_evidence:" + ",".join(missing))
             if open_issues:
@@ -371,11 +441,31 @@ class AuthorityStore:
 
 
 class AuthorityServer:
-    def __init__(self, socket_path: str, db_path: str, authorization_key_file: str, *, allowed_client_uid: int, socket_mode: int = 0o600, socket_gid: int | None = None):
+    def __init__(
+        self,
+        socket_path: str,
+        db_path: str,
+        authorization_key_file: str,
+        provenance_key_file: str,
+        *,
+        allowed_client_uid: int,
+        socket_mode: int = 0o600,
+        socket_gid: int | None = None,
+    ):
+        authority_uid = os.getuid()
+        if int(allowed_client_uid) == authority_uid:
+            raise ValueError("authority and client UIDs must be distinct")
         self._socket_path = socket_path
         self._socket_mode = socket_mode
         self._socket_gid = socket_gid
-        self._store = AuthorityStore(db_path, _read_once_secret(authorization_key_file), allowed_client_uid)
+        authorization_key = _read_once_secret(authorization_key_file)
+        provenance_key = _read_once_secret(provenance_key_file)
+        self._store = AuthorityStore(
+            db_path,
+            authorization_key,
+            allowed_client_uid,
+            provenance_key=provenance_key,
+        )
 
     def serve_forever(self) -> None:
         path = Path(self._socket_path)
@@ -407,7 +497,12 @@ class AuthorityServer:
                     try:
                         response = self._store.handle(json.loads(request_bytes.decode("utf-8")), peer_uid)
                     except Exception as exc:
-                        response = {"ok": False, "error": "invalid_request", "detail": type(exc).__name__, "schema": SCHEMA_VERSION}
+                        response = {
+                            "ok": False,
+                            "error": "invalid_request",
+                            "detail": type(exc).__name__,
+                            "schema": SCHEMA_VERSION,
+                        }
                     connection.sendall(json.dumps(response, sort_keys=True).encode("utf-8") + b"\n")
         finally:
             server.close()
@@ -421,7 +516,8 @@ def main() -> None:
     parser.add_argument("--socket", required=True)
     parser.add_argument("--db", required=True)
     parser.add_argument("--authorization-key-file", required=True)
-    parser.add_argument("--allowed-client-uid", type=int, default=os.getuid())
+    parser.add_argument("--provenance-key-file", required=True)
+    parser.add_argument("--allowed-client-uid", type=int, required=True)
     parser.add_argument("--socket-mode", type=lambda value: int(value, 8), default=0o600)
     parser.add_argument("--socket-gid", type=int)
     args = parser.parse_args()
@@ -429,6 +525,7 @@ def main() -> None:
         args.socket,
         args.db,
         args.authorization_key_file,
+        args.provenance_key_file,
         allowed_client_uid=args.allowed_client_uid,
         socket_mode=args.socket_mode,
         socket_gid=args.socket_gid,
