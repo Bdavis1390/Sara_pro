@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import importlib.util
 import subprocess
 import sys
 import tomllib
 from pathlib import Path
+
+import worldshepherd_sara
 
 
 def test_base_package_import_does_not_bootstrap_same_process_sentinel_custody():
@@ -27,15 +30,29 @@ def test_production_sentinel_scripts_route_to_isolated_authority():
 
 def test_production_authority_cli_fails_closed_without_authority(tmp_path: Path):
     result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "worldshepherd_sara.sentinel_authority_cli",
-            "--authority-socket",
-            str(tmp_path / "missing.sock"),
-        ],
+        [sys.executable, "-m", "worldshepherd_sara.sentinel_authority_cli", "--authority-socket", str(tmp_path / "missing.sock")],
         text=True,
         capture_output=True,
     )
     assert result.returncode == 2
     assert '"authority_status": "FAIL_CLOSED"' in result.stdout
+
+
+def test_alternate_name_legacy_source_load_is_not_production_authority():
+    legacy_path = Path(worldshepherd_sara.__file__).resolve().parent / "infrastructure_assurance_legacy.py"
+    spec = importlib.util.spec_from_file_location("worldshepherd_sara._historical_legacy_probe", legacy_path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+        assert hasattr(module, "PackageState")
+        assert "worldshepherd_sara.infrastructure_assurance" not in sys.modules
+        # Loading historical/synthetic code does not install or replace the production
+        # Sentinel command routing, which remains authority-client based.
+        pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        scripts = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["scripts"]
+        assert scripts["ws-sentinel-readiness"] == "worldshepherd_sara.sentinel_authority_cli:main"
+        assert scripts["ws-sentinel-infrastructure"] == "worldshepherd_sara.sentinel_authority_cli:main"
+    finally:
+        sys.modules.pop(spec.name, None)
