@@ -56,82 +56,22 @@ class CustodyClient:
     def health(self) -> dict[str, Any]:
         return self._request("health", {})
 
-    def register_package(
-        self,
-        *,
-        package_id: str,
-        authority_required: str,
-        required_evidence_types: list[str] | tuple[str, ...],
-        baseline_id: str,
-        request_id: str | None = None,
-    ) -> dict[str, Any]:
-        return self._request(
-            "register_package",
-            {
-                "package_id": package_id,
-                "authority_required": authority_required,
-                "required_evidence_types": list(required_evidence_types),
-                "baseline_id": baseline_id,
-            },
-            request_id=request_id,
-        )
+    def register_package(self, *, package_id: str, authority_required: str, required_evidence_types: list[str] | tuple[str, ...], baseline_id: str, request_id: str | None = None) -> dict[str, Any]:
+        return self._request("register_package", {"package_id": package_id, "authority_required": authority_required, "required_evidence_types": list(required_evidence_types), "baseline_id": baseline_id}, request_id=request_id)
 
     def get_snapshot(self, package_id: str) -> dict[str, Any]:
         return self._request("get_snapshot", {"package_id": package_id})
 
-    def ingest_evidence(
-        self,
-        *,
-        package_id: str,
-        evidence_id: str,
-        evidence_type: str,
-        version: int,
-        baseline_id: str,
-        record: dict[str, Any],
-        request_id: str | None = None,
-    ) -> dict[str, Any]:
+    def ingest_evidence(self, *, package_id: str, evidence_id: str, evidence_type: str, version: int, baseline_id: str, record: dict[str, Any], request_id: str | None = None) -> dict[str, Any]:
         detached = copy.deepcopy(record)
-        digest = hashlib.sha256(
-            json.dumps(detached, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        ).hexdigest()
-        return self._request(
-            "ingest_evidence",
-            {
-                "package_id": package_id,
-                "evidence_id": evidence_id,
-                "evidence_type": evidence_type,
-                "version": version,
-                "baseline_id": baseline_id,
-                "record": detached,
-                "digest": digest,
-            },
-            request_id=request_id,
-        )
+        digest = hashlib.sha256(json.dumps(detached, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+        return self._request("ingest_evidence", {"package_id": package_id, "evidence_id": evidence_id, "evidence_type": evidence_type, "version": version, "baseline_id": baseline_id, "record": detached, "digest": digest}, request_id=request_id)
 
     def open_issue(self, *, package_id: str, issue: str) -> dict[str, Any]:
         return self._request("open_issue", {"package_id": package_id, "issue": issue})
 
-    def resolve_issue(
-        self,
-        *,
-        package_id: str,
-        issue: str,
-        actor: str,
-        role: str,
-        rationale: str,
-        request_id: str | None = None,
-    ) -> dict[str, Any]:
-        return self._request(
-            "resolve_issue",
-            {
-                "package_id": package_id,
-                "issue": issue,
-                "actor": actor,
-                "role": role,
-                "rationale": rationale,
-            },
-            request_id=request_id,
-        )
+    def resolve_issue(self, *, package_id: str, issue: str, actor: str, role: str, rationale: str, authorization: dict[str, Any], request_id: str | None = None) -> dict[str, Any]:
+        return self._request("resolve_issue", {"package_id": package_id, "issue": issue, "actor": actor, "role": role, "rationale": rationale, "authorization": copy.deepcopy(authorization)}, request_id=request_id)
 
     def close_package(self, package_id: str, *, request_id: str | None = None) -> dict[str, Any]:
         return self._request("close_package", {"package_id": package_id}, request_id=request_id)
