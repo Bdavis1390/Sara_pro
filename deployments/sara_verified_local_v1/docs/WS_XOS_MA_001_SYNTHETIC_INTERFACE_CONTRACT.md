@@ -43,9 +43,9 @@ The fixture contains no weapon employment, targeting, payload-release, kinetic-a
 
 ## Adapter invariants
 
-### I-01 — Contract-bounded ingestion
+### I-01 — Contract-bounded ingestion / default deny
 
-Only event types listed by the active Worldshepherd synthetic `InterfaceContract` are accepted. Required payload fields are checked before evidence acceptance.
+`required_message_types` is an explicit allowlist. Only event types listed by the active Worldshepherd synthetic `InterfaceContract` are accepted; an empty allowlist accepts no event types. Required payload fields are checked before evidence acceptance. Unlisted or unconfigured event semantics fail closed.
 
 ### I-02 — Idempotence and collision detection
 
@@ -82,6 +82,7 @@ Even with those fields populated, the **synthetic adapter itself refuses externa
 The internal synthetic test suite must demonstrate:
 
 - all contracted fixture events are accepted once;
+- an empty message-type allowlist accepts nothing and fails closed;
 - identical retransmission is idempotently rejected as a duplicate;
 - reuse of the same event identity with mutated content fails closed as an idempotency collision;
 - required-field omissions fail closed;
