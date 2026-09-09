@@ -4,8 +4,12 @@ import hashlib
 import hmac
 import json
 import os
+import socket
+import subprocess
+import sys
 import time
 import uuid
+from pathlib import Path
 
 from worldshepherd_sara.isolated_custody_service_v2 import AuthorityStoreV2, CAP_SCHEMA, SCHEMA_VERSION
 
@@ -164,3 +168,87 @@ def test_closure_rejects_unattested_required_type_even_if_database_row_exists(tm
         assert closed["error"] == "evidence_attestation_failure"
     finally:
         store.close()
+
+
+def test_issue_creation_requires_scoped_capability(tmp_path):
+    store, auth = _store(tmp_path)
+    try:
+        _register(store, auth, os.getuid())
+        denied = store.handle(
+            _request("open_issue", {"package_id": "pkg-1", "issue": "REVIEW_REQUIRED"}),
+            os.getuid(),
+        )
+        assert denied["error"] == "open_issue_authorization_required"
+        bound = {"package_id": "pkg-1", "issue": "REVIEW_REQUIRED"}
+        authorized = store.handle(
+            _request("open_issue", {**bound, "authorization": _cap(auth, "open_issue", **bound)}),
+            os.getuid(),
+        )
+        assert authorized["ok"]
+        assert authorized["snapshot"]["open_issues"] == ["REVIEW_REQUIRED"]
+    finally:
+        store.close()
+
+
+def test_closure_requires_scoped_capability(tmp_path):
+    store, auth = _store(tmp_path)
+    try:
+        _register(store, auth, os.getuid())
+        denied = store.handle(_request("close_package", {"package_id": "pkg-1"}), os.getuid())
+        assert denied["error"] == "close_package_authorization_required"
+        bound = {"package_id": "pkg-1"}
+        authorized = store.handle(
+            _request("close_package", {**bound, "authorization": _cap(auth, "close_package", **bound)}),
+            os.getuid(),
+        )
+        assert authorized["error"].startswith("missing_validated_evidence:")
+    finally:
+        store.close()
+
+
+def test_incomplete_socket_request_is_time_bounded(tmp_path):
+    socket_path = tmp_path / "authority-v2.sock"
+    db_path = tmp_path / "authority-v2.sqlite3"
+    auth_path = tmp_path / "authorization.key"
+    provenance_path = tmp_path / "provenance.key"
+    auth_path.write_bytes(os.urandom(32))
+    provenance_path.write_bytes(os.urandom(32))
+    process = subprocess.Popen(
+        [
+            sys.executable,
+            "-m",
+            "worldshepherd_sara.isolated_custody_service_v2",
+            "--socket",
+            str(socket_path),
+            "--db",
+            str(db_path),
+            "--authorization-key-file",
+            str(auth_path),
+            "--provenance-key-file",
+            str(provenance_path),
+            "--allowed-client-uid",
+            str(os.getuid() + 1),
+            "--connection-timeout-seconds",
+            "0.05",
+        ],
+        cwd=Path(__file__).resolve().parents[1],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        deadline = time.time() + 5
+        while time.time() < deadline and not socket_path.exists():
+            time.sleep(0.01)
+        assert socket_path.exists()
+        slow = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        slow.settimeout(1)
+        started = time.monotonic()
+        slow.connect(str(socket_path))
+        response = slow.recv(65536)
+        elapsed = time.monotonic() - started
+        assert elapsed < 0.75
+        assert b'"error": "invalid_request"' in response
+        slow.close()
+    finally:
+        process.terminate()
+        process.wait(timeout=5)
