@@ -3,6 +3,7 @@ import sys
 
 import pytest
 
+import worldshepherd_sara.infrastructure_assurance as assurance
 from worldshepherd_sara.infrastructure_assurance import (
     PackageState,
     _append_issue,
@@ -192,3 +193,8 @@ else:
         text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_hardened_module_does_not_expose_vulnerable_original_handles() -> None:
+    assert not hasattr(assurance, "_ORIGINAL_INGEST_EVIDENCE")
+    assert not hasattr(assurance, "_ORIGINAL_CLOSE_PACKAGE")
