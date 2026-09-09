@@ -416,17 +416,20 @@ class AuthorityServerV2:
                     if hasattr(socket, "SO_PEERCRED"):
                         raw = conn.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
                         _pid, peer_uid, _gid = struct.unpack("3i", raw)
-                    data = b""
-                    while not data.endswith(b"\n") and len(data) <= 2_000_000:
-                        chunk = conn.recv(65536)
-                        if not chunk:
-                            break
-                        data += chunk
                     try:
+                        data = b""
+                        while not data.endswith(b"\n") and len(data) <= 2_000_000:
+                            chunk = conn.recv(65536)
+                            if not chunk:
+                                break
+                            data += chunk
                         response = self._store.handle(json.loads(data.decode("utf-8")), peer_uid)
                     except Exception as exc:
                         response = {"ok": False, "error": "invalid_request", "detail": type(exc).__name__, "schema": SCHEMA_VERSION}
-                    conn.sendall(json.dumps(response, sort_keys=True).encode("utf-8") + b"\n")
+                    try:
+                        conn.sendall(json.dumps(response, sort_keys=True).encode("utf-8") + b"\n")
+                    except OSError:
+                        pass
         finally:
             server.close()
             self._store.close()
