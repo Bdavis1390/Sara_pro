@@ -77,6 +77,12 @@ Any future external interface activation metadata must include:
 
 Even with those fields populated, the **synthetic adapter itself refuses external activation**. A future partner-specific adapter must be separately implemented and reviewed after the applicable legal, export-control, security, and partner-interface gates.
 
+### I-08 — Optional durable restart reconciliation
+
+When configured with SARA's local secured `DurableStore`, accepted idempotency identities and their evidence records are persisted under the synthetic interface-contract digest. Reconstructing the adapter against the same store reloads that state. An identical retransmission after reconstruction remains a duplicate; mutated reuse of the same identity remains a fail-closed collision and is written to the local audit log.
+
+This is **local single-store persistence only**. It does not establish distributed exactly-once processing, multi-process linearizability, partner acknowledgement semantics, XOS replay behavior, or platform-level restart safety.
+
 ## D1 acceptance criteria
 
 The internal synthetic test suite must demonstrate:
@@ -93,6 +99,19 @@ The internal synthetic test suite must demonstrate:
 - a non-allowlisted supervisory action requires human review;
 - an explicitly denied route-override action is denied; and
 - external activation without authoritative/partner evidence is rejected, while the synthetic adapter rejects external activation even when such metadata is supplied.
+
+## D2 local restart/rejoin acceptance criteria
+
+With a temporary Worldshepherd-owned `DurableStore`, the internal test suite must demonstrate:
+
+- an accepted event is persisted with its contract digest, idempotency identity, event digest, and evidence record;
+- constructing a new adapter instance against the same durable store reloads the accepted-event state;
+- replaying the identical event after adapter reconstruction is rejected as a duplicate and returns the original evidence identity;
+- replaying the same event identity with changed content after reconstruction fails closed as an idempotency collision;
+- the collision creates a local audit record; and
+- no persistence or restart path creates an external command transport or upgrades evidence beyond `SIMULATION` / `SIMULATED_ONLY`.
+
+D2 does **not** validate partner-platform restart/rejoin semantics, network partition reconciliation, distributed concurrent writers, acknowledgement ordering, monotonic sequence enforcement, or XOS-specific replay behavior. Those remain partner/interface requirements.
 
 ## Requirement delta for any future XTEND mapping
 
@@ -121,4 +140,4 @@ These items must not be reverse engineered or inferred from the synthetic schema
 
 ## Claim boundary
 
-Passing this test suite would establish only that the Worldshepherd-owned synthetic adapter behavior passed the stated internal software tests on the tested commit. It would **not** establish XTEND/XOS interoperability, XTEND Certified status, platform safety, field performance, government acceptance, external certification, export classification, or partnership.
+Passing this test suite would establish only that the Worldshepherd-owned synthetic adapter behavior passed the stated internal software tests on the tested commit. It would **not** establish XTEND/XOS interoperability, XTEND Certified status, platform safety, field performance, government acceptance, external certification, export classification, distributed exactly-once processing, or partnership.
