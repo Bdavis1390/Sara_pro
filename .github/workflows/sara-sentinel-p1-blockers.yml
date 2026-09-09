@@ -41,5 +41,5 @@ jobs:
       - name: Run Sentinel P1 blocker regressions
         run: pytest -q tests/test_sentinel_p1_blockers.py
 
-# Exact-head validation trigger retained intentionally so any guard-source change
-# produces an auditable push run on the hardening branch.
+# Exact-head validation trigger retained intentionally so any guard-source change,
+# including package bootstrap changes in __init__.py, produces an auditable push run.
