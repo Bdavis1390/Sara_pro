@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tomllib
@@ -27,12 +28,36 @@ def test_production_sentinel_scripts_route_to_isolated_authority():
 
 def test_production_authority_cli_fails_closed_without_authority(tmp_path: Path):
     result = subprocess.run(
-        [sys.executable, "-m", "worldshepherd_sara.sentinel_authority_cli", "--authority-socket", str(tmp_path / "missing.sock")],
+        [
+            sys.executable,
+            "-m",
+            "worldshepherd_sara.sentinel_authority_cli",
+            "--authority-socket",
+            str(tmp_path / "missing.sock"),
+            "--expected-authority-uid",
+            str(os.getuid()),
+        ],
         text=True,
         capture_output=True,
     )
     assert result.returncode == 2
     assert '"authority_status": "FAIL_CLOSED"' in result.stdout
+
+
+def test_production_authority_cli_requires_expected_authority_uid(tmp_path: Path):
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "worldshepherd_sara.sentinel_authority_cli",
+            "--authority-socket",
+            str(tmp_path / "missing.sock"),
+        ],
+        text=True,
+        capture_output=True,
+    )
+    assert result.returncode == 2
+    assert "--expected-authority-uid" in result.stderr
 
 
 def test_alternate_name_legacy_source_load_is_not_production_authority():
