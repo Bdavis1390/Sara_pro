@@ -60,6 +60,7 @@ def _start(tmp_path: Path, key: bytes):
         sys.executable, "-m", "worldshepherd_sara.isolated_custody_service",
         "--socket", str(socket_path), "--db", str(db_path),
         "--authorization-key-file", str(key_path),
+        "--allowed-client-uid", str(os.getuid()),
     ], cwd=Path(__file__).resolve().parents[1], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     _wait_for_socket(socket_path)
     assert not key_path.exists()
@@ -119,12 +120,12 @@ def test_request_id_reuse_with_different_payload_is_rejected(authority):
     assert second["error"] == "request_id_reuse_mismatch"
 
 
-def test_replay_record_is_bound_to_peer(tmp_path: Path):
-    store = AuthorityStore(str(tmp_path / "store.sqlite3"), os.urandom(32))
+def test_peer_allowlist_blocks_other_uids(tmp_path: Path):
+    store = AuthorityStore(str(tmp_path / "store.sqlite3"), os.urandom(32), allowed_client_uid=1001)
     try:
         request = {"schema": SCHEMA_VERSION, "request_id": "peer-bound", "operation": "health", "payload": {}}
         assert store.handle(request, 1001)["ok"]
-        assert store.handle(request, 1002)["error"] == "request_peer_mismatch"
+        assert store.handle(request, 1002)["error"] == "peer_not_authorized"
     finally:
         store.close()
 
@@ -160,6 +161,22 @@ def test_expired_resolution_capability_is_rejected(authority):
     assert client.resolve_issue(package_id="pkg-1", issue="REVIEW_REQUIRED", actor="operator", role="CRE1AWS", rationale="synthetic test authorization", authorization=auth)["error"] == "resolution_authorization_expired"
 
 
+def test_audit_snapshot_is_detached_and_chained(authority):
+    client, _, _, _ = authority; _registered(client)
+    response = client.get_audit(limit=20)
+    assert response["ok"]
+    audit = list(reversed(response["audit"]))
+    assert audit
+    previous = "GENESIS"
+    for row in audit:
+        assert row["previous_tag"] == previous
+        assert str(row["tag"]).startswith("hmac-sha256:")
+        previous = row["tag"]
+    audit[-1]["detail"] = "forged"
+    fresh = client.get_audit(limit=20)["audit"]
+    assert all(row["detail"] != "forged" for row in fresh)
+
+
 def test_authority_unavailable_fails_closed(tmp_path: Path):
     with pytest.raises(AuthorityUnavailable):
         CustodyClient(str(tmp_path / "missing.sock"), timeout_seconds=0.1).health()
@@ -180,6 +197,15 @@ def test_schema_mismatch_fails_closed(authority):
             client.health()
     finally:
         client_module.SCHEMA_VERSION = original
+
+
+def test_wrong_restart_key_fails_closed(tmp_path: Path):
+    db_path = tmp_path / "key-continuity.sqlite3"
+    first_key = os.urandom(32)
+    store = AuthorityStore(str(db_path), first_key, allowed_client_uid=os.getuid())
+    store.close()
+    with pytest.raises(RuntimeError, match="key continuity"):
+        AuthorityStore(str(db_path), os.urandom(32), allowed_client_uid=os.getuid())
 
 
 def test_service_restart_preserves_resolution_chain_key(tmp_path: Path):
