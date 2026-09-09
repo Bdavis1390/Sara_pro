@@ -350,18 +350,24 @@ class AuthorityStoreV2:
             return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
         if operation == "open_issue":
             package_id = str(payload["package_id"])
+            issue = str(payload["issue"])
             package = self._db.execute("SELECT closed FROM packages WHERE package_id=?", (package_id,)).fetchone()
             if package is None:
                 raise KeyError("unknown_package")
             if package["closed"]:
                 raise ValueError("package_closed")
-            self._db.execute("INSERT INTO issues(package_id,issue,open) VALUES(?,?,1)", (package_id, str(payload["issue"])))
+            bound = {"package_id": package_id, "issue": issue}
+            cap = self._verify_capability("open_issue", payload, bound)
+            self._consume(cap, package_id)
+            self._db.execute("INSERT INTO issues(package_id,issue,open) VALUES(?,?,1)", (package_id, issue))
             return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
         if operation == "close_package":
             package_id = str(payload["package_id"])
             package = self._db.execute("SELECT * FROM packages WHERE package_id=?", (package_id,)).fetchone()
             if package is None:
                 raise KeyError("unknown_package")
+            bound = {"package_id": package_id}
+            cap = self._verify_capability("close_package", payload, bound)
             if package["closed"]:
                 return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
             required = set(json.loads(package["required_types"]))
@@ -372,17 +378,19 @@ class AuthorityStoreV2:
             open_issues = self._db.execute("SELECT COUNT(*) n FROM issues WHERE package_id=? AND open=1", (package_id,)).fetchone()["n"]
             if open_issues:
                 raise ValueError("unresolved_issues")
+            self._consume(cap, package_id)
             self._db.execute("UPDATE packages SET closed=1 WHERE package_id=?", (package_id,))
             return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
         raise ValueError("unknown_operation")
 
 
 class AuthorityServerV2:
-    def __init__(self, socket_path: str, db_path: str, authorization_key_file: str, provenance_key_file: str, *, allowed_client_uid: int, socket_mode: int = 0o600):
+    def __init__(self, socket_path: str, db_path: str, authorization_key_file: str, provenance_key_file: str, *, allowed_client_uid: int, socket_mode: int = 0o600, connection_timeout_seconds: float = 1.0):
         if int(allowed_client_uid) == os.getuid():
             raise ValueError("authority and client UIDs must be distinct")
         self._socket_path = socket_path
         self._socket_mode = socket_mode
+        self._connection_timeout_seconds = max(0.05, float(connection_timeout_seconds))
         self._store = AuthorityStoreV2(
             db_path,
             _read_once_secret(authorization_key_file),
@@ -403,6 +411,7 @@ class AuthorityServerV2:
             while True:
                 conn, _ = server.accept()
                 with conn:
+                    conn.settimeout(self._connection_timeout_seconds)
                     peer_uid = -1
                     if hasattr(socket, "SO_PEERCRED"):
                         raw = conn.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
@@ -433,6 +442,7 @@ def main() -> None:
     parser.add_argument("--provenance-key-file", required=True)
     parser.add_argument("--allowed-client-uid", type=int, required=True)
     parser.add_argument("--socket-mode", type=lambda v: int(v, 8), default=0o600)
+    parser.add_argument("--connection-timeout-seconds", type=float, default=1.0)
     args = parser.parse_args()
     AuthorityServerV2(
         args.socket,
@@ -441,6 +451,7 @@ def main() -> None:
         args.provenance_key_file,
         allowed_client_uid=args.allowed_client_uid,
         socket_mode=args.socket_mode,
+        connection_timeout_seconds=args.connection_timeout_seconds,
     ).serve_forever()
 
 
