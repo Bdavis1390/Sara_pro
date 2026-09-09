@@ -1,3 +1,4 @@
+import importlib
 import subprocess
 import sys
 
@@ -8,6 +9,7 @@ from worldshepherd_sara.infrastructure_assurance import (
     PackageState,
     _append_issue,
     _custody,
+    _resolved_issue_snapshot,
     _valid_evidence,
     build_synthetic_packages,
     close_package,
@@ -85,53 +87,12 @@ def test_evidence_ingestion_fails_closed_after_package_closure() -> None:
     assert state.authoritative_evidence["design"].evidence_id == current.evidence_id
 
 
-def test_resolved_issue_provenance_is_retained_in_engine_custody(monkeypatch) -> None:
-    admin_token = "admin-token-" + "a" * 24
-    relay_token = "relay-token-" + "b" * 24
+def _resolve_synthetic_issue(state: PackageState, monkeypatch, suffix: str) -> str:
+    admin_token = "admin-token-" + suffix * 24
+    relay_token = "relay-token-" + suffix.upper() * 24
     monkeypatch.setenv("SARA_ADMIN_TOKEN", admin_token)
     monkeypatch.setenv("SARA_RELAY_TOKEN", relay_token)
-
-    state = _complete_state("RESOLVED-CUSTODY")
-    issue = "SYNTHETIC_RESOLUTION_BLOCKER"
-    _append_issue(state, issue)
-
-    capability = issue_authorization_capability(
-        authorization=f"Bearer {admin_token}",
-        target_id=state.package.package_id,
-        authority_role=state.package.authority_required,
-        action="ISSUE_RESOLUTION",
-    )
-    assert resolve_issue(
-        state,
-        issue=issue,
-        actor=capability.actor,
-        role=capability.role,
-        rationale="synthetic regression resolution",
-        capability=capability,
-    ) is True
-
-    custody = _custody(state)
-    assert hasattr(custody, "resolved_issues")
-    assert custody.resolved_issues
-    latest = custody.resolved_issues[-1]
-    assert latest["issue"] == issue
-    assert latest["actor"] == capability.actor
-    assert latest["rationale"] == "synthetic regression resolution"
-
-    state.events.clear()
-    closed, blockers = close_package(state)
-    assert closed is True
-    assert blockers == ()
-
-
-def test_resolved_issue_custody_tamper_blocks_closure(monkeypatch) -> None:
-    admin_token = "admin-token-" + "c" * 24
-    relay_token = "relay-token-" + "d" * 24
-    monkeypatch.setenv("SARA_ADMIN_TOKEN", admin_token)
-    monkeypatch.setenv("SARA_RELAY_TOKEN", relay_token)
-
-    state = _complete_state("RESOLUTION-TAMPER")
-    issue = "SYNTHETIC_TAMPER_BLOCKER"
+    issue = f"SYNTHETIC_{suffix}_BLOCKER"
     _append_issue(state, issue)
     capability = issue_authorization_capability(
         authorization=f"Bearer {admin_token}",
@@ -147,12 +108,34 @@ def test_resolved_issue_custody_tamper_blocks_closure(monkeypatch) -> None:
         rationale="authorized synthetic resolution",
         capability=capability,
     ) is True
+    return issue
+
+
+def test_resolved_issue_provenance_snapshot_is_detached(monkeypatch) -> None:
+    state = _complete_state("RESOLVED-CUSTODY")
+    issue = _resolve_synthetic_issue(state, monkeypatch, "a")
 
     custody = _custody(state)
-    custody.resolved_issues[-1]["rationale"] = "tampered rationale"
+    assert not hasattr(custody, "resolved_issues")
+
+    snapshot = _resolved_issue_snapshot(state)
+    assert snapshot and snapshot[-1]["issue"] == issue
+    snapshot[-1]["rationale"] = "caller-forged detached copy"
+
+    fresh = _resolved_issue_snapshot(state)
+    assert fresh[-1]["rationale"] == "authorized synthetic resolution"
+
     closed, blockers = close_package(state)
-    assert closed is False
-    assert "INVALID_RESOLVED_ISSUE_CUSTODY" in blockers
+    assert closed is True
+    assert blockers == ()
+
+
+def test_resolution_signing_secret_is_not_returned_by_custody(monkeypatch) -> None:
+    state = _complete_state("RESOLUTION-KEY")
+    _resolve_synthetic_issue(state, monkeypatch, "b")
+    custody = _custody(state)
+    assert not hasattr(custody, "resolution_key")
+    assert not hasattr(custody, "resolved_issues")
 
 
 def test_direct_legacy_import_is_bootstrapped_through_hardening() -> None:
@@ -193,6 +176,29 @@ else:
         text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_legacy_reload_cannot_restore_vulnerable_implementation() -> None:
+    from worldshepherd_sara import infrastructure_assurance_legacy as legacy
+
+    before = legacy.ingest_evidence
+    reloaded = importlib.reload(legacy)
+    assert reloaded is legacy
+    assert legacy.ingest_evidence is before
+    assert legacy.ingest_evidence is assurance.ingest_evidence
+
+    state = legacy.PackageState(
+        package=legacy.build_synthetic_packages(1)[0],
+        current_baseline="BL-001",
+    )
+    with pytest.raises(RuntimeError, match="already registered|reinitial"):
+        state.__post_init__()
+
+
+def test_hardened_ingest_and_close_do_not_capture_legacy_callables() -> None:
+    for function in (assurance.ingest_evidence, assurance.close_package):
+        closure = function.__closure__ or ()
+        assert not any(callable(cell.cell_contents) for cell in closure)
 
 
 def test_hardened_module_does_not_expose_vulnerable_original_handles() -> None:
