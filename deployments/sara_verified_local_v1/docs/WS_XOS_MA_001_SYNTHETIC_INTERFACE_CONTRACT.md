@@ -28,7 +28,7 @@ Required envelope fields:
 - `sequence` — non-negative source sequence value.
 - `payload` — event-specific data restricted by the synthetic contract.
 
-The event digest is canonical SHA-256 over the complete neutral envelope. The idempotency key is separately derived from schema version, source system, mission ID, and event ID so a retransmission produces the same acceptance identity.
+The event digest is canonical SHA-256 over the complete neutral envelope. The idempotency key is separately derived from schema version, source system, mission ID, and event ID so an identical retransmission produces the same acceptance identity. Reuse of that identity with a different event digest is treated as a collision/replay conflict and fails closed.
 
 ## Synthetic D1 non-kinetic ISR profile
 
@@ -47,9 +47,9 @@ The fixture contains no weapon employment, targeting, payload-release, kinetic-a
 
 Only event types listed by the active Worldshepherd synthetic `InterfaceContract` are accepted. Required payload fields are checked before evidence acceptance.
 
-### I-02 — Idempotence
+### I-02 — Idempotence and collision detection
 
-A previously accepted event with the same neutral idempotency identity is marked duplicate and not accepted a second time.
+A previously accepted event with the same neutral idempotency identity and the same event digest is marked duplicate and not accepted a second time. If the same idempotency identity is reused with different event content, the adapter rejects the event as an idempotency collision instead of silently treating it as a valid duplicate.
 
 ### I-03 — Provenance
 
@@ -82,7 +82,8 @@ Even with those fields populated, the **synthetic adapter itself refuses externa
 The internal synthetic test suite must demonstrate:
 
 - all contracted fixture events are accepted once;
-- retransmission is idempotently rejected as a duplicate;
+- identical retransmission is idempotently rejected as a duplicate;
+- reuse of the same event identity with mutated content fails closed as an idempotency collision;
 - required-field omissions fail closed;
 - uncontracted event types fail closed;
 - evidence remains `SIMULATION` / `SIMULATED_ONLY`;
