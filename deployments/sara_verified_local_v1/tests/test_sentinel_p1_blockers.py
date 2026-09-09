@@ -1,3 +1,6 @@
+import subprocess
+import sys
+
 import pytest
 
 from worldshepherd_sara.infrastructure_assurance import (
@@ -149,3 +152,43 @@ def test_resolved_issue_custody_tamper_blocks_closure(monkeypatch) -> None:
     closed, blockers = close_package(state)
     assert closed is False
     assert "INVALID_RESOLVED_ISSUE_CUSTODY" in blockers
+
+
+def test_direct_legacy_import_is_bootstrapped_through_hardening() -> None:
+    code = r'''
+from worldshepherd_sara import infrastructure_assurance_legacy as legacy
+state = legacy.PackageState(
+    package=legacy.build_synthetic_packages(1)[0],
+    current_baseline="BL-001",
+)
+try:
+    state.__post_init__()
+except RuntimeError:
+    pass
+else:
+    raise SystemExit("legacy direct import bypassed one-shot custody")
+
+class ForgedPackageState(legacy.PackageState):
+    def __hash__(self):
+        return 1
+    def __eq__(self, _other):
+        return True
+
+forged = ForgedPackageState(
+    package=legacy.build_synthetic_packages(1)[0],
+    current_baseline="BL-001",
+)
+try:
+    legacy._custody(forged)
+except RuntimeError:
+    pass
+else:
+    raise SystemExit("legacy direct import bypassed exact-type custody")
+'''
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
