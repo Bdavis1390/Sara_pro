@@ -44,7 +44,7 @@ def test_production_authority_cli_fails_closed_without_authority(tmp_path: Path)
     assert '"authority_status": "FAIL_CLOSED"' in result.stdout
 
 
-def test_production_authority_cli_requires_expected_authority_uid(tmp_path: Path):
+def test_production_authority_cli_fails_closed_without_expected_authority_uid(tmp_path: Path):
     result = subprocess.run(
         [
             sys.executable,
@@ -57,7 +57,8 @@ def test_production_authority_cli_requires_expected_authority_uid(tmp_path: Path
         capture_output=True,
     )
     assert result.returncode == 2
-    assert "--expected-authority-uid" in result.stderr
+    assert '"authority_status": "FAIL_CLOSED"' in result.stdout
+    assert "expected authority uid required" in result.stdout
 
 
 def test_alternate_name_legacy_source_load_is_not_production_authority():
