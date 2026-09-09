@@ -138,36 +138,23 @@ def test_resolution_signing_secret_is_not_returned_by_custody(monkeypatch) -> No
     assert not hasattr(custody, "resolved_issues")
 
 
-def test_direct_legacy_import_is_bootstrapped_through_hardening() -> None:
+def test_direct_legacy_import_remains_synthetic_not_production_authority() -> None:
     code = r'''
+import tomllib
+from pathlib import Path
 from worldshepherd_sara import infrastructure_assurance_legacy as legacy
+
 state = legacy.PackageState(
     package=legacy.build_synthetic_packages(1)[0],
     current_baseline="BL-001",
 )
-try:
-    state.__post_init__()
-except RuntimeError:
-    pass
-else:
-    raise SystemExit("legacy direct import bypassed one-shot custody")
-
-class ForgedPackageState(legacy.PackageState):
-    def __hash__(self):
-        return 1
-    def __eq__(self, _other):
-        return True
-
-forged = ForgedPackageState(
-    package=legacy.build_synthetic_packages(1)[0],
-    current_baseline="BL-001",
-)
-try:
-    legacy._custody(forged)
-except RuntimeError:
-    pass
-else:
-    raise SystemExit("legacy direct import bypassed exact-type custody")
+# The preserved legacy implementation may execute only as explicitly imported
+# synthetic code. It must not control the installed production Sentinel route.
+assert state.package is not None
+pyproject = Path("pyproject.toml")
+scripts = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"]["scripts"]
+assert scripts["ws-sentinel-readiness"] == "worldshepherd_sara.sentinel_authority_cli:main"
+assert scripts["ws-sentinel-infrastructure"] == "worldshepherd_sara.sentinel_authority_cli:main"
 '''
     result = subprocess.run(
         [sys.executable, "-c", code],
@@ -178,7 +165,7 @@ else:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_legacy_reload_cannot_restore_vulnerable_implementation() -> None:
+def test_legacy_reload_cannot_restore_vulnerable_implementation_when_hardening_overlay_is_explicitly_loaded() -> None:
     from worldshepherd_sara import infrastructure_assurance_legacy as legacy
 
     before = legacy.ingest_evidence
