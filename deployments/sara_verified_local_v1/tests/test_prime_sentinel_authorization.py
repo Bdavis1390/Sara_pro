@@ -214,3 +214,73 @@ def test_authorization_is_one_time_consumable():
             transition_id="PRIME-CUSTODY-456",
             consumed_at=now,
         )
+
+
+
+def test_expired_terminal_records_are_pruned_without_shortening_replay_window():
+    private, verifier = _keys()
+    now = datetime.now(timezone.utc)
+    active = verifier.verify(
+        _signed_assertion(private, now=now, authorization_id="AUTH-ACTIVE"),
+        now=now,
+    )
+    registry = verified_authorization_registry_patch({}, active)
+    consumed = consumed_authorization_registry_patch(
+        registry,
+        authorization_id="AUTH-ACTIVE",
+        transition_id="PRIME-CUSTODY-ACTIVE",
+        consumed_at=now,
+    )
+
+    replacement = verifier.verify(
+        _signed_assertion(
+            private,
+            now=now,
+            authorization_id="AUTH-NEW",
+            nonce="nonce-new-0123456789abcdef",
+        ),
+        now=now,
+    )
+    retained = verified_authorization_registry_patch(consumed, replacement)
+    assert "AUTH-ACTIVE" in retained["PRIME_SENTINEL_AUTHORIZATIONS"]
+
+    expired_registry = {
+        "PRIME_SENTINEL_AUTHORIZATIONS": {
+            "AUTH-EXPIRED": {
+                **consumed["PRIME_SENTINEL_AUTHORIZATIONS"]["AUTH-ACTIVE"],
+                "expires_at": (now - timedelta(seconds=1)).isoformat(),
+            }
+        }
+    }
+    pruned = verified_authorization_registry_patch(expired_registry, replacement)
+    assert "AUTH-EXPIRED" not in pruned["PRIME_SENTINEL_AUTHORIZATIONS"]
+    assert "AUTH-NEW" in pruned["PRIME_SENTINEL_AUTHORIZATIONS"]
+
+
+def test_active_window_capacity_exhaustion_fails_closed():
+    private, verifier = _keys()
+    now = datetime.now(timezone.utc)
+    records = {}
+    for index in range(64):
+        verified = verifier.verify(
+            _signed_assertion(
+                private,
+                now=now,
+                authorization_id=f"AUTH-{index:03d}",
+                nonce=f"nonce-{index:03d}-0123456789abcdef",
+            ),
+            now=now,
+        )
+        records = verified_authorization_registry_patch(records, verified)
+
+    overflow = verifier.verify(
+        _signed_assertion(
+            private,
+            now=now,
+            authorization_id="AUTH-OVERFLOW",
+            nonce="nonce-overflow-0123456789",
+        ),
+        now=now,
+    )
+    with pytest.raises(PrimeSentinelAuthorizationError, match="capacity exhausted"):
+        verified_authorization_registry_patch(records, overflow)

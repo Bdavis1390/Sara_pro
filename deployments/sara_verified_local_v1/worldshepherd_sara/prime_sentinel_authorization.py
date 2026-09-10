@@ -19,6 +19,7 @@ PRIME_SENTINEL_AUTHZ_SCHEMA = "WS-PRIME-SENTINEL-AUTHZ-V1"
 PRIME_SENTINEL_AUTHZ_REGISTRY_KEY = "PRIME_SENTINEL_AUTHORIZATIONS"
 MAX_ASSERTION_LIFETIME = timedelta(minutes=15)
 MAX_FUTURE_SKEW = timedelta(seconds=60)
+MAX_AUTHORIZATION_RECORDS = 64
 
 
 class PrimeSentinelAuthorizationError(ValueError):
@@ -199,16 +200,43 @@ def _authorization_map(registry: dict[str, Any]) -> dict[str, Any]:
     return dict(raw)
 
 
+def _prune_expired_terminal_authorizations(
+    records: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Discard terminal records only after their signed replay window closes."""
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    retained: dict[str, Any] = {}
+    for authorization_id, entry in records.items():
+        if not isinstance(entry, dict) or entry.get("status") not in {"CONSUMED", "SUPERSEDED"}:
+            retained[authorization_id] = entry
+            continue
+        try:
+            expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
+        except (KeyError, ValueError):
+            # Preserve malformed records so corruption remains visible and fail-closed.
+            retained[authorization_id] = entry
+            continue
+        if current < expires.astimezone(timezone.utc):
+            retained[authorization_id] = entry
+    return retained
+
+
 def verified_authorization_registry_patch(
     registry: dict[str, Any],
     verified: VerifiedPrimeSentinelAuthorization,
 ) -> dict[str, Any]:
-    records = _authorization_map(registry)
+    records = _prune_expired_terminal_authorizations(_authorization_map(registry))
     if verified.authorization_id in records:
         raise PrimeSentinelAuthorizationError("authorization_id has already been recorded")
     for entry in records.values():
         if isinstance(entry, dict) and entry.get("nonce") == verified.nonce:
             raise PrimeSentinelAuthorizationError("authorization nonce has already been recorded")
+    if len(records) >= MAX_AUTHORIZATION_RECORDS:
+        raise PrimeSentinelAuthorizationError(
+            "authorization registry active-window capacity exhausted"
+        )
     records[verified.authorization_id] = {
         "status": "VERIFIED",
         "prime_id": verified.prime_id,

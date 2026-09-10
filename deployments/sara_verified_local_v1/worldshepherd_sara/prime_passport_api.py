@@ -47,6 +47,10 @@ class _PassportAlreadyExists(ValueError):
     pass
 
 
+class _PassportRegistryInvalid(RuntimeError):
+    pass
+
+
 def _store(request: Request) -> DurableStore:
     return request.app.state.store
 
@@ -302,7 +306,10 @@ def authorize_prime_requalification(
     verifier = _sentinel_verifier(request)
 
     def operation(registry: dict[str, Any]):
-        passport = _load_from_registry(registry, prime_id)
+        try:
+            passport = _load_from_registry(registry, prime_id)
+        except ValueError as exc:
+            raise _PassportRegistryInvalid from exc
         verified = verifier.verify(body)
         updated, payload = apply_verified_requalification_authorization(passport, verified)
         patch = verified_authorization_registry_patch(registry, verified)
@@ -313,6 +320,11 @@ def authorize_prime_requalification(
         updated, payload = durable_store.transact_registry(operation)
     except _PassportNotFound as exc:
         raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
+    except _PassportRegistryInvalid as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="PRIME passport registry validation failed",
+        ) from exc
     except (PrimeSentinelAuthorizationError, ValueError) as exc:
         _append_sentinel_rejection(
             durable_store,
@@ -341,8 +353,12 @@ def activate_prime_pack(
     def operation(registry: dict[str, Any]):
         passport = _load_from_registry(registry, prime_id)
         authorization_id = passport.custody.requalification_release_authorization_id
+        releasing_quarantine = (
+            passport.custody.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
+            and authorization_id is not None
+        )
 
-        if passport.custody.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION and authorization_id:
+        if releasing_quarantine:
             if not verifier.configured:
                 return None, (
                     "VERIFIER_NOT_CONFIGURED",
@@ -382,7 +398,7 @@ def activate_prime_pack(
             )
 
         patch = passport_registry_patch(registry, updated)
-        if authorization_id:
+        if releasing_quarantine and authorization_id:
             patch.update(
                 consumed_authorization_registry_patch(
                     registry,
