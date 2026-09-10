@@ -12,6 +12,7 @@ from .event_outbox import (
     outbox_status,
     queue_events_outbox_patch,
 )
+from .models import AuditRecord
 from .prime_configuration_custody import PrimeActivationDisposition, PrimeCustodyState
 from .prime_passport import (
     PrimeDigitalPassport,
@@ -157,11 +158,36 @@ def _with_events(
 
 def _drain_delivery_status(durable_store: DurableStore) -> str:
     try:
-        drain_event_outbox(durable_store, limit=256)
+        drain_event_outbox(durable_store, limit=64)
         status = outbox_status(durable_store.get_registry())
     except (OSError, RuntimeError, ValueError, EventOutboxError):
         return "PENDING_REPLAY"
     return "DELIVERED" if status["pending"] == 0 else "PENDING_REPLAY"
+
+
+def _append_direct_degraded_audit(
+    durable_store: DurableStore,
+    role: Role,
+    *,
+    event: str,
+    payload: dict[str, Any],
+) -> bool:
+    degraded_payload = dict(payload)
+    degraded_payload["provenance_mode"] = "DEGRADED_DIRECT_AUDIT"
+    degraded_payload["claims_boundary"] = (
+        "Safety-tightening fallback only; registry and audit are not cross-file atomic."
+    )
+    try:
+        durable_store.append_audit(
+            AuditRecord.create(
+                event=event,
+                actor=role.value,
+                payload=degraded_payload,
+            )
+        )
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return True
 
 
 def _queue_rejection(
@@ -172,6 +198,12 @@ def _queue_rejection(
     reason: str,
     authorization_id: str | None = None,
 ) -> str:
+    rejection_payload = _rejection_payload(
+        prime_id=prime_id,
+        authorization_id=authorization_id,
+        reason=reason,
+    )
+
     def operation(registry: dict[str, Any]):
         patch, _ids = _with_events(
             registry,
@@ -180,17 +212,25 @@ def _queue_rejection(
                 _event(
                     event="prime_sentinel_authorization_rejected",
                     role=role,
-                    payload=_rejection_payload(
-                        prime_id=prime_id,
-                        authorization_id=authorization_id,
-                        reason=reason,
-                    ),
+                    payload=rejection_payload,
                 )
             ],
         )
         return patch, None
 
-    durable_store.transact_registry(operation)
+    try:
+        durable_store.transact_registry(operation)
+    except EventOutboxError:
+        return (
+            "DEGRADED_DIRECT_AUDIT"
+            if _append_direct_degraded_audit(
+                durable_store,
+                role,
+                event="prime_sentinel_authorization_rejected",
+                payload=rejection_payload,
+            )
+            else "DEGRADED_UNDELIVERED"
+        )
     return _drain_delivery_status(durable_store)
 
 
@@ -246,7 +286,10 @@ def create_prime_passport(
     except _PassportAlreadyExists as exc:
         raise HTTPException(status_code=409, detail="PRIME passport already exists") from exc
     except (ValueError, EventOutboxError) as exc:
-        raise HTTPException(status_code=500, detail="PRIME passport registry/outbox validation failed") from exc
+        raise HTTPException(
+            status_code=500,
+            detail="PRIME passport registry/outbox validation failed",
+        ) from exc
 
     delivery = _drain_delivery_status(durable_store)
     return {
@@ -267,7 +310,7 @@ def complete_prime_mission(
     require_admin(role)
     durable_store = _store(request)
 
-    def operation(registry: dict[str, Any]):
+    def derive_transition(registry: dict[str, Any]):
         passport = _load_from_registry(registry, prime_id)
         prior_authorization_id = passport.custody.requalification_release_authorization_id
         updated, payload = complete_mission(passport, body)
@@ -282,8 +325,6 @@ def complete_prime_mission(
                 reason="MISSION_COMPLETED",
             )
         except PrimeSentinelAuthorizationError as exc:
-            # Mission completion is safety-tightening. Persist quarantine even if
-            # authorization-ledger integrity is broken.
             base_patch = passport_registry_patch(registry, updated)
             supersession_error = str(exc)
             payload["details"]["authorization_supersession"] = "FAILED_SAFE_QUARANTINE"
@@ -305,19 +346,81 @@ def complete_prime_mission(
             if prior_authorization_id:
                 payload["details"]["superseded_authorization_id"] = prior_authorization_id
         events.append(_provenance_event(role, payload))
+        return updated, payload, prior_authorization_id, supersession_error, base_patch, events
+
+    def normal_operation(registry: dict[str, Any]):
+        updated, payload, prior_id, supersession_error, base_patch, events = derive_transition(registry)
         patch, event_ids = _with_events(
             registry,
             base_patch=base_patch,
             events=events,
         )
-        return patch, (updated, payload, prior_authorization_id, supersession_error, event_ids)
+        return patch, (updated, payload, prior_id, supersession_error, event_ids)
 
     try:
-        updated, payload, _authorization_id, _supersession_error, event_ids = durable_store.transact_registry(operation)
+        updated, payload, prior_id, supersession_error, event_ids = durable_store.transact_registry(
+            normal_operation
+        )
     except _PassportNotFound as exc:
         raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
-    except (ValueError, EventOutboxError) as exc:
-        raise HTTPException(status_code=500, detail="PRIME passport registry/outbox validation failed") from exc
+    except EventOutboxError as outbox_exc:
+        # Mission completion is safety-tightening. If provenance capacity or
+        # outbox integrity is unavailable, do not leave a returned machine in a
+        # previously READY state merely to preserve the normal provenance path.
+        def safety_operation(registry: dict[str, Any]):
+            updated, payload, prior_id, supersession_error, base_patch, _events = derive_transition(
+                registry
+            )
+            payload["details"]["provenance_outbox"] = "BYPASSED_FAIL_SAFE_QUARANTINE"
+            payload["details"]["provenance_outbox_error"] = str(outbox_exc)
+            return base_patch, (updated, payload, prior_id, supersession_error)
+
+        try:
+            updated, payload, prior_id, supersession_error = durable_store.transact_registry(
+                safety_operation
+            )
+        except _PassportNotFound as exc:
+            raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="PRIME fail-safe quarantine registry validation failed",
+            ) from exc
+
+        audit_ok = True
+        if supersession_error:
+            audit_ok = _append_direct_degraded_audit(
+                durable_store,
+                role,
+                event="prime_sentinel_authorization_rejected",
+                payload=_rejection_payload(
+                    prime_id=prime_id,
+                    authorization_id=prior_id,
+                    reason=(
+                        "mission quarantine preserved; authorization supersession failed: "
+                        f"{supersession_error}"
+                    ),
+                ),
+            ) and audit_ok
+        audit_ok = _append_direct_degraded_audit(
+            durable_store,
+            role,
+            event="prime_custody_provenance",
+            payload=payload,
+        ) and audit_ok
+        return {
+            "passport": updated.model_dump(mode="json"),
+            "provenance": payload,
+            "provenance_event_ids": [],
+            "provenance_delivery": (
+                "DEGRADED_DIRECT_AUDIT" if audit_ok else "DEGRADED_UNDELIVERED"
+            ),
+        }
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="PRIME passport registry/outbox validation failed",
+        ) from exc
 
     delivery = _drain_delivery_status(durable_store)
     return {
@@ -377,7 +480,10 @@ def patch_prime_requalification(
             detail="PRIME SENTINEL authorization supersession failed",
         ) from exc
     except (ValueError, EventOutboxError) as exc:
-        raise HTTPException(status_code=500, detail="PRIME passport registry/outbox validation failed") from exc
+        raise HTTPException(
+            status_code=500,
+            detail="PRIME passport registry/outbox validation failed",
+        ) from exc
 
     delivery = _drain_delivery_status(durable_store)
     return {
@@ -453,7 +559,10 @@ def activate_prime_pack(
         passport = _load_from_registry(registry, prime_id)
         authorization_id = passport.custody.requalification_release_authorization_id
 
-        if passport.custody.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION and authorization_id:
+        if (
+            passport.custody.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
+            and authorization_id
+        ):
             if not verifier.configured:
                 rejection = _event(
                     event="prime_sentinel_authorization_rejected",
@@ -555,7 +664,15 @@ def activate_prime_pack(
         )
 
     try:
-        state, passport, authorization_id, auth_error, disposition, decision, event_ids = durable_store.transact_registry(operation)
+        (
+            state,
+            passport,
+            authorization_id,
+            auth_error,
+            disposition,
+            decision,
+            event_ids,
+        ) = durable_store.transact_registry(operation)
     except _PassportNotFound as exc:
         raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
     except PrimeSentinelAuthorizationError as exc:
@@ -576,7 +693,10 @@ def activate_prime_pack(
             status_code=409,
         )
     except (ValueError, EventOutboxError) as exc:
-        raise HTTPException(status_code=500, detail="PRIME passport registry/outbox validation failed") from exc
+        raise HTTPException(
+            status_code=500,
+            detail="PRIME passport registry/outbox validation failed",
+        ) from exc
 
     delivery = _drain_delivery_status(durable_store)
 
