@@ -87,5 +87,8 @@ def test_observed_order_uses_the_effective_refinement_ratio():
 
 def test_steady_reference_is_finite_for_large_hartmann_values():
     assert steady_hartmann_exact_velocity(0.5, 1000.0) == pytest.approx(1e-6)
+    extreme_velocity = steady_hartmann_exact_velocity(0.0, 1e155)
+    assert extreme_velocity > 0.0
+    assert extreme_velocity == pytest.approx(1e-310, rel=1e-12, abs=0.0)
     assert steady_hartmann_exact_velocity(-1.0, 1000.0) == pytest.approx(0.0)
     assert steady_hartmann_exact_velocity(1.0, 1000.0) == pytest.approx(0.0)
