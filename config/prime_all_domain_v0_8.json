@@ -1,0 +1,162 @@
+{
+  "schema": "worldshepherd.prime.all_domain",
+  "version": "0.8",
+  "date": "2026-09-10",
+  "claims_control": {
+    "physical_performance_status": "ENGINEERING_TARGET_OR_SCREEN_ONLY",
+    "experimental_performance_credit_before_validation": false,
+    "unconventional_propulsion_credit": 0,
+    "weapon_employment": "OUT_OF_SCOPE",
+    "targeting": "OUT_OF_SCOPE"
+  },
+  "psdm4l": {
+    "prime_count": 4,
+    "stations": 2,
+    "prime_per_station": 2,
+    "clear_diameter_target_m_max": 2.10,
+    "axial_length_target_m": [3.6, 3.7],
+    "nominal_loaded_mass_target_kg": 1100,
+    "hard_loaded_mass_ceiling_kg": 1300,
+    "nominal_mass_breakdown_kg": {
+      "four_space_configured_prime": 520,
+      "four_cassettes_and_restraints": 100,
+      "primary_and_outer_structure": 150,
+      "power_and_thermal_service": 70,
+      "deployment_release_systems": 60,
+      "avionics_timing_comms_health": 25,
+      "protected_psdm_contingency_energy": 25,
+      "common_wiring_fluid_connectors": 30,
+      "structural_integration_growth": 120
+    },
+    "paired_release_first_order_cg_shift_m": 0.26,
+    "post_paired_release_cg_shift_target_m_max": 0.30,
+    "individual_release": "REQUIRES_ACTUAL_MASS_PROPERTY_AND_ATTITUDE_CONTROL_CLOSURE",
+    "status": "LEADING_AIR_LAUNCH_TRADE_BLOCKED_PENDING_CAD_AND_STRUCTURAL_ANALYSIS"
+  },
+  "aero": {
+    "pack_mass_gate_kg": 90,
+    "installed_energy_and_reserve_allocation_kg": 45,
+    "non_energy_hard_mass_gate_kg": 45,
+    "non_energy_bom_target_kg": {
+      "lift_cruise_effectors_ducts_local_protection": 12.0,
+      "motors_inverters": 6.0,
+      "wing_primary_structure": 10.0,
+      "fold_tilt_deployment_mechanisms": 5.0,
+      "thermal": 3.0,
+      "avionics_flight_control_sensors": 2.0,
+      "power_distribution_harness_contactors": 2.0,
+      "landing_docking": 2.0,
+      "acoustic_fault_containment_shells": 1.5,
+      "growth": 1.5
+    },
+    "design_power_screen_kW_at_8m2": 33.2,
+    "motor_inverter_allocation_specific_power_screen_kW_per_kg": 5.53,
+    "highest_risk_mass_line": "LIFT_CRUISE_EFFECTORS_DUCTS_LOCAL_PROTECTION",
+    "preferred_effector_architectures": ["ENCLOSED", "DUCTED", "PARTIALLY_SHROUDED", "EMBEDDED", "FOLDING", "OTHER_PROTECTED"],
+    "open_rotor": "FALLBACK_ONLY_IF_MASS_EFFICIENCY_AND_SAFETY_GATES_REQUIRE",
+    "status": "BLOCKED_CANDIDATE_GEOMETRY_PART_MASS_THERMAL_AND_FAILURE_MODE_CLOSURE"
+  },
+  "space_thermal": {
+    "space_s50": {
+      "pumi_class": "S",
+      "pack_mass_target_kg": 50,
+      "thermal_allocation_kg": 8,
+      "v0_7_total_effective_radiator_area_target_m2": 2.4,
+      "fully_deployable_2_4m2_against_external_lt8kg_per_m2_benchmark": {
+        "radiator_mass_upper_screen_kg": 19.2,
+        "result": "FAIL_BLOCKED_AGAINST_8KG_THERMAL_ALLOCATION"
+      },
+      "redesign": {
+        "designation": "SPACE-S50-TBI",
+        "body_integrated_effective_area_target_m2": 1.2,
+        "deployable_supplemental_area_target_m2": 1.2,
+        "reserved_loop_interface_valves_actuation_kg": 2.0,
+        "deployable_radiator_mass_budget_kg": 6.0,
+        "deployable_areal_mass_target_kg_per_m2_max": 5.0,
+        "status": "ENGINEERING_TARGET_REQUIRES_VIEW_FACTOR_MASS_AND_ENVIRONMENT_VALIDATION"
+      }
+    },
+    "space_h70_therm": {
+      "pumi_class": "H",
+      "purpose": "HIGHER_SUSTAINED_HEAT_LOAD_PARALLEL_CONFIGURATION",
+      "status": "TARGET_REQUIRES_COMPLETE_MASS_CG_INERTIA_ENERGY_AND_MOBILITY_CLOSURE"
+    },
+    "continuous_2kW_vacuum_rejection_claimed": false
+  },
+  "hadal": {
+    "core_mass_target_kg": 92,
+    "pack_mass_ceiling_kg": 150,
+    "system_mass_screen_kg": 242,
+    "seawater_density_kg_per_m3": 1025,
+    "operating_apparent_negative_mass_target_kg": 10,
+    "effective_displacement_for_minus10kg_trim_L": 226.3,
+    "ballast_release_branch_kg": 15,
+    "post_release_apparent_positive_buoyancy_target_kg": 5,
+    "rebalanced_pack_mass_target_kg": {
+      "pressure_buoyancy_architecture": 55,
+      "energy": 25,
+      "thrusters_drives": 20,
+      "structure_interface": 15,
+      "sonar_environment_sensing": 10,
+      "ballast_release": 15,
+      "controls_comms_thermal": 5,
+      "growth": 5
+    },
+    "emergency_ascent_requires_continuous_thrusters": false,
+    "status": "HYDROSTATIC_TARGET_BLOCKED_CAD_PRESSURE_STABILITY_AND_REPRESENTATIVE_TESTING"
+  },
+  "subspace": {
+    "post_hazard_state": "QUARANTINED_FOR_REQUALIFICATION",
+    "state_clearance_requires": [
+      "DECONTAMINATION_CLEANING",
+      "MECHANICAL_AND_NDT_INSPECTION_AS_REQUIRED",
+      "CONNECTOR_AND_INSULATION_CHECKS",
+      "SEAL_AND_TRIBOLOGY_CONDITION",
+      "BATTERY_HEALTH",
+      "STRUCTURAL_HEALTH_REVIEW",
+      "PACK_PROVENANCE",
+      "TARGET_ENVIRONMENT_ACCEPTANCE"
+    ],
+    "new_space_pack_alone_can_clear_quarantine": false,
+    "sara_role": "CONFIGURATION_CUSTODY",
+    "prime_sentinel_role": "INDEPENDENT_ENVIRONMENT_AUTHORIZATION",
+    "echo_role": "BEFORE_AFTER_EVIDENCE_PROVENANCE"
+  },
+  "external_evidence": [
+    {
+      "source": "NASA TechPort project 113167",
+      "updated": "2026-01-22",
+      "statement": "deployable freeze-tolerant radiator design reports meeting solicitation mass requirement below 8 kg/m2",
+      "use": "SPACE_S50_MASS_GATE_AND_REDESIGN_INPUT",
+      "credit": "EXTERNAL_BENCHMARK_ONLY"
+    },
+    {
+      "source": "NASA Small Spacecraft Thermal Control SOA",
+      "updated": "2026-05-07",
+      "statement": "deployable radiators increase available radiative area where body area is constrained",
+      "use": "SPACE_BODY_INTEGRATED_PLUS_DEPLOYABLE_ARCHITECTURE",
+      "credit": "ARCHITECTURE_PRECEDENT_ONLY"
+    },
+    {
+      "source": "NASA TechPort HPDM-30",
+      "updated": "2026-08-20",
+      "statement": "30 kW integrated motor drive project target 10 kW/kg continuous",
+      "use": "AERO_MOTOR_INVERTER_BENCHMARK",
+      "credit": "NO_DIRECT_PRIME_PERFORMANCE_CREDIT"
+    }
+  ],
+  "new_experimental_articles": [
+    "SPACE-E-SINGLE-RAD",
+    "SPACE-E-SINGLE-MULTITHERM",
+    "AERO-E-SINGLE-EFFECTOR",
+    "PSDM-E-SINGLE-SPINE",
+    "HADAL-E-SINGLE-TRIM"
+  ],
+  "next_gates": [
+    "AERO_CANDIDATE_GEOMETRY_AND_PART_SOURCING_FOR_45KG_NON_ENERGY_BOM",
+    "SPACE_S50_BODY_RADIATOR_VIEW_FACTOR_AND_RADIATOR_MASS_MODEL",
+    "PSDM4L_ACTUAL_INERTIA_TENSOR_AND_LOAD_CASE_SCHEMA",
+    "HADAL_BODY_PACK_DISPLACED_VOLUME_LEDGER",
+    "SARA_QUARANTINE_STATE_MACHINE_INTEGRATION"
+  ]
+}
