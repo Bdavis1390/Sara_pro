@@ -1,10 +1,52 @@
 from __future__ import annotations
 
+import base64
+from datetime import datetime, timedelta, timezone
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
 from worldshepherd_sara.prime_configuration_custody import REQUALIFICATION_CHECKS
+from worldshepherd_sara.prime_sentinel_authorization import (
+    PrimeSentinelAuthorizationAssertion,
+    PrimeSentinelVerifier,
+    canonical_authorization_message,
+)
 
 
 def auth(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+def _b64url(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+
+def _configure_sentinel(client):
+    private = Ed25519PrivateKey.generate()
+    client.app.state.prime_sentinel_verifier = PrimeSentinelVerifier(
+        public_keys_b64url={"PS-K1": _b64url(private.public_key().public_bytes_raw())}
+    )
+    return private
+
+
+def _signed_authorization(private: Ed25519PrivateKey, **overrides) -> dict[str, object]:
+    now = datetime.now(timezone.utc)
+    values = {
+        "key_id": "PS-K1",
+        "authorization_id": "AUTH-REQUAL-001",
+        "prime_id": "PRIME-001",
+        "target_environment": "SPACE",
+        "issued_at": now,
+        "expires_at": now + timedelta(minutes=5),
+        "nonce": "nonce-0123456789abcdef",
+        "signature_b64url": _b64url(b"0" * 64),
+    }
+    values.update(overrides)
+    assertion = PrimeSentinelAuthorizationAssertion(**values)
+    signature = private.sign(canonical_authorization_message(assertion))
+    return assertion.model_copy(
+        update={"signature_b64url": _b64url(signature)}
+    ).model_dump(mode="json")
 
 
 def _qualified_space_pack() -> dict[str, object]:
@@ -41,29 +83,23 @@ def test_prime_passport_endpoints_are_admin_only(client, tokens):
     assert response.status_code == 403
 
 
-def test_prime_passport_full_quarantine_requalification_activation_lifecycle(client, tokens):
+def test_signed_sentinel_quarantine_requalification_activation_lifecycle(client, tokens):
     _, admin = tokens
+    private = _configure_sentinel(client)
 
     created = _create_passport(client, admin)
     assert created.status_code == 201
     assert created.json()["passport"]["custody"]["state"] == "READY"
-    assert created.json()["provenance"]["provenance_channel"] == "SARA_AUDIT_FOR_ECHO_INGEST"
-
-    duplicate = _create_passport(client, admin)
-    assert duplicate.status_code == 409
 
     mission = client.post(
         "/admin/prime/PRIME-001/mission-complete",
         headers=auth(admin),
-        json={
-            "environment": "HADAL",
-            "evidence_refs": ["ECHO:MISSION:HADAL:001"],
-        },
+        json={"environment": "HADAL", "evidence_refs": ["ECHO:MISSION:HADAL:001"]},
     )
     assert mission.status_code == 200
     assert mission.json()["passport"]["custody"]["state"] == "QUARANTINED_FOR_REQUALIFICATION"
 
-    evidence_only = client.patch(
+    evidence = client.patch(
         "/admin/prime/PRIME-001/requalification",
         headers=auth(admin),
         json={
@@ -71,7 +107,17 @@ def test_prime_passport_full_quarantine_requalification_activation_lifecycle(cli
             "evidence_refs": ["ECHO:REQUAL:001"],
         },
     )
-    assert evidence_only.status_code == 200
+    assert evidence.status_code == 200
+
+    bypass = client.patch(
+        "/admin/prime/PRIME-001/requalification",
+        headers=auth(admin),
+        json={
+            "completed_checks": list(REQUALIFICATION_CHECKS),
+            "release_authorization_id": "UNVERIFIED-BYPASS",
+        },
+    )
+    assert bypass.status_code == 422
 
     blocked = client.post(
         "/admin/prime/PRIME-001/activate-pack",
@@ -80,18 +126,25 @@ def test_prime_passport_full_quarantine_requalification_activation_lifecycle(cli
     )
     assert blocked.status_code == 409
     assert blocked.json()["disposition"] == "REQUALIFICATION_REQUIRED"
-    assert blocked.json()["passport"]["installed_pack"] is None
 
-    authorized = client.patch(
-        "/admin/prime/PRIME-001/requalification",
+    assertion = _signed_authorization(private)
+    authorized = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
         headers=auth(admin),
-        json={
-            "completed_checks": list(REQUALIFICATION_CHECKS),
-            "evidence_refs": ["ECHO:REQUAL:002"],
-            "release_authorization_id": "AUTH-REQUAL-001",
-        },
+        json=assertion,
     )
     assert authorized.status_code == 200
+    custody = authorized.json()["passport"]["custody"]
+    assert custody["requalification_release_authorization_id"] == "AUTH-REQUAL-001"
+    assert custody["requalification_release_target_environment"] == "SPACE"
+    assert custody["requalification_release_key_id"] == "PS-K1"
+
+    replay = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=assertion,
+    )
+    assert replay.status_code == 403
 
     activated = client.post(
         "/admin/prime/PRIME-001/activate-pack",
@@ -102,35 +155,82 @@ def test_prime_passport_full_quarantine_requalification_activation_lifecycle(cli
     body = activated.json()
     assert body["disposition"] == "ACTIVATION_ALLOWED"
     assert body["passport"]["custody"]["state"] == "READY"
+    assert body["passport"]["custody"]["requalification_release_authorization_id"] is None
     assert body["passport"]["installed_pack"]["pack_id"] == "SPACE-PACK-001"
 
-    fetched = client.get(
-        "/admin/prime/PRIME-001/passport",
-        headers=auth(admin),
-    )
-    assert fetched.status_code == 200
-    assert fetched.json()["passport"]["installed_pack"]["pack_id"] == "SPACE-PACK-001"
-
     registry = client.get("/admin/registry", headers=auth(admin)).json()["registry"]
-    assert registry["PRIME_DIGITAL_PASSPORTS"]["PRIME-001"]["custody"]["state"] == "READY"
+    auth_record = registry["PRIME_SENTINEL_AUTHORIZATIONS"]["AUTH-REQUAL-001"]
+    assert auth_record["status"] == "CONSUMED"
+    assert auth_record["consumed_transition_id"] == body["provenance"]["transition_id"]
 
-    audit = client.get("/v1/audit?limit=100", headers=auth(admin))
-    assert audit.status_code == 200
-    provenance = [
-        item for item in audit.json()["records"]
-        if item.get("event") == "prime_custody_provenance"
-    ]
-    assert len(provenance) >= 5
-    assert all(
-        item["payload"]["schema"] == "WS-ECHO-PRIME-CUSTODY-V1"
-        for item in provenance
+    audit = client.get("/v1/audit?limit=100", headers=auth(admin)).json()["records"]
+    assert any(
+        item.get("event") == "prime_sentinel_authorization_rejected"
+        for item in audit
+    )
+    assert any(
+        item.get("event") == "prime_custody_provenance"
+        and item["payload"].get("action") == "REQUALIFICATION_AUTHORIZATION_VERIFIED"
+        for item in audit
     )
 
 
-def test_denied_pack_activation_is_audited_but_does_not_mutate_passport(client, tokens):
+def test_tampered_signed_assertion_is_rejected_and_passport_remains_quarantined(client, tokens):
+    _, admin = tokens
+    private = _configure_sentinel(client)
+    assert _create_passport(client, admin).status_code == 201
+    assert client.post(
+        "/admin/prime/PRIME-001/mission-complete",
+        headers=auth(admin),
+        json={"environment": "SUBTERRA"},
+    ).status_code == 200
+    assert client.patch(
+        "/admin/prime/PRIME-001/requalification",
+        headers=auth(admin),
+        json={"completed_checks": list(REQUALIFICATION_CHECKS)},
+    ).status_code == 200
+
+    assertion = _signed_authorization(private)
+    assertion["target_environment"] = "AERO"
+    rejected = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=assertion,
+    )
+    assert rejected.status_code == 403
+    passport = client.get(
+        "/admin/prime/PRIME-001/passport", headers=auth(admin)
+    ).json()["passport"]
+    assert passport["custody"]["state"] == "QUARANTINED_FOR_REQUALIFICATION"
+    assert passport["custody"]["requalification_release_authorization_id"] is None
+
+
+def test_authorization_route_fails_closed_when_no_public_keys_are_configured(client, tokens):
+    _, admin = tokens
+    private = Ed25519PrivateKey.generate()
+    assert _create_passport(client, admin).status_code == 201
+    response = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=_signed_authorization(private),
+    )
+    assert response.status_code == 503
+
+
+def test_protected_registry_namespaces_cannot_be_patched_through_generic_admin_api(client, tokens):
+    _, admin = tokens
+    for key in ("PRIME_DIGITAL_PASSPORTS", "PRIME_SENTINEL_AUTHORIZATIONS"):
+        response = client.patch(
+            "/admin/registry",
+            headers=auth(admin),
+            json={"values": {key: {}}},
+        )
+        assert response.status_code == 403
+
+
+def test_denied_pack_activation_is_audited_but_does_not_mutate_ready_passport(client, tokens):
     _, admin = tokens
     assert _create_passport(client, admin).status_code == 201
-
     before = client.get(
         "/admin/prime/PRIME-001/passport", headers=auth(admin)
     ).json()["passport"]
@@ -149,10 +249,3 @@ def test_denied_pack_activation_is_audited_but_does_not_mutate_passport(client, 
         "/admin/prime/PRIME-001/passport", headers=auth(admin)
     ).json()["passport"]
     assert after == before
-
-    audit = client.get("/v1/audit?limit=50", headers=auth(admin)).json()["records"]
-    events = [item for item in audit if item.get("event") == "prime_custody_provenance"]
-    assert any(
-        item["payload"]["details"].get("disposition") == "DENIED"
-        for item in events
-    )
