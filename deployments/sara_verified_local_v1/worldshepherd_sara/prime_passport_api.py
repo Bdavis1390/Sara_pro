@@ -269,8 +269,6 @@ def activate_prime_pack(
             )
 
     updated, disposition, reasons, payload = activate_pack(passport, body)
-    _append_provenance(durable_store, role, payload)
-
     response: dict[str, Any] = {
         "disposition": disposition.value,
         "reasons": reasons,
@@ -302,7 +300,10 @@ def activate_prime_pack(
                     status_code=409,
                 )
         durable_store.patch_registry(patch)
+        _append_provenance(durable_store, role, payload)
         return JSONResponse(response, status_code=200)
+
+    _append_provenance(durable_store, role, payload)
     if disposition == PrimeActivationDisposition.REQUALIFICATION_REQUIRED:
         return JSONResponse(response, status_code=409)
     return JSONResponse(response, status_code=403)
