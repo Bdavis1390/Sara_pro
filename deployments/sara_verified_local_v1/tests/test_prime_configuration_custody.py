@@ -77,12 +77,14 @@ def test_complete_checks_without_authorization_remain_quarantined():
     assert any("authorization record" in reason for reason in reasons)
 
 
-def test_target_bound_authorization_and_valid_pack_allow_release():
+def test_target_bound_authorization_and_valid_pack_allow_release_and_clear_one_time_binding():
     record = _authorized_record()
     released, disposition, reasons = release_from_quarantine(record, _space_pack())
     assert disposition == PrimeActivationDisposition.ACTIVATION_ALLOWED
     assert released.state == PrimeCustodyState.READY
-    assert released.requalification_release_authorization_id == "AUTH-2026-0001"
+    assert released.requalification_release_authorization_id is None
+    assert released.requalification_release_target_environment is None
+    assert released.requalification_release_key_id is None
     assert reasons
 
 
