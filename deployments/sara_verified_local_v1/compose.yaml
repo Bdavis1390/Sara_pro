@@ -15,6 +15,7 @@ services:
       # Defense in depth: signer-only settings must never reach SARA even if an
       # operator accidentally places them in the general .env file.
       PRIME_SENTINEL_PRIVATE_KEY_FILE: ""
+      PRIME_SENTINEL_SERVICE_TOKEN_FILE: ""
       PRIME_SENTINEL_SERVICE_TOKEN: ""
       PRIME_SENTINEL_SIGNING_KEY_ID: ""
     ports:
@@ -53,8 +54,8 @@ services:
       - "9540"
     environment:
       PRIME_SENTINEL_PRIVATE_KEY_FILE: /run/worldshepherd-prime-sentinel/ed25519-private.pem
+      PRIME_SENTINEL_SERVICE_TOKEN_FILE: /run/worldshepherd-prime-sentinel/service-token
       PRIME_SENTINEL_SIGNING_KEY_ID: ${PRIME_SENTINEL_SIGNING_KEY_ID:-UNCONFIGURED}
-      PRIME_SENTINEL_SERVICE_TOKEN: ${PRIME_SENTINEL_SERVICE_TOKEN:-UNCONFIGURED}
       # This service does not load the SARA .env file; SARA bearer credentials
       # therefore are not present in the signer container.
     ports:
@@ -63,6 +64,10 @@ services:
       - type: bind
         source: ${PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel/ed25519-private.pem}
         target: /run/worldshepherd-prime-sentinel/ed25519-private.pem
+        read_only: true
+      - type: bind
+        source: ${PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel/service-token}
+        target: /run/worldshepherd-prime-sentinel/service-token
         read_only: true
     read_only: true
     tmpfs:
