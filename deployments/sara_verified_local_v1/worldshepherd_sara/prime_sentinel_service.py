@@ -27,8 +27,9 @@ from .prime_sentinel_authorization import (
 
 KEY_FILE_ENV = "PRIME_SENTINEL_PRIVATE_KEY_FILE"
 KEY_ID_ENV = "PRIME_SENTINEL_SIGNING_KEY_ID"
-SERVICE_TOKEN_ENV = "PRIME_SENTINEL_SERVICE_TOKEN"
+SERVICE_TOKEN_FILE_ENV = "PRIME_SENTINEL_SERVICE_TOKEN_FILE"
 MAX_KEY_FILE_BYTES = 16 * 1024
+MAX_SERVICE_TOKEN_FILE_BYTES = 4 * 1024
 MIN_SERVICE_TOKEN_CHARS = 32
 _KEY_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
@@ -63,65 +64,68 @@ def _b64url(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
 
 
-def _load_private_key_file(path_value: str) -> Ed25519PrivateKey:
+def _read_owned_secret_file(
+    path_value: str,
+    *,
+    env_name: str,
+    label: str,
+    max_bytes: int,
+) -> bytes:
     if not path_value:
-        raise PrimeSentinelServiceConfigError(f"{KEY_FILE_ENV} is required")
+        raise PrimeSentinelServiceConfigError(f"{env_name} is required")
     path = Path(path_value)
     if not path.is_absolute():
-        raise PrimeSentinelServiceConfigError(f"{KEY_FILE_ENV} must be an absolute path")
+        raise PrimeSentinelServiceConfigError(f"{env_name} must be an absolute path")
+
     try:
         link_status = path.lstat()
     except OSError as exc:
-        raise PrimeSentinelServiceConfigError(
-            "unable to inspect PRIME SENTINEL private-key file"
-        ) from exc
+        raise PrimeSentinelServiceConfigError(f"unable to inspect {label}") from exc
     if stat.S_ISLNK(link_status.st_mode):
-        raise PrimeSentinelServiceConfigError(
-            "PRIME SENTINEL private-key file must not be a symbolic link"
-        )
+        raise PrimeSentinelServiceConfigError(f"{label} must not be a symbolic link")
 
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
         descriptor = os.open(path, flags)
     except OSError as exc:
-        raise PrimeSentinelServiceConfigError(
-            "unable to open PRIME SENTINEL private-key file securely"
-        ) from exc
+        raise PrimeSentinelServiceConfigError(f"unable to open {label} securely") from exc
 
     try:
         file_status = os.fstat(descriptor)
         if not stat.S_ISREG(file_status.st_mode):
-            raise PrimeSentinelServiceConfigError(
-                "PRIME SENTINEL private-key path must be a regular file"
-            )
+            raise PrimeSentinelServiceConfigError(f"{label} must be a regular file")
         if (link_status.st_dev, link_status.st_ino) != (
             file_status.st_dev,
             file_status.st_ino,
         ):
-            raise PrimeSentinelServiceConfigError(
-                "PRIME SENTINEL private-key file changed during secure open"
-            )
+            raise PrimeSentinelServiceConfigError(f"{label} changed during secure open")
         if file_status.st_uid != os.geteuid():
-            raise PrimeSentinelServiceConfigError(
-                "PRIME SENTINEL private-key file must be owned by the service UID"
-            )
+            raise PrimeSentinelServiceConfigError(f"{label} must be owned by the service UID")
         if stat.S_IMODE(file_status.st_mode) & 0o077:
             raise PrimeSentinelServiceConfigError(
-                "PRIME SENTINEL private-key file must not grant group/other permissions"
+                f"{label} must not grant group/other permissions"
             )
-        if file_status.st_size < 1 or file_status.st_size > MAX_KEY_FILE_BYTES:
-            raise PrimeSentinelServiceConfigError(
-                "PRIME SENTINEL private-key file size is invalid"
-            )
+        if file_status.st_size < 1 or file_status.st_size > max_bytes:
+            raise PrimeSentinelServiceConfigError(f"{label} size is invalid")
         with os.fdopen(descriptor, "rb") as handle:
             descriptor = -1
-            data = handle.read(MAX_KEY_FILE_BYTES + 1)
+            data = handle.read(max_bytes + 1)
     finally:
         if descriptor >= 0:
             os.close(descriptor)
 
-    if len(data) > MAX_KEY_FILE_BYTES:
-        raise PrimeSentinelServiceConfigError("PRIME SENTINEL private-key file is too large")
+    if len(data) > max_bytes:
+        raise PrimeSentinelServiceConfigError(f"{label} is too large")
+    return data
+
+
+def _load_private_key_file(path_value: str) -> Ed25519PrivateKey:
+    data = _read_owned_secret_file(
+        path_value,
+        env_name=KEY_FILE_ENV,
+        label="PRIME SENTINEL private-key file",
+        max_bytes=MAX_KEY_FILE_BYTES,
+    )
     try:
         key = serialization.load_pem_private_key(data, password=None)
     except (TypeError, ValueError) as exc:
@@ -135,17 +139,34 @@ def _load_private_key_file(path_value: str) -> Ed25519PrivateKey:
     return key
 
 
-def _load_service_token() -> str:
-    token = os.getenv(SERVICE_TOKEN_ENV, "")
+def _load_service_token_file(path_value: str) -> str:
+    data = _read_owned_secret_file(
+        path_value,
+        env_name=SERVICE_TOKEN_FILE_ENV,
+        label="PRIME SENTINEL service-token file",
+        max_bytes=MAX_SERVICE_TOKEN_FILE_BYTES,
+    )
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise PrimeSentinelServiceConfigError(
+            "PRIME SENTINEL service-token file must be UTF-8 text"
+        ) from exc
+
+    token = text.rstrip("\r\n")
+    if not token or token != token.strip() or "\n" in token or "\r" in token:
+        raise PrimeSentinelServiceConfigError(
+            "PRIME SENTINEL service-token file must contain one token"
+        )
     if len(token) < MIN_SERVICE_TOKEN_CHARS:
         raise PrimeSentinelServiceConfigError(
-            f"{SERVICE_TOKEN_ENV} must be at least {MIN_SERVICE_TOKEN_CHARS} characters"
+            f"PRIME SENTINEL service token must be at least {MIN_SERVICE_TOKEN_CHARS} characters"
         )
     for other_name in ("SARA_ADMIN_TOKEN", "SARA_RELAY_TOKEN"):
         other = os.getenv(other_name, "")
         if other and hmac.compare_digest(token, other):
             raise PrimeSentinelServiceConfigError(
-                f"{SERVICE_TOKEN_ENV} must be independent from {other_name}"
+                f"PRIME SENTINEL service token must be independent from {other_name}"
             )
     return token
 
@@ -191,7 +212,9 @@ class PrimeSentinelSigner:
         return cls(
             private_key=_load_private_key_file(os.getenv(KEY_FILE_ENV, "")),
             key_id=_load_key_id(),
-            service_token=_load_service_token(),
+            service_token=_load_service_token_file(
+                os.getenv(SERVICE_TOKEN_FILE_ENV, "")
+            ),
         )
 
     def public_key_record(self) -> PrimeSentinelPublicKey:
