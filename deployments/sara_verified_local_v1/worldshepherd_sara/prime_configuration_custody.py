@@ -45,6 +45,7 @@ class PrimeConfigurationCustodyRecord(BaseModel):
     state: PrimeCustodyState = PrimeCustodyState.READY
     last_environment: PrimeEnvironment = PrimeEnvironment.GROUND
     completed_requalification_checks: list[str] = Field(default_factory=list)
+    requalification_release_authorized: bool = False
 
 
 class PrimeMissionPackEvidence(BaseModel):
@@ -89,7 +90,11 @@ def evaluate_pack_activation(
                 "PRIME remains quarantined after hazardous/deep-environment service",
                 *[f"missing requalification check: {check}" for check in missing],
             ]
+        if not record.requalification_release_authorized:
+            return PrimeActivationDisposition.REQUALIFICATION_REQUIRED, [
+                "requalification evidence is complete but release from quarantine is not authorized"
+            ]
 
     return PrimeActivationDisposition.ACTIVATION_ALLOWED, [
-        "pack authentication, compatibility, target qualification, and custody gates are satisfied"
+        "pack authentication, compatibility, target qualification, requalification evidence, and authorization gates are satisfied"
     ]
