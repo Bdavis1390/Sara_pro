@@ -120,6 +120,7 @@ def test_admin_registry_audit_and_selftest(client, tokens):
         "persistent_storage",
         "registry_read",
         "audit_append",
+        "event_outbox",
     }
 
     audit = client.get("/v1/audit?limit=50", headers=auth(admin))
