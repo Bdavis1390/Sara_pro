@@ -10,9 +10,13 @@ from .storage import DurableStore
 
 EVENT_OUTBOX_REGISTRY_KEY = "SARA_EVENT_OUTBOX"
 EVENT_OUTBOX_SCHEMA = "WS-SARA-EVENT-OUTBOX-V1"
-MAX_PENDING_OUTBOX_EVENTS = 2048
-MAX_RETAINED_DELIVERED_EVENTS = 512
+# SARA limits any mapping to 64 keys and the complete validated resource to
+# 48 KiB. Keep explicit headroom for future schema growth and other registry
+# state; serialized-size validation may reject an outbox before these counts.
+MAX_PENDING_OUTBOX_EVENTS = 32
+MAX_RETAINED_DELIVERED_EVENTS = 16
 _RESERVED_PAYLOAD_KEYS = frozenset({"_outbox_event_id", "_delivery_semantics"})
+_VALID_STATUSES = frozenset({"PENDING", "DELIVERED"})
 
 
 class EventOutboxError(ValueError):
@@ -21,6 +25,16 @@ class EventOutboxError(ValueError):
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _valid_timestamp(value: Any) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None
 
 
 def _outbox_map(registry: dict[str, Any]) -> dict[str, Any]:
@@ -38,6 +52,46 @@ def _validate_payload(payload: dict[str, Any]) -> None:
         )
 
 
+def _entry_is_valid(event_id: str, entry: Any) -> bool:
+    if not isinstance(event_id, str) or not event_id or not isinstance(entry, dict):
+        return False
+    if entry.get("schema") != EVENT_OUTBOX_SCHEMA:
+        return False
+    if entry.get("event_id") != event_id:
+        return False
+    status = entry.get("status")
+    if status not in _VALID_STATUSES:
+        return False
+    event = entry.get("event")
+    actor = entry.get("actor")
+    payload = entry.get("payload")
+    if not isinstance(event, str) or not event:
+        return False
+    if not isinstance(actor, str) or not actor:
+        return False
+    if not isinstance(payload, dict):
+        return False
+    try:
+        _validate_payload(payload)
+    except EventOutboxError:
+        return False
+    if not _valid_timestamp(entry.get("created_at")):
+        return False
+    if entry.get("delivery_semantics") != "AT_LEAST_ONCE":
+        return False
+    if status == "DELIVERED" and not _valid_timestamp(entry.get("delivered_at")):
+        return False
+    return True
+
+
+def _validate_outbox_map(records: dict[str, Any]) -> None:
+    malformed = [
+        event_id for event_id, entry in records.items() if not _entry_is_valid(event_id, entry)
+    ]
+    if malformed:
+        raise EventOutboxError("event outbox contains malformed records")
+
+
 def queue_event_outbox_patch(
     registry: dict[str, Any],
     *,
@@ -51,26 +105,24 @@ def queue_event_outbox_patch(
     _validate_payload(payload)
 
     records = _outbox_map(registry)
-    pending_count = sum(
-        1
-        for entry in records.values()
-        if isinstance(entry, dict) and entry.get("status") == "PENDING"
-    )
+    _validate_outbox_map(records)
+    pending_count = sum(1 for entry in records.values() if entry["status"] == "PENDING")
     if pending_count >= MAX_PENDING_OUTBOX_EVENTS:
         raise EventOutboxError("pending event outbox capacity exceeded")
 
     stable_id = event_id or f"SARA-EVENT-{uuid4()}"
+    if not isinstance(stable_id, str) or not stable_id:
+        raise EventOutboxError("event_id must be a non-empty string")
     if stable_id in records:
         raise EventOutboxError("outbox event_id already exists")
 
     delivered = [
-        (key, value)
-        for key, value in records.items()
-        if isinstance(value, dict) and value.get("status") == "DELIVERED"
+        (key, value) for key, value in records.items() if value["status"] == "DELIVERED"
     ]
     if len(delivered) >= MAX_RETAINED_DELIVERED_EVENTS:
         delivered.sort(key=lambda item: str(item[1].get("delivered_at", "")))
-        for key, _value in delivered[: len(delivered) - MAX_RETAINED_DELIVERED_EVENTS + 1]:
+        remove_count = len(delivered) - MAX_RETAINED_DELIVERED_EVENTS + 1
+        for key, _value in delivered[:remove_count]:
             records.pop(key, None)
 
     records[stable_id] = {
@@ -90,11 +142,7 @@ def queue_events_outbox_patch(
     registry: dict[str, Any],
     events: list[dict[str, Any]],
 ) -> tuple[dict[str, Any], list[str]]:
-    """Queue multiple events against one evolving registry snapshot.
-
-    This prevents a second event from rebuilding the outbox namespace from the
-    pre-first-event snapshot and accidentally dropping its sibling event.
-    """
+    """Queue multiple events against one evolving registry snapshot."""
     working = dict(registry)
     ids: list[str] = []
     patch: dict[str, Any] = {}
@@ -116,8 +164,8 @@ def pending_event_ids(registry: dict[str, Any]) -> list[str]:
     records = _outbox_map(registry)
     pending: list[tuple[str, str]] = []
     for event_id, entry in records.items():
-        if isinstance(entry, dict) and entry.get("status") == "PENDING":
-            pending.append((str(entry.get("created_at", "")), event_id))
+        if _entry_is_valid(event_id, entry) and entry["status"] == "PENDING":
+            pending.append((entry["created_at"], event_id))
     pending.sort()
     return [event_id for _created_at, event_id in pending]
 
@@ -127,15 +175,13 @@ def outbox_status(registry: dict[str, Any]) -> dict[str, int]:
     pending = 0
     delivered = 0
     malformed = 0
-    for entry in records.values():
-        if not isinstance(entry, dict):
+    for event_id, entry in records.items():
+        if not _entry_is_valid(event_id, entry):
             malformed += 1
-        elif entry.get("status") == "PENDING":
+        elif entry["status"] == "PENDING":
             pending += 1
-        elif entry.get("status") == "DELIVERED":
-            delivered += 1
         else:
-            malformed += 1
+            delivered += 1
     return {"pending": pending, "delivered_retained": delivered, "malformed": malformed}
 
 
@@ -146,28 +192,20 @@ def _delivery_patch(
 ) -> tuple[dict[str, Any], AuditRecord]:
     records = _outbox_map(registry)
     entry = records.get(event_id)
-    if not isinstance(entry, dict):
+    if not _entry_is_valid(event_id, entry):
         raise EventOutboxError("outbox event is missing or malformed")
-    if entry.get("status") != "PENDING":
+    assert isinstance(entry, dict)
+    if entry["status"] != "PENDING":
         raise EventOutboxError("outbox event is not pending")
-    if entry.get("schema") != EVENT_OUTBOX_SCHEMA:
-        raise EventOutboxError("outbox event schema is invalid")
 
-    event = entry.get("event")
-    actor = entry.get("actor")
-    payload = entry.get("payload")
-    if not isinstance(event, str) or not event:
-        raise EventOutboxError("outbox event name is invalid")
-    if not isinstance(actor, str) or not actor:
-        raise EventOutboxError("outbox actor is invalid")
-    if not isinstance(payload, dict):
-        raise EventOutboxError("outbox payload is invalid")
-    _validate_payload(payload)
-
-    audit_payload = dict(payload)
-    audit_payload["_outbox_event_id"] = event_id
-    audit_payload["_delivery_semantics"] = "AT_LEAST_ONCE"
-    record = AuditRecord.create(event=event, actor=actor, payload=audit_payload)
+    payload = dict(entry["payload"])
+    payload["_outbox_event_id"] = event_id
+    payload["_delivery_semantics"] = "AT_LEAST_ONCE"
+    record = AuditRecord.create(
+        event=entry["event"],
+        actor=entry["actor"],
+        payload=payload,
+    )
 
     updated = dict(entry)
     updated.update({"status": "DELIVERED", "delivered_at": _utc_now()})
@@ -178,17 +216,20 @@ def _delivery_patch(
 def drain_event_outbox(store: DurableStore, *, limit: int = 100) -> int:
     """Deliver pending events to the SARA audit log with at-least-once semantics.
 
-    Each delivery is serialized through DurableStore.transact_registry(). The
-    audit append occurs before the PENDING->DELIVERED registry write. A process
-    or filesystem failure in that narrow window can therefore cause replay of
-    the same stable event_id. Consumers must deduplicate on _outbox_event_id.
+    The audit append happens before PENDING->DELIVERED is persisted. A failure
+    after the append but before the registry write may therefore replay the
+    same stable event ID. Consumers must deduplicate on _outbox_event_id.
     """
     if limit < 1:
         raise ValueError("limit must be >= 1")
 
     delivered = 0
     for _ in range(limit):
+
         def operation(registry: dict[str, Any]):
+            status = outbox_status(registry)
+            if status["malformed"]:
+                raise EventOutboxError("event outbox contains malformed records")
             ids = pending_event_ids(registry)
             if not ids:
                 return None, False
