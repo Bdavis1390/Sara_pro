@@ -1,0 +1,63 @@
+name: WS-NSB v0.6 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_benchmark.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_benchmark_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_benchmark.py'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v0-6.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_benchmark.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_benchmark_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_benchmark.py'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v0-6.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  nsb-g0-g1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Run WS-NSB unit gate
+        run: python -m pytest -q tests/test_nsb_benchmark.py
+
+      - name: Run CLI smoke and report verification
+        run: |
+          command -v ws-nsb-benchmark
+          ws-nsb-benchmark --help >/dev/null
+          mkdir -p nsb_ci_artifacts
+          ws-nsb-benchmark --resolutions 8,12,16 --output nsb_ci_artifacts/ws_nsb_v0_6.json
+          ws-nsb-benchmark --verify nsb_ci_artifacts/ws_nsb_v0_6.json | grep -Fx VALID
+
+      - name: Upload hash-bound WS-NSB report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-nsb-v0-6-report
+          path: deployments/sara_verified_local_v1/nsb_ci_artifacts/ws_nsb_v0_6.json
+          if-no-files-found: error
