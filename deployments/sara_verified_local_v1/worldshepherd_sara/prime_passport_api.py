@@ -30,6 +30,7 @@ from .prime_sentinel_authorization import (
     PrimeSentinelVerifier,
     assert_recorded_authorization_usable,
     consumed_authorization_registry_patch,
+    superseded_authorization_registry_patch,
     verified_authorization_registry_patch,
 )
 from .storage import DurableStore
@@ -103,6 +104,27 @@ def _append_sentinel_rejection(
     )
 
 
+def _passport_with_superseded_authorization_patch(
+    registry: dict[str, Any],
+    *,
+    prior_authorization_id: str | None,
+    updated_passport: PrimeDigitalPassport,
+    transition_id: str,
+    reason: str,
+) -> dict[str, Any]:
+    patch = passport_registry_patch(registry, updated_passport)
+    if prior_authorization_id:
+        patch.update(
+            superseded_authorization_registry_patch(
+                registry,
+                authorization_id=prior_authorization_id,
+                transition_id=transition_id,
+                reason=reason,
+            )
+        )
+    return patch
+
+
 @router.get("/{prime_id}/passport")
 def get_prime_passport(
     prime_id: str,
@@ -161,8 +183,35 @@ def complete_prime_mission(
     require_admin(role)
     durable_store = _store(request)
     passport = _load_or_404(durable_store, prime_id)
+    prior_authorization_id = passport.custody.requalification_release_authorization_id
     updated, payload = complete_mission(passport, body)
-    _persist(durable_store, updated)
+    registry = durable_store.get_registry()
+
+    try:
+        patch = _passport_with_superseded_authorization_patch(
+            registry,
+            prior_authorization_id=prior_authorization_id,
+            updated_passport=updated,
+            transition_id=payload["transition_id"],
+            reason="MISSION_COMPLETED",
+        )
+    except PrimeSentinelAuthorizationError as exc:
+        # Mission completion is safety-tightening. Preserve quarantine even if the
+        # authorization ledger is inconsistent, and surface the integrity defect.
+        durable_store.patch_registry(passport_registry_patch(registry, updated))
+        _append_sentinel_rejection(
+            durable_store,
+            role,
+            prime_id=prime_id,
+            authorization_id=prior_authorization_id,
+            reason=f"mission quarantine preserved; authorization supersession failed: {exc}",
+        )
+        payload["details"]["authorization_supersession"] = "FAILED_SAFE_QUARANTINE"
+    else:
+        durable_store.patch_registry(patch)
+        if prior_authorization_id:
+            payload["details"]["superseded_authorization_id"] = prior_authorization_id
+
     _append_provenance(durable_store, role, payload)
     return {"passport": updated.model_dump(mode="json"), "provenance": payload}
 
@@ -177,8 +226,34 @@ def patch_prime_requalification(
     require_admin(role)
     durable_store = _store(request)
     passport = _load_or_404(durable_store, prime_id)
+    prior_authorization_id = passport.custody.requalification_release_authorization_id
     updated, payload = update_requalification_evidence(passport, body)
-    _persist(durable_store, updated)
+    registry = durable_store.get_registry()
+
+    try:
+        patch = _passport_with_superseded_authorization_patch(
+            registry,
+            prior_authorization_id=prior_authorization_id,
+            updated_passport=updated,
+            transition_id=payload["transition_id"],
+            reason="REQUALIFICATION_EVIDENCE_CHANGED",
+        )
+    except PrimeSentinelAuthorizationError as exc:
+        _append_sentinel_rejection(
+            durable_store,
+            role,
+            prime_id=prime_id,
+            authorization_id=prior_authorization_id,
+            reason=f"requalification update rejected because authorization supersession failed: {exc}",
+        )
+        raise HTTPException(
+            status_code=409,
+            detail="PRIME SENTINEL authorization supersession failed",
+        ) from exc
+
+    durable_store.patch_registry(patch)
+    if prior_authorization_id:
+        payload["details"]["superseded_authorization_id"] = prior_authorization_id
     _append_provenance(durable_store, role, payload)
     return {"passport": updated.model_dump(mode="json"), "provenance": payload}
 
