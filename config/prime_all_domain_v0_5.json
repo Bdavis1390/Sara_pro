@@ -1,0 +1,66 @@
+{
+  "schema": "worldshepherd.prime.all_domain.v0.5",
+  "claims_state": "engineering_screens_only",
+  "inherits": "worldshepherd.prime.all_domain.v0.4",
+  "aero": {
+    "gross_mass_screen_kg": 182,
+    "wing_area_screen_m2": 4.8,
+    "clmax_screen": 1.6,
+    "cruise_speed_screen_m_s": 35,
+    "lift_to_drag_screen": 12,
+    "propulsive_efficiency_screen": 0.8,
+    "stall_speed_screen_m_s": 19.5,
+    "cruise_input_power_screen_kw": 6.5,
+    "baseline_energy_kwh": 10.8,
+    "vtol_total_minutes_screen": 4,
+    "vtol_power_screen_kw": 36,
+    "energy_reserve_fraction": 0.2,
+    "idealized_baseline_range_screen_nmi": 65,
+    "experimental_shadow_range_screen_nmi": 95,
+    "range_status": "SIMULATED_ONLY_FIRST_ORDER",
+    "open_rotor_geometry_frozen": false
+  },
+  "space_thermal": {
+    "emissivity_screen": 0.9,
+    "radiator_temperature_screen_k": 300,
+    "ideal_radiative_flux_w_m2": 413,
+    "ideal_radiator_area_m2": {
+      "700_w": 1.69,
+      "1200_w": 2.90,
+      "2000_w": 4.84
+    },
+    "status": "BLOCKED_ENVIRONMENT_SPECIFIC_THERMAL_ANALYSIS"
+  },
+  "hadal_buoyancy_sensitivity": {
+    "seawater_density_kg_m3": 1025,
+    "screens": [
+      {"material_density_kg_m3": 500, "net_buoyancy_kg_per_l": 0.525, "liters_for_100kg": 190},
+      {"material_density_kg_m3": 600, "net_buoyancy_kg_per_l": 0.425, "liters_for_100kg": 235},
+      {"material_density_kg_m3": 700, "net_buoyancy_kg_per_l": 0.325, "liters_for_100kg": 308}
+    ],
+    "status": "DENSITY_ONLY_SCREEN_NOT_MATERIAL_SPECIFICATION"
+  },
+  "subspace": {
+    "mine_hazardous_location_gate_separate": true,
+    "space_vacuum_outgassing_radiation_gate_separate": true,
+    "shared_core_strategy": "controlled_sealed_joint_modules_plus_replaceable_environment_layer"
+  },
+  "psdm_olv": {
+    "psdm_external_screen_m": [1.95, 2.00, 1.90],
+    "circular_fairing_face_m": [2.00, 1.90],
+    "minimum_circumscribed_diameter_before_clearance_m": 2.76,
+    "compact_air_launch_packaging_status": "BLOCKED",
+    "redesign_branches": ["corner_nested", "canted", "circularized"]
+  },
+  "promotion_state": {
+    "AERO": "BLOCKED_CFD_PROPULSION_TRANSITION_ACOUSTICS_THERMAL_FLIGHT_CONTROL_RESERVE",
+    "SPACE": "BLOCKED_FULL_THERMAL_ENVIRONMENT",
+    "HADAL": "BLOCKED_PRESSURE_HYDROSTATIC_MATERIAL",
+    "SUBSPACE": "ARCHITECTURE_DEFINED_DUAL_QUALIFICATION_REQUIRED",
+    "PSDM_OLV": "BLOCKED_CIRCULAR_FAIRING_PACKAGING"
+  },
+  "performance_credit": {
+    "experimental_new_credit": false,
+    "unconventional_propulsion_credit": false
+  }
+}

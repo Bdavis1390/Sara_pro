@@ -1,0 +1,104 @@
+{
+  "schema": "worldshepherd.prime.all_domain",
+  "version": "0.6",
+  "date": "2026-09-10",
+  "claims_control": {
+    "physical_performance_status": "ENGINEERING_TARGET_OR_SCREEN_ONLY",
+    "image_generated_values_are_evidence": false,
+    "experimental_performance_credit_before_validation": false,
+    "unconventional_propulsion_credit": 0,
+    "ws_alti_structural_credit": "BLOCKED_PENDING_COUPON_JOINT_SUBASSEMBLY_EVIDENCE"
+  },
+  "formation": {
+    "prime_per_psdm": 4,
+    "prime_per_olv": 4,
+    "standard_squad": 8,
+    "standard_olv_per_squad": 2,
+    "growth_formation": 12
+  },
+  "prime_reference": {
+    "core_mass_target_kg": 92.0,
+    "space_launch_fold_m": {
+      "axial": 1.60,
+      "cross_a": 0.82,
+      "cross_b": 0.75
+    },
+    "reference_frame_origin": "pelvis_centerline",
+    "pumi_upper_to_pelvic_vertical_spacing_m": 0.55,
+    "pumi_lateral_spacing_m": 0.46
+  },
+  "pumi": {
+    "classes": {
+      "S": {"pack_mass_target_kg_max": 50, "cg_offset_m_max": 0.25, "working_load_kN": 8, "working_moment_kNm": 1.5},
+      "H": {"pack_mass_target_kg_max": 100, "cg_offset_m_max": 0.30, "working_load_kN": 12, "working_moment_kNm": 2.0},
+      "X": {"pack_mass_target_kg_max": 150, "cg_offset_m_max": 0.35, "working_load_kN": 15, "working_moment_kNm": 2.5}
+    },
+    "development_proof_factor": 1.5,
+    "x_class_proof_load_kN": 22.5,
+    "x_class_proof_moment_kNm": 3.75,
+    "moment_couple_at_0_55m_kN": 6.82,
+    "simple_peak_node_load_screen_kN": 9.03,
+    "initial_node_article_proof_target_kN": 10.0,
+    "candidate_pin_screen": {
+      "diameter_mm": 14,
+      "load_kN": 10,
+      "ideal_double_shear_MPa": 32.5,
+      "local_bearing_stack_thickness_mm": 10,
+      "nominal_bearing_MPa": 71.4,
+      "status": "SCREEN_ONLY"
+    },
+    "power": {
+      "service_high_voltage_class_VDC": 120,
+      "safety_control_voltage_class_VDC": "24/28",
+      "controlled_bidirectional_service_target_kW": 10,
+      "propulsion_power_local_to_pack": true,
+      "domains": ["P0_CORE", "P1_MISSION", "P2_SURVIVAL_RESERVE", "P3_RETURN_MOBILITY_RESERVE"]
+    },
+    "data": ["D-A_PRIMARY", "D-B_REDUNDANT", "D-S_INDEPENDENT_SAFETY_HEALTH"],
+    "thermal": {"active_transfer_target_kW_continuous": 2.0, "pack_safe_without_active_coupling": true}
+  },
+  "psdm4": {
+    "bays": 4,
+    "bay_independence_required": true,
+    "launch_restraint_separate_from_pumi": true,
+    "raw_folded_body_cross_section_total_m2": 2.46,
+    "circularization": {
+      "topology": "FOUR_CONFORMAL_PETAL_CASSETTES_AROUND_CENTRAL_SERVICE_SPINE",
+      "fallback_clear_internal_diameter_m": 2.65,
+      "objective_clear_internal_diameter_m": 2.55,
+      "stretch_clear_internal_diameter_m": 2.45,
+      "circle_area_m2": {"2.45": 4.71, "2.55": 5.11, "2.65": 5.52},
+      "raw_folded_body_occupancy_percent": {"2.45": 52.2, "2.55": 48.2, "2.65": 44.6},
+      "mass_savings_credit": "NOT_CURRENTLY_CLAIMED",
+      "status": "ENGINEERING_TARGET_REQUIRES_PARAMETERIZED_CAD"
+    },
+    "loaded_mass_target_tonnes": [1.0, 1.3]
+  },
+  "domain_pack_mapping": {
+    "SUBTERRA_SUBSPACE": {"target_class": "PUMI-S", "external_equipment_mass_target_kg_max": 35},
+    "SPACE": {"target_class": "PUMI-S_OR_H", "local_mobility_mass_target_kg_max": 50},
+    "AERO": {"target_class": "PUMI-H", "mass_target_kg_max": 90, "status": "BLOCKED_COMPLETE_PROPULSION_ENERGY_AERO_CLOSURE"},
+    "HADAL": {"target_class": "PUMI-X", "dry_handling_mass_target_kg_max": 150, "status": "BLOCKED_HYDROSTATIC_PRESSURE_CAD"}
+  },
+  "olv4": {
+    "prime_payload_count": 4,
+    "psdm_payload_class_tonnes_min_planning": 1.5,
+    "v0_5_rectangular_layout_status": "FAILED_PACKAGING_SCREEN",
+    "v0_6_gate": "PSDM4_CIRCULARIZED_CAD_MUST_CLOSE_BEFORE_OLV_GEOMETRY_FREEZE",
+    "propulsion_or_staging_design_in_this_record": false
+  },
+  "experimental_tracks": ["BASELINE", "E_SINGLE", "E_MIX", "E_MULTI", "E_X"],
+  "military_government_scope": {
+    "allowed_architecture_scope": ["mobility", "transport", "logistics", "engineering", "rescue_recovery", "sensing", "communications", "environmental_operations", "platform_survivability", "space_support"],
+    "weapon_employment": "OUT_OF_SCOPE",
+    "targeting": "OUT_OF_SCOPE"
+  },
+  "next_gates": [
+    "PARAMETERIZED_PSDM4_FOUR_PETAL_CAD",
+    "PUMI_NODE_LAMINATE_INSERT_FEA",
+    "PSDM4_ACTUAL_MASS_INERTIA_UPDATE",
+    "AERO_NON_ENERGY_MASS_CLOSURE",
+    "SPACE_RADIATOR_DEPLOYMENT_CLOSURE",
+    "HADAL_PRESSURE_BUOYANCY_STRUCTURAL_CLOSURE"
+  ]
+}

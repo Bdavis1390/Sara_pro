@@ -1,0 +1,159 @@
+{
+  "schema": "worldshepherd.prime.all_domain",
+  "version": "0.7",
+  "date": "2026-09-10",
+  "claims_control": {
+    "physical_performance_status": "ENGINEERING_TARGET_OR_SCREEN_ONLY",
+    "experimental_performance_credit_before_validation": false,
+    "image_generated_values_are_evidence": false,
+    "unconventional_propulsion_credit": 0,
+    "weapon_employment": "OUT_OF_SCOPE",
+    "targeting": "OUT_OF_SCOPE"
+  },
+  "formation": {
+    "prime_per_psdm": 4,
+    "prime_per_olv": 4,
+    "standard_squad": 8,
+    "standard_olv_per_squad": 2,
+    "growth_formation": 12
+  },
+  "psdm4_geometry_trades": {
+    "space_fold_cross_section_each_m": [0.82, 0.75],
+    "central_service_cross_gap_m": 0.10,
+    "compact_raw_grid_m": [1.74, 1.60],
+    "compact_raw_grid_diagonal_m": 2.364,
+    "compact_circular": {
+      "fallback_clear_id_m": 2.65,
+      "fallback_radial_corner_margin_m": 0.143,
+      "objective_clear_id_m": 2.55,
+      "objective_radial_corner_margin_m": 0.093,
+      "stretch_clear_id_m": 2.45,
+      "stretch_radial_corner_margin_m": 0.043,
+      "status": "BLOCKED_PENDING_PARAMETERIZED_CAD"
+    },
+    "slender_air_launch": {
+      "designation": "PSDM-4L",
+      "units_per_longitudinal_station": 2,
+      "stations": 2,
+      "raw_station_cross_section_m": [1.74, 0.75],
+      "raw_station_diagonal_m": 1.895,
+      "clear_diameter_target_m": 2.10,
+      "axial_length_target_m": [3.6, 3.7],
+      "status": "LEADING_AIR_LAUNCH_TRADE_BLOCKED_PENDING_CAD_LOADS"
+    },
+    "single_file_remote_trade": {
+      "designation": "PSDM-4S",
+      "clear_diameter_screen_m": [1.3, 1.4],
+      "axial_length_screen_m": 7.0,
+      "status": "REMOTE_TRADE_LENGTH_BENDING_PENALTY"
+    }
+  },
+  "pumi": {
+    "x_class_proof_load_kN": 22.5,
+    "x_class_proof_moment_kNm": 3.75,
+    "simple_peak_node_load_screen_kN": 9.03,
+    "initial_node_article_proof_target_kN": 10.0,
+    "launch_restraint_separate_from_pumi": true
+  },
+  "aero": {
+    "gross_mass_screen_kg": 182,
+    "pack_mass_gate_kg": 90,
+    "non_energy_hardware_mass_gate_kg": 45,
+    "effective_lift_area_trade_m2": {
+      "6.28": {"design_power_kW": 37.5, "four_minute_vtol_energy_kWh": 2.50},
+      "8.0": {"design_power_kW": 33.2, "four_minute_vtol_energy_kWh": 2.21},
+      "10.0": {"design_power_kW": 29.7, "four_minute_vtol_energy_kWh": 1.98}
+    },
+    "effective_lift_area_objective_m2_min": 8.0,
+    "propulsion_inverter_allocation_kg": 15,
+    "required_peak_specific_power_for_33_2kW_kW_per_kg": 2.21,
+    "architecture_preference": ["ENCLOSED", "DUCTED", "PARTIALLY_SHROUDED", "EMBEDDED", "FOLDING", "OTHER_PROTECTED"],
+    "open_rotor": "FALLBACK_TRADE_NOT_DEFAULT",
+    "status": "BLOCKED_DETAILED_BOM_PROPULSION_AERO_THERMAL_FLIGHT_TEST"
+  },
+  "space_thermal": {
+    "deployable_radiator_area_target_m2": 2.4,
+    "emissivity_screen": 0.9,
+    "effective_rejection_factor_screen": 0.70,
+    "rejection_screen_W": {
+      "330K": 1017,
+      "350K": 1287
+    },
+    "nominal_local_heat_target_W": 700,
+    "pumi_thermal_transfer_capability_kW": 2.0,
+    "continuous_2kW_rejection_claimed": false,
+    "two_kW_for_15min_at_350K_buffer_requirement": {
+      "energy_kJ": 642,
+      "energy_kWh": 0.178
+    },
+    "status": "BLOCKED_MISSION_SPECIFIC_ORBIT_SURFACE_THERMAL_BALANCE_AND_DEPLOYMENT_RELIABILITY"
+  },
+  "hadal": {
+    "baseline_pressure_strategies": [
+      "PRESSURE_BALANCED_OR_OIL_FILLED_WHERE_COMPONENTS_ALLOW",
+      "MINIMIZED_DRY_PRESSURE_VESSELS_FOR_SENSITIVE_EQUIPMENT",
+      "DISTRIBUTED_QUALIFIED_SYNTACTIC_OR_CERAMIC_BUOYANCY",
+      "INDEPENDENT_RELEASABLE_BALLAST_AND_POSITIVE_BUOYANCY_EMERGENCY_ASCENT"
+    ],
+    "experimental_article": "HADAL-BUOY-E1_CERAMIC_SPHERE_DISTRIBUTED_FLOTATION",
+    "status": "BLOCKED_REPRESENTATIVE_PRESSURE_HYDROSTATIC_MATERIAL_SEAL_CONNECTOR_THRUSTER_TESTING"
+  },
+  "subspace": {
+    "same_serialized_prime_core": true,
+    "mine_and_space_qualification_independent": true,
+    "transition_gate": [
+      "DECONTAMINATION_CLEANING",
+      "MECHANICAL_AND_NDT_INSPECTION_AS_REQUIRED",
+      "CONNECTOR_AND_INSULATION_CHECK",
+      "SEAL_LUBRICANT_CONDITION",
+      "BATTERY_HEALTH",
+      "STRUCTURAL_HEALTH_REVIEW",
+      "PACK_PROVENANCE",
+      "VACUUM_OUTGASSING_ENVIRONMENT_ACCEPTANCE"
+    ],
+    "status": "ARCHITECTURE_DEFINED_VALIDATION_REQUIRED"
+  },
+  "external_evidence_operationalization": [
+    {
+      "source": "NASA TechPort HPDM-30",
+      "updated": "2026-08-20",
+      "evidence": "30 kW integrated motor-drive project targeting 10 kW/kg continuous",
+      "use": "AERO_E_SINGLE_PWR_BENCHMARK",
+      "credit": "NO_DIRECT_PRIME_PERFORMANCE_CREDIT"
+    },
+    {
+      "source": "NASA Electric Aircraft Propulsion Power Converters",
+      "evidence": "250 kW converter reported at 10.6 kW/kg and 99.3% efficiency",
+      "use": "AERO_INVERTER_BENCHMARK",
+      "credit": "NO_DIRECT_PRIME_PERFORMANCE_CREDIT"
+    },
+    {
+      "source": "NASA 2026 Small Spacecraft Thermal Systems State of the Art",
+      "evidence": "deployable radiator technology increases radiating area when body area is insufficient",
+      "use": "SPACE_DEPLOYABLE_RADIATOR_BASELINE_REQUIREMENT",
+      "credit": "ARCHITECTURE_PRECEDENT_ONLY"
+    },
+    {
+      "source": "WHOI deep-ocean engineering sources",
+      "evidence": "spherical/cylindrical pressure housings, syntactic flotation, oil pressure equalization, ceramic flotation",
+      "use": "HADAL_BASELINE_AND_E_SINGLE_BUOYANCY_ARCHITECTURE",
+      "credit": "EXTERNAL_PRACTICE_NOT_WORLDSHEPHERD_HARDWARE_EVIDENCE"
+    }
+  ],
+  "experimental_tracks": ["BASELINE", "E_SINGLE", "E_MIX", "E_MULTI", "E_X"],
+  "new_experimental_articles": [
+    "AERO-E-SINGLE-PWR",
+    "AERO-E-SINGLE-LIFT",
+    "SPACE-E-SINGLE-THERM",
+    "HADAL-E-SINGLE-BUOY",
+    "PSDM-E-SINGLE-MAT",
+    "PUMI-E-SINGLE-NODE"
+  ],
+  "next_gates": [
+    "PARAMETERIZED_CAD_COMPARE_PSDM4C_VS_PSDM4L",
+    "PUMI_NODE_LAMINATE_INSERT_FEA",
+    "AERO_DETAILED_NON_ENERGY_BOM",
+    "SPACE_RADIATOR_STOW_DEPLOY_MASS_AND_THERMAL_LOOP",
+    "HADAL_DRY_VOLUME_PRESSURE_BUOYANCY_ACCOUNTING"
+  ]
+}
