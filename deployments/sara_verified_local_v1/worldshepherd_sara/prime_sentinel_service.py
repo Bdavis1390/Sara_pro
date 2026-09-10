@@ -69,6 +69,16 @@ def _load_private_key_file(path_value: str) -> Ed25519PrivateKey:
     path = Path(path_value)
     if not path.is_absolute():
         raise PrimeSentinelServiceConfigError(f"{KEY_FILE_ENV} must be an absolute path")
+    try:
+        link_status = path.lstat()
+    except OSError as exc:
+        raise PrimeSentinelServiceConfigError(
+            "unable to inspect PRIME SENTINEL private-key file"
+        ) from exc
+    if stat.S_ISLNK(link_status.st_mode):
+        raise PrimeSentinelServiceConfigError(
+            "PRIME SENTINEL private-key file must not be a symbolic link"
+        )
 
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
@@ -83,6 +93,13 @@ def _load_private_key_file(path_value: str) -> Ed25519PrivateKey:
         if not stat.S_ISREG(file_status.st_mode):
             raise PrimeSentinelServiceConfigError(
                 "PRIME SENTINEL private-key path must be a regular file"
+            )
+        if (link_status.st_dev, link_status.st_ino) != (
+            file_status.st_dev,
+            file_status.st_ino,
+        ):
+            raise PrimeSentinelServiceConfigError(
+                "PRIME SENTINEL private-key file changed during secure open"
             )
         if file_status.st_uid != os.geteuid():
             raise PrimeSentinelServiceConfigError(
