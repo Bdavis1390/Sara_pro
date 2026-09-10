@@ -252,6 +252,12 @@ def test_incomplete_socket_request_is_time_bounded(tmp_path):
         slow.settimeout(1)
         started = time.monotonic()
         slow.connect(str(socket_path))
+        for _ in range(20):
+            try:
+                slow.sendall(b"{")
+            except BrokenPipeError:
+                break
+            time.sleep(0.01)
         response = slow.recv(65536)
         elapsed = time.monotonic() - started
         assert elapsed < 0.75
@@ -260,3 +266,25 @@ def test_incomplete_socket_request_is_time_bounded(tmp_path):
     finally:
         process.terminate()
         process.wait(timeout=5)
+
+
+def test_idempotent_close_consumes_one_use_capability(tmp_path):
+    store, auth = _store(tmp_path)
+    try:
+        _register(store, auth, os.getuid())
+        store._db.execute("UPDATE packages SET closed=1 WHERE package_id=?", ("pkg-1",))
+        store._db.commit()
+        bound = {"package_id": "pkg-1"}
+        capability = _cap(auth, "close_package", **bound)
+        first = store.handle(
+            _request("close_package", {**bound, "authorization": capability}),
+            os.getuid(),
+        )
+        assert first["ok"]
+        replay = store.handle(
+            _request("close_package", {**bound, "authorization": capability}),
+            os.getuid(),
+        )
+        assert replay["error"] == "close_package_authorization_replayed"
+    finally:
+        store.close()
