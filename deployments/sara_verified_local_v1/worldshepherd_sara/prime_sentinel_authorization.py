@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import binascii
 import hashlib
 import json
 import os
@@ -83,9 +84,10 @@ def canonical_authorization_message(assertion: PrimeSentinelAuthorizationAsserti
 
 def _decode_b64url(value: str, *, expected_length: int, label: str) -> bytes:
     try:
-        padded = value + "=" * (-len(value) % 4)
-        decoded = base64.urlsafe_b64decode(padded.encode("ascii"))
-    except (ValueError, UnicodeEncodeError) as exc:
+        encoded = value.encode("ascii")
+        padded = encoded + b"=" * (-len(encoded) % 4)
+        decoded = base64.b64decode(padded, altchars=b"-_", validate=True)
+    except (ValueError, UnicodeEncodeError, binascii.Error) as exc:
         raise PrimeSentinelAuthorizationError(f"invalid {label} encoding") from exc
     if len(decoded) != expected_length:
         raise PrimeSentinelAuthorizationError(
@@ -114,6 +116,12 @@ class PrimeSentinelVerifier:
     def configured(self) -> bool:
         return bool(self._public_keys)
 
+    def key_is_configured(self, key_id: str) -> bool:
+        return key_id in self._public_keys
+
+    def key_is_revoked(self, key_id: str) -> bool:
+        return key_id in self.revoked_key_ids
+
     @classmethod
     def from_environment(cls) -> "PrimeSentinelVerifier":
         raw_keys = os.getenv("PRIME_SENTINEL_PUBLIC_KEYS_JSON", "{}").strip() or "{}"
@@ -134,9 +142,6 @@ class PrimeSentinelVerifier:
             return cls(public_keys_b64url=parsed, revoked_key_ids=revoked)
         except (ValueError, PrimeSentinelAuthorizationError) as exc:
             raise RuntimeError(f"invalid PRIME SENTINEL key configuration: {exc}") from exc
-
-    def key_is_revoked(self, key_id: str) -> bool:
-        return key_id in self.revoked_key_ids
 
     def verify(
         self,
@@ -237,8 +242,10 @@ def assert_recorded_authorization_usable(
     if entry.get("target_environment") != target_environment.value:
         raise PrimeSentinelAuthorizationError("authorization target environment mismatch")
     key_id = entry.get("key_id")
-    if not isinstance(key_id, str) or verifier.key_is_revoked(key_id):
-        raise PrimeSentinelAuthorizationError("authorization signing key is revoked or invalid")
+    if not isinstance(key_id, str) or not verifier.key_is_configured(key_id):
+        raise PrimeSentinelAuthorizationError("authorization signing key is no longer configured")
+    if verifier.key_is_revoked(key_id):
+        raise PrimeSentinelAuthorizationError("authorization signing key is revoked")
     try:
         expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
     except (KeyError, ValueError) as exc:
