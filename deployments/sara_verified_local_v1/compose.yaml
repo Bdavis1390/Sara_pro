@@ -55,9 +55,8 @@ services:
       PRIME_SENTINEL_PRIVATE_KEY_FILE: /run/worldshepherd-prime-sentinel/ed25519-private.pem
       PRIME_SENTINEL_SIGNING_KEY_ID: ${PRIME_SENTINEL_SIGNING_KEY_ID:-UNCONFIGURED}
       PRIME_SENTINEL_SERVICE_TOKEN: ${PRIME_SENTINEL_SERVICE_TOKEN:-UNCONFIGURED}
-      # SARA bearer credentials are deliberately absent from this service.
-      SARA_ADMIN_TOKEN: ""
-      SARA_RELAY_TOKEN: ""
+      # This service does not load the SARA .env file; SARA bearer credentials
+      # therefore are not present in the signer container.
     ports:
       - "127.0.0.1:${PRIME_SENTINEL_HOST_PORT:-9540}:9540"
     volumes:
