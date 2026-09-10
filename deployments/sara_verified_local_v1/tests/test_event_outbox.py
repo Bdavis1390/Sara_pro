@@ -4,6 +4,7 @@ import pytest
 
 from worldshepherd_sara.event_outbox import (
     EVENT_OUTBOX_REGISTRY_KEY,
+    MAX_PENDING_OUTBOX_EVENTS,
     EventOutboxError,
     drain_event_outbox,
     outbox_status,
@@ -203,3 +204,61 @@ def test_prime_state_and_outbox_survive_immediate_audit_delivery_failure(
     monkeypatch.setattr(store, "append_audit", original_append)
     assert drain_event_outbox(store, limit=1) == 1
     assert outbox_status(store.get_registry())["pending"] == 0
+
+
+def test_mission_completion_quarantines_even_when_outbox_is_saturated(client, tokens):
+    _, admin = tokens
+    store = client.app.state.store
+    created = client.post(
+        "/admin/prime/PRIME-OUTBOX-SAFE/passport",
+        headers=auth(admin),
+        json={
+            "hardware_revision": "HW-1",
+            "software_revision": "SW-1",
+            "evidence_refs": ["TEST-EVIDENCE-1"],
+        },
+    )
+    assert created.status_code == 201
+    assert created.json()["passport"]["custody"]["state"] == "READY"
+
+    def saturate(registry):
+        events = [
+            {
+                "event": "synthetic_pending",
+                "actor": "test",
+                "payload": {"index": index},
+                "event_id": f"SARA-EVENT-SAT-{index:02d}",
+            }
+            for index in range(MAX_PENDING_OUTBOX_EVENTS)
+        ]
+        patch, _ids = queue_events_outbox_patch(registry, events)
+        return patch, None
+
+    store.transact_registry(saturate)
+    assert outbox_status(store.get_registry())["pending"] == MAX_PENDING_OUTBOX_EVENTS
+
+    mission = client.post(
+        "/admin/prime/PRIME-OUTBOX-SAFE/mission-complete",
+        headers=auth(admin),
+        json={
+            "environment": "HADAL",
+            "evidence_refs": ["TEST-MISSION-HADAL-1"],
+        },
+    )
+    assert mission.status_code == 200
+    body = mission.json()
+    assert body["passport"]["custody"]["state"] == "QUARANTINED_FOR_REQUALIFICATION"
+    assert body["provenance_delivery"] == "DEGRADED_DIRECT_AUDIT"
+    assert body["provenance_event_ids"] == []
+    assert body["provenance"]["details"]["provenance_outbox"] == (
+        "BYPASSED_FAIL_SAFE_QUARANTINE"
+    )
+
+    persisted = client.get(
+        "/admin/prime/PRIME-OUTBOX-SAFE/passport",
+        headers=auth(admin),
+    )
+    assert persisted.status_code == 200
+    assert persisted.json()["passport"]["custody"]["state"] == (
+        "QUARANTINED_FOR_REQUALIFICATION"
+    )
