@@ -368,6 +368,7 @@ class AuthorityStoreV2:
                 raise KeyError("unknown_package")
             bound = {"package_id": package_id}
             cap = self._verify_capability("close_package", payload, bound)
+            self._consume(cap, package_id)
             if package["closed"]:
                 return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
             required = set(json.loads(package["required_types"]))
@@ -378,7 +379,6 @@ class AuthorityStoreV2:
             open_issues = self._db.execute("SELECT COUNT(*) n FROM issues WHERE package_id=? AND open=1", (package_id,)).fetchone()["n"]
             if open_issues:
                 raise ValueError("unresolved_issues")
-            self._consume(cap, package_id)
             self._db.execute("UPDATE packages SET closed=1 WHERE package_id=?", (package_id,))
             return {"ok": True, "schema": SCHEMA_VERSION, "snapshot": self._snapshot(package_id)}
         raise ValueError("unknown_operation")
@@ -411,14 +411,18 @@ class AuthorityServerV2:
             while True:
                 conn, _ = server.accept()
                 with conn:
-                    conn.settimeout(self._connection_timeout_seconds)
                     peer_uid = -1
                     if hasattr(socket, "SO_PEERCRED"):
                         raw = conn.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("3i"))
                         _pid, peer_uid, _gid = struct.unpack("3i", raw)
                     try:
                         data = b""
+                        deadline = time.monotonic() + self._connection_timeout_seconds
                         while not data.endswith(b"\n") and len(data) <= 2_000_000:
+                            remaining = deadline - time.monotonic()
+                            if remaining <= 0:
+                                raise TimeoutError("absolute request deadline exceeded")
+                            conn.settimeout(remaining)
                             chunk = conn.recv(65536)
                             if not chunk:
                                 break
