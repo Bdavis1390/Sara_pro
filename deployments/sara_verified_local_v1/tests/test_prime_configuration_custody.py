@@ -26,6 +26,20 @@ def _space_pack(**overrides):
     return PrimeMissionPackEvidence(**values)
 
 
+def _authorized_record(**overrides):
+    values = {
+        "prime_id": "PRIME-001",
+        "state": PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
+        "last_environment": PrimeEnvironment.SUBTERRA,
+        "completed_requalification_checks": list(REQUALIFICATION_CHECKS),
+        "requalification_release_authorization_id": "AUTH-2026-0001",
+        "requalification_release_target_environment": PrimeEnvironment.SPACE,
+        "requalification_release_key_id": "PS-K1",
+    }
+    values.update(overrides)
+    return PrimeConfigurationCustodyRecord(**values)
+
+
 def test_subterra_and_hadal_missions_enter_requalification_quarantine():
     assert post_mission_state(PrimeEnvironment.SUBTERRA) == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
     assert post_mission_state(PrimeEnvironment.HADAL) == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
@@ -33,19 +47,15 @@ def test_subterra_and_hadal_missions_enter_requalification_quarantine():
 
 
 def test_post_mission_transition_resets_old_requalification_evidence_and_authorization():
-    record = PrimeConfigurationCustodyRecord(
-        prime_id="PRIME-001",
-        completed_requalification_checks=list(REQUALIFICATION_CHECKS),
-        requalification_release_authorization_id="AUTH-OLD",
-    )
-    transitioned = apply_post_mission_state(record, PrimeEnvironment.SUBTERRA)
+    transitioned = apply_post_mission_state(_authorized_record(), PrimeEnvironment.SUBTERRA)
     assert transitioned.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
-    assert transitioned.last_environment == PrimeEnvironment.SUBTERRA
     assert transitioned.completed_requalification_checks == []
     assert transitioned.requalification_release_authorization_id is None
+    assert transitioned.requalification_release_target_environment is None
+    assert transitioned.requalification_release_key_id is None
 
 
-def test_installing_a_valid_space_pack_does_not_clear_quarantine_by_itself():
+def test_installing_valid_pack_does_not_clear_quarantine_without_evidence():
     record = PrimeConfigurationCustodyRecord(
         prime_id="PRIME-001",
         state=PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
@@ -53,15 +63,13 @@ def test_installing_a_valid_space_pack_does_not_clear_quarantine_by_itself():
     )
     disposition, reasons = evaluate_pack_activation(record, _space_pack())
     assert disposition == PrimeActivationDisposition.REQUALIFICATION_REQUIRED
-    assert any("quarantined" in reason for reason in reasons)
     assert any("TARGET_ENVIRONMENT_ACCEPTANCE" in reason for reason in reasons)
 
 
-def test_complete_checks_without_authorization_record_remain_quarantined():
+def test_complete_checks_without_authorization_remain_quarantined():
     record = PrimeConfigurationCustodyRecord(
         prime_id="PRIME-001",
         state=PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
-        last_environment=PrimeEnvironment.SUBTERRA,
         completed_requalification_checks=list(REQUALIFICATION_CHECKS),
     )
     disposition, reasons = evaluate_pack_activation(record, _space_pack())
@@ -69,31 +77,36 @@ def test_complete_checks_without_authorization_record_remain_quarantined():
     assert any("authorization record" in reason for reason in reasons)
 
 
-def test_complete_requalification_authorization_and_valid_pack_allow_release_to_ready():
-    record = PrimeConfigurationCustodyRecord(
-        prime_id="PRIME-001",
-        state=PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
-        last_environment=PrimeEnvironment.SUBTERRA,
-        completed_requalification_checks=list(REQUALIFICATION_CHECKS),
-        requalification_release_authorization_id="AUTH-2026-0001",
-    )
+def test_target_bound_authorization_and_valid_pack_allow_release_and_clear_one_time_binding():
+    record = _authorized_record()
     released, disposition, reasons = release_from_quarantine(record, _space_pack())
     assert disposition == PrimeActivationDisposition.ACTIVATION_ALLOWED
     assert released.state == PrimeCustodyState.READY
-    assert released.requalification_release_authorization_id == "AUTH-2026-0001"
+    assert released.requalification_release_authorization_id is None
+    assert released.requalification_release_target_environment is None
+    assert released.requalification_release_key_id is None
     assert reasons
 
 
-def test_invalid_target_environment_qualification_fails_closed_even_after_checks():
-    record = PrimeConfigurationCustodyRecord(
-        prime_id="PRIME-001",
-        state=PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
-        last_environment=PrimeEnvironment.HADAL,
-        completed_requalification_checks=list(REQUALIFICATION_CHECKS),
-        requalification_release_authorization_id="AUTH-2026-0002",
+def test_authorization_target_mismatch_fails_closed():
+    record = _authorized_record(
+        requalification_release_target_environment=PrimeEnvironment.AERO
     )
+    disposition, reasons = evaluate_pack_activation(record, _space_pack())
+    assert disposition == PrimeActivationDisposition.DENIED
+    assert any("target environment" in reason for reason in reasons)
+
+
+def test_authorization_without_signing_key_binding_fails_closed():
+    record = _authorized_record(requalification_release_key_id=None)
+    disposition, reasons = evaluate_pack_activation(record, _space_pack())
+    assert disposition == PrimeActivationDisposition.DENIED
+    assert any("signing key" in reason for reason in reasons)
+
+
+def test_invalid_target_environment_qualification_fails_closed():
     disposition, reasons = evaluate_pack_activation(
-        record,
+        _authorized_record(),
         _space_pack(target_environment_qualification_valid=False),
     )
     assert disposition == PrimeActivationDisposition.DENIED

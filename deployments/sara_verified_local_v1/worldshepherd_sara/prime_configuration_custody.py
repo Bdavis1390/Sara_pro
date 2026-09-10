@@ -46,6 +46,8 @@ class PrimeConfigurationCustodyRecord(BaseModel):
     last_environment: PrimeEnvironment = PrimeEnvironment.GROUND
     completed_requalification_checks: list[str] = Field(default_factory=list)
     requalification_release_authorization_id: str | None = None
+    requalification_release_target_environment: PrimeEnvironment | None = None
+    requalification_release_key_id: str | None = None
 
 
 class PrimeMissionPackEvidence(BaseModel):
@@ -72,6 +74,8 @@ def apply_post_mission_state(
             "state": post_mission_state(environment),
             "completed_requalification_checks": [],
             "requalification_release_authorization_id": None,
+            "requalification_release_target_environment": None,
+            "requalification_release_key_id": None,
         }
     )
 
@@ -108,6 +112,18 @@ def evaluate_pack_activation(
             return PrimeActivationDisposition.REQUALIFICATION_REQUIRED, [
                 "requalification evidence is complete but no release authorization record is present"
             ]
+        if record.requalification_release_target_environment is None:
+            return PrimeActivationDisposition.DENIED, [
+                "release authorization is not bound to a target environment"
+            ]
+        if record.requalification_release_target_environment != pack.target_environment:
+            return PrimeActivationDisposition.DENIED, [
+                "release authorization target environment does not match mission pack"
+            ]
+        if not record.requalification_release_key_id:
+            return PrimeActivationDisposition.DENIED, [
+                "release authorization is not bound to a PRIME SENTINEL signing key"
+            ]
 
     return PrimeActivationDisposition.ACTIVATION_ALLOWED, [
         "pack authentication, compatibility, target qualification, requalification evidence, and authorization gates are satisfied"
@@ -125,5 +141,12 @@ def release_from_quarantine(
     if record.state != PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION:
         return record, disposition, reasons
 
-    released = record.model_copy(update={"state": PrimeCustodyState.READY})
+    released = record.model_copy(
+        update={
+            "state": PrimeCustodyState.READY,
+            "requalification_release_authorization_id": None,
+            "requalification_release_target_environment": None,
+            "requalification_release_key_id": None,
+        }
+    )
     return released, disposition, reasons

@@ -15,8 +15,18 @@ from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
 from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
+from .prime_passport import PRIME_PASSPORTS_REGISTRY_KEY
 from .prime_passport_api import router as prime_passport_router
+from .prime_sentinel_authorization import (
+    PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
+    PrimeSentinelVerifier,
+)
 from .storage import DurableStore
+
+
+PROTECTED_REGISTRY_NAMESPACES = frozenset(
+    {PRIME_PASSPORTS_REGISTRY_KEY, PRIME_SENTINEL_AUTHZ_REGISTRY_KEY}
+)
 
 
 class RequestTooLarge(Exception):
@@ -85,11 +95,16 @@ async def lifespan(app: FastAPI):
     validate_runtime_secrets()
     app.state.store = DurableStore()
     app.state.hmaa_store = HMAAEvidenceStore()
+    app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
     app.state.store.append_audit(
         AuditRecord.create(
             event="service_started",
             actor="system",
-            payload={"version": __version__, "mode": os.getenv("SARA_MODE", "local")},
+            payload={
+                "version": __version__,
+                "mode": os.getenv("SARA_MODE", "local"),
+                "prime_sentinel_public_keys_configured": app.state.prime_sentinel_verifier.configured,
+            },
         )
     )
     yield
@@ -129,12 +144,13 @@ def hmaa_store(request: Request) -> HMAAEvidenceStore:
 
 
 @app.get("/health")
-def health() -> dict[str, object]:
+def health(request: Request) -> dict[str, object]:
     return {
         "ok": True,
         "service": "Worldshepherd SARA / SSPADAWANZZ Admin Interface",
         "version": __version__,
         "mode": os.getenv("SARA_MODE", "local"),
+        "prime_sentinel_public_keys_configured": request.app.state.prime_sentinel_verifier.configured,
         "endpoints": {
             "ui": "/ui",
             "liveness": "/livez",
@@ -144,6 +160,7 @@ def health() -> dict[str, object]:
             "hmaa_evidence": "/v1/hmaa/evidence?limit=50",
             "registry": "/admin/registry",
             "prime_passport": "/admin/prime/{prime_id}/passport",
+            "prime_requalification_authorize": "/admin/prime/{prime_id}/requalification/authorize",
             "relay": "/v1/relay",
             "selftest": "/admin/selftest",
         },
@@ -176,7 +193,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
 <div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
-<div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. Use Bearer authentication from an approved local client.</p></div>
+<div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. PRIME SENTINEL private signing keys are not stored by SARA.</p></div>
 </body></html>"""
 
 
@@ -267,6 +284,19 @@ def registry_patch(
     role: Annotated[Role, Depends(resolve_role)],
 ) -> dict[str, object]:
     require_admin(role)
+    protected = sorted(PROTECTED_REGISTRY_NAMESPACES.intersection(body.values))
+    if protected:
+        store(request).append_audit(
+            AuditRecord.create(
+                event="protected_registry_patch_rejected",
+                actor=role.value,
+                payload={"keys": protected},
+            )
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Protected registry namespaces must use their governed APIs",
+        )
     try:
         updated = store(request).patch_registry(body.values)
     except ValueError as exc:
@@ -307,14 +337,8 @@ def selftest(
         audit_detail = f"audit append failed: {exc}"
     checks: dict[str, dict[str, Any]] = {
         "persistent_storage": {"ok": storage_ok, "detail": storage_detail},
-        "registry_read": {
-            "ok": registry_ok,
-            "detail": registry_detail,
-        },
-        "audit_append": {
-            "ok": audit_ok,
-            "detail": audit_detail,
-        },
+        "registry_read": {"ok": registry_ok, "detail": registry_detail},
+        "audit_append": {"ok": audit_ok, "detail": audit_detail},
     }
     if audit_ok:
         durable_store.append_audit(

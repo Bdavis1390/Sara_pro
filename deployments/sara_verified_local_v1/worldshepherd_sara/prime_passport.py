@@ -3,18 +3,21 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .prime_configuration_custody import (
     REQUALIFICATION_CHECKS,
     PrimeActivationDisposition,
     PrimeConfigurationCustodyRecord,
+    PrimeCustodyState,
     PrimeEnvironment,
     PrimeMissionPackEvidence,
     apply_post_mission_state,
     evaluate_pack_activation,
+    missing_requalification_checks,
     release_from_quarantine,
 )
+from .prime_sentinel_authorization import VerifiedPrimeSentinelAuthorization
 
 
 PRIME_PASSPORTS_REGISTRY_KEY = "PRIME_DIGITAL_PASSPORTS"
@@ -42,20 +45,22 @@ class PrimeDigitalPassport(BaseModel):
 
 
 class PrimePassportCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     hardware_revision: str = Field(min_length=1, max_length=128)
     software_revision: str = Field(min_length=1, max_length=128)
     evidence_refs: list[str] = Field(default_factory=list)
 
 
 class PrimeMissionCompletionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     environment: PrimeEnvironment
     evidence_refs: list[str] = Field(default_factory=list)
 
 
 class PrimeRequalificationEvidenceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     completed_checks: list[str] = Field(default_factory=list)
     evidence_refs: list[str] = Field(default_factory=list)
-    release_authorization_id: str | None = Field(default=None, min_length=1, max_length=128)
 
     @field_validator("completed_checks")
     @classmethod
@@ -69,6 +74,7 @@ class PrimeRequalificationEvidenceRequest(BaseModel):
 
 
 class PrimePackActivationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     pack: PrimeMissionPackEvidence
     evidence_refs: list[str] = Field(default_factory=list)
 
@@ -164,7 +170,9 @@ def update_requalification_evidence(
     updated_custody = passport.custody.model_copy(
         update={
             "completed_requalification_checks": list(request.completed_checks),
-            "requalification_release_authorization_id": request.release_authorization_id,
+            "requalification_release_authorization_id": None,
+            "requalification_release_target_environment": None,
+            "requalification_release_key_id": None,
         }
     )
     updated = passport.model_copy(
@@ -181,8 +189,50 @@ def update_requalification_evidence(
         previous_state=previous_state,
         new_state=updated.custody.state.value,
         evidence_refs=request.evidence_refs,
-        authorization_id=request.release_authorization_id,
         completed_checks=list(request.completed_checks),
+        prior_authorization_cleared=True,
+    )
+    return updated, payload
+
+
+def apply_verified_requalification_authorization(
+    passport: PrimeDigitalPassport,
+    verified: VerifiedPrimeSentinelAuthorization,
+) -> tuple[PrimeDigitalPassport, dict[str, Any]]:
+    if passport.prime_id != verified.prime_id:
+        raise ValueError("PRIME SENTINEL authorization identity does not match passport")
+    if passport.custody.state != PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION:
+        raise ValueError("PRIME is not quarantined for requalification")
+    missing = missing_requalification_checks(passport.custody)
+    if missing:
+        raise ValueError("requalification evidence is incomplete")
+
+    transition_id = new_transition_id()
+    updated_custody = passport.custody.model_copy(
+        update={
+            "requalification_release_authorization_id": verified.authorization_id,
+            "requalification_release_target_environment": verified.target_environment,
+            "requalification_release_key_id": verified.key_id,
+        }
+    )
+    updated = passport.model_copy(
+        update={
+            "custody": updated_custody,
+            "last_transition_id": transition_id,
+        }
+    )
+    payload = custody_provenance_payload(
+        transition_id=transition_id,
+        prime_id=passport.prime_id,
+        action="REQUALIFICATION_AUTHORIZATION_VERIFIED",
+        previous_state=passport.custody.state.value,
+        new_state=updated.custody.state.value,
+        evidence_refs=[],
+        authorization_id=verified.authorization_id,
+        target_environment=verified.target_environment.value,
+        key_id=verified.key_id,
+        key_fingerprint_sha256=verified.key_fingerprint_sha256,
+        expires_at=verified.expires_at.isoformat(),
     )
     return updated, payload
 
@@ -215,6 +265,7 @@ def activate_pack(
         new_state=updated.custody.state.value,
         evidence_refs=request.evidence_refs,
         authorization_id=passport.custody.requalification_release_authorization_id,
+        authorization_key_id=passport.custody.requalification_release_key_id,
         pack_id=request.pack.pack_id,
         target_environment=request.pack.target_environment.value,
         disposition=disposition.value,
