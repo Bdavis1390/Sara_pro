@@ -86,6 +86,32 @@ def queue_event_outbox_patch(
     return {EVENT_OUTBOX_REGISTRY_KEY: records}, stable_id
 
 
+def queue_events_outbox_patch(
+    registry: dict[str, Any],
+    events: list[dict[str, Any]],
+) -> tuple[dict[str, Any], list[str]]:
+    """Queue multiple events against one evolving registry snapshot.
+
+    This prevents a second event from rebuilding the outbox namespace from the
+    pre-first-event snapshot and accidentally dropping its sibling event.
+    """
+    working = dict(registry)
+    ids: list[str] = []
+    patch: dict[str, Any] = {}
+    for item in events:
+        event_patch, event_id = queue_event_outbox_patch(
+            working,
+            event=str(item["event"]),
+            actor=str(item["actor"]),
+            payload=dict(item["payload"]),
+            event_id=item.get("event_id"),
+        )
+        working.update(event_patch)
+        patch.update(event_patch)
+        ids.append(event_id)
+    return patch, ids
+
+
 def pending_event_ids(registry: dict[str, Any]) -> list[str]:
     records = _outbox_map(registry)
     pending: list[tuple[str, str]] = []
