@@ -1,0 +1,92 @@
+{
+  "schema": "WS-PRIME-PHYSICS-CLOSURE-V0.9",
+  "claims_boundary": "Engineering arithmetic and external research precedent only; no physical capability promotion without CAD, FEA, representative test evidence, and applicable authorization.",
+  "psdm_4l": {
+    "status": "BLOCKED_PENDING_CAD_FEA_TEST",
+    "mass_kg_nominal": 1100,
+    "mass_kg_ceiling": 1300,
+    "clear_diameter_m_target": 2.10,
+    "length_m_screen": 3.65,
+    "prime_unit_mass_kg_screen": 130,
+    "prime_positions_m": [
+      {"x": 0.85, "y": 0.45, "z": 0.0},
+      {"x": 0.85, "y": -0.45, "z": 0.0},
+      {"x": -0.85, "y": 0.45, "z": 0.0},
+      {"x": -0.85, "y": -0.45, "z": 0.0}
+    ],
+    "approx_loaded_inertia_kg_m2": {"Ix": 425.0, "Iy": 1179.5, "Iz": 1284.8},
+    "approx_after_symmetric_pair_inertia_kg_m2": {"Ix": 372.4, "Iy": 991.6, "Iz": 1044.3},
+    "cg_shift_m": {
+      "one_full_fore_or_aft_station_removed": 0.263,
+      "one_lateral_side_pair_removed": 0.139,
+      "one_unit_only_removed": 0.129,
+      "ideal_symmetric_cross_station_pair_removed": 0.0
+    },
+    "preferred_release_sequence": "SYMMETRIC_CROSS_STATION_PAIR_THEN_COMPLEMENTARY_PAIR",
+    "single_release_mismatch_response": "INHIBIT_FURTHER_RELEASE_UNTIL_STATE_RECOVERY_AND_FAILED_BAY_DISPOSITION"
+  },
+  "aero": {
+    "status": "BLOCKED_PENDING_MASS_CFD_PROPULSION_THERMAL_FLIGHT_VALIDATION",
+    "gross_mass_kg_screen": 182,
+    "pack_mass_kg_ceiling": 90,
+    "energy_mass_kg": 45,
+    "non_energy_mass_kg": 45,
+    "effective_lift_area_m2_target": 8.0,
+    "design_power_kw_screen": 33.2,
+    "disk_loading_n_m2_screen": 223.2,
+    "trades": [
+      {"effectors": 4, "equivalent_diameter_m": 1.596, "thrust_n_each": 446.4, "power_kw_each": 8.30, "propulsor_related_mass_kg_each": 5.75},
+      {"effectors": 6, "equivalent_diameter_m": 1.303, "thrust_n_each": 297.6, "power_kw_each": 5.53, "propulsor_related_mass_kg_each": 3.83},
+      {"effectors": 8, "equivalent_diameter_m": 1.128, "thrust_n_each": 223.2, "power_kw_each": 4.15, "propulsor_related_mass_kg_each": 2.88},
+      {"effectors": 12, "equivalent_diameter_m": 0.921, "thrust_n_each": 148.8, "power_kw_each": 2.77, "propulsor_related_mass_kg_each": 1.92}
+    ],
+    "leading_cad_trade": "AERO-VTOL-B6",
+    "leading_cad_trade_effectors": 6,
+    "guard_policy": "PARTIAL_OR_FULL_PROTECTION_PREFERRED_WHERE_MASS_EFFICIENCY_CLOSE; GUARDS_MAY_BE_OMITTED_WITH_INTERLOCK_STOW_EXCLUSION_AND_HUMAN_PROXIMITY_CONTROLS",
+    "external_evidence": [
+      {"source": "NASA TechPort 154365", "use": "integrated motor-drive research benchmark", "credit": "NONE_TO_PRIME_UNTIL_VALIDATED"},
+      {"source": "NASA TechPort 125317", "use": "distributed ducted-fan/high-lift precedent", "credit": "NONE_TO_PRIME_UNTIL_VALIDATED"},
+      {"source": "NASA NTRS 20250007333", "use": "ducted-fan/wing aeropropulsive interaction test precedent", "credit": "NONE_TO_PRIME_UNTIL_VALIDATED"}
+    ]
+  },
+  "space_s50_tbi": {
+    "status": "BLOCKED_PENDING_VIEW_FACTOR_MASS_THERMAL_VAC_TEST",
+    "pack_mass_kg_ceiling": 50,
+    "thermal_hardware_mass_kg_ceiling": 8,
+    "deployable_area_m2_physical": 1.2,
+    "body_integrated_area_m2_physical": 1.2,
+    "emissivity_screen": 0.9,
+    "system_effectiveness_screen": 0.7,
+    "net_flux_w_m2": {"330K": 423.7, "350K": 536.1},
+    "body_utilization_min_for_700w_at_330k": 0.377,
+    "rejection_w_at_350k_body_utilization_0_60": 1029,
+    "deployable_specific_mass_kg_m2_objective": 5.0,
+    "continuous_2kw_rejection_claim": false,
+    "two_kw_15min_unrejected_heat_mj": {"330K_body_utilization_0_60": 1.068, "350K_body_utilization_0_60": 0.874},
+    "external_evidence": [
+      {"source": "NASA TechPort 113167", "use": "freeze-tolerant deployable radiator mass benchmark", "credit": "NONE_TO_PRIME_UNTIL_VALIDATED"}
+    ]
+  },
+  "hadal": {
+    "status": "BLOCKED_PENDING_HYDROSTATIC_CAD_PRESSURE_TEST",
+    "total_mass_kg_screen": 242,
+    "seawater_density_kg_m3_screen": 1025,
+    "operating_apparent_negative_mass_kg_target": 5,
+    "effective_displacement_l_target": 231.2,
+    "releasable_ballast_kg": 15,
+    "ideal_post_release_positive_buoyancy_kg": 10,
+    "minimum_positive_buoyancy_kg_at_rated_depth_target": 5,
+    "maximum_combined_buoyancy_equivalent_loss_fraction_before_redesign_screen": 0.0211,
+    "restoring_moment_nm_at_10deg_sensitivity": {"cb_cg_25mm": 10.1, "cb_cg_50mm": 20.2, "cb_cg_100mm": 40.4},
+    "external_evidence": [
+      {"source": "WHOI deep-ocean engineering public references", "use": "pressure housing, syntactic buoyancy, oil-filled pressure balancing, ceramic challenger precedent", "credit": "NONE_TO_PRIME_DEPTH_QUALIFICATION"}
+    ]
+  },
+  "next_gates": [
+    "PSDM_4L_PARAMETERIZED_OCCUPIED_BAY_CAD_AND_SEPARATION_MULTIBODY_MODEL",
+    "AERO_B6_INTEGRATED_MASS_GEOMETRY_BEM_CFD_THERMAL_ACOUSTIC_MODEL",
+    "SPACE_S50_TBI_VIEW_FACTOR_THERMAL_NETWORK_AND_STOW_DEPLOY_CAD",
+    "HADAL_DEPTH_DEPENDENT_BUOYANCY_AND_STABILITY_LEDGER",
+    "PUMI_PRIME_COUPLED_FEA_AND_COMPONENT_TESTS"
+  ]
+}
