@@ -204,7 +204,7 @@ def steady_hartmann_exact_velocity(y: float, hartmann: float) -> float:
             math.exp(ha * (absolute_y - 1.0))
             + math.exp(-ha * (absolute_y + 1.0))
         ) / (1.0 + math.exp(-2.0 * ha))
-    return (1.0 - cosh_ratio) / (ha * ha)
+    return (1.0 - cosh_ratio) / ha / ha
 
 
 def _crank_nicolson_step(
