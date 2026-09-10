@@ -277,3 +277,28 @@ def consumed_authorization_registry_patch(
     )
     records[authorization_id] = updated
     return {PRIME_SENTINEL_AUTHZ_REGISTRY_KEY: records}
+
+
+def superseded_authorization_registry_patch(
+    registry: dict[str, Any],
+    *,
+    authorization_id: str,
+    transition_id: str,
+    reason: str,
+    superseded_at: datetime | None = None,
+) -> dict[str, Any]:
+    records = _authorization_map(registry)
+    entry = records.get(authorization_id)
+    if not isinstance(entry, dict) or entry.get("status") != "VERIFIED":
+        raise PrimeSentinelAuthorizationError("authorization cannot be superseded")
+    updated = dict(entry)
+    updated.update(
+        {
+            "status": "SUPERSEDED",
+            "superseded_transition_id": transition_id,
+            "superseded_reason": reason,
+            "superseded_at": _utc_iso(superseded_at or datetime.now(timezone.utc)),
+        }
+    )
+    records[authorization_id] = updated
+    return {PRIME_SENTINEL_AUTHZ_REGISTRY_KEY: records}
