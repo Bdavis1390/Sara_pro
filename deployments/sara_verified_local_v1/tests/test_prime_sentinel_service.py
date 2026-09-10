@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,7 @@ from worldshepherd_sara.prime_sentinel_authorization import (
 from worldshepherd_sara.prime_sentinel_service import (
     KEY_FILE_ENV,
     KEY_ID_ENV,
-    SERVICE_TOKEN_ENV,
+    SERVICE_TOKEN_FILE_ENV,
     PrimeSentinelServiceConfigError,
     create_prime_sentinel_app,
 )
@@ -37,18 +36,36 @@ def write_ed25519_key(path: Path, mode: int = 0o600) -> Ed25519PrivateKey:
     return key
 
 
-def configure(monkeypatch, path: Path, *, token: str = SERVICE_TOKEN, key_id: str = KEY_ID):
-    monkeypatch.setenv(KEY_FILE_ENV, str(path))
+def write_service_token(path: Path, token: str = SERVICE_TOKEN, mode: int = 0o600) -> None:
+    path.write_text(token + "\n", encoding="utf-8")
+    path.chmod(mode)
+
+
+def configure(
+    monkeypatch,
+    key_path: Path,
+    token_path: Path,
+    *,
+    key_id: str = KEY_ID,
+):
+    monkeypatch.setenv(KEY_FILE_ENV, str(key_path))
+    monkeypatch.setenv(SERVICE_TOKEN_FILE_ENV, str(token_path))
     monkeypatch.setenv(KEY_ID_ENV, key_id)
-    monkeypatch.setenv(SERVICE_TOKEN_ENV, token)
     monkeypatch.delenv("SARA_ADMIN_TOKEN", raising=False)
     monkeypatch.delenv("SARA_RELAY_TOKEN", raising=False)
 
 
-def test_service_issues_assertion_accepted_by_existing_sara_verifier(tmp_path, monkeypatch):
+def configured_files(tmp_path: Path, *, token: str = SERVICE_TOKEN):
     key_path = tmp_path / "sentinel.pem"
+    token_path = tmp_path / "service-token"
     write_ed25519_key(key_path)
-    configure(monkeypatch, key_path)
+    write_service_token(token_path, token)
+    return key_path, token_path
+
+
+def test_service_issues_assertion_accepted_by_existing_sara_verifier(tmp_path, monkeypatch):
+    key_path, token_path = configured_files(tmp_path)
+    configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
 
     with TestClient(app) as client:
@@ -83,9 +100,8 @@ def test_service_issues_assertion_accepted_by_existing_sara_verifier(tmp_path, m
 
 
 def test_issue_endpoint_requires_independent_bearer(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
-    write_ed25519_key(key_path)
-    configure(monkeypatch, key_path)
+    key_path, token_path = configured_files(tmp_path)
+    configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
 
     with TestClient(app) as client:
@@ -103,9 +119,8 @@ def test_issue_endpoint_requires_independent_bearer(tmp_path, monkeypatch):
 
 
 def test_caller_cannot_inject_action_authorization_id_nonce_or_signature(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
-    write_ed25519_key(key_path)
-    configure(monkeypatch, key_path)
+    key_path, token_path = configured_files(tmp_path)
+    configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
 
     with TestClient(app) as client:
@@ -125,9 +140,8 @@ def test_caller_cannot_inject_action_authorization_id_nonce_or_signature(tmp_pat
 
 
 def test_lifetime_above_fifteen_minutes_is_rejected(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
-    write_ed25519_key(key_path)
-    configure(monkeypatch, key_path)
+    key_path, token_path = configured_files(tmp_path)
+    configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
 
     with TestClient(app) as client:
@@ -144,50 +158,58 @@ def test_lifetime_above_fifteen_minutes_is_rejected(tmp_path, monkeypatch):
 
 
 def test_insecure_private_key_permissions_are_rejected(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
-    write_ed25519_key(key_path, mode=0o644)
-    configure(monkeypatch, key_path)
+    key_path, token_path = configured_files(tmp_path)
+    key_path.chmod(0o644)
+    configure(monkeypatch, key_path, token_path)
     with pytest.raises(PrimeSentinelServiceConfigError, match="group/other permissions"):
         create_prime_sentinel_app()
 
 
 def test_private_key_symlink_is_rejected(tmp_path, monkeypatch):
-    real_key = tmp_path / "real.pem"
-    write_ed25519_key(real_key)
+    real_key, token_path = configured_files(tmp_path)
     symlink = tmp_path / "link.pem"
     symlink.symlink_to(real_key)
-    configure(monkeypatch, symlink)
+    configure(monkeypatch, symlink, token_path)
     with pytest.raises(PrimeSentinelServiceConfigError, match="symbolic link"):
         create_prime_sentinel_app()
 
 
 def test_relative_private_key_path_is_rejected(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
-    write_ed25519_key(key_path)
+    key_path, token_path = configured_files(tmp_path)
     monkeypatch.chdir(tmp_path)
-    configure(monkeypatch, Path("sentinel.pem"))
+    configure(monkeypatch, Path("sentinel.pem"), token_path)
     with pytest.raises(PrimeSentinelServiceConfigError, match="absolute path"):
         create_prime_sentinel_app()
 
 
-def test_service_token_must_be_long_and_not_reuse_sara_tokens(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
-    write_ed25519_key(key_path)
-
-    configure(monkeypatch, key_path, token="too-short")
+def test_service_token_file_must_be_secure_long_and_independent(tmp_path, monkeypatch):
+    key_path, token_path = configured_files(tmp_path, token="too-short")
+    configure(monkeypatch, key_path, token_path)
     with pytest.raises(PrimeSentinelServiceConfigError, match="at least 32"):
         create_prime_sentinel_app()
 
-    configure(monkeypatch, key_path)
+    write_service_token(token_path, SERVICE_TOKEN, mode=0o644)
+    with pytest.raises(PrimeSentinelServiceConfigError, match="group/other permissions"):
+        create_prime_sentinel_app()
+
+    write_service_token(token_path, SERVICE_TOKEN, mode=0o600)
     monkeypatch.setenv("SARA_ADMIN_TOKEN", SERVICE_TOKEN)
     with pytest.raises(PrimeSentinelServiceConfigError, match="independent"):
         create_prime_sentinel_app()
 
 
-def test_health_and_public_surfaces_do_not_disclose_private_key_or_path(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
-    write_ed25519_key(key_path)
-    configure(monkeypatch, key_path)
+def test_service_token_symlink_is_rejected(tmp_path, monkeypatch):
+    key_path, real_token = configured_files(tmp_path)
+    link = tmp_path / "token-link"
+    link.symlink_to(real_token)
+    configure(monkeypatch, key_path, link)
+    with pytest.raises(PrimeSentinelServiceConfigError, match="symbolic link"):
+        create_prime_sentinel_app()
+
+
+def test_health_and_public_surfaces_do_not_disclose_secrets_or_paths(tmp_path, monkeypatch):
+    key_path, token_path = configured_files(tmp_path)
+    configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
 
     with TestClient(app) as client:
@@ -198,13 +220,26 @@ def test_health_and_public_surfaces_do_not_disclose_private_key_or_path(tmp_path
         ]
     combined = "\n".join(bodies)
     assert str(key_path) not in combined
+    assert str(token_path) not in combined
     assert "PRIVATE KEY" not in combined
     assert SERVICE_TOKEN not in combined
 
 
-def test_missing_key_configuration_refuses_service_start(monkeypatch):
+def test_missing_key_configuration_refuses_service_start(tmp_path, monkeypatch):
+    token_path = tmp_path / "service-token"
+    write_service_token(token_path)
     monkeypatch.delenv(KEY_FILE_ENV, raising=False)
     monkeypatch.setenv(KEY_ID_ENV, KEY_ID)
-    monkeypatch.setenv(SERVICE_TOKEN_ENV, SERVICE_TOKEN)
+    monkeypatch.setenv(SERVICE_TOKEN_FILE_ENV, str(token_path))
     with pytest.raises(PrimeSentinelServiceConfigError, match=KEY_FILE_ENV):
+        create_prime_sentinel_app()
+
+
+def test_missing_service_token_file_refuses_service_start(tmp_path, monkeypatch):
+    key_path = tmp_path / "sentinel.pem"
+    write_ed25519_key(key_path)
+    monkeypatch.setenv(KEY_FILE_ENV, str(key_path))
+    monkeypatch.setenv(KEY_ID_ENV, KEY_ID)
+    monkeypatch.delenv(SERVICE_TOKEN_FILE_ENV, raising=False)
+    with pytest.raises(PrimeSentinelServiceConfigError, match=SERVICE_TOKEN_FILE_ENV):
         create_prime_sentinel_app()
