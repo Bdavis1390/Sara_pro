@@ -37,6 +37,7 @@ ws-programmable-boundary-benchmark = "worldshepherd_sara.programmable_boundary_b
 ws-nsb-benchmark = "worldshepherd_sara.nsb_benchmark_cli:main"
 ws-nsb-g2 = "worldshepherd_sara.nsb_g2_cli:main"
 ws-nsb-g3 = "worldshepherd_sara.nsb_g3_cli:main"
+ws-nsb-g4 = "worldshepherd_sara.nsb_g4_cli:main"
 ws-omega-recursion = "worldshepherd_sara.recursive_discovery_cli:main"
 
 [tool.setuptools]
