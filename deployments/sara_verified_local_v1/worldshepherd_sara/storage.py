@@ -7,10 +7,17 @@ import stat
 import threading
 from collections import deque
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, TypeVar
 
 from .limits import MAX_AUDIT_LINE_BYTES, validate_json_resource
 from .models import AuditRecord
+
+
+T = TypeVar("T")
+RegistryTransaction = Callable[
+    [dict[str, Any]],
+    tuple[dict[str, Any] | None, T],
+]
 
 
 class DurableStore:
@@ -247,6 +254,31 @@ class DurableStore:
             validate_json_resource(current)
             self._atomic_write_json(self.registry_path, current)
             return current
+
+    def transact_registry(self, operation: RegistryTransaction[T]) -> T:
+        """Execute a registry read/derive/write operation under one lock.
+
+        The callback receives the latest validated registry snapshot while the
+        store lock is held. It returns a top-level patch (or ``None`` for a
+        read/decision-only transaction) plus an arbitrary result. Exceptions
+        abort the transaction before any registry write occurs.
+
+        This primitive exists to prevent lost updates when callers need to
+        derive a protected namespace map from current registry state. It does
+        not make the audit log and registry a single cross-file transaction.
+        """
+        with self._lock:
+            current = self.get_registry()
+            patch, result = operation(current)
+            if patch is None:
+                return result
+            if not isinstance(patch, dict):
+                raise TypeError("registry transaction patch must be a dict or None")
+            updated = dict(current)
+            updated.update(patch)
+            validate_json_resource(updated)
+            self._atomic_write_json(self.registry_path, updated)
+            return result
 
     def check_storage(self) -> tuple[bool, str]:
         probe = self.root / f".readiness-{secrets.token_hex(8)}"
