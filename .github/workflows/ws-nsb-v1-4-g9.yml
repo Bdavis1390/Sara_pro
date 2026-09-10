@@ -1,0 +1,62 @@
+name: WS-NSB v1.4 G9 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g9_linear_alfven.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g9_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g9_linear_alfven.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_4_G9_LINEAR_FINITE_RM_ALFVEN.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-4-g9.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g9_linear_alfven.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g9_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g9_linear_alfven.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_4_G9_LINEAR_FINITE_RM_ALFVEN.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-4-g9.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  g9-linear-finite-rm-alfven:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Run G9 test suite
+        run: python -m pytest tests/test_nsb_g9_linear_alfven.py -q
+
+      - name: Execute and verify deterministic G9 report
+        run: |
+          rm -f ws_nsb_g9_report.json
+          ws-nsb-g9 --output ws_nsb_g9_report.json
+          ws-nsb-g9 --verify ws_nsb_g9_report.json
+
+      - name: Upload G9 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-nsb-v1-4-g9-report
+          path: deployments/sara_verified_local_v1/ws_nsb_g9_report.json
+          if-no-files-found: error
