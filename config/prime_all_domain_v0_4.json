@@ -1,0 +1,83 @@
+{
+  "schema": "worldshepherd.prime.all_domain.v0.4",
+  "claims_state": "engineering_targets_only",
+  "deployment": {
+    "prime_per_psdm": 4,
+    "prime_per_olv": 4,
+    "standard_squad": 8,
+    "standard_squad_launch_groups": 2,
+    "growth_formation": 12,
+    "growth_launch_groups": 3
+  },
+  "prime_reference_frame": {
+    "origin": "pelvic_structural_center",
+    "axes": {"x": "forward", "y": "left", "z": "up"},
+    "body_targets_m": {
+      "standing_height": 1.86,
+      "shoulder_width": 0.52,
+      "pelvic_width": 0.38,
+      "torso_depth": 0.30
+    },
+    "folded_targets_m": {
+      "bare_core": [1.45, 0.74, 0.64],
+      "space_configured": [1.60, 0.82, 0.75]
+    }
+  },
+  "pumi": {
+    "hardpoints_m": {
+      "upper_left": [-0.10, 0.23, 0.32],
+      "upper_right": [-0.10, -0.23, 0.32],
+      "lower_left": [-0.08, 0.20, -0.23],
+      "lower_right": [-0.08, -0.20, -0.23]
+    },
+    "service_power": {
+      "hv_bus_class_vdc": 120,
+      "lv_bus_class_vdc": 28,
+      "controlled_bidirectional_target_kw": 10,
+      "primary_propulsion_routed_through_pumi": false
+    },
+    "thermal": {
+      "active_transfer_target_kw_per_prime": 2,
+      "passive_path_required": true,
+      "active_loop_optional": true
+    },
+    "classes": {
+      "S": {"max_pack_mass_kg": 50, "max_cg_offset_m": 0.25, "working_load_kn": 8, "working_moment_knm": 1.5},
+      "H": {"max_pack_mass_kg": 100, "max_cg_offset_m": 0.30, "working_load_kn": 12, "working_moment_knm": 2.0},
+      "X": {"max_pack_mass_kg": 150, "max_cg_offset_m": 0.35, "working_load_kn": 15, "working_moment_knm": 2.5, "development_proof_load_kn": 22.5, "development_proof_moment_knm": 3.75, "initial_combined_node_article_screen_kn": 10}
+    },
+    "data_channels": ["D-A_primary_high_rate", "D-B_redundant_high_rate", "D-S_independent_safety_health"],
+    "energy_domains": ["P0_core", "P1_mission_pack", "P2_survival_reserve", "P3_return_mobility_reserve"]
+  },
+  "psdm4": {
+    "independent_bays": 4,
+    "cassette_clear_envelope_m": [1.70, 0.90, 0.82],
+    "module_envelope_target_m": [1.95, 2.00, 1.90],
+    "loaded_mass_target_tonnes": [1.0, 1.3],
+    "launch_restraints_separate_from_pumi": true
+  },
+  "pack_inertia_screens": {
+    "axis_order": "XYZ",
+    "S": {"mass_kg": 50, "envelope_m": [0.25, 0.60, 0.45], "cg_inertia_kg_m2": [2.34, 1.10, 1.76]},
+    "H": {"mass_kg": 100, "envelope_m": [0.35, 0.75, 0.80], "cg_inertia_kg_m2": [10.02, 6.35, 5.71]},
+    "X": {"mass_kg": 150, "envelope_m": [0.45, 0.85, 1.05], "cg_inertia_kg_m2": [22.81, 16.31, 11.56]}
+  },
+  "domain_pack_targets": {
+    "SUBTERRA_SUBSPACE": {"pumi_class": "S", "max_external_pack_mass_kg": 35},
+    "SPACE": {"preferred_pumi_class": "S", "local_mobility_target_kg": 50, "heavier_variant_class": "H"},
+    "AERO": {"pumi_class": "H", "max_pack_mass_kg": 90, "architecture": "short_VTOL_plus_wing_borne_cruise", "open_rotor_geometry_frozen": false},
+    "HADAL": {"pumi_class": "X", "max_dry_handling_pack_mass_kg": 150, "hydrostatic_closure_required": true}
+  },
+  "experimental_tracks": ["Baseline", "E-Single", "E-Mix", "E-MULTI", "E-X"],
+  "blocked": [
+    "pumi_laminate_insert_fea",
+    "physical_folded_pose_verification",
+    "full_multiaxial_pumi_test",
+    "hadal_pressure_hydrostatic_validation",
+    "aero_propulsion_aerodynamic_validation",
+    "space_vacuum_thermal_radiation_validation",
+    "psdm_launch_vibration_shock_validation",
+    "ws_alti_structural_credit",
+    "unconventional_propulsion_performance_credit"
+  ]
+}
