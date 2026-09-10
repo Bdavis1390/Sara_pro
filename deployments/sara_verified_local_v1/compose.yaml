@@ -61,7 +61,7 @@ services:
       - "127.0.0.1:${PRIME_SENTINEL_HOST_PORT:-9540}:9540"
     volumes:
       - type: bind
-        source: /var/lib/worldshepherd/prime-sentinel/ed25519-private.pem
+        source: ${PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel/ed25519-private.pem}
         target: /run/worldshepherd-prime-sentinel/ed25519-private.pem
         read_only: true
     read_only: true
