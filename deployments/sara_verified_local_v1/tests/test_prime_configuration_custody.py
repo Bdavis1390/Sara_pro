@@ -42,12 +42,25 @@ def test_installing_a_valid_space_pack_does_not_clear_quarantine_by_itself():
     assert any("TARGET_ENVIRONMENT_ACCEPTANCE" in reason for reason in reasons)
 
 
-def test_complete_requalification_and_valid_pack_allow_activation():
+def test_complete_checks_without_release_authorization_remain_quarantined():
     record = PrimeConfigurationCustodyRecord(
         prime_id="PRIME-001",
         state=PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
         last_environment=PrimeEnvironment.SUBTERRA,
         completed_requalification_checks=list(REQUALIFICATION_CHECKS),
+    )
+    disposition, reasons = evaluate_pack_activation(record, _space_pack())
+    assert disposition == PrimeActivationDisposition.REQUALIFICATION_REQUIRED
+    assert any("not authorized" in reason for reason in reasons)
+
+
+def test_complete_requalification_authorization_and_valid_pack_allow_activation():
+    record = PrimeConfigurationCustodyRecord(
+        prime_id="PRIME-001",
+        state=PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
+        last_environment=PrimeEnvironment.SUBTERRA,
+        completed_requalification_checks=list(REQUALIFICATION_CHECKS),
+        requalification_release_authorized=True,
     )
     disposition, reasons = evaluate_pack_activation(record, _space_pack())
     assert disposition == PrimeActivationDisposition.ACTIVATION_ALLOWED
@@ -60,6 +73,7 @@ def test_invalid_target_environment_qualification_fails_closed_even_after_checks
         state=PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION,
         last_environment=PrimeEnvironment.HADAL,
         completed_requalification_checks=list(REQUALIFICATION_CHECKS),
+        requalification_release_authorized=True,
     )
     disposition, reasons = evaluate_pack_activation(
         record,
