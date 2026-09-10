@@ -40,8 +40,8 @@ def test_energy_budget_closes_and_magnetic_sink_is_controlled(report):
 def test_magnetic_damping_is_monotonic_in_reference_sweep(report):
     centerlines = [case.centerline_velocity for case in report.cases]
     means = [case.mean_velocity for case in report.cases]
-    assert all(b < a for a, b in zip(centerlines, centerlines[1:], strict=True))
-    assert all(b < a for a, b in zip(means, means[1:], strict=True))
+    assert all(b < a for a, b in zip(centerlines, centerlines[1:]))
+    assert all(b < a for a, b in zip(means, means[1:]))
 
 
 def test_field_sign_symmetry_and_steady_limit_pass(report):
