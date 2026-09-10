@@ -194,7 +194,17 @@ def steady_hartmann_exact_velocity(y: float, hartmann: float) -> float:
     ha = abs(hartmann)
     if ha == 0.0:
         return 0.5 * (1.0 - y * y)
-    return (1.0 - math.cosh(ha * y) / math.cosh(ha)) / (ha * ha)
+    if abs(y) > 1.0:
+        raise ValueError("steady Hartmann reference requires y in [-1, 1]")
+    if ha < 20.0:
+        cosh_ratio = math.cosh(ha * y) / math.cosh(ha)
+    else:
+        absolute_y = abs(y)
+        cosh_ratio = (
+            math.exp(ha * (absolute_y - 1.0))
+            + math.exp(-ha * (absolute_y + 1.0))
+        ) / (1.0 + math.exp(-2.0 * ha))
+    return (1.0 - cosh_ratio) / ha / ha
 
 
 def _crank_nicolson_step(
@@ -352,10 +362,16 @@ def _case_result(
     )
 
 
-def _observed_order(coarse_error: float, fine_error: float) -> float:
+def _observed_order(
+    coarse_error: float,
+    fine_error: float,
+    refinement_ratio: float = 2.0,
+) -> float:
     if coarse_error <= 0.0 or fine_error <= 0.0:
         raise ValueError("convergence errors must be positive")
-    return math.log(coarse_error / fine_error) / math.log(2.0)
+    if refinement_ratio <= 1.0:
+        raise ValueError("refinement_ratio must be greater than one")
+    return math.log(coarse_error / fine_error) / math.log(refinement_ratio)
 
 
 def run_nsb_g6_benchmark(
@@ -383,8 +399,15 @@ def run_nsb_g6_benchmark(
 ) -> NSBG6Report:
     _require_grid(sweep_grid_size)
     _require_grid(temporal_grid_size)
-    if not sweep_hartmann or sweep_hartmann[0] != 0.0 or tuple(sorted(sweep_hartmann)) != sweep_hartmann:
-        raise ValueError("sweep_hartmann must be sorted and begin with zero")
+    if (
+        len(sweep_hartmann) < 2
+        or sweep_hartmann[0] != 0.0
+        or tuple(sorted(sweep_hartmann)) != sweep_hartmann
+        or not any(value > 0.0 for value in sweep_hartmann[1:])
+    ):
+        raise ValueError(
+            "sweep_hartmann must be sorted, begin with zero, and include a positive field case"
+        )
     if any(value < 0.0 for value in sweep_hartmann):
         raise ValueError("sweep_hartmann values must be nonnegative")
     if spatial_grids[1] != 2 * spatial_grids[0] - 1 or spatial_grids[2] != 2 * spatial_grids[1] - 1:
@@ -431,8 +454,16 @@ def run_nsb_g6_benchmark(
     )
     temporal_errors = tuple(item.l2_velocity_error for item in temporal_cases)
     temporal_orders = (
-        _observed_order(temporal_errors[0], temporal_errors[1]),
-        _observed_order(temporal_errors[1], temporal_errors[2]),
+        _observed_order(
+            temporal_errors[0],
+            temporal_errors[1],
+            temporal_cases[0].effective_dt / temporal_cases[1].effective_dt,
+        ),
+        _observed_order(
+            temporal_errors[1],
+            temporal_errors[2],
+            temporal_cases[1].effective_dt / temporal_cases[2].effective_dt,
+        ),
     )
 
     _, positive = _case_result(
