@@ -1,8 +1,9 @@
-"""Worldshepherd SARA local administration service."""
+"""Worldshepherd SARA local administration service.
+
+Sentinel authoritative custody is intentionally not imported at package
+initialization. Production Sentinel entrypoints use the isolated custody client;
+legacy/synthetic assurance modules must be imported explicitly by synthetic
+validation tooling and are not an authority boundary.
+"""
 
 __version__ = "0.1.0"
-
-# Bootstrap Sentinel assurance hardening at package initialization so callers
-# cannot obtain the preserved legacy module before its P1-sensitive state
-# transitions have been replaced by the bounded hardening overlay.
-from . import infrastructure_assurance as _sentinel_assurance_hardening  # noqa: F401,E402

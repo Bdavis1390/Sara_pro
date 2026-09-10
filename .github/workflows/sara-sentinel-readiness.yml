@@ -7,10 +7,14 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_infrastructure_cli.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_authority_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_client.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_service.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight_cli.py'
       - 'deployments/sara_verified_local_v1/tests/test_infrastructure_assurance.py'
       - 'deployments/sara_verified_local_v1/tests/test_sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_authority_production_path.py'
       - 'deployments/sara_verified_local_v1/tests/test_sentinel_supplier_preflight.py'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/sara-sentinel-readiness.yml'
@@ -20,10 +24,14 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_infrastructure_cli.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_readiness_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_authority_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_client.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_service.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_supplier_preflight_cli.py'
       - 'deployments/sara_verified_local_v1/tests/test_infrastructure_assurance.py'
       - 'deployments/sara_verified_local_v1/tests/test_sentinel_readiness.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_authority_production_path.py'
       - 'deployments/sara_verified_local_v1/tests/test_sentinel_supplier_preflight.py'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/sara-sentinel-readiness.yml'
@@ -57,9 +65,13 @@ jobs:
           python -m pip check
           command -v ws-sentinel-infrastructure
           command -v ws-sentinel-readiness
+          command -v ws-sentinel-synthetic-infrastructure
+          command -v ws-sentinel-synthetic-readiness
           command -v ws-sentinel-supplier-preflight
           ws-sentinel-infrastructure --help >/dev/null
           ws-sentinel-readiness --help >/dev/null
+          ws-sentinel-synthetic-infrastructure --help >/dev/null
+          ws-sentinel-synthetic-readiness --help >/dev/null
           ws-sentinel-supplier-preflight --help >/dev/null
 
       - name: Run Sentinel regression tests
@@ -67,12 +79,22 @@ jobs:
           pytest -q \
             tests/test_infrastructure_assurance.py \
             tests/test_sentinel_readiness.py \
+            tests/test_sentinel_authority_production_path.py \
             tests/test_sentinel_supplier_preflight.py
 
-      - name: Build G1 infrastructure evidence
+      - name: Verify production Sentinel entrypoints fail closed without authority
+        run: |
+          set +e
+          ws-sentinel-infrastructure --authority-socket /tmp/ws-no-authority.sock >/tmp/ws-sentinel-prod.out 2>&1
+          rc=$?
+          set -e
+          test "$rc" -eq 2
+          grep -q 'FAIL_CLOSED' /tmp/ws-sentinel-prod.out
+
+      - name: Build synthetic G1 infrastructure evidence
         run: |
           rm -rf sentinel_g1_evidence_ci
-          ws-sentinel-infrastructure \
+          ws-sentinel-synthetic-infrastructure \
             --out sentinel_g1_evidence_ci \
             --campaign-id WS-SENTINEL-DEMO-G1-CI \
             --software-commit "$GITHUB_SHA" \
@@ -82,10 +104,10 @@ jobs:
           test -s sentinel_g1_evidence_ci/gate-report.json
           test -s sentinel_g1_evidence_ci/claims-boundary.md
 
-      - name: Build readiness evidence
+      - name: Build synthetic readiness evidence
         run: |
           rm -rf sentinel_readiness_evidence_ci
-          ws-sentinel-readiness \
+          ws-sentinel-synthetic-readiness \
             --out sentinel_readiness_evidence_ci \
             --software-commit "$GITHUB_SHA" \
             --executed-utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -156,14 +178,14 @@ jobs:
           assert 'does not independently authenticate' in report['claims_boundary']
           PY
 
-      - name: Upload Sentinel G1 evidence
+      - name: Upload Sentinel synthetic G1 evidence
         uses: actions/upload-artifact@v4
         with:
           name: sentinel-g1-infrastructure-evidence
           path: deployments/sara_verified_local_v1/sentinel_g1_evidence_ci
           if-no-files-found: error
 
-      - name: Upload Sentinel readiness evidence
+      - name: Upload Sentinel synthetic readiness evidence
         uses: actions/upload-artifact@v4
         with:
           name: sentinel-readiness-evidence

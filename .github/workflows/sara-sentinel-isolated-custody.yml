@@ -1,0 +1,51 @@
+name: SARA Sentinel Isolated Custody Gate
+
+on:
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/__init__.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_client.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_service.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_client_v2.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_service_v2.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_authority_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_isolated_custody_authority.py'
+      - 'deployments/sara_verified_local_v1/tests/test_isolated_custody_v2_policy.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_authority_production_path.py'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - 'docs/sentinel-custody-isolation-design.md'
+      - '.github/workflows/sara-sentinel-isolated-custody.yml'
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/__init__.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_client.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_service.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_client_v2.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/isolated_custody_service_v2.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sentinel_authority_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_isolated_custody_authority.py'
+      - 'deployments/sara_verified_local_v1/tests/test_isolated_custody_v2_policy.py'
+      - 'deployments/sara_verified_local_v1/tests/test_sentinel_authority_production_path.py'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - 'docs/sentinel-custody-isolation-design.md'
+      - '.github/workflows/sara-sentinel-isolated-custody.yml'
+
+jobs:
+  isolated-custody:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deployments/sara_verified_local_v1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project and test dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[test]'
+      - name: Run isolated custody adversarial and production-routing tests
+        run: >-
+          python -m pytest -q
+          tests/test_isolated_custody_authority.py
+          tests/test_isolated_custody_v2_policy.py
+          tests/test_sentinel_authority_production_path.py
