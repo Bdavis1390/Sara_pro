@@ -8,8 +8,11 @@ from worldshepherd_sara.nsb_g11_independent_nonlinear_mhd import (
 )
 
 
+REPORT = run_nsb_g11_benchmark()
+
+
 def test_g11_default_report_passes_and_verifies():
-    report = run_nsb_g11_benchmark()
+    report = REPORT
     assert report.acceptance.acceptance_pass
     assert report.acceptance.cross_method_pass
     assert report.acceptance.cancellation_pass
@@ -19,7 +22,7 @@ def test_g11_default_report_passes_and_verifies():
 
 
 def test_g11_cross_method_converges_with_refinement():
-    report = run_nsb_g11_benchmark()
+    report = REPORT
     points = report.cross_method_case.points
     assert points[1].combined_relative_difference < points[0].combined_relative_difference
     assert points[2].combined_relative_difference < points[1].combined_relative_difference
@@ -28,7 +31,7 @@ def test_g11_cross_method_converges_with_refinement():
 
 
 def test_g11_aligned_alfvenic_case_cancels_nonlinearity():
-    case = run_nsb_g11_benchmark().aligned_case
+    case = REPORT.aligned_case
     assert case.nonlinear_advection_rms > 1e-3
     assert case.lorentz_curl_rms > 1e-3
     assert case.nonlinear_cancellation_rms <= 1e-10
@@ -36,7 +39,7 @@ def test_g11_aligned_alfvenic_case_cancels_nonlinearity():
 
 
 def test_g11_geometry_and_energy_are_bounded():
-    report = run_nsb_g11_benchmark()
+    report = REPORT
     case = report.cross_method_case
     assert case.fd_velocity_divergence_rms <= report.acceptance.divergence_limit
     assert case.fd_magnetic_divergence_rms <= report.acceptance.divergence_limit
@@ -59,7 +62,7 @@ def test_g11_integrator_rejects_invalid_dt():
 
 
 def test_g11_digest_detects_tampering():
-    report = run_nsb_g11_benchmark()
+    report = REPORT
     tampered = report.model_copy(
         update={
             "cross_method_case": report.cross_method_case.model_copy(
@@ -71,16 +74,14 @@ def test_g11_digest_detects_tampering():
 
 
 def test_g11_fail_closed_external_validation_claim():
-    report = run_nsb_g11_benchmark()
-    payload = report.model_dump(mode="json")
+    payload = REPORT.model_dump(mode="json")
     payload["independent_third_party_validation_claimed"] = True
     with pytest.raises(ValueError):
         NSBG11Report.model_validate(payload)
 
 
 def test_g11_fail_closed_plasma_claim():
-    report = run_nsb_g11_benchmark()
-    payload = report.model_dump(mode="json")
+    payload = REPORT.model_dump(mode="json")
     payload["plasma_solved"] = True
     with pytest.raises(ValueError):
         NSBG11Report.model_validate(payload)
