@@ -141,5 +141,12 @@ def release_from_quarantine(
     if record.state != PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION:
         return record, disposition, reasons
 
-    released = record.model_copy(update={"state": PrimeCustodyState.READY})
+    released = record.model_copy(
+        update={
+            "state": PrimeCustodyState.READY,
+            "requalification_release_authorization_id": None,
+            "requalification_release_target_environment": None,
+            "requalification_release_key_id": None,
+        }
+    )
     return released, disposition, reasons
