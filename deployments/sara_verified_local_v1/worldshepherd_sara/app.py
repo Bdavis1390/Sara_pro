@@ -12,6 +12,12 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from . import __version__
 from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
+from .event_outbox import (
+    EVENT_OUTBOX_REGISTRY_KEY,
+    MAX_PENDING_OUTBOX_EVENTS,
+    drain_event_outbox,
+    outbox_status,
+)
 from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
@@ -25,7 +31,11 @@ from .storage import DurableStore
 
 
 PROTECTED_REGISTRY_NAMESPACES = frozenset(
-    {PRIME_PASSPORTS_REGISTRY_KEY, PRIME_SENTINEL_AUTHZ_REGISTRY_KEY}
+    {
+        PRIME_PASSPORTS_REGISTRY_KEY,
+        PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
+        EVENT_OUTBOX_REGISTRY_KEY,
+    }
 )
 
 
@@ -94,6 +104,13 @@ async def lifespan(app: FastAPI):
     os.umask(0o077)
     validate_runtime_secrets()
     app.state.store = DurableStore()
+    replayed = drain_event_outbox(
+        app.state.store,
+        limit=MAX_PENDING_OUTBOX_EVENTS,
+    )
+    outbox = outbox_status(app.state.store.get_registry())
+    if outbox["malformed"]:
+        raise RuntimeError("SARA event outbox contains malformed records")
     app.state.hmaa_store = HMAAEvidenceStore()
     app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
     app.state.store.append_audit(
@@ -104,6 +121,8 @@ async def lifespan(app: FastAPI):
                 "version": __version__,
                 "mode": os.getenv("SARA_MODE", "local"),
                 "prime_sentinel_public_keys_configured": app.state.prime_sentinel_verifier.configured,
+                "outbox_events_replayed": replayed,
+                "outbox_pending_after_replay": outbox["pending"],
             },
         )
     )
@@ -145,12 +164,14 @@ def hmaa_store(request: Request) -> HMAAEvidenceStore:
 
 @app.get("/health")
 def health(request: Request) -> dict[str, object]:
+    current_outbox = outbox_status(store(request).get_registry())
     return {
-        "ok": True,
+        "ok": current_outbox["malformed"] == 0,
         "service": "Worldshepherd SARA / SSPADAWANZZ Admin Interface",
         "version": __version__,
         "mode": os.getenv("SARA_MODE", "local"),
         "prime_sentinel_public_keys_configured": request.app.state.prime_sentinel_verifier.configured,
+        "event_outbox": current_outbox,
         "endpoints": {
             "ui": "/ui",
             "liveness": "/livez",
@@ -174,9 +195,17 @@ def liveness() -> dict[str, object]:
 
 @app.get("/readyz")
 def readiness(request: Request) -> JSONResponse:
-    ready, detail = store(request).check_storage()
+    durable_store = store(request)
+    ready, detail = durable_store.check_storage()
+    current_outbox = outbox_status(durable_store.get_registry())
+    ready = ready and current_outbox["malformed"] == 0
     return JSONResponse(
-        {"ok": ready, "status": "ready" if ready else "not_ready", "storage": detail},
+        {
+            "ok": ready,
+            "status": "ready" if ready else "not_ready",
+            "storage": detail,
+            "event_outbox": current_outbox,
+        },
         status_code=200 if ready else 503,
     )
 
@@ -320,11 +349,21 @@ def selftest(
     durable_store = store(request)
     storage_ok, storage_detail = durable_store.check_storage()
     try:
-        registry_ok = isinstance(durable_store.get_registry(), dict)
+        registry_value = durable_store.get_registry()
+        registry_ok = isinstance(registry_value, dict)
         registry_detail = "registry parsed as a JSON object"
+        current_outbox = outbox_status(registry_value)
+        outbox_ok = current_outbox["malformed"] == 0
+        outbox_detail = (
+            f"pending={current_outbox['pending']}, "
+            f"delivered_retained={current_outbox['delivered_retained']}, "
+            f"malformed={current_outbox['malformed']}"
+        )
     except (OSError, RuntimeError, json.JSONDecodeError, ValueError) as exc:
         registry_ok = False
         registry_detail = f"registry read failed: {exc}"
+        outbox_ok = False
+        outbox_detail = f"outbox read failed: {exc}"
     audit_probe = AuditRecord.create(
         event="selftest_audit_probe", actor=role.value, payload={}
     )
@@ -338,6 +377,7 @@ def selftest(
     checks: dict[str, dict[str, Any]] = {
         "persistent_storage": {"ok": storage_ok, "detail": storage_detail},
         "registry_read": {"ok": registry_ok, "detail": registry_detail},
+        "event_outbox": {"ok": outbox_ok, "detail": outbox_detail},
         "audit_append": {"ok": audit_ok, "detail": audit_detail},
     }
     if audit_ok:
