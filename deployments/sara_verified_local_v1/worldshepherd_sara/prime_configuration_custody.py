@@ -45,7 +45,7 @@ class PrimeConfigurationCustodyRecord(BaseModel):
     state: PrimeCustodyState = PrimeCustodyState.READY
     last_environment: PrimeEnvironment = PrimeEnvironment.GROUND
     completed_requalification_checks: list[str] = Field(default_factory=list)
-    requalification_release_authorized: bool = False
+    requalification_release_authorization_id: str | None = None
 
 
 class PrimeMissionPackEvidence(BaseModel):
@@ -60,6 +60,20 @@ def post_mission_state(environment: PrimeEnvironment) -> PrimeCustodyState:
     if environment in HAZARDOUS_POST_MISSION_ENVIRONMENTS:
         return PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
     return PrimeCustodyState.READY
+
+
+def apply_post_mission_state(
+    record: PrimeConfigurationCustodyRecord,
+    environment: PrimeEnvironment,
+) -> PrimeConfigurationCustodyRecord:
+    return record.model_copy(
+        update={
+            "last_environment": environment,
+            "state": post_mission_state(environment),
+            "completed_requalification_checks": [],
+            "requalification_release_authorization_id": None,
+        }
+    )
 
 
 def missing_requalification_checks(record: PrimeConfigurationCustodyRecord) -> list[str]:
@@ -90,11 +104,26 @@ def evaluate_pack_activation(
                 "PRIME remains quarantined after hazardous/deep-environment service",
                 *[f"missing requalification check: {check}" for check in missing],
             ]
-        if not record.requalification_release_authorized:
+        if not record.requalification_release_authorization_id:
             return PrimeActivationDisposition.REQUALIFICATION_REQUIRED, [
-                "requalification evidence is complete but release from quarantine is not authorized"
+                "requalification evidence is complete but no release authorization record is present"
             ]
 
     return PrimeActivationDisposition.ACTIVATION_ALLOWED, [
         "pack authentication, compatibility, target qualification, requalification evidence, and authorization gates are satisfied"
     ]
+
+
+def release_from_quarantine(
+    record: PrimeConfigurationCustodyRecord,
+    pack: PrimeMissionPackEvidence,
+) -> tuple[PrimeConfigurationCustodyRecord, PrimeActivationDisposition, list[str]]:
+    disposition, reasons = evaluate_pack_activation(record, pack)
+    if disposition != PrimeActivationDisposition.ACTIVATION_ALLOWED:
+        return record, disposition, reasons
+
+    if record.state != PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION:
+        return record, disposition, reasons
+
+    released = record.model_copy(update={"state": PrimeCustodyState.READY})
+    return released, disposition, reasons
