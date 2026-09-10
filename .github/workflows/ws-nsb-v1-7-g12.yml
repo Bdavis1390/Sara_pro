@@ -1,0 +1,62 @@
+name: WS-NSB v1.7 G12 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g12_adaptive_lorentz_control.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g12_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g12_adaptive_lorentz_control.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_7_G12_ADAPTIVE_LORENTZ_CONTROL.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-7-g12.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g12_adaptive_lorentz_control.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g12_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g12_adaptive_lorentz_control.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_7_G12_ADAPTIVE_LORENTZ_CONTROL.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-7-g12.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  g12-adaptive-lorentz-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Run G12 test suite
+        run: python -m pytest tests/test_nsb_g12_adaptive_lorentz_control.py -q
+
+      - name: Execute and verify deterministic G12 report
+        run: |
+          rm -f ws_nsb_g12_report.json
+          ws-nsb-g12 --output ws_nsb_g12_report.json
+          ws-nsb-g12 --verify ws_nsb_g12_report.json
+
+      - name: Upload G12 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-nsb-v1-7-g12-report
+          path: deployments/sara_verified_local_v1/ws_nsb_g12_report.json
+          if-no-files-found: error
