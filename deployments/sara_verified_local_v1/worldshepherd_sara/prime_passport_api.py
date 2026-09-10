@@ -39,6 +39,14 @@ from .storage import DurableStore
 router = APIRouter(prefix="/admin/prime", tags=["prime-custody"])
 
 
+class _PassportNotFound(LookupError):
+    pass
+
+
+class _PassportAlreadyExists(ValueError):
+    pass
+
+
 def _store(request: Request) -> DurableStore:
     return request.app.state.store
 
@@ -53,19 +61,20 @@ def _sentinel_verifier(request: Request) -> PrimeSentinelVerifier:
     return verifier
 
 
-def _load_or_404(durable_store: DurableStore, prime_id: str) -> PrimeDigitalPassport:
-    try:
-        passport = load_passport(durable_store.get_registry(), prime_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=500, detail="PRIME passport registry validation failed") from exc
+def _load_from_registry(registry: dict[str, Any], prime_id: str) -> PrimeDigitalPassport:
+    passport = load_passport(registry, prime_id)
     if passport is None:
-        raise HTTPException(status_code=404, detail="PRIME passport not found")
+        raise _PassportNotFound(prime_id)
     return passport
 
 
-def _persist(durable_store: DurableStore, passport: PrimeDigitalPassport) -> None:
-    registry = durable_store.get_registry()
-    durable_store.patch_registry(passport_registry_patch(registry, passport))
+def _load_or_404(durable_store: DurableStore, prime_id: str) -> PrimeDigitalPassport:
+    try:
+        return _load_from_registry(durable_store.get_registry(), prime_id)
+    except _PassportNotFound as exc:
+        raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="PRIME passport registry validation failed") from exc
 
 
 def _append_provenance(
@@ -145,30 +154,35 @@ def create_prime_passport(
 ) -> dict[str, Any]:
     require_admin(role)
     durable_store = _store(request)
+
+    def operation(registry: dict[str, Any]):
+        if load_passport(registry, prime_id) is not None:
+            raise _PassportAlreadyExists(prime_id)
+        passport = create_passport(
+            prime_id=prime_id,
+            hardware_revision=body.hardware_revision,
+            software_revision=body.software_revision,
+            evidence_refs=body.evidence_refs,
+        )
+        payload = custody_provenance_payload(
+            transition_id=new_transition_id(),
+            prime_id=prime_id,
+            action="PASSPORT_CREATED",
+            previous_state="UNREGISTERED",
+            new_state=passport.custody.state.value,
+            evidence_refs=body.evidence_refs,
+            hardware_revision=body.hardware_revision,
+            software_revision=body.software_revision,
+        )
+        return passport_registry_patch(registry, passport), (passport, payload)
+
     try:
-        existing = load_passport(durable_store.get_registry(), prime_id)
+        passport, payload = durable_store.transact_registry(operation)
+    except _PassportAlreadyExists as exc:
+        raise HTTPException(status_code=409, detail="PRIME passport already exists") from exc
     except ValueError as exc:
         raise HTTPException(status_code=500, detail="PRIME passport registry validation failed") from exc
-    if existing is not None:
-        raise HTTPException(status_code=409, detail="PRIME passport already exists")
 
-    passport = create_passport(
-        prime_id=prime_id,
-        hardware_revision=body.hardware_revision,
-        software_revision=body.software_revision,
-        evidence_refs=body.evidence_refs,
-    )
-    _persist(durable_store, passport)
-    payload = custody_provenance_payload(
-        transition_id=new_transition_id(),
-        prime_id=prime_id,
-        action="PASSPORT_CREATED",
-        previous_state="UNREGISTERED",
-        new_state=passport.custody.state.value,
-        evidence_refs=body.evidence_refs,
-        hardware_revision=body.hardware_revision,
-        software_revision=body.software_revision,
-    )
     _append_provenance(durable_store, role, payload)
     return {"passport": passport.model_dump(mode="json"), "provenance": payload}
 
@@ -182,36 +196,46 @@ def complete_prime_mission(
 ) -> dict[str, Any]:
     require_admin(role)
     durable_store = _store(request)
-    passport = _load_or_404(durable_store, prime_id)
-    prior_authorization_id = passport.custody.requalification_release_authorization_id
-    updated, payload = complete_mission(passport, body)
-    registry = durable_store.get_registry()
+
+    def operation(registry: dict[str, Any]):
+        passport = _load_from_registry(registry, prime_id)
+        prior_authorization_id = passport.custody.requalification_release_authorization_id
+        updated, payload = complete_mission(passport, body)
+        supersession_error: str | None = None
+        try:
+            patch = _passport_with_superseded_authorization_patch(
+                registry,
+                prior_authorization_id=prior_authorization_id,
+                updated_passport=updated,
+                transition_id=payload["transition_id"],
+                reason="MISSION_COMPLETED",
+            )
+        except PrimeSentinelAuthorizationError as exc:
+            # Mission completion is safety-tightening. Persist quarantine even if
+            # authorization-ledger integrity is broken.
+            patch = passport_registry_patch(registry, updated)
+            supersession_error = str(exc)
+            payload["details"]["authorization_supersession"] = "FAILED_SAFE_QUARANTINE"
+        else:
+            if prior_authorization_id:
+                payload["details"]["superseded_authorization_id"] = prior_authorization_id
+        return patch, (updated, payload, prior_authorization_id, supersession_error)
 
     try:
-        patch = _passport_with_superseded_authorization_patch(
-            registry,
-            prior_authorization_id=prior_authorization_id,
-            updated_passport=updated,
-            transition_id=payload["transition_id"],
-            reason="MISSION_COMPLETED",
-        )
-    except PrimeSentinelAuthorizationError as exc:
-        # Mission completion is safety-tightening. Preserve quarantine even if the
-        # authorization ledger is inconsistent, and surface the integrity defect.
-        durable_store.patch_registry(passport_registry_patch(registry, updated))
+        updated, payload, prior_authorization_id, supersession_error = durable_store.transact_registry(operation)
+    except _PassportNotFound as exc:
+        raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="PRIME passport registry validation failed") from exc
+
+    if supersession_error:
         _append_sentinel_rejection(
             durable_store,
             role,
             prime_id=prime_id,
             authorization_id=prior_authorization_id,
-            reason=f"mission quarantine preserved; authorization supersession failed: {exc}",
+            reason=f"mission quarantine preserved; authorization supersession failed: {supersession_error}",
         )
-        payload["details"]["authorization_supersession"] = "FAILED_SAFE_QUARANTINE"
-    else:
-        durable_store.patch_registry(patch)
-        if prior_authorization_id:
-            payload["details"]["superseded_authorization_id"] = prior_authorization_id
-
     _append_provenance(durable_store, role, payload)
     return {"passport": updated.model_dump(mode="json"), "provenance": payload}
 
@@ -225,12 +249,13 @@ def patch_prime_requalification(
 ) -> dict[str, Any]:
     require_admin(role)
     durable_store = _store(request)
-    passport = _load_or_404(durable_store, prime_id)
-    prior_authorization_id = passport.custody.requalification_release_authorization_id
-    updated, payload = update_requalification_evidence(passport, body)
-    registry = durable_store.get_registry()
+    context: dict[str, str | None] = {"authorization_id": None}
 
-    try:
+    def operation(registry: dict[str, Any]):
+        passport = _load_from_registry(registry, prime_id)
+        prior_authorization_id = passport.custody.requalification_release_authorization_id
+        context["authorization_id"] = prior_authorization_id
+        updated, payload = update_requalification_evidence(passport, body)
         patch = _passport_with_superseded_authorization_patch(
             registry,
             prior_authorization_id=prior_authorization_id,
@@ -238,22 +263,29 @@ def patch_prime_requalification(
             transition_id=payload["transition_id"],
             reason="REQUALIFICATION_EVIDENCE_CHANGED",
         )
+        if prior_authorization_id:
+            payload["details"]["superseded_authorization_id"] = prior_authorization_id
+        return patch, (updated, payload)
+
+    try:
+        updated, payload = durable_store.transact_registry(operation)
+    except _PassportNotFound as exc:
+        raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
     except PrimeSentinelAuthorizationError as exc:
         _append_sentinel_rejection(
             durable_store,
             role,
             prime_id=prime_id,
-            authorization_id=prior_authorization_id,
+            authorization_id=context["authorization_id"],
             reason=f"requalification update rejected because authorization supersession failed: {exc}",
         )
         raise HTTPException(
             status_code=409,
             detail="PRIME SENTINEL authorization supersession failed",
         ) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="PRIME passport registry validation failed") from exc
 
-    durable_store.patch_registry(patch)
-    if prior_authorization_id:
-        payload["details"]["superseded_authorization_id"] = prior_authorization_id
     _append_provenance(durable_store, role, payload)
     return {"passport": updated.model_dump(mode="json"), "provenance": payload}
 
@@ -268,14 +300,19 @@ def authorize_prime_requalification(
     require_admin(role)
     durable_store = _store(request)
     verifier = _sentinel_verifier(request)
-    passport = _load_or_404(durable_store, prime_id)
 
-    try:
+    def operation(registry: dict[str, Any]):
+        passport = _load_from_registry(registry, prime_id)
         verified = verifier.verify(body)
         updated, payload = apply_verified_requalification_authorization(passport, verified)
-        registry = durable_store.get_registry()
-        auth_patch = verified_authorization_registry_patch(registry, verified)
-        passport_patch = passport_registry_patch(registry, updated)
+        patch = verified_authorization_registry_patch(registry, verified)
+        patch.update(passport_registry_patch(registry, updated))
+        return patch, (updated, payload)
+
+    try:
+        updated, payload = durable_store.transact_registry(operation)
+    except _PassportNotFound as exc:
+        raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
     except (PrimeSentinelAuthorizationError, ValueError) as exc:
         _append_sentinel_rejection(
             durable_store,
@@ -286,7 +323,6 @@ def authorize_prime_requalification(
         )
         raise HTTPException(status_code=403, detail="PRIME SENTINEL authorization rejected") from exc
 
-    durable_store.patch_registry({**passport_patch, **auth_patch})
     _append_provenance(durable_store, role, payload)
     return {"passport": updated.model_dump(mode="json"), "provenance": payload}
 
@@ -301,84 +337,128 @@ def activate_prime_pack(
     require_admin(role)
     durable_store = _store(request)
     verifier = request.app.state.prime_sentinel_verifier
-    passport = _load_or_404(durable_store, prime_id)
-    registry = durable_store.get_registry()
 
-    authorization_id = passport.custody.requalification_release_authorization_id
-    if passport.custody.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION and authorization_id:
-        if not verifier.configured:
-            _append_sentinel_rejection(
-                durable_store,
-                role,
-                prime_id=prime_id,
-                authorization_id=authorization_id,
-                reason="PRIME SENTINEL public-key verification is not configured",
-            )
-            return JSONResponse(
-                {"detail": "PRIME SENTINEL authorization cannot be revalidated"},
-                status_code=503,
-            )
-        try:
-            assert_recorded_authorization_usable(
-                registry,
-                authorization_id=authorization_id,
-                prime_id=prime_id,
-                target_environment=body.pack.target_environment,
-                verifier=verifier,
-            )
-        except PrimeSentinelAuthorizationError as exc:
-            _append_sentinel_rejection(
-                durable_store,
-                role,
-                prime_id=prime_id,
-                authorization_id=authorization_id,
-                reason=str(exc),
-            )
-            return JSONResponse(
-                {
-                    "disposition": PrimeActivationDisposition.REQUALIFICATION_REQUIRED.value,
-                    "reasons": [str(exc)],
-                    "passport": passport.model_dump(mode="json"),
-                },
-                status_code=409,
+    def operation(registry: dict[str, Any]):
+        passport = _load_from_registry(registry, prime_id)
+        authorization_id = passport.custody.requalification_release_authorization_id
+
+        if passport.custody.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION and authorization_id:
+            if not verifier.configured:
+                return None, (
+                    "VERIFIER_NOT_CONFIGURED",
+                    passport,
+                    authorization_id,
+                    None,
+                    None,
+                    None,
+                )
+            try:
+                assert_recorded_authorization_usable(
+                    registry,
+                    authorization_id=authorization_id,
+                    prime_id=prime_id,
+                    target_environment=body.pack.target_environment,
+                    verifier=verifier,
+                )
+            except PrimeSentinelAuthorizationError as exc:
+                return None, (
+                    "AUTHORIZATION_INVALID",
+                    passport,
+                    authorization_id,
+                    str(exc),
+                    None,
+                    None,
+                )
+
+        updated, disposition, reasons, payload = activate_pack(passport, body)
+        if disposition != PrimeActivationDisposition.ACTIVATION_ALLOWED:
+            return None, (
+                "DECISION_ONLY",
+                updated,
+                authorization_id,
+                None,
+                disposition,
+                (reasons, payload),
             )
 
-    updated, disposition, reasons, payload = activate_pack(passport, body)
+        patch = passport_registry_patch(registry, updated)
+        if authorization_id:
+            patch.update(
+                consumed_authorization_registry_patch(
+                    registry,
+                    authorization_id=authorization_id,
+                    transition_id=payload["transition_id"],
+                )
+            )
+        return patch, (
+            "ACTIVATED",
+            updated,
+            authorization_id,
+            None,
+            disposition,
+            (reasons, payload),
+        )
+
+    try:
+        state, passport, authorization_id, auth_error, disposition, decision = durable_store.transact_registry(operation)
+    except _PassportNotFound as exc:
+        raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
+    except PrimeSentinelAuthorizationError as exc:
+        _append_sentinel_rejection(
+            durable_store,
+            role,
+            prime_id=prime_id,
+            reason=str(exc),
+        )
+        return JSONResponse(
+            {"detail": "PRIME SENTINEL authorization consumption failed"},
+            status_code=409,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="PRIME passport registry validation failed") from exc
+
+    if state == "VERIFIER_NOT_CONFIGURED":
+        _append_sentinel_rejection(
+            durable_store,
+            role,
+            prime_id=prime_id,
+            authorization_id=authorization_id,
+            reason="PRIME SENTINEL public-key verification is not configured",
+        )
+        return JSONResponse(
+            {"detail": "PRIME SENTINEL authorization cannot be revalidated"},
+            status_code=503,
+        )
+
+    if state == "AUTHORIZATION_INVALID":
+        _append_sentinel_rejection(
+            durable_store,
+            role,
+            prime_id=prime_id,
+            authorization_id=authorization_id,
+            reason=auth_error or "authorization invalid",
+        )
+        return JSONResponse(
+            {
+                "disposition": PrimeActivationDisposition.REQUALIFICATION_REQUIRED.value,
+                "reasons": [auth_error or "authorization invalid"],
+                "passport": passport.model_dump(mode="json"),
+            },
+            status_code=409,
+        )
+
+    assert disposition is not None and decision is not None
+    reasons, payload = decision
     response: dict[str, Any] = {
         "disposition": disposition.value,
         "reasons": reasons,
-        "passport": updated.model_dump(mode="json"),
+        "passport": passport.model_dump(mode="json"),
         "provenance": payload,
     }
+    _append_provenance(durable_store, role, payload)
 
     if disposition == PrimeActivationDisposition.ACTIVATION_ALLOWED:
-        patch = passport_registry_patch(registry, updated)
-        if authorization_id:
-            try:
-                patch.update(
-                    consumed_authorization_registry_patch(
-                        registry,
-                        authorization_id=authorization_id,
-                        transition_id=payload["transition_id"],
-                    )
-                )
-            except PrimeSentinelAuthorizationError as exc:
-                _append_sentinel_rejection(
-                    durable_store,
-                    role,
-                    prime_id=prime_id,
-                    authorization_id=authorization_id,
-                    reason=str(exc),
-                )
-                return JSONResponse(
-                    {"detail": "PRIME SENTINEL authorization consumption failed"},
-                    status_code=409,
-                )
-        durable_store.patch_registry(patch)
-        _append_provenance(durable_store, role, payload)
         return JSONResponse(response, status_code=200)
-
-    _append_provenance(durable_store, role, payload)
     if disposition == PrimeActivationDisposition.REQUALIFICATION_REQUIRED:
         return JSONResponse(response, status_code=409)
     return JSONResponse(response, status_code=403)
