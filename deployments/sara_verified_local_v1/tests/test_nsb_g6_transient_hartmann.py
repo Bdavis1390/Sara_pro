@@ -4,8 +4,10 @@ import pytest
 
 from worldshepherd_sara.nsb_g6_transient_hartmann import (
     NSBG6Report,
+    _observed_order,
     integrate_transient_hartmann,
     run_nsb_g6_benchmark,
+    steady_hartmann_exact_velocity,
     transient_hartmann_exact_velocity,
     verify_nsb_g6_report,
 )
@@ -71,3 +73,19 @@ def test_claim_promotion_fails_closed(report):
 def test_invalid_even_grid_is_rejected():
     with pytest.raises(ValueError):
         integrate_transient_hartmann(hartmann=2.0, grid_size=32, dt=0.01, final_time=0.1)
+
+
+
+def test_sweep_requires_a_positive_magnetic_case():
+    with pytest.raises(ValueError, match="include a positive field case"):
+        run_nsb_g6_benchmark(sweep_hartmann=(0.0,))
+
+
+def test_observed_order_uses_the_effective_refinement_ratio():
+    assert _observed_order(25.0, 4.0, 2.5) == pytest.approx(2.0)
+
+
+def test_steady_reference_is_finite_for_large_hartmann_values():
+    assert steady_hartmann_exact_velocity(0.5, 1000.0) == pytest.approx(1e-6)
+    assert steady_hartmann_exact_velocity(-1.0, 1000.0) == pytest.approx(0.0)
+    assert steady_hartmann_exact_velocity(1.0, 1000.0) == pytest.approx(0.0)
