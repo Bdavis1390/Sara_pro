@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum, IntEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -64,7 +65,10 @@ class FrontierSafetyPolicy(BaseModel):
     deny_governing_policy_modification: bool = True
     deny_monitoring_suppression: bool = True
     deny_unbounded_agent_creation: bool = True
-    allow_f5_when_all_gates_pass: bool = False
+    # WS-FASA v1 has no policy switch that can authorize F5. Keeping this
+    # serialized field pinned to False makes attempts to enable it fail model
+    # validation rather than silently changing the execution boundary.
+    allow_f5_when_all_gates_pass: Literal[False] = False
 
 
 def evaluate_frontier_action(
@@ -116,8 +120,8 @@ def evaluate_frontier_action(
     ):
         denied.append("current independent review is required at this capability level")
 
-    if candidate.capability_level == CapabilityLevel.F5 and not policy.allow_f5_when_all_gates_pass:
-        denied.append("F5 execution is disabled by default policy")
+    if candidate.capability_level == CapabilityLevel.F5:
+        denied.append("F5 execution is disabled by WS-FASA v1 invariant")
 
     if denied:
         return FrontierDisposition.DENIED, denied
