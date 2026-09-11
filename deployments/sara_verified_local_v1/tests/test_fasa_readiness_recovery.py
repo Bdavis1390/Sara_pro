@@ -59,6 +59,19 @@ def _seed(store: DurableStore, records: dict[str, dict[str, object]]) -> None:
     store.patch_registry({FASA_EXECUTION_READINESS_REGISTRY_KEY: records})
 
 
+def test_pristine_recovery_is_read_only(tmp_path):
+    now = datetime(2026, 9, 11, 21, 15, tzinfo=timezone.utc)
+    store = DurableStore(tmp_path / "sara")
+
+    result = recover_execution_readiness_after_restart(store, now=now)
+
+    assert result.live_preserved == 0
+    assert result.consumed_preserved == 0
+    assert result.expired_tombstoned == 0
+    assert result.tombstones_retained == 0
+    assert store.get_registry() == {}
+
+
 def test_live_waiting_survives_restart_recovery(tmp_path):
     now = datetime(2026, 9, 11, 21, 20, tzinfo=timezone.utc)
     root = tmp_path / "sara"
@@ -82,7 +95,7 @@ def test_live_waiting_survives_restart_recovery(tmp_path):
     assert result.expired_tombstoned == 0
     registry = restarted.get_registry()
     assert registry[FASA_EXECUTION_READINESS_REGISTRY_KEY]["T-LIVE"]["status"] == "WAITING_ECHO"
-    assert registry[FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY] == {}
+    assert FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY not in registry
 
 
 def test_expired_waiting_moves_to_tombstone_and_recovery_is_idempotent(tmp_path):
@@ -180,7 +193,7 @@ def test_consumed_authority_is_preserved_and_never_resurrected(tmp_path):
     assert result.expired_tombstoned == 0
     registry = DurableStore(root).get_registry()
     assert registry[FASA_EXECUTION_READINESS_REGISTRY_KEY]["T-CONSUMED"]["status"] == "CONSUMED"
-    assert registry[FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY] == {}
+    assert FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY not in registry
 
 
 def test_expiry_tombstones_are_bounded_without_evicting_live_state(tmp_path):
