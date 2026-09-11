@@ -1,0 +1,54 @@
+name: Worldshepherd AGI Gate
+
+on:
+  pull_request:
+    paths:
+      - "config/ws_agi_gate_v1.json"
+      - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
+      - "evals/**"
+      - ".github/workflows/ws-agi-gate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "config/ws_agi_gate_v1.json"
+      - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
+      - "evals/**"
+      - ".github/workflows/ws-agi-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-agi-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate JSON configuration
+        run: python -m json.tool config/ws_agi_gate_v1.json >/dev/null
+
+      - name: Compile evaluator
+        run: python -m py_compile evals/ws_agi_gate.py evals/test_ws_agi_gate.py
+
+      - name: Run unit tests
+        run: python -m unittest discover -s evals -p 'test_*.py' -v
+
+      - name: Evaluate public frontier reference baseline
+        run: |
+          python evals/ws_agi_gate.py \
+            evals/baselines/public_frontier_reference_2026_03.json \
+            --config config/ws_agi_gate_v1.json \
+            --pretty > agi_gate_baseline_output.json
+          python - <<'PY'
+          import json
+          with open('agi_gate_baseline_output.json', encoding='utf-8') as f:
+              result = json.load(f)
+          assert result['intelligence_state'] == 'BELOW_AGI', result
+          print('Baseline correctly remains BELOW_AGI')
+          PY
