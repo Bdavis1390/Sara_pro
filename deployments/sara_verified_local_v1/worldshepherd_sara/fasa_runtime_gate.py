@@ -4,6 +4,12 @@ from datetime import datetime, timezone
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .event_outbox import (
+    SINK_ECHO,
+    SINK_SARA_AUDIT,
+    EventOutboxError,
+    queue_event_outbox_patch,
+)
 from .fasa import FrontierActionCandidate, FrontierDisposition, FrontierSafetyPolicy
 from .fasa_admission_evidence import FASAAdmissionEvidence, build_admission_evidence
 from .fasa_approval_lease import (
@@ -22,6 +28,9 @@ from .fasa_capability_registry import (
 from .storage import DurableStore
 
 
+FASA_ECHO_EVIDENCE_SCHEMA = "WS-FASA-ECHO-EVIDENCE-V1"
+
+
 class FASARuntimeGateError(ValueError):
     pass
 
@@ -37,6 +46,8 @@ class FASARuntimeDecision(BaseModel):
     evidence: FASAAdmissionEvidence | None = None
     approval_consumed: bool = False
     authorization_id: str | None = Field(default=None, min_length=1, max_length=128)
+    provenance_event_id: str | None = Field(default=None, min_length=1, max_length=200)
+    provenance_delivery: str = "NOT_REQUIRED"
 
 
 def _decision_time(value: datetime | None) -> datetime:
@@ -70,6 +81,34 @@ def verify_and_record_approval(
     return store.transact_registry(operation)
 
 
+def _fasa_echo_payload(
+    *,
+    candidate: FrontierActionCandidate,
+    policy: FrontierSafetyPolicy,
+    target_environment: str,
+    transition_id: str,
+    evidence: FASAAdmissionEvidence,
+    authorization_id: str,
+) -> dict[str, object]:
+    return {
+        "schema": FASA_ECHO_EVIDENCE_SCHEMA,
+        "transition_id": transition_id,
+        "decision_digest_sha256": evidence.decision_digest_sha256,
+        "disposition": evidence.disposition.value,
+        "authorization_id": authorization_id,
+        "evaluation_id": evidence.evaluation_id,
+        "model_id": candidate.model_id,
+        "model_version": candidate.model_version,
+        "capability_level": int(candidate.capability_level),
+        "policy_id": policy.policy_id,
+        "target_environment": target_environment,
+        "approval_consumed": True,
+        "provenance_enabled": candidate.provenance_enabled,
+        "overwatch_enabled": candidate.overwatch_enabled,
+        "assessed_at": evidence.assessed_at.isoformat(),
+    }
+
+
 def admit_frontier_action_transactionally(
     store: DurableStore,
     *,
@@ -83,10 +122,15 @@ def admit_frontier_action_transactionally(
 ) -> FASARuntimeDecision:
     """Admit against durable capability state and consume approval before execution.
 
-    Capability custody, approval-state validation, the admission decision, and
-    approval consumption occur while one DurableStore registry transaction holds
-    the store lock. An approval-gated ALLOW consumes its verified lease before the
-    caller can proceed, so concurrent replay attempts cannot both receive ALLOW.
+    Capability custody, approval-state validation, the admission decision,
+    approval consumption, and the durable provenance-delivery obligation occur
+    while one DurableStore registry transaction holds the store lock.
+
+    For an approval-gated ALLOW, SARA commits both the VERIFIED->CONSUMED approval
+    transition and an outbox event requiring SARA_AUDIT plus ECHO. If the outbox
+    obligation cannot be queued, the action is denied and the approval remains
+    unconsumed. Delivery to ECHO is at-least-once and occurs after this registry
+    transaction; cross-store atomic delivery is not claimed.
 
     When an approval lease is supplied, verification uses only SARA's configured
     PRIME SENTINEL public-key trust root; the caller cannot substitute a verifier.
@@ -152,14 +196,62 @@ def admit_frontier_action_transactionally(
         patch = None
         approval_consumed = False
         authorization_id = verified.authorization_id if verified else None
+        provenance_event_id = None
+        provenance_delivery = "NOT_REQUIRED"
+
         if disposition == FrontierDisposition.ALLOW and verified is not None:
-            patch = consumed_approval_registry_patch(
+            consumed_patch = consumed_approval_registry_patch(
                 snapshot,
                 authorization_id=verified.authorization_id,
                 transition_id=transition_id,
                 consumed_at=decision_time,
             )
+            working = dict(snapshot)
+            working.update(consumed_patch)
+            try:
+                outbox_patch, provenance_event_id = queue_event_outbox_patch(
+                    working,
+                    event="fasa_admission_decision",
+                    actor="SARA_FASA_RUNTIME",
+                    payload=_fasa_echo_payload(
+                        candidate=candidate,
+                        policy=policy,
+                        target_environment=target_environment,
+                        transition_id=transition_id,
+                        evidence=evidence,
+                        authorization_id=verified.authorization_id,
+                    ),
+                    required_sinks=(SINK_SARA_AUDIT, SINK_ECHO),
+                )
+            except EventOutboxError as exc:
+                denied_reasons = tuple(reasons) + (
+                    f"required FASA provenance obligation could not be queued: {exc}",
+                )
+                denied_evidence = build_admission_evidence(
+                    candidate,
+                    registry_entry,
+                    policy,
+                    FrontierDisposition.DENIED,
+                    denied_reasons,
+                    verified_approval=verified,
+                    assessed_at=decision_time,
+                )
+                decision = FASARuntimeDecision(
+                    transition_id=transition_id,
+                    disposition=FrontierDisposition.DENIED,
+                    reasons=denied_reasons,
+                    evidence=denied_evidence,
+                    approval_consumed=False,
+                    authorization_id=verified.authorization_id,
+                    provenance_event_id=None,
+                    provenance_delivery="FAILED_CLOSED",
+                )
+                return None, decision
+
+            patch = dict(consumed_patch)
+            patch.update(outbox_patch)
             approval_consumed = True
+            provenance_delivery = "PENDING_REQUIRED_SINKS"
 
         decision = FASARuntimeDecision(
             transition_id=transition_id,
@@ -168,6 +260,8 @@ def admit_frontier_action_transactionally(
             evidence=evidence,
             approval_consumed=approval_consumed,
             authorization_id=authorization_id,
+            provenance_event_id=provenance_event_id,
+            provenance_delivery=provenance_delivery,
         )
         return patch, decision
 
