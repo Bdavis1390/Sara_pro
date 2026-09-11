@@ -46,11 +46,22 @@ def _decision_time(value: datetime | None) -> datetime:
     return current.astimezone(timezone.utc)
 
 
-def record_verified_approval(
+def verify_and_record_approval(
     store: DurableStore,
-    verified: VerifiedFASAApproval,
+    *,
+    lease: FASAApprovalLease,
+    now: datetime | None = None,
 ) -> VerifiedFASAApproval:
-    """Record a verified PRIME approval under the protected namespace atomically."""
+    """Verify against the configured PRIME trust root, then record atomically.
+
+    The caller cannot provide an alternate verifier. The FASA verifier is built
+    from SARA's configured PRIME SENTINEL public-key environment, keeping the
+    protected approval namespace bound to the process trust configuration.
+    """
+
+    verified_at = _decision_time(now)
+    verifier = PrimeSentinelFASAApprovalVerifier.from_environment()
+    verified = verifier.verify(lease, now=verified_at)
 
     def operation(snapshot):
         patch = verified_approval_registry_patch(snapshot, verified)
@@ -68,7 +79,6 @@ def admit_frontier_action_transactionally(
     transition_id: str,
     assurance: FASAAssuranceEvidence | None = None,
     lease: FASAApprovalLease | None = None,
-    verifier: PrimeSentinelFASAApprovalVerifier | None = None,
     now: datetime | None = None,
 ) -> FASARuntimeDecision:
     """Admit against durable capability state and consume approval before execution.
@@ -78,8 +88,10 @@ def admit_frontier_action_transactionally(
     the store lock. An approval-gated ALLOW consumes its verified lease before the
     caller can proceed, so concurrent replay attempts cannot both receive ALLOW.
 
-    This function only performs admission control. It does not execute an
-    external operation.
+    When an approval lease is supplied, verification uses only SARA's configured
+    PRIME SENTINEL public-key trust root; the caller cannot substitute a verifier.
+    This function performs admission control only and does not execute an external
+    operation.
     """
 
     if not transition_id or len(transition_id) > 128:
@@ -91,6 +103,11 @@ def admit_frontier_action_transactionally(
 
     decision_time = _decision_time(now)
     assurance = assurance or FASAAssuranceEvidence()
+    verifier = (
+        PrimeSentinelFASAApprovalVerifier.from_environment()
+        if lease is not None
+        else None
+    )
 
     def operation(snapshot):
         try:
