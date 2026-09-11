@@ -7,6 +7,7 @@ on:
       - "config/ws_economic_battery_v1.json"
       - "config/ws_transfer_eval_v1.json"
       - "config/ws_reliability_eval_v1.json"
+      - "config/ws_replication_eval_v1.json"
       - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
       - "evals/**"
       - ".github/workflows/ws-agi-gate.yml"
@@ -17,6 +18,7 @@ on:
       - "config/ws_economic_battery_v1.json"
       - "config/ws_transfer_eval_v1.json"
       - "config/ws_reliability_eval_v1.json"
+      - "config/ws_replication_eval_v1.json"
       - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
       - "evals/**"
       - ".github/workflows/ws-agi-gate.yml"
@@ -42,21 +44,27 @@ jobs:
           python -m json.tool config/ws_economic_battery_v1.json >/dev/null
           python -m json.tool config/ws_transfer_eval_v1.json >/dev/null
           python -m json.tool config/ws_reliability_eval_v1.json >/dev/null
+          python -m json.tool config/ws_replication_eval_v1.json >/dev/null
 
       - name: Compile evaluator and adapters
         run: |
           python -m py_compile \
             evals/ws_agi_gate.py \
             evals/build_gate_bundle.py \
+            evals/echo_provenance.py \
+            evals/overwatch_snapshot.py \
             evals/adapters/arc_agi_3.py \
             evals/adapters/metr_time_horizon.py \
             evals/adapters/economic_battery.py \
             evals/adapters/transfer_eval.py \
             evals/adapters/reliability_eval.py \
+            evals/adapters/replication_eval.py \
             evals/test_ws_agi_gate.py \
             evals/test_agi_adapters.py \
             evals/test_gate_bundle.py \
-            evals/test_transfer_reliability_adapters.py
+            evals/test_transfer_reliability_adapters.py \
+            evals/test_replication_eval.py \
+            evals/test_provenance_overwatch.py
 
       - name: Run unit tests
         run: python -m unittest discover -s evals -p 'test_*.py' -v
@@ -76,3 +84,6 @@ jobs:
             --config config/ws_agi_gate_v1.json \
             --pretty > astra_arc_output.json
           python -c "import json; r=json.load(open('astra_arc_output.json')); assert r['intelligence_state']=='BELOW_AGI'; print('Astra ARC reference remains BELOW_AGI under the multi-lane gate')"
+
+      - name: Render OVERWATCH baseline snapshot
+        run: python evals/overwatch_snapshot.py astra_arc_output.json --format markdown > overwatch_snapshot.md
