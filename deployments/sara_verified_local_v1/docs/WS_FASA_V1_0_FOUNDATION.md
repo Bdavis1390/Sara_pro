@@ -10,9 +10,22 @@ Core invariant:
 
 This is an engineering readiness baseline. It is not a certification or a guarantee of safety.
 
-## Phase-1 implementation
+## Current implementation
 
-The initial `worldshepherd_sara.fasa` module provides a six-level capability ladder, a version-bound capability registry record, a fail-closed policy evaluator, mandatory provenance and monitoring gates, human-approval escalation, and a default prohibition on the highest-risk capability class.
+The current feature-branch implementation includes:
+
+1. A six-level capability ladder and fail-closed policy evaluator.
+2. Version-bound capability-registry records with an invariant that authorization cannot exceed assessed capability.
+3. An authoritative protected capability-registry namespace in durable SARA state.
+4. PRIME SENTINEL Ed25519 approval leases bound to model/version, capability level, action, target environment, policy, evaluation, assurance evidence, expiry, signer, and nonce.
+5. Short approval lifetimes with F5 approval leases disabled.
+6. A protected approval-state namespace with VERIFIED-to-CONSUMED transitions and replay resistance.
+7. A transactional runtime admission gate that reads authoritative capability state, evaluates the action, and consumes any required approval before returning ALLOW.
+8. Tamper-evident admission evidence containing the decision inputs, disposition, reasons, approval identity, provenance/monitoring state, and a SHA-256 decision digest.
+9. Generic administrative registry writes are blocked from mutating FASA capability or approval namespaces.
+10. F5 execution is an immutable WS-FASA v1 denial rather than a configurable policy option.
+
+The runtime gate performs admission control only. It does not itself execute an external operation.
 
 ## Capability ladder
 
@@ -21,57 +34,68 @@ The initial `worldshepherd_sara.fasa` module provides a six-level capability lad
 | F0 | Text/reasoning only | Bounded execution |
 | F1 | Read-only tools/data | Logged, scoped access |
 | F2 | Reversible bounded tool actions | Automatic eligibility only when all gates pass |
-| F3 | Consequential external action | Human approval required |
-| F4 | Persistent or high-risk autonomous capability | Human approval plus current safety case and independent review |
-| F5 | Capability with potentially catastrophic consequences | DENY by default |
+| F3 | Consequential external action | Verified human/PRIME approval required |
+| F4 | Persistent or high-risk autonomous capability | Approval plus current safety case and independent review |
+| F5 | Capability with potentially catastrophic consequences | DENY invariant in WS-FASA v1 |
 
 ## Implemented invariants
 
-1. Model identity and version must match the capability registry.
+1. Model identity and version must match the authoritative capability registry.
 2. Capability evaluation must be current.
-3. Requested capability cannot exceed assessed or authorized levels.
-4. Required ECHO provenance must remain enabled.
-5. Required OVERWATCH monitoring must remain enabled.
-6. Self-authorization is denied.
-7. AI-directed modification of governing safety policy is denied.
-8. Monitoring suppression is denied.
-9. Unbounded agent creation is denied.
-10. F4 and above require a current safety case and independent review.
-11. F5 remains disabled by default.
+3. Maximum authorized capability cannot exceed assessed capability.
+4. Requested capability cannot exceed assessed or authorized levels.
+5. Required ECHO provenance must remain enabled.
+6. Required OVERWATCH monitoring must remain enabled.
+7. Self-authorization is denied.
+8. AI-directed modification of governing safety policy is denied.
+9. Monitoring suppression is denied.
+10. Unbounded agent creation is denied.
+11. F4 requires a current safety case and independent review.
+12. Approval-gated ALLOW decisions require a valid PRIME-signed lease bound to the exact action and active evaluation context.
+13. Approval state is consumed transactionally before an approval-gated ALLOW is returned.
+14. FASA capability and approval namespaces cannot be changed through the generic administrative registry endpoint.
+15. F5 execution and F5 approval leases are disabled by WS-FASA v1 invariant.
 
 ## Separation of authority
 
 ```text
 Human authority
-    -> PRIME policy authorization
-    -> SARA bounded execution
+    -> PRIME policy / approval trust root
+    -> authoritative FASA capability state
+    -> SARA transactional admission gate
     -> ECHO evidence/provenance
     -> OVERWATCH independent monitoring
     -> continue / constrain / contain / terminate
 ```
 
-The evaluated model must not possess unilateral authority over policy, evidence custody, independent monitoring, or its own promotion state.
+The evaluated model must not possess unilateral authority over policy, approval issuance, capability-evaluation custody, evidence custody, independent monitoring, or its own promotion state.
+
+## Validation state
+
+The WS-FASA feature branch has passed the repository's SARA Verified Local v1 CI gate after the runtime-custody additions. That gate includes unit/API testing, software-supply-chain evidence generation, PRE qualification generation, Compose validation, deployment verification, destructive backup/restore exercise, operational snapshot capture, release-identity verification, and release-evidence indexing.
+
+This supports an internal software-implementation claim. It does not convert CI evidence into external certification, formal verification, or field validation.
 
 ## Claims boundary
 
-After the branch is tested, the narrow claim is:
+Supported narrow claim:
 
-> IMPLEMENTED IN SOFTWARE — frontier-capability classification and fail-closed policy-evaluation prototype.
+> IMPLEMENTED IN SOFTWARE — fail-closed frontier-capability classification, protected capability custody, PRIME-bound approval leases, transactional approval consumption, and tamper-evident admission-decision evidence have been implemented and exercised in repository CI.
 
-Not claimed: prevention of catastrophic outcomes, proof of alignment, independent third-party validation, production-grade key custody, immutable external evidence retention, formal certification, or safe F5 execution.
+Not claimed: prevention of catastrophic outcomes, proof of alignment, independent third-party validation, production-grade external key custody, immutable off-system evidence retention, field validation, formal certification, or safe F5 execution.
 
 ## Next gates
 
-Phase 2: short-lived capability leases with scope, expiry, resource ceilings, and revocation.
+Phase 4: bind every FASA admission decision and approval-consumption transition into the ECHO signed evidence chain, including decision digest, transition ID, authorization ID, capability evaluation ID, and release identity.
 
-Phase 3: enforcement in the SARA execution path.
+Phase 5: independent OVERWATCH tripwires and deterministic containment-state transitions whose authority cannot be suppressed by the evaluated model.
 
-Phase 4: independent OVERWATCH tripwires and deterministic containment-state transitions.
+Phase 6: governed capability-evaluation ingestion with independently attributable evaluator identity and signed/attested evaluation provenance.
 
-Phase 5: bind FASA decisions and containment events into the ECHO signed evidence chain.
+Phase 7: adversarial evaluation of policy adherence, privilege boundaries, approval replay resistance, persistence behavior, monitoring integrity, evidence integrity, and out-of-distribution behavior.
 
-Phase 6: adversarial evaluation of policy adherence, privilege boundaries, persistence behavior, monitoring integrity, and out-of-distribution behavior.
+Phase 8: independent external review before any claim of production safety assurance or certification readiness.
 
 ## Promotion rule
 
-A capability level is never inherited automatically by a new model version. Every version requires its own registry entry, current evaluation evidence, and authorization ceiling.
+A capability level is never inherited automatically by a new model version. Every version requires its own authoritative registry entry, current evaluation evidence, and authorization ceiling. A changed evaluation receives a new evaluation identifier and cannot silently reuse the prior evaluation identity.
