@@ -21,6 +21,7 @@ from worldshepherd_sara.echo_checkpoint_anchor import (
     verify_anchor_receipt,
     verify_anchor_request,
 )
+from worldshepherd_sara.echo_checkpoint_anchor_cli import main as anchor_cli_main
 from worldshepherd_sara.echo_event_store import EchoEventStore
 from worldshepherd_sara.models import AuditRecord
 
@@ -264,3 +265,40 @@ def test_external_readback_rejects_different_provider_document(tmp_path, echo_ch
             provider_reference="https://github.com/example/repo/blob/ref/anchor.json",
             observed_at="2026-09-11T01:47:00+00:00",
         )
+
+
+def test_cli_verify_requires_and_checks_evidence_artifact(tmp_path, echo_checkpoint_key):
+    key, _path = echo_checkpoint_key
+    bundle, fingerprint = _checkpoint(tmp_path, key)
+    request = build_anchor_request(bundle, fingerprint)
+    evidence = build_test_anchor_evidence(
+        request,
+        provider_reference="test://echo-anchor/cli",
+        observed_at="2026-09-11T01:48:00+00:00",
+    )
+    receipt = build_anchor_receipt(
+        request,
+        evidence,
+        expected_provider=TEST_PROVIDER,
+        expected_mode=TEST_PROVIDER_MODE,
+    )
+    checkpoint_path = tmp_path / "checkpoint.json"
+    evidence_path = tmp_path / "evidence.json"
+    receipt_path = tmp_path / "receipt.json"
+    output_path = tmp_path / "verified.json"
+    checkpoint_path.write_text(json.dumps(bundle), encoding="utf-8")
+    evidence_path.write_text(json.dumps(evidence), encoding="utf-8")
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    assert anchor_cli_main([
+        "verify",
+        "--checkpoint", str(checkpoint_path),
+        "--evidence", str(evidence_path),
+        "--receipt", str(receipt_path),
+        "--expected-fingerprint", fingerprint,
+        "--expected-provider", TEST_PROVIDER,
+        "--expected-mode", TEST_PROVIDER_MODE,
+        "--output", str(output_path),
+    ]) == 0
+    verified = json.loads(output_path.read_text(encoding="utf-8"))
+    assert verified["status"] == "PASS"
+    assert verified["evidence_sha256"] == evidence["evidence_sha256"]
