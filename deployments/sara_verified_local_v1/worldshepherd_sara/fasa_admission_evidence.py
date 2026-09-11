@@ -60,6 +60,20 @@ def _utc_iso(value: datetime) -> str:
     return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _approval_required(
+    candidate: FrontierActionCandidate, policy: FrontierSafetyPolicy
+) -> bool:
+    return bool(
+        candidate.capability_level >= policy.human_review_level
+        or candidate.capability_level > policy.maximum_automatic_level
+        or (policy.require_human_for_irreversible and not candidate.reversible)
+        or (
+            policy.require_human_for_consequential_external_effect
+            and candidate.consequential_external_effect
+        )
+    )
+
+
 def _canonical_payload(
     *,
     action_id: str,
@@ -138,10 +152,10 @@ def build_admission_evidence(
         verified_approval.independent_review_id if verified_approval else None
     )
 
-    if disposition == FrontierDisposition.ALLOW and candidate.capability_level >= policy.human_review_level:
+    if disposition == FrontierDisposition.ALLOW and _approval_required(candidate, policy):
         if verified_approval is None:
             raise FASAAdmissionEvidenceError(
-                "ALLOW at or above the human-review level requires verified approval evidence"
+                "ALLOW for an approval-gated candidate requires verified approval evidence"
             )
         if (
             verified_approval.model_id != candidate.model_id
