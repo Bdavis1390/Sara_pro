@@ -4,6 +4,7 @@
 The controller is model/provider agnostic. It accepts planner, tool, and verifier
 callbacks supplied by the host application. Tool access is deny-by-default through
 an explicit allowlist, and selected tools can require human approval before use.
+Planner, tool, and verifier exceptions are preserved as structured run evidence.
 """
 
 from __future__ import annotations
@@ -68,8 +69,12 @@ Tool = Callable[..., Any]
 ApprovalCheck = Callable[[TaskContract, Action], bool]
 
 
+def _error_payload(exc: Exception) -> Dict[str, str]:
+    return {"error": type(exc).__name__, "message": str(exc)}
+
+
 class DeliberativeController:
-    """Execute a task under explicit tool, approval, and step boundaries."""
+    """Execute a task under explicit tool, approval, verification, and step boundaries."""
 
     def __init__(
         self,
@@ -87,7 +92,39 @@ class DeliberativeController:
         trace: List[StepRecord] = []
 
         for step_number in range(1, contract.max_steps + 1):
-            action = self.planner(contract, list(trace))
+            try:
+                action = self.planner(contract, list(trace))
+            except Exception as exc:
+                record = StepRecord(
+                    step=step_number,
+                    action=Action(tool="__planner_error__", arguments={}),
+                    tool_result=_error_payload(exc),
+                    status="PLANNER_ERROR",
+                )
+                trace.append(record)
+                return RunResult(
+                    task_id=contract.task_id,
+                    status="PLANNER_ERROR",
+                    steps=trace,
+                    final_result=record.tool_result,
+                    final_feedback=f"planner failed: {type(exc).__name__}: {exc}",
+                )
+            if not isinstance(action, Action):
+                record = StepRecord(
+                    step=step_number,
+                    action=Action(tool="__planner_contract_error__", arguments={}),
+                    tool_result={"error": "TypeError", "message": "planner must return Action"},
+                    status="PLANNER_ERROR",
+                )
+                trace.append(record)
+                return RunResult(
+                    task_id=contract.task_id,
+                    status="PLANNER_ERROR",
+                    steps=trace,
+                    final_result=record.tool_result,
+                    final_feedback="planner must return Action",
+                )
+
             record = StepRecord(step=step_number, action=action)
 
             if action.tool not in contract.allowed_tools:
@@ -111,7 +148,20 @@ class DeliberativeController:
                 )
 
             if action.tool in contract.approval_required_tools:
-                if not self.approval_check(contract, action):
+                try:
+                    approved = bool(self.approval_check(contract, action))
+                except Exception as exc:
+                    record.status = "APPROVAL_CHECK_ERROR"
+                    record.tool_result = _error_payload(exc)
+                    trace.append(record)
+                    return RunResult(
+                        task_id=contract.task_id,
+                        status="APPROVAL_CHECK_ERROR",
+                        steps=trace,
+                        final_result=record.tool_result,
+                        final_feedback=f"approval check failed: {type(exc).__name__}: {exc}",
+                    )
+                if not approved:
                     record.status = "APPROVAL_REQUIRED"
                     trace.append(record)
                     return RunResult(
@@ -123,8 +173,8 @@ class DeliberativeController:
 
             try:
                 result = self.tools[action.tool](**action.arguments)
-            except Exception as exc:  # host tool failures are evidence, not silent success
-                record.tool_result = {"error": type(exc).__name__, "message": str(exc)}
+            except Exception as exc:
+                record.tool_result = _error_payload(exc)
                 verification = Verification(
                     success=False,
                     recoverable=True,
@@ -132,9 +182,38 @@ class DeliberativeController:
                 )
             else:
                 record.tool_result = result
-                verification = self.verifier(contract, action, result, list(trace))
+                try:
+                    verification = self.verifier(contract, action, result, list(trace))
+                except Exception as exc:
+                    record.status = "VERIFIER_ERROR"
+                    record.verification = Verification(
+                        success=False,
+                        recoverable=False,
+                        feedback=f"verifier failed: {type(exc).__name__}: {exc}",
+                    )
+                    trace.append(record)
+                    return RunResult(
+                        task_id=contract.task_id,
+                        status="VERIFIER_ERROR",
+                        steps=trace,
+                        final_result=record.tool_result,
+                        final_feedback=record.verification.feedback,
+                    )
                 if not isinstance(verification, Verification):
-                    raise TypeError("verifier must return Verification")
+                    record.status = "VERIFIER_ERROR"
+                    record.verification = Verification(
+                        success=False,
+                        recoverable=False,
+                        feedback="verifier must return Verification",
+                    )
+                    trace.append(record)
+                    return RunResult(
+                        task_id=contract.task_id,
+                        status="VERIFIER_ERROR",
+                        steps=trace,
+                        final_result=record.tool_result,
+                        final_feedback=record.verification.feedback,
+                    )
 
             record.verification = verification
             record.status = "SUCCESS" if verification.success else "NEEDS_REPAIR"
