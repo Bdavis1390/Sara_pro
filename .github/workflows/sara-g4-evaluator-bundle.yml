@@ -1,0 +1,128 @@
+name: SARA G4 Evaluator Bundle Rehearsal
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/rmabm_external_evaluation.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/rmabm.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qualification.py'
+      - 'deployments/sara_verified_local_v1/tools/rmabm_external_evaluation.py'
+      - 'deployments/sara_verified_local_v1/tools/build_g4_evaluator_bundle.py'
+      - 'deployments/sara_verified_local_v1/tests/test_rmabm_external_evaluation.py'
+      - 'deployments/sara_verified_local_v1/requirements-g4-evaluator.txt'
+      - 'docs/golden_dome/GD-10_G4_EXTERNAL_REPRODUCTION_PROTOCOL.md'
+      - 'docs/golden_dome/GD-11_G4_EXTERNAL_EVALUATION_SCORECARD.md'
+      - 'docs/golden_dome/GD-13_G4_EVALUATOR_HANDOFF.md'
+      - '.github/workflows/sara-g4-evaluator-bundle.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/rmabm_external_evaluation.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/rmabm.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qualification.py'
+      - 'deployments/sara_verified_local_v1/tools/rmabm_external_evaluation.py'
+      - 'deployments/sara_verified_local_v1/tools/build_g4_evaluator_bundle.py'
+      - 'deployments/sara_verified_local_v1/tests/test_rmabm_external_evaluation.py'
+      - 'deployments/sara_verified_local_v1/requirements-g4-evaluator.txt'
+      - 'docs/golden_dome/GD-10_G4_EXTERNAL_REPRODUCTION_PROTOCOL.md'
+      - 'docs/golden_dome/GD-11_G4_EXTERNAL_EVALUATION_SCORECARD.md'
+      - 'docs/golden_dome/GD-13_G4_EVALUATOR_HANDOFF.md'
+      - '.github/workflows/sara-g4-evaluator-bundle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-rehearse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install evaluator-only pinned dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -r requirements-g4-evaluator.txt
+          python -m pip check
+
+      - name: Build minimal review-gated evaluator bundle
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          BUNDLE="$RUNNER_TEMP/w-rmabm-g4-evaluator-bundle"
+          python tools/build_g4_evaluator_bundle.py --output "$BUNDLE" > "$RUNNER_TEMP/g4-bundle-build.json"
+          test -f "$BUNDLE/MANIFEST.json"
+          test -f "$BUNDLE/README_EVALUATOR.md"
+          echo "BUNDLE=$BUNDLE" >> "$GITHUB_ENV"
+
+      - name: Execute focused tests from bundle only
+        run: |
+          cd "$BUNDLE"
+          env -u PYTHONPATH PYTHONPATH="$BUNDLE" python -m pytest -q tests/test_rmabm_external_evaluation.py
+
+      - name: Run synthetic rehearsal and record resource use
+        run: |
+          cd "$BUNDLE"
+          env -u PYTHONPATH PYTHONPATH="$BUNDLE" /usr/bin/time -v -o "$RUNNER_TEMP/g4-resource-usage.txt" \
+            python tools/rmabm_external_evaluation.py \
+              --challenge-id ci-resource-rehearsal \
+              --seed 424242 \
+              --output "$RUNNER_TEMP/g4-rehearsal-result.json"
+          {
+            echo "repository=$GITHUB_REPOSITORY"
+            echo "commit=$GITHUB_SHA"
+            uname -a
+            python --version
+            python -m pip freeze --all | sort
+            du -sb "$BUNDLE"
+          } > "$RUNNER_TEMP/g4-environment.txt"
+
+      - name: Verify bundle manifest accounting
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          bundle = Path(os.environ['BUNDLE'])
+          manifest = json.loads((bundle / 'MANIFEST.json').read_text(encoding='utf-8'))
+          artifacts = manifest['artifacts']
+          assert manifest['artifact_count'] == len(artifacts)
+          assert manifest['total_bytes'] == sum(item['byte_count'] for item in artifacts)
+          assert manifest['total_lines'] == sum(item['line_count'] for item in artifacts)
+          assert manifest['source_revision'] != 'UNKNOWN'
+          assert all(len(item['sha256']) == 64 for item in artifacts)
+          print(json.dumps({
+              'artifact_count': manifest['artifact_count'],
+              'total_bytes': manifest['total_bytes'],
+              'total_lines': manifest['total_lines'],
+              'bundle_content_sha256': manifest['bundle_content_sha256'],
+              'source_revision': manifest['source_revision'],
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload internal pre-release rehearsal evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: w-rmabm-g4-evaluator-pre-release-${{ github.sha }}
+          path: |
+            ${{ env.BUNDLE }}
+            ${{ runner.temp }}/g4-bundle-build.json
+            ${{ runner.temp }}/g4-resource-usage.txt
+            ${{ runner.temp }}/g4-environment.txt
+            ${{ runner.temp }}/g4-rehearsal-result.json
+          if-no-files-found: error
+          retention-days: 14
