@@ -46,9 +46,6 @@ fi
 
 git_head="$(git rev-parse HEAD 2>/dev/null || echo unknown)"
 
-# Build a live inventory from every Git-tracked file in this deployment subtree.
-# This supersedes the historical static file-hash list in MANIFEST.json and binds
-# deployment evidence to the files actually present at the tested commit.
 tracked_files_sha256="$(
   python3 - "$evidence_dir/tracked-files.json" <<'PY_TRACKED'
 import hashlib
@@ -179,12 +176,16 @@ curl --fail --silent --show-error -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}"
   "${base_url}/admin/registry" | tee "${evidence_dir}/registry.after-restart.json" | grep -q "SARA_CORE"
 scripts/admin_smoke_test.sh | tee "${evidence_dir}/smoke.after-restart.log"
 
-# Protected CI must prove PRIME SENTINEL as a separately deployed signer, not
-# merely as in-process Python logic. Local operators may opt in explicitly.
 if [[ "${GITHUB_ACTIONS:-}" == "true" || "${VERIFY_PRIME_SENTINEL_INTEGRATION:-0}" == "1" ]]; then
   PRIME_SENTINEL_EVIDENCE_FILE="${evidence_dir}/prime-sentinel-integration.json" \
     bash scripts/verify_prime_sentinel_integration.sh \
     | tee "${evidence_dir}/prime-sentinel-integration.log"
+fi
+
+if [[ "${GITHUB_ACTIONS:-}" == "true" || "${VERIFY_ECHO_PERSISTENCE_INTEGRATION:-0}" == "1" ]]; then
+  ECHO_PERSISTENCE_EVIDENCE_FILE="${evidence_dir}/echo-persistence-integration.json" \
+    bash scripts/verify_echo_persistence_integration.sh \
+    | tee "${evidence_dir}/echo-persistence-integration.log"
 fi
 
 if ! wait_for_healthy; then
