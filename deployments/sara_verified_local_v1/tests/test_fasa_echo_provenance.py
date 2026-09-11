@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from worldshepherd_sara import event_outbox as event_outbox_module
@@ -31,7 +32,11 @@ from worldshepherd_sara.fasa_approval_lease import (
 from worldshepherd_sara.fasa_capability_registry import capability_registry_patch
 from worldshepherd_sara.fasa_runtime_gate import (
     FASA_ECHO_EVIDENCE_SCHEMA,
+    FASA_EXECUTION_READINESS_REGISTRY_KEY,
+    FASARuntimeGateError,
+    acknowledge_echo_and_confirm_execution_readiness,
     admit_frontier_action_transactionally,
+    consume_execution_readiness,
     verify_and_record_approval,
 )
 from worldshepherd_sara.storage import DurableStore
@@ -246,3 +251,70 @@ def test_outbox_capacity_failure_denies_and_leaves_approval_verified(
     approval = registry[FASA_APPROVAL_REGISTRY_KEY]["AUTH-FASA-ECHO-001"]
     assert approval["status"] == "VERIFIED"
     assert EVENT_OUTBOX_REGISTRY_KEY not in registry
+
+
+def test_echo_hold_requires_both_sinks_and_readiness_is_single_use(
+    tmp_path, fasa_prime_signing_key
+):
+    now = datetime(2026, 9, 11, 20, 20, tzinfo=timezone.utc)
+    store = DurableStore(tmp_path / "sara")
+    _install(store)
+    lease = _lease(fasa_prime_signing_key, now)
+    verify_and_record_approval(store, lease=lease, now=now + timedelta(seconds=1))
+
+    decision = admit_frontier_action_transactionally(
+        store,
+        candidate=_candidate(),
+        policy=FrontierSafetyPolicy(
+            policy_id="WS-FASA-ECHO",
+            echo_ack_before_execution_level=CapabilityLevel.F3,
+        ),
+        target_environment="staging",
+        transition_id="TRANSITION-FASA-ECHO-HOLD",
+        lease=lease,
+        now=now + timedelta(seconds=2),
+    )
+    assert decision.disposition == FrontierDisposition.ECHO_ACK_REQUIRED
+    assert decision.approval_consumed is True
+    assert decision.provenance_event_id is not None
+
+    waiting = store.get_registry()[FASA_EXECUTION_READINESS_REGISTRY_KEY][
+        "TRANSITION-FASA-ECHO-HOLD"
+    ]
+    assert waiting["status"] == "WAITING_ECHO"
+
+    echo_store = EchoEventStore((tmp_path / "echo-held").resolve())
+    readiness = acknowledge_echo_and_confirm_execution_readiness(
+        store,
+        echo_store,
+        decision=decision,
+        now=now + timedelta(seconds=3),
+    )
+    assert readiness.ready is True
+
+    registry = store.get_registry()
+    event = registry[EVENT_OUTBOX_REGISTRY_KEY][decision.provenance_event_id]
+    assert event["status"] == "DELIVERED"
+    assert set(event["delivered_sinks"]) == {SINK_SARA_AUDIT, SINK_ECHO}
+    assert registry[FASA_EXECUTION_READINESS_REGISTRY_KEY][
+        "TRANSITION-FASA-ECHO-HOLD"
+    ]["status"] == "READY"
+
+    consumed = consume_execution_readiness(
+        store,
+        readiness=readiness,
+        execution_id="EXECUTION-FASA-ECHO-001",
+        now=now + timedelta(seconds=4),
+    )
+    assert consumed.consumed is True
+    assert store.get_registry()[FASA_EXECUTION_READINESS_REGISTRY_KEY][
+        "TRANSITION-FASA-ECHO-HOLD"
+    ]["status"] == "CONSUMED"
+
+    with pytest.raises(FASARuntimeGateError, match="already been consumed"):
+        consume_execution_readiness(
+            store,
+            readiness=readiness,
+            execution_id="EXECUTION-FASA-ECHO-REPLAY",
+            now=now + timedelta(seconds=5),
+        )
