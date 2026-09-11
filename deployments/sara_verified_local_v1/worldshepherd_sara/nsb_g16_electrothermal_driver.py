@@ -15,13 +15,7 @@ from .nsb_g12_adaptive_lorentz_control import (
     integrate_feedback_control,
 )
 from .nsb_g13_actuator_forward_map import _representative_g12_target, allocate_modal_command
-from .nsb_g15_finite_geometry_em import (
-    COPPER_RESISTIVITY_OHM_M,
-    G15Geometry,
-    _coil_center,
-    _coil_properties,
-    build_finite_geometry_transfer_matrix,
-)
+from .nsb_g15_finite_geometry_em import G15Geometry, _coil_center, _coil_properties, build_finite_geometry_transfer_matrix
 from .qualification import CapabilityStatus, canonical_digest
 
 MU0 = 4.0 * math.pi * 1.0e-7
@@ -202,10 +196,9 @@ def _self_inductance_h(geometry: G15Geometry) -> float:
 def _loop_bz_3d_per_amp(*, x: float, y: float, z: float, coil_index: int, geometry: G15Geometry) -> float:
     cx, cy, cz = _coil_center(coil_index, geometry)
     total = 0.0
-    segments = geometry.coil_segments
-    for segment in range(segments):
-        theta0 = 2.0 * math.pi * segment / segments
-        theta1 = 2.0 * math.pi * (segment + 1) / segments
+    for segment in range(geometry.coil_segments):
+        theta0 = 2.0 * math.pi * segment / geometry.coil_segments
+        theta1 = 2.0 * math.pi * (segment + 1) / geometry.coil_segments
         p0x = cx + geometry.coil_radius_m * math.cos(theta0)
         p0y = cy + geometry.coil_radius_m * math.sin(theta0)
         p1x = cx + geometry.coil_radius_m * math.cos(theta1)
@@ -269,9 +262,7 @@ def _matvec(matrix, vector):
 
 
 def _condition_inf(matrix, inverse) -> float:
-    norm = max(sum(abs(value) for value in row) for row in matrix)
-    inv_norm = max(sum(abs(value) for value in row) for row in inverse)
-    return norm * inv_norm
+    return max(sum(abs(value) for value in row) for row in matrix) * max(sum(abs(value) for value in row) for row in inverse)
 
 
 def _resistance_at_temperature(base_resistance: float, temperature_k: float, ambient_k: float) -> float:
@@ -291,17 +282,11 @@ def _relative_error(actual, target) -> float:
 
 def _driver_step(*, currents, temperatures, targets, dt: float, geometry: G15Geometry, driver: G16DriverConfig, inverse_l, base_resistance: float, mass_per_coil: float):
     resistances = tuple(_resistance_at_temperature(base_resistance, temperatures[i], driver.ambient_temperature_k) for i in range(geometry.coil_count))
-    raw_voltages = tuple(
-        resistances[i] * targets[i] + driver.current_feedback_gain_v_per_a * (targets[i] - currents[i])
-        for i in range(geometry.coil_count)
-    )
+    raw_voltages = tuple(resistances[i] * targets[i] + driver.current_feedback_gain_v_per_a * (targets[i] - currents[i]) for i in range(geometry.coil_count))
     voltages = tuple(max(-driver.driver_voltage_limit_v, min(driver.driver_voltage_limit_v, value)) for value in raw_voltages)
     rhs = tuple(voltages[i] - resistances[i] * currents[i] for i in range(geometry.coil_count))
     derivatives = _matvec(inverse_l, rhs)
-    updated_currents = tuple(
-        max(-driver.current_limit_a, min(driver.current_limit_a, currents[i] + dt * derivatives[i]))
-        for i in range(geometry.coil_count)
-    )
+    updated_currents = tuple(max(-driver.current_limit_a, min(driver.current_limit_a, currents[i] + dt * derivatives[i])) for i in range(geometry.coil_count))
     area = _thermal_area_per_coil(geometry)
     thermal_capacity = mass_per_coil * COPPER_SPECIFIC_HEAT_J_KG_K
     updated_temperatures = []
@@ -336,24 +321,19 @@ def _circuit_case(geometry: G15Geometry, driver: G16DriverConfig):
 
 
 def _step_response_case(geometry: G15Geometry, driver: G16DriverConfig):
-    matrix = build_finite_geometry_transfer_matrix(geometry)
+    transfer = build_finite_geometry_transfer_matrix(geometry)
     target_modes = _representative_g12_target()
-    target_currents, _, _, _ = allocate_modal_command(target_modes, matrix=matrix, actuator_limit=driver.current_limit_a)
-    inductance = _inductance_matrix(geometry)
-    inverse = _invert_matrix(inductance)
+    target_currents, _, _, _ = allocate_modal_command(target_modes, matrix=transfer, actuator_limit=driver.current_limit_a)
+    inverse = _invert_matrix(_inductance_matrix(geometry))
     base_resistance, mass_per_coil = _coil_properties(geometry)
     currents = tuple(0.0 for _ in range(geometry.coil_count))
     temperatures = tuple(driver.ambient_temperature_k for _ in range(geometry.coil_count))
     dt = 5.0e-5
-    final_time = 0.02
-    steps = round(final_time / dt)
+    steps = round(0.02 / dt)
     settled_since = None
     settling_time = None
-    max_voltage = 0.0
-    max_current = 0.0
+    max_voltage = max_current = joule_energy = input_energy = 0.0
     peak_temperature = driver.ambient_temperature_k
-    joule_energy = 0.0
-    input_energy = 0.0
     saturated_steps = 0
     for step in range(steps):
         currents, temperatures, voltages, saturated, joule_power, input_power = _driver_step(
@@ -397,57 +377,44 @@ def _step_response_case(geometry: G15Geometry, driver: G16DriverConfig):
 
 
 def _thermal_case(geometry: G15Geometry, driver: G16DriverConfig):
-    inductance = _inductance_matrix(geometry)
-    inverse = _invert_matrix(inductance)
     base_resistance, mass_per_coil = _coil_properties(geometry)
     hold_current = 0.90 * driver.current_limit_a
-    targets = tuple(hold_current for _ in range(geometry.coil_count))
-    currents = tuple(0.0 for _ in range(geometry.coil_count))
-    temperatures = tuple(driver.ambient_temperature_k for _ in range(geometry.coil_count))
+    area = _thermal_area_per_coil(geometry)
+    thermal_capacity = mass_per_coil * COPPER_SPECIFIC_HEAT_J_KG_K
+    temperature = driver.ambient_temperature_k
+    peak = temperature
     dt = 0.02
     dwell = 60.0
-    peak = driver.ambient_temperature_k
-    joule_energy = 0.0
+    total_joule_energy = 0.0
     for _ in range(round(dwell / dt)):
-        currents, temperatures, _, _, joule_power, _ = _driver_step(
-            currents=currents,
-            temperatures=temperatures,
-            targets=targets,
-            dt=dt,
-            geometry=geometry,
-            driver=driver,
-            inverse_l=inverse,
-            base_resistance=base_resistance,
-            mass_per_coil=mass_per_coil,
-        )
-        peak = max(peak, *temperatures)
-        joule_energy += dt * joule_power
-    final_resistance = max(_resistance_at_temperature(base_resistance, value, driver.ambient_temperature_k) for value in temperatures)
+        resistance = _resistance_at_temperature(base_resistance, temperature, driver.ambient_temperature_k)
+        heat_per_coil = hold_current**2 * resistance
+        cooling_per_coil = driver.convection_coefficient_w_m2_k * area * (temperature - driver.ambient_temperature_k)
+        temperature += dt * (heat_per_coil - cooling_per_coil) / thermal_capacity
+        peak = max(peak, temperature)
+        total_joule_energy += dt * heat_per_coil * geometry.coil_count
+    final_resistance = _resistance_at_temperature(base_resistance, temperature, driver.ambient_temperature_k)
     return G16ThermalCase(
         dwell_time_s=dwell,
         hold_current_a=hold_current,
         peak_temperature_k=peak,
         temperature_rise_k=peak - driver.ambient_temperature_k,
         final_resistance_ratio=final_resistance / base_resistance,
-        total_joule_energy_j=joule_energy,
+        total_joule_energy_j=total_joule_energy,
         thermal_limit_k=driver.thermal_limit_k,
     )
 
 
 def _bandwidth_case(geometry: G15Geometry, driver: G16DriverConfig):
-    inductance = _inductance_matrix(geometry)
-    inverse = _invert_matrix(inductance)
+    inverse = _invert_matrix(_inductance_matrix(geometry))
     base_resistance, mass_per_coil = _coil_properties(geometry)
     currents = tuple(0.0 for _ in range(geometry.coil_count))
     temperatures = tuple(driver.ambient_temperature_k for _ in range(geometry.coil_count))
     dt = 2.5e-5
     frequency = 400.0
     amplitude = 0.85 * driver.current_limit_a
-    final_time = 0.025
-    error_sum = 0.0
-    target_sum = 0.0
-    max_voltage = 0.0
-    for step in range(round(final_time / dt)):
+    error_sum = target_sum = max_voltage = 0.0
+    for step in range(round(0.025 / dt)):
         time = step * dt
         target = amplitude * math.sin(2.0 * math.pi * frequency * time)
         targets = tuple(target if index % 2 == 0 else -target for index in range(geometry.coil_count))
@@ -507,8 +474,7 @@ def _dynamic_closed_loop_case(geometry: G15Geometry, driver: G16DriverConfig):
         feedback_sign=-1.0,
     )
     transfer = build_finite_geometry_transfer_matrix(geometry)
-    inductance = _inductance_matrix(geometry)
-    inverse = _invert_matrix(inductance)
+    inverse = _invert_matrix(_inductance_matrix(geometry))
     base_resistance, mass_per_coil = _coil_properties(geometry)
     omega = [row[:] for row in omega0]
     magnetic = [row[:] for row in a0]
@@ -516,22 +482,20 @@ def _dynamic_closed_loop_case(geometry: G15Geometry, driver: G16DriverConfig):
     temperatures = tuple(driver.ambient_temperature_k for _ in range(geometry.coil_count))
     zero_targets = tuple(0.0 for _ in range(geometry.coil_count))
     delay_steps = max(0, round(driver.command_latency_s / fluid_dt))
-    queue = [zero_targets for _ in range(delay_steps + 1)]
+    queue = [zero_targets for _ in range(delay_steps)]
     electrical_dt = fluid_dt / driver.electrical_substeps_per_fluid_step
-    max_current = 0.0
-    max_voltage = 0.0
+    max_current = max_voltage = max_tracking_error = effort = electrical_energy = 0.0
     peak_temperature = driver.ambient_temperature_k
-    max_tracking_error = 0.0
-    effort = 0.0
-    electrical_energy = 0.0
-    steps = round(final_time / fluid_dt)
-    for _ in range(steps):
+    for _ in range(round(final_time / fluid_dt)):
         modal_targets, bases = _commands(omega, gain=gain, command_limit=command_limit, feedback_sign=-1.0)
         target_currents, _, _, _ = allocate_modal_command(tuple(modal_targets), matrix=transfer, actuator_limit=driver.current_limit_a)
-        queue.append(target_currents)
-        applied_targets = queue.pop(0)
+        if delay_steps:
+            queue.append(target_currents)
+            applied_targets = queue.pop(0)
+        else:
+            applied_targets = target_currents
         for _ in range(driver.electrical_substeps_per_fluid_step):
-            currents, temperatures, voltages, _, joule_power, input_power = _driver_step(
+            currents, temperatures, voltages, _, _, input_power = _driver_step(
                 currents=currents,
                 temperatures=temperatures,
                 targets=applied_targets,
@@ -547,7 +511,8 @@ def _dynamic_closed_loop_case(geometry: G15Geometry, driver: G16DriverConfig):
             peak_temperature = max(peak_temperature, *temperatures)
             effort += electrical_dt * sum(value * value for value in currents)
             electrical_energy += electrical_dt * input_power
-        max_tracking_error = max(max_tracking_error, _relative_error(currents, applied_targets) if any(abs(value) > 1e-12 for value in applied_targets) else 0.0)
+        if any(abs(value) > 1e-12 for value in applied_targets):
+            max_tracking_error = max(max_tracking_error, _relative_error(currents, applied_targets))
         realized_modes = tuple(sum(transfer[mode][coil] * currents[coil] for coil in range(geometry.coil_count)) for mode in range(3))
         source = _source_from_commands(realized_modes, bases)
         omega, magnetic = _controlled_midpoint_step(
