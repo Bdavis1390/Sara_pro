@@ -92,3 +92,22 @@ def test_steady_reference_is_finite_for_large_hartmann_values():
     assert extreme_velocity == pytest.approx(1e-310, rel=1e-12, abs=0.0)
     assert steady_hartmann_exact_velocity(-1.0, 1000.0) == pytest.approx(0.0)
     assert steady_hartmann_exact_velocity(1.0, 1000.0) == pytest.approx(0.0)
+
+def test_convergence_summary_records_effective_time_steps():
+    custom = run_nsb_g6_benchmark(
+        temporal_dts=(0.3, 0.15, 0.075),
+        temporal_final_time=1.0,
+    )
+    assert custom.convergence.temporal_dts == (0.3, 0.15, 0.075)
+    assert custom.convergence.temporal_effective_dts == pytest.approx(
+        (1.0 / 3.0, 1.0 / 7.0, 1.0 / 13.0)
+    )
+    payload = custom.model_dump(mode="json")
+    assert payload["convergence"]["temporal_effective_dts"] == pytest.approx(
+        (1.0 / 3.0, 1.0 / 7.0, 1.0 / 13.0)
+    )
+
+
+def test_steady_reference_rejects_out_of_domain_y_at_zero_field():
+    with pytest.raises(ValueError, match=r"y in \[-1, 1\]"):
+        steady_hartmann_exact_velocity(2.0, 0.0)
