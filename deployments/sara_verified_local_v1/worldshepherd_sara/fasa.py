@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum, IntEnum
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CapabilityLevel(IntEnum):
@@ -30,6 +30,14 @@ class CapabilityRegistryEntry(BaseModel):
     maximum_authorized_level: CapabilityLevel
     evaluation_id: str = Field(min_length=1)
     evaluation_current: bool = True
+
+    @model_validator(mode="after")
+    def validate_authorization_ceiling(self) -> "CapabilityRegistryEntry":
+        if self.maximum_authorized_level > self.assessed_level:
+            raise ValueError(
+                "maximum_authorized_level cannot exceed assessed_level"
+            )
+        return self
 
 
 class FrontierActionCandidate(BaseModel):
