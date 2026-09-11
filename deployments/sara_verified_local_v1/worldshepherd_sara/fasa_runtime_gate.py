@@ -1,18 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from .echo_event_store import EchoEventStore, EchoEventStoreError
 from .event_outbox import (
     EVENT_OUTBOX_REGISTRY_KEY,
-    MAX_PENDING_OUTBOX_EVENTS,
     SINK_ECHO,
     SINK_SARA_AUDIT,
     EventOutboxError,
-    drain_event_outbox_to_echo,
+    deliver_event_outbox_to_echo,
     queue_event_outbox_patch,
 )
 from .fasa import FrontierActionCandidate, FrontierDisposition, FrontierSafetyPolicy
@@ -35,6 +34,16 @@ from .storage import DurableStore
 
 FASA_ECHO_EVIDENCE_SCHEMA = "WS-FASA-ECHO-EVIDENCE-V1"
 FASA_ECHO_READINESS_SCHEMA = "WS-FASA-ECHO-EXECUTION-READINESS-V1"
+FASA_EXECUTION_CONSUMPTION_SCHEMA = "WS-FASA-EXECUTION-READINESS-CONSUMPTION-V1"
+FASA_EXECUTION_READINESS_REGISTRY_KEY = "FASA_EXECUTION_READINESS"
+FASA_EXECUTION_READINESS_RECORD_SCHEMA = "WS-FASA-EXECUTION-READINESS-STATE-V1"
+MAX_FASA_EXECUTION_READINESS_RECORDS = 32
+_READINESS_WAITING = "WAITING_ECHO"
+_READINESS_READY = "READY"
+_READINESS_CONSUMED = "CONSUMED"
+_VALID_READINESS_STATES = frozenset(
+    {_READINESS_WAITING, _READINESS_READY, _READINESS_CONSUMED}
+)
 
 
 class FASARuntimeGateError(ValueError):
@@ -60,7 +69,8 @@ class FASAEchoExecutionReadiness(BaseModel):
     """Evidence that a held frontier transition reached its required ECHO sink.
 
     This receipt establishes gate readiness only. It does not itself perform an
-    external operation and is not a reusable bearer credential.
+    external operation and is not a reusable bearer credential. Durable SARA
+    readiness state must still be consumed exactly once before execution.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -74,7 +84,25 @@ class FASAEchoExecutionReadiness(BaseModel):
     echo_semantic_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     echo_delivery_count: int = Field(ge=1)
     acknowledged_at: datetime
+    expires_at: datetime
     ready: Literal[True] = True
+
+
+class FASAExecutionReadinessConsumption(BaseModel):
+    """Single-use durable consumption record immediately preceding execution."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema: Literal[FASA_EXECUTION_CONSUMPTION_SCHEMA] = FASA_EXECUTION_CONSUMPTION_SCHEMA
+    transition_id: str = Field(min_length=1, max_length=128)
+    action_id: str = Field(min_length=1, max_length=128)
+    authorization_id: str = Field(min_length=1, max_length=128)
+    provenance_event_id: str = Field(min_length=1, max_length=200)
+    decision_digest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    echo_semantic_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    execution_id: str = Field(min_length=1, max_length=128)
+    consumed_at: datetime
+    consumed: Literal[True] = True
 
 
 def _decision_time(value: datetime | None) -> datetime:
@@ -82,6 +110,155 @@ def _decision_time(value: datetime | None) -> datetime:
     if current.tzinfo is None:
         raise FASARuntimeGateError("runtime admission timestamp must be timezone-aware")
     return current.astimezone(timezone.utc)
+
+
+def _utc_iso(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _parse_utc(value: Any, *, label: str) -> datetime:
+    if not isinstance(value, str) or not value:
+        raise FASARuntimeGateError(f"{label} is missing")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise FASARuntimeGateError(f"{label} is invalid") from exc
+    if parsed.tzinfo is None:
+        raise FASARuntimeGateError(f"{label} must be timezone-aware")
+    return parsed.astimezone(timezone.utc)
+
+
+def _sha256_text(value: Any) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _readiness_record_valid(transition_id: str, entry: Any) -> bool:
+    if not isinstance(transition_id, str) or not transition_id or not isinstance(entry, dict):
+        return False
+    if entry.get("schema") != FASA_EXECUTION_READINESS_RECORD_SCHEMA:
+        return False
+    if entry.get("transition_id") != transition_id:
+        return False
+    if entry.get("status") not in _VALID_READINESS_STATES:
+        return False
+    for key in ("action_id", "authorization_id", "provenance_event_id"):
+        if not isinstance(entry.get(key), str) or not entry.get(key):
+            return False
+    if not _sha256_text(entry.get("decision_digest_sha256")):
+        return False
+    try:
+        _parse_utc(entry.get("created_at"), label="readiness created_at")
+        _parse_utc(entry.get("expires_at"), label="readiness expires_at")
+    except FASARuntimeGateError:
+        return False
+    status = entry["status"]
+    if status in {_READINESS_READY, _READINESS_CONSUMED}:
+        if not _sha256_text(entry.get("echo_semantic_sha256")):
+            return False
+        try:
+            _parse_utc(
+                entry.get("echo_acknowledged_at"),
+                label="readiness echo_acknowledged_at",
+            )
+        except FASARuntimeGateError:
+            return False
+    if status == _READINESS_CONSUMED:
+        if not isinstance(entry.get("execution_id"), str) or not entry.get("execution_id"):
+            return False
+        try:
+            _parse_utc(entry.get("consumed_at"), label="readiness consumed_at")
+        except FASARuntimeGateError:
+            return False
+    return True
+
+
+def _readiness_map(registry: dict[str, Any]) -> dict[str, Any]:
+    raw = registry.get(FASA_EXECUTION_READINESS_REGISTRY_KEY, {})
+    if not isinstance(raw, dict):
+        raise FASARuntimeGateError(
+            f"{FASA_EXECUTION_READINESS_REGISTRY_KEY} must be a JSON object"
+        )
+    records = dict(raw)
+    malformed = [
+        transition_id
+        for transition_id, entry in records.items()
+        if not _readiness_record_valid(transition_id, entry)
+    ]
+    if malformed:
+        raise FASARuntimeGateError("FASA execution-readiness registry is malformed")
+    return records
+
+
+def _waiting_readiness_registry_patch(
+    registry: dict[str, Any],
+    *,
+    transition_id: str,
+    action_id: str,
+    authorization_id: str,
+    provenance_event_id: str,
+    decision_digest_sha256: str,
+    created_at: datetime,
+    expires_at: datetime,
+) -> dict[str, Any]:
+    records = _readiness_map(registry)
+    if transition_id in records:
+        raise FASARuntimeGateError("transition_id already has execution-readiness state")
+
+    if len(records) >= MAX_FASA_EXECUTION_READINESS_RECORDS:
+        consumed = sorted(
+            (
+                (key, value)
+                for key, value in records.items()
+                if value.get("status") == _READINESS_CONSUMED
+            ),
+            key=lambda item: str(item[1].get("consumed_at", "")),
+        )
+        while len(records) >= MAX_FASA_EXECUTION_READINESS_RECORDS and consumed:
+            key, _value = consumed.pop(0)
+            records.pop(key, None)
+    if len(records) >= MAX_FASA_EXECUTION_READINESS_RECORDS:
+        raise FASARuntimeGateError("FASA execution-readiness capacity exceeded")
+
+    records[transition_id] = {
+        "schema": FASA_EXECUTION_READINESS_RECORD_SCHEMA,
+        "status": _READINESS_WAITING,
+        "transition_id": transition_id,
+        "action_id": action_id,
+        "authorization_id": authorization_id,
+        "provenance_event_id": provenance_event_id,
+        "decision_digest_sha256": decision_digest_sha256,
+        "created_at": _utc_iso(created_at),
+        "expires_at": _utc_iso(expires_at),
+    }
+    return {FASA_EXECUTION_READINESS_REGISTRY_KEY: records}
+
+
+def _bound_readiness_entry(
+    registry: dict[str, Any],
+    *,
+    decision: FASARuntimeDecision,
+) -> dict[str, Any]:
+    if decision.evidence is None or not decision.authorization_id or not decision.provenance_event_id:
+        raise FASARuntimeGateError("held decision is missing readiness binding")
+    records = _readiness_map(registry)
+    entry = records.get(decision.transition_id)
+    if not isinstance(entry, dict):
+        raise FASARuntimeGateError("durable FASA execution-readiness state is unavailable")
+    expected = {
+        "transition_id": decision.transition_id,
+        "action_id": decision.evidence.action_id,
+        "authorization_id": decision.authorization_id,
+        "provenance_event_id": decision.provenance_event_id,
+        "decision_digest_sha256": decision.evidence.decision_digest_sha256,
+    }
+    for key, value in expected.items():
+        if entry.get(key) != value:
+            raise FASARuntimeGateError(f"durable readiness {key} binding mismatch")
+    return entry
 
 
 def verify_and_record_approval(
@@ -150,9 +327,9 @@ def admit_frontier_action_transactionally(
 
     Approval-gated decisions commit a required SARA_AUDIT plus ECHO provenance
     obligation atomically with VERIFIED->CONSUMED approval state. For capability
-    levels at or above policy.echo_ack_before_execution_level, the runtime returns
-    ECHO_ACK_REQUIRED rather than ALLOW. A separate ECHO readiness check must then
-    succeed before an external executor may treat the transition as ready.
+    levels at or above policy.echo_ack_before_execution_level, the same transaction
+    also creates protected WAITING_ECHO execution-readiness state and the runtime
+    returns ECHO_ACK_REQUIRED rather than ALLOW.
 
     This function performs admission control only and does not execute an external
     operation. Cross-store atomic delivery is not claimed.
@@ -255,9 +432,22 @@ def admit_frontier_action_transactionally(
                     ),
                     required_sinks=(SINK_SARA_AUDIT, SINK_ECHO),
                 )
-            except EventOutboxError as exc:
+                working.update(outbox_patch)
+                readiness_patch: dict[str, Any] = {}
+                if disposition == FrontierDisposition.ECHO_ACK_REQUIRED:
+                    readiness_patch = _waiting_readiness_registry_patch(
+                        working,
+                        transition_id=transition_id,
+                        action_id=evidence.action_id,
+                        authorization_id=verified.authorization_id,
+                        provenance_event_id=provenance_event_id,
+                        decision_digest_sha256=evidence.decision_digest_sha256,
+                        created_at=decision_time,
+                        expires_at=verified.expires_at,
+                    )
+            except (EventOutboxError, FASARuntimeGateError) as exc:
                 denied_reasons = tuple(reasons) + (
-                    f"required FASA provenance obligation could not be queued: {exc}",
+                    f"required FASA provenance/readiness obligation could not be committed: {exc}",
                 )
                 denied_evidence = build_admission_evidence(
                     candidate,
@@ -282,6 +472,7 @@ def admit_frontier_action_transactionally(
 
             patch = dict(consumed_patch)
             patch.update(outbox_patch)
+            patch.update(readiness_patch)
             approval_consumed = True
             provenance_delivery = (
                 "ECHO_ACK_REQUIRED"
@@ -311,11 +502,11 @@ def acknowledge_echo_and_confirm_execution_readiness(
     decision: FASARuntimeDecision,
     now: datetime | None = None,
 ) -> FASAEchoExecutionReadiness:
-    """Synchronously satisfy and verify the ECHO gate for a held F4 transition.
+    """Satisfy and verify the exact ECHO event for a held frontier transition.
 
-    No readiness receipt is returned unless the exact stable provenance event is
-    present in ECHO with the decision digest and transition binding from the held
-    FASA decision. ECHO failures therefore remain fail-closed.
+    Unrelated outbox events are not drained. The exact durable readiness record,
+    stable event ID, decision digest, authorization, and transition must agree.
+    ECHO failures or lease/readiness expiry therefore remain fail-closed.
     """
 
     acknowledged_at = _decision_time(now)
@@ -328,11 +519,18 @@ def acknowledge_echo_and_confirm_execution_readiness(
     if not decision.authorization_id or not decision.provenance_event_id:
         raise FASARuntimeGateError("held decision is missing provenance binding")
 
+    initial_entry = _bound_readiness_entry(store.get_registry(), decision=decision)
+    if initial_entry.get("status") == _READINESS_CONSUMED:
+        raise FASARuntimeGateError("execution readiness has already been consumed")
+    expires_at = _parse_utc(initial_entry.get("expires_at"), label="readiness expires_at")
+    if acknowledged_at >= expires_at:
+        raise FASARuntimeGateError("execution readiness expired before ECHO acknowledgement")
+
     try:
-        drain_event_outbox_to_echo(
+        deliver_event_outbox_to_echo(
             store,
             echo_store,
-            limit=MAX_PENDING_OUTBOX_EVENTS,
+            event_id=decision.provenance_event_id,
         )
     except (EventOutboxError, EchoEventStoreError) as exc:
         raise FASARuntimeGateError(
@@ -377,6 +575,37 @@ def acknowledge_echo_and_confirm_execution_readiness(
     if echoed_payload.get("decision_digest_sha256") != decision.evidence.decision_digest_sha256:
         raise FASARuntimeGateError("stored ECHO decision digest mismatch")
 
+    def mark_ready(snapshot):
+        records = _readiness_map(snapshot)
+        current = records.get(decision.transition_id)
+        if not isinstance(current, dict):
+            raise FASARuntimeGateError("durable execution-readiness state disappeared")
+        bound = _bound_readiness_entry(snapshot, decision=decision)
+        if bound.get("status") == _READINESS_CONSUMED:
+            raise FASARuntimeGateError("execution readiness has already been consumed")
+        durable_expiry = _parse_utc(bound.get("expires_at"), label="readiness expires_at")
+        if acknowledged_at >= durable_expiry:
+            raise FASARuntimeGateError("execution readiness expired before READY transition")
+        if bound.get("status") == _READINESS_READY:
+            if bound.get("echo_semantic_sha256") != echoed.semantic_sha256:
+                raise FASARuntimeGateError("stored readiness ECHO digest mismatch")
+            return None, dict(bound)
+        if bound.get("status") != _READINESS_WAITING:
+            raise FASARuntimeGateError("execution readiness is not waiting for ECHO")
+        updated = dict(bound)
+        updated.update(
+            {
+                "status": _READINESS_READY,
+                "echo_semantic_sha256": echoed.semantic_sha256,
+                "echo_acknowledged_at": _utc_iso(acknowledged_at),
+            }
+        )
+        records[decision.transition_id] = updated
+        return {FASA_EXECUTION_READINESS_REGISTRY_KEY: records}, updated
+
+    durable_ready = store.transact_registry(mark_ready)
+    durable_expiry = _parse_utc(durable_ready.get("expires_at"), label="readiness expires_at")
+
     return FASAEchoExecutionReadiness(
         transition_id=decision.transition_id,
         action_id=decision.evidence.action_id,
@@ -385,5 +614,73 @@ def acknowledge_echo_and_confirm_execution_readiness(
         decision_digest_sha256=decision.evidence.decision_digest_sha256,
         echo_semantic_sha256=echoed.semantic_sha256,
         echo_delivery_count=echoed.delivery_count,
-        acknowledged_at=acknowledged_at,
+        acknowledged_at=_parse_utc(
+            durable_ready.get("echo_acknowledged_at"),
+            label="readiness echo_acknowledged_at",
+        ),
+        expires_at=durable_expiry,
     )
+
+
+def consume_execution_readiness(
+    store: DurableStore,
+    *,
+    readiness: FASAEchoExecutionReadiness,
+    execution_id: str,
+    now: datetime | None = None,
+) -> FASAExecutionReadinessConsumption:
+    """Consume durable READY state exactly once immediately before execution.
+
+    Replaying the same readiness receipt after a successful consumption fails
+    because the protected registry state has already transitioned to CONSUMED.
+    """
+
+    consumed_at = _decision_time(now)
+    if not execution_id or len(execution_id) > 128:
+        raise FASARuntimeGateError("execution_id must contain 1 to 128 characters")
+
+    def operation(snapshot):
+        records = _readiness_map(snapshot)
+        entry = records.get(readiness.transition_id)
+        if not isinstance(entry, dict):
+            raise FASARuntimeGateError("durable execution-readiness state is unavailable")
+        if entry.get("status") != _READINESS_READY:
+            if entry.get("status") == _READINESS_CONSUMED:
+                raise FASARuntimeGateError("execution readiness has already been consumed")
+            raise FASARuntimeGateError("execution readiness is not READY")
+        expected = {
+            "transition_id": readiness.transition_id,
+            "action_id": readiness.action_id,
+            "authorization_id": readiness.authorization_id,
+            "provenance_event_id": readiness.provenance_event_id,
+            "decision_digest_sha256": readiness.decision_digest_sha256,
+            "echo_semantic_sha256": readiness.echo_semantic_sha256,
+        }
+        for key, value in expected.items():
+            if entry.get(key) != value:
+                raise FASARuntimeGateError(f"execution readiness {key} binding mismatch")
+        expires_at = _parse_utc(entry.get("expires_at"), label="readiness expires_at")
+        if consumed_at >= expires_at:
+            raise FASARuntimeGateError("execution readiness expired before consumption")
+        updated = dict(entry)
+        updated.update(
+            {
+                "status": _READINESS_CONSUMED,
+                "execution_id": execution_id,
+                "consumed_at": _utc_iso(consumed_at),
+            }
+        )
+        records[readiness.transition_id] = updated
+        result = FASAExecutionReadinessConsumption(
+            transition_id=readiness.transition_id,
+            action_id=readiness.action_id,
+            authorization_id=readiness.authorization_id,
+            provenance_event_id=readiness.provenance_event_id,
+            decision_digest_sha256=readiness.decision_digest_sha256,
+            echo_semantic_sha256=readiness.echo_semantic_sha256,
+            execution_id=execution_id,
+            consumed_at=consumed_at,
+        )
+        return {FASA_EXECUTION_READINESS_REGISTRY_KEY: records}, result
+
+    return store.transact_registry(operation)
