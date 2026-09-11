@@ -70,4 +70,5 @@ jobs:
           grep -F 'SIMULATED_ONLY' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
           grep -F 'independent third-party attestation' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
           grep -F 'immutable or WORM retention' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
-          grep -F 'exact provider document' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
+          grep -F 'actual provider document' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
+          grep -F 'exact deterministic anchor request' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
