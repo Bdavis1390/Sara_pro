@@ -2,8 +2,8 @@
 """Worldshepherd AGI gate evaluator.
 
 Evaluates a JSON result bundle against config/ws_agi_gate_v1.json.
-This tool does not measure intelligence itself; it enforces the configured
-acceptance thresholds and reports missing/failed evidence explicitly.
+This tool does not measure intelligence itself; it enforces configured
+acceptance thresholds, metric validity, and metric-to-evidence provenance.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 
 OPS = {
@@ -32,42 +32,112 @@ def load_json(path: Path) -> Dict[str, Any]:
     return data
 
 
-def validate_evidence(bundle: Dict[str, Any], required_fields: List[str]) -> Dict[str, Any]:
+def validate_evidence(
+    bundle: Dict[str, Any],
+    required_fields: List[str],
+    required_metrics: Optional[List[str]] = None,
+    allowed_claim_states: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Validate evidence records and metric-level provenance coverage."""
+
     records = bundle.get("evidence", [])
     if not isinstance(records, list):
         return {
             "valid": False,
             "record_count": 0,
             "errors": ["evidence must be an array"],
+            "metric_coverage": {},
         }
 
     errors: List[str] = []
+    seen_ids = set()
+    required_metric_set = set(required_metrics or [])
+    coverage: Dict[str, List[str]] = {name: [] for name in required_metric_set}
+
     for index, record in enumerate(records):
         if not isinstance(record, dict):
             errors.append(f"evidence[{index}] must be an object")
             continue
+
         missing = [field for field in required_fields if record.get(field) in (None, "")]
         if missing:
             errors.append(f"evidence[{index}] missing: {', '.join(missing)}")
+
+        evidence_id = record.get("evidence_id")
+        if evidence_id not in (None, ""):
+            if evidence_id in seen_ids:
+                errors.append(f"duplicate evidence_id: {evidence_id}")
+            seen_ids.add(evidence_id)
+
+        metric_names = record.get("metric_names")
+        if metric_names is not None:
+            if not isinstance(metric_names, list) or not metric_names:
+                errors.append(f"evidence[{index}].metric_names must be a non-empty array")
+            else:
+                for metric_name in metric_names:
+                    if not isinstance(metric_name, str) or not metric_name:
+                        errors.append(f"evidence[{index}] contains invalid metric name")
+                        continue
+                    if required_metric_set and metric_name not in required_metric_set:
+                        errors.append(
+                            f"evidence[{index}] references unknown metric: {metric_name}"
+                        )
+                        continue
+                    coverage.setdefault(metric_name, []).append(str(evidence_id))
+
+        claim_state = record.get("claim_state")
+        if (
+            allowed_claim_states
+            and claim_state not in (None, "")
+            and claim_state not in allowed_claim_states
+        ):
+            errors.append(f"evidence[{index}] invalid claim_state: {claim_state}")
+
+    if required_metric_set:
+        missing_coverage = sorted(name for name in required_metric_set if not coverage.get(name))
+        if missing_coverage:
+            errors.append(
+                "required metrics without evidence mapping: " + ", ".join(missing_coverage)
+            )
 
     return {
         "valid": len(errors) == 0 and len(records) > 0,
         "record_count": len(records),
         "errors": errors,
+        "metric_coverage": {name: coverage.get(name, []) for name in sorted(coverage)},
     }
 
 
 def evaluate_level(
-    metrics: Dict[str, Any], required_metrics: Dict[str, Any], level: str
+    metrics: Dict[str, Any],
+    required_metrics: Dict[str, Any],
+    level: str,
+    metric_validity: Optional[Mapping[str, Any]] = None,
 ) -> Tuple[bool, List[Dict[str, Any]]]:
     checks: List[Dict[str, Any]] = []
     passed_all = True
+    validity = metric_validity or {}
 
     for name, level_rules in required_metrics.items():
         rule = level_rules[level]
         operator = rule["operator"]
         target = rule["value"]
         actual = metrics.get(name)
+
+        validity_record = validity.get(name)
+        if isinstance(validity_record, dict) and validity_record.get("valid") is False:
+            checks.append(
+                {
+                    "metric": name,
+                    "status": "BLOCKED",
+                    "actual": actual,
+                    "operator": operator,
+                    "target": target,
+                    "validity_reason": validity_record.get("reason", "metric invalidated"),
+                }
+            )
+            passed_all = False
+            continue
 
         if actual is None:
             checks.append(
@@ -127,31 +197,36 @@ def main() -> int:
         default=Path("config/ws_agi_gate_v1.json"),
         help="AGI gate configuration JSON",
     )
-    parser.add_argument(
-        "--pretty",
-        action="store_true",
-        help="Pretty-print output JSON",
-    )
+    parser.add_argument("--pretty", action="store_true", help="Pretty-print output JSON")
     args = parser.parse_args()
 
     try:
         config = load_json(args.config)
         bundle = load_json(args.results)
         metrics = bundle.get("metrics", {})
+        metric_validity = bundle.get("metric_validity", {})
         if not isinstance(metrics, dict):
             raise ValueError("results.metrics must be an object")
+        if not isinstance(metric_validity, dict):
+            raise ValueError("results.metric_validity must be an object when present")
 
-        evidence = validate_evidence(bundle, config.get("evidence_required_fields", []))
+        required_metrics = config["required_metrics"]
+        evidence = validate_evidence(
+            bundle,
+            config.get("evidence_required_fields", []),
+            required_metrics=list(required_metrics),
+            allowed_claim_states=config.get("claim_states", []),
+        )
         candidate_pass, candidate_checks = evaluate_level(
-            metrics, config["required_metrics"], "candidate"
+            metrics, required_metrics, "candidate", metric_validity
         )
         verified_pass, verified_checks = evaluate_level(
-            metrics, config["required_metrics"], "verified"
+            metrics, required_metrics, "verified", metric_validity
         )
 
         state = determine_state(candidate_pass, verified_pass, evidence["valid"])
         output = {
-            "schema": "WS-AGI-GATE-EVALUATION-V1.0",
+            "schema": "WS-AGI-GATE-EVALUATION-V1.1",
             "gate_config_schema": config.get("schema"),
             "system_id": bundle.get("system_id", "UNKNOWN"),
             "intelligence_state": state,
@@ -165,6 +240,7 @@ def main() -> int:
                 "metric_thresholds_passed": verified_pass,
                 "checks": verified_checks,
             },
+            "metric_validity": metric_validity,
             "evidence": evidence,
             "deployment_state_changed": False,
             "claims_boundary": config.get("claims_boundary"),
