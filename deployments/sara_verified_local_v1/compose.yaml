@@ -17,6 +17,8 @@ services:
       PRIME_SENTINEL_SERVICE_TOKEN: ""
       PRIME_SENTINEL_SIGNING_KEY_ID: ""
       PRIME_SENTINEL_DATA_DIR: ""
+      ECHO_INGEST_TOKEN_FILE: ""
+      ECHO_DATA_DIR: ""
     ports:
       - "127.0.0.1:${SARA_HOST_PORT:-9530}:9530"
     volumes:
@@ -56,6 +58,8 @@ services:
       PRIME_SENTINEL_SERVICE_TOKEN_FILE: /run/worldshepherd-prime-sentinel/service-token
       PRIME_SENTINEL_SIGNING_KEY_ID: ${PRIME_SENTINEL_SIGNING_KEY_ID:-UNCONFIGURED}
       PRIME_SENTINEL_DATA_DIR: /var/lib/prime-sentinel
+      ECHO_INGEST_TOKEN_FILE: ""
+      ECHO_DATA_DIR: ""
     ports:
       - "127.0.0.1:${PRIME_SENTINEL_HOST_PORT:-9540}:9540"
     volumes:
@@ -84,10 +88,63 @@ services:
       retries: 5
       start_period: 10s
 
+  echo:
+    profiles: ["echo"]
+    build:
+      context: .
+      args:
+        SARA_BUILD_COMMIT: ${SARA_BUILD_COMMIT:-UNKNOWN}
+        SARA_RELEASE_ID: ${SARA_RELEASE_ID:-UNVERIFIED}
+    restart: unless-stopped
+    command:
+      - uvicorn
+      - --factory
+      - worldshepherd_sara.echo_persistence_service:create_echo_app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "9550"
+    environment:
+      ECHO_INGEST_TOKEN_FILE: /run/worldshepherd-echo/ingest-token
+      ECHO_DATA_DIR: /var/lib/echo
+      SARA_ADMIN_TOKEN: ""
+      SARA_RELAY_TOKEN: ""
+      PRIME_SENTINEL_PRIVATE_KEY_FILE: ""
+      PRIME_SENTINEL_SERVICE_TOKEN_FILE: ""
+      PRIME_SENTINEL_SERVICE_TOKEN: ""
+      PRIME_SENTINEL_SIGNING_KEY_ID: ""
+      PRIME_SENTINEL_DATA_DIR: ""
+    ports:
+      - "127.0.0.1:${ECHO_HOST_PORT:-9550}:9550"
+    volumes:
+      - type: bind
+        source: ${ECHO_INGEST_TOKEN_HOST_PATH:-/var/lib/worldshepherd/echo/ingest-token}
+        target: /run/worldshepherd-echo/ingest-token
+        read_only: true
+      - echo_data:/var/lib/echo
+    read_only: true
+    tmpfs:
+      - /tmp:size=8m,mode=1777
+    networks:
+      - echo_private
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9550/readyz', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
 volumes:
   sara_data:
   prime_sentinel_data:
+  echo_data:
 
 networks:
   prime_sentinel_private:
+    driver: bridge
+  echo_private:
     driver: bridge
