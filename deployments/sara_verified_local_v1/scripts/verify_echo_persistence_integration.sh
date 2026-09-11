@@ -147,7 +147,8 @@ curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" \
   > "${secret_dir}/ingest-first.json"
 curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" \
   "${echo_header[@]}" --data @"${secret_dir}/source-record.json" \
-  > "${secret_dir}/ingest-replay.json"\n
+  > "${secret_dir}/ingest-replay.json"
+
 python3 - "${secret_dir}/ingest-first.json" "${secret_dir}/ingest-replay.json" "$event_id" <<'PY'
 import json, sys
 from pathlib import Path
@@ -193,14 +194,15 @@ PY
 
 curl --fail --silent --show-error "${echo_url}/v1/event/${event_id}" \
   -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/stored.json"
-curl --fail --silent --show-error -X POST "${echo_url}/v1/reconcile" \
-  "${echo_header[@]}" \
-  --data "$(python3 - "${secret_dir}/source-record.json" <<'PY'
+python3 - "${secret_dir}/source-record.json" "${secret_dir}/reconcile-request.json" <<'PY'
 import json, sys
 from pathlib import Path
-print(json.dumps({'records':[json.loads(Path(sys.argv[1]).read_text())]}, separators=(',', ':')))
+record=json.loads(Path(sys.argv[1]).read_text())
+Path(sys.argv[2]).write_text(json.dumps({'records':[record]}, separators=(',', ':')) + '\n')
 PY
-)" > "${secret_dir}/reconcile.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/reconcile" \
+  "${echo_header[@]}" --data @"${secret_dir}/reconcile-request.json" \
+  > "${secret_dir}/reconcile.json"
 
 python3 - "${secret_dir}/stored.json" "${secret_dir}/reconcile.json" <<'PY'
 import json, sys
