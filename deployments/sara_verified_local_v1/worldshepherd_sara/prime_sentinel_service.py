@@ -5,11 +5,9 @@ import hashlib
 import hmac
 import os
 import re
-import secrets
+import sqlite3
 import stat
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from uuid import uuid4
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -18,11 +16,21 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .prime_configuration_custody import PrimeEnvironment
 from .prime_sentinel_authorization import (
-    MAX_ASSERTION_LIFETIME,
     PRIME_SENTINEL_AUTHZ_SCHEMA,
     PrimeSentinelAuthorizationAssertion,
     canonical_authorization_message,
 )
+from .prime_sentinel_issuance_store import (
+    REQUEST_ID_HEADER,
+    IssuanceRecord,
+    PrimeSentinelIssuanceStore,
+    PrimeSentinelIssuanceStoreError,
+    PrimeSentinelLedgerFull,
+    PrimeSentinelRequestConflict,
+    parse_utc,
+    validate_request_id,
+)
+from .prime_sentinel_ledger_integrity import verify_issuance_ledger_integrity
 
 
 KEY_FILE_ENV = "PRIME_SENTINEL_PRIVATE_KEY_FILE"
@@ -58,6 +66,21 @@ class PrimeSentinelPublicKey(BaseModel):
 class PrimeSentinelIssueResponse(BaseModel):
     schema: str = "WS-PRIME-SENTINEL-ISSUE-RESPONSE-V1"
     assertion: PrimeSentinelAuthorizationAssertion
+
+
+class PrimeSentinelIssuanceStatus(BaseModel):
+    schema: str = "WS-PRIME-SENTINEL-ISSUANCE-STATUS-V1"
+    request_id: str
+    state: str
+    authorization_id: str
+    prime_id: str
+    target_environment: PrimeEnvironment
+    key_id: str
+    key_fingerprint_sha256: str
+    issued_at: str
+    expires_at: str
+    prepared_at: str
+    signed_at: str | None
 
 
 def _b64url(data: bytes) -> str:
@@ -189,6 +212,16 @@ def _require_bearer(request: Request, expected_token: str) -> None:
         raise HTTPException(status_code=403, detail="PRIME SENTINEL bearer token rejected")
 
 
+def _require_request_id(request: Request) -> str:
+    raw = request.headers.get(REQUEST_ID_HEADER)
+    if raw is None:
+        raise HTTPException(status_code=400, detail=f"{REQUEST_ID_HEADER} is required")
+    try:
+        return validate_request_id(raw)
+    except PrimeSentinelIssuanceStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 class PrimeSentinelSigner:
     def __init__(
         self,
@@ -224,43 +257,174 @@ class PrimeSentinelSigner:
             fingerprint_sha256=self.fingerprint_sha256,
         )
 
-    def issue(
+    def _assertion_from_record(
         self,
-        request: PrimeSentinelIssueRequest,
+        record: IssuanceRecord,
         *,
-        now: datetime | None = None,
+        signature_b64url: str,
     ) -> PrimeSentinelAuthorizationAssertion:
-        lifetime = timedelta(seconds=request.lifetime_seconds)
-        if lifetime > MAX_ASSERTION_LIFETIME:
-            raise ValueError("authorization lifetime exceeds PRIME SENTINEL maximum")
-        issued = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
-        unsigned = PrimeSentinelAuthorizationAssertion(
+        return PrimeSentinelAuthorizationAssertion(
             schema=PRIME_SENTINEL_AUTHZ_SCHEMA,
             issuer="PRIME_SENTINEL",
-            key_id=self.key_id,
-            authorization_id=f"PSAUTH-{uuid4()}",
-            prime_id=request.prime_id,
+            key_id=record.key_id,
+            authorization_id=record.authorization_id,
+            prime_id=record.prime_id,
             action="REQUALIFICATION_RELEASE",
-            target_environment=request.target_environment,
-            issued_at=issued,
-            expires_at=issued + lifetime,
-            nonce=secrets.token_urlsafe(24),
-            signature_b64url="UNSIGNED",
+            target_environment=PrimeEnvironment(record.target_environment),
+            issued_at=parse_utc(record.issued_at),
+            expires_at=parse_utc(record.expires_at),
+            nonce=record.nonce,
+            signature_b64url=signature_b64url,
         )
+
+    def issue_durable(
+        self,
+        body: PrimeSentinelIssueRequest,
+        *,
+        request_id: str,
+        store: PrimeSentinelIssuanceStore,
+    ) -> PrimeSentinelAuthorizationAssertion:
+        record = store.prepare_or_get(
+            request_id=request_id,
+            prime_id=body.prime_id,
+            target_environment=body.target_environment,
+            lifetime_seconds=body.lifetime_seconds,
+            key_id=self.key_id,
+        )
+        if record.state == "SIGNED":
+            stored = record.assertion_dict()
+            if stored is None:
+                raise PrimeSentinelIssuanceStoreError(
+                    "SIGNED issuance record is missing its assertion"
+                )
+            return PrimeSentinelAuthorizationAssertion.model_validate(stored)
+
+        unsigned = self._assertion_from_record(record, signature_b64url="UNSIGNED")
         signature = self._private_key.sign(canonical_authorization_message(unsigned))
-        return unsigned.model_copy(update={"signature_b64url": _b64url(signature)})
+        signed = unsigned.model_copy(update={"signature_b64url": _b64url(signature)})
+        persisted = store.mark_signed(
+            request_id=request_id,
+            signature_b64url=signed.signature_b64url,
+            assertion=signed.model_dump(mode="json"),
+        )
+        stored = persisted.assertion_dict()
+        if stored is None:
+            raise PrimeSentinelIssuanceStoreError(
+                "durable SIGNED issuance record is missing its assertion"
+            )
+        return PrimeSentinelAuthorizationAssertion.model_validate(stored)
+
+
+def _bind_signing_key_identity(
+    store: PrimeSentinelIssuanceStore,
+    signer: PrimeSentinelSigner,
+) -> None:
+    name = f"signing_key_fingerprint:{signer.key_id}"
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(store.db_path, timeout=5.0, isolation_level=None)
+        connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA synchronous = FULL")
+        connection.execute("BEGIN IMMEDIATE")
+        row = connection.execute(
+            "SELECT value FROM metadata WHERE name = ?", (name,)
+        ).fetchone()
+        if row is None:
+            connection.execute(
+                "INSERT INTO metadata(name, value) VALUES(?, ?)",
+                (name, signer.fingerprint_sha256),
+            )
+        elif row["value"] != signer.fingerprint_sha256:
+            raise PrimeSentinelServiceConfigError(
+                "PRIME SENTINEL signing key ID is already bound to different key material"
+            )
+        connection.commit()
+    except sqlite3.Error as exc:
+        raise PrimeSentinelServiceConfigError(
+            "unable to bind PRIME SENTINEL signing key identity to issuance ledger"
+        ) from exc
+    finally:
+        if connection is not None:
+            connection.close()
+
+
+def _bound_key_fingerprint(
+    store: PrimeSentinelIssuanceStore,
+    key_id: str,
+) -> str:
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(store.db_path, timeout=5.0)
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            "SELECT value FROM metadata WHERE name = ?",
+            (f"signing_key_fingerprint:{key_id}",),
+        ).fetchone()
+    except sqlite3.Error as exc:
+        raise PrimeSentinelIssuanceStoreError(
+            "unable to read signing-key binding from issuance ledger"
+        ) from exc
+    finally:
+        if connection is not None:
+            connection.close()
+    if row is None:
+        raise PrimeSentinelIssuanceStoreError(
+            "issuance ledger is missing the signing-key fingerprint binding"
+        )
+    return str(row["value"])
+
+
+def _combined_ledger_status(store: PrimeSentinelIssuanceStore) -> dict[str, object]:
+    basic = store.health()
+    deep = verify_issuance_ledger_integrity(store)
+    combined: dict[str, object] = {
+        **basic,
+        "cross_table_integrity_ok": bool(deep.get("ok")),
+        "integrity_model": deep.get("integrity_model"),
+        "tail_event_hash": deep.get("tail_event_hash"),
+    }
+    if not deep.get("ok"):
+        combined["integrity_reason"] = deep.get("reason", "UNKNOWN")
+    combined["ok"] = bool(basic.get("ok")) and bool(deep.get("ok"))
+    return combined
+
+
+def _status_from_record(
+    record: IssuanceRecord,
+    store: PrimeSentinelIssuanceStore,
+) -> PrimeSentinelIssuanceStatus:
+    return PrimeSentinelIssuanceStatus(
+        request_id=record.request_id,
+        state=record.state,
+        authorization_id=record.authorization_id,
+        prime_id=record.prime_id,
+        target_environment=PrimeEnvironment(record.target_environment),
+        key_id=record.key_id,
+        key_fingerprint_sha256=_bound_key_fingerprint(store, record.key_id),
+        issued_at=record.issued_at,
+        expires_at=record.expires_at,
+        prepared_at=record.prepared_at,
+        signed_at=record.signed_at,
+    )
 
 
 def create_prime_sentinel_app() -> FastAPI:
     signer = PrimeSentinelSigner.from_environment()
+    try:
+        store = PrimeSentinelIssuanceStore.from_environment()
+    except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
+        raise PrimeSentinelServiceConfigError(str(exc)) from exc
+    _bind_signing_key_identity(store, signer)
+
     app = FastAPI(
         title="Worldshepherd PRIME SENTINEL Authorization Service",
-        version="1.4",
+        version="1.5",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
     )
     app.state.signer = signer
+    app.state.issuance_store = store
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
@@ -274,20 +438,51 @@ def create_prime_sentinel_app() -> FastAPI:
 
     @app.get("/livez")
     def livez() -> dict[str, object]:
-        return {"ok": True, "service": "PRIME_SENTINEL", "version": "1.4"}
+        return {"ok": True, "service": "PRIME_SENTINEL", "version": "1.5"}
 
     @app.get("/readyz")
     def readyz() -> dict[str, object]:
+        try:
+            ledger = _combined_ledger_status(store)
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
+            raise HTTPException(status_code=503, detail="issuance ledger unavailable") from exc
+        if not ledger["ok"]:
+            raise HTTPException(status_code=503, detail="issuance ledger integrity check failed")
         return {
             "ok": True,
             "service": "PRIME_SENTINEL",
             "signing_key_id": signer.key_id,
             "algorithm": "Ed25519",
+            "issuance_ledger": "HEALTHY",
         }
 
     @app.get("/v1/public-key", response_model=PrimeSentinelPublicKey)
     def public_key() -> PrimeSentinelPublicKey:
         return signer.public_key_record()
+
+    @app.get("/v1/issuance/{request_id}", response_model=PrimeSentinelIssuanceStatus)
+    def issuance_status(request_id: str, request: Request) -> PrimeSentinelIssuanceStatus:
+        _require_bearer(request, signer.service_token)
+        try:
+            record = store.get(validate_request_id(request_id))
+            if record is None:
+                raise HTTPException(status_code=404, detail="issuance request not found")
+            return _status_from_record(record, store)
+        except HTTPException:
+            raise
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
+            raise HTTPException(status_code=503, detail="issuance ledger unavailable") from exc
+
+    @app.get("/v1/ledger-status")
+    def ledger_status(request: Request) -> dict[str, object]:
+        _require_bearer(request, signer.service_token)
+        try:
+            status = _combined_ledger_status(store)
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
+            raise HTTPException(status_code=503, detail="issuance ledger unavailable") from exc
+        if not status["ok"]:
+            raise HTTPException(status_code=503, detail="issuance ledger integrity check failed")
+        return {"schema": "WS-PRIME-SENTINEL-LEDGER-STATUS-V1", **status}
 
     @app.post("/v1/requalification-release", response_model=PrimeSentinelIssueResponse)
     def issue_requalification_release(
@@ -295,7 +490,19 @@ def create_prime_sentinel_app() -> FastAPI:
         request: Request,
     ) -> PrimeSentinelIssueResponse:
         _require_bearer(request, signer.service_token)
-        assertion = signer.issue(body)
+        request_id = _require_request_id(request)
+        try:
+            assertion = signer.issue_durable(
+                body,
+                request_id=request_id,
+                store=store,
+            )
+        except PrimeSentinelRequestConflict as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except PrimeSentinelLedgerFull as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
+            raise HTTPException(status_code=503, detail="issuance persistence failed") from exc
         return PrimeSentinelIssueResponse(assertion=assertion)
 
     return app
