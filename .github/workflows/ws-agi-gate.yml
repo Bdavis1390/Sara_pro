@@ -10,6 +10,7 @@ on:
       - "config/ws_replication_eval_v1.json"
       - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
       - "evals/**"
+      - "runtime/**"
       - ".github/workflows/ws-agi-gate.yml"
   push:
     branches: [main]
@@ -21,6 +22,7 @@ on:
       - "config/ws_replication_eval_v1.json"
       - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
       - "evals/**"
+      - "runtime/**"
       - ".github/workflows/ws-agi-gate.yml"
 
 permissions:
@@ -46,7 +48,7 @@ jobs:
           python -m json.tool config/ws_reliability_eval_v1.json >/dev/null
           python -m json.tool config/ws_replication_eval_v1.json >/dev/null
 
-      - name: Compile evaluator and adapters
+      - name: Compile evaluator adapters and runtime
         run: |
           python -m py_compile \
             evals/ws_agi_gate.py \
@@ -59,12 +61,14 @@ jobs:
             evals/adapters/transfer_eval.py \
             evals/adapters/reliability_eval.py \
             evals/adapters/replication_eval.py \
+            runtime/deliberative_controller.py \
             evals/test_ws_agi_gate.py \
             evals/test_agi_adapters.py \
             evals/test_gate_bundle.py \
             evals/test_transfer_reliability_adapters.py \
             evals/test_replication_eval.py \
-            evals/test_provenance_overwatch.py
+            evals/test_provenance_overwatch.py \
+            evals/test_deliberative_controller.py
 
       - name: Run unit tests
         run: python -m unittest discover -s evals -p 'test_*.py' -v
