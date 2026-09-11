@@ -121,7 +121,9 @@ def recover_execution_readiness_after_restart(
     preserved exactly. Unknown or malformed readiness state fails closed.
 
     This function never acknowledges ECHO, drains provenance, creates READY,
-    creates approval, or executes an external action.
+    creates approval, or executes an external action. If no state transition or
+    retention trim is needed, recovery is read-only and does not create empty
+    protected registry namespaces.
     """
 
     recovered_at = _recovery_time(now)
@@ -182,10 +184,12 @@ def recover_execution_readiness_after_restart(
                 tombstones.pop(transition_id, None)
                 tombstones_evicted += 1
 
-        patch = {
-            FASA_EXECUTION_READINESS_REGISTRY_KEY: readiness,
-            FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY: tombstones,
-        }
+        patch: dict[str, Any] | None = None
+        if expired_tombstoned or tombstones_evicted:
+            patch = {
+                FASA_EXECUTION_READINESS_REGISTRY_KEY: readiness,
+                FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY: tombstones,
+            }
         result = FASAReadinessRecoveryResult(
             recovered_at=recovered_at,
             live_preserved=live_preserved,
