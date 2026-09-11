@@ -282,9 +282,10 @@ def build_anchor_receipt(
         "evidence_sha256": verified["evidence_sha256"],
         "verification_state": verified["verification_state"],
         "claims_boundary": (
-            "Receipt proves only that supplied evidence matches this checkpoint anchor contract. "
-            "Provider independence, immutability/WORM retention, privileged rollback resistance, "
-            "legal chain of custody, and exactly-once transport require separate evidence."
+            "Receipt proves only that the supplied evidence artifact and provider content satisfy "
+            "this checkpoint anchor contract. Provider independence, immutability/WORM retention, "
+            "privileged rollback resistance, legal chain of custody, and exactly-once transport "
+            "require separate evidence."
         ),
     }
     if "provider_content_sha256" in verified:
@@ -295,6 +296,7 @@ def build_anchor_receipt(
 
 def verify_anchor_receipt(
     receipt: Any,
+    evidence: Any,
     bundle: Any,
     expected_fingerprint: str,
     *,
@@ -302,54 +304,31 @@ def verify_anchor_receipt(
     expected_mode: str,
     provider_document: Any | None = None,
 ) -> dict[str, Any]:
+    """Verify receipt, evidence artifact, checkpoint, and provider read-back as one evidence set."""
     request = build_anchor_request(bundle, expected_fingerprint)
     if not isinstance(receipt, dict) or receipt.get("schema") != ANCHOR_RECEIPT_SCHEMA:
         raise EchoCheckpointAnchorError("anchor receipt schema mismatch")
-    provider = _provider(receipt.get("provider"))
-    if provider != expected_provider or receipt.get("provider_mode") != expected_mode:
-        raise EchoCheckpointAnchorError("anchor receipt provider binding mismatch")
-    for field in (
-        "checkpoint_sequence",
-        "checkpoint_id",
-        "checkpoint_sha256",
-        "anchor_payload_sha256",
-        "anchor_request_sha256",
-    ):
-        if receipt.get(field) != request.get(field):
-            raise EchoCheckpointAnchorError(f"anchor receipt {field} mismatch")
-    _sha256_text(receipt.get("evidence_sha256"), label="anchor evidence digest")
+    expected_receipt = build_anchor_receipt(
+        request,
+        evidence,
+        expected_provider=expected_provider,
+        expected_mode=expected_mode,
+        provider_document=provider_document,
+    )
+    if receipt != expected_receipt:
+        raise EchoCheckpointAnchorError(
+            "anchor receipt does not exactly bind the supplied verified evidence artifact"
+        )
     supplied = _sha256_text(receipt.get("receipt_sha256"), label="anchor receipt digest")
-    core = dict(receipt)
-    core.pop("receipt_sha256", None)
-    if hashlib.sha256(_canonical(core)).hexdigest() != supplied:
-        raise EchoCheckpointAnchorError("anchor receipt digest mismatch")
-    state = receipt.get("verification_state")
-    if expected_mode == TEST_PROVIDER_MODE:
-        if provider != TEST_PROVIDER or state != "SIMULATED_ONLY":
-            raise EchoCheckpointAnchorError("test anchor receipt must remain SIMULATED_ONLY")
-    elif expected_mode == EXTERNAL_READ_BACK_MODE:
-        if provider == TEST_PROVIDER or state != "VERIFIED_READ_BACK":
-            raise EchoCheckpointAnchorError("external anchor receipt lacks verified read-back state")
-        if provider_document is None:
-            raise EchoCheckpointAnchorError("external receipt verification requires provider document")
-        parsed = _provider_document(provider_document)
-        if parsed != request:
-            raise EchoCheckpointAnchorError("provider read-back document does not equal anchor request")
-        expected_content = hashlib.sha256(_canonical(parsed)).hexdigest()
-        if _sha256_text(
-            receipt.get("provider_content_sha256"), label="provider content digest"
-        ) != expected_content:
-            raise EchoCheckpointAnchorError("provider content digest mismatch")
-    else:
-        raise EchoCheckpointAnchorError("unsupported anchor receipt provider mode")
     return {
         "schema": "WS-ECHO-CHECKPOINT-ANCHOR-VERIFICATION-V1",
         "status": "PASS",
         "checkpoint_sequence": request["checkpoint_sequence"],
         "checkpoint_sha256": request["checkpoint_sha256"],
-        "provider": provider,
-        "provider_mode": expected_mode,
-        "verification_state": state,
+        "provider": receipt["provider"],
+        "provider_mode": receipt["provider_mode"],
+        "verification_state": receipt["verification_state"],
+        "evidence_sha256": receipt["evidence_sha256"],
         "receipt_sha256": supplied,
         "claims_boundary": receipt.get("claims_boundary"),
     }
