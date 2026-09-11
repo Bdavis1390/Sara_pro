@@ -50,13 +50,23 @@ This mode cannot be established by hashes alone. Verification requires the actua
 
 The software performs no network fetch itself. This is intentional: provider retrieval is a separately evidenced control-plane action, allowing the read-back source, identity, authorization, and transport to be audited independently from ECHO.
 
-## Receipt
+## Receipt and complete evidence set
 
 The receipt schema is `WS-ECHO-CHECKPOINT-ANCHOR-RECEIPT-V1`.
 
 A receipt binds the checkpoint, anchor request, provider identity/mode/reference, evidence digest, verification state, and provider-content digest where external read-back applies. A receipt SHA-256 detects alteration of that normalized receipt.
 
-For `EXTERNAL_READ_BACK`, receipt verification again requires the retrieved provider document. A receipt alone is insufficient.
+Receipt verification is deliberately **not** receipt-only. The verifier requires the actual evidence artifact and reconstructs the expected receipt from that evidence. A syntactically valid evidence SHA-256 written into a receipt is insufficient. If the supplied evidence artifact differs—even if its own digest has been recomputed—the receipt is rejected unless it exactly binds that evidence artifact.
+
+For `EXTERNAL_READ_BACK`, the complete verification set is therefore:
+
+- signed v1.7 checkpoint bundle;
+- separately supplied trusted ECHO checkpoint-key fingerprint;
+- provider evidence artifact;
+- anchor receipt;
+- actual provider read-back document.
+
+The provider read-back document must also exactly equal the deterministic anchor request. A receipt or evidence record alone is insufficient.
 
 ## Claims boundary
 
@@ -65,12 +75,13 @@ After protected exact-head CI passes and this software is merged, Worldshepherd 
 - `IMPLEMENTED IN SOFTWARE` — deterministic checkpoint anchor requests;
 - `IMPLEMENTED IN SOFTWARE` — provider evidence and receipt schemas;
 - `IMPLEMENTED IN SOFTWARE` — fail-closed test-provider separation;
+- `IMPLEMENTED IN SOFTWARE` — receipt verification requiring the actual evidence artifact;
 - `IMPLEMENTED IN SOFTWARE` — external read-back verification requiring the actual retrieved provider document;
-- `IMPLEMENTED IN SOFTWARE` — tamper detection for checkpoint/request/provider-content/receipt binding.
+- `IMPLEMENTED IN SOFTWARE` — tamper detection across checkpoint/request/evidence/provider-content/receipt binding.
 
 These statements do **not** establish that any checkpoint has actually been externally anchored.
 
-After a real provider publication is performed and a separately retrieved provider document passes the v1.8 verifier, the bounded evidence statement may be:
+After a real provider publication is performed and a separately retrieved provider document passes the v1.8 verifier as part of the complete evidence set, the bounded evidence statement may be:
 
 > `PROVEN INTERNALLY — the identified checkpoint anchor request was externally observable at the recorded provider reference and matched on read-back.`
 
@@ -94,12 +105,14 @@ The v1.8 candidate must demonstrate on the exact candidate commit:
 2. an untrusted ECHO checkpoint-key fingerprint is rejected;
 3. the CI test provider remains `SIMULATED_ONLY`;
 4. changing checkpoint binding data invalidates a receipt even when the attacker recomputes the receipt digest;
-5. `EXTERNAL_READ_BACK` cannot pass without an actual provider document;
-6. an external provider document must equal the exact deterministic anchor request;
-7. provider-content SHA-256 is recomputed from the retrieved document rather than trusted from the receipt;
-8. a different retrieved provider document is rejected;
-9. the existing full unit/API suite remains green;
-10. existing deployment, destructive recovery, operational snapshot, release identity, and release evidence-index gates remain green.
+5. receipt verification requires the actual evidence artifact, not only its stated digest;
+6. substituting a different internally valid evidence artifact invalidates the original receipt;
+7. `EXTERNAL_READ_BACK` cannot pass without an actual provider document;
+8. an external provider document must equal the exact deterministic anchor request;
+9. provider-content SHA-256 is recomputed from the retrieved document rather than trusted from the receipt;
+10. a different retrieved provider document is rejected;
+11. the existing full unit/API suite remains green;
+12. existing deployment, destructive recovery, operational snapshot, release identity, and release evidence-index gates remain green.
 
 ## Operational sequence for a real external anchor
 
@@ -110,7 +123,8 @@ The v1.8 candidate must demonstrate on the exact candidate commit:
 5. retrieve the published JSON through a separate read-back path;
 6. record provider identity, reference, retrieval time, and retrieved content;
 7. construct external read-back evidence from the exact retrieved document;
-8. build and verify the anchor receipt;
-9. retain the local checkpoint, request, provider evidence, receipt, provider read-back, and provider locator together in the release evidence set.
+8. build the receipt from that evidence;
+9. verify the checkpoint, evidence artifact, receipt, and provider read-back document together;
+10. retain the local checkpoint, request, provider evidence, receipt, provider read-back, and provider locator together in the release evidence set.
 
 The external publication/read-back operation is a separate evidence action and must not be inferred merely from successful CI.
