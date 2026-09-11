@@ -52,8 +52,9 @@ def _parser() -> argparse.ArgumentParser:
     simulate.add_argument("--observed-at", required=True)
     simulate.add_argument("--output")
 
-    verify = sub.add_parser("verify", help="verify an anchor receipt against a checkpoint")
+    verify = sub.add_parser("verify", help="verify receipt, evidence, and checkpoint as one anchor evidence set")
     verify.add_argument("--checkpoint", required=True)
+    verify.add_argument("--evidence", required=True)
     verify.add_argument("--receipt", required=True)
     verify.add_argument("--expected-fingerprint", required=True)
     verify.add_argument("--expected-provider", required=True)
@@ -91,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             result = {"request": request, "evidence": evidence, "receipt": receipt}
         else:
+            evidence = _read_json(args.evidence)
             receipt = _read_json(args.receipt)
             provider_document = None
             if args.expected_mode == EXTERNAL_READ_BACK_MODE:
@@ -101,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
                 provider_document = _read_json(args.provider_document)
             result = verify_anchor_receipt(
                 receipt,
+                evidence,
                 checkpoint,
                 args.expected_fingerprint,
                 expected_provider=args.expected_provider,
