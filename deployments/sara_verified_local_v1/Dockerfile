@@ -20,7 +20,9 @@ WORKDIR /app
 COPY pyproject.toml README.md constraints-runtime.txt ./
 COPY worldshepherd_sara ./worldshepherd_sara
 RUN pip install --no-cache-dir --disable-pip-version-check -c constraints-runtime.txt .
-RUN mkdir -p /var/lib/sara && chown -R sara:sara /var/lib/sara /app && chmod 0700 /var/lib/sara
+RUN mkdir -p /var/lib/sara /var/lib/prime-sentinel \
+    && chown -R sara:sara /var/lib/sara /var/lib/prime-sentinel /app \
+    && chmod 0700 /var/lib/sara /var/lib/prime-sentinel
 USER sara
 EXPOSE 9530
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
