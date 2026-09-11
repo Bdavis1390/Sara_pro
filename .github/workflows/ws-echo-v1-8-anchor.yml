@@ -1,0 +1,74 @@
+name: WS-ECHO v1.8 Anchor Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_anchor.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_anchor_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_verify.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint_anchor.py'
+      - 'deployments/sara_verified_local_v1/docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-echo-v1-8-anchor.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_anchor.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_anchor_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_verify.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint_anchor.py'
+      - 'deployments/sara_verified_local_v1/docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-echo-v1-8-anchor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  anchor-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile anchor implementation
+        run: |
+          python -m py_compile \
+            worldshepherd_sara/echo_checkpoint_anchor.py \
+            worldshepherd_sara/echo_checkpoint_anchor_cli.py
+
+      - name: Run ECHO checkpoint and anchor tests
+        run: python -m pytest tests/test_echo_checkpoint.py tests/test_echo_checkpoint_anchor.py -q
+
+      - name: Verify anchor CLI is packaged
+        run: |
+          ws-echo-anchor --help >/dev/null
+          ws-echo-anchor verify --help >/dev/null
+
+      - name: Enforce claims boundary in design contract
+        run: |
+          grep -F 'SIMULATED_ONLY' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
+          grep -F 'independent third-party attestation' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
+          grep -F 'immutable or WORM retention' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
+          grep -F 'actual provider document' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
+          grep -F 'exact deterministic anchor request' docs/ECHO_CHECKPOINT_V1_8_EXTERNAL_ANCHOR_DESIGN.md
