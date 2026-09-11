@@ -9,6 +9,8 @@ from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .echo_checkpoint import EchoCheckpointConfigError, EchoCheckpointError, EchoCheckpointManager
+from .echo_checkpoint_integrity import check_checkpoint_integrity
 from .echo_event_store import (
     EchoEventConflict,
     EchoEventStore,
@@ -131,18 +133,21 @@ def create_echo_app() -> FastAPI:
     token = _read_owned_token_file(os.getenv(ECHO_TOKEN_FILE_ENV, ""))
     try:
         store = EchoEventStore.from_environment()
-    except EchoEventStoreError as exc:
+        checkpoints = EchoCheckpointManager.from_environment(store)
+        check_checkpoint_integrity(checkpoints)
+    except (EchoEventStoreError, EchoCheckpointError, EchoCheckpointConfigError) as exc:
         raise EchoServiceConfigError(str(exc)) from exc
 
     app = FastAPI(
         title="Worldshepherd ECHO SENTINEL LINK Persistence Service",
-        version="1.6",
+        version="1.7",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
     )
     app.state.echo_token = token
     app.state.echo_store = store
+    app.state.echo_checkpoints = checkpoints
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
@@ -156,21 +161,24 @@ def create_echo_app() -> FastAPI:
 
     @app.get("/livez")
     def livez() -> dict[str, object]:
-        return {"ok": True, "service": "ECHO_SENTINEL_LINK", "version": "1.6"}
+        return {"ok": True, "service": "ECHO_SENTINEL_LINK", "version": "1.7"}
 
     @app.get("/readyz")
     def readyz() -> dict[str, object]:
         try:
-            status = store.health()
-        except EchoEventStoreError as exc:
+            persistence = store.health()
+            checkpoint_state = check_checkpoint_integrity(checkpoints)
+        except (EchoEventStoreError, EchoCheckpointError) as exc:
             raise HTTPException(status_code=503, detail="ECHO persistence unavailable") from exc
-        if not status["ok"]:
+        if not persistence["ok"] or not checkpoint_state["ok"]:
             raise HTTPException(status_code=503, detail="ECHO persistence integrity check failed")
         return {
             "ok": True,
             "service": "ECHO_SENTINEL_LINK",
             "persistence": "HEALTHY",
             "deduplication": "STABLE_EVENT_ID_PLUS_SEMANTIC_HASH",
+            "checkpoint_integrity": "HEALTHY",
+            "checkpoint_count": checkpoint_state["checkpoint_count"],
         }
 
     @app.get("/v1/status")
@@ -178,15 +186,18 @@ def create_echo_app() -> FastAPI:
         _require_bearer(request, token)
         try:
             value = store.health()
-        except EchoEventStoreError as exc:
+            checkpoint_state = check_checkpoint_integrity(checkpoints)
+        except (EchoEventStoreError, EchoCheckpointError) as exc:
             raise HTTPException(status_code=503, detail="ECHO persistence unavailable") from exc
         return {
             "schema": "WS-ECHO-PERSISTENCE-STATUS-V1",
             **value,
+            "checkpoints": checkpoint_state,
             "delivery_semantics": "AT_LEAST_ONCE_INPUT_IDEMPOTENT_SEMANTIC_STORAGE",
             "claims_boundary": (
-                "Reference software persistence/deduplication only; exactly-once transport, "
-                "immutable/WORM storage, and independent third-party attestation are not claimed."
+                "Reference software persistence/deduplication and signed local checkpointing only; "
+                "exactly-once transport, immutable/WORM storage, external anchoring, privileged "
+                "rollback resistance, and independent third-party attestation are not claimed."
             ),
         }
 
@@ -240,5 +251,41 @@ def create_echo_app() -> FastAPI:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         except EchoEventStoreError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.post("/v1/checkpoint", status_code=201)
+    def create_checkpoint(request: Request) -> dict[str, Any]:
+        _require_bearer(request, token)
+        try:
+            check_checkpoint_integrity(checkpoints)
+            bundle = checkpoints.create_checkpoint()
+            check_checkpoint_integrity(checkpoints)
+            return bundle
+        except EchoCheckpointError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @app.get("/v1/checkpoint/status")
+    def checkpoint_status(request: Request) -> dict[str, Any]:
+        _require_bearer(request, token)
+        try:
+            return check_checkpoint_integrity(checkpoints)
+        except EchoCheckpointError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    @app.get("/v1/checkpoint/public-key")
+    def checkpoint_public_key(request: Request) -> dict[str, str]:
+        _require_bearer(request, token)
+        return checkpoints.public_key_record()
+
+    @app.get("/v1/checkpoint/{sequence}")
+    def checkpoint(sequence: int, request: Request) -> dict[str, Any]:
+        _require_bearer(request, token)
+        try:
+            check_checkpoint_integrity(checkpoints)
+            value = checkpoints.get_checkpoint(sequence)
+        except EchoCheckpointError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        if value is None:
+            raise HTTPException(status_code=404, detail="ECHO checkpoint not found")
+        return value
 
     return app
