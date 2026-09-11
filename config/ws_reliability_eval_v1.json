@@ -1,0 +1,19 @@
+{
+  "schema": "WS-RELIABILITY-EVAL-V1.0",
+  "candidate": {
+    "min_workflow_trials": 100,
+    "min_recovery_trials": 100,
+    "min_integrity_trials": 500
+  },
+  "verified": {
+    "min_workflow_trials": 500,
+    "min_recovery_trials": 500,
+    "min_integrity_trials": 2000
+  },
+  "required_controls": {
+    "heldout_tasks": true,
+    "independent_result_check": true,
+    "task_set_fixed_before_run": true,
+    "retain_failed_tasks": true
+  }
+}
