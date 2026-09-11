@@ -1,0 +1,62 @@
+name: WS-NSB v1.9 G14 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g14_geometry_em_forward_map.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g14_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g14_geometry_em_forward_map.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_9_G14_GEOMETRY_EM_FORWARD_MAP.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-9-g14.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g14_geometry_em_forward_map.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g14_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g14_geometry_em_forward_map.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_9_G14_GEOMETRY_EM_FORWARD_MAP.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-9-g14.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  g14-geometry-forward-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Run G14 test suite
+        run: python -m pytest tests/test_nsb_g14_geometry_em_forward_map.py -q
+
+      - name: Execute and verify deterministic G14 report
+        run: |
+          rm -f ws_nsb_g14_report.json
+          ws-nsb-g14 --output ws_nsb_g14_report.json
+          ws-nsb-g14 --verify ws_nsb_g14_report.json
+
+      - name: Upload G14 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-nsb-v1-9-g14-report
+          path: deployments/sara_verified_local_v1/ws_nsb_g14_report.json
+          if-no-files-found: error
