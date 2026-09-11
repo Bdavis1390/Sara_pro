@@ -8,10 +8,12 @@ from pydantic import BaseModel, ConfigDict, Field
 from .echo_event_store import EchoEventStore, EchoEventStoreError
 from .event_outbox import (
     EVENT_OUTBOX_REGISTRY_KEY,
+    MAX_PENDING_OUTBOX_EVENTS,
     SINK_ECHO,
     SINK_SARA_AUDIT,
     EventOutboxError,
     deliver_event_outbox_to_echo,
+    drain_event_outbox,
     queue_event_outbox_patch,
 )
 from .fasa import FrontierActionCandidate, FrontierDisposition, FrontierSafetyPolicy
@@ -66,7 +68,7 @@ class FASARuntimeDecision(BaseModel):
 
 
 class FASAEchoExecutionReadiness(BaseModel):
-    """Evidence that a held frontier transition reached its required ECHO sink.
+    """Evidence that a held frontier transition reached its required provenance sinks.
 
     This receipt establishes gate readiness only. It does not itself perform an
     external operation and is not a reusable bearer credential. Durable SARA
@@ -502,11 +504,13 @@ def acknowledge_echo_and_confirm_execution_readiness(
     decision: FASARuntimeDecision,
     now: datetime | None = None,
 ) -> FASAEchoExecutionReadiness:
-    """Satisfy and verify the exact ECHO event for a held frontier transition.
+    """Satisfy and verify both provenance sinks for a held frontier transition.
 
-    Unrelated outbox events are not drained. The exact durable readiness record,
-    stable event ID, decision digest, authorization, and transition must agree.
-    ECHO failures or lease/readiness expiry therefore remain fail-closed.
+    Before READY, SARA drains the bounded local audit sink and targeted-delivers
+    the exact held event to ECHO. The exact durable readiness record, stable event
+    ID, decision digest, authorization, transition, and both required sinks must
+    agree. Unrelated malformed outbox state therefore blocks readiness rather than
+    weakening the safety boundary. ECHO failures or expiry remain fail-closed.
     """
 
     acknowledged_at = _decision_time(now)
@@ -524,17 +528,18 @@ def acknowledge_echo_and_confirm_execution_readiness(
         raise FASARuntimeGateError("execution readiness has already been consumed")
     expires_at = _parse_utc(initial_entry.get("expires_at"), label="readiness expires_at")
     if acknowledged_at >= expires_at:
-        raise FASARuntimeGateError("execution readiness expired before ECHO acknowledgement")
+        raise FASARuntimeGateError("execution readiness expired before provenance acknowledgement")
 
     try:
+        drain_event_outbox(store, limit=MAX_PENDING_OUTBOX_EVENTS)
         deliver_event_outbox_to_echo(
             store,
             echo_store,
             event_id=decision.provenance_event_id,
         )
-    except (EventOutboxError, EchoEventStoreError) as exc:
+    except (EventOutboxError, EchoEventStoreError, OSError, RuntimeError) as exc:
         raise FASARuntimeGateError(
-            "required ECHO acknowledgement failed; external execution remains blocked"
+            "required provenance acknowledgement failed; external execution remains blocked"
         ) from exc
 
     registry = store.get_registry()
@@ -546,10 +551,14 @@ def acknowledge_echo_and_confirm_execution_readiness(
         raise FASARuntimeGateError("FASA provenance event is unavailable")
     required_sinks = entry.get("required_sinks")
     delivered_sinks = entry.get("delivered_sinks")
-    if not isinstance(required_sinks, list) or SINK_ECHO not in required_sinks:
-        raise FASARuntimeGateError("FASA provenance event does not require ECHO")
-    if not isinstance(delivered_sinks, list) or SINK_ECHO not in delivered_sinks:
-        raise FASARuntimeGateError("required ECHO sink is not acknowledged")
+    if not isinstance(required_sinks, list):
+        raise FASARuntimeGateError("FASA provenance required-sink state is unavailable")
+    if not {SINK_SARA_AUDIT, SINK_ECHO}.issubset(set(required_sinks)):
+        raise FASARuntimeGateError("FASA provenance event does not require both safety sinks")
+    if not isinstance(delivered_sinks, list):
+        raise FASARuntimeGateError("FASA provenance delivered-sink state is unavailable")
+    if not {SINK_SARA_AUDIT, SINK_ECHO}.issubset(set(delivered_sinks)):
+        raise FASARuntimeGateError("required provenance sinks are not both acknowledged")
 
     payload = entry.get("payload")
     if not isinstance(payload, dict):
