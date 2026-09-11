@@ -30,6 +30,7 @@ from .prime_sentinel_issuance_store import (
     parse_utc,
     validate_request_id,
 )
+from .prime_sentinel_ledger_integrity import verify_issuance_ledger_integrity
 
 
 KEY_FILE_ENV = "PRIME_SENTINEL_PRIVATE_KEY_FILE"
@@ -319,6 +320,7 @@ def _bind_signing_key_identity(
     signer: PrimeSentinelSigner,
 ) -> None:
     name = f"signing_key_fingerprint:{signer.key_id}"
+    connection: sqlite3.Connection | None = None
     try:
         connection = sqlite3.connect(store.db_path, timeout=5.0, isolation_level=None)
         connection.row_factory = sqlite3.Row
@@ -342,15 +344,54 @@ def _bind_signing_key_identity(
             "unable to bind PRIME SENTINEL signing key identity to issuance ledger"
         ) from exc
     finally:
-        try:
+        if connection is not None:
             connection.close()
-        except UnboundLocalError:
-            pass
+
+
+def _bound_key_fingerprint(
+    store: PrimeSentinelIssuanceStore,
+    key_id: str,
+) -> str:
+    connection: sqlite3.Connection | None = None
+    try:
+        connection = sqlite3.connect(store.db_path, timeout=5.0)
+        connection.row_factory = sqlite3.Row
+        row = connection.execute(
+            "SELECT value FROM metadata WHERE name = ?",
+            (f"signing_key_fingerprint:{key_id}",),
+        ).fetchone()
+    except sqlite3.Error as exc:
+        raise PrimeSentinelIssuanceStoreError(
+            "unable to read signing-key binding from issuance ledger"
+        ) from exc
+    finally:
+        if connection is not None:
+            connection.close()
+    if row is None:
+        raise PrimeSentinelIssuanceStoreError(
+            "issuance ledger is missing the signing-key fingerprint binding"
+        )
+    return str(row["value"])
+
+
+def _combined_ledger_status(store: PrimeSentinelIssuanceStore) -> dict[str, object]:
+    basic = store.health()
+    deep = verify_issuance_ledger_integrity(store)
+    combined: dict[str, object] = {
+        **basic,
+        "cross_table_integrity_ok": bool(deep.get("ok")),
+        "integrity_model": deep.get("integrity_model"),
+        "tail_event_hash": deep.get("tail_event_hash"),
+    }
+    if not deep.get("ok"):
+        combined["integrity_reason"] = deep.get("reason", "UNKNOWN")
+    combined["ok"] = bool(basic.get("ok")) and bool(deep.get("ok"))
+    return combined
 
 
 def _status_from_record(
     record: IssuanceRecord,
-    signer: PrimeSentinelSigner,
+    store: PrimeSentinelIssuanceStore,
 ) -> PrimeSentinelIssuanceStatus:
     return PrimeSentinelIssuanceStatus(
         request_id=record.request_id,
@@ -359,7 +400,7 @@ def _status_from_record(
         prime_id=record.prime_id,
         target_environment=PrimeEnvironment(record.target_environment),
         key_id=record.key_id,
-        key_fingerprint_sha256=signer.fingerprint_sha256,
+        key_fingerprint_sha256=_bound_key_fingerprint(store, record.key_id),
         issued_at=record.issued_at,
         expires_at=record.expires_at,
         prepared_at=record.prepared_at,
@@ -371,7 +412,7 @@ def create_prime_sentinel_app() -> FastAPI:
     signer = PrimeSentinelSigner.from_environment()
     try:
         store = PrimeSentinelIssuanceStore.from_environment()
-    except PrimeSentinelIssuanceStoreError as exc:
+    except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
         raise PrimeSentinelServiceConfigError(str(exc)) from exc
     _bind_signing_key_identity(store, signer)
 
@@ -402,8 +443,8 @@ def create_prime_sentinel_app() -> FastAPI:
     @app.get("/readyz")
     def readyz() -> dict[str, object]:
         try:
-            ledger = store.health()
-        except PrimeSentinelIssuanceStoreError as exc:
+            ledger = _combined_ledger_status(store)
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
             raise HTTPException(status_code=503, detail="issuance ledger unavailable") from exc
         if not ledger["ok"]:
             raise HTTPException(status_code=503, detail="issuance ledger integrity check failed")
@@ -424,18 +465,20 @@ def create_prime_sentinel_app() -> FastAPI:
         _require_bearer(request, signer.service_token)
         try:
             record = store.get(validate_request_id(request_id))
-        except PrimeSentinelIssuanceStoreError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        if record is None:
-            raise HTTPException(status_code=404, detail="issuance request not found")
-        return _status_from_record(record, signer)
+            if record is None:
+                raise HTTPException(status_code=404, detail="issuance request not found")
+            return _status_from_record(record, store)
+        except HTTPException:
+            raise
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
+            raise HTTPException(status_code=503, detail="issuance ledger unavailable") from exc
 
     @app.get("/v1/ledger-status")
     def ledger_status(request: Request) -> dict[str, object]:
         _require_bearer(request, signer.service_token)
         try:
-            status = store.health()
-        except PrimeSentinelIssuanceStoreError as exc:
+            status = _combined_ledger_status(store)
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
             raise HTTPException(status_code=503, detail="issuance ledger unavailable") from exc
         if not status["ok"]:
             raise HTTPException(status_code=503, detail="issuance ledger integrity check failed")
@@ -458,7 +501,7 @@ def create_prime_sentinel_app() -> FastAPI:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         except PrimeSentinelLedgerFull as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
-        except PrimeSentinelIssuanceStoreError as exc:
+        except (PrimeSentinelIssuanceStoreError, sqlite3.Error) as exc:
             raise HTTPException(status_code=503, detail="issuance persistence failed") from exc
         return PrimeSentinelIssueResponse(assertion=assertion)
 
