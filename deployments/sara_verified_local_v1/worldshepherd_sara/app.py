@@ -20,6 +20,10 @@ from .event_outbox import (
 )
 from .fasa_approval_lease import FASA_APPROVAL_REGISTRY_KEY
 from .fasa_capability_registry import FASA_CAPABILITY_REGISTRY_KEY
+from .fasa_readiness_recovery import (
+    FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY,
+    recover_execution_readiness_after_restart,
+)
 from .fasa_runtime_gate import FASA_EXECUTION_READINESS_REGISTRY_KEY
 from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
@@ -41,6 +45,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         FASA_APPROVAL_REGISTRY_KEY,
         FASA_CAPABILITY_REGISTRY_KEY,
         FASA_EXECUTION_READINESS_REGISTRY_KEY,
+        FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY,
     }
 )
 
@@ -110,6 +115,7 @@ async def lifespan(app: FastAPI):
     os.umask(0o077)
     validate_runtime_secrets()
     app.state.store = DurableStore()
+    readiness_recovery = recover_execution_readiness_after_restart(app.state.store)
     replayed = drain_event_outbox(
         app.state.store,
         limit=MAX_PENDING_OUTBOX_EVENTS,
@@ -129,6 +135,7 @@ async def lifespan(app: FastAPI):
                 "prime_sentinel_public_keys_configured": app.state.prime_sentinel_verifier.configured,
                 "outbox_events_replayed": replayed,
                 "outbox_pending_after_replay": outbox["pending"],
+                "fasa_readiness_recovery": readiness_recovery.model_dump(mode="json"),
             },
         )
     )
