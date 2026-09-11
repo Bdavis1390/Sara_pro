@@ -336,6 +336,46 @@ def drain_event_outbox(store: DurableStore, *, limit: int = 100) -> int:
     return delivered
 
 
+def deliver_event_outbox_to_echo(
+    store: DurableStore,
+    echo_store: "EchoEventStore",
+    *,
+    event_id: str,
+) -> bool:
+    """Deliver one exact outbox event to ECHO without draining unrelated events.
+
+    This path deliberately validates only the selected event. A malformed or
+    unavailable unrelated event therefore cannot create head-of-line blocking
+    for a FASA transition whose exact provenance event is otherwise valid.
+
+    ECHO ingest happens before the SARA sink-delivery mark. If the registry write
+    fails after ECHO accepts the event, retry is safe because ECHO deduplicates on
+    stable event ID plus semantic hash. If ECHO was already marked delivered,
+    this function is an idempotent no-op and returns False.
+    """
+    if not isinstance(event_id, str) or not event_id:
+        raise EventOutboxError("event_id must be a non-empty string")
+
+    def operation(registry: dict[str, Any]):
+        records = _outbox_map(registry)
+        entry = records.get(event_id)
+        if not _entry_is_valid(event_id, entry):
+            raise EventOutboxError("selected outbox event is missing or malformed")
+        assert isinstance(entry, dict)
+        required, delivered = _entry_sink_state(entry)
+        if SINK_ECHO not in required:
+            raise EventOutboxError("selected outbox event does not require ECHO")
+        if SINK_ECHO in delivered:
+            return None, False
+        patch, record = _sink_delivery_patch(
+            registry, event_id=event_id, sink=SINK_ECHO
+        )
+        echo_store.ingest(record)
+        return patch, True
+
+    return bool(store.transact_registry(operation))
+
+
 def drain_event_outbox_to_echo(
     store: DurableStore,
     echo_store: "EchoEventStore",
