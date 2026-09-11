@@ -1,0 +1,27 @@
+{
+  "claims_boundary": [
+    "This is not a WS-ECHO-CHECKPOINT-ANCHOR-REQUEST-V1 object.",
+    "This does not establish external anchoring of a signed ECHO checkpoint.",
+    "A successful GitHub read-back proves only provider-path observability and exact content retrieval for this pilot object.",
+    "It does not establish independent third-party attestation, immutable/WORM retention, trusted timestamping, privileged rollback resistance, legal chain of custody, production HSM/KMS custody, exactly-once transport, certification, or physical-system qualification."
+  ],
+  "evidence_class": "SYNTHETIC_TRANSPORT_PILOT",
+  "pilot_payload_sha256": "12ae1597e4443132c83222ab3d54efd88c6bb6eda7910a9a3b2d154eb755a1f1",
+  "protected_ci_run_id": 34553568881,
+  "protected_pytest": {
+    "duration_seconds": 134.21,
+    "passed": 651,
+    "warnings": 10
+  },
+  "provider": "GITHUB_CONTENTS_API",
+  "purpose": "Exercise an authorized real remote-provider write/read path with non-sensitive synthetic evidence before anchoring a production ECHO checkpoint.",
+  "release_evidence_index_artifact": {
+    "artifact_id": 10181771063,
+    "sha256": "82f73ffea02ce0d447ac760781f4dbb54074fe21ed1bea990d60a5b34ef229c9"
+  },
+  "repository": "Bdavis1390/Sara_pro",
+  "schema": "WS-ECHO-PROVIDER-RETRIEVAL-PILOT-V1",
+  "v1_8_landed_tree": "136cae3e713fc4bcdeb92c586b512de5b3d776f2",
+  "v1_8_merge_commit": "c525305b6865f3814169158e961aab81e26dcdb0",
+  "v1_8_tested_branch_head": "d7a2891ee659348ef1ef690c4d6d912f22d89719"
+}
