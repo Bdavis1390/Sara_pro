@@ -20,6 +20,7 @@ from .event_outbox import (
 )
 from .fasa_approval_lease import FASA_APPROVAL_REGISTRY_KEY
 from .fasa_capability_registry import FASA_CAPABILITY_REGISTRY_KEY
+from .fasa_runtime_gate import FASA_EXECUTION_READINESS_REGISTRY_KEY
 from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
@@ -39,6 +40,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         EVENT_OUTBOX_REGISTRY_KEY,
         FASA_APPROVAL_REGISTRY_KEY,
         FASA_CAPABILITY_REGISTRY_KEY,
+        FASA_EXECUTION_READINESS_REGISTRY_KEY,
     }
 )
 
