@@ -1,0 +1,25 @@
+{
+  "system_id": "OPENAI_GPT6_ASTRA_ARC_REFERENCE_2026-09-03",
+  "metrics": {
+    "arc_agi_3_standard_score_pct": 62.71,
+    "arc_agi_3_provider_adapter_score_pct": 99.95
+  },
+  "evidence": [
+    {
+      "system_id": "OPENAI_GPT6_ASTRA_ARC_REFERENCE_2026-09-03",
+      "system_version": "GPT-6 Astra / ARC Prize evaluated variants",
+      "evaluator": "ARC Prize Foundation",
+      "benchmark_version": "ARC-AGI-3 Semi-Private",
+      "evaluation_date": "2026-09-03",
+      "environment": "ARC-AGI-3 Semi-Private, Standard and Provider Adapter harnesses",
+      "tools_and_permissions": "Standard harness uses provider-neutral visible notes; Provider Adapter preserves provider-specific opaque reasoning state and compaction",
+      "trial_count": "See ARC Prize published result tables",
+      "score": "62.71% Standard harness max; 99.95% Provider Adapter high",
+      "human_baseline": "Humans solve 100% of environments; median human action count used for action-efficiency baseline",
+      "contamination_controls": "Semi-private ARC-AGI-3 evaluation; see ARC Prize testing policy",
+      "integrity_adjudication": "ARC Prize explicitly states benchmark saturation is not proof of AGI and reports harnesses separately",
+      "source_or_artifact_hash": "https://arcprize.org/blog/astra",
+      "claim_state": "EXTERNALLY_REPLICATED"
+    }
+  ]
+}
