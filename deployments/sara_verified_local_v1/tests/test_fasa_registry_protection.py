@@ -1,24 +1,27 @@
 from __future__ import annotations
 
+import pytest
+
 from worldshepherd_sara.fasa_approval_lease import FASA_APPROVAL_REGISTRY_KEY
+from worldshepherd_sara.fasa_capability_registry import FASA_CAPABILITY_REGISTRY_KEY
 
 
 def _auth(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def test_generic_registry_patch_cannot_mutate_fasa_approval_namespace(client, tokens):
+@pytest.mark.parametrize(
+    "namespace",
+    [FASA_APPROVAL_REGISTRY_KEY, FASA_CAPABILITY_REGISTRY_KEY],
+)
+def test_generic_registry_patch_cannot_mutate_fasa_protected_namespaces(
+    client, tokens, namespace
+):
     _, admin = tokens
     response = client.patch(
         "/admin/registry",
         headers=_auth(admin),
-        json={
-            "values": {
-                FASA_APPROVAL_REGISTRY_KEY: {
-                    "forged-authorization": {"status": "VERIFIED"}
-                }
-            }
-        },
+        json={"values": {namespace: {"test-record": {"status": "TEST"}}}},
     )
     assert response.status_code == 403
     assert response.json()["detail"] == (
@@ -27,7 +30,7 @@ def test_generic_registry_patch_cannot_mutate_fasa_approval_namespace(client, to
 
     registry = client.get("/admin/registry", headers=_auth(admin))
     assert registry.status_code == 200
-    assert FASA_APPROVAL_REGISTRY_KEY not in registry.json()["registry"]
+    assert namespace not in registry.json()["registry"]
 
     audit = client.get("/v1/audit?limit=50", headers=_auth(admin))
     assert audit.status_code == 200
@@ -37,4 +40,4 @@ def test_generic_registry_patch_cannot_mutate_fasa_approval_namespace(client, to
         if item["event"] == "protected_registry_patch_rejected"
     ]
     assert rejected
-    assert FASA_APPROVAL_REGISTRY_KEY in rejected[-1]["payload"]["keys"]
+    assert namespace in rejected[-1]["payload"]["keys"]
