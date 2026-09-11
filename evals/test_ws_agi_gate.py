@@ -11,8 +11,11 @@ CONFIG = json.loads((ROOT / "config" / "ws_agi_gate_v1.json").read_text(encoding
 
 
 def complete_evidence():
+    metric_names = list(CONFIG["required_metrics"])
     return [
         {
+            "evidence_id": "unit-test:all-metrics",
+            "metric_names": metric_names,
             "system_id": "TEST",
             "system_version": "test-v1",
             "evaluator": "unit-test",
@@ -25,17 +28,30 @@ def complete_evidence():
             "human_baseline": "synthetic",
             "contamination_controls": "synthetic",
             "integrity_adjudication": "synthetic",
-            "source_or_artifact_hash": "synthetic",
+            "source_or_artifact_hash": "sha256:synthetic",
+            "task_hash": "sha256:synthetic-task",
+            "grader_version": "test-v1",
+            "rerun_count": 0,
+            "human_adjudication": "synthetic",
             "claim_state": "PROVEN_INTERNALLY",
         }
     ]
 
 
 def metrics_for(level):
-    values = {}
-    for name, rules in CONFIG["required_metrics"].items():
-        values[name] = rules[level]["value"]
-    return values
+    return {
+        name: rules[level]["value"]
+        for name, rules in CONFIG["required_metrics"].items()
+    }
+
+
+def validate(bundle):
+    return validate_evidence(
+        bundle,
+        CONFIG["evidence_required_fields"],
+        required_metrics=list(CONFIG["required_metrics"]),
+        allowed_claim_states=CONFIG["claim_states"],
+    )
 
 
 class AGIGateTests(unittest.TestCase):
@@ -48,40 +64,56 @@ class AGIGateTests(unittest.TestCase):
         metrics = metrics_for("candidate")
         candidate_pass, _ = evaluate_level(metrics, CONFIG["required_metrics"], "candidate")
         verified_pass, _ = evaluate_level(metrics, CONFIG["required_metrics"], "verified")
-        evidence = validate_evidence(
-            {"evidence": complete_evidence()}, CONFIG["evidence_required_fields"]
-        )
+        evidence = validate({"evidence": complete_evidence()})
+        self.assertTrue(evidence["valid"])
         self.assertTrue(candidate_pass)
         self.assertFalse(verified_pass)
-        self.assertEqual(
-            determine_state(candidate_pass, verified_pass, evidence["valid"]),
-            "AGI_CANDIDATE",
-        )
+        self.assertEqual(determine_state(candidate_pass, verified_pass, True), "AGI_CANDIDATE")
 
     def test_exact_verified_thresholds_pass(self):
         metrics = metrics_for("verified")
         candidate_pass, _ = evaluate_level(metrics, CONFIG["required_metrics"], "candidate")
         verified_pass, _ = evaluate_level(metrics, CONFIG["required_metrics"], "verified")
-        evidence = validate_evidence(
-            {"evidence": complete_evidence()}, CONFIG["evidence_required_fields"]
-        )
+        evidence = validate({"evidence": complete_evidence()})
+        self.assertTrue(evidence["valid"])
         self.assertTrue(candidate_pass)
         self.assertTrue(verified_pass)
-        self.assertEqual(
-            determine_state(candidate_pass, verified_pass, evidence["valid"]),
-            "AGI_VERIFIED",
-        )
+        self.assertEqual(determine_state(candidate_pass, verified_pass, True), "AGI_VERIFIED")
 
     def test_invalid_evidence_blocks_promotion(self):
         metrics = metrics_for("verified")
         candidate_pass, _ = evaluate_level(metrics, CONFIG["required_metrics"], "candidate")
         verified_pass, _ = evaluate_level(metrics, CONFIG["required_metrics"], "verified")
-        evidence = validate_evidence({"evidence": [{}]}, CONFIG["evidence_required_fields"])
+        evidence = validate({"evidence": [{}]})
         self.assertFalse(evidence["valid"])
         self.assertEqual(
             determine_state(candidate_pass, verified_pass, evidence["valid"]),
             "BELOW_AGI",
         )
+
+    def test_unmapped_metric_blocks_evidence(self):
+        records = complete_evidence()
+        records[0]["metric_names"] = records[0]["metric_names"][:-1]
+        evidence = validate({"evidence": records})
+        self.assertFalse(evidence["valid"])
+        self.assertTrue(any("without evidence mapping" in error for error in evidence["errors"]))
+
+    def test_duplicate_evidence_id_is_rejected(self):
+        records = complete_evidence() * 2
+        evidence = validate({"evidence": records})
+        self.assertFalse(evidence["valid"])
+        self.assertTrue(any("duplicate evidence_id" in error for error in evidence["errors"]))
+
+    def test_invalidated_metric_blocks_threshold_pass(self):
+        metrics = metrics_for("verified")
+        blocked_metric = "metr_50pct_horizon_hours"
+        validity = {blocked_metric: {"valid": False, "reason": "outside reliable range"}}
+        passed, checks = evaluate_level(
+            metrics, CONFIG["required_metrics"], "verified", validity
+        )
+        self.assertFalse(passed)
+        check = next(item for item in checks if item["metric"] == blocked_metric)
+        self.assertEqual(check["status"], "BLOCKED")
 
 
 if __name__ == "__main__":
