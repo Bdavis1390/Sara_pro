@@ -1,0 +1,41 @@
+{
+  "bounded_claim": "PROVEN INTERNALLY — a non-sensitive synthetic Worldshepherd provider-path pilot object was published to GitHub and retrieved through both the GitHub Contents API and a commit-pinned raw GitHub path with matching content.",
+  "evidence_class": "PROVEN_INTERNALLY_SYNTHETIC_PROVIDER_PATH",
+  "evidence_sha256": "ef15b0149cf6d3b25535a6cdd4ffe430fcd3301db483fef7a3e82c4e31a77770",
+  "not_claimed": [
+    "external anchoring of a signed ECHO checkpoint",
+    "independent third-party attestation",
+    "immutable or WORM retention",
+    "trusted timestamp or transparency-log guarantee",
+    "privileged rollback resistance",
+    "legal chain of custody",
+    "production HSM/KMS custody",
+    "exactly-once transport",
+    "certification or government authorization",
+    "physical-system qualification"
+  ],
+  "provider": "GITHUB",
+  "provider_blob_sha": "89c9a74c3fe53cb0ee38cd49c9901c4079b34203",
+  "provider_reported_modified_utc": "2026-09-11T02:30:40Z",
+  "publication_commit_sha": "6e87e711b82d6e7349af09b8ef05002d42a04556",
+  "published_content_sha256": "cecd3c4f029d4d90971d8e99b99c32f722286d957f734159e7662ab9bca0b003",
+  "published_object_path": "external_anchor_pilots/github/2026-09-11/provider-retrieval-pilot-v1.json",
+  "published_payload_sha256": "12ae1597e4443132c83222ab3d54efd88c6bb6eda7910a9a3b2d154eb755a1f1",
+  "repository": "Bdavis1390/Sara_pro",
+  "result": "PASS",
+  "retrieval_observed_utc": "2026-09-11T02:31:15Z",
+  "retrieval_paths": [
+    {
+      "kind": "GITHUB_CONTENTS_API",
+      "provider_blob_sha": "89c9a74c3fe53cb0ee38cd49c9901c4079b34203",
+      "ref": "echo-provider-retrieval-pilot-v1-9",
+      "result": "CONTENT_MATCH"
+    },
+    {
+      "kind": "RAW_COMMIT_URL",
+      "ref": "6e87e711b82d6e7349af09b8ef05002d42a04556",
+      "result": "CONTENT_MATCH"
+    }
+  ],
+  "schema": "WS-ECHO-PROVIDER-RETRIEVAL-EVIDENCE-V1"
+}
