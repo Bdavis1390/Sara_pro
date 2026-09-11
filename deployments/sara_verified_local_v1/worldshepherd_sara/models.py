@@ -8,6 +8,9 @@ from pydantic import BaseModel, Field, field_validator
 from .limits import validate_json_resource
 
 
+OVERWATCH_PROTECTED_REGISTRY_PREFIX = "ws_overwatch_"
+
+
 class RelayRequest(BaseModel):
     target: str = Field(min_length=1, max_length=128)
     action: str = Field(min_length=1, max_length=128)
@@ -34,6 +37,17 @@ class RegistryPatch(BaseModel):
     @field_validator("values")
     @classmethod
     def values_within_limits(cls, value: dict[str, Any]) -> dict[str, Any]:
+        protected = sorted(
+            key
+            for key in value
+            if isinstance(key, str)
+            and key.startswith(OVERWATCH_PROTECTED_REGISTRY_PREFIX)
+        )
+        if protected:
+            raise ValueError(
+                "OVERWATCH protected registry namespaces cannot be mutated "
+                "through the generic registry patch model"
+            )
         return validate_json_resource(value)
 
 
