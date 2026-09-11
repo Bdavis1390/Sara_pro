@@ -67,7 +67,7 @@ def test_anchor_request_is_deterministic_and_binds_verified_checkpoint(tmp_path,
     assert verify_anchor_request(first, bundle, fingerprint) == first
 
 
-def test_simulated_receipt_verifies_without_earning_external_credit(tmp_path, echo_checkpoint_key):
+def test_simulated_receipt_verifies_only_with_supplied_evidence_artifact(tmp_path, echo_checkpoint_key):
     key, _path = echo_checkpoint_key
     bundle, fingerprint = _checkpoint(tmp_path, key)
     request = build_anchor_request(bundle, fingerprint)
@@ -84,6 +84,7 @@ def test_simulated_receipt_verifies_without_earning_external_credit(tmp_path, ec
     )
     result = verify_anchor_receipt(
         receipt,
+        evidence,
         bundle,
         fingerprint,
         expected_provider=TEST_PROVIDER,
@@ -91,6 +92,7 @@ def test_simulated_receipt_verifies_without_earning_external_credit(tmp_path, ec
     )
     assert result["status"] == "PASS"
     assert result["verification_state"] == "SIMULATED_ONLY"
+    assert result["evidence_sha256"] == evidence["evidence_sha256"]
     assert "external publication" in evidence["claims_boundary"]
 
 
@@ -121,9 +123,41 @@ def test_receipt_tamper_fails_even_if_attacker_recomputes_receipt_digest(tmp_pat
     core = dict(tampered)
     core.pop("receipt_sha256")
     tampered["receipt_sha256"] = hashlib.sha256(_canonical(core)).hexdigest()
-    with pytest.raises(EchoCheckpointAnchorError, match="checkpoint_sha256 mismatch"):
+    with pytest.raises(EchoCheckpointAnchorError, match="does not exactly bind"):
         verify_anchor_receipt(
             tampered,
+            evidence,
+            bundle,
+            fingerprint,
+            expected_provider=TEST_PROVIDER,
+            expected_mode=TEST_PROVIDER_MODE,
+        )
+
+
+def test_receipt_rejects_substituted_evidence_even_with_valid_evidence_digest(tmp_path, echo_checkpoint_key):
+    key, _path = echo_checkpoint_key
+    bundle, fingerprint = _checkpoint(tmp_path, key)
+    request = build_anchor_request(bundle, fingerprint)
+    evidence = build_test_anchor_evidence(
+        request,
+        provider_reference="test://echo-anchor/1",
+        observed_at="2026-09-11T01:46:00+00:00",
+    )
+    receipt = build_anchor_receipt(
+        request,
+        evidence,
+        expected_provider=TEST_PROVIDER,
+        expected_mode=TEST_PROVIDER_MODE,
+    )
+    substituted = copy.deepcopy(evidence)
+    substituted["provider_reference"] = "test://echo-anchor/substituted"
+    core = dict(substituted)
+    core.pop("evidence_sha256")
+    substituted["evidence_sha256"] = hashlib.sha256(_canonical(core)).hexdigest()
+    with pytest.raises(EchoCheckpointAnchorError, match="does not exactly bind"):
+        verify_anchor_receipt(
+            receipt,
+            substituted,
             bundle,
             fingerprint,
             expected_provider=TEST_PROVIDER,
@@ -193,6 +227,7 @@ def test_external_readback_requires_exact_retrieved_provider_document(tmp_path, 
     with pytest.raises(EchoCheckpointAnchorError, match="requires provider document"):
         verify_anchor_receipt(
             receipt,
+            evidence,
             bundle,
             fingerprint,
             expected_provider="GITHUB_REMOTE",
@@ -200,6 +235,7 @@ def test_external_readback_requires_exact_retrieved_provider_document(tmp_path, 
         )
     result = verify_anchor_receipt(
         receipt,
+        evidence,
         bundle,
         fingerprint,
         expected_provider="GITHUB_REMOTE",
