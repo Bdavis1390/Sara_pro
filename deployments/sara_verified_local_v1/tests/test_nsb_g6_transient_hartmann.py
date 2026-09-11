@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from worldshepherd_sara.nsb_g6_transient_hartmann import (
@@ -75,7 +77,6 @@ def test_invalid_even_grid_is_rejected():
         integrate_transient_hartmann(hartmann=2.0, grid_size=32, dt=0.01, final_time=0.1)
 
 
-
 def test_sweep_requires_a_positive_magnetic_case():
     with pytest.raises(ValueError, match="include a positive field case"):
         run_nsb_g6_benchmark(sweep_hartmann=(0.0,))
@@ -92,3 +93,29 @@ def test_steady_reference_is_finite_for_large_hartmann_values():
     assert extreme_velocity == pytest.approx(1e-310, rel=1e-12, abs=0.0)
     assert steady_hartmann_exact_velocity(-1.0, 1000.0) == pytest.approx(0.0)
     assert steady_hartmann_exact_velocity(1.0, 1000.0) == pytest.approx(0.0)
+
+
+def test_custom_temporal_run_serializes_effective_time_steps_for_reproducibility():
+    custom = run_nsb_g6_benchmark(
+        temporal_dts=(0.3, 0.15, 0.075),
+        temporal_final_time=1.0,
+        temporal_order_floor=0.1,
+        finest_temporal_l2_limit=1.0,
+    )
+    effective = custom.convergence.temporal_effective_dts
+    assert effective == pytest.approx((1.0 / 3.0, 1.0 / 7.0, 1.0 / 13.0))
+    assert custom.convergence.temporal_final_time == pytest.approx(1.0)
+    errors = custom.convergence.temporal_errors
+    reconstructed = (
+        math.log(errors[0] / errors[1]) / math.log(effective[0] / effective[1]),
+        math.log(errors[1] / errors[2]) / math.log(effective[1] / effective[2]),
+    )
+    assert custom.convergence.temporal_orders == pytest.approx(reconstructed)
+
+
+def test_steady_reference_domain_guard_is_field_independent():
+    for ha in (0.0, 1.0, 1000.0):
+        with pytest.raises(ValueError, match=r"y in \[-1, 1\]"):
+            steady_hartmann_exact_velocity(2.0, ha)
+        with pytest.raises(ValueError, match=r"y in \[-1, 1\]"):
+            steady_hartmann_exact_velocity(-2.0, ha)

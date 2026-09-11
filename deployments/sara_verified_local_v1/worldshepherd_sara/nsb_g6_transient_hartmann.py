@@ -36,6 +36,8 @@ class G6ConvergenceSummary(BaseModel):
     temporal_hartmann: float = Field(gt=0.0)
     temporal_grid_size: int = Field(ge=5)
     temporal_dts: tuple[float, float, float]
+    temporal_effective_dts: tuple[float, float, float]
+    temporal_final_time: float = Field(gt=0.0)
     temporal_errors: tuple[float, float, float]
     temporal_orders: tuple[float, float]
     temporal_order_floor: float = Field(gt=0.0)
@@ -181,21 +183,16 @@ def transient_hartmann_exact_velocity(
         eigenvalue = (0.5 * n * math.pi) ** 2 + ha * ha
         forcing_coefficient = 4.0 / (n * math.pi)
         transient_factor = 1.0 - math.exp(-eigenvalue * time_value)
-        total += (
-            forcing_coefficient
-            * transient_factor
-            * math.sin(n * math.pi * x)
-            / eigenvalue
-        )
+        total += forcing_coefficient * transient_factor * math.sin(n * math.pi * x) / eigenvalue
     return total
 
 
 def steady_hartmann_exact_velocity(y: float, hartmann: float) -> float:
+    if abs(y) > 1.0:
+        raise ValueError("steady Hartmann reference requires y in [-1, 1]")
     ha = abs(hartmann)
     if ha == 0.0:
         return 0.5 * (1.0 - y * y)
-    if abs(y) > 1.0:
-        raise ValueError("steady Hartmann reference requires y in [-1, 1]")
     if ha < 20.0:
         cosh_ratio = math.cosh(ha * y) / math.cosh(ha)
     else:
@@ -283,20 +280,12 @@ def integrate_transient_hartmann(
             dt=effective_dt,
             dy=dy,
         )
-        midpoint = [
-            0.5 * (before + after)
-            for before, after in zip(velocity, next_velocity, strict=True)
-        ]
+        midpoint = [0.5 * (before + after) for before, after in zip(velocity, next_velocity, strict=True)]
         before_energy = _kinetic_energy(velocity, dy)
         after_energy = _kinetic_energy(next_velocity, dy)
         forcing_power = dy * sum(midpoint[1:-1])
-        viscous_power = sum(
-            (midpoint[index + 1] - midpoint[index]) ** 2
-            for index in range(grid_size - 1)
-        ) / dy
-        em_power = abs(hartmann) ** 2 * dy * sum(
-            value * value for value in midpoint[1:-1]
-        )
+        viscous_power = sum((midpoint[index + 1] - midpoint[index]) ** 2 for index in range(grid_size - 1)) / dy
+        em_power = abs(hartmann) ** 2 * dy * sum(value * value for value in midpoint[1:-1])
         step_residual = abs(
             (after_energy - before_energy)
             - effective_dt * (forcing_power - viscous_power - em_power)
@@ -338,10 +327,7 @@ def _case_result(
     )
     dy = 2.0 / (grid_size - 1)
     y = [-1.0 + index * dy for index in range(grid_size)]
-    exact = [
-        transient_hartmann_exact_velocity(value, hartmann, final_time)
-        for value in y
-    ]
+    exact = [transient_hartmann_exact_velocity(value, hartmann, final_time) for value in y]
     center = grid_size // 2
     return (
         TransientHartmannCaseResult(
@@ -453,16 +439,17 @@ def run_nsb_g6_benchmark(
         for dt in temporal_dts
     )
     temporal_errors = tuple(item.l2_velocity_error for item in temporal_cases)
+    temporal_effective_dts = tuple(item.effective_dt for item in temporal_cases)
     temporal_orders = (
         _observed_order(
             temporal_errors[0],
             temporal_errors[1],
-            temporal_cases[0].effective_dt / temporal_cases[1].effective_dt,
+            temporal_effective_dts[0] / temporal_effective_dts[1],
         ),
         _observed_order(
             temporal_errors[1],
             temporal_errors[2],
-            temporal_cases[1].effective_dt / temporal_cases[2].effective_dt,
+            temporal_effective_dts[1] / temporal_effective_dts[2],
         ),
     )
 
@@ -490,10 +477,7 @@ def run_nsb_g6_benchmark(
     )
     dy = 2.0 / (sweep_grid_size - 1)
     y = [-1.0 + index * dy for index in range(sweep_grid_size)]
-    steady_exact = [
-        steady_hartmann_exact_velocity(value, spatial_hartmann)
-        for value in y
-    ]
+    steady_exact = [steady_hartmann_exact_velocity(value, spatial_hartmann) for value in y]
     steady_limit_l2 = _l2_difference(long_time, steady_exact)
 
     centerlines = tuple(case.centerline_velocity for case in cases)
@@ -505,19 +489,11 @@ def run_nsb_g6_benchmark(
     )
 
     zero_field = cases[0]
-    spatial_pass = (
-        min(spatial_orders) >= spatial_order_floor
-        and spatial_errors[-1] <= finest_spatial_l2_limit
-    )
-    temporal_pass = (
-        min(temporal_orders) >= temporal_order_floor
-        and temporal_errors[-1] <= finest_temporal_l2_limit
-    )
+    spatial_pass = min(spatial_orders) >= spatial_order_floor and spatial_errors[-1] <= finest_spatial_l2_limit
+    temporal_pass = min(temporal_orders) >= temporal_order_floor and temporal_errors[-1] <= finest_temporal_l2_limit
     profile_accuracy_pass = max(case.l2_velocity_error for case in cases) <= finest_spatial_l2_limit
     all_budget_cases = (*cases, *spatial_cases, *temporal_cases)
-    energy_budget_pass = max(
-        case.energy_budget_abs_residual for case in all_budget_cases
-    ) <= energy_budget_abs_residual_limit
+    energy_budget_pass = max(case.energy_budget_abs_residual for case in all_budget_cases) <= energy_budget_abs_residual_limit
     zero_field_pass = zero_field.cumulative_em_dissipation <= zero_field_em_sink_limit
     symmetry_pass = sign_symmetry_l2 <= field_sign_symmetry_l2_limit
     positive_em_pass = all(
@@ -548,6 +524,8 @@ def run_nsb_g6_benchmark(
             temporal_hartmann=temporal_hartmann,
             temporal_grid_size=temporal_grid_size,
             temporal_dts=temporal_dts,
+            temporal_effective_dts=temporal_effective_dts,
+            temporal_final_time=temporal_final_time,
             temporal_errors=temporal_errors,
             temporal_orders=temporal_orders,
             temporal_order_floor=temporal_order_floor,
