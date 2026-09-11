@@ -83,7 +83,10 @@ wait_echo || {
 
 echo_container="$(docker compose --profile echo ps -q echo)"
 sara_container="$(docker compose ps -q sara)"
-[[ -n "$echo_container" && -n "$sara_container" ]] || { echo "ERROR: SARA or ECHO container not found." >&2; exit 1; }
+[[ -n "$echo_container" && -n "$sara_container" ]] || {
+  echo "ERROR: SARA or ECHO container not found." >&2
+  exit 1
+}
 docker inspect "$echo_container" > "${secret_dir}/echo-inspect.json"
 docker inspect "$sara_container" > "${secret_dir}/sara-inspect.json"
 python3 - "${secret_dir}/echo-inspect.json" "${secret_dir}/sara-inspect.json" <<'PY'
@@ -131,7 +134,8 @@ Path(sys.argv[2]).write_text(ids[0], encoding='utf-8')
 PY
   local eid
   eid="$(cat "$event_out")"
-  curl --fail --silent --show-error "${sara_url}/v1/audit?limit=500" -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" > "${secret_dir}/audit.json"
+  curl --fail --silent --show-error "${sara_url}/v1/audit?limit=500" \
+    -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" > "${secret_dir}/audit.json"
   python3 - "${secret_dir}/audit.json" "$eid" "$record_out" <<'PY'
 import json, sys
 from pathlib import Path
@@ -146,8 +150,10 @@ PY
 
 create_source_record "$prime_id" "${secret_dir}/passport1.json" "${secret_dir}/event1.txt" "${secret_dir}/source1.json"
 event_id="$(cat "${secret_dir}/event1.txt")"
-curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" --data @"${secret_dir}/source1.json" > "${secret_dir}/ingest-first.json"
-curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" --data @"${secret_dir}/source1.json" > "${secret_dir}/ingest-replay.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" \
+  --data @"${secret_dir}/source1.json" > "${secret_dir}/ingest-first.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" \
+  --data @"${secret_dir}/source1.json" > "${secret_dir}/ingest-replay.json"
 python3 - "${secret_dir}/ingest-first.json" "${secret_dir}/ingest-replay.json" "$event_id" <<'PY'
 import json,sys
 from pathlib import Path
@@ -157,7 +163,8 @@ assert first['event_id']==replay['event_id']==sys.argv[3]
 assert first['semantic_sha256']==replay['semantic_sha256'] and replay['delivery_count']==2
 PY
 
-curl --fail --silent --show-error -X POST "${echo_url}/v1/checkpoint" "${echo_header[@]}" > "${secret_dir}/checkpoint1.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/checkpoint" "${echo_header[@]}" \
+  > "${secret_dir}/checkpoint1.json"
 python3 - "${secret_dir}/checkpoint1.json" <<'PY'
 import json,sys
 from pathlib import Path
@@ -168,7 +175,8 @@ PY
 
 docker compose --profile echo restart echo >/dev/null
 wait_echo || { echo "ERROR: ECHO failed readiness after checkpoint restart." >&2; exit 1; }
-curl --fail --silent --show-error "${echo_url}/v1/checkpoint/1" -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/checkpoint1-after-restart.json"
+curl --fail --silent --show-error "${echo_url}/v1/checkpoint/1" \
+  -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/checkpoint1-after-restart.json"
 python3 - "${secret_dir}/checkpoint1.json" "${secret_dir}/checkpoint1-after-restart.json" <<'PY'
 import json,sys
 from pathlib import Path
@@ -182,19 +190,25 @@ from pathlib import Path
 record=json.loads(Path(sys.argv[1]).read_text()); record['timestamp']=datetime.now(timezone.utc).isoformat()
 Path(sys.argv[2]).write_text(json.dumps(record,sort_keys=True)+'\n')
 PY
-curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" --data @"${secret_dir}/replay-after-restart.json" > "${secret_dir}/ingest-after-restart.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" \
+  --data @"${secret_dir}/replay-after-restart.json" > "${secret_dir}/ingest-after-restart.json"
 python3 - "${secret_dir}/ingest-after-restart.json" <<'PY'
 import json,sys
 from pathlib import Path
-body=json.loads(Path(sys.argv[1]).read_text()); assert body['outcome']=='DEDUPLICATED' and body['delivery_count']==3
+body=json.loads(Path(sys.argv[1]).read_text())
+assert body['outcome']=='DEDUPLICATED' and body['delivery_count']==3
 PY
 
 create_source_record "$prime_id_2" "${secret_dir}/passport2.json" "${secret_dir}/event2.txt" "${secret_dir}/source2.json"
-curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" --data @"${secret_dir}/source2.json" > "${secret_dir}/ingest-second.json"
-curl --fail --silent --show-error -X POST "${echo_url}/v1/checkpoint" "${echo_header[@]}" > "${secret_dir}/checkpoint2.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" \
+  --data @"${secret_dir}/source2.json" > "${secret_dir}/ingest-second.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/checkpoint" "${echo_header[@]}" \
+  > "${secret_dir}/checkpoint2.json"
 
-curl --fail --silent --show-error "${echo_url}/v1/checkpoint/public-key" -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/checkpoint-public-key.json"
-python3 - "${secret_dir}/checkpoint-public-key.json" "$checkpoint_fingerprint" "${secret_dir}/checkpoint1.json" "${secret_dir}/checkpoint2.json" <<'PY'
+curl --fail --silent --show-error "${echo_url}/v1/checkpoint/public-key" \
+  -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/checkpoint-public-key.json"
+python3 - "${secret_dir}/checkpoint-public-key.json" "$checkpoint_fingerprint" \
+  "${secret_dir}/checkpoint1.json" "${secret_dir}/checkpoint2.json" <<'PY'
 import json,sys
 from pathlib import Path
 pub=json.loads(Path(sys.argv[1]).read_text()); fp=sys.argv[2]
@@ -205,7 +219,9 @@ assert two['manifest']['previous_checkpoint_sha256']==one['checkpoint_sha256']
 assert two['manifest']['event_count'] >= 2
 PY
 
-ws-echo-checkpoint-verify --expected-fingerprint "$checkpoint_fingerprint" --output "${secret_dir}/verification.json" "${secret_dir}/checkpoint1.json" "${secret_dir}/checkpoint2.json" >/dev/null
+ws-echo-checkpoint-verify --expected-fingerprint "$checkpoint_fingerprint" \
+  --output "${secret_dir}/verification.json" \
+  "${secret_dir}/checkpoint1.json" "${secret_dir}/checkpoint2.json" >/dev/null
 
 python3 - "${secret_dir}/checkpoint2.json" "$secret_dir" <<'PY'
 import copy,json,sys
@@ -222,31 +238,43 @@ for name,value in variants.items():
     (root/f'tamper-{name}.json').write_text(json.dumps(value,sort_keys=True)+'\n')
 PY
 for mutation in deleted reordered substituted signature predecessor key; do
-  if ws-echo-checkpoint-verify --expected-fingerprint "$checkpoint_fingerprint" "${secret_dir}/checkpoint1.json" "${secret_dir}/tamper-${mutation}.json" >/dev/null 2>&1; then
+  if ws-echo-checkpoint-verify --expected-fingerprint "$checkpoint_fingerprint" \
+    "${secret_dir}/checkpoint1.json" "${secret_dir}/tamper-${mutation}.json" >/dev/null 2>&1; then
     echo "ERROR: tampered checkpoint unexpectedly verified: ${mutation}" >&2
     exit 1
   fi
 done
 
-curl --fail --silent --show-error "${echo_url}/v1/event/${event_id}" -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/stored.json"
+curl --fail --silent --show-error "${echo_url}/v1/event/${event_id}" \
+  -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/stored.json"
 python3 - "${secret_dir}/source1.json" "${secret_dir}/reconcile-request.json" <<'PY'
 import json,sys
 from pathlib import Path
-record=json.loads(Path(sys.argv[1]).read_text()); Path(sys.argv[2]).write_text(json.dumps({'records':[record]},separators=(',',':'))+'\n')
+record=json.loads(Path(sys.argv[1]).read_text())
+Path(sys.argv[2]).write_text(json.dumps({'records':[record]},separators=(',',':'))+'\n')
 PY
-curl --fail --silent --show-error -X POST "${echo_url}/v1/reconcile" "${echo_header[@]}" --data @"${secret_dir}/reconcile-request.json" > "${secret_dir}/reconcile.json"
+curl --fail --silent --show-error -X POST "${echo_url}/v1/reconcile" "${echo_header[@]}" \
+  --data @"${secret_dir}/reconcile-request.json" > "${secret_dir}/reconcile.json"
 
 python3 - "${secret_dir}/source1.json" "${secret_dir}/conflict.json" <<'PY'
 import json,sys
 from pathlib import Path
-record=json.loads(Path(sys.argv[1]).read_text()); record['payload']['evidence_refs']=['MUTATED-CONFLICT-CHECK']
+record=json.loads(Path(sys.argv[1]).read_text())
+record['payload']['evidence_refs']=['MUTATED-CONFLICT-CHECK']
 Path(sys.argv[2]).write_text(json.dumps(record,sort_keys=True)+'\n')
 PY
-conflict_status="$(curl --silent --output "${secret_dir}/conflict-response.json" --write-out '%{http_code}' -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" --data @"${secret_dir}/conflict.json")"
-[[ "$conflict_status" == "409" ]] || { echo "ERROR: ECHO semantic conflict was not rejected; HTTP ${conflict_status}." >&2; exit 1; }
+conflict_status="$(curl --silent --output "${secret_dir}/conflict-response.json" --write-out '%{http_code}' \
+  -X POST "${echo_url}/v1/ingest" "${echo_header[@]}" --data @"${secret_dir}/conflict.json")"
+[[ "$conflict_status" == "409" ]] || {
+  echo "ERROR: ECHO semantic conflict was not rejected; HTTP ${conflict_status}." >&2
+  exit 1
+}
 
-curl --fail --silent --show-error "${echo_url}/v1/status" -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/status.json"
-python3 - "${secret_dir}/stored.json" "${secret_dir}/status.json" "${secret_dir}/reconcile.json" "${secret_dir}/verification.json" "$event_id" "$prime_id" "$evidence_file" <<'PY'
+curl --fail --silent --show-error "${echo_url}/v1/status" \
+  -H "Authorization: Bearer ${echo_token}" > "${secret_dir}/status.json"
+python3 - "${secret_dir}/stored.json" "${secret_dir}/status.json" \
+  "${secret_dir}/reconcile.json" "${secret_dir}/verification.json" \
+  "$event_id" "$prime_id" "$evidence_file" <<'PY'
 import json,sys
 from pathlib import Path
 stored=json.loads(Path(sys.argv[1]).read_text()); status=json.loads(Path(sys.argv[2]).read_text())
@@ -255,18 +283,28 @@ out=Path(sys.argv[7])
 assert stored['delivery_count']==3
 assert status['ok'] is True and status['rejected_conflicts'] >= 1
 assert status['checkpoints']['ok'] is True and status['checkpoints']['checkpoint_count']==2
-assert reconcile['scope']=='PROVIDED_SARA_AUDIT_WINDOW' and reconcile['counts']=={'MATCHED':1}
+expected_counts={'MATCHED':1,'ECHO_ONLY':1}
+assert reconcile['scope']=='PROVIDED_SARA_AUDIT_WINDOW' and reconcile['counts']==expected_counts, reconcile
 assert verification['status']=='PASS' and verification['checkpoint_count']==2
 summary={
-  'schema':'WS-ECHO-CHECKPOINT-INTEGRATION-V1','status':'PASS','prime_id':sys.argv[6],'event_id':sys.argv[5],
-  'semantic_sha256':stored['semantic_sha256'],'delivery_count_after_restart':stored['delivery_count'],
-  'checkpoint_count':verification['checkpoint_count'],'last_checkpoint_sha256':verification['last_checkpoint_sha256'],
+  'schema':'WS-ECHO-CHECKPOINT-INTEGRATION-V1',
+  'status':'PASS',
+  'prime_id':sys.argv[6],
+  'event_id':sys.argv[5],
+  'semantic_sha256':stored['semantic_sha256'],
+  'delivery_count_after_restart':stored['delivery_count'],
+  'checkpoint_count':verification['checkpoint_count'],
+  'last_checkpoint_sha256':verification['last_checkpoint_sha256'],
   'expected_key_fingerprint_sha256':verification['expected_key_fingerprint_sha256'],
   'tamper_cases_rejected':['deleted','reordered','substituted','signature','predecessor','key'],
-  'semantic_conflict_rejected_http_status':409,'reconciliation_scope':reconcile['scope'],'reconciliation_counts':reconcile['counts'],
+  'semantic_conflict_rejected_http_status':409,
+  'reconciliation_scope':reconcile['scope'],
+  'reconciliation_counts':reconcile['counts'],
   'separation_checks':{
-    'echo_has_no_sara_bearer_credentials':True,'echo_has_no_sara_data_mount':True,
-    'sara_has_no_echo_ingest_or_checkpoint_secret_or_data_mount':True,'sara_and_echo_share_no_docker_network':True,
+    'echo_has_no_sara_bearer_credentials':True,
+    'echo_has_no_sara_data_mount':True,
+    'sara_has_no_echo_ingest_or_checkpoint_secret_or_data_mount':True,
+    'sara_and_echo_share_no_docker_network':True,
   },
   'claims_boundary':(
     'Internal reference software evidence only. Signed ECHO checkpoint creation, restart persistence, '
@@ -275,7 +313,8 @@ summary={
     'exactly-once transport, certification, and physical PRIME qualification are not established.'
   ),
 }
-out.parent.mkdir(parents=True,exist_ok=True); out.write_text(json.dumps(summary,sort_keys=True,indent=2)+'\n')
+out.parent.mkdir(parents=True,exist_ok=True)
+out.write_text(json.dumps(summary,sort_keys=True,indent=2)+'\n')
 PY
 
 echo "ECHO persistence/checkpoint integration: PASS (${evidence_file})"
