@@ -3,7 +3,8 @@
 
 Evaluates a JSON result bundle against config/ws_agi_gate_v1.json.
 This tool does not measure intelligence itself; it enforces configured
-acceptance thresholds, metric validity, and metric-to-evidence provenance.
+acceptance thresholds, metric validity, metric-to-evidence provenance,
+and separation between intelligence capability and deployment authority.
 """
 
 from __future__ import annotations
@@ -22,6 +23,8 @@ OPS = {
     "<": lambda actual, target: actual < target,
     "==": lambda actual, target: actual == target,
 }
+
+STATUS_PRIORITY = {"PASS": 0, "FAIL": 1, "UNKNOWN": 2, "BLOCKED": 3}
 
 
 def load_json(path: Path) -> Dict[str, Any]:
@@ -176,6 +179,44 @@ def evaluate_level(
     return passed_all, checks
 
 
+def summarize_lanes(
+    checks: List[Dict[str, Any]], metric_lanes: Mapping[str, List[str]]
+) -> Dict[str, Any]:
+    """Produce an OVERWATCH-friendly lane summary from metric checks."""
+
+    by_metric = {check["metric"]: check for check in checks}
+    lanes: Dict[str, Any] = {}
+    for lane_name, metric_names in metric_lanes.items():
+        lane_checks = [by_metric[name] for name in metric_names if name in by_metric]
+        if not lane_checks:
+            lane_status = "UNKNOWN"
+        else:
+            lane_status = max(
+                (check["status"] for check in lane_checks),
+                key=lambda status: STATUS_PRIORITY.get(status, 99),
+            )
+        lanes[lane_name] = {
+            "status": lane_status,
+            "metrics": [
+                {
+                    "metric": check["metric"],
+                    "status": check["status"],
+                    "actual": check.get("actual"),
+                    "target": check.get("target"),
+                }
+                for check in lane_checks
+            ],
+        }
+    return lanes
+
+
+def preserve_deployment_state(bundle: Dict[str, Any], allowed_states: List[str]) -> str:
+    state = bundle.get("deployment_state", "BLOCKED")
+    if state not in allowed_states:
+        raise ValueError(f"Invalid deployment_state: {state}")
+    return state
+
+
 def determine_state(
     candidate_pass: bool,
     verified_pass: bool,
@@ -211,6 +252,9 @@ def main() -> int:
             raise ValueError("results.metric_validity must be an object when present")
 
         required_metrics = config["required_metrics"]
+        deployment_state = preserve_deployment_state(
+            bundle, config.get("deployment_states", ["BLOCKED"])
+        )
         evidence = validate_evidence(
             bundle,
             config.get("evidence_required_fields", []),
@@ -226,7 +270,7 @@ def main() -> int:
 
         state = determine_state(candidate_pass, verified_pass, evidence["valid"])
         output = {
-            "schema": "WS-AGI-GATE-EVALUATION-V1.1",
+            "schema": "WS-AGI-GATE-EVALUATION-V1.2",
             "gate_config_schema": config.get("schema"),
             "system_id": bundle.get("system_id", "UNKNOWN"),
             "intelligence_state": state,
@@ -234,15 +278,24 @@ def main() -> int:
                 "passed": candidate_pass and evidence["valid"],
                 "metric_thresholds_passed": candidate_pass,
                 "checks": candidate_checks,
+                "lanes": summarize_lanes(candidate_checks, config.get("metric_lanes", {})),
             },
             "verified_gate": {
                 "passed": verified_pass and evidence["valid"],
                 "metric_thresholds_passed": verified_pass,
                 "checks": verified_checks,
+                "lanes": summarize_lanes(verified_checks, config.get("metric_lanes", {})),
             },
             "metric_validity": metric_validity,
             "evidence": evidence,
-            "deployment_state_changed": False,
+            "prime_policy": {
+                "deployment_state_input": deployment_state,
+                "deployment_state_output": deployment_state,
+                "deployment_state_changed": False,
+                "human_approval_required_for_consequential_actions": config.get("policy", {}).get(
+                    "human_approval_required_for_consequential_actions", True
+                ),
+            },
             "claims_boundary": config.get("claims_boundary"),
         }
 
