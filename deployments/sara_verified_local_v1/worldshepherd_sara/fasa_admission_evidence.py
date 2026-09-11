@@ -120,7 +120,10 @@ def build_admission_evidence(
     if policy.policy_id == "":
         raise FASAAdmissionEvidenceError("policy_id cannot be empty")
 
-    current = (assessed_at or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    raw_assessed_at = assessed_at or datetime.now(timezone.utc)
+    if raw_assessed_at.tzinfo is None:
+        raise FASAAdmissionEvidenceError("assessed_at must be timezone-aware")
+    current = raw_assessed_at.astimezone(timezone.utc)
     normalized_reasons = tuple(str(reason) for reason in reasons)
     if not normalized_reasons:
         raise FASAAdmissionEvidenceError("at least one decision reason is required")
