@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .echo_checkpoint_anchor import (
+    EXTERNAL_READ_BACK_MODE,
     EchoCheckpointAnchorError,
     TEST_PROVIDER,
     TEST_PROVIDER_MODE,
@@ -58,8 +59,12 @@ def _parser() -> argparse.ArgumentParser:
     verify.add_argument("--expected-provider", required=True)
     verify.add_argument(
         "--expected-mode",
-        choices=["TEST_PROVIDER", "EXTERNAL_READ_BACK"],
+        choices=[TEST_PROVIDER_MODE, EXTERNAL_READ_BACK_MODE],
         required=True,
+    )
+    verify.add_argument(
+        "--provider-document",
+        help="retrieved provider JSON; mandatory for EXTERNAL_READ_BACK verification",
     )
     verify.add_argument("--output")
     return parser
@@ -87,12 +92,20 @@ def main(argv: list[str] | None = None) -> int:
             result = {"request": request, "evidence": evidence, "receipt": receipt}
         else:
             receipt = _read_json(args.receipt)
+            provider_document = None
+            if args.expected_mode == EXTERNAL_READ_BACK_MODE:
+                if not args.provider_document:
+                    raise EchoCheckpointAnchorError(
+                        "EXTERNAL_READ_BACK verification requires --provider-document"
+                    )
+                provider_document = _read_json(args.provider_document)
             result = verify_anchor_receipt(
                 receipt,
                 checkpoint,
                 args.expected_fingerprint,
                 expected_provider=args.expected_provider,
                 expected_mode=args.expected_mode,
+                provider_document=provider_document,
             )
         _write_json(result, args.output)
         return 0
