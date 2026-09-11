@@ -81,18 +81,17 @@ jobs:
               --challenge-id ci-resource-rehearsal \
               --seed 424242 \
               --output "$RUNNER_TEMP/g4-rehearsal-result.json"
-          {
-            echo "repository=$GITHUB_REPOSITORY"
-            echo "commit=$GITHUB_SHA"
-            uname -a
-            python --version
-            python -m pip freeze --all | sort
-            du -sb "$BUNDLE"
-          } > "$RUNNER_TEMP/g4-environment.txt"
 
-      - name: Verify bundle manifest accounting
+      - name: Remove execution caches from staged bundle
+        run: |
+          find "$BUNDLE" -type d -name '__pycache__' -prune -exec rm -rf {} +
+          rm -rf "$BUNDLE/.pytest_cache"
+          test -z "$(find "$BUNDLE" -type f -name '*.pyc' -print -quit)"
+
+      - name: Verify bundle manifest and exact file closure
         run: |
           python - <<'PY'
+          import hashlib
           import json
           import os
           from pathlib import Path
@@ -104,15 +103,49 @@ jobs:
           assert manifest['total_bytes'] == sum(item['byte_count'] for item in artifacts)
           assert manifest['total_lines'] == sum(item['line_count'] for item in artifacts)
           assert manifest['source_revision'] != 'UNKNOWN'
-          assert all(len(item['sha256']) == 64 for item in artifacts)
-          print(json.dumps({
+
+          expected_files = {item['path'] for item in artifacts} | {'MANIFEST.json', 'README_EVALUATOR.md'}
+          actual_files = {
+              path.relative_to(bundle).as_posix()
+              for path in bundle.rglob('*')
+              if path.is_file()
+          }
+          assert actual_files == expected_files, {
+              'unexpected': sorted(actual_files - expected_files),
+              'missing': sorted(expected_files - actual_files),
+          }
+
+          for item in artifacts:
+              data = (bundle / item['path']).read_bytes()
+              assert len(data) == item['byte_count']
+              assert hashlib.sha256(data).hexdigest() == item['sha256']
+
+          total_staged_file_bytes = sum(path.stat().st_size for path in bundle.rglob('*') if path.is_file())
+          summary = {
               'artifact_count': manifest['artifact_count'],
-              'total_bytes': manifest['total_bytes'],
+              'manifested_source_bytes': manifest['total_bytes'],
               'total_lines': manifest['total_lines'],
+              'total_staged_file_bytes': total_staged_file_bytes,
               'bundle_content_sha256': manifest['bundle_content_sha256'],
               'source_revision': manifest['source_revision'],
-          }, indent=2, sort_keys=True))
+          }
+          Path(os.environ['RUNNER_TEMP'], 'g4-bundle-summary.json').write_text(
+              json.dumps(summary, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          print(json.dumps(summary, indent=2, sort_keys=True))
           PY
+
+      - name: Record reference environment
+        run: |
+          {
+            echo "repository=$GITHUB_REPOSITORY"
+            echo "commit=$GITHUB_SHA"
+            uname -a
+            python --version
+            python -m pip freeze --all | sort
+            du -sb "$BUNDLE"
+          } > "$RUNNER_TEMP/g4-environment.txt"
 
       - name: Upload internal pre-release rehearsal evidence
         uses: actions/upload-artifact@v4
@@ -121,6 +154,7 @@ jobs:
           path: |
             ${{ env.BUNDLE }}
             ${{ runner.temp }}/g4-bundle-build.json
+            ${{ runner.temp }}/g4-bundle-summary.json
             ${{ runner.temp }}/g4-resource-usage.txt
             ${{ runner.temp }}/g4-environment.txt
             ${{ runner.temp }}/g4-rehearsal-result.json
