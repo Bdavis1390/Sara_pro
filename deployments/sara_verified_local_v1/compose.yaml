@@ -89,5 +89,8 @@ volumes:
   sara_data:
 
 networks:
+  # Dedicated signer-only bridge. It is intentionally separate from SARA's
+  # default network; loopback host publishing remains usable for authorized
+  # local callers while SARA and PRIME SENTINEL share no Docker network.
   prime_sentinel_private:
-    internal: true
+    driver: bridge
