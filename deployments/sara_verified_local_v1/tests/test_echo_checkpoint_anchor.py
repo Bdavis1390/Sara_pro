@@ -8,13 +8,13 @@ import pytest
 
 from worldshepherd_sara.echo_checkpoint import EchoCheckpointManager
 from worldshepherd_sara.echo_checkpoint_anchor import (
-    ANCHOR_EVIDENCE_SCHEMA,
     EXTERNAL_READ_BACK_MODE,
     TEST_PROVIDER,
     TEST_PROVIDER_MODE,
     EchoCheckpointAnchorError,
     build_anchor_receipt,
     build_anchor_request,
+    build_external_readback_evidence,
     build_test_anchor_evidence,
     verify_anchor_evidence,
     verify_anchor_receipt,
@@ -141,13 +141,14 @@ def test_test_provider_cannot_be_promoted_to_external_mode(tmp_path, echo_checkp
         observed_at="2026-09-11T01:46:00+00:00",
     )
     promoted = copy.deepcopy(evidence)
+    promoted["provider"] = "GITHUB_REMOTE"
     promoted["provider_mode"] = EXTERNAL_READ_BACK_MODE
     promoted["verification_state"] = "VERIFIED_READ_BACK"
-    promoted["provider_content_sha256"] = hashlib.sha256(b"fake").hexdigest()
+    promoted["provider_content_sha256"] = hashlib.sha256(_canonical(request)).hexdigest()
     core = dict(promoted)
     core.pop("evidence_sha256")
     promoted["evidence_sha256"] = hashlib.sha256(_canonical(core)).hexdigest()
-    with pytest.raises(EchoCheckpointAnchorError, match="provider mismatch"):
+    with pytest.raises(EchoCheckpointAnchorError, match="requires provider document"):
         verify_anchor_evidence(
             promoted,
             request,
@@ -156,45 +157,70 @@ def test_test_provider_cannot_be_promoted_to_external_mode(tmp_path, echo_checkp
         )
 
 
-def test_external_readback_evidence_contract_binds_provider_content_digest(tmp_path, echo_checkpoint_key):
+def test_external_readback_requires_exact_retrieved_provider_document(tmp_path, echo_checkpoint_key):
     key, _path = echo_checkpoint_key
     bundle, fingerprint = _checkpoint(tmp_path, key)
     request = build_anchor_request(bundle, fingerprint)
-    evidence = {
-        "schema": ANCHOR_EVIDENCE_SCHEMA,
-        "provider": "GITHUB_REMOTE",
-        "provider_mode": EXTERNAL_READ_BACK_MODE,
-        "provider_reference": "https://github.com/example/repo/blob/ref/anchor.json",
-        "observed_at": "2026-09-11T01:47:00+00:00",
-        "checkpoint_sequence": request["checkpoint_sequence"],
-        "checkpoint_id": request["checkpoint_id"],
-        "checkpoint_sha256": request["checkpoint_sha256"],
-        "anchor_payload_sha256": request["anchor_payload_sha256"],
-        "anchor_request_sha256": request["anchor_request_sha256"],
-        "provider_content_sha256": hashlib.sha256(_canonical(request)).hexdigest(),
-        "verification_state": "VERIFIED_READ_BACK",
-        "claims_boundary": "Externally supplied read-back evidence; provider independence and immutability are not established.",
-    }
-    evidence["evidence_sha256"] = hashlib.sha256(_canonical(evidence)).hexdigest()
+    evidence = build_external_readback_evidence(
+        request,
+        request,
+        provider="GITHUB_REMOTE",
+        provider_reference="https://github.com/example/repo/blob/ref/anchor.json",
+        observed_at="2026-09-11T01:47:00+00:00",
+    )
+    with pytest.raises(EchoCheckpointAnchorError, match="requires provider document"):
+        verify_anchor_evidence(
+            evidence,
+            request,
+            expected_provider="GITHUB_REMOTE",
+            expected_mode=EXTERNAL_READ_BACK_MODE,
+        )
     verified = verify_anchor_evidence(
         evidence,
         request,
         expected_provider="GITHUB_REMOTE",
         expected_mode=EXTERNAL_READ_BACK_MODE,
+        provider_document=request,
     )
-    assert verified["verification_state"] == "VERIFIED_READ_BACK"
+    assert verified["provider_content_sha256"] == hashlib.sha256(_canonical(request)).hexdigest()
     receipt = build_anchor_receipt(
         request,
         evidence,
         expected_provider="GITHUB_REMOTE",
         expected_mode=EXTERNAL_READ_BACK_MODE,
+        provider_document=request,
     )
+    with pytest.raises(EchoCheckpointAnchorError, match="requires provider document"):
+        verify_anchor_receipt(
+            receipt,
+            bundle,
+            fingerprint,
+            expected_provider="GITHUB_REMOTE",
+            expected_mode=EXTERNAL_READ_BACK_MODE,
+        )
     result = verify_anchor_receipt(
         receipt,
         bundle,
         fingerprint,
         expected_provider="GITHUB_REMOTE",
         expected_mode=EXTERNAL_READ_BACK_MODE,
+        provider_document=request,
     )
     assert result["status"] == "PASS"
     assert result["verification_state"] == "VERIFIED_READ_BACK"
+
+
+def test_external_readback_rejects_different_provider_document(tmp_path, echo_checkpoint_key):
+    key, _path = echo_checkpoint_key
+    bundle, fingerprint = _checkpoint(tmp_path, key)
+    request = build_anchor_request(bundle, fingerprint)
+    wrong = copy.deepcopy(request)
+    wrong["checkpoint_sha256"] = "0" * 64
+    with pytest.raises(EchoCheckpointAnchorError, match="does not equal anchor request"):
+        build_external_readback_evidence(
+            request,
+            wrong,
+            provider="GITHUB_REMOTE",
+            provider_reference="https://github.com/example/repo/blob/ref/anchor.json",
+            observed_at="2026-09-11T01:47:00+00:00",
+        )
