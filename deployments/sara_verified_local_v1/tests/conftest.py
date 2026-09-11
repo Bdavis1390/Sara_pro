@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import base64
+import json
+
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -24,6 +27,22 @@ def echo_checkpoint_key(monkeypatch: pytest.MonkeyPatch, tmp_path_factory):
     monkeypatch.setenv("ECHO_CHECKPOINT_PRIVATE_KEY_FILE", str(path.resolve()))
     monkeypatch.setenv("ECHO_CHECKPOINT_KEY_ID", "ECHO-CHECKPOINT-PYTEST-V1")
     return key, path
+
+
+@pytest.fixture()
+def fasa_prime_signing_key(monkeypatch: pytest.MonkeyPatch):
+    key = Ed25519PrivateKey.generate()
+    public = key.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
+    )
+    encoded = base64.urlsafe_b64encode(public).rstrip(b"=").decode("ascii")
+    monkeypatch.setenv(
+        "PRIME_SENTINEL_PUBLIC_KEYS_JSON",
+        json.dumps({"prime-key-runtime": encoded}),
+    )
+    monkeypatch.delenv("PRIME_SENTINEL_REVOKED_KEY_IDS", raising=False)
+    return key
 
 
 @pytest.fixture()
