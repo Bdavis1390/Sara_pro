@@ -5,6 +5,8 @@ on:
     paths:
       - "config/ws_agi_gate_v1.json"
       - "config/ws_economic_battery_v1.json"
+      - "config/ws_transfer_eval_v1.json"
+      - "config/ws_reliability_eval_v1.json"
       - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
       - "evals/**"
       - ".github/workflows/ws-agi-gate.yml"
@@ -13,6 +15,8 @@ on:
     paths:
       - "config/ws_agi_gate_v1.json"
       - "config/ws_economic_battery_v1.json"
+      - "config/ws_transfer_eval_v1.json"
+      - "config/ws_reliability_eval_v1.json"
       - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
       - "evals/**"
       - ".github/workflows/ws-agi-gate.yml"
@@ -36,6 +40,8 @@ jobs:
         run: |
           python -m json.tool config/ws_agi_gate_v1.json >/dev/null
           python -m json.tool config/ws_economic_battery_v1.json >/dev/null
+          python -m json.tool config/ws_transfer_eval_v1.json >/dev/null
+          python -m json.tool config/ws_reliability_eval_v1.json >/dev/null
 
       - name: Compile evaluator and adapters
         run: |
@@ -45,9 +51,12 @@ jobs:
             evals/adapters/arc_agi_3.py \
             evals/adapters/metr_time_horizon.py \
             evals/adapters/economic_battery.py \
+            evals/adapters/transfer_eval.py \
+            evals/adapters/reliability_eval.py \
             evals/test_ws_agi_gate.py \
             evals/test_agi_adapters.py \
-            evals/test_gate_bundle.py
+            evals/test_gate_bundle.py \
+            evals/test_transfer_reliability_adapters.py
 
       - name: Run unit tests
         run: python -m unittest discover -s evals -p 'test_*.py' -v
