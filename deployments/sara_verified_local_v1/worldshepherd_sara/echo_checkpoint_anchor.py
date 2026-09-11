@@ -15,6 +15,7 @@ ANCHOR_PURPOSE = "EXTERNAL_CHECKPOINT_DIGEST_ANCHOR"
 TEST_PROVIDER = "WORLDSHEPHERD_TEST_PROVIDER"
 TEST_PROVIDER_MODE = "TEST_PROVIDER"
 EXTERNAL_READ_BACK_MODE = "EXTERNAL_READ_BACK"
+READ_BACK_CONTENT_MATCH = "READ_BACK_CONTENT_MATCH"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _PROVIDER = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 
@@ -155,11 +156,11 @@ def build_external_readback_evidence(
     provider_reference: str,
     observed_at: str,
 ) -> dict[str, Any]:
-    """Bind an already retrieved provider document to the exact anchor request.
+    """Bind supplied read-back content to the exact anchor request.
 
-    This function performs no network I/O. The caller must retrieve provider_document through a
-    separately evidenced read-back path. Equality proves that the supplied read-back document is
-    the anchor request; it does not prove provider independence or immutability.
+    This function performs no network I/O and cannot establish where the supplied content came
+    from. The caller must preserve separate provider-retrieval evidence tying provider_document to
+    provider_reference. This function proves content equality only.
     """
     if request.get("schema") != ANCHOR_REQUEST_SCHEMA:
         raise EchoCheckpointAnchorError("anchor request schema mismatch")
@@ -185,11 +186,12 @@ def build_external_readback_evidence(
             request.get("anchor_request_sha256"), label="anchor request digest"
         ),
         "provider_content_sha256": hashlib.sha256(_canonical(parsed)).hexdigest(),
-        "verification_state": "VERIFIED_READ_BACK",
+        "verification_state": READ_BACK_CONTENT_MATCH,
         "claims_boundary": (
-            "The supplied provider read-back document exactly matched the anchor request. "
-            "Provider independence, immutability/WORM retention, privileged rollback resistance, "
-            "legal chain of custody, and exactly-once transport are not established."
+            "The supplied read-back content exactly matched the anchor request. The software does "
+            "not prove that content was retrieved from the stated provider reference. Provider "
+            "retrieval provenance, independence, immutability/WORM retention, privileged rollback "
+            "resistance, legal chain of custody, and exactly-once transport require separate evidence."
         ),
     }
     evidence["evidence_sha256"] = hashlib.sha256(_canonical(evidence)).hexdigest()
@@ -237,8 +239,10 @@ def verify_anchor_evidence(
     elif mode == EXTERNAL_READ_BACK_MODE:
         if provider == TEST_PROVIDER:
             raise EchoCheckpointAnchorError("test provider cannot satisfy external read-back mode")
-        if state != "VERIFIED_READ_BACK":
-            raise EchoCheckpointAnchorError("external read-back evidence must be VERIFIED_READ_BACK")
+        if state != READ_BACK_CONTENT_MATCH:
+            raise EchoCheckpointAnchorError(
+                f"external read-back evidence must be {READ_BACK_CONTENT_MATCH}"
+            )
         if provider_document is None:
             raise EchoCheckpointAnchorError("external read-back verification requires provider document")
         parsed = _provider_document(provider_document)
@@ -282,10 +286,10 @@ def build_anchor_receipt(
         "evidence_sha256": verified["evidence_sha256"],
         "verification_state": verified["verification_state"],
         "claims_boundary": (
-            "Receipt proves only that the supplied evidence artifact and provider content satisfy "
-            "this checkpoint anchor contract. Provider independence, immutability/WORM retention, "
-            "privileged rollback resistance, legal chain of custody, and exactly-once transport "
-            "require separate evidence."
+            "Receipt proves only that the supplied evidence artifact and supplied provider content "
+            "satisfy this checkpoint anchor contract. It does not prove remote retrieval provenance. "
+            "Provider independence, immutability/WORM retention, privileged rollback resistance, "
+            "legal chain of custody, and exactly-once transport require separate evidence."
         ),
     }
     if "provider_content_sha256" in verified:
@@ -304,7 +308,7 @@ def verify_anchor_receipt(
     expected_mode: str,
     provider_document: Any | None = None,
 ) -> dict[str, Any]:
-    """Verify receipt, evidence artifact, checkpoint, and provider read-back as one evidence set."""
+    """Verify receipt, evidence artifact, checkpoint, and supplied read-back content as one set."""
     request = build_anchor_request(bundle, expected_fingerprint)
     if not isinstance(receipt, dict) or receipt.get("schema") != ANCHOR_RECEIPT_SCHEMA:
         raise EchoCheckpointAnchorError("anchor receipt schema mismatch")
