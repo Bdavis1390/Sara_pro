@@ -39,10 +39,20 @@ def _seed_state():
     return initialize_state(seeds)
 
 
+SOURCE_FIXTURE_NAMES = (
+    "omega_cycle_20260907_v1.json",
+    "omega_cycle_20260907_science_extension_v1.json",
+    "omega_cycle_20260907_release6_extension_v1.json",
+)
+COMBINED_FIXTURE_NAME = "omega_cycle_20260907_combined_v1.json"
+
+
 def _cycle_payloads():
-    paths = sorted(FIXTURES.glob("omega_cycle_20260907*_v1.json"))
-    assert paths, "expected at least one WS-OMEGA cycle fixture"
-    return [(path, _load(path)) for path in paths]
+    return [(FIXTURES / name, _load(FIXTURES / name)) for name in SOURCE_FIXTURE_NAMES]
+
+
+def _combined_payload():
+    return _load(FIXTURES / COMBINED_FIXTURE_NAME)
 
 
 def test_cycle_2_fixtures_validate_and_reference_known_seed_parents():
@@ -66,14 +76,27 @@ def test_cycle_2_fixtures_validate_and_reference_known_seed_parents():
     assert total >= 20
 
 
+def test_combined_cli_fixture_contains_every_source_proposal_once():
+    combined = _combined_payload()
+    assert combined["schema"] == "ws-omega-proposals-1"
+    assert tuple(combined["source_fixture_names"]) == SOURCE_FIXTURE_NAMES
+    source_proposals = [
+        item
+        for _path, payload in _cycle_payloads()
+        for item in payload["proposals"]
+    ]
+    assert len(combined["proposals"]) == len(source_proposals)
+    assert {
+        json.dumps(item, sort_keys=True) for item in combined["proposals"]
+    } == {json.dumps(item, sort_keys=True) for item in source_proposals}
+
+
 def test_cycle_2_executes_without_dropping_or_promoting_proposals():
     state = _seed_state()
-    proposals = []
-    for _path, payload in _cycle_payloads():
-        proposals.extend(
-            ExpansionProposal.model_validate(item)
-            for item in payload["proposals"]
-        )
+    proposals = [
+        ExpansionProposal.model_validate(item)
+        for item in _combined_payload()["proposals"]
+    ]
 
     policy = RecursiveDiscoveryPolicy(
         parent_budget_per_cycle=64,
@@ -103,12 +126,10 @@ def test_cycle_2_executes_without_dropping_or_promoting_proposals():
 
 def test_cycle_2_preserves_negative_and_prior_art_as_first_class_nodes():
     state = _seed_state()
-    proposals = []
-    for _path, payload in _cycle_payloads():
-        proposals.extend(
-            ExpansionProposal.model_validate(item)
-            for item in payload["proposals"]
-        )
+    proposals = [
+        ExpansionProposal.model_validate(item)
+        for item in _combined_payload()["proposals"]
+    ]
 
     next_state, report = run_recursive_cycle(
         state,
