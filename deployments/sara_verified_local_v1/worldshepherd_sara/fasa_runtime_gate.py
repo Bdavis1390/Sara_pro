@@ -447,7 +447,7 @@ def admit_frontier_action_transactionally(
                     )
             except (EventOutboxError, FASARuntimeGateError) as exc:
                 denied_reasons = tuple(reasons) + (
-                    f"required FASA provenance/readiness obligation could not be committed: {exc}",
+                    f"required FASA provenance obligation and execution-readiness state could not be committed: {exc}",
                 )
                 denied_evidence = build_admission_evidence(
                     candidate,
