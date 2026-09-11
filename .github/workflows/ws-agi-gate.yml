@@ -48,27 +48,8 @@ jobs:
           python -m json.tool config/ws_reliability_eval_v1.json >/dev/null
           python -m json.tool config/ws_replication_eval_v1.json >/dev/null
 
-      - name: Compile evaluator adapters and runtime
-        run: |
-          python -m py_compile \
-            evals/ws_agi_gate.py \
-            evals/build_gate_bundle.py \
-            evals/echo_provenance.py \
-            evals/overwatch_snapshot.py \
-            evals/adapters/arc_agi_3.py \
-            evals/adapters/metr_time_horizon.py \
-            evals/adapters/economic_battery.py \
-            evals/adapters/transfer_eval.py \
-            evals/adapters/reliability_eval.py \
-            evals/adapters/replication_eval.py \
-            runtime/deliberative_controller.py \
-            evals/test_ws_agi_gate.py \
-            evals/test_agi_adapters.py \
-            evals/test_gate_bundle.py \
-            evals/test_transfer_reliability_adapters.py \
-            evals/test_replication_eval.py \
-            evals/test_provenance_overwatch.py \
-            evals/test_deliberative_controller.py
+      - name: Compile complete evaluator and runtime tree
+        run: python -m compileall -q evals runtime
 
       - name: Run unit tests
         run: python -m unittest discover -s evals -p 'test_*.py' -v
