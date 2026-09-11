@@ -27,6 +27,9 @@ SAFE_RELATIVE_PATHS = frozenset(
         "docs/golden_dome/GD-07_SPACE_DATA_NETWORK_CAPTURE_LANE.md",
         "docs/golden_dome/GD-08_GOLDEN_DOME_HUB_CAPABILITY_OVERVIEW.md",
         "docs/golden_dome/GD-09_G3_TRANSITION_READINESS_MAP.md",
+        "docs/golden_dome/GD-10_G4_EXTERNAL_REPRODUCTION_PROTOCOL.md",
+        "docs/golden_dome/GD-11_G4_EXTERNAL_EVALUATION_SCORECARD.md",
+        "docs/golden_dome/GD-13_G4_EVALUATOR_HANDOFF.md",
     }
 )
 
