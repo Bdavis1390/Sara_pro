@@ -9,8 +9,10 @@ ProtectedTask objects for the existing bounded suite runner.
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping
 
@@ -105,3 +107,31 @@ def load_manifest(path: Path) -> Dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError("manifest must be a JSON object")
     return value
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate an evaluator-controlled protected task artifact")
+    parser.add_argument("manifest", type=Path)
+    parser.add_argument("artifact", type=Path)
+    parser.add_argument("--pretty", action="store_true")
+    args = parser.parse_args()
+    try:
+        manifest = load_manifest(args.manifest)
+        tasks = load_protected_tasks(manifest, args.artifact)
+        summary = {
+            "valid": True,
+            "suite_id": manifest.get("suite_id"),
+            "suite_version": manifest.get("suite_version"),
+            "task_count": len(tasks),
+            "task_set_hash": manifest.get("task_set_hash"),
+            "artifact_reference": manifest.get("artifact_access", {}).get("reference_id"),
+        }
+        print(json.dumps(summary, indent=2 if args.pretty else None, sort_keys=args.pretty))
+        return 0
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        print(f"Protected artifact validation error: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
