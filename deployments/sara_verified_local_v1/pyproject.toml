@@ -50,6 +50,7 @@ ws-nsb-g10 = "worldshepherd_sara.nsb_g10_cli:main"
 ws-nsb-g11 = "worldshepherd_sara.nsb_g11_cli:main"
 ws-nsb-g12 = "worldshepherd_sara.nsb_g12_cli:main"
 ws-nsb-g13 = "worldshepherd_sara.nsb_g13_cli:main"
+ws-nsb-g14 = "worldshepherd_sara.nsb_g14_cli:main"
 ws-omega-recursion = "worldshepherd_sara.recursive_discovery_cli:main"
 
 [tool.setuptools]
