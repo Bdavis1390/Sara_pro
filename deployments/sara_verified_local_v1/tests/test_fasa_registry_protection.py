@@ -4,6 +4,10 @@ import pytest
 
 from worldshepherd_sara.fasa_approval_lease import FASA_APPROVAL_REGISTRY_KEY
 from worldshepherd_sara.fasa_capability_registry import FASA_CAPABILITY_REGISTRY_KEY
+from worldshepherd_sara.fasa_readiness_recovery import (
+    FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY,
+)
+from worldshepherd_sara.fasa_runtime_gate import FASA_EXECUTION_READINESS_REGISTRY_KEY
 
 
 def _auth(token: str) -> dict[str, str]:
@@ -12,7 +16,12 @@ def _auth(token: str) -> dict[str, str]:
 
 @pytest.mark.parametrize(
     "namespace",
-    [FASA_APPROVAL_REGISTRY_KEY, FASA_CAPABILITY_REGISTRY_KEY],
+    [
+        FASA_APPROVAL_REGISTRY_KEY,
+        FASA_CAPABILITY_REGISTRY_KEY,
+        FASA_EXECUTION_READINESS_REGISTRY_KEY,
+        FASA_EXECUTION_READINESS_EXPIRY_REGISTRY_KEY,
+    ],
 )
 def test_generic_registry_patch_cannot_mutate_fasa_protected_namespaces(
     client, tokens, namespace
