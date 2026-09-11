@@ -80,6 +80,18 @@ class FrontierSafetyPolicy(BaseModel):
     # validation rather than silently changing the execution boundary.
     allow_f5_when_all_gates_pass: Literal[False] = False
 
+    @model_validator(mode="after")
+    def validate_echo_ack_threshold(self) -> "FrontierSafetyPolicy":
+        if self.echo_ack_before_execution_level < self.human_review_level:
+            raise ValueError(
+                "echo_ack_before_execution_level cannot be below human_review_level"
+            )
+        if self.echo_ack_before_execution_level > CapabilityLevel.F4:
+            raise ValueError(
+                "echo_ack_before_execution_level cannot exceed F4 while F5 is disabled"
+            )
+        return self
+
 
 def evaluate_frontier_action(
     candidate: FrontierActionCandidate,
