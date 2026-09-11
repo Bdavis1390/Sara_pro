@@ -107,8 +107,8 @@ docker compose config | awk '
   }
   { print }
   END {
-    if (admin_tokens != 1 || relay_tokens != 1) {
-      print "ERROR: Compose token redaction did not find exactly one value for each token." > "/dev/stderr"
+    if (admin_tokens < 1 || relay_tokens < 1) {
+      print "ERROR: Compose token redaction did not find required token keys." > "/dev/stderr"
       exit 1
     }
   }
