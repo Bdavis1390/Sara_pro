@@ -3,7 +3,13 @@ import json
 import unittest
 from pathlib import Path
 
-from ws_agi_gate import determine_state, evaluate_level, validate_evidence
+from ws_agi_gate import (
+    determine_state,
+    evaluate_level,
+    preserve_deployment_state,
+    summarize_lanes,
+    validate_evidence,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -114,6 +120,25 @@ class AGIGateTests(unittest.TestCase):
         self.assertFalse(passed)
         check = next(item for item in checks if item["metric"] == blocked_metric)
         self.assertEqual(check["status"], "BLOCKED")
+
+    def test_overwatch_lane_uses_worst_metric_status(self):
+        checks = [
+            {"metric": "a", "status": "PASS", "actual": 1, "target": 1},
+            {"metric": "b", "status": "UNKNOWN", "actual": None, "target": 1},
+        ]
+        lanes = summarize_lanes(checks, {"lane": ["a", "b"]})
+        self.assertEqual(lanes["lane"]["status"], "UNKNOWN")
+
+    def test_deployment_state_is_preserved(self):
+        for state in CONFIG["deployment_states"]:
+            self.assertEqual(
+                preserve_deployment_state({"deployment_state": state}, CONFIG["deployment_states"]),
+                state,
+            )
+        with self.assertRaises(ValueError):
+            preserve_deployment_state(
+                {"deployment_state": "AUTO_PROMOTE"}, CONFIG["deployment_states"]
+            )
 
 
 if __name__ == "__main__":
