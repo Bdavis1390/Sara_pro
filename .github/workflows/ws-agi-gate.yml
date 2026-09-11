@@ -39,16 +39,18 @@ jobs:
       - name: Run unit tests
         run: python -m unittest discover -s evals -p 'test_*.py' -v
 
-      - name: Evaluate public frontier reference baseline
+      - name: Evaluate historical public frontier baseline
         run: |
           python evals/ws_agi_gate.py \
             evals/baselines/public_frontier_reference_2026_03.json \
             --config config/ws_agi_gate_v1.json \
-            --pretty > agi_gate_baseline_output.json
-          python - <<'PY'
-          import json
-          with open('agi_gate_baseline_output.json', encoding='utf-8') as f:
-              result = json.load(f)
-          assert result['intelligence_state'] == 'BELOW_AGI', result
-          print('Baseline correctly remains BELOW_AGI')
-          PY
+            --pretty > historical_baseline_output.json
+          python -c "import json; r=json.load(open('historical_baseline_output.json')); assert r['intelligence_state']=='BELOW_AGI'; print('Historical baseline remains BELOW_AGI')"
+
+      - name: Evaluate GPT-6 Astra ARC reference
+        run: |
+          python evals/ws_agi_gate.py \
+            evals/baselines/gpt6_astra_arc_reference_2026_09_03.json \
+            --config config/ws_agi_gate_v1.json \
+            --pretty > astra_arc_output.json
+          python -c "import json; r=json.load(open('astra_arc_output.json')); assert r['intelligence_state']=='BELOW_AGI'; print('Astra ARC reference remains BELOW_AGI under the multi-lane gate')"
