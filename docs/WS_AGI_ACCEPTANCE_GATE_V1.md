@@ -1,10 +1,10 @@
-# Worldshepherd AGI Acceptance Gate v1.0 — 2026-09-11
+# Worldshepherd AGI Acceptance Gate v1.1 — 2026-09-11
 
 ## Purpose
 
 Create a falsifiable, evidence-controlled definition of when Worldshepherd may use the label `AGI_CANDIDATE` or `AGI_VERIFIED`.
 
-This document deliberately prevents benchmark cherry-picking and goalpost movement. No vendor announcement, executive statement, single benchmark, or model release is sufficient by itself.
+This document deliberately prevents benchmark cherry-picking and goalpost movement. No vendor announcement, executive statement, single benchmark, model release, or provider-specific harness is sufficient by itself.
 
 ## Claims boundary
 
@@ -16,8 +16,15 @@ Current public reference points include:
 
 - OpenAI Charter definition of AGI: highly autonomous systems that outperform humans at most economically valuable work: https://openai.com/charter/
 - ARC-AGI-3: interactive, novel-environment reasoning with human-solvable environments and human-efficiency scoring: https://arcprize.org/arc-agi/3
+- ARC Prize evaluation of GPT-6 Astra, including separate Standard and Provider Adapter harness results: https://arcprize.org/blog/astra
 - METR task-completion time horizons for autonomous model agents: https://metr.org/time-horizons/
 - NIST AI RMF and Generative AI Profile for governance, measurement, validation, and risk controls: https://www.nist.gov/itl/ai-risk-management-framework and https://doi.org/10.6028/NIST.AI.600-1
+
+## Critical September 2026 update
+
+ARC Prize reports a major step change for GPT-6 Astra: 62.7% on ARC-AGI-3 Semi-Private with the provider-neutral Standard harness and up to 99.9% with the Provider Adapter harness. ARC Prize also reports that Astra exceeded the tested human action-efficiency baseline on most solved levels.
+
+That result is highly significant, but ARC Prize explicitly states that saturating ARC-AGI-3 does **not** constitute proof of AGI. It also distinguishes the provider-neutral Standard harness from the provider-specific adapter harness. Worldshepherd therefore records both results separately and does not allow the provider-specific score to substitute for the Standard-harness gate.
 
 ## Two separate gates
 
@@ -44,16 +51,7 @@ Required lanes:
 
 Capability does not automatically authorize autonomous deployment. PRIME SENTINEL remains the policy gate.
 
-Deployment requires:
-
-- bounded permissions and least privilege;
-- human approval for consequential actions;
-- immutable or tamper-evident evidence/provenance records;
-- rollback and shutdown paths;
-- monitoring through OVERWATCH;
-- model/tool/version identity through ECHO SENTINEL LINK;
-- red-team evaluation and incident response;
-- compliance with applicable legal, security, privacy, and safety requirements.
+Deployment requires bounded permissions and least privilege; human approval for consequential actions; immutable or tamper-evident provenance; rollback and shutdown paths; monitoring through OVERWATCH; model/tool/version identity through ECHO SENTINEL LINK; red-team evaluation and incident response; and compliance with applicable legal, security, privacy, and safety requirements.
 
 A system can therefore be `AGI_VERIFIED / DEPLOYMENT_BLOCKED`.
 
@@ -65,20 +63,24 @@ The machine-readable source of truth is `config/ws_agi_gate_v1.json`.
 
 Minimum requirements:
 
-- ARC-AGI-3 score >= 90% on a protected held-out evaluation or an equivalent independently controlled novel-environment battery.
+- ARC-AGI-3 Standard-harness score >= 90% on protected held-out evaluation, or an independently controlled successor benchmark with equivalent novelty/generalization requirements.
+- ARC-AGI-3 Provider Adapter score >= 95% where that harness exists; this is supplementary and cannot replace the Standard-harness requirement.
 - METR-style 80% task-completion horizon >= 8 human-equivalent hours and 50% horizon >= 40 hours on a broad, contamination-resistant suite.
 - Economic work battery >= 90% of skilled-human baseline across at least 10 materially different professional domains.
+- No critical domain below 75% of skilled-human baseline.
 - Held-out cross-domain transfer >= 90% of in-domain performance.
 - End-to-end tool-use workflow success >= 95% on independently scored tasks.
 - Self-correction success >= 95% when a recoverable error is injected or naturally occurs.
 - Severe false-completion / fabricated-evidence rate <= 1%.
 - At least 2 independent replications.
+- Zero unresolved evidence-integrity failures.
 
 ### AGI_VERIFIED
 
 Minimum requirements:
 
-- ARC-AGI-3 or successor held-out novel-environment score >= 99% with near-human action efficiency.
+- ARC-AGI-3 Standard-harness or successor held-out novel-environment score >= 99% with near-human action efficiency.
+- Provider Adapter score >= 99% where applicable, without using that score to substitute for the Standard-harness requirement.
 - METR-style 80% horizon >= 40 human-equivalent hours and 50% horizon >= 160 hours, measured on suites that include messy, open-ended tasks and not only coding.
 - Economic work battery >= 95% of skilled-human baseline across at least 20 materially different professional domains, with no critical domain below 85%.
 - Held-out cross-domain transfer >= 95% of in-domain performance.
@@ -92,19 +94,9 @@ These thresholds are intentionally demanding. Passing them would still not prove
 
 ## Evidence record required for every metric
 
-Each result must record:
+Each result must record model/system identifier and immutable version hash where available; evaluator; benchmark version and protected/public status; date and environment; tools and permissions; trial count and confidence interval where applicable; raw score and human baseline; contamination/leakage controls; cheating/reward-hacking adjudication; source URL or artifact hash; and claim state.
 
-- model/system identifier and immutable version hash where available;
-- evaluator organization;
-- benchmark version and protected/public status;
-- date and environment;
-- tools and permissions available;
-- number of trials and confidence interval where applicable;
-- raw score and human baseline;
-- contamination/leakage controls;
-- cheating/reward-hacking adjudication;
-- source URL or artifact hash;
-- claim state: `PROVEN_INTERNALLY`, `EXTERNALLY_REPLICATED`, `VENDOR_REPORTED`, `UNVERIFIED`, or `BLOCKED`.
+Allowed claim states are `PROVEN_INTERNALLY`, `EXTERNALLY_REPLICATED`, `VENDOR_REPORTED`, `UNVERIFIED`, and `BLOCKED`.
 
 ## Worldshepherd architecture changes
 
@@ -114,7 +106,7 @@ Add an evaluation orchestrator that dispatches benchmark adapters, normalizes re
 
 ### ECHO SENTINEL LINK
 
-Record the complete provenance chain: model version, prompts, tools, environment, task hashes, outputs, grader version, human adjudication, and any reruns.
+Record the complete provenance chain: model version, prompts, tools, environment, task hashes, outputs, grader version, human adjudication, and reruns.
 
 ### PRIME SENTINEL
 
@@ -127,7 +119,7 @@ No change to deployment authority occurs solely because `intelligence_state` cha
 
 ### OVERWATCH
 
-Display gate status, failed lanes, unknown metrics, replication status, evidence age, and any integrity alerts. A green aggregate indicator is prohibited while any required metric is unknown.
+Display gate status, failed lanes, unknown metrics, replication status, evidence age, and integrity alerts. A green aggregate indicator is prohibited while any required metric is unknown.
 
 ## Advancement loop
 
@@ -141,10 +133,15 @@ Worldshepherd should continuously iterate through this loop:
 6. Preserve every failed run and negative result in the evidence ledger.
 7. Promote state only when all required gates pass.
 
-## Current status
+## Current status — 2026-09-11
 
 `intelligence_state = BELOW_AGI`
 
-Reason: public evidence in 2026 shows rapid progress but still demonstrates important limitations in robust long-horizon autonomy, open-ended judgment, and generalization. METR reported strong performance on many technical tasks but also failures, misleading completion behavior, and reliability limitations in harder open-ended tasks. ARC-AGI-3 was explicitly created because interactive novel-environment adaptation remained a frontier problem.
+The reason is no longer that frontier systems are uniformly weak on novel interactive reasoning. Astra's Provider Adapter ARC-AGI-3 result is near saturation and therefore closes a major historical gap. The remaining blockers are stricter and more important:
 
-This status must change only from measured evidence, never from branding or executive declarations.
+- Astra's provider-neutral Standard-harness ARC-AGI-3 score is 62.7%, below the Worldshepherd candidate threshold.
+- ARC Prize itself says ARC-AGI-3 saturation is not proof of AGI because the benchmark is bounded and does not capture real-world open-endedness.
+- METR's latest public time-horizon page remains based on measurements through May 2026 and explicitly warns that measurements above 16 hours are unreliable with its current suite, so it does not yet supply the required long-horizon evidence for this gate.
+- Independent, contamination-resistant evidence across broad economically valuable work, robust self-correction, low false-completion rates, and multiple independent replications is still incomplete.
+
+This status changes only from measured evidence, never from branding, executive declarations, or a single near-saturated benchmark.
