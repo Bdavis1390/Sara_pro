@@ -1,5 +1,5 @@
 {
-  "schema": "WS-AGI-GATE-V1.1",
+  "schema": "WS-AGI-GATE-V1.2",
   "date": "2026-09-11",
   "claims_boundary": "Worldshepherd operational AGI acceptance criteria. Passing these gates does not establish scientific consensus, consciousness, sentience, or deployment authorization.",
   "states": ["BELOW_AGI", "AGI_CANDIDATE", "AGI_VERIFIED"],
@@ -59,6 +59,8 @@
     }
   },
   "evidence_required_fields": [
+    "evidence_id",
+    "metric_names",
     "system_id",
     "system_version",
     "evaluator",
@@ -72,6 +74,10 @@
     "contamination_controls",
     "integrity_adjudication",
     "source_or_artifact_hash",
+    "task_hash",
+    "grader_version",
+    "rerun_count",
+    "human_adjudication",
     "claim_state"
   ],
   "claim_states": [
@@ -89,6 +95,9 @@
     "human_approval_required_for_consequential_actions": true,
     "preserve_failed_runs": true,
     "protected_holdout_required_for_verified_state": true,
-    "provider_specific_harness_cannot_substitute_for_standard_harness": true
+    "provider_specific_harness_cannot_substitute_for_standard_harness": true,
+    "metric_evidence_mapping_required": true,
+    "invalidated_metric_is_failure": true,
+    "duplicate_evidence_ids_are_failure": true
   }
 }
