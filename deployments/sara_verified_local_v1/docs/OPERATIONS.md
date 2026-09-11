@@ -19,6 +19,23 @@ At start of shift or after deployment/recovery:
 5. Confirm audit append/self-test succeeds.
 6. Capture `scripts/ops_snapshot.sh` output and retain with the relevant release/incident record.
 
+## PRIME SENTINEL optional signer profile
+
+The default SARA deployment does not start the signing service. Enable the signer only after provisioning its two host-side secret files outside the repository:
+
+- `/var/lib/worldshepherd/prime-sentinel/ed25519-private.pem`
+- `/var/lib/worldshepherd/prime-sentinel/service-token`
+
+The reference signer container runs as UID `10001`. Each file must be owned by that UID and grant no group/other permissions. The private key must be an unencrypted Ed25519 PEM key. The bearer-token file must contain one independent token of at least 32 characters. Do not reuse the SARA relay or administrator bearer values.
+
+One controlled provisioning pattern is to generate material in a root-only temporary directory, install it to the paths above with owner/group `10001:10001` and mode `0600`, then securely remove the temporary copies. Do not place private key or bearer-token contents in shell history, `.env`, Git, issue text, logs, CI artifacts, or release evidence.
+
+Set `PRIME_SENTINEL_SIGNING_KEY_ID` only in the signer launch environment, then start the opt-in profile with `docker compose --profile prime-sentinel up -d prime-sentinel`. Retrieve `/v1/public-key`, independently confirm its fingerprint against the intended key, and configure only that public key in SARA through `PRIME_SENTINEL_PUBLIC_KEYS_JSON`. Recreate/restart SARA after changing trusted public keys.
+
+The reference host binding remains loopback-only. Do not expose port 9540 publicly. Key rotation requires introducing the new public key into SARA, validating issuance/verification, moving issuance to the new key ID, revoking the prior key ID in SARA, and retaining the rotation evidence. Suspected signer-key or signer-token compromise is SEV-1 and requires immediate signer shutdown, credential/key replacement, revocation of the compromised key ID, preservation of evidence, and explicit human reauthorization before resuming release issuance.
+
+`VERIFY_PRIME_SENTINEL_INTEGRATION=1 scripts/verify_deployment.sh` enables the same two-container signer→SARA lifecycle gate used by protected CI. GitHub Actions runs that integration automatically. The test uses ephemeral secrets and proves software separation, signature verification, replay rejection, and one-time authorization consumption; it does not validate production/HSM custody.
+
 ## Incident classes
 - **SEV-1:** suspected credential compromise, unauthorized admin action, integrity/custody failure, prohibited-data exposure, or inability to trust audit/configuration state.
 - **SEV-2:** service unavailable, readiness failure, persistent-data corruption, repeated authorization failures, or recovery failure without evidence of compromise.
