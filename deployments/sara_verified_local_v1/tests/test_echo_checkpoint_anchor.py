@@ -9,6 +9,7 @@ import pytest
 from worldshepherd_sara.echo_checkpoint import EchoCheckpointManager
 from worldshepherd_sara.echo_checkpoint_anchor import (
     EXTERNAL_READ_BACK_MODE,
+    READ_BACK_CONTENT_MATCH,
     TEST_PROVIDER,
     TEST_PROVIDER_MODE,
     EchoCheckpointAnchorError,
@@ -177,7 +178,7 @@ def test_test_provider_cannot_be_promoted_to_external_mode(tmp_path, echo_checkp
     promoted = copy.deepcopy(evidence)
     promoted["provider"] = "GITHUB_REMOTE"
     promoted["provider_mode"] = EXTERNAL_READ_BACK_MODE
-    promoted["verification_state"] = "VERIFIED_READ_BACK"
+    promoted["verification_state"] = READ_BACK_CONTENT_MATCH
     promoted["provider_content_sha256"] = hashlib.sha256(_canonical(request)).hexdigest()
     core = dict(promoted)
     core.pop("evidence_sha256")
@@ -191,7 +192,7 @@ def test_test_provider_cannot_be_promoted_to_external_mode(tmp_path, echo_checkp
         )
 
 
-def test_external_readback_requires_exact_retrieved_provider_document(tmp_path, echo_checkpoint_key):
+def test_external_readback_requires_exact_supplied_document_and_reports_content_match(tmp_path, echo_checkpoint_key):
     key, _path = echo_checkpoint_key
     bundle, fingerprint = _checkpoint(tmp_path, key)
     request = build_anchor_request(bundle, fingerprint)
@@ -202,6 +203,8 @@ def test_external_readback_requires_exact_retrieved_provider_document(tmp_path, 
         provider_reference="https://github.com/example/repo/blob/ref/anchor.json",
         observed_at="2026-09-11T01:47:00+00:00",
     )
+    assert evidence["verification_state"] == READ_BACK_CONTENT_MATCH
+    assert "does not prove" in evidence["claims_boundary"]
     with pytest.raises(EchoCheckpointAnchorError, match="requires provider document"):
         verify_anchor_evidence(
             evidence,
@@ -243,7 +246,8 @@ def test_external_readback_requires_exact_retrieved_provider_document(tmp_path, 
         provider_document=request,
     )
     assert result["status"] == "PASS"
-    assert result["verification_state"] == "VERIFIED_READ_BACK"
+    assert result["verification_state"] == READ_BACK_CONTENT_MATCH
+    assert "does not prove remote retrieval provenance" in result["claims_boundary"]
 
 
 def test_external_readback_rejects_different_provider_document(tmp_path, echo_checkpoint_key):
