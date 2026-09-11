@@ -19,6 +19,7 @@ class CapabilityLevel(IntEnum):
 
 class FrontierDisposition(str, Enum):
     ALLOW = "ALLOW"
+    ECHO_ACK_REQUIRED = "ECHO_ACK_REQUIRED"
     HUMAN_REVIEW_REQUIRED = "HUMAN_REVIEW_REQUIRED"
     DENIED = "DENIED"
 
@@ -65,6 +66,7 @@ class FrontierSafetyPolicy(BaseModel):
     human_review_level: CapabilityLevel = CapabilityLevel.F3
     safety_case_level: CapabilityLevel = CapabilityLevel.F4
     independent_review_level: CapabilityLevel = CapabilityLevel.F4
+    echo_ack_before_execution_level: CapabilityLevel = CapabilityLevel.F4
     require_human_for_irreversible: bool = True
     require_human_for_consequential_external_effect: bool = True
     require_provenance: bool = True
