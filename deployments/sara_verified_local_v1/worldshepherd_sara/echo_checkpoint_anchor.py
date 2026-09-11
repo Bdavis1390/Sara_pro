@@ -65,6 +65,23 @@ def _anchor_payload_digest(binding: dict[str, Any]) -> str:
     ).hexdigest()
 
 
+def _provider_document(value: Any) -> dict[str, Any]:
+    parsed: Any = value
+    if isinstance(value, bytes):
+        try:
+            parsed = json.loads(value.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise EchoCheckpointAnchorError("provider read-back document is not valid UTF-8 JSON") from exc
+    elif isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError as exc:
+            raise EchoCheckpointAnchorError("provider read-back document is not valid JSON") from exc
+    if not isinstance(parsed, dict):
+        raise EchoCheckpointAnchorError("provider read-back document must be a JSON object")
+    return parsed
+
+
 def build_anchor_request(bundle: Any, expected_fingerprint: str) -> dict[str, Any]:
     """Build a deterministic request for externally recording a verified checkpoint digest."""
     binding = _checkpoint_binding(bundle, expected_fingerprint)
@@ -130,12 +147,62 @@ def build_test_anchor_evidence(
     return evidence
 
 
+def build_external_readback_evidence(
+    request: dict[str, Any],
+    provider_document: Any,
+    *,
+    provider: str,
+    provider_reference: str,
+    observed_at: str,
+) -> dict[str, Any]:
+    """Bind an already retrieved provider document to the exact anchor request.
+
+    This function performs no network I/O. The caller must retrieve provider_document through a
+    separately evidenced read-back path. Equality proves that the supplied read-back document is
+    the anchor request; it does not prove provider independence or immutability.
+    """
+    if request.get("schema") != ANCHOR_REQUEST_SCHEMA:
+        raise EchoCheckpointAnchorError("anchor request schema mismatch")
+    parsed = _provider_document(provider_document)
+    if parsed != request:
+        raise EchoCheckpointAnchorError("provider read-back document does not equal anchor request")
+    provider_id = _provider(provider)
+    if provider_id == TEST_PROVIDER:
+        raise EchoCheckpointAnchorError("test provider cannot be used for external read-back evidence")
+    evidence = {
+        "schema": ANCHOR_EVIDENCE_SCHEMA,
+        "provider": provider_id,
+        "provider_mode": EXTERNAL_READ_BACK_MODE,
+        "provider_reference": _text(provider_reference, label="provider reference"),
+        "observed_at": _text(observed_at, label="observed_at", maximum=128),
+        "checkpoint_sequence": request.get("checkpoint_sequence"),
+        "checkpoint_id": request.get("checkpoint_id"),
+        "checkpoint_sha256": request.get("checkpoint_sha256"),
+        "anchor_payload_sha256": _sha256_text(
+            request.get("anchor_payload_sha256"), label="anchor payload digest"
+        ),
+        "anchor_request_sha256": _sha256_text(
+            request.get("anchor_request_sha256"), label="anchor request digest"
+        ),
+        "provider_content_sha256": hashlib.sha256(_canonical(parsed)).hexdigest(),
+        "verification_state": "VERIFIED_READ_BACK",
+        "claims_boundary": (
+            "The supplied provider read-back document exactly matched the anchor request. "
+            "Provider independence, immutability/WORM retention, privileged rollback resistance, "
+            "legal chain of custody, and exactly-once transport are not established."
+        ),
+    }
+    evidence["evidence_sha256"] = hashlib.sha256(_canonical(evidence)).hexdigest()
+    return evidence
+
+
 def verify_anchor_evidence(
     evidence: Any,
     request: dict[str, Any],
     *,
     expected_provider: str,
     expected_mode: str,
+    provider_document: Any | None = None,
 ) -> dict[str, Any]:
     if not isinstance(evidence, dict) or evidence.get("schema") != ANCHOR_EVIDENCE_SCHEMA:
         raise EchoCheckpointAnchorError("anchor evidence schema mismatch")
@@ -168,9 +235,20 @@ def verify_anchor_evidence(
         if not str(evidence["provider_reference"]).startswith("test://"):
             raise EchoCheckpointAnchorError("test-provider reference must use test://")
     elif mode == EXTERNAL_READ_BACK_MODE:
+        if provider == TEST_PROVIDER:
+            raise EchoCheckpointAnchorError("test provider cannot satisfy external read-back mode")
         if state != "VERIFIED_READ_BACK":
             raise EchoCheckpointAnchorError("external read-back evidence must be VERIFIED_READ_BACK")
-        _sha256_text(evidence.get("provider_content_sha256"), label="provider content digest")
+        if provider_document is None:
+            raise EchoCheckpointAnchorError("external read-back verification requires provider document")
+        parsed = _provider_document(provider_document)
+        if parsed != request:
+            raise EchoCheckpointAnchorError("provider read-back document does not equal anchor request")
+        expected_content = hashlib.sha256(_canonical(parsed)).hexdigest()
+        if _sha256_text(
+            evidence.get("provider_content_sha256"), label="provider content digest"
+        ) != expected_content:
+            raise EchoCheckpointAnchorError("provider content digest mismatch")
     else:
         raise EchoCheckpointAnchorError("unsupported anchor evidence provider mode")
     return evidence
@@ -182,12 +260,14 @@ def build_anchor_receipt(
     *,
     expected_provider: str,
     expected_mode: str,
+    provider_document: Any | None = None,
 ) -> dict[str, Any]:
     verified = verify_anchor_evidence(
         evidence,
         request,
         expected_provider=expected_provider,
         expected_mode=expected_mode,
+        provider_document=provider_document,
     )
     receipt = {
         "schema": ANCHOR_RECEIPT_SCHEMA,
@@ -220,6 +300,7 @@ def verify_anchor_receipt(
     *,
     expected_provider: str,
     expected_mode: str,
+    provider_document: Any | None = None,
 ) -> dict[str, Any]:
     request = build_anchor_request(bundle, expected_fingerprint)
     if not isinstance(receipt, dict) or receipt.get("schema") != ANCHOR_RECEIPT_SCHEMA:
@@ -247,9 +328,18 @@ def verify_anchor_receipt(
         if provider != TEST_PROVIDER or state != "SIMULATED_ONLY":
             raise EchoCheckpointAnchorError("test anchor receipt must remain SIMULATED_ONLY")
     elif expected_mode == EXTERNAL_READ_BACK_MODE:
-        if state != "VERIFIED_READ_BACK":
+        if provider == TEST_PROVIDER or state != "VERIFIED_READ_BACK":
             raise EchoCheckpointAnchorError("external anchor receipt lacks verified read-back state")
-        _sha256_text(receipt.get("provider_content_sha256"), label="provider content digest")
+        if provider_document is None:
+            raise EchoCheckpointAnchorError("external receipt verification requires provider document")
+        parsed = _provider_document(provider_document)
+        if parsed != request:
+            raise EchoCheckpointAnchorError("provider read-back document does not equal anchor request")
+        expected_content = hashlib.sha256(_canonical(parsed)).hexdigest()
+        if _sha256_text(
+            receipt.get("provider_content_sha256"), label="provider content digest"
+        ) != expected_content:
+            raise EchoCheckpointAnchorError("provider content digest mismatch")
     else:
         raise EchoCheckpointAnchorError("unsupported anchor receipt provider mode")
     return {
