@@ -1,0 +1,62 @@
+name: WS-NSB v1.8 G13 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g13_actuator_forward_map.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g13_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g13_actuator_forward_map.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_8_G13_ACTUATOR_FORWARD_MAP.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-8-g13.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g13_actuator_forward_map.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/nsb_g13_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_nsb_g13_actuator_forward_map.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NSB_V1_8_G13_ACTUATOR_FORWARD_MAP.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-nsb-v1-8-g13.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  g13-actuator-forward-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Run G13 test suite
+        run: python -m pytest tests/test_nsb_g13_actuator_forward_map.py -q
+
+      - name: Execute and verify deterministic G13 report
+        run: |
+          rm -f ws_nsb_g13_report.json
+          ws-nsb-g13 --output ws_nsb_g13_report.json
+          ws-nsb-g13 --verify ws_nsb_g13_report.json
+
+      - name: Upload G13 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-nsb-v1-8-g13-report
+          path: deployments/sara_verified_local_v1/ws_nsb_g13_report.json
+          if-no-files-found: error
