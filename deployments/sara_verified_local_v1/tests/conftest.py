@@ -9,9 +9,10 @@ from worldshepherd_sara.app import app
 
 
 @pytest.fixture(autouse=True)
-def echo_checkpoint_key(monkeypatch: pytest.MonkeyPatch, tmp_path):
+def echo_checkpoint_key(monkeypatch: pytest.MonkeyPatch, tmp_path_factory):
     key = Ed25519PrivateKey.generate()
-    path = tmp_path / "echo-checkpoint-ed25519-private.pem"
+    key_dir = tmp_path_factory.mktemp("echo-checkpoint-key")
+    path = key_dir / "echo-checkpoint-ed25519-private.pem"
     path.write_bytes(
         key.private_bytes(
             encoding=serialization.Encoding.PEM,
