@@ -14,6 +14,7 @@ on:
       - 'deployments/sara_verified_local_v1/tests/test_pre_improvement.py'
       - 'deployments/sara_verified_local_v1/tests/test_evidence_improvement.py'
       - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_V0_1.md'
+      - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_PRODUCER_BRIDGES_V0_1.md'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/ws-recursive-improvement-v0-1.yml'
   push:
@@ -29,6 +30,7 @@ on:
       - 'deployments/sara_verified_local_v1/tests/test_pre_improvement.py'
       - 'deployments/sara_verified_local_v1/tests/test_evidence_improvement.py'
       - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_V0_1.md'
+      - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_PRODUCER_BRIDGES_V0_1.md'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/ws-recursive-improvement-v0-1.yml'
   workflow_dispatch:
