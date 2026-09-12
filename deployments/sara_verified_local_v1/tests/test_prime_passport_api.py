@@ -352,3 +352,32 @@ def test_malformed_sentinel_entry_is_server_corruption_not_signer_rejection(clie
         json=_signed_authorization(private),
     )
     assert response.status_code == 500
+
+
+
+def test_corrupt_authorization_window_over_signed_limit_is_server_failure(client, tokens):
+    _, admin = tokens
+    private = _configure_sentinel(client)
+    assert _create_passport(client, admin).status_code == 201
+    now = datetime.now(timezone.utc)
+    store = client.app.state.store
+    store.patch_registry({
+        "PRIME_SENTINEL_AUTHORIZATIONS": {
+            "BROKEN-WINDOW": {
+                "status": "VERIFIED",
+                "prime_id": "PRIME-001",
+                "target_environment": "SPACE",
+                "key_id": "PS-K1",
+                "key_fingerprint_sha256": "0" * 64,
+                "nonce": "nonce-corrupt-0123456789",
+                "issued_at": now.isoformat(),
+                "expires_at": (now + timedelta(days=1)).isoformat(),
+            }
+        }
+    })
+    response = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=_signed_authorization(private),
+    )
+    assert response.status_code == 500
