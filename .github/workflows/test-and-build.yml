@@ -1,0 +1,85 @@
+name: Required Test and Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - oss-contrib-2026-09-12
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    name: test-and-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile semantic-health reference
+        run: python -m compileall -q tools/oss_health
+
+      - name: Run semantic-health regression tests
+        working-directory: tools/oss_health
+        run: python -m unittest -v test_semantic_health.py
+
+      - name: Validate upstream patch artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d docs/oss_contributions
+          test -d docs/oss/patches
+          mapfile -d '' patches < <(
+            find docs/oss_contributions docs/oss/patches \
+              -type f -name '*.patch' -print0 | sort -z
+          )
+          if (( ${#patches[@]} < 5 )); then
+            echo "Expected at least five patch-ready artifacts across OSS patch directories; found ${#patches[@]}" >&2
+            exit 1
+          fi
+          for patch in "${patches[@]}"; do
+            test -s "$patch"
+            grep -q '^--- a/' "$patch" || {
+              echo "Missing old-file patch header in $patch" >&2
+              exit 1
+            }
+            grep -q '^+++ b/' "$patch" || {
+              echo "Missing new-file patch header in $patch" >&2
+              exit 1
+            }
+          done
+
+      - name: Reject unresolved merge-conflict markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -n -E '^(<<<<<<< |>>>>>>> )' tools/oss_health docs/oss_contributions docs/oss/patches; then
+            echo "Unresolved merge-conflict marker found" >&2
+            exit 1
+          fi
+
+      - name: Check contribution diff for whitespace errors
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Stored *.patch files are patch payloads. Lines such as `+ ` and the
+          # standard mail-patch separator `-- ` are meaningful patch content and
+          # look like trailing whitespace to git when the patch itself is stored
+          # as a repository file. Their structure is validated in the dedicated
+          # patch-artifact step above; keep diff --check strict for everything else.
+          if git rev-parse --verify origin/main >/dev/null 2>&1; then
+            git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.patch'
+          else
+            git diff --check HEAD^ -- . ':(exclude,glob)**/*.patch'
+          fi

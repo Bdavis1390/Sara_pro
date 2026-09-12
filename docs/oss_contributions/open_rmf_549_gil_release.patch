@@ -1,0 +1,138 @@
+From: Worldshepherd OSS contribution workbench
+Subject: [PATCH DRAFT] rmf_fleet_adapter_python: release GIL around blocking RMF calls
+Upstream target: open-rmf/rmf_ros2#549
+Claims state: IMPLEMENTED AS PATCH DRAFT / REQUIRES UPSTREAM BUILD+STRESS VALIDATION
+
+Rationale
+---------
+Python currently keeps the GIL while entering a set of RMF methods that may
+wait on internal worker state. If an RMF worker simultaneously owns an RMF
+mutex and needs the GIL to call a Python RobotCommandHandle callback, the two
+threads can deadlock. The process may remain alive while robot state telemetry
+freezes.
+
+This draft adds py::call_guard<py::gil_scoped_release>() only to the binding
+surfaces explicitly implicated by issue #549. Argument conversion happens
+before the guard is constructed and return conversion happens after the guard
+is destroyed, so Python object conversion remains GIL-protected.
+
+--- a/rmf_fleet_adapter_python/src/adapter.cpp
++++ b/rmf_fleet_adapter_python/src/adapter.cpp
+@@
+-  .def("interrupted", &agv::RobotUpdateHandle::replan)
+-  .def("replan", &agv::RobotUpdateHandle::replan)
++  .def("interrupted", &agv::RobotUpdateHandle::replan,
++    py::call_guard<py::gil_scoped_release>())
++  .def("replan", &agv::RobotUpdateHandle::replan,
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_current_waypoint",
+     py::overload_cast<std::size_t, double>(
+       &agv::RobotUpdateHandle::update_position),
+     py::arg("waypoint"),
+-    py::arg("orientation"))
++    py::arg("orientation"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_current_lanes",
+     py::overload_cast<const Eigen::Vector3d&,
+     const std::vector<std::size_t>&>(
+       &agv::RobotUpdateHandle::update_position),
+     py::arg("position"),
+-    py::arg("lanes"))
++    py::arg("lanes"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_off_grid_position",
+     py::overload_cast<const Eigen::Vector3d&,
+     std::size_t>(
+       &agv::RobotUpdateHandle::update_position),
+     py::arg("position"),
+-    py::arg("target_waypoint"))
++    py::arg("target_waypoint"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_lost_position",
+     py::overload_cast<const std::string&,
+     const Eigen::Vector3d&,
+@@
+     py::arg("position"),
+     py::arg("max_merge_waypoint_distance") = 0.1,
+     py::arg("max_merge_lane_distance") = 1.0,
+-    py::arg("min_lane_length") = 1e-8)
++    py::arg("min_lane_length") = 1e-8,
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_position",
+     py::overload_cast<rmf_traffic::agv::Plan::StartSet>(
+       &agv::RobotUpdateHandle::update_position),
+-    py::arg("start_set"))
++    py::arg("start_set"),
++    py::call_guard<py::gil_scoped_release>())
+   .def("set_charger_waypoint", &agv::RobotUpdateHandle::set_charger_waypoint,
+-    py::arg("charger_wp"))
++    py::arg("charger_wp"),
++    py::call_guard<py::gil_scoped_release>())
+   .def("update_battery_soc", &agv::RobotUpdateHandle::update_battery_soc,
+-    py::arg("battery_soc"))
++    py::arg("battery_soc"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("cancel_task",
+     &agv::RobotUpdateHandle::cancel_task,
+     py::arg("task_id"),
+     py::arg("labels"),
+-    py::arg("on_cancellation"))
++    py::arg("on_cancellation"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("create_issue",
+     &agv::RobotUpdateHandle::create_issue,
+     py::arg("tier"),
+     py::arg("category"),
+-    py::arg("detail"))
++    py::arg("detail"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("set_task_planner_params",
+     [&](agv::FleetUpdateHandle& self,
+@@
+     py::arg("recharge_soc"),
+     py::arg("account_for_battery_drain"),
+-    py::arg("finishing_request") = "nothing")
++    py::arg("finishing_request") = "nothing",
++    py::call_guard<py::gil_scoped_release>())
+
+--- a/rmf_fleet_adapter_python/src/schedule/schedule.cpp
++++ b/rmf_fleet_adapter_python/src/schedule/schedule.cpp
+@@
+   .def("set_itinerary",
+     [&](schedule::Participant& self,
+       const std::vector<rmf_traffic::Route>& itinerary)
+     {
+       self.set(self.assign_plan_id(), itinerary);
+     },
+-    py::arg("itinerary"));
++    py::arg("itinerary"),
++    py::call_guard<py::gil_scoped_release>());
+
+Validation required before upstream submission
+---------------------------------------------
+1. Build rmf_fleet_adapter_python on the target ROS 2 Humble toolchain.
+2. Run the existing Python test suite and rmf_fleet_adapter tests.
+3. Run a contention stress test with RobotCommandHandle callbacks entering
+   Python while a separate Python thread repeatedly invokes replan(),
+   create_issue(), update_position(), and cancel_task().
+4. Assert callback progress and telemetry freshness throughout the run; process
+   liveness alone is not a passing criterion.
+5. Run ThreadSanitizer/ASan-capable variants where practical to detect any
+   lifetime assumptions exposed by allowing concurrent Python/C++ progress.
+6. Review every added guard for methods that touch Python objects internally;
+   remove a guard if the underlying C++ call itself requires the GIL.
+
+Non-goals
+---------
+- No change to RMF scheduling semantics.
+- No change to RobotCommandHandle callback ordering.
+- No claim that every binding needs a GIL release.
+- No upstream acceptance claimed until maintainers review and CI/stress tests pass.

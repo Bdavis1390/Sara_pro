@@ -1,0 +1,61 @@
+From: Worldshepherd OSS contribution workbench
+Subject: [PATCH DRAFT] systems: register configure-priority interfaces for Physics and UserCommands
+Upstream target: gazebosim/gz-sim#3976
+Claims state: PATCH-READY / REQUIRES UPSTREAM BUILD+REGRESSION TEST
+
+Problem
+-------
+Physics and UserCommands inherit ISystemConfigurePriority and provide declared
+non-default priorities, but their dynamic plugin registration metadata omits
+that interface. Dynamic loading therefore falls back to priority 0 even though
+in-memory C++ instances expose the intended priority interface.
+
+The issue report includes a deterministic dynamic-plugin regression in which
+both systems land in the wrong scheduler bucket; adding the omitted interface
+registrations reportedly makes the reproducer pass.
+
+--- a/src/systems/physics/Physics.cc
++++ b/src/systems/physics/Physics.cc
+@@
+ GZ_ADD_PLUGIN(Physics,
+                     System,
++                    Physics::ISystemConfigurePriority,
+                     Physics::ISystemConfigure,
+                     Physics::ISystemReset,
+                     Physics::ISystemUpdate)
+
+--- a/src/systems/user_commands/UserCommands.cc
++++ b/src/systems/user_commands/UserCommands.cc
+@@
+ GZ_ADD_PLUGIN(UserCommands, System,
++  UserCommands::ISystemConfigurePriority,
+   UserCommands::ISystemConfigure,
+   UserCommands::ISystemPreUpdate
+ )
+
+Regression requirements
+-----------------------
+1. Dynamically load Physics and assert QueryInterface<ISystemConfigurePriority>()
+   is non-null.
+2. Dynamically load UserCommands and assert the same.
+3. Assert Physics is placed in the kPhysicsPriority scheduler bucket rather
+   than kDefaultPriority.
+4. Assert UserCommands is placed in the kUserCommandsPriority bucket rather
+   than kDefaultPriority.
+5. Keep ForceTorque as a positive-control dynamic plugin because it already
+   registers ISystemConfigurePriority.
+6. Run existing gz-sim plugin/system tests to catch registration ABI regressions.
+
+Why this is high priority for Worldshepherd
+-------------------------------------------
+Simulation ordering is part of evidence quality. A simulator that silently
+runs systems at priority 0 can invalidate timing-sensitive fault-injection and
+resilience experiments while still appearing nominal. This fix therefore maps
+directly to Worldshepherd's simulation-evidence and semantic-health lanes.
+
+Scope boundary
+--------------
+This draft only adds the missing registration metadata. It does not modify
+scheduler semantics, physics behavior, system priorities, or plugin loading
+policy. No upstream acceptance is claimed until Gazebo maintainers review and
+run their regression suite.
