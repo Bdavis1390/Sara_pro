@@ -69,6 +69,7 @@ def test_rejected_recovery_stays_non_executable():
     events = [APNTEvent.model_validate(item) for item in fixture["events"]]
     decision = OperatorInput(
         event_sequence=3,
+        recommendation_id="REC:3:SUSPECT:KINEMATIC_RESIDUAL_EXCEEDED:ISOLATE_PRIMARY_SOURCE",
         operator_id="TEST-OPERATOR",
         decision="REJECT",
         reason="Synthetic rejection path.",
@@ -96,6 +97,7 @@ def test_unknown_operator_decision_target_fails_closed():
     events = [APNTEvent.model_validate(item) for item in fixture["events"]]
     decision = OperatorInput(
         event_sequence=999,
+        recommendation_id="REC:999:INVALID",
         operator_id="TEST-OPERATOR",
         decision="APPROVE",
         reason="Invalid synthetic target.",
@@ -103,6 +105,36 @@ def test_unknown_operator_decision_target_fails_closed():
 
     with pytest.raises(ValueError, match="unknown events"):
         run_scenario(scenario_id="UNKNOWN-DECISION", events=events, operator_inputs=[decision])
+
+
+def test_operator_decision_for_no_action_event_fails_closed():
+    fixture = _fixture()
+    events = [APNTEvent.model_validate(item) for item in fixture["events"]]
+    decision = OperatorInput(
+        event_sequence=1,
+        recommendation_id="REC:1:NONE",
+        operator_id="TEST-OPERATOR",
+        decision="APPROVE",
+        reason="Should not be accepted for a nominal no-action event.",
+    )
+
+    with pytest.raises(ValueError, match="without actionable recommendations"):
+        run_scenario(scenario_id="NO-ACTION-DECISION", events=events, operator_inputs=[decision])
+
+
+def test_operator_approval_is_bound_to_exact_recommendation_id():
+    fixture = _fixture()
+    events = [APNTEvent.model_validate(item) for item in fixture["events"]]
+    decision = OperatorInput(
+        event_sequence=2,
+        recommendation_id="REC:2:DEGRADED:INTEGRITY_MARGIN_REDUCED:DIFFERENT_CANDIDATE",
+        operator_id="TEST-OPERATOR",
+        decision="APPROVE",
+        reason="Mismatched candidate must not inherit approval.",
+    )
+
+    with pytest.raises(ValueError, match="recommendation mismatch"):
+        run_scenario(scenario_id="MISMATCHED-RECOMMENDATION", events=events, operator_inputs=[decision])
 
 
 def test_hash_chain_links_every_audit_step():
