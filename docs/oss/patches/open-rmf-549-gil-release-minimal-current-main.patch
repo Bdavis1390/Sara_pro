@@ -1,0 +1,104 @@
+From: Worldshepherd OSS contribution workbench
+Subject: [PATCH DRAFT] rmf_fleet_adapter_python: release GIL around blocking RMF calls
+Upstream issue: open-rmf/rmf_ros2#549
+Upstream baseline reviewed: c16cfee2a80065972e191ecad6ad13c29e156baf
+Claims state: PATCH DRAFT / REQUIRES UPSTREAM BUILD AND CONTENTION VALIDATION
+
+This deliberately limits the first patch to the bindings explicitly named in
+#549's minimum suggested-fix list. It does not attempt a blanket GIL-release
+pass across the Python API.
+
+diff --git a/rmf_fleet_adapter_python/src/adapter.cpp b/rmf_fleet_adapter_python/src/adapter.cpp
+--- a/rmf_fleet_adapter_python/src/adapter.cpp
++++ b/rmf_fleet_adapter_python/src/adapter.cpp
+@@
+-  .def("replan", &agv::RobotUpdateHandle::replan)
++  .def("replan", &agv::RobotUpdateHandle::replan,
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_current_waypoint",
+     py::overload_cast<std::size_t, double>(
+       &agv::RobotUpdateHandle::update_position),
+     py::arg("waypoint"),
+-    py::arg("orientation"))
++    py::arg("orientation"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_current_lanes",
+     py::overload_cast<const Eigen::Vector3d&,
+     const std::vector<std::size_t>&>(
+       &agv::RobotUpdateHandle::update_position),
+     py::arg("position"),
+-    py::arg("lanes"))
++    py::arg("lanes"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_off_grid_position",
+     py::overload_cast<const Eigen::Vector3d&,
+     std::size_t>(
+       &agv::RobotUpdateHandle::update_position),
+     py::arg("position"),
+-    py::arg("target_waypoint"))
++    py::arg("target_waypoint"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_lost_position",
+     py::overload_cast<const std::string&,
+     const Eigen::Vector3d&,
+@@
+     py::arg("position"),
+     py::arg("max_merge_waypoint_distance") = 0.1,
+     py::arg("max_merge_lane_distance") = 1.0,
+-    py::arg("min_lane_length") = 1e-8)
++    py::arg("min_lane_length") = 1e-8,
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("set_charger_waypoint", &agv::RobotUpdateHandle::set_charger_waypoint,
+-    py::arg("charger_wp"))
++    py::arg("charger_wp"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("update_battery_soc", &agv::RobotUpdateHandle::update_battery_soc,
+-    py::arg("battery_soc"))
++    py::arg("battery_soc"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("cancel_task",
+     &agv::RobotUpdateHandle::cancel_task,
+     py::arg("task_id"),
+     py::arg("labels"),
+-    py::arg("on_cancellation"))
++    py::arg("on_cancellation"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("create_issue",
+     &agv::RobotUpdateHandle::create_issue,
+     py::arg("tier"),
+     py::arg("category"),
+-    py::arg("detail"))
++    py::arg("detail"),
++    py::call_guard<py::gil_scoped_release>())
+@@
+   .def("set_task_planner_params",
+     [&](agv::FleetUpdateHandle& self,
+@@
+     py::arg("recharge_threshold"),
+     py::arg("recharge_soc"),
+     py::arg("account_for_battery_drain"),
+-    py::arg("finishing_request") = "nothing")
++    py::arg("finishing_request") = "nothing",
++    py::call_guard<py::gil_scoped_release>())
+
+diff --git a/rmf_fleet_adapter_python/src/schedule/schedule.cpp b/rmf_fleet_adapter_python/src/schedule/schedule.cpp
+--- a/rmf_fleet_adapter_python/src/schedule/schedule.cpp
++++ b/rmf_fleet_adapter_python/src/schedule/schedule.cpp
+@@
+   .def("set_itinerary",
+     [&](schedule::Participant& self,
+       const std::vector<rmf_traffic::Route>& itinerary)
+     {
+       self.set(self.assign_plan_id(), itinerary);
+     },
+-    py::arg("itinerary"));
++    py::arg("itinerary"),
++    py::call_guard<py::gil_scoped_release>());
