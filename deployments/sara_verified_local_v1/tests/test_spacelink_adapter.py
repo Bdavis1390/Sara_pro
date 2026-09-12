@@ -86,6 +86,31 @@ def test_aws_adapter_accepts_documented_status_alias_from_list_response():
     assert contact.attributes["status_field"] == "status"
 
 
+def test_aws_adapter_normalizes_describe_contact_nested_version_fields():
+    contact = AwsGroundStationContactAdapter().normalize_contact(
+        {
+            "contactId": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "contactStatus": "AWS_FAILED",
+            "groundStation": "Digital Twin Hawaii 1",
+            "startTime": 1789214400,
+            "endTime": 1789215000,
+            "version": {
+                "versionId": 4,
+                "lastUpdated": 1789215100,
+                "failureCodes": ["INTERNAL_ERROR"],
+                "failureMessage": "synthetic describe-contact failure",
+                "status": "ACTIVE",
+            },
+        }
+    )
+    assert contact.version_id == 4
+    assert contact.last_updated is not None
+    assert contact.failure_codes == ["INTERNAL_ERROR"]
+    assert contact.failure_message == "synthetic describe-contact failure"
+    assert contact.attributes["provider_shape"] == "DescribeContact"
+    assert contact.authoritative_spec_ref.endswith("API_DescribeContact.html")
+
+
 def test_unknown_provider_status_fails_closed():
     with pytest.raises(ValueError, match="unrecognized space-contact status"):
         AwsGroundStationContactAdapter().normalize_contact(
