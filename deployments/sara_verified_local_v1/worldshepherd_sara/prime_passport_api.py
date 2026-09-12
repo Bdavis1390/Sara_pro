@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -310,8 +311,30 @@ def authorize_prime_requalification(
             passport = _load_from_registry(registry, prime_id)
         except ValueError as exc:
             raise _PassportRegistryInvalid from exc
-        if not isinstance(registry.get("PRIME_SENTINEL_AUTHORIZATIONS", {}), dict):
+        records = registry.get("PRIME_SENTINEL_AUTHORIZATIONS", {})
+        if not isinstance(records, dict):
             raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
+        for record_id, entry in records.items():
+            if (
+                not isinstance(record_id, str)
+                or not isinstance(entry, dict)
+                or entry.get("status") not in {"VERIFIED", "CONSUMED", "SUPERSEDED"}
+                or any(
+                    not isinstance(entry.get(field), str) or not entry[field]
+                    for field in (
+                        "prime_id", "target_environment", "key_id",
+                        "key_fingerprint_sha256", "nonce", "issued_at", "expires_at",
+                    )
+                )
+            ):
+                raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
+            try:
+                issued = datetime.fromisoformat(entry["issued_at"].replace("Z", "+00:00"))
+                expires = datetime.fromisoformat(entry["expires_at"].replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed") from exc
+            if issued.tzinfo is None or expires.tzinfo is None or issued >= expires:
+                raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
         verified = verifier.verify(body)
         updated, payload = apply_verified_requalification_authorization(passport, verified)
         patch = verified_authorization_registry_patch(registry, verified)
@@ -410,6 +433,8 @@ def activate_prime_pack(
                     "requalification_release_key_id": None,
                 }),
             })
+            payload["details"]["authorization_id"] = None
+            payload["details"]["authorization_key_id"] = None
             payload["details"]["legacy_release_authorization_cleared"] = True
         patch = passport_registry_patch(registry, updated)
         if releasing_quarantine and authorization_id:
