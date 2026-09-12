@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module prime_hw_policy_controller (
     input  logic       clk,
     input  logic       reset_n,
@@ -48,7 +50,11 @@ module prime_hw_policy_controller (
                 if (fatal_fault || !policy_valid) begin
                     state_d = ST_SAFE;
                 end else if (boot_verified && policy_valid) begin
-                    state_d = health_degraded ? ST_DEGRADED : ST_OPERATIONAL;
+                    if (health_degraded) begin
+                        state_d = ST_DEGRADED;
+                    end else begin
+                        state_d = ST_OPERATIONAL;
+                    end
                 end
             end
 
@@ -80,7 +86,11 @@ module prime_hw_policy_controller (
                 if (fatal_fault) begin
                     state_d = ST_SAFE;
                 end else if (boot_verified && policy_valid) begin
-                    state_d = health_degraded ? ST_DEGRADED : ST_OPERATIONAL;
+                    if (health_degraded) begin
+                        state_d = ST_DEGRADED;
+                    end else begin
+                        state_d = ST_OPERATIONAL;
+                    end
                 end else begin
                     state_d = ST_BOOT_LOCKED;
                 end
