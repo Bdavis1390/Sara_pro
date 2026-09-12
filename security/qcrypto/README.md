@@ -11,9 +11,11 @@ QCRYPTO separates quantities that are frequently conflated:
 3. **architecture-specific runtime** — how long a compiled attack is estimated to take on a stated hardware/QEC architecture;
 4. **measured QEC overhead** — what a concrete error-correcting code has demonstrated on real hardware;
 5. **hardware roadmap maturity** — what a vendor plans versus what has actually been demonstrated;
-6. **exposure and migration windows** — how long a public key is available to attack and how long defenders need to migrate.
+6. **platform/manufacturing maturity** — whether relevant hardware has moved into fabricated prototypes and productization;
+7. **classical real-time decoding capacity** — whether the classical QEC control plane can plausibly keep pace with many logical qubits;
+8. **exposure and migration windows** — how long a public key is available to attack and how long defenders need to migrate.
 
-A low logical-qubit count does **not** imply a fast practical attack. A low physical/logical code-block ratio does **not** imply a complete-application physical-qubit count. A point-addition or arithmetic subroutine result does **not** imply a complete end-to-end key break. A future vendor roadmap is **not** demonstrated hardware. Q4 is reserved for a production-strength break demonstrated in a controlled, authorized environment.
+A low logical-qubit count does **not** imply a fast practical attack. A low physical/logical code-block ratio does **not** imply a complete-application physical-qubit count. A point-addition or arithmetic subroutine result does **not** imply a complete end-to-end key break. A future vendor roadmap is **not** demonstrated hardware. A fabricated prototype is **not** attack-scale hardware. A proposed FPGA/ASIC decoder is **not** an integrated cryptanalytic control plane. Q4 is reserved for a production-strength break demonstrated in a controlled, authorized environment.
 
 ## Threat ladder
 
@@ -33,7 +35,7 @@ That result tightens the **width** frontier substantially while not, by itself, 
 
 IonQ's current public roadmap targets approximately **10,000 physical / 800 logical qubits in 2027** and **20,000 physical / 1,600 logical qubits in 2028**, with the roadmap explicitly presented as forward-looking targets.
 
-IonQ's separate Walking Cat secp256k1 resource estimate reports an end-to-end attack envelope of approximately **19,397 physical / about 1,450 logical qubits** and **25.7 days per attempt** under its architecture assumptions.
+IonQ's separate Walking Cat secp256k1 resource estimate reports an end-to-end attack envelope of approximately **19,397 physical / 1,457 logical qubits** and **25.7 days per attempt** under its architecture assumptions.
 
 Those numbers create a material planning signal: the vendor's **2028 target numerically overlaps the vendor's own attack envelope**. This is not evidence that the 2028 target will be achieved, that every required QEC/runtime assumption will hold, or that a production key can be broken today.
 
@@ -44,28 +46,46 @@ Those numbers create a material planning signal: the vendor's **2028 target nume
 - a collision can increase migration urgency to `ACCELERATE_MIGRATION_VALIDATION` or `MIGRATION_SCHEDULE_AT_RISK`;
 - roadmap evidence alone can never establish Q2, Q3, Q4, or Q-day.
 
-This fixes a common failure mode in quantum-risk analysis: treating vendor roadmaps as either meaningless marketing or as already-delivered capability. QCRYPTO records them as forward evidence that can compress the available migration schedule without upgrading capability maturity.
+## September 2026 full-stack convergence trigger
 
-## September 2026 hardware-QEC trigger
+The roadmap collision is no longer the only planning signal.
 
-Quantinuum's C4-Helix experiment, `arXiv:2609.03194`, reports a `[[20,2,6]]` code on Helios: **20 physical ions carrying two logical qubits**, repeated error correction at about `4.6e-5` error per logical qubit per cycle, and complete two-logical-qubit Clifford benchmarking at about `2.8e-4` error per logical Clifford. The encoded results outperform corresponding unencoded physical baselines without postselection.
+IonQ reports that **Superion 256 integrated QPUs have been fabricated at SkyWater, ions have been trapped in prototype systems, orders are open, and customer deliveries are planned for 2027**. IonQ also reports breakeven qLDPC QEC on a Tempo engineering system and describes it as validating key Walking Cat elements on hardware.
 
-This is substantial evidence that useful QEC overhead can be much lower than older surface-code intuition suggests on some architectures. It is **not** evidence that a complete 835-logical-qubit ECDLP attack needs only 8,350 physical ions.
+Separately, `arXiv:2605.03180` proposes a generalized qLDPC classical predecoder that processes over 90% of decoding workload, reports up to 3,963x decoder-utilization reduction, and describes designs supporting about **1,200 bivariate-bicycle logical qubits on one FPGA** or **36,000-360,000 logical qubits on a cryogenic ASIC**.
 
-`assess_qec_bridge()` therefore treats `835 × 10 = 8,350` only as a **bare code-block floor** and blocks promotion to a physical attack estimate until all of the following are supplied:
+That decoder result is **not** demonstrated as the exact Walking Cat decoder. Its code compatibility, physical implementation at stated capacity, timing, and attack-specific integration remain unproven. However, it means the classical decoder should no longer be modeled as an immutable scaling barrier.
 
-- universal non-Clifford fault-tolerant execution,
-- architecture-specific compilation of the complete attack,
-- justified scaling to the attack's logical width and operation count,
-- and a complete fault-tolerant overhead model covering ancillas, magic-state/factory resources, routing, decoding and runtime reliability.
+`assess_full_stack_convergence()` therefore tracks five planes together:
+
+1. complete attack-resource estimate;
+2. same-architecture future hardware target;
+3. demonstrated prototype/manufacturing progress;
+4. demonstrated QEC components on related hardware;
+5. classical decoder capacity evidence.
+
+When all five move in the same direction, QCRYPTO emits `MULTI_PLANE_CONVERGENCE_SIGNAL`. That signal can accelerate migration validation but **cannot** establish Q2/Q3/Q4 or a practical break.
+
+Current blocking gaps include:
+
+- the 20,000-qubit target has not been demonstrated;
+- Superion 256 is only a 256-qubit prototype/product platform, not attack scale;
+- proposed qLDPC decoder capacity has not been demonstrated as the Walking Cat decoder;
+- exact QEC-code compatibility is unproven;
+- attack-specific decoder integration is absent;
+- full non-Clifford factory, routing, runtime-reliability, and integrated-system scaling remain to be demonstrated.
+
+## Independent multi-vendor fault-tolerance signal
+
+Quantinuum's C4-Helix work provides independent trapped-ion QEC evidence, and separate peer-reviewed trapped-ion work has demonstrated fault-tolerant universal logical operations at small scale. These sources do **not** get multiplied into IonQ's physical-resource estimate. They are retained only as independent evidence that several fault-tolerant primitives are becoming engineering demonstrations rather than purely theoretical proposals.
 
 ## Claims-control rule
 
-Hardware progress, roadmap targets, QEC evidence and attack-algorithm progress are tracked independently and may all compress the threat frontier. Cross-paper multiplication is prohibited unless architecture compatibility and complete fault-tolerant overhead are established. Roadmap collision is a migration-planning signal, never a production-break claim.
+Hardware progress, roadmap targets, QEC evidence, classical decoder capacity, platform maturity, and attack-algorithm progress are tracked independently and may all compress the threat frontier. Cross-paper multiplication is prohibited unless architecture compatibility and complete fault-tolerant overhead are established. Roadmap or convergence evidence is a migration-planning signal, never a production-break claim.
 
 ## Safety boundary
 
-This module does not implement Shor's algorithm, private-key recovery, wallet interaction, transaction signing, live-network probing, or attacks against third-party systems. It is a defensive resource-estimate, QEC-evidence, roadmap-collision and migration-risk classifier.
+This module does not implement Shor's algorithm, private-key recovery, wallet interaction, transaction signing, live-network probing, or attacks against third-party systems. It is a defensive resource-estimate, QEC-evidence, roadmap/platform/decoder-convergence and migration-risk classifier.
 
 ## Validation
 
@@ -75,6 +95,7 @@ Run:
 python -m py_compile security/qcrypto/qcrypto_guard.py
 python -m unittest discover -s security/qcrypto -p 'test_*.py' -v
 python -m json.tool security/qcrypto/baseline_2026-09-12.json >/dev/null
+python -m json.tool security/qcrypto/evidence_register_2026-09-12.json >/dev/null
 ```
 
-The GitHub Actions workflow `.github/workflows/qcrypto-risk-gate.yml` enforces these checks for changes to this package.
+The GitHub Actions workflow `.github/workflows/qcrypto-risk-gate.yml` enforces the package checks for changes to this package.
