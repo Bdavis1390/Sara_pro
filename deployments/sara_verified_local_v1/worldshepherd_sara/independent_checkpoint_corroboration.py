@@ -42,6 +42,7 @@ class IndependentCheckpointCorroboration(BaseModel):
         INDEPENDENT_CHECKPOINT_CORROBORATION_SCHEMA
     )
     observation_id: str = Field(min_length=1, max_length=160)
+    monitor_id: str = Field(min_length=1, max_length=160)
     provenance_event_id: str = Field(min_length=1, max_length=200)
     decision_digest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     echo_semantic_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -64,6 +65,7 @@ class IndependentCheckpointCorroboration(BaseModel):
 def _canonical_payload(
     *,
     observation_id: str,
+    monitor_id: str,
     provenance_event_id: str,
     decision_digest_sha256: str,
     echo_semantic_sha256: str,
@@ -76,6 +78,7 @@ def _canonical_payload(
     payload = {
         "schema": INDEPENDENT_CHECKPOINT_CORROBORATION_SCHEMA,
         "observation_id": observation_id,
+        "monitor_id": monitor_id,
         "provenance_event_id": provenance_event_id,
         "decision_digest_sha256": decision_digest_sha256,
         "echo_semantic_sha256": echo_semantic_sha256,
@@ -173,6 +176,7 @@ def corroborate_overwatch_checkpoint(
 
     canonical = _canonical_payload(
         observation_id=observation.observation_id,
+        monitor_id=observation.monitor_id,
         provenance_event_id=overwatch_provenance.provenance_event_id,
         decision_digest_sha256=overwatch_provenance.decision_digest_sha256,
         echo_semantic_sha256=overwatch_provenance.echo_semantic_sha256,
@@ -185,6 +189,7 @@ def corroborate_overwatch_checkpoint(
 
     return IndependentCheckpointCorroboration(
         observation_id=observation.observation_id,
+        monitor_id=observation.monitor_id,
         provenance_event_id=overwatch_provenance.provenance_event_id,
         decision_digest_sha256=overwatch_provenance.decision_digest_sha256,
         echo_semantic_sha256=overwatch_provenance.echo_semantic_sha256,
@@ -222,6 +227,7 @@ def verify_independent_checkpoint_corroboration(
     expected = hashlib.sha256(
         _canonical_payload(
             observation_id=corroboration.observation_id,
+            monitor_id=corroboration.monitor_id,
             provenance_event_id=corroboration.provenance_event_id,
             decision_digest_sha256=corroboration.decision_digest_sha256,
             echo_semantic_sha256=corroboration.echo_semantic_sha256,
