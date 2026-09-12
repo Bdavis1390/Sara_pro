@@ -62,15 +62,23 @@ jobs:
           import json
           import subprocess
           from pathlib import Path
-          from worldshepherd_sara.apnt_awareness import APNTEvent, OperatorInput, run_scenario
+          from worldshepherd_sara.apnt_awareness import (
+              APNTEvent,
+              CLAIMS_BOUNDARY,
+              OperatorInput,
+              run_scenario,
+          )
 
           fixture = json.loads(Path('fixtures/apnt_operator_awareness_synthetic_v1.json').read_text())
+          assert fixture['claims_boundary'] == CLAIMS_BOUNDARY, 'fixture claims boundary changed'
+
           result = run_scenario(
               scenario_id=fixture['scenario_id'],
               events=[APNTEvent.model_validate(x) for x in fixture['events']],
               operator_inputs=[OperatorInput.model_validate(x) for x in fixture['operator_inputs']],
           )
           expected = fixture['expected']
+          assert result.claims_boundary == CLAIMS_BOUNDARY
           assert len(result.alerts) == expected['event_count']
           assert len(result.recommendations) == expected['recommendation_count']
           assert result.final_integrity_state.value == expected['final_integrity_state']
