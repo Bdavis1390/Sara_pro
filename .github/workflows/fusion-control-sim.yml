@@ -10,12 +10,14 @@ on:
     paths:
       - 'worldshepherd_sara/fusion_control.py'
       - 'worldshepherd_sara/fair_mast_adapter.py'
+      - 'worldshepherd_sara/fair_mast_probe.py'
       - 'worldshepherd_sara/fusion_replay.py'
       - 'worldshepherd_sara/fusion_audit_bridge.py'
       - 'worldshepherd_sara/fusion_faults.py'
       - 'tests/test_fusion_control.py'
       - 'tests/test_fair_mast_adapter.py'
       - 'tests/test_fair_mast_manifest.py'
+      - 'tests/test_fair_mast_probe.py'
       - 'tests/test_fusion_replay.py'
       - 'tests/test_fusion_audit_bridge.py'
       - 'tests/test_fusion_faults.py'
@@ -45,6 +47,7 @@ jobs:
           python -m py_compile
           worldshepherd_sara/fusion_control.py
           worldshepherd_sara/fair_mast_adapter.py
+          worldshepherd_sara/fair_mast_probe.py
           worldshepherd_sara/fusion_replay.py
           worldshepherd_sara/fusion_audit_bridge.py
           worldshepherd_sara/fusion_faults.py
@@ -54,6 +57,43 @@ jobs:
           tests/test_fusion_control.py
           tests/test_fair_mast_adapter.py
           tests/test_fair_mast_manifest.py
+          tests/test_fair_mast_probe.py
           tests/test_fusion_replay.py
           tests/test_fusion_audit_bridge.py
           tests/test_fusion_faults.py
+
+  fair-mast-source-probe:
+    if: >-
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.message, '[probe-fair-mast]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Probe pinned FAIR-MAST Zarr metadata only
+        run: >-
+          python -m worldshepherd_sara.fair_mast_probe
+          --manifest data/fair_mast/shot_30420_amc_manifest.json
+          --output /tmp/fair-mast-shot-30420-amc-probe.json
+      - name: Verify probe safety flags
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/fair-mast-shot-30420-amc-probe.json').read_text())
+          assert report['array_chunks_fetched'] is False
+          assert report['machine_control_authority'] is False
+          assert set(report['signals']) == {'time', 'plasma_current'}
+          print('probe_report_sha256=' + report['report_sha256'])
+          for signal in ('time', 'plasma_current'):
+              zarray = report['signals'][signal]['.zarray']['metadata']
+              zattrs = report['signals'][signal]['.zattrs']['metadata']
+              print(signal + '_shape=' + repr(zarray.get('shape')))
+              print(signal + '_dtype=' + repr(zarray.get('dtype')))
+              print(signal + '_units=' + repr(zattrs.get('units')))
+          PY
