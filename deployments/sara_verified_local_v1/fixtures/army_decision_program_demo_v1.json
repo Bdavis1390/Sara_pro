@@ -9,6 +9,7 @@
         "metric_id": "mass_kg",
         "label": "Minimize subsystem mass",
         "direction": "MINIMIZE",
+        "unit": "kg",
         "weight": 0.30
       },
       {
@@ -16,6 +17,7 @@
         "metric_id": "unit_cost_usd",
         "label": "Minimize unit acquisition cost",
         "direction": "MINIMIZE",
+        "unit": "USD",
         "weight": 0.35
       },
       {
@@ -23,6 +25,7 @@
         "metric_id": "reliability_fraction",
         "label": "Maximize demonstrated reliability",
         "direction": "MAXIMIZE",
+        "unit": "fraction",
         "weight": 0.35
       }
     ],
@@ -37,6 +40,7 @@
         "metric_id": "mass_kg",
         "operator": "<=",
         "threshold": 120.0,
+        "unit": "kg",
         "rationale": "Synthetic packaging mass ceiling for the bounded demonstration."
       },
       {
@@ -44,6 +48,7 @@
         "metric_id": "unit_cost_usd",
         "operator": "<=",
         "threshold": 40000.0,
+        "unit": "USD",
         "rationale": "Synthetic unit-cost ceiling for the bounded demonstration."
       }
     ],
