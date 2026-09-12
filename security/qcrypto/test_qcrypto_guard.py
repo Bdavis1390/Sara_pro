@@ -1,6 +1,13 @@
 import unittest
 
-from qcrypto_guard import AttackEstimate, QECEvidence, assess, assess_qec_bridge
+from qcrypto_guard import (
+    AttackEstimate,
+    HardwareRoadmapTarget,
+    QECEvidence,
+    assess,
+    assess_qec_bridge,
+    assess_roadmap_collision,
+)
 
 
 class QCryptoGuardTests(unittest.TestCase):
@@ -113,6 +120,78 @@ class QCryptoGuardTests(unittest.TestCase):
         self.assertEqual(bridge.codeblock_floor_physical_qubits, 10000)
         self.assertNotEqual(bridge.attack_projection_state, "MODEL_READY_NOT_PRODUCTION_BREAK")
         self.assertTrue(any("overhead" in gap.lower() for gap in bridge.blocking_gaps))
+
+    def test_ionq_2028_roadmap_overlaps_its_attack_envelope_without_claiming_break(self):
+        attack = AttackEstimate(
+            name="IonQ Walking Cat",
+            source="arXiv:2609.05625",
+            full_attack=True,
+            logical_qubits=1450,
+            toffoli_gates=40_000_000,
+            physical_qubits=19_397,
+            runtime_seconds=25.7 * 86400,
+        )
+        roadmap = HardwareRoadmapTarget(
+            vendor="IonQ",
+            source="https://www.ionq.com/roadmap",
+            target_year=2028,
+            physical_qubits=20_000,
+            logical_qubits=1600,
+            logical_error_rate=1e-7,
+            same_architecture_family=True,
+            demonstrated=False,
+        )
+        result = assess_roadmap_collision(attack, roadmap, current_year=2026, migration_years=1.5)
+        self.assertEqual(result.collision_state, "SAME_ARCHITECTURE_ATTACK_ENVELOPE_COLLISION")
+        self.assertEqual(result.evidence_state, "VENDOR_ROADMAP_TARGET")
+        self.assertEqual(result.logical_headroom, 150)
+        self.assertEqual(result.physical_headroom, 603)
+        self.assertEqual(result.urgency, "ACCELERATE_MIGRATION_VALIDATION")
+        self.assertTrue(any("forward-looking" in reason for reason in result.reasons))
+
+    def test_roadmap_collision_with_negative_migration_margin_flags_schedule_not_qday(self):
+        attack = AttackEstimate(
+            name="IonQ Walking Cat",
+            source="test",
+            full_attack=True,
+            logical_qubits=1450,
+            toffoli_gates=40_000_000,
+            physical_qubits=19_397,
+            runtime_seconds=25.7 * 86400,
+        )
+        roadmap = HardwareRoadmapTarget(
+            vendor="IonQ",
+            source="test",
+            target_year=2028,
+            physical_qubits=20_000,
+            logical_qubits=1600,
+            same_architecture_family=True,
+        )
+        result = assess_roadmap_collision(attack, roadmap, current_year=2026, migration_years=3)
+        self.assertEqual(result.urgency, "MIGRATION_SCHEDULE_AT_RISK")
+        self.assertLessEqual(result.migration_margin_years, 0)
+        self.assertNotEqual(result.evidence_state, "DEMONSTRATED_HARDWARE_CAPABILITY")
+
+    def test_2027_ionq_target_is_near_luo_width_but_not_a_complete_collision(self):
+        luo = AttackEstimate(
+            name="Luo 835q",
+            source="arXiv:2607.13816",
+            full_attack=True,
+            logical_qubits=835,
+            toffoli_gates=1_927_282_688,
+        )
+        roadmap = HardwareRoadmapTarget(
+            vendor="IonQ",
+            source="https://www.ionq.com/roadmap",
+            target_year=2027,
+            physical_qubits=10_000,
+            logical_qubits=800,
+            same_architecture_family=False,
+        )
+        result = assess_roadmap_collision(luo, roadmap, current_year=2026)
+        self.assertEqual(result.collision_state, "NEAR_LOGICAL_WIDTH_COLLISION")
+        self.assertEqual(result.logical_headroom, -35)
+        self.assertEqual(result.evidence_state, "VENDOR_ROADMAP_TARGET")
 
 
 if __name__ == "__main__":
