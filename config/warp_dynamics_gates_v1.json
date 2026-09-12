@@ -1,0 +1,37 @@
+{
+  "schema": "WS-WARP-DYNAMICS-GATES-v1",
+  "claims_policy": {
+    "reduced_models_cannot_claim": [
+      "stable physical warp drive",
+      "Einstein-constraint satisfaction",
+      "observer-robust energy-condition satisfaction",
+      "engineered spacetime curvature",
+      "superluminal propulsion"
+    ],
+    "allowed_states": [
+      "REDUCED_DYNAMICAL_SURVIVOR",
+      "REQUIRES_SOURCE_MODEL_IMPROVEMENT",
+      "SIMULATED_ONLY",
+      "REQUIRES_LAB_VALIDATION",
+      "NOT_CURRENTLY_CLAIMED"
+    ]
+  },
+  "reduced_srhd_gates": {
+    "density_ratio_max": 2.0,
+    "peak_retention_min": 0.9,
+    "sound_speed_max": 1.0,
+    "shock_gradient_ratio_max": 1.5,
+    "perturbation_pass_fraction_min": 0.95,
+    "compact_wall_width_over_R_max": 0.5
+  },
+  "promotion_requirements_after_reduced_pass": [
+    "causal source-derived anisotropic stress model",
+    "resolution-converged shock/characteristic analysis",
+    "perturbation ensemble",
+    "Einstein Hamiltonian constraint",
+    "Einstein momentum constraints",
+    "bounded curvature",
+    "observer-robust NEC/WEC/DEC/SEC analysis",
+    "independent numerical implementation"
+  ]
+}
