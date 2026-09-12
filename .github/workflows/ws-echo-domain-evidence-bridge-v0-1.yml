@@ -1,0 +1,126 @@
+name: WS ECHO Domain Evidence Bridge v0.1 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_domain_evidence_bridge.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_domain_evidence_bridge.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_ECHO_DOMAIN_EVIDENCE_BRIDGE_V0_1.md'
+      - '.github/workflows/ws-echo-domain-evidence-bridge-v0-1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_domain_evidence_bridge.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_domain_evidence_bridge.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_ECHO_DOMAIN_EVIDENCE_BRIDGE_V0_1.md'
+      - '.github/workflows/ws-echo-domain-evidence-bridge-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  echo-domain-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record tested source and claims boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=EVIDENCE/PROVENANCE TRANSPORT ONLY / NO MATURITY ELEVATION / NO EXECUTION"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile bridge
+        run: python -m compileall -q worldshepherd_sara/echo_domain_evidence_bridge.py
+
+      - name: Run focused regressions
+        run: python -m pytest tests/test_echo_domain_evidence_bridge.py -q
+
+      - name: Emit bounded compatibility evidence
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          from worldshepherd_sara.echo_domain_evidence_bridge import DomainEvidenceEnvelope
+          from worldshepherd_sara.echo_event_store import semantic_sha256
+
+          army = DomainEvidenceEnvelope(
+              domain='ARMY_DECISION',
+              source_kind='DecisionPackage',
+              source_id='WS-ADM-DEMO-001:v1',
+              source_sha256='1' * 64,
+              claim_state='SIMULATED_ONLY',
+              claims_boundary='Synthetic compatibility fixture only; no Army acceptance or acquisition authority.',
+              payload={
+                  'program_id': 'WS-ADM-DEMO-001',
+                  'version': 1,
+                  'recommended_option_id': 'OPTION-A',
+                  'human_signoff': False,
+              },
+          )
+          apnt = DomainEvidenceEnvelope(
+              domain='APNT_AWARENESS',
+              source_kind='APNTReplayResult',
+              source_id='WS-NP004-POC-A-001:replay-1',
+              source_sha256='2' * 64,
+              claim_state='SIMULATED_ONLY',
+              claims_boundary='Synthetic informational-awareness compatibility fixture only; no PNT-engine capability or action routing.',
+              payload={
+                  'scenario_id': 'WS-NP004-POC-A-001',
+                  'final_integrity_state': 'RESTORED',
+                  'trace_complete': True,
+                  'execution_attempted': False,
+              },
+              parent_refs=('synthetic-fixture:v1',),
+          )
+
+          records = [army.to_audit_record(), apnt.to_audit_record()]
+          evidence = {
+              'schema': 'WS-ECHO-DOMAIN-EVIDENCE-BRIDGE-V1-CI',
+              'tested_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+              'execution_attempted': False,
+              'records': [
+                  {
+                      'event_id': envelope.stable_event_id(),
+                      'source_sha256': envelope.source_sha256,
+                      'claim_state': envelope.claim_state,
+                      'claims_boundary': envelope.claims_boundary,
+                      'bridge_payload_sha256': envelope.bridge_payload_sha256(),
+                      'echo_semantic_sha256': semantic_sha256(record),
+                  }
+                  for envelope, record in zip((army, apnt), records)
+              ],
+          }
+          assert all(item['claim_state'] == 'SIMULATED_ONLY' for item in evidence['records'])
+          assert evidence['execution_attempted'] is False
+          Path('ws_echo_domain_evidence_bridge_v0_1.json').write_text(
+              json.dumps(evidence, indent=2, sort_keys=True, allow_nan=False) + '\n'
+          )
+          PY
+
+      - name: Upload bridge evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-echo-domain-evidence-bridge-v0-1-evidence
+          path: deployments/sara_verified_local_v1/ws_echo_domain_evidence_bridge_v0_1.json
+          if-no-files-found: error
