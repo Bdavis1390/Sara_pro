@@ -5,7 +5,7 @@ import json
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 
 CLAIMS_BOUNDARY = "SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR"
@@ -56,6 +56,7 @@ class APNTEvent(BaseModel):
 
 class OperatorInput(BaseModel):
     event_sequence: int = Field(ge=1)
+    recommendation_id: str = Field(min_length=1)
     operator_id: str = Field(min_length=1)
     decision: OperatorDecision
     reason: str = Field(min_length=1)
@@ -69,6 +70,7 @@ class AwarenessAlert(BaseModel):
 
 
 class RecoveryRecommendation(BaseModel):
+    recommendation_id: str
     event_sequence: int
     candidate: str
     rationale: str
@@ -152,7 +154,12 @@ def recommendation_for_event(event: APNTEvent) -> RecoveryRecommendation | None:
         IntegrityState.RECOVERING,
     }:
         return None
+    recommendation_id = (
+        f"REC:{event.sequence}:{event.integrity_state.value}:{event.reason_code}:"
+        f"{event.recommended_recovery_candidate}"
+    )
     return RecoveryRecommendation(
+        recommendation_id=recommendation_id,
         event_sequence=event.sequence,
         candidate=event.recommended_recovery_candidate,
         rationale=(
@@ -187,6 +194,12 @@ def run_scenario(
     operator_inputs: list[OperatorInput],
 ) -> APNTReplayResult:
     ordered = replay_events(events)
+    recommendations_by_event = {
+        event.sequence: recommendation
+        for event in ordered
+        if (recommendation := recommendation_for_event(event)) is not None
+    }
+
     decisions: dict[int, OperatorInput] = {}
     for decision in operator_inputs:
         if decision.event_sequence in decisions:
@@ -197,6 +210,20 @@ def run_scenario(
     unknown_decisions = sorted(set(decisions) - event_sequences)
     if unknown_decisions:
         raise ValueError(f"operator decision references unknown events: {unknown_decisions}")
+
+    non_actionable_decisions = sorted(set(decisions) - set(recommendations_by_event))
+    if non_actionable_decisions:
+        raise ValueError(
+            f"operator decision references events without actionable recommendations: {non_actionable_decisions}"
+        )
+
+    for event_sequence, operator in decisions.items():
+        expected = recommendations_by_event[event_sequence]
+        if operator.recommendation_id != expected.recommendation_id:
+            raise ValueError(
+                f"operator decision recommendation mismatch for event {event_sequence}: "
+                f"expected {expected.recommendation_id}"
+            )
 
     alerts: list[AwarenessAlert] = []
     recommendations: list[RecoveryRecommendation] = []
@@ -219,7 +246,7 @@ def run_scenario(
             detail={"alert": alert.model_dump(mode="json")},
         )
 
-        recommendation = recommendation_for_event(event)
+        recommendation = recommendations_by_event.get(event.sequence)
         if recommendation is None:
             action_states[event.sequence] = ActionState.NONE
             _append_audit(
@@ -247,6 +274,7 @@ def run_scenario(
                 event_sequence=event.sequence,
                 stage="OPERATOR_DECISION",
                 detail={
+                    "recommendation_id": recommendation.recommendation_id,
                     "decision": OperatorDecision.DEFER.value,
                     "operator_id": "NO_DECISION_RECORDED",
                     "reason": "No explicit operator decision supplied; action remains non-executable.",
@@ -267,6 +295,7 @@ def run_scenario(
             event_sequence=event.sequence,
             stage="OPERATOR_DECISION",
             detail={
+                "recommendation_id": operator.recommendation_id,
                 "decision": operator.decision.value,
                 "operator_id": operator.operator_id,
                 "reason": operator.reason,
@@ -281,6 +310,7 @@ def run_scenario(
                 event_sequence=event.sequence,
                 stage="SIMULATED_ACTION",
                 detail={
+                    "recommendation_id": recommendation.recommendation_id,
                     "candidate": recommendation.candidate,
                     "action_state": ActionState.SIMULATED_APPLIED.value,
                     "boundary": "Synthetic state transition only; no PNT hardware, estimator, or platform command executed.",
@@ -294,7 +324,10 @@ def run_scenario(
     alert_events = {alert.event_sequence for alert in alerts}
     trace_complete = (
         expected_trace_events == audited_ingest_events == alert_events
-        and all(item.previous_hash == (audit_steps[index - 1].step_hash if index else None) for index, item in enumerate(audit_steps))
+        and all(
+            item.previous_hash == (audit_steps[index - 1].step_hash if index else None)
+            for index, item in enumerate(audit_steps)
+        )
     )
 
     result_payload = {
