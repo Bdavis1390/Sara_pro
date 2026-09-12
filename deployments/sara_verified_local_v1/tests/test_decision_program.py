@@ -7,6 +7,7 @@ import pytest
 
 from worldshepherd_sara.decision_program import (
     DecisionEpoch,
+    DecisionPackage,
     DecisionSpec,
     PackageState,
     evaluate_decision,
@@ -38,7 +39,7 @@ def test_point_trade_study_is_deterministic_and_never_auto_signs():
     assert first.recommended_option_id == expected["epoch_1_recommendation"]
     assert first.package_state == PackageState.READY_FOR_HUMAN_REVIEW
     assert first.human_signoff is False
-    assert all(step.state.value == "PROPOSED" for step in first.agentic_plan)
+    assert all(step.state == "PROPOSED" for step in first.agentic_plan)
     assert all(step.authority_required == "identified-human-authority" for step in first.agentic_plan)
 
 
@@ -161,3 +162,53 @@ def test_spec_provenance_change_changes_spec_and_package_hash():
     assert changed.recommended_option_id == baseline.recommended_option_id
     assert changed.spec_hash != baseline.spec_hash
     assert changed.package_hash != baseline.package_hash
+
+
+def test_mixed_units_are_rejected_instead_of_compared_as_raw_numbers():
+    spec, epochs, _ = _spec_and_epochs()
+    payload = epochs[0].model_dump(mode="json")
+    payload["evidence"][0]["unit"] = "lb"
+    mixed = DecisionEpoch.model_validate(payload)
+
+    with pytest.raises(ValueError, match="unit mismatch"):
+        evaluate_decision(spec, mixed)
+
+
+def test_conflicting_declared_canonical_units_are_rejected():
+    spec, _, _ = _spec_and_epochs()
+    payload = spec.model_dump(mode="json")
+    payload["constraints"][0]["unit"] = "lb"
+
+    with pytest.raises(ValueError, match="conflicting canonical units"):
+        DecisionSpec.model_validate(payload)
+
+
+def test_non_finite_evidence_and_thresholds_are_rejected():
+    spec, epochs, _ = _spec_and_epochs()
+    event_payload = epochs[0].model_dump(mode="json")
+    event_payload["evidence"][0]["value"] = float("inf")
+    with pytest.raises(ValueError):
+        DecisionEpoch.model_validate(event_payload)
+
+    spec_payload = spec.model_dump(mode="json")
+    spec_payload["constraints"][0]["threshold"] = float("nan")
+    with pytest.raises(ValueError):
+        DecisionSpec.model_validate(spec_payload)
+
+
+def test_persisted_package_hash_must_match_contents():
+    spec, epochs, _ = _spec_and_epochs()
+    package = evaluate_decision(spec, epochs[0])
+    payload = package.model_dump(mode="json")
+    payload["recommended_option_id"] = "OPTION-C"
+
+    with pytest.raises(ValueError, match="package_hash does not match"):
+        DecisionPackage.model_validate(payload)
+
+
+def test_package_is_frozen_after_validation():
+    spec, epochs, _ = _spec_and_epochs()
+    package = evaluate_decision(spec, epochs[0])
+
+    with pytest.raises(ValueError):
+        package.recommended_option_id = "OPTION-C"
