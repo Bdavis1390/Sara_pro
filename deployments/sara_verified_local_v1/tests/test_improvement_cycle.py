@@ -160,3 +160,32 @@ def test_promoted_improvement_can_be_superseded_without_erasure():
     superseded = supersede_improvement(promoted, superseded_by="WS-IR-2026-0002")
     assert superseded.state == ImprovementState.SUPERSEDED
     assert {"superseded_by": "WS-IR-2026-0002"} in superseded.negative_evidence
+
+
+def test_public_transition_revalidates_existing_forbidden_execution_flag():
+    proposal = make_proposal()
+    invalid = proposal.model_copy(update={"requested_external_execution": True})
+    assessment = assess_improvement(
+        invalid,
+        {
+            "test_schema": ResultStatus.PASS,
+            "test_fail_closed": ResultStatus.FAIL,
+        },
+    )
+    with pytest.raises(ValidationError):
+        apply_assessment(invalid, assessment)
+
+
+def test_human_transition_revalidates_existing_forbidden_claim_flag():
+    proposal = make_proposal(state=ImprovementState.HUMAN_REVIEW_REQUIRED)
+    invalid = proposal.model_copy(update={"requested_claim_promotion": True})
+    with pytest.raises(ValidationError):
+        record_human_decision(
+            invalid,
+            accepted=True,
+            reviewer="CRE1AWS",
+            reviewed_utc="2026-09-12T19:40:00Z",
+            rationale="Evidence accepted.",
+            qualification_refs=["WS-QE-2026-0001"],
+            authorization_ref="PRIME-AUTH-1",
+        )
