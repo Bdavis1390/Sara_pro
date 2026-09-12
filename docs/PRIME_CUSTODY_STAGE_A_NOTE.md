@@ -1,0 +1,1 @@
+This branch is intentionally incomplete and blocked from merge until the current-main API reconciliation, full CI, independent review, and explicit incorporation gate are complete.
