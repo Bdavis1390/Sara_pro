@@ -35,6 +35,22 @@
       "last_checked": "2026-09-12"
     },
     {
+      "repo": "open-policy-agent/opa",
+      "number": 8772,
+      "url": "https://github.com/open-policy-agent/opa/issues/8772",
+      "title": "server: opt-in load-aware health and backpressure signals",
+      "task": "B",
+      "priority": "P0",
+      "score": 95,
+      "upstream_state": "OPEN",
+      "collision": "CLEAR",
+      "duplicate_checked": true,
+      "evidence_maturity": "SOURCE_REVIEWED",
+      "claims_state": "NOT CURRENTLY CLAIMED",
+      "next_gate": "Agree on a narrow evidence-pipeline pressure contract and add queue-pressure/readiness regression tests before broader memory or request backpressure work.",
+      "last_checked": "2026-09-12"
+    },
+    {
       "repo": "ros2/rclcpp",
       "number": 2962,
       "url": "https://github.com/ros2/rclcpp/issues/2962",
