@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -154,3 +155,29 @@ def test_hash_chain_links_every_audit_step():
     assert result.audit_steps[0].previous_hash is None
     for prior, current in zip(result.audit_steps, result.audit_steps[1:]):
         assert current.previous_hash == prior.step_hash
+
+
+@pytest.mark.parametrize("bad_value", [math.nan, math.inf, -math.inf])
+@pytest.mark.parametrize(
+    ("field_path", "bad_value_key"),
+    [
+        (("position",), "x_m"),
+        (("position",), "y_m"),
+        (("position",), "z_m"),
+        ((), "timestamp_s"),
+        ((), "confidence"),
+        ((), "integrity_indicator"),
+    ],
+)
+def test_non_finite_replay_evidence_is_rejected(field_path, bad_value_key, bad_value):
+    fixture = _fixture()
+    payload = dict(fixture["events"][0])
+    payload["position"] = dict(payload["position"])
+
+    target = payload
+    for key in field_path:
+        target = target[key]
+    target[bad_value_key] = bad_value
+
+    with pytest.raises(ValueError):
+        APNTEvent.model_validate(payload)
