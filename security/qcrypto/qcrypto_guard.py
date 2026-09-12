@@ -1,9 +1,10 @@
-"""Worldshepherd QCRYPTO width-time-exposure, QEC and roadmap risk gate.
+"""Worldshepherd QCRYPTO defensive convergence and migration-risk gate.
 
-Defensive analysis only. This module does not implement key recovery, Shor's
-algorithm, wallet interaction, transaction signing, or network access. It
-converts externally published resource estimates, measured QEC evidence and
-vendor hardware roadmaps into claims-controlled states for migration planning.
+This module does not implement key recovery, Shor's algorithm, wallet access,
+transaction signing, or network probing. It converts published attack-resource
+estimates, measured QEC evidence, vendor roadmaps, platform/manufacturing
+progress, and classical-decoder evidence into claims-controlled migration
+signals.
 """
 
 from __future__ import annotations
@@ -32,13 +33,7 @@ class AttackEstimate:
 
 @dataclass(frozen=True)
 class QECEvidence:
-    """Measured QEC evidence for one concrete code/hardware configuration.
-
-    `physical_qubits` / `logical_qubits` is a measured code-block ratio only.
-    It is NOT a full-application physical-qubit estimate because ancillas,
-    factories, routing, decoding, code switching and runtime reliability can
-    dominate a complete fault-tolerant workload.
-    """
+    """Measured QEC evidence for one concrete code/hardware configuration."""
 
     name: str
     source: str
@@ -63,13 +58,7 @@ class QECEvidence:
 
 @dataclass(frozen=True)
 class HardwareRoadmapTarget:
-    """Forward-looking hardware target.
-
-    Roadmaps are planning evidence, not demonstrated capability. The
-    `same_architecture_family` flag means a physical-resource comparison is
-    technically relevant enough to monitor; it does not prove that the future
-    target will implement the exact attack/QEC stack or meet its runtime.
-    """
+    """Forward-looking hardware target; never equivalent to delivered hardware."""
 
     vendor: str
     source: str
@@ -79,6 +68,48 @@ class HardwareRoadmapTarget:
     logical_error_rate: Optional[float] = None
     same_architecture_family: bool = False
     demonstrated: bool = False
+
+
+@dataclass(frozen=True)
+class PlatformMaturityEvidence:
+    """Evidence that a roadmap platform has moved beyond slideware.
+
+    This record describes demonstrated component/platform progress only. It does
+    not imply target-scale fault tolerance or cryptanalytic capability.
+    """
+
+    vendor: str
+    source: str
+    platform: str
+    physical_qubits: int
+    qpu_fabricated: bool = False
+    qubits_trapped_or_operated: bool = False
+    customer_orders_open: bool = False
+    customer_delivery_year: Optional[int] = None
+    qec_component_validated_on_related_hardware: bool = False
+    same_architecture_family: bool = False
+    target_scale_demonstrated: bool = False
+
+
+@dataclass(frozen=True)
+class ClassicalDecoderEvidence:
+    """Classical real-time decoder capacity relevant to fault-tolerant QEC.
+
+    Proposed FPGA/ASIC capacity is planning evidence only. It cannot be treated
+    as attack-ready unless hardware is demonstrated, the exact QEC family is
+    compatible, and attack-specific integration is validated.
+    """
+
+    name: str
+    source: str
+    code_family: str
+    supported_logical_qubits: int
+    implementation_kind: str
+    demonstrated_hardware: bool = False
+    workload_processed_fraction: Optional[float] = None
+    decoder_utilization_reduction: Optional[float] = None
+    exact_attack_code_compatible: bool = False
+    attack_specific_integration: bool = False
 
 
 @dataclass(frozen=True)
@@ -110,6 +141,20 @@ class RoadmapCollisionAssessment:
 
 
 @dataclass(frozen=True)
+class FullStackConvergenceAssessment:
+    convergence_state: str
+    platform_maturity_state: str
+    decoder_state: str
+    decoder_capacity_ratio: float
+    migration_margin_years: Optional[float]
+    urgency: str
+    blocking_gaps: tuple[str, ...]
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class RiskAssessment:
     threat_level: str
     claim_state: str
@@ -133,14 +178,7 @@ def width_band(logical_qubits: int) -> str:
 
 
 def assess_qec_bridge(estimate: AttackEstimate, qec: QECEvidence) -> QECBridgeAssessment:
-    """Assess whether measured QEC evidence can be bridged to an attack estimate.
-
-    The code-block floor is intentionally reported as a lower-bound arithmetic
-    comparison only. It must never be described as the physical resources for
-    the complete attack unless architecture-specific compilation, universal
-    non-Clifford execution, attack-scale operation and a complete FT overhead
-    model are all available.
-    """
+    """Assess whether measured QEC evidence can be bridged to an attack estimate."""
 
     ratio = qec.physical_per_logical
     floor = ceil(estimate.logical_qubits * ratio)
@@ -164,11 +202,7 @@ def assess_qec_bridge(estimate: AttackEstimate, qec: QECEvidence) -> QECBridgeAs
     else:
         evidence_state = "QEC_RESOURCE_RECORD_ONLY"
 
-    projection_state = (
-        "MODEL_READY_NOT_PRODUCTION_BREAK"
-        if not gaps
-        else "CROSS_ARCHITECTURE_PROJECTION_BLOCKED"
-    )
+    projection_state = "MODEL_READY_NOT_PRODUCTION_BREAK" if not gaps else "CROSS_ARCHITECTURE_PROJECTION_BLOCKED"
 
     return QECBridgeAssessment(
         evidence_state=evidence_state,
@@ -186,38 +220,20 @@ def assess_roadmap_collision(
     current_year: int,
     migration_years: Optional[float] = None,
 ) -> RoadmapCollisionAssessment:
-    """Compare a published attack envelope with a forward hardware roadmap.
-
-    This function is intentionally conservative. A roadmap collision can raise
-    migration urgency, but it can never establish Q2/Q3/Q4 or a production
-    break because a roadmap is not demonstrated hardware.
-    """
+    """Compare a published attack envelope with a forward hardware roadmap."""
 
     reasons: list[str] = []
     years_to_target = roadmap.target_year - current_year
-    logical_headroom: Optional[int] = None
-    physical_headroom: Optional[int] = None
-    migration_margin_years: Optional[float] = None
-
-    if roadmap.logical_qubits is not None:
-        logical_headroom = roadmap.logical_qubits - estimate.logical_qubits
+    logical_headroom = None if roadmap.logical_qubits is None else roadmap.logical_qubits - estimate.logical_qubits
+    physical_headroom = None
     if roadmap.physical_qubits is not None and estimate.physical_qubits is not None:
         physical_headroom = roadmap.physical_qubits - estimate.physical_qubits
 
     logical_collision = logical_headroom is not None and logical_headroom >= 0
     near_logical_collision = logical_headroom is not None and -50 <= logical_headroom < 0
-    physical_collision = (
-        roadmap.same_architecture_family
-        and physical_headroom is not None
-        and physical_headroom >= 0
-    )
+    physical_collision = roadmap.same_architecture_family and physical_headroom is not None and physical_headroom >= 0
 
-    if (
-        logical_collision
-        and physical_collision
-        and roadmap.same_architecture_family
-        and estimate.runtime_seconds is not None
-    ):
+    if logical_collision and physical_collision and roadmap.same_architecture_family and estimate.runtime_seconds is not None:
         collision_state = "SAME_ARCHITECTURE_ATTACK_ENVELOPE_COLLISION"
         reasons.append("Roadmap logical and physical targets overlap the published same-architecture attack envelope.")
     elif logical_collision and roadmap.same_architecture_family:
@@ -234,16 +250,14 @@ def assess_roadmap_collision(
         reasons.append("Roadmap target does not reach the published attack width.")
 
     evidence_state = "DEMONSTRATED_HARDWARE_CAPABILITY" if roadmap.demonstrated else "VENDOR_ROADMAP_TARGET"
-
-    if migration_years is not None:
-        migration_margin_years = years_to_target - migration_years
+    margin = None if migration_years is None else years_to_target - migration_years
 
     urgency = "MONITOR"
     if collision_state != "NO_COLLISION":
         urgency = "PREPARE_MIGRATION"
         if years_to_target <= 2:
             urgency = "ACCELERATE_MIGRATION_VALIDATION"
-        if migration_margin_years is not None and migration_margin_years <= 0:
+        if margin is not None and margin <= 0:
             urgency = "MIGRATION_SCHEDULE_AT_RISK"
 
     if not roadmap.demonstrated:
@@ -258,9 +272,93 @@ def assess_roadmap_collision(
         years_to_target=years_to_target,
         logical_headroom=logical_headroom,
         physical_headroom=physical_headroom,
-        migration_margin_years=migration_margin_years,
+        migration_margin_years=margin,
         urgency=urgency,
         reasons=tuple(reasons),
+    )
+
+
+def assess_full_stack_convergence(
+    estimate: AttackEstimate,
+    roadmap: HardwareRoadmapTarget,
+    platform: PlatformMaturityEvidence,
+    decoder: ClassicalDecoderEvidence,
+    *,
+    current_year: int,
+    migration_years: Optional[float] = None,
+) -> FullStackConvergenceAssessment:
+    """Detect convergence across attack, roadmap, platform, QEC and decoder planes.
+
+    This function cannot return a Q2/Q3/Q4 threat level. Its output is a
+    migration-planning signal only. In particular, a proposed classical decoder
+    or a fabricated prototype QPU is not evidence of a complete cryptanalytic
+    machine.
+    """
+
+    collision = assess_roadmap_collision(
+        estimate,
+        roadmap,
+        current_year=current_year,
+        migration_years=migration_years,
+    )
+    ratio = decoder.supported_logical_qubits / estimate.logical_qubits
+    gaps: list[str] = []
+
+    platform_progress = platform.qpu_fabricated and platform.qubits_trapped_or_operated
+    qec_progress = platform.qec_component_validated_on_related_hardware
+
+    if platform.target_scale_demonstrated:
+        platform_state = "TARGET_SCALE_DEMONSTRATED"
+    elif platform_progress and qec_progress:
+        platform_state = "PROTOTYPE_PLATFORM_PLUS_RELATED_QEC_VALIDATED"
+    elif platform_progress:
+        platform_state = "PROTOTYPE_PLATFORM_DEMONSTRATED"
+    else:
+        platform_state = "ROADMAP_PLATFORM_ONLY"
+
+    if decoder.demonstrated_hardware and decoder.exact_attack_code_compatible and decoder.attack_specific_integration:
+        decoder_state = "ATTACK_INTEGRATED_DECODER_DEMONSTRATED"
+    elif decoder.demonstrated_hardware:
+        decoder_state = "DECODER_HARDWARE_DEMONSTRATED_NOT_ATTACK_INTEGRATED"
+    else:
+        decoder_state = "PROPOSED_DECODER_CAPACITY_ONLY"
+
+    roadmap_collision = collision.collision_state == "SAME_ARCHITECTURE_ATTACK_ENVELOPE_COLLISION"
+    decoder_near_scale = ratio >= 0.75
+
+    if roadmap_collision and platform_progress and qec_progress and decoder_near_scale:
+        convergence_state = "MULTI_PLANE_CONVERGENCE_SIGNAL"
+    elif roadmap_collision and (platform_progress or decoder_near_scale):
+        convergence_state = "PARTIAL_CONVERGENCE_SIGNAL"
+    else:
+        convergence_state = "NO_FULL_STACK_CONVERGENCE"
+
+    if not roadmap.demonstrated:
+        gaps.append("Attack-scale roadmap target remains forward-looking, not delivered hardware.")
+    if not platform.target_scale_demonstrated:
+        gaps.append("Prototype/platform evidence does not demonstrate the roadmap's attack-scale qubit count.")
+    if not decoder.demonstrated_hardware:
+        gaps.append("Decoder capacity is a proposed implementation result, not demonstrated attack-scale hardware.")
+    if not decoder.exact_attack_code_compatible:
+        gaps.append("Decoder evidence is not validated for the exact QEC code stack used by the attack estimate.")
+    if not decoder.attack_specific_integration:
+        gaps.append("No end-to-end integration of the decoder with the cryptanalytic workload is demonstrated.")
+    gaps.append("Full non-Clifford factory, routing, runtime-reliability and integrated-system scaling remain required unless separately demonstrated.")
+
+    urgency = collision.urgency
+    if convergence_state == "MULTI_PLANE_CONVERGENCE_SIGNAL" and urgency == "PREPARE_MIGRATION":
+        urgency = "ACCELERATE_MIGRATION_VALIDATION"
+    if collision.migration_margin_years is not None and collision.migration_margin_years <= 0:
+        urgency = "MIGRATION_SCHEDULE_AT_RISK"
+
+    return FullStackConvergenceAssessment(
+        convergence_state=convergence_state,
+        platform_maturity_state=platform_state,
+        decoder_state=decoder_state,
+        decoder_capacity_ratio=ratio,
+        migration_margin_years=collision.migration_margin_years,
+        urgency=urgency,
+        blocking_gaps=tuple(gaps),
     )
 
 
@@ -279,10 +377,9 @@ def assess(
     Q3: Q2 plus migration margin is exhausted/negative.
     Q4: production-strength break demonstrated in a controlled, authorized setting.
 
-    Low logical-qubit count, low QEC code-block overhead, or a forward hardware
-    roadmap alone can never produce Q2+. This separates width, time, QEC
-    overhead, roadmap maturity and application-scale fault-tolerant execution so
-    cross-paper arithmetic cannot become a false operational claim.
+    Low width, low QEC overhead, roadmaps, prototypes, or proposed decoder scale
+    alone can never produce Q2+. Those inputs belong to migration-planning
+    convergence analysis, not production-break claims.
     """
     reasons: list[str] = []
     band = width_band(estimate.logical_qubits)
@@ -312,12 +409,7 @@ def assess(
     if estimate.toffoli_gates >= 1_000_000_000:
         reasons.append("Very high Toffoli count: low width does not imply low runtime.")
 
-    if (
-        estimate.full_attack
-        and estimate.runtime_seconds is not None
-        and exposure_seconds is not None
-        and exposure_seconds > 0
-    ):
+    if estimate.full_attack and estimate.runtime_seconds is not None and exposure_seconds is not None and exposure_seconds > 0:
         ratio = estimate.runtime_seconds / exposure_seconds
         if ratio <= 1.0:
             level = "Q2"
