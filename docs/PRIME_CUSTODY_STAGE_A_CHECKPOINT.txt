@@ -1,0 +1,1 @@
+Stage A checkpoint only. No merge authorization.
