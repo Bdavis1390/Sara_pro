@@ -92,6 +92,8 @@ def wall_width_10_90(sigma_R: float, R: float = 1.0) -> float:
 
 
 def passive_compactness_bound(width_over_R: float) -> float:
+    # A 0.9->0.1 drop forces |du/dx| >= 0.8 v/W.
+    # Thus t_c v/R <= (W/R)/0.8.
     return width_over_R / 0.8
 
 
@@ -210,6 +212,8 @@ def run_srhd(
     p0 = p_from_cs(1.0, cs0, gamma)
     p = np.full(nx, p0)
     U = prim_to_cons(rho, v, p, gamma)
+
+    # Reference horizon based on sigmaR=8 pressureless benchmark, t_c v/R~0.25.
     t_end = horizon_baseline_tc * (0.25/vs)
     t = 0.0
     pguess = p.copy()
@@ -271,6 +275,35 @@ def resolution_gate(low: Result, high: Result, gates: Gates) -> Dict[str, object
     }
 
 
+def perturbation_ensemble_gate(
+    gamma: float,
+    cs0: float,
+    sigma_R: float,
+    gates: Gates,
+    seeds: int = 20,
+    perturbation: float = 0.05,
+) -> Dict[str, object]:
+    results = []
+    for seed in range(1, seeds + 1):
+        low = run_srhd(gamma, cs0, sigma_R, nx=400, perturbation=perturbation, seed=seed)
+        high = run_srhd(gamma, cs0, sigma_R, nx=800, perturbation=perturbation, seed=seed)
+        gate = resolution_gate(low, high, gates)
+        results.append({
+            "seed": seed,
+            "high": asdict(high),
+            "gate": gate,
+        })
+    pass_fraction = sum(1 for r in results if r["gate"]["pass"]) / len(results)
+    return {
+        "perturbation_fraction": perturbation,
+        "seed_count": seeds,
+        "pass_fraction": pass_fraction,
+        "required_pass_fraction": gates.perturbation_pass_fraction_min,
+        "pass": pass_fraction >= gates.perturbation_pass_fraction_min,
+        "results": results,
+    }
+
+
 def default_campaign(gates: Gates) -> Dict[str, object]:
     candidates: List[Dict[str, object]] = []
     for sigma in (4.4, 4.8, 5.5, 6.5, 8.0):
@@ -295,6 +328,15 @@ def default_campaign(gates: Gates) -> Dict[str, object]:
             + max(0.0, x["gate"]["gradient_ratio_2N_over_N"]/gates.shock_gradient_ratio_max - 1.0)
         )
     )
+    perturbation_gate = perturbation_ensemble_gate(
+        2.0,
+        float(closest["cs0"]),
+        float(closest["sigma_R"]),
+        gates,
+        seeds=20,
+        perturbation=0.05,
+    )
+    final_pass = bool(passed) and perturbation_gate["pass"]
     return {
         "schema": "WS-WARP-DYNAMICS-v1",
         "model": "1D_SRHD_gamma_law_HLL",
@@ -303,7 +345,8 @@ def default_campaign(gates: Gates) -> Dict[str, object]:
         "candidate_count": len(candidates),
         "pass_count": len(passed),
         "closest_candidate": closest,
-        "status": "PASS" if passed else "NO_FULL_PASS",
+        "closest_candidate_perturbation_gate": perturbation_gate,
+        "status": "PASS" if final_pass else "NO_FULL_PASS",
         "candidates": candidates,
     }
 
@@ -342,6 +385,11 @@ def main() -> int:
         "pass_count": report["pass_count"],
         "candidate_count": report["candidate_count"],
         "closest_candidate": report["closest_candidate"],
+        "closest_candidate_perturbation_gate": {
+            "pass_fraction": report["closest_candidate_perturbation_gate"]["pass_fraction"],
+            "required_pass_fraction": report["closest_candidate_perturbation_gate"]["required_pass_fraction"],
+            "pass": report["closest_candidate_perturbation_gate"]["pass"],
+        },
     }, indent=2))
     return 0
 
