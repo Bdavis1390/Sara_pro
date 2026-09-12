@@ -2,7 +2,7 @@
 
 module tb_prime_hw_async_reset;
     logic clk = 1'b0;
-    logic reset_n = 1'b0;
+    logic reset_n = 1'b1;
     logic boot_verified = 1'b0;
     logic policy_valid = 1'b0;
     logic health_degraded = 1'b0;
@@ -53,13 +53,23 @@ module tb_prime_hw_async_reset;
     initial begin
         $display("PRIME-HW async-reset regression: native RTL only / no formal-equivalence claim");
 
-        // Initial asynchronous reset establishes RESET.
+        // Generate an explicit asynchronous reset edge away from a positive clock edge.
+        // Starting reset high avoids relying on simulator initialization ordering to
+        // create a negedge event.
         #1;
-        expect_state(ST_RESET, "initial reset");
-        expect_blocked("initial reset blocks request");
+        reset_n = 1'b0;
+        #1;
+        expect_state(ST_RESET, "explicit initial asynchronous reset");
+        expect_blocked("initial asynchronous reset blocks request");
 
-        // Release reset and advance to OPERATIONAL on normal clock edges.
+        // Release reset between edges; state must remain RESET until a posedge.
+        #1;
         reset_n = 1'b1;
+        #1;
+        expect_state(ST_RESET, "initial reset release holds until clock");
+        expect_blocked("initial reset release remains blocked before clock");
+
+        // Advance to OPERATIONAL on normal clock edges.
         @(posedge clk); #1;
         expect_state(ST_BOOT_LOCKED, "release reaches boot lock");
 
