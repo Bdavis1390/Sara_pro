@@ -1,0 +1,61 @@
+name: WS Recursive Improvement v0.1 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_cycle.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/recursive_discovery.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/config_custody.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_cycle.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_V0_1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-recursive-improvement-v0-1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_cycle.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/recursive_discovery.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/config_custody.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_cycle.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_V0_1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-recursive-improvement-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  recursive-improvement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile recursive-improvement modules
+        run: |
+          python -m py_compile worldshepherd_sara/improvement_cycle.py
+          python -m py_compile worldshepherd_sara/improvement_routing.py
+
+      - name: Run recursive-improvement tests
+        run: |
+          python -m pytest tests/test_improvement_cycle.py tests/test_improvement_routing.py -q
