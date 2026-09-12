@@ -78,24 +78,28 @@
   "operator_inputs": [
     {
       "event_sequence": 2,
+      "recommendation_id": "REC:2:DEGRADED:INTEGRITY_MARGIN_REDUCED:COMPARE_ALTERNATE_SOURCE",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "APPROVE",
       "reason": "Approve synthetic alternate-source comparison."
     },
     {
       "event_sequence": 3,
+      "recommendation_id": "REC:3:SUSPECT:KINEMATIC_RESIDUAL_EXCEEDED:ISOLATE_PRIMARY_SOURCE",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "APPROVE",
       "reason": "Approve synthetic isolation of suspect source."
     },
     {
       "event_sequence": 4,
+      "recommendation_id": "REC:4:DISAGREEMENT:PRIMARY_ALTERNATE_DIVERGENCE:PREFER_ALTERNATE_SOURCE",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "APPROVE",
       "reason": "Approve synthetic alternate-source preference."
     },
     {
       "event_sequence": 5,
+      "recommendation_id": "REC:5:RECOVERING:ALTERNATE_SOURCE_CONSISTENT:HOLD_ALTERNATE_UNTIL_TRUST_RESTORED",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "DEFER",
       "reason": "Hold final trust restoration pending another synthetic sample."
