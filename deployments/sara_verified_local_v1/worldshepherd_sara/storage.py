@@ -174,7 +174,7 @@ class DurableStore:
         with self._lock:
             descriptor = os.open(
                 self.audit_path,
-                os.O_WRONLY
+                os.O_RDWR
                 | os.O_CREAT
                 | os.O_APPEND
                 | getattr(os, "O_NOFOLLOW", 0),
@@ -182,13 +182,23 @@ class DurableStore:
             )
             try:
                 self._secure_descriptor(descriptor, 0o600, "audit file")
-            except Exception:
+                size = os.fstat(descriptor).st_size
+                if size:
+                    os.lseek(descriptor, -1, os.SEEK_END)
+                    if os.read(descriptor, 1) != b"\n":
+                        # Preserve an interrupted tail as visible corruption,
+                        # then frame the replayed event as its own JSONL record.
+                        # A crash before the new record keeps the outbox pending.
+                        os.write(descriptor, b"\n")
+                payload = (line + "\n").encode("utf-8")
+                while payload:
+                    written = os.write(descriptor, payload)
+                    if written == 0:
+                        raise OSError("audit append made no progress")
+                    payload = payload[written:]
+                os.fsync(descriptor)
+            finally:
                 os.close(descriptor)
-                raise
-            with os.fdopen(descriptor, "a", encoding="utf-8") as handle:
-                handle.write(line + "\n")
-                handle.flush()
-                os.fsync(handle.fileno())
             self._secure_mode(self.audit_path, 0o600, "audit file")
 
     def read_audit(self, limit: int) -> list[dict[str, Any]]:
