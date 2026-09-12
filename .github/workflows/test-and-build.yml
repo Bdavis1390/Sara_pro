@@ -73,8 +73,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Stored *.patch files are patch payloads. Lines such as `+ ` and the
+          # standard mail-patch separator `-- ` are meaningful patch content and
+          # look like trailing whitespace to git when the patch itself is stored
+          # as a repository file. Their structure is validated in the dedicated
+          # patch-artifact step above; keep diff --check strict for everything else.
           if git rev-parse --verify origin/main >/dev/null 2>&1; then
-            git diff --check origin/main...HEAD
+            git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.patch'
           else
-            git diff --check HEAD^
+            git diff --check HEAD^ -- . ':(exclude,glob)**/*.patch'
           fi
