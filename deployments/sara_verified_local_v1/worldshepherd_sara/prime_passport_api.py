@@ -310,6 +310,8 @@ def authorize_prime_requalification(
             passport = _load_from_registry(registry, prime_id)
         except ValueError as exc:
             raise _PassportRegistryInvalid from exc
+        if not isinstance(registry.get("PRIME_SENTINEL_AUTHORIZATIONS", {}), dict):
+            raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
         verified = verifier.verify(body)
         updated, payload = apply_verified_requalification_authorization(passport, verified)
         patch = verified_authorization_registry_patch(registry, verified)
@@ -397,6 +399,18 @@ def activate_prime_pack(
                 (reasons, payload),
             )
 
+        if authorization_id and not releasing_quarantine:
+            # Pre-ledger READY records may carry an obsolete release ID. Clear it
+            # during this successful custody transition to avoid later invalid
+            # supersession, without treating the old ID as a new authorization.
+            updated = updated.model_copy(update={
+                "custody": updated.custody.model_copy(update={
+                    "requalification_release_authorization_id": None,
+                    "requalification_release_target_environment": None,
+                    "requalification_release_key_id": None,
+                }),
+            })
+            payload["details"]["legacy_release_authorization_cleared"] = True
         patch = passport_registry_patch(registry, updated)
         if releasing_quarantine and authorization_id:
             patch.update(
