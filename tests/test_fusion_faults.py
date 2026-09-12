@@ -1,10 +1,16 @@
 from worldshepherd_sara.fusion_control import SensorSample
 from worldshepherd_sara.fusion_faults import (
+    FAULT_DELAYED_LOWER,
+    FAULT_DIAGNOSTIC_COLLISION,
     FAULT_DROP_LOWER,
+    FAULT_DUPLICATE_PAIR,
     FAULT_INVALID_FLAG,
     FAULT_MISSING_PROVENANCE,
+    FAULT_MISSING_QUALITY,
+    FAULT_MISSING_UNIT,
     FAULT_NONFINITE_VALUE,
     FAULT_PAIR_TIME_SKEW,
+    FAULT_REORDERED_PAIR,
     FAULT_SHOT_MISMATCH,
     run_fault_case,
     run_standard_fault_campaign,
@@ -42,7 +48,7 @@ def test_baseline_fixture_replays_before_fault_injection():
 def test_standard_fault_campaign_fails_safe_for_all_cases():
     upper, lower = paired_series()
     results = run_standard_fault_campaign(FusionReplayRunner(), upper, lower)
-    assert len(results) == 6
+    assert len(results) == 12
     assert all(result.safe_failure for result in results)
 
 
@@ -73,7 +79,37 @@ def test_corrupted_sample_integrity_faults_stop_before_valid_control():
         (FAULT_MISSING_PROVENANCE, "provenance_missing"),
         (FAULT_NONFINITE_VALUE, "value_not_finite"),
         (FAULT_INVALID_FLAG, "sensor_invalid"),
+        (FAULT_MISSING_UNIT, "unit_missing"),
+        (FAULT_MISSING_QUALITY, "quality_missing"),
     ):
         result = run_fault_case(FusionReplayRunner(), upper, lower, fault)
         assert result.safe_failure is True
         assert expected in result.observed_reason
+
+
+def test_duplicate_pair_is_rejected_by_monotonic_time_invariant():
+    upper, lower = paired_series()
+    result = run_fault_case(FusionReplayRunner(), upper, lower, FAULT_DUPLICATE_PAIR)
+    assert result.safe_failure is True
+    assert "replay_time_not_strictly_increasing" in result.observed_reason
+
+
+def test_delayed_lower_stream_is_rejected_by_pair_skew_invariant():
+    upper, lower = paired_series()
+    result = run_fault_case(FusionReplayRunner(), upper, lower, FAULT_DELAYED_LOWER)
+    assert result.safe_failure is True
+    assert "paired_timestamp_skew_exceeded" in result.observed_reason
+
+
+def test_reordered_pair_is_rejected_by_monotonic_time_invariant():
+    upper, lower = paired_series()
+    result = run_fault_case(FusionReplayRunner(), upper, lower, FAULT_REORDERED_PAIR)
+    assert result.safe_failure is True
+    assert "replay_time_not_strictly_increasing" in result.observed_reason
+
+
+def test_contradictory_diagnostic_identity_is_rejected():
+    upper, lower = paired_series()
+    result = run_fault_case(FusionReplayRunner(), upper, lower, FAULT_DIAGNOSTIC_COLLISION)
+    assert result.safe_failure is True
+    assert "optical diagnostic identity collision" in result.observed_reason
