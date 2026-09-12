@@ -1,14 +1,15 @@
-"""Worldshepherd QCRYPTO width-time-exposure risk gate.
+"""Worldshepherd QCRYPTO width-time-exposure and QEC-evidence risk gate.
 
-This module is defensive analysis only. It does not implement key recovery,
-Shor's algorithm, wallet interaction, transaction signing, or network access.
-It converts externally published resource estimates into claims-controlled
-risk states for migration planning.
+Defensive analysis only. This module does not implement key recovery, Shor's
+algorithm, wallet interaction, transaction signing, or network access. It
+converts externally published resource estimates and measured QEC evidence
+into claims-controlled states for migration planning.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
+from math import ceil
 from typing import Optional
 
 
@@ -27,6 +28,49 @@ class AttackEstimate:
     def gate_width_product(self) -> int:
         """Coarse comparison proxy only; Toffoli count is not circuit depth."""
         return self.logical_qubits * self.toffoli_gates
+
+
+@dataclass(frozen=True)
+class QECEvidence:
+    """Measured QEC evidence for one concrete code/hardware configuration.
+
+    `physical_qubits` / `logical_qubits` is a measured code-block ratio only.
+    It is NOT a full-application physical-qubit estimate because ancillas,
+    factories, routing, decoding, code switching and runtime reliability can
+    dominate a complete fault-tolerant workload.
+    """
+
+    name: str
+    source: str
+    physical_qubits: int
+    logical_qubits: int
+    code_distance: Optional[int] = None
+    logical_memory_error_per_cycle: Optional[float] = None
+    logical_clifford_error: Optional[float] = None
+    postselection_used: bool = False
+    universal_non_clifford_demonstrated: bool = False
+    architecture_specific_attack_compilation: bool = False
+    attack_scale_demonstrated: bool = False
+    complete_fault_tolerant_overhead_model: bool = False
+    independently_replicated: bool = False
+
+    @property
+    def physical_per_logical(self) -> float:
+        if self.logical_qubits <= 0 or self.physical_qubits <= 0:
+            raise ValueError("QEC qubit counts must be positive")
+        return self.physical_qubits / self.logical_qubits
+
+
+@dataclass(frozen=True)
+class QECBridgeAssessment:
+    evidence_state: str
+    physical_per_logical: float
+    codeblock_floor_physical_qubits: int
+    attack_projection_state: str
+    blocking_gaps: tuple[str, ...]
+
+    def to_dict(self) -> dict:
+        return asdict(self)
 
 
 @dataclass(frozen=True)
@@ -52,6 +96,53 @@ def width_band(logical_qubits: int) -> str:
     return "HIGH_WIDTH"
 
 
+def assess_qec_bridge(estimate: AttackEstimate, qec: QECEvidence) -> QECBridgeAssessment:
+    """Assess whether measured QEC evidence can be bridged to an attack estimate.
+
+    The code-block floor is intentionally reported as a lower-bound arithmetic
+    comparison only. It must never be described as the physical resources for
+    the complete attack unless architecture-specific compilation, universal
+    non-Clifford execution, attack-scale operation and a complete FT overhead
+    model are all available.
+    """
+
+    ratio = qec.physical_per_logical
+    floor = ceil(estimate.logical_qubits * ratio)
+    gaps: list[str] = []
+
+    if not estimate.full_attack:
+        gaps.append("Attack estimate is not end-to-end.")
+    if not qec.universal_non_clifford_demonstrated:
+        gaps.append("Universal non-Clifford fault-tolerant execution is not demonstrated for this evidence record.")
+    if not qec.architecture_specific_attack_compilation:
+        gaps.append("No architecture-specific compilation of this attack to the measured QEC architecture is supplied.")
+    if not qec.attack_scale_demonstrated:
+        gaps.append("The QEC architecture has not been demonstrated at the attack's logical width and workload scale.")
+    if not qec.complete_fault_tolerant_overhead_model:
+        gaps.append("Ancilla, magic-state/factory, routing, decoding and runtime-reliability overheads are not completely modeled.")
+
+    if qec.postselection_used:
+        evidence_state = "QEC_DEMONSTRATED_WITH_POSTSELECTION"
+    elif qec.logical_memory_error_per_cycle is not None or qec.logical_clifford_error is not None:
+        evidence_state = "HARDWARE_VALIDATED_QEC_WITHOUT_POSTSELECTION"
+    else:
+        evidence_state = "QEC_RESOURCE_RECORD_ONLY"
+
+    projection_state = (
+        "MODEL_READY_NOT_PRODUCTION_BREAK"
+        if not gaps
+        else "CROSS_ARCHITECTURE_PROJECTION_BLOCKED"
+    )
+
+    return QECBridgeAssessment(
+        evidence_state=evidence_state,
+        physical_per_logical=ratio,
+        codeblock_floor_physical_qubits=floor,
+        attack_projection_state=projection_state,
+        blocking_gaps=tuple(gaps),
+    )
+
+
 def assess(
     estimate: AttackEstimate,
     *,
@@ -67,9 +158,10 @@ def assess(
     Q3: Q2 plus migration margin is exhausted/negative.
     Q4: production-strength break demonstrated in a controlled, authorized setting.
 
-    A low logical-qubit count alone can never produce Q2+. This deliberately
-    separates *width* from *time* and prevents low-width/high-gate constructions
-    from being misreported as fast attacks.
+    Low logical-qubit count or low QEC code-block overhead alone can never
+    produce Q2+. This separates width, time, QEC overhead and application-scale
+    fault-tolerant execution so cross-paper arithmetic cannot become a false
+    operational claim.
     """
     reasons: list[str] = []
     band = width_band(estimate.logical_qubits)
