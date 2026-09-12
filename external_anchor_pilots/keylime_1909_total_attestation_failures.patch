@@ -1,0 +1,226 @@
+From: Worldshepherd OSS contribution pack
+Subject: [PATCH DRAFT] verifier: persist cumulative attestation failure count
+Upstream issue: https://github.com/keylime/keylime/issues/1909
+Target: keylime/keylime master
+Claims state: DRAFT / REQUIRES UPSTREAM TEST + MIGRATION VALIDATION
+
+Rationale
+---------
+Keylime currently exposes cumulative successful attestations through
+`attestation_count` and the current failure streak through
+`consecutive_attestation_failures`. A successful attestation may reset the
+consecutive counter, so external monitoring cannot recover an agent's lifetime
+failure count without maintaining a separate durable event store.
+
+Add `total_attestation_failures` as a persistent, monotonic counter. It is
+independent of the existing streak counter:
+
+  attestation_count            = lifetime successful attestations
+  total_attestation_failures   = lifetime failed attestations
+  consecutive_attestation_failures = current failure streak / backoff state
+
+This patch deliberately updates both the newer VerifierAgent model and the
+legacy VerfierMain model. Keylime has previously needed a follow-up fix when
+`consecutive_attestation_failures` existed in the new model but was absent from
+the legacy model, preventing durable persistence in some deployments.
+
+--- a/keylime/models/verifier/verifier_agent.py
++++ b/keylime/models/verifier/verifier_agent.py
+@@
+         # Metrics and timestamps
+         cls._field("attestation_count", Integer)
++        cls._field("total_attestation_failures", Integer)
+ 
+         # ------------------------------------------------------------------ #
+         # PUSH-MODE ONLY FIELDS:
+
+--- a/keylime/db/verifier_db.py
++++ b/keylime/db/verifier_db.py
+@@
+     mtls_cert = Column(String(2048), nullable=True)
+     attestation_count = Column(Integer)
++    total_attestation_failures = Column(Integer, nullable=False, default=0, server_default="0")
+     last_received_quote = Column(Integer)
+     last_successful_attestation = Column(Integer)
+
+--- a/keylime/verification/tpm_engine.py
++++ b/keylime/verification/tpm_engine.py
+@@
+         else:
+             self.attestation.evaluation = "fail"
+ 
++            # Lifetime failure count is independent of the consecutive-failure
++            # streak. Use a null-safe increment so upgraded or partially
++            # initialized agent objects cannot lose the first failure.
++            self.attestation.agent.total_attestation_failures = (
++                (getattr(self.attestation.agent, "total_attestation_failures", None) or 0) + 1
++            )
++
+             # Increment consecutive failures counter for exponential backoff (per enhancement #103)
+             # Update the ORIGINAL agent object (self.attestation.agent), not the fresh agent (self.agent)
+             if self.attestation.agent.consecutive_attestation_failures is None:
+                 self.attestation.agent.consecutive_attestation_failures = 1
+
+--- a/keylime/cloud_verifier_tornado.py
++++ b/keylime/cloud_verifier_tornado.py
+@@
+         "mtls_cert",
+         "ak_tpm",
+         "attestation_count",
++        "total_attestation_failures",
+         "last_received_quote",
+         "last_successful_attestation",
+         "tpm_clockinfo",
+
+--- /dev/null
++++ b/keylime/migrations/versions/c8f0e21a7b4d_add_total_attestation_failures.py
+@@
++"""add total_attestation_failures column
++
++Revision ID: c8f0e21a7b4d
++Revises: a59cc9366774
++Create Date: 2026-09-12 00:00:00.000000
++
++"""
++
++import sqlalchemy as sa
++from alembic import op
++
++# revision identifiers, used by Alembic.
++revision = "c8f0e21a7b4d"
++down_revision = "a59cc9366774"
++branch_labels = None
++depends_on = None
++
++
++def upgrade(engine_name):
++    globals()[f"upgrade_{engine_name}"]()
++
++
++def downgrade(engine_name):
++    globals()[f"downgrade_{engine_name}"]()
++
++
++def upgrade_registrar():
++    pass
++
++
++def downgrade_registrar():
++    pass
++
++
++def upgrade_cloud_verifier():
++    op.add_column(
++        "verifiermain",
++        sa.Column(
++            "total_attestation_failures",
++            sa.Integer(),
++            nullable=False,
++            server_default=sa.text("0"),
++        ),
++    )
++
++
++def downgrade_cloud_verifier():
++    op.drop_column("verifiermain", "total_attestation_failures")
+
+--- a/test/test_tpm_engine.py
++++ b/test/test_tpm_engine.py
+@@
+         self.mock_agent = MagicMock()
+         self.mock_agent.agent_id = "test-agent-123"
+         self.mock_agent.attestation_count = 0
++        self.mock_agent.total_attestation_failures = 0
+         self.mock_agent.accept_attestations = True
+@@
+     def test_process_results_push_mode_failure_preserves_session(
+@@
+         # Evaluation should be set to fail
+         self.assertEqual(self.mock_attestation.evaluation, "fail")
++        self.assertEqual(self.mock_agent.total_attestation_failures, 1)
+@@
+     def test_process_results_pull_mode_failure_deletes_session(
+@@
+         # Evaluation should be set to fail
+         self.assertEqual(self.mock_attestation.evaluation, "fail")
++        self.assertEqual(self.mock_agent.total_attestation_failures, 1)
+@@
+     def test_process_results_success_extends_token(self, mock_getboolean):
+@@
+         # Attestation count should increment
+         self.assertEqual(self.mock_agent.attestation_count, 1)
++        # Lifetime failures are not reset by a successful attestation
++        self.assertEqual(self.mock_agent.total_attestation_failures, 0)
+@@
++    @patch("keylime.verification.tpm_engine.config.get")
++    @patch("keylime.verification.tpm_engine.config.getboolean")
++    @patch("keylime.verification.tpm_engine.AuthSession.delete_active_session_for_agent")
++    def test_total_attestation_failures_is_monotonic_across_recovery(
++        self, _mock_delete_session, mock_getboolean, mock_config_get
++    ):
++        mock_config_get.return_value = "pull"
++        mock_getboolean.return_value = False
++
++        failure = Failure(Component.QUOTE_VALIDATION)
++        failure.add_event("test_failure", "Test failure", True)
++
++        common_patches = (
++            patch.object(self.engine, "_select_ima_log_item", return_value=None),
++            patch.object(self.engine, "_determine_failure_reason"),
++            patch.object(type(self.engine), "attest_state", new_callable=PropertyMock, return_value=None),
++            patch.object(type(self.engine), "failure_reason", new_callable=PropertyMock, return_value=None),
++        )
++
++        with common_patches[0], common_patches[1], common_patches[2], common_patches[3]:
++            self.engine._process_results(failure)
++            self.engine._process_results(failure)
++
++        self.assertEqual(self.mock_agent.total_attestation_failures, 2)
++
++        # A later pass may reset the consecutive streak, but must not erase
++        # lifetime history.
++        with patch.object(self.engine, "_extend_auth_token"):
++            with patch.object(self.engine, "_select_ima_log_item", return_value=None):
++                with patch.object(self.engine, "_determine_failure_reason"):
++                    with patch.object(type(self.engine), "attest_state", new_callable=PropertyMock, return_value=None):
++                        with patch.object(
++                            type(self.engine), "failure_reason", new_callable=PropertyMock, return_value=None
++                        ):
++                            self.engine._process_results(None)
++
++        self.assertEqual(self.mock_agent.total_attestation_failures, 2)
++        self.assertEqual(self.mock_agent.attestation_count, 1)
+
+Validation required before upstream PR
+--------------------------------------
+1. Verify Alembic head before submission. This draft uses `a59cc9366774`, the
+   current indexed migration head observed during preparation; rebase if master
+   advances.
+2. Run migration upgrade/downgrade tests on SQLite, PostgreSQL, and MySQL/MariaDB
+   where maintained CI coverage exists.
+3. Run `test/test_tpm_engine.py` and verifier API tests.
+4. Verify a pre-existing agent row upgrades with value 0.
+5. Verify two failures -> success -> failure yields:
+      attestation_count = 1
+      total_attestation_failures = 3
+      consecutive_attestation_failures = 1 (subject to configured recovery semantics)
+6. Restart verifier and confirm `total_attestation_failures` is restored and
+   exposed by the API rather than reverting to an in-memory default.
+7. Update verifier REST API documentation/examples for the supported API
+   versions selected by maintainers.
+
+Operational value
+-----------------
+A monitoring layer can compute a lifetime failure ratio without maintaining a
+parallel persistent database:
+
+  failures / (successes + failures)
+
+The raw counters remain preferable to storing a derived rate because operators
+can choose their own windows and aggregation rules.
+
+Claims boundary
+---------------
+This is a source-reviewed patch draft. It has not been executed against
+Keylime's multi-database migration matrix in Worldshepherd CI and does not claim
+upstream acceptance.
