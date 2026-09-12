@@ -2,7 +2,7 @@
 
 Upstream: `cilium/tetragon#5237`
 
-Claims state: **SOURCE-REVIEWED FIX DESIGN / REQUIRES BPF VERIFIER AND KERNEL TESTING**
+Claims state: **SOURCE-REVIEWED FIX DESIGN / REQUIRES BPF VERIFIER AND KERNEL TESTING / COORDINATE BEFORE UPSTREAM SUBMISSION**
 
 ## Confirmed failure mechanism
 
@@ -71,7 +71,7 @@ If testing shows any path can emit without a freshly populated payload after `po
 
 ## Relation to Tetragon #5528
 
-#5528 reports hundreds of events for one denied `execve`, with both kernel-side event multiplicity and user-space cache retry amplification. #5237 has a more precise stale-per-CPU-output mechanism and should be fixed/tested independently first. If #5528 persists after #5237, its remaining event-cache behavior can be isolated without conflating the two mechanisms.
+#5528 reports hundreds of events for one denied `execve`. Its issue thread explicitly notes that its immutable timestamp, single PID, and node-wide activity correlation may indicate the same #5237 stale-per-CPU mechanism, while also noting differences in hook/action/version. Treat #5528 as a likely related or duplicate symptom until #5237 is resolved and retested; do not open a second overlapping implementation lane.
 
 ## Worldshepherd mapping
 
@@ -81,6 +81,17 @@ This is an ECHO provenance-integrity failure: an old event is emitted as if it w
 
 The upstream fix belongs in Tetragon; Worldshepherd should consume trustworthy events rather than compensate downstream for stale kernel telemetry.
 
+## Upstream coordination and AI-assistance boundary
+
+The maintainer has already asked the original reporter whether they are willing to propose a fix and separately asked whether the report was AI-generated. There is still no matching implementation PR or assignee in the 2026-09-12 audit, but that conversation means Worldshepherd should **not race the reporter**.
+
+Before any external issue comment or PR:
+
+- re-check whether the original reporter has accepted the maintainer's invitation or opened a PR;
+- read and comply with the current Cilium/Tetragon contribution and AI-assistance policies;
+- disclose AI assistance exactly as the project requires;
+- prefer offering the regression harness / independent verification if another contributor has taken the code fix.
+
 ## Submission boundary
 
-No matching implementation PR was found in the 2026-09-12 duplicate check. This design has not been built through the Tetragon BPF toolchain and must not be labeled validated until verifier, unit/integration, and kernel-matrix tests pass.
+This design has not been built through the Tetragon BPF toolchain and must not be labeled validated until verifier, unit/integration, and supported-kernel tests pass. Internal preparation may continue; external submission requires the ownership and policy checks above.
