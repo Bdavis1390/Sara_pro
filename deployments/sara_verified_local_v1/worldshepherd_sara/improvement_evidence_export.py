@@ -20,6 +20,7 @@ class ImprovementEvidenceManifest(BaseModel):
     head_sequence: int | None = None
     head_record_digest: str | None = None
     state_counts: dict[str, int]
+    record_sequences: list[int]
     record_digests: list[str]
     records_digest: str = Field(min_length=1)
     feedback_cursor: dict[str, Any]
@@ -45,19 +46,37 @@ class ImprovementEvidenceManifest(BaseModel):
             raise ValueError("evidence manifest cannot claim promotion, deployment, or execution")
         if self.record_count != len(self.record_digests):
             raise ValueError("record_count must match record_digests")
+        if self.record_count != len(self.record_sequences):
+            raise ValueError("record_count must match record_sequences")
         if sum(self.state_counts.values()) != self.record_count:
             raise ValueError("state_counts must sum to record_count")
         if any(value < 0 for value in self.state_counts.values()):
             raise ValueError("state_counts may not contain negative values")
+        if any(sequence < 1 for sequence in self.record_sequences):
+            raise ValueError("record sequences must be positive")
+        if any(
+            later <= earlier
+            for earlier, later in zip(self.record_sequences, self.record_sequences[1:])
+        ):
+            raise ValueError("record sequences must be strictly increasing")
         if self.record_count == 0:
             if self.head_sequence is not None or self.head_record_digest is not None:
                 raise ValueError("empty manifest may not declare a ledger head")
         else:
-            if self.head_sequence != self.record_count:
-                raise ValueError("head_sequence must equal record_count for contiguous ledger export")
+            if self.head_sequence != self.record_sequences[-1]:
+                raise ValueError("head_sequence must match final record sequence")
             if self.head_record_digest != self.record_digests[-1]:
                 raise ValueError("head_record_digest must match final record digest")
         return self
+
+
+def _records_material(sequences: list[int], digests: list[str]) -> dict[str, object]:
+    return {
+        "records": [
+            {"sequence": sequence, "record_digest": digest}
+            for sequence, digest in zip(sequences, digests)
+        ]
+    }
 
 
 def _manifest_material(runtime: ImprovementRuntime, *, generated_utc: str) -> dict[str, object]:
@@ -67,6 +86,7 @@ def _manifest_material(runtime: ImprovementRuntime, *, generated_utc: str) -> di
         raise ImprovementRuntimeError("WS-RI ledger chain verification failed")
     records = runtime.ledger.records()
     cursor = runtime.load_cursor()
+    record_sequences = [record.sequence for record in records]
     record_digests = [record.record_digest for record in records]
     return {
         "schema": EVIDENCE_MANIFEST_SCHEMA,
@@ -75,8 +95,9 @@ def _manifest_material(runtime: ImprovementRuntime, *, generated_utc: str) -> di
         "head_sequence": None if not records else records[-1].sequence,
         "head_record_digest": None if not records else records[-1].record_digest,
         "state_counts": dict(sorted(Counter(record.state for record in records).items())),
+        "record_sequences": record_sequences,
         "record_digests": record_digests,
-        "records_digest": canonical_digest({"record_digests": record_digests}),
+        "records_digest": canonical_digest(_records_material(record_sequences, record_digests)),
         "feedback_cursor": cursor.model_dump(mode="json"),
         "feedback_cursor_digest": feedback_cursor_digest(cursor),
         "ledger_chain_verified": True,
@@ -108,11 +129,23 @@ def verify_evidence_manifest(manifest: ImprovementEvidenceManifest) -> bool:
     if observed != canonical_digest(material):
         return False
     record_digests = material.get("record_digests")
+    record_sequences = material.get("record_sequences")
     state_counts = material.get("state_counts")
-    if not isinstance(record_digests, list) or not isinstance(state_counts, dict):
+    if not isinstance(record_digests, list) or not isinstance(record_sequences, list):
+        return False
+    if not isinstance(state_counts, dict):
         return False
     record_count = material.get("record_count")
-    if not isinstance(record_count, int) or record_count != len(record_digests):
+    if not isinstance(record_count, int):
+        return False
+    if record_count != len(record_digests) or record_count != len(record_sequences):
+        return False
+    if any(not isinstance(sequence, int) or sequence < 1 for sequence in record_sequences):
+        return False
+    if any(
+        later <= earlier
+        for earlier, later in zip(record_sequences, record_sequences[1:])
+    ):
         return False
     if any(not isinstance(value, int) or value < 0 for value in state_counts.values()):
         return False
@@ -133,11 +166,11 @@ def verify_evidence_manifest(manifest: ImprovementEvidenceManifest) -> bool:
         if material.get("head_sequence") is not None or material.get("head_record_digest") is not None:
             return False
     else:
-        if material.get("head_sequence") != record_count:
+        if material.get("head_sequence") != record_sequences[-1]:
             return False
         if material.get("head_record_digest") != record_digests[-1]:
             return False
-    if material.get("records_digest") != canonical_digest({"record_digests": record_digests}):
+    if material.get("records_digest") != canonical_digest(_records_material(record_sequences, record_digests)):
         return False
     cursor = material.get("feedback_cursor")
     if not isinstance(cursor, dict):
@@ -165,6 +198,7 @@ def manifest_matches_runtime(
         and manifest.head_sequence == (None if not records else records[-1].sequence)
         and manifest.head_record_digest == (None if not records else records[-1].record_digest)
         and manifest.state_counts == expected_counts
+        and manifest.record_sequences == [record.sequence for record in records]
         and manifest.record_digests == [record.record_digest for record in records]
         and manifest.feedback_cursor == cursor.model_dump(mode="json")
         and manifest.feedback_cursor_digest == feedback_cursor_digest(cursor)
