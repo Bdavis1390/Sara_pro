@@ -4,6 +4,7 @@ from pydantic import ValidationError
 
 from worldshepherd_sara.echo_event_store import EchoEventStore
 from worldshepherd_sara.improvement_evidence_export import (
+    ImprovementEvidenceManifest,
     build_evidence_manifest,
     manifest_matches_runtime,
     verify_evidence_manifest,
@@ -110,6 +111,7 @@ def test_evidence_manifest_verifies_and_matches_runtime(tmp_path):
     assert verify_evidence_manifest(manifest) is True
     assert manifest_matches_runtime(manifest, runtime) is True
     assert manifest.record_count == 1
+    assert manifest.record_sequences == [1]
     assert manifest.ledger_chain_verified is True
     assert manifest.claim_promotion_performed is False
     assert manifest.deployment_performed is False
@@ -131,6 +133,47 @@ def test_manifest_detects_tampering_and_runtime_drift(tmp_path):
     assert manifest_matches_runtime(manifest, runtime) is False
 
 
+def test_manifest_model_rejects_semantic_authority_escalation(tmp_path):
+    runtime = seeded_runtime(tmp_path)
+    manifest = build_evidence_manifest(
+        runtime,
+        generated_utc="2026-09-12T21:06:00+00:00",
+    )
+    data = manifest.model_dump(mode="json")
+    data["claim_promotion_performed"] = True
+    try:
+        ImprovementEvidenceManifest.model_validate(data)
+    except ValidationError:
+        pass
+    else:
+        raise AssertionError("manifest must reject claim-promotion assertions")
+
+
+def test_manifest_model_rejects_inconsistent_sequence_or_state_counts(tmp_path):
+    runtime = seeded_runtime(tmp_path)
+    manifest = build_evidence_manifest(
+        runtime,
+        generated_utc="2026-09-12T21:06:00+00:00",
+    )
+    bad_sequence = manifest.model_dump(mode="json")
+    bad_sequence["record_sequences"] = [5]
+    with_validation_error = False
+    try:
+        ImprovementEvidenceManifest.model_validate(bad_sequence)
+    except ValidationError:
+        with_validation_error = True
+    assert with_validation_error is True
+
+    bad_counts = manifest.model_dump(mode="json")
+    bad_counts["state_counts"] = {"PROPOSED": 2}
+    with_validation_error = False
+    try:
+        ImprovementEvidenceManifest.model_validate(bad_counts)
+    except ValidationError:
+        with_validation_error = True
+    assert with_validation_error is True
+
+
 def test_empty_runtime_can_emit_evidence_manifest(tmp_path):
     runtime = ImprovementRuntime((tmp_path / "wsri").resolve())
     manifest = build_evidence_manifest(
@@ -138,5 +181,6 @@ def test_empty_runtime_can_emit_evidence_manifest(tmp_path):
         generated_utc="2026-09-12T21:06:00+00:00",
     )
     assert manifest.record_count == 0
+    assert manifest.record_sequences == []
     assert manifest.head_record_digest is None
     assert verify_evidence_manifest(manifest) is True
