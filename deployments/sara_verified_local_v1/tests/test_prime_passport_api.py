@@ -329,5 +329,26 @@ def test_ready_legacy_id_clears_on_successful_activation(client, tokens):
     )
     assert activated.status_code == 200
     assert activated.json()["passport"]["custody"]["requalification_release_authorization_id"] is None
+    assert activated.json()["provenance"]["details"]["authorization_id"] is None
+    assert activated.json()["provenance"]["details"]["authorization_key_id"] is None
     stored = client.get("/admin/prime/PRIME-001/passport", headers=auth(admin)).json()
     assert stored["passport"]["custody"]["requalification_release_authorization_id"] is None
+
+
+
+def test_malformed_sentinel_entry_is_server_corruption_not_signer_rejection(client, tokens):
+    _, admin = tokens
+    private = _configure_sentinel(client)
+    assert _create_passport(client, admin).status_code == 201
+    store = client.app.state.store
+    store.patch_registry({
+        "PRIME_SENTINEL_AUTHORIZATIONS": {
+            "BROKEN": {"status": "VERIFIED", "expires_at": "invalid"}
+        }
+    })
+    response = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=_signed_authorization(private),
+    )
+    assert response.status_code == 500
