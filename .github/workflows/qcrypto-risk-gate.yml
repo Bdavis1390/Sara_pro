@@ -34,3 +34,4 @@ jobs:
         run: |
           python -m json.tool security/qcrypto/baseline_2026-09-12.json >/dev/null
           python -m json.tool security/qcrypto/evidence_register_2026-09-12.json >/dev/null
+          python -m json.tool security/qcrypto/review_manifest_2026-09-12.json >/dev/null
