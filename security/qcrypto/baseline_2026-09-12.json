@@ -1,0 +1,37 @@
+{
+  "schema": "WS-QCRYPTO-RESOURCE-BASELINE-v1",
+  "as_of": "2026-09-12",
+  "claims_control": "External resource estimates only; no production key break is claimed.",
+  "estimates": [
+    {
+      "name": "Google Quantum AI 2026 low-width secp256k1 ECDLP",
+      "source": "https://research.google/pubs/securing-elliptic-curve-cryptocurrencies-against-quantum-vulnerabilities-mitigations-2/",
+      "full_attack": true,
+      "logical_qubits": 1200,
+      "toffoli_gates": 90000000,
+      "physical_qubits": 500000,
+      "runtime_seconds": 300,
+      "runtime_note": "Order-of-minutes scenario under stated superconducting/QEC assumptions; 300 s is a conservative placeholder for scenario testing, not a quoted exact runtime."
+    },
+    {
+      "name": "IonQ Walking Cat trapped-ion secp256k1 ECDLP",
+      "source": "https://arxiv.org/abs/2609.05625",
+      "full_attack": true,
+      "logical_qubits": 1450,
+      "toffoli_gates": 40000000,
+      "physical_qubits": 19397,
+      "runtime_seconds": 2220480,
+      "runtime_note": "25.7 days per attempt under the published architecture assumptions."
+    },
+    {
+      "name": "Luo et al. 2026 space-efficient complete ECDLP",
+      "source": "https://arxiv.org/abs/2607.13816",
+      "full_attack": true,
+      "logical_qubits": 835,
+      "toffoli_gates": 1927282688,
+      "physical_qubits": null,
+      "runtime_seconds": null,
+      "runtime_note": "Complete Shor/ECDLP width result. High Toffoli count; do not infer fast runtime without an architecture-specific compilation."
+    }
+  ]
+}
