@@ -1,6 +1,6 @@
 {
   "scenario_id": "WS-NP004-POC-A-001",
-  "claims_boundary": "SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR",
+  "claims_boundary": "SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR / INFORMATIONAL DECISION AID ONLY",
   "events": [
     {
       "sequence": 1,
@@ -81,28 +81,28 @@
       "recommendation_id": "REC:2:DEGRADED:INTEGRITY_MARGIN_REDUCED:COMPARE_ALTERNATE_SOURCE",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "APPROVE",
-      "reason": "Approve synthetic alternate-source comparison."
+      "reason": "Synthetic operator judges the informational comparison recommendation appropriate."
     },
     {
       "event_sequence": 3,
       "recommendation_id": "REC:3:SUSPECT:KINEMATIC_RESIDUAL_EXCEEDED:ISOLATE_PRIMARY_SOURCE",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "APPROVE",
-      "reason": "Approve synthetic isolation of suspect source."
+      "reason": "Synthetic operator judges the informational isolation recommendation appropriate."
     },
     {
       "event_sequence": 4,
       "recommendation_id": "REC:4:DISAGREEMENT:PRIMARY_ALTERNATE_DIVERGENCE:PREFER_ALTERNATE_SOURCE",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "APPROVE",
-      "reason": "Approve synthetic alternate-source preference."
+      "reason": "Synthetic operator judges the informational alternate-source recommendation appropriate."
     },
     {
       "event_sequence": 5,
       "recommendation_id": "REC:5:RECOVERING:ALTERNATE_SOURCE_CONSISTENT:HOLD_ALTERNATE_UNTIL_TRUST_RESTORED",
       "operator_id": "SYNTHETIC-OPERATOR-01",
       "decision": "DEFER",
-      "reason": "Hold final trust restoration pending another synthetic sample."
+      "reason": "Synthetic operator defers the informational recommendation pending another sample."
     }
   ],
   "expected": {
@@ -110,7 +110,8 @@
     "recommendation_count": 4,
     "final_integrity_state": "RESTORED",
     "trace_complete": true,
-    "event_2_action_state": "SIMULATED_APPLIED",
+    "execution_attempted": false,
+    "event_2_action_state": "APPROVED",
     "event_5_action_state": "DEFERRED"
   }
 }
