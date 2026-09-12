@@ -43,7 +43,11 @@ PROHIBITED_CONTROL_KEYS = frozenset(
 
 class WsDemaScenario(BaseModel):
     schema: Literal[WS_DEMA_SCHEMA] = WS_DEMA_SCHEMA
-    scenario_id: str = Field(min_length=1, max_length=128)
+    scenario_id: str = Field(
+        min_length=1,
+        max_length=80,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    )
     created_utc: str = Field(min_length=1)
     actor: str = Field(min_length=1, max_length=128)
     baseline_configuration: dict[str, Any]
