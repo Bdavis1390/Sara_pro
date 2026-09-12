@@ -249,3 +249,127 @@ def test_denied_pack_activation_is_audited_but_does_not_mutate_ready_passport(cl
         "/admin/prime/PRIME-001/passport", headers=auth(admin)
     ).json()["passport"]
     assert after == before
+
+
+def test_authorization_route_reports_corrupt_passport_as_server_failure(client, tokens):
+    _, admin = tokens
+    private = _configure_sentinel(client)
+    assert _create_passport(client, admin).status_code == 201
+    store = client.app.state.store
+    registry = store.get_registry()
+    passports = dict(registry["PRIME_DIGITAL_PASSPORTS"])
+    malformed = dict(passports["PRIME-001"])
+    malformed["prime_id"] = "PRIME-MISMATCH"
+    passports["PRIME-001"] = malformed
+    store.patch_registry({"PRIME_DIGITAL_PASSPORTS": passports})
+
+    response = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=_signed_authorization(private),
+    )
+    assert response.status_code == 500
+    assert response.json()["detail"] == "PRIME passport registry validation failed"
+
+
+def test_authorization_route_reports_corrupt_sentinel_registry_as_server_failure(client, tokens):
+    _, admin = tokens
+    private = _configure_sentinel(client)
+    assert _create_passport(client, admin).status_code == 201
+    client.app.state.store.patch_registry({"PRIME_SENTINEL_AUTHORIZATIONS": []})
+
+    response = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=_signed_authorization(private),
+    )
+    assert response.status_code == 500
+    assert response.json()["detail"] == "PRIME passport registry validation failed"
+
+
+def test_malformed_sentinel_entry_is_server_corruption_not_signer_rejection(client, tokens):
+    _, admin = tokens
+    private = _configure_sentinel(client)
+    assert _create_passport(client, admin).status_code == 201
+    client.app.state.store.patch_registry(
+        {
+            "PRIME_SENTINEL_AUTHORIZATIONS": {
+                "BROKEN": {"status": "VERIFIED", "expires_at": "invalid"}
+            }
+        }
+    )
+
+    response = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=_signed_authorization(private),
+    )
+    assert response.status_code == 500
+
+
+def test_corrupt_authorization_window_over_signed_limit_is_server_failure(client, tokens):
+    _, admin = tokens
+    private = _configure_sentinel(client)
+    assert _create_passport(client, admin).status_code == 201
+    now = datetime.now(timezone.utc)
+    client.app.state.store.patch_registry(
+        {
+            "PRIME_SENTINEL_AUTHORIZATIONS": {
+                "BROKEN-WINDOW": {
+                    "status": "VERIFIED",
+                    "prime_id": "PRIME-001",
+                    "target_environment": "SPACE",
+                    "key_id": "PS-K1",
+                    "key_fingerprint_sha256": "0" * 64,
+                    "nonce": "nonce-corrupt-0123456789",
+                    "issued_at": now.isoformat(),
+                    "expires_at": (now + timedelta(days=1)).isoformat(),
+                }
+            }
+        }
+    )
+
+    response = client.post(
+        "/admin/prime/PRIME-001/requalification/authorize",
+        headers=auth(admin),
+        json=_signed_authorization(private),
+    )
+    assert response.status_code == 500
+
+
+def test_ready_legacy_authorization_is_cleared_without_false_provenance(client, tokens):
+    _, admin = tokens
+    assert _create_passport(client, admin).status_code == 201
+    store = client.app.state.store
+    registry = store.get_registry()
+    passports = dict(registry["PRIME_DIGITAL_PASSPORTS"])
+    legacy = dict(passports["PRIME-001"])
+    legacy["custody"] = {
+        **legacy["custody"],
+        "requalification_release_authorization_id": "LEGACY-AUTHORIZATION",
+        "requalification_release_target_environment": "SPACE",
+        "requalification_release_key_id": "LEGACY-KEY",
+    }
+    passports["PRIME-001"] = legacy
+    store.patch_registry({"PRIME_DIGITAL_PASSPORTS": passports})
+
+    activated = client.post(
+        "/admin/prime/PRIME-001/activate-pack",
+        headers=auth(admin),
+        json=_qualified_space_pack(),
+    )
+    assert activated.status_code == 200
+    body = activated.json()
+    custody = body["passport"]["custody"]
+    assert custody["requalification_release_authorization_id"] is None
+    assert custody["requalification_release_target_environment"] is None
+    assert custody["requalification_release_key_id"] is None
+    assert body["provenance"]["details"]["authorization_id"] is None
+    assert body["provenance"]["details"]["authorization_key_id"] is None
+    assert body["provenance"]["details"]["legacy_release_authorization_cleared"] is True
+
+    stored = client.get("/admin/prime/PRIME-001/passport", headers=auth(admin)).json()["passport"]
+    assert stored["custody"]["requalification_release_authorization_id"] is None
+    assert "LEGACY-AUTHORIZATION" not in store.get_registry().get(
+        "PRIME_SENTINEL_AUTHORIZATIONS", {}
+    )

@@ -20,6 +20,10 @@ RegistryTransaction = Callable[
 ]
 
 
+class RegistryIntegrityError(RuntimeError):
+    """Durable registry bytes failed structural/resource validation on read."""
+
+
 class DurableStore:
     def __init__(self, data_dir: str | Path | None = None) -> None:
         root = Path(data_dir or os.getenv("SARA_DATA_DIR", "./data")).resolve()
@@ -239,13 +243,18 @@ class DurableStore:
             descriptor = self._open_read_descriptor(
                 self.registry_path, "registry file"
             )
-            with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
-                value = json.load(handle)
+            try:
+                with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
+                    value = json.load(handle)
 
-            if not isinstance(value, dict):
-                raise ValueError("registry must contain a JSON object")
+                if not isinstance(value, dict):
+                    raise ValueError("registry must contain a JSON object")
 
-            return validate_json_resource(value)
+                return validate_json_resource(value)
+            except (json.JSONDecodeError, ValueError) as exc:
+                raise RegistryIntegrityError(
+                    f"registry integrity validation failed: {exc}"
+                ) from exc
 
     def patch_registry(self, values: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
