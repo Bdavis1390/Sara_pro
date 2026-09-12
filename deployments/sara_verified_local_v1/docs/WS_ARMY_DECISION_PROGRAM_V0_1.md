@@ -1,9 +1,12 @@
 # WS Army Decision Program v0.1
 
-**Status:** DRAFT / SIMULATED_ONLY / INTERNAL SOFTWARE DEMONSTRATOR / BLOCK MERGE  
-**Date:** 2026-09-12  
-**Opportunity alignment:** ARM26BX06-NV012 (SBIR) / ARM26TX06-NV003 (STTR)  
-**Authoritative opportunity source reviewed:** https://armysbir.army.mil/  
+**Status:** DRAFT / SIMULATED_ONLY / INTERNAL SOFTWARE DEMONSTRATOR / BLOCK MERGE
+
+**Date:** 2026-09-12
+
+**Opportunity alignment:** ARM26BX06-NV012 (SBIR) / ARM26TX06-NV003 (STTR)
+
+**Authoritative opportunity source reviewed:** https://armysbir.army.mil/
 
 ## Purpose
 
