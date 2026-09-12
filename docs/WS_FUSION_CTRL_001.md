@@ -13,11 +13,12 @@ The branch now exercises:
 5. SHA-256 hash-chained audit and deterministic replay;
 6. strict read-only FAIR-MAST source/data validation;
 7. non-mutating mapping into the existing SARA audit shape;
-8. offline diagnostic fault injection;
+8. expanded offline diagnostic fault injection;
 9. estimator-consensus/disagreement handling;
 10. provenance-gated external observer intake;
-11. archive evidence readiness classification;
-12. an explicit archive-to-control admission gate.
+11. external-observer authority completeness checks;
+12. archive evidence readiness classification;
+13. an explicit archive-to-control admission gate.
 
 ## Hard safety boundary
 
@@ -44,6 +45,8 @@ provenance + validity checks
 state estimator(s)
         |
         +---- external observer adapter (source validated only)
+        |             |
+        |             +---- observer authority completeness gate
         |
         v
 estimator consensus / disagreement gate
@@ -72,7 +75,7 @@ FAIR-MAST evidence -> archive readiness -> control admission
 
 ## Core contracts
 
-Every `SensorSample` carries timestamp, shot identity, diagnostic identity, value/unit, uncertainty, validity, quality, and provenance.
+Every `SensorSample` carries timestamp, shot identity, diagnostic identity, value/unit, uncertainty, validity, quality, and provenance. Blank unit, quality, diagnostic identity, or provenance now fails validation.
 
 Every `PlasmaStateEstimate` carries timestamp, shot identity, displacement estimate, confidence, estimator identity, and source diagnostics.
 
@@ -97,6 +100,8 @@ Rejected proposals receive `applied_value = null`.
 
 `DifferentialOpticalEstimator` uses a normalized difference between upper/lower synthetic optical-emission channels. It exists to exercise the data/control architecture and is **not** a validated plasma-position estimator.
 
+The estimator now also rejects paired inputs that claim the same diagnostic identity, preventing contradictory metadata from being treated as two independent optical channels.
+
 `ProportionalVirtualActuatorController` produces an abstract correction from the demonstration displacement. It has no physical actuator semantics.
 
 ## Estimator consensus and external observers
@@ -113,6 +118,24 @@ Rejected proposals receive `applied_value = null`.
 The tolerance is a software policy parameter, **not** a validated plasma-physics threshold.
 
 `ExternalObserverAdapter` does not implement magnetic or equilibrium reconstruction. It only admits an externally produced estimate when method, diagnostics, provenance, quality, confidence, estimator identity, and source validation are explicit. This creates a partner/laboratory integration point without fabricating a second physics model.
+
+### Observer authority completeness
+
+`observer_authority.py` adds a separate fail-closed completeness check for external equilibrium/state observers. A packet must carry provenance for:
+
+- diagnostic geometry and calibration;
+- passive-structure model;
+- response matrices or their generation method;
+- reconstruction settings;
+- coordinate conventions.
+
+Profile/kinetic constraints are tracked as optional because they are method-dependent.
+
+The validator also requires explicit `validated_by` and `validation_reference` fields. This proves packet completeness only; it does **not** certify that a source is scientifically authoritative.
+
+A public FAIR-MAST issue (#231, opened 2026-07-24) independently requests these same categories for reproducible MAST equilibrium reconstruction work. Worldshepherd records that as supporting evidence only—not as proof that UKAEA lacks or possesses the requested materials. The claims-controlled record is:
+
+`evidence/fair_mast/observer_authority_gap_20260912.json`
 
 ## Audit, replay, and SARA bridge
 
@@ -197,14 +220,22 @@ Current control blockers include:
 
 ## Offline diagnostic fault campaign
 
-The standard campaign verifies safe failure for:
+The standard campaign now verifies safe failure for twelve cases:
 
 - dropped paired sample;
 - excessive timestamp skew;
 - shot mismatch;
 - missing provenance;
 - non-finite value;
-- explicit invalid-sensor flag.
+- explicit invalid-sensor flag;
+- duplicated pair;
+- delayed lower stream;
+- reordered pair;
+- contradictory/colliding diagnostic identity;
+- missing unit metadata;
+- missing quality metadata.
+
+Duplicated and reordered pairs are rejected by the strictly increasing replay-time invariant. One-sided delay is rejected by the pair-time-skew invariant. Metadata corruption and diagnostic identity collision fail before a valid state estimate can be produced.
 
 These are data-integrity invariants, not plasma-physics anomaly thresholds.
 
@@ -219,13 +250,13 @@ Branch-scoped GitHub Actions uses:
 - `contents: read` permissions;
 - explicit Python compile gate.
 
-At commit `a5d8f3825dc28af06d43f7c4ec3f8cfd2962b270`, the complete targeted suite reported:
+At commit `b7d0cf4de45cc5a0e7568293032203ae67813830`, the complete targeted suite reported:
 
 ```text
-50 passed in 0.14s
+57 passed in 0.15s
 ```
 
-The suite covers simulator control, FAIR-MAST adapter/manifest/probe, deterministic replay, SARA audit mapping, fault injection, estimator consensus, archive readiness, external-observer admission, and archive-to-control admission.
+The suite covers simulator control, FAIR-MAST adapter/manifest/probe, deterministic replay, SARA audit mapping, twelve-case fault injection, estimator consensus, archive readiness, external-observer admission, observer-authority completeness, and archive-to-control admission.
 
 ## Claims state
 
@@ -239,9 +270,10 @@ The suite covers simulator control, FAIR-MAST adapter/manifest/probe, determinis
 - read-only FAIR-MAST adapters/probes;
 - deterministic replay/fingerprinting;
 - non-mutating SARA audit bridge;
-- six-case diagnostic fault campaign;
+- twelve-case diagnostic fault campaign;
 - estimator-consensus gate;
 - external-observer adapter;
+- observer-authority completeness gate;
 - archive readiness classifier;
 - archive-to-control admission gate.
 
@@ -252,11 +284,17 @@ The suite covers simulator control, FAIR-MAST adapter/manifest/probe, determinis
 - archive content hashes and statistics persisted without raw sample persistence;
 - time and plasma-current arrays each contain 30,000 finite samples in this probe.
 
+### SUPPORTED BY EXTERNAL SOURCE EVIDENCE
+
+- FAIR-MAST issue #231 independently identifies diagnostic geometry/calibration, passive-structure authority, response matrices, reconstruction settings, coordinate conventions, and optional profile/kinetic constraints as relevant authorities for reproducible MAST equilibrium reconstruction work.
+- This issue is a community request hosted in the FAIR-MAST tracker; it is not treated as an official statement that UKAEA lacks or possesses those authorities.
+
 ### REQUIRES FURTHER DATA/PARTNER VALIDATION
 
 - calibration/quality interpretation beyond the archive's `Not Checked` label;
 - a defensible uncertainty model supplied by source metadata, calibration evidence, or validated methodology;
 - a genuine independent state estimator/observer supplied by a qualified external method or implemented and validated separately;
+- an authority-complete observer packet backed by genuinely authoritative sources;
 - comparison against authoritative plasma-state/equilibrium reconstruction;
 - real state-estimation accuracy and latency validation.
 
@@ -274,8 +312,8 @@ Any claim that Worldshepherd estimates or controls real plasma position, improve
 
 ## Next gates
 
-1. Obtain authoritative calibration/uncertainty/quality information for selected FAIR-MAST diagnostics instead of inventing uncertainty.
-2. Attach a genuinely independent equilibrium/state observer through `ExternalObserverAdapter` and exercise disagreement handling against the demonstration estimator.
-3. Extend fault injection to duplicated, delayed, contradictory, reordered, and metadata-corrupted streams.
+1. Resolve authoritative calibration/uncertainty/quality information for selected FAIR-MAST diagnostics instead of inventing uncertainty.
+2. Resolve the required observer-authority categories against primary UKAEA/lab documentation or a qualified partner package.
+3. Attach a genuinely independent equilibrium/state observer through `ExternalObserverAdapter` and exercise disagreement handling against the demonstration estimator.
 4. Build analysis-only replay for selected real public signals where the physics mapping is justified; keep control admission closed until validation requirements are actually met.
 5. Only after these gates pass, evaluate a **non-actuating, read-only EPICS-compatible telemetry adapter**.
