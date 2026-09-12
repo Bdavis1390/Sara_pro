@@ -111,10 +111,45 @@ module prime_hw_policy_controller_formal;
             end
         end
 
-        // Reachability witnesses prevent vacuous success for the principal states.
+        // Principal-state reachability witnesses.
         cover(state_code == ST_OPERATIONAL);
         cover(state_code == ST_DEGRADED);
         cover(state_code == ST_SAFE);
         cover(state_code == ST_RECOVERY);
+
+        // Assertion-family witnesses: demonstrate that the bounded environment can
+        // actually exercise the guarded safety properties rather than proving them
+        // only because their antecedents are unreachable.
+        cover(past_valid && state_code == ST_OPERATIONAL && allow);
+        cover(past_valid && state_code == ST_DEGRADED && allow);
+
+        cover(past_valid &&
+              ($past(state_code) == ST_OPERATIONAL || $past(state_code) == ST_DEGRADED) &&
+              ($past(fatal_fault) || !$past(policy_valid) || !$past(boot_verified)) &&
+              state_code == ST_SAFE);
+
+        cover(past_valid &&
+              $past(state_code) == ST_OPERATIONAL &&
+              !$past(fatal_fault) && $past(policy_valid) && $past(boot_verified) &&
+              $past(health_degraded) && state_code == ST_DEGRADED);
+
+        cover(past_valid &&
+              $past(state_code) == ST_DEGRADED &&
+              !$past(fatal_fault) && $past(policy_valid) && $past(boot_verified) &&
+              !$past(health_degraded) && state_code == ST_OPERATIONAL);
+
+        cover(past_valid &&
+              $past(state_code) == ST_SAFE &&
+              !$past(recovery_authorized) && state_code == ST_SAFE);
+
+        cover(past_valid &&
+              $past(state_code) == ST_SAFE &&
+              $past(recovery_authorized) && $past(fatal_fault) &&
+              state_code == ST_SAFE);
+
+        cover(past_valid &&
+              $past(state_code) == ST_SAFE &&
+              $past(recovery_authorized) && !$past(fatal_fault) &&
+              state_code == ST_RECOVERY);
     end
 endmodule
