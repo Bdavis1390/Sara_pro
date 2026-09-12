@@ -1,1 +1,0 @@
-Status: DRAFT / PARTIAL SAFE PORT / BLOCK MERGE. Issue #176 remains the controlling defect ledger. Stage B must reconcile the current-main API behavior before this branch can be considered complete.
