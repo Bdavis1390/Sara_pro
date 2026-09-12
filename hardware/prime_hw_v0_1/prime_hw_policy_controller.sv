@@ -59,12 +59,10 @@ module prime_hw_policy_controller (
             end
 
             ST_OPERATIONAL: begin
-                if (fatal_fault) begin
+                if (fatal_fault || !policy_valid || !boot_verified) begin
                     state_d = ST_SAFE;
                 end else if (health_degraded) begin
                     state_d = ST_DEGRADED;
-                end else if (!policy_valid || !boot_verified) begin
-                    state_d = ST_SAFE;
                 end
             end
 
