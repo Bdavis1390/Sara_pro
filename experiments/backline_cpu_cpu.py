@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Worldshepherd QBL-G1 local CPU-to-CPU Backline validation.
 
-Claims boundary:
-- This is a simulator-backed laboratory check.
-- It does not establish physical-QPU performance, RDMA performance,
-  quantum advantage, or sub-microsecond/microsecond transport latency.
+QBL-G1A reproduces the upstream Tier-1/Demo-1 device choice (``null.qubit``).
+QBL-G1B exercises the Worldshepherd compatibility extension (``lightning.qubit``).
 
-Upstream API pattern:
-https://www.pennylane.ai/demos/backline
+Claims boundary:
+- These are simulator-backed laboratory checks.
+- They do not establish physical-QPU performance, RDMA performance,
+  quantum advantage, or sub-3-microsecond Worldshepherd performance.
 """
 
 from __future__ import annotations
@@ -34,9 +34,62 @@ def _distribution_version(name: str) -> str | None:
         return None
 
 
+def decoder_library_candidates() -> list[Path]:
+    candidates: list[Path] = []
+
+    explicit = os.environ.get("BACKLINE_STEANE_DECODER")
+    if explicit:
+        candidates.append(Path(explicit).expanduser())
+
+    catalyst_root = os.environ.get("CATALYST_ROOT")
+    if catalyst_root:
+        candidates.append(
+            Path(catalyst_root).expanduser()
+            / "runtime"
+            / "build"
+            / "lib"
+            / "libsteane_coprocessor_cpu.so"
+        )
+
+    try:
+        from catalyst.utils.runtime_environment import get_lib_path
+
+        candidates.append(
+            Path(get_lib_path("runtime", "RUNTIME_LIB_DIR"))
+            / "libsteane_coprocessor_cpu.so"
+        )
+    except Exception:
+        # Preserve candidate discovery as a non-fatal setup concern; the caller
+        # reports a precise missing-library error if no candidate exists.
+        pass
+
+    default_source = (
+        Path("~/catalyst").expanduser()
+        / "runtime"
+        / "build"
+        / "lib"
+        / "libsteane_coprocessor_cpu.so"
+    )
+    candidates.append(default_source)
+
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key not in seen:
+            seen.add(key)
+            unique.append(candidate)
+    return unique
+
+
 def decoder_library_path() -> Path:
-    root = Path(os.environ.get("CATALYST_ROOT", "~/catalyst")).expanduser()
-    return root / "runtime" / "build" / "lib" / "libsteane_coprocessor_cpu.so"
+    candidates = decoder_library_candidates()
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    if candidates:
+        return candidates[0]
+    return Path("libsteane_coprocessor_cpu.so")
 
 
 def sha256_file(path: Path) -> str:
@@ -47,7 +100,15 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def environment_manifest(decoder_path: Path) -> dict[str, Any]:
+def gate_for_device(device_name: str) -> str:
+    if device_name == "null.qubit":
+        return "QBL-G1A"
+    if device_name == "lightning.qubit":
+        return "QBL-G1B"
+    raise ValueError(f"unsupported QBL-G1 device: {device_name}")
+
+
+def environment_manifest(decoder_path: Path, device_name: str) -> dict[str, Any]:
     return {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "python": sys.version,
@@ -60,26 +121,31 @@ def environment_manifest(decoder_path: Path) -> dict[str, Any]:
         "decoder_library": str(decoder_path),
         "decoder_library_exists": decoder_path.is_file(),
         "decoder_library_sha256": sha256_file(decoder_path) if decoder_path.is_file() else None,
+        "decoder_search_candidates": [str(path) for path in decoder_library_candidates()],
         "transport": "memcpy",
         "qec_code": "steane",
-        "quantum_device": "lightning.qubit",
+        "quantum_device": device_name,
         "claims_state": "REQUIRES_LAB_VALIDATION",
     }
 
 
-def build_ghz_qnode(shots: int = 10):
+def build_ghz_qnode(shots: int = 10, device_name: str = "lightning.qubit"):
+    gate_for_device(device_name)
     decoder_path = decoder_library_path()
     if not decoder_path.is_file():
+        searched = ", ".join(str(path) for path in decoder_library_candidates())
         raise FileNotFoundError(
-            f"Steane coprocessor library not found: {decoder_path}. "
-            "Set CATALYST_ROOT to the pinned Catalyst environment."
+            "Steane coprocessor library not found. "
+            f"Searched: {searched}. Set BACKLINE_STEANE_DECODER explicitly if needed."
         )
 
-    steane_decode = qp.CoprocessorFunction("steane_coprocessor", str(decoder_path))
-    quantum_device = qp.device("lightning.qubit", wires=3)
+    steane_decode = qp.CoprocessorFunction(
+        "steane_coprocessor", lib_path=str(decoder_path)
+    )
+    quantum_device = qp.device(device_name, wires=3)
 
-    controller = qp.Controller(device=quantum_device)
-    coprocessor = qp.Coprocessor(coprocessor_fn=steane_decode)
+    controller = qp.Controller(name="cpu-controller", device=quantum_device)
+    coprocessor = qp.Coprocessor(name="cpu-coproc", coprocessor_fn=steane_decode)
     backline = qp.Backline(
         controller=controller,
         coprocessors=[coprocessor],
@@ -113,17 +179,23 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--shots", type=int, default=10)
     parser.add_argument("--repeat", type=int, default=10)
+    parser.add_argument(
+        "--device",
+        choices=("null.qubit", "lightning.qubit"),
+        default="lightning.qubit",
+    )
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args()
 
     if args.shots < 1 or args.repeat < 1:
         parser.error("--shots and --repeat must be positive integers")
 
+    gate = gate_for_device(args.device)
     decoder_path = decoder_library_path()
-    manifest = environment_manifest(decoder_path)
+    manifest = environment_manifest(decoder_path, args.device)
 
     try:
-        ghz = build_ghz_qnode(shots=args.shots)
+        ghz = build_ghz_qnode(shots=args.shots, device_name=args.device)
         results = []
         failures = 0
 
@@ -139,8 +211,9 @@ def main() -> int:
                 }
             )
 
+        scope_claim = f"PROVEN_INTERNALLY_{gate}_SCOPE_ONLY"
         report = {
-            "gate": "QBL-G1",
+            "gate": gate,
             "status": "PASS" if failures == 0 else "FAIL",
             "manifest": manifest,
             "repeat": args.repeat,
@@ -149,9 +222,7 @@ def main() -> int:
             "results": results,
             "claims_boundary": {
                 "worldshepherd_backline_integration": (
-                    "PROVEN_INTERNALLY_QBL_G1_SCOPE_ONLY"
-                    if failures == 0
-                    else "REQUIRES_LAB_VALIDATION"
+                    scope_claim if failures == 0 else "REQUIRES_LAB_VALIDATION"
                 ),
                 "sub_3us_performance": "NOT_CURRENTLY_CLAIMED",
                 "hardware_qpu_integration": "NOT_CURRENTLY_CLAIMED",
@@ -160,20 +231,23 @@ def main() -> int:
         }
     except Exception as exc:  # Preserve setup/runtime failures as evidence.
         report = {
-            "gate": "QBL-G1",
+            "gate": gate,
             "status": "ERROR",
             "manifest": manifest,
             "error_type": type(exc).__name__,
             "error": str(exc),
             "claims_boundary": {
-                "worldshepherd_backline_integration": "REQUIRES_LAB_VALIDATION"
+                "worldshepherd_backline_integration": "REQUIRES_LAB_VALIDATION",
+                "sub_3us_performance": "NOT_CURRENTLY_CLAIMED",
+                "hardware_qpu_integration": "NOT_CURRENTLY_CLAIMED",
+                "quantum_advantage": "NOT_CURRENTLY_CLAIMED",
             },
         }
 
     if args.json_output:
         print(json.dumps(report, indent=2, sort_keys=True))
     else:
-        print(f"QBL-G1 status: {report['status']}")
+        print(f"{gate} status: {report['status']}")
         print(json.dumps(report, indent=2, sort_keys=True))
 
     return 0 if report["status"] == "PASS" else 1
