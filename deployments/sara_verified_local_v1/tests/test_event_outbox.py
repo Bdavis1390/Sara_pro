@@ -277,3 +277,29 @@ def test_replay_after_partial_audit_tail_preserves_a_valid_event(tmp_path):
     assert delivered[0]["payload"]["_outbox_event_id"] == event_id
     assert outbox_status(store.get_registry())["pending"] == 0
     assert store.audit_path.read_bytes().endswith(b"\n")
+
+
+
+def test_failed_tail_separator_write_keeps_outbox_pending(tmp_path, monkeypatch):
+    from worldshepherd_sara import storage as storage_module
+
+    store = DurableStore(tmp_path / "data")
+    event_id = queue_fixed_event(store, "SARA-EVENT-SEPARATOR-001")
+    store.audit_path.write_bytes(b'{"event":"interrupted"')
+    original_write = storage_module.os.write
+
+    def fail_separator(descriptor, data):
+        if data == b"\\n":
+            return 0
+        return original_write(descriptor, data)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(storage_module.os, "write", fail_separator)
+        with pytest.raises(OSError, match="separator write made no progress"):
+            drain_event_outbox(store, limit=1)
+
+    assert pending_event_ids(store.get_registry()) == [event_id]
+    assert not any(
+        record.get("event") == "test_provenance"
+        for record in store.read_audit(50)
+    )
