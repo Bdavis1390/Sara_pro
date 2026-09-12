@@ -40,6 +40,7 @@ def test_six_state_scenario_preserves_trace_and_expected_operator_states():
     assert result.trace_complete is expected["trace_complete"]
     assert result.action_states[2].value == expected["event_2_action_state"]
     assert result.action_states[5].value == expected["event_5_action_state"]
+    assert result.execution_attempted is False
 
 
 def test_replay_is_deterministic_for_identical_inputs():
@@ -54,17 +55,31 @@ def test_replay_is_deterministic_for_identical_inputs():
     assert first.audit_steps == second.audit_steps
 
 
-def test_no_operator_decision_never_executes_recommendation():
+def test_no_operator_response_never_creates_execution_stage():
     fixture = _fixture()
     events = [APNTEvent.model_validate(item) for item in fixture["events"]]
     result = run_scenario(scenario_id=fixture["scenario_id"], events=events, operator_inputs=[])
 
     for recommendation in result.recommendations:
         assert result.action_states[recommendation.event_sequence] == ActionState.DEFERRED
-    assert ActionState.SIMULATED_APPLIED not in result.action_states.values()
+    assert result.execution_attempted is False
+    assert all(step.stage != "SIMULATED_ACTION" for step in result.audit_steps)
 
 
-def test_rejected_recovery_stays_non_executable():
+def test_approved_operator_response_remains_informational_only():
+    fixture, result = _run()
+    assert result.action_states[2] == ActionState.APPROVED
+    assert result.execution_attempted is False
+    assert all(step.stage != "SIMULATED_ACTION" for step in result.audit_steps)
+    decision_steps = [
+        step for step in result.audit_steps
+        if step.event_sequence == 2 and step.stage == "OPERATOR_EVALUATION_RESPONSE"
+    ]
+    assert len(decision_steps) == 1
+    assert decision_steps[0].detail["execution_permitted"] is False
+
+
+def test_rejected_recovery_stays_informational():
     fixture = _fixture()
     events = [APNTEvent.model_validate(item) for item in fixture["events"]]
     decision = OperatorInput(
@@ -77,10 +92,7 @@ def test_rejected_recovery_stays_non_executable():
     result = run_scenario(scenario_id="REJECT-CASE", events=events, operator_inputs=[decision])
 
     assert result.action_states[3] == ActionState.REJECTED
-    assert all(
-        not (step.event_sequence == 3 and step.stage == "SIMULATED_ACTION")
-        for step in result.audit_steps
-    )
+    assert result.execution_attempted is False
 
 
 def test_duplicate_sequence_fails_closed():
@@ -107,7 +119,7 @@ def test_unknown_operator_decision_target_fails_closed():
         run_scenario(scenario_id="UNKNOWN-DECISION", events=events, operator_inputs=[decision])
 
 
-def test_operator_decision_for_no_action_event_fails_closed():
+def test_operator_decision_for_no_recommendation_event_fails_closed():
     fixture = _fixture()
     events = [APNTEvent.model_validate(item) for item in fixture["events"]]
     decision = OperatorInput(
@@ -115,14 +127,14 @@ def test_operator_decision_for_no_action_event_fails_closed():
         recommendation_id="REC:1:NONE",
         operator_id="TEST-OPERATOR",
         decision="APPROVE",
-        reason="Should not be accepted for a nominal no-action event.",
+        reason="Should not be accepted for a nominal no-recommendation event.",
     )
 
-    with pytest.raises(ValueError, match="without actionable recommendations"):
-        run_scenario(scenario_id="NO-ACTION-DECISION", events=events, operator_inputs=[decision])
+    with pytest.raises(ValueError, match="without informational recommendations"):
+        run_scenario(scenario_id="NO-RECOMMENDATION-DECISION", events=events, operator_inputs=[decision])
 
 
-def test_operator_approval_is_bound_to_exact_recommendation_id():
+def test_operator_response_is_bound_to_exact_recommendation_id():
     fixture = _fixture()
     events = [APNTEvent.model_validate(item) for item in fixture["events"]]
     decision = OperatorInput(
@@ -130,7 +142,7 @@ def test_operator_approval_is_bound_to_exact_recommendation_id():
         recommendation_id="REC:2:DEGRADED:INTEGRITY_MARGIN_REDUCED:DIFFERENT_CANDIDATE",
         operator_id="TEST-OPERATOR",
         decision="APPROVE",
-        reason="Mismatched candidate must not inherit approval.",
+        reason="Mismatched candidate must not inherit the operator response.",
     )
 
     with pytest.raises(ValueError, match="recommendation mismatch"):
