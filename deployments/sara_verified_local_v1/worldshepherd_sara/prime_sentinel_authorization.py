@@ -123,6 +123,12 @@ class PrimeSentinelVerifier:
     def key_is_revoked(self, key_id: str) -> bool:
         return key_id in self.revoked_key_ids
 
+    def key_fingerprint_sha256(self, key_id: str) -> str | None:
+        key_bytes = self._public_keys.get(key_id)
+        if key_bytes is None:
+            return None
+        return hashlib.sha256(key_bytes).hexdigest()
+
     @classmethod
     def from_environment(cls) -> "PrimeSentinelVerifier":
         raw_keys = os.getenv("PRIME_SENTINEL_PUBLIC_KEYS_JSON", "{}").strip() or "{}"
@@ -274,12 +280,27 @@ def assert_recorded_authorization_usable(
         raise PrimeSentinelAuthorizationError("authorization signing key is no longer configured")
     if verifier.key_is_revoked(key_id):
         raise PrimeSentinelAuthorizationError("authorization signing key is revoked")
+    expected_fingerprint = verifier.key_fingerprint_sha256(key_id)
+    if (
+        not isinstance(entry.get("key_fingerprint_sha256"), str)
+        or entry.get("key_fingerprint_sha256") != expected_fingerprint
+    ):
+        raise PrimeSentinelAuthorizationError("authorization signing key fingerprint mismatch")
     try:
+        issued = datetime.fromisoformat(str(entry["issued_at"]).replace("Z", "+00:00"))
         expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
     except (KeyError, ValueError) as exc:
-        raise PrimeSentinelAuthorizationError("authorization expiry is invalid") from exc
+        raise PrimeSentinelAuthorizationError("authorization signed window is invalid") from exc
+    if issued.tzinfo is None or expires.tzinfo is None:
+        raise PrimeSentinelAuthorizationError("authorization signed window is not timezone-aware")
+    issued_utc = issued.astimezone(timezone.utc)
+    expires_utc = expires.astimezone(timezone.utc)
+    if issued_utc >= expires_utc or expires_utc - issued_utc > MAX_ASSERTION_LIFETIME:
+        raise PrimeSentinelAuthorizationError("authorization signed window exceeds policy")
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
-    if current >= expires.astimezone(timezone.utc):
+    if issued_utc > current + MAX_FUTURE_SKEW:
+        raise PrimeSentinelAuthorizationError("authorization issued_at is too far in the future")
+    if current >= expires_utc:
         raise PrimeSentinelAuthorizationError("authorization is expired")
     return entry
 
