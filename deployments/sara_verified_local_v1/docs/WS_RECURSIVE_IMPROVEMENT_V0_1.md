@@ -157,6 +157,68 @@ opportunity     -> PRE / partner screening / capture review
 security        -> containment / verification / authorized remediation
 ```
 
+## Executable OMEGA -> WS-RI bridge
+
+`improvement_routing.py` now provides the first executable bridge from recursive discovery into the improvement lifecycle.
+
+`omega_to_improvement()` translates a `DiscoveryNode` into an `ImprovementProposal` while preserving the OMEGA node ID and source references as lineage. It maps discovery type to an improvement trigger and maps discovery evidence state to a conservative baseline capability state. It deliberately does not assign a target maturity level.
+
+The conservative evidence mapping is:
+
+| OMEGA evidence state | WS-RI baseline capability state |
+| --- | --- |
+| SOURCE_VERIFIED / CORROBORATED | SUPPORTED_BY_LITERATURE |
+| SINGLE_SOURCE / HYPOTHESIS | HYPOTHESIS |
+| SIMULATED | SIMULATED_ONLY |
+| SPECULATIVE | SPECULATIVE_EXTENSION |
+| CONFLICTING / UNVERIFIED | NOT_CURRENTLY_CLAIMED |
+
+This mapping is intentionally non-promotional. A verified source can establish that external evidence exists; it cannot establish that Worldshepherd has physically demonstrated or internally proven the capability.
+
+Every OMEGA-derived proposal receives at least two qualification gates:
+
+- a source/evidence gate;
+- a red-team gate.
+
+Any OMEGA falsification tests and caller-specified additional tests are added to those required gates.
+
+`route_improvement()` returns a deterministic routing envelope only. It can route records toward ECHO, WS-OMEGA, PRE, PRIME-TEVV, PRIME, OVERWATCH, RED-TEAM, partner screening, and configuration custody according to trigger and lifecycle state. It explicitly records:
+
+- `deployment_authorized=false`;
+- `claim_promotion_performed=false`;
+- `external_execution_performed=false`.
+
+Configuration custody is excluded until the improvement record reaches `PROMOTED` through the existing validation and human/authorization gates.
+
+## Configuration-custody staging boundary
+
+`build_promoted_configuration_snapshot()` connects an accepted WS-RI record to the existing append-only configuration custody model.
+
+The function requires:
+
+- `state=PROMOTED`;
+- accepted identified-human review;
+- qualification references;
+- an authorization reference;
+- an identified actor.
+
+It then returns a `ConfigurationSnapshot` whose reason records the improvement ID, authorization reference, and qualification references.
+
+The function **does not append the snapshot to the ledger**. It therefore does not merge code, change the deployed configuration, deploy a release, actuate hardware, or perform an external action. Existing configuration-custody and authorized change paths remain the execution boundary.
+
+This separation creates the following traceable sequence:
+
+```text
+OMEGA DISCOVERY
+  -> WS-RI PROPOSAL
+  -> QUALIFICATION / RED-TEAM
+  -> HUMAN + PRIME AUTHORIZATION
+  -> PROMOTED RECORD
+  -> CONFIGURATION SNAPSHOT CANDIDATE
+  -> AUTHORIZED CUSTODY APPEND / CHANGE PROCESS
+  -> OBSERVATION / ECHO / OMEGA FEEDBACK
+```
+
 ## Initial standing doctrine encoded by WS-RI
 
 For every materially relevant new input, Worldshepherd should ask:
@@ -174,7 +236,9 @@ For every materially relevant new input, Worldshepherd should ask:
 
 ## Current implementation claim
 
-The v0.1 branch implements the **schema and deterministic validation-state logic** for the recursive improvement record, with unit tests for fail-closed boundaries, quarantine behavior, human-review gating, promotion-record requirements, rejection, and supersession.
+The v0.1 branch implements the **recursive improvement schema, deterministic validation-state logic, OMEGA-to-WS-RI translation, deterministic downstream routing, and promoted-record configuration-custody staging**.
+
+Unit tests cover fail-closed boundaries, quarantine behavior, human-review gating, promotion-record requirements, rejection, supersession, conservative evidence-state translation, non-inflation of capability maturity, routing gates, and configuration lineage staging.
 
 This does not establish:
 
