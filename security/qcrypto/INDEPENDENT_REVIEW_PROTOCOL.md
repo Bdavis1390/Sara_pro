@@ -48,6 +48,12 @@ A successful review can support statements such as:
 
 A successful review does not by itself establish original authorship of external scientific findings, third-party certification, endorsement, adoption, possession of advanced quantum hardware, or independent validation unless the reviewer explicitly performs and documents such validation.
 
+## Attributable review receipt
+
+Use `review_receipt_template.json` to record the reviewer identity or organization, exact commit, environment, date, pass/fail results, discrepancies, supported claims, excluded claims, and an attributable review record. `independent_review_guard.py` defines the conservative classification rule for that receipt.
+
+An incomplete, anonymous, unattributed, or partially failed receipt must not be represented as independent validation. A complete receipt may support the narrower label `INDEPENDENTLY REPRODUCED — METHODOLOGY/SOFTWARE BEHAVIOR ONLY`; certification, endorsement, adoption, scientific originality, and external validation of broader Worldshepherd capability remain separate claims requiring separate evidence.
+
 ## Reviewer output
 
 A useful independent review should publish:
