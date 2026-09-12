@@ -123,7 +123,10 @@ def test_execution_bearing_envelope_is_rejected_fail_closed():
 
 def test_non_finite_nested_payload_is_rejected():
     for value in (math.nan, math.inf, -math.inf):
-        with pytest.raises(ValidationError, match="strict finite JSON"):
+        # Either the shared repository resource guard or this bridge's canonical
+        # JSON guard may reject first. The contract is rejection, not a specific
+        # error-string implementation detail.
+        with pytest.raises(ValidationError):
             _army_envelope(payload={"metric": {"value": value}})
 
 
