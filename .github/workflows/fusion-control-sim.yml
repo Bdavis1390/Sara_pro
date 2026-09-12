@@ -10,8 +10,10 @@ on:
     paths:
       - 'worldshepherd_sara/fusion_control.py'
       - 'worldshepherd_sara/fair_mast_adapter.py'
+      - 'worldshepherd_sara/fusion_replay.py'
       - 'tests/test_fusion_control.py'
       - 'tests/test_fair_mast_adapter.py'
+      - 'tests/test_fusion_replay.py'
       - 'scripts/run_fusion_control_demo.py'
       - 'docs/WS_FUSION_CTRL_001.md'
       - '.github/workflows/fusion-control-sim.yml'
@@ -37,8 +39,10 @@ jobs:
           python -m py_compile
           worldshepherd_sara/fusion_control.py
           worldshepherd_sara/fair_mast_adapter.py
-      - name: Run fusion-control and FAIR-MAST adapter tests
+          worldshepherd_sara/fusion_replay.py
+      - name: Run fusion-control, FAIR-MAST, and replay tests
         run: >-
           python -m pytest -q
           tests/test_fusion_control.py
           tests/test_fair_mast_adapter.py
+          tests/test_fusion_replay.py
