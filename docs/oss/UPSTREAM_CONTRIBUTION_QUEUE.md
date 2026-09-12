@@ -2,6 +2,12 @@
 
 This queue converts the open-source screen into bounded engineering work. Priority is based on Worldshepherd fit, reproducibility, upstream usefulness, blast-radius reduction, and ability to prove improvement with tests.
 
+## Current scan delta
+
+- **Eclipse Zenoh PR #2779 — MERGED / upstream-resolved lane.** The `StartConditions`/`ctrl_lock` peer-churn deadlock has an accepted upstream fix on `main`. Any Worldshepherd work aimed at the same #2637/#2779 root cause should be retained only as validation evidence, not submitted as a competing implementation. This does **not** supersede #2780 or #2718, which are distinct failure modes.
+- **Eclipse Zenoh #2783 — NEW HIGH-FIT CANDIDATE.** Metadata-only storage queries would allow freshness, HLC timestamp, existence, and payload-size inspection without transferring large images/point clouds. Contribution target: backend-independent metadata contract plus compatibility/regression tests.
+- **Chainloop PR #3436 — MERGED / compatibility input.** The `ai-security-context-0.1` model now carries `unresolved[].retryable`, `survivors[].verdict`, `survivors[].verdict_reason`, and `stats.abandoned`. The #39 durable fan-out proposal should preserve these adjudication outcomes when they are present rather than inventing parallel outcome semantics.
+
 ## P0 — Open-RMF: isolate per-robot failures from fleet health
 
 ### Issue open-rmf/rmf_ros2#553
@@ -9,6 +15,8 @@ This queue converts the open-source screen into bounded engineering work. Priori
 `add_robot()` can throw from an asynchronous participant callback when no charger is reachable. The exception can terminate the fleet adapter process even though the failure is specific to one robot.
 
 **Worldshepherd contribution:** failure containment + semantic health reporting.
+
+Status: **PATCH DRAFT IMPLEMENTED / REQUIRES UPSTREAM BUILD+TEST VALIDATION**.
 
 Proposed acceptance criteria:
 
@@ -32,14 +40,18 @@ callback invoked after fleet weak_ptr expired -> safe return
 
 Python bindings can retain the GIL during blocking RMF calls, creating a fleet-wide deadlock when worker callbacks simultaneously need Python.
 
-**Worldshepherd contribution:** concurrency boundary audit + liveness regression test.
+**Worldshepherd contribution:** concurrency-boundary patch + semantic-liveness regression test.
+
+Status: **MAINTAINER-WELCOMED / PATCH DRAFT IMPLEMENTED / REGRESSION PLAN IMPLEMENTED / REQUIRES ROS 2 HUMBLE BUILD+STRESS VALIDATION**.
 
 Acceptance criteria:
 
 - binding calls that may block on RMF internals release the GIL;
 - Python callbacks reacquire the GIL only for Python execution;
 - stress test runs concurrent `replan()`/issue creation and callback traffic for a bounded interval with a watchdog;
-- watchdog proves telemetry timestamps continue advancing, not merely that the process PID is alive.
+- watchdog proves telemetry timestamps continue advancing, not merely that the process PID is alive;
+- no guarded method directly manipulates Python objects while the GIL is released;
+- callback-bearing `std::function` arguments are validated under contention to confirm trampoline GIL reacquisition.
 
 ## P0 — Eclipse Zenoh: semantic transport health under DDIL/reconnect stress
 
@@ -48,6 +60,8 @@ Acceptance criteria:
 Router can remain alive with listeners present while silently ceasing to accept new sessions.
 
 **Worldshepherd contribution:** accept-path accounting invariants + externally observable semantic readiness.
+
+Status: **PATCH DRAFT IMPLEMENTED / ROOT CAUSE NOT YET PROVEN / REQUIRES UPSTREAM STRESS VALIDATION**.
 
 Acceptance criteria:
 
@@ -78,6 +92,33 @@ Acceptance criteria:
 - graceful shutdown is retained as a null/control case;
 - link teardown must not hold a global/shared forwarding critical section across blocking close/flush work;
 - regression threshold should be expressed in relation to normal forwarding cadence, not only an absolute wall-clock value.
+
+### Issue eclipse-zenoh/zenoh#2783
+
+Metadata-only storage queries would let clients inspect existence, original payload length, HLC timestamp, and attachments without transferring large payloads.
+
+**Worldshepherd contribution:** metadata contract + storage-manager compatibility tests.
+
+Status: **NEW FEATURE REQUEST / DESIGN CONTRIBUTION CANDIDATE**.
+
+Acceptance criteria:
+
+- one reserved selector parameter with unambiguous namespace and behavior;
+- zero original payload bytes transferred in metadata-only mode;
+- original HLC timestamp preserved exactly;
+- original payload length exposed as a typed/defined metadata field;
+- original attachment preserved without creating recursive or ambiguous wrapping;
+- identical logical behavior across filesystem, RocksDB, and S3 storage backends;
+- unknown/unsupported selector behavior remains backward-compatible;
+- future backend fast paths cannot change the wire-level contract.
+
+See `ZENOH_2783_METADATA_ONLY_PROPOSAL.md`.
+
+### Upstream-resolved Zenoh lane: PR #2779 / related #2637
+
+Status: **MERGED UPSTREAM — DO NOT DUPLICATE**.
+
+The peer-churn `StartConditions` deadlock is now fixed upstream by making the relevant start-condition synchronization synchronous and removing the `block_in_place` scheduling dependency under `ctrl_lock`. Worldshepherd should keep any reproducer/stress evidence as a validation asset and monitor downstream `rmw_zenoh` uptake rather than submit a competing patch.
 
 ## P1 — Keylime: attestation truthfulness and history
 
@@ -182,7 +223,7 @@ Primary objective is an agent-runtime guide with a structured decision contract 
 
 See `CHAINLOOP_FANOUT_RESILIENCY_PROPOSAL.md`.
 
-Primary objective is a durable, replayable, inspectable integration-delivery contract before broker-specific implementation.
+Primary objective is a durable, replayable, inspectable integration-delivery contract before broker-specific implementation. As of Chainloop PR #3436, delivery evidence should preserve upstream adjudication metadata such as retryability, terminal verdict/reason, and abandoned counts when those fields exist.
 
 ## Definition of an upstream-ready Worldshepherd contribution
 
