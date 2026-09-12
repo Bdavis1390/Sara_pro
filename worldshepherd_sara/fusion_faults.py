@@ -9,7 +9,6 @@ as valid.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-import math
 from typing import Dict, Sequence, Tuple
 
 from worldshepherd_sara.fusion_control import SensorSample
@@ -22,6 +21,12 @@ FAULT_SHOT_MISMATCH = "shot_mismatch"
 FAULT_MISSING_PROVENANCE = "missing_provenance"
 FAULT_NONFINITE_VALUE = "nonfinite_value"
 FAULT_INVALID_FLAG = "invalid_sensor_flag"
+FAULT_DUPLICATE_PAIR = "duplicate_pair"
+FAULT_DELAYED_LOWER = "delayed_lower_stream"
+FAULT_REORDERED_PAIR = "reordered_pair"
+FAULT_DIAGNOSTIC_COLLISION = "diagnostic_identity_collision"
+FAULT_MISSING_UNIT = "missing_unit_metadata"
+FAULT_MISSING_QUALITY = "missing_quality_metadata"
 
 _SUPPORTED_FAULTS = {
     FAULT_DROP_LOWER,
@@ -30,6 +35,12 @@ _SUPPORTED_FAULTS = {
     FAULT_MISSING_PROVENANCE,
     FAULT_NONFINITE_VALUE,
     FAULT_INVALID_FLAG,
+    FAULT_DUPLICATE_PAIR,
+    FAULT_DELAYED_LOWER,
+    FAULT_REORDERED_PAIR,
+    FAULT_DIAGNOSTIC_COLLISION,
+    FAULT_MISSING_UNIT,
+    FAULT_MISSING_QUALITY,
 }
 
 _EXPECTED_REASON_FRAGMENT: Dict[str, str] = {
@@ -39,6 +50,12 @@ _EXPECTED_REASON_FRAGMENT: Dict[str, str] = {
     FAULT_MISSING_PROVENANCE: "provenance_missing",
     FAULT_NONFINITE_VALUE: "value_not_finite",
     FAULT_INVALID_FLAG: "sensor_invalid",
+    FAULT_DUPLICATE_PAIR: "replay_time_not_strictly_increasing",
+    FAULT_DELAYED_LOWER: "paired_timestamp_skew_exceeded",
+    FAULT_REORDERED_PAIR: "replay_time_not_strictly_increasing",
+    FAULT_DIAGNOSTIC_COLLISION: "optical diagnostic identity collision",
+    FAULT_MISSING_UNIT: "unit_missing",
+    FAULT_MISSING_QUALITY: "quality_missing",
 }
 
 
@@ -77,6 +94,23 @@ def inject_fault(
         upper[0] = replace(upper[0], value=float("nan"))
     elif fault == FAULT_INVALID_FLAG:
         upper[0] = replace(upper[0], valid=False)
+    elif fault == FAULT_DUPLICATE_PAIR:
+        upper.insert(1, upper[0])
+        lower.insert(1, lower[0])
+    elif fault == FAULT_DELAYED_LOWER:
+        index = 1 if len(lower) > 1 else 0
+        lower[index] = replace(lower[index], timestamp=lower[index].timestamp + float(skew_s))
+    elif fault == FAULT_REORDERED_PAIR:
+        if len(upper) < 2 or len(lower) < 2:
+            raise ValueError("reordered_pair_requires_at_least_two_pairs")
+        upper[0], upper[1] = upper[1], upper[0]
+        lower[0], lower[1] = lower[1], lower[0]
+    elif fault == FAULT_DIAGNOSTIC_COLLISION:
+        lower[0] = replace(lower[0], diagnostic=upper[0].diagnostic)
+    elif fault == FAULT_MISSING_UNIT:
+        upper[0] = replace(upper[0], unit="")
+    elif fault == FAULT_MISSING_QUALITY:
+        upper[0] = replace(upper[0], quality="")
 
     return tuple(upper), tuple(lower)
 
@@ -132,5 +166,11 @@ def run_standard_fault_campaign(
             FAULT_MISSING_PROVENANCE,
             FAULT_NONFINITE_VALUE,
             FAULT_INVALID_FLAG,
+            FAULT_DUPLICATE_PAIR,
+            FAULT_DELAYED_LOWER,
+            FAULT_REORDERED_PAIR,
+            FAULT_DIAGNOSTIC_COLLISION,
+            FAULT_MISSING_UNIT,
+            FAULT_MISSING_QUALITY,
         )
     )
