@@ -5,12 +5,16 @@ import json
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .prime import ActionProposal
 
 
 CLAIMS_BOUNDARY = "SIMULATED_ONLY / INTERNAL SOFTWARE DEMONSTRATOR"
+
+
+class FrozenModel(BaseModel):
+    model_config = ConfigDict(frozen=True)
 
 
 class Direction(str, Enum):
@@ -40,64 +44,66 @@ class PackageState(str, Enum):
     BLOCKED = "BLOCKED"
 
 
-class Objective(BaseModel):
+class Objective(FrozenModel):
     objective_id: str = Field(min_length=1)
     metric_id: str = Field(min_length=1)
     label: str = Field(min_length=1)
     direction: Direction
-    weight: float = Field(gt=0)
+    unit: str = Field(min_length=1)
+    weight: float = Field(gt=0, allow_inf_nan=False)
 
 
-class Option(BaseModel):
+class Option(FrozenModel):
     option_id: str = Field(min_length=1)
     label: str = Field(min_length=1)
 
 
-class Constraint(BaseModel):
+class Constraint(FrozenModel):
     constraint_id: str = Field(min_length=1)
     metric_id: str = Field(min_length=1)
     operator: ConstraintOperator
-    threshold: float
+    threshold: float = Field(allow_inf_nan=False)
+    unit: str = Field(min_length=1)
     rationale: str = Field(min_length=1)
 
 
-class Assumption(BaseModel):
+class Assumption(FrozenModel):
     assumption_id: str = Field(min_length=1)
     statement: str = Field(min_length=1)
     status: AssumptionStatus
     source_ref: str = Field(min_length=1)
 
 
-class Risk(BaseModel):
+class Risk(FrozenModel):
     risk_id: str = Field(min_length=1)
     statement: str = Field(min_length=1)
-    probability: float = Field(ge=0, le=1)
-    impact: float = Field(ge=0, le=1)
-    penalty_weight: float = Field(ge=0, le=1, default=0.0)
+    probability: float = Field(ge=0, le=1, allow_inf_nan=False)
+    impact: float = Field(ge=0, le=1, allow_inf_nan=False)
+    penalty_weight: float = Field(ge=0, le=1, default=0.0, allow_inf_nan=False)
     option_id: str | None = None
     source_ref: str = Field(min_length=1)
 
 
-class BiasCheck(BaseModel):
+class BiasCheck(FrozenModel):
     bias_check_id: str = Field(min_length=1)
     check: str = Field(min_length=1)
     status: BiasCheckStatus
     evidence_ref: str = Field(min_length=1)
 
 
-class EvidenceDatum(BaseModel):
+class EvidenceDatum(FrozenModel):
     evidence_id: str = Field(min_length=1)
     option_id: str = Field(min_length=1)
     metric_id: str = Field(min_length=1)
-    value: float
+    value: float = Field(allow_inf_nan=False)
     unit: str = Field(min_length=1)
     source_ref: str = Field(min_length=1)
 
 
-class DecisionEpoch(BaseModel):
+class DecisionEpoch(FrozenModel):
     epoch_id: str = Field(min_length=1)
     evaluated_utc: str = Field(min_length=1)
-    evidence: list[EvidenceDatum] = Field(min_length=1)
+    evidence: tuple[EvidenceDatum, ...] = Field(min_length=1)
     change_reason: str = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -115,15 +121,15 @@ class DecisionEpoch(BaseModel):
         return self
 
 
-class DecisionSpec(BaseModel):
+class DecisionSpec(FrozenModel):
     program_id: str = Field(min_length=1)
     title: str = Field(min_length=1)
-    objectives: list[Objective] = Field(min_length=1)
-    options: list[Option] = Field(min_length=2)
-    constraints: list[Constraint] = Field(default_factory=list)
-    assumptions: list[Assumption] = Field(min_length=1)
-    risks: list[Risk] = Field(min_length=1)
-    bias_checks: list[BiasCheck] = Field(min_length=1)
+    objectives: tuple[Objective, ...] = Field(min_length=1)
+    options: tuple[Option, ...] = Field(min_length=2)
+    constraints: tuple[Constraint, ...] = Field(default_factory=tuple)
+    assumptions: tuple[Assumption, ...] = Field(min_length=1)
+    risks: tuple[Risk, ...] = Field(min_length=1)
+    bias_checks: tuple[BiasCheck, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validate_schema(self) -> "DecisionSpec":
@@ -142,71 +148,120 @@ class DecisionSpec(BaseModel):
         for risk in self.risks:
             if risk.option_id is not None and risk.option_id not in option_ids:
                 raise ValueError(f"risk references unknown option: {risk.option_id}")
+
+        metric_units: dict[str, str] = {}
+        for objective in self.objectives:
+            existing = metric_units.setdefault(objective.metric_id, objective.unit)
+            if existing != objective.unit:
+                raise ValueError(
+                    f"conflicting canonical units for {objective.metric_id}: {existing} vs {objective.unit}"
+                )
+        for constraint in self.constraints:
+            existing = metric_units.setdefault(constraint.metric_id, constraint.unit)
+            if existing != constraint.unit:
+                raise ValueError(
+                    f"conflicting canonical units for {constraint.metric_id}: {existing} vs {constraint.unit}"
+                )
         return self
 
 
-class ObjectiveContribution(BaseModel):
+class ObjectiveContribution(FrozenModel):
     objective_id: str
     metric_id: str
-    raw_value: float
-    normalized_value: float
-    weighted_contribution: float
+    raw_value: float = Field(allow_inf_nan=False)
+    normalized_value: float = Field(allow_inf_nan=False)
+    weighted_contribution: float = Field(allow_inf_nan=False)
 
 
-class OptionEvaluation(BaseModel):
+class OptionEvaluation(FrozenModel):
     option_id: str
     feasible: bool
-    failed_constraints: list[str] = Field(default_factory=list)
-    objective_contributions: list[ObjectiveContribution] = Field(default_factory=list)
-    base_score: float = 0.0
-    risk_penalty: float = 0.0
-    final_score: float = 0.0
+    failed_constraints: tuple[str, ...] = Field(default_factory=tuple)
+    objective_contributions: tuple[ObjectiveContribution, ...] = Field(default_factory=tuple)
+    base_score: float = Field(default=0.0, allow_inf_nan=False)
+    risk_penalty: float = Field(default=0.0, allow_inf_nan=False)
+    final_score: float = Field(default=0.0, allow_inf_nan=False)
 
 
-class FlipCondition(BaseModel):
+class FlipCondition(FrozenModel):
     objective_id: str
     metric_id: str
     direction: Direction
-    normalized_shift_required: float
+    normalized_shift_required: float = Field(allow_inf_nan=False)
     explanation: str
 
 
-class DecisionPackage(BaseModel):
+class GovernedAgentStep(FrozenModel):
+    proposal_id: str
+    action: str
+    rationale: tuple[str, ...]
+    authority_required: str
+    state: str
+
+
+class DecisionPackage(FrozenModel):
     program_id: str
     version: int = Field(ge=1)
     epoch_id: str
     evaluated_utc: str
     change_reason: str
-    spec_hash: str
-    evidence_hash: str
+    spec_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    evidence_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     package_state: PackageState
     recommended_option_id: str | None
     runner_up_option_id: str | None
-    option_evaluations: list[OptionEvaluation]
-    flip_conditions: list[FlipCondition]
-    blockers: list[str]
-    warnings: list[str]
-    agentic_plan: list[ActionProposal]
-    parent_package_hash: str | None = None
-    package_hash: str
+    option_evaluations: tuple[OptionEvaluation, ...]
+    flip_conditions: tuple[FlipCondition, ...]
+    blockers: tuple[str, ...]
+    warnings: tuple[str, ...]
+    agentic_plan: tuple[GovernedAgentStep, ...]
+    parent_package_hash: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    package_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     human_signoff: bool = False
     claims_boundary: str = CLAIMS_BOUNDARY
 
+    @model_validator(mode="after")
+    def verify_declared_hash(self) -> "DecisionPackage":
+        payload = self.model_dump(mode="json", exclude={"package_hash"})
+        expected = _sha256(payload)
+        if self.package_hash != expected:
+            raise ValueError("DecisionPackage package_hash does not match its contents")
+        return self
 
-class DecisionHistory(BaseModel):
+
+class DecisionHistory(FrozenModel):
     program_id: str
-    packages: list[DecisionPackage]
+    packages: tuple[DecisionPackage, ...]
+
+    @model_validator(mode="after")
+    def verify_chain(self) -> "DecisionHistory":
+        previous_hash: str | None = None
+        for expected_version, package in enumerate(self.packages, start=1):
+            if package.program_id != self.program_id:
+                raise ValueError("DecisionHistory package program_id mismatch")
+            if package.version != expected_version:
+                raise ValueError("DecisionHistory versions must be contiguous starting at 1")
+            if package.parent_package_hash != previous_hash:
+                raise ValueError("DecisionHistory parent_package_hash chain mismatch")
+            previous_hash = package.package_hash
+        return self
 
 
 def _canonical_json(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
 
 
 def _sha256(value: Any) -> str:
     return hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
 
 
-def build_governed_agent_plan(program_id: str) -> list[ActionProposal]:
+def build_governed_agent_plan(program_id: str) -> tuple[GovernedAgentStep, ...]:
     actions = (
         ("validate_decision_schema", "Validate objectives, options, constraints, assumptions, risks, and bias checks."),
         ("collect_bounded_evidence", "Collect only evidence bound to declared options and metrics."),
@@ -214,31 +269,50 @@ def build_governed_agent_plan(program_id: str) -> list[ActionProposal]:
         ("analyze_decision_flip", "Compute bounded sensitivity conditions that could change the recommendation."),
         ("prepare_decision_package", "Assemble a provenance-bearing package for identified-human review."),
     )
-    return [
-        ActionProposal(
+    steps: list[GovernedAgentStep] = []
+    for index, (action, rationale) in enumerate(actions, start=1):
+        proposal = ActionProposal(
             proposal_id=f"{program_id}-STEP-{index:02d}",
             action=action,
             rationale=[rationale],
             authority_required="identified-human-authority",
         )
-        for index, (action, rationale) in enumerate(actions, start=1)
-    ]
+        steps.append(
+            GovernedAgentStep(
+                proposal_id=proposal.proposal_id,
+                action=proposal.action,
+                rationale=tuple(proposal.rationale),
+                authority_required=proposal.authority_required,
+                state=proposal.state.value,
+            )
+        )
+    return tuple(steps)
+
+
+def _canonical_metric_units(spec: DecisionSpec) -> dict[str, str]:
+    units = {objective.metric_id: objective.unit for objective in spec.objectives}
+    for constraint in spec.constraints:
+        units.setdefault(constraint.metric_id, constraint.unit)
+    return units
 
 
 def _evidence_index(spec: DecisionSpec, epoch: DecisionEpoch) -> dict[tuple[str, str], EvidenceDatum]:
     option_ids = {option.option_id for option in spec.options}
-    allowed_metrics = {objective.metric_id for objective in spec.objectives} | {
-        constraint.metric_id for constraint in spec.constraints
-    }
+    canonical_units = _canonical_metric_units(spec)
     index: dict[tuple[str, str], EvidenceDatum] = {}
     for datum in epoch.evidence:
         if datum.option_id not in option_ids:
             raise ValueError(f"evidence references unknown option: {datum.option_id}")
-        if datum.metric_id not in allowed_metrics:
+        if datum.metric_id not in canonical_units:
             raise ValueError(f"evidence references undeclared metric: {datum.metric_id}")
+        required_unit = canonical_units[datum.metric_id]
+        if datum.unit != required_unit:
+            raise ValueError(
+                f"unit mismatch for {datum.metric_id}: expected {required_unit}, received {datum.unit}"
+            )
         index[(datum.option_id, datum.metric_id)] = datum
 
-    required_metrics = allowed_metrics
+    required_metrics = set(canonical_units)
     for option_id in option_ids:
         missing = [metric for metric in sorted(required_metrics) if (option_id, metric) not in index]
         if missing:
@@ -250,7 +324,7 @@ def _constraint_failures(
     spec: DecisionSpec,
     option_id: str,
     evidence: dict[tuple[str, str], EvidenceDatum],
-) -> list[str]:
+) -> tuple[str, ...]:
     failures: list[str] = []
     for constraint in spec.constraints:
         value = evidence[(option_id, constraint.metric_id)].value
@@ -261,7 +335,7 @@ def _constraint_failures(
         )
         if not passed:
             failures.append(constraint.constraint_id)
-    return sorted(failures)
+    return tuple(sorted(failures))
 
 
 def _normalized(
@@ -285,7 +359,7 @@ def evaluate_decision(
     parent_package_hash: str | None = None,
 ) -> DecisionPackage:
     evidence = _evidence_index(spec, epoch)
-    evaluations: dict[str, OptionEvaluation] = {}
+    evaluation_parts: dict[str, dict[str, Any]] = {}
 
     spec_hash = _sha256(spec.model_dump(mode="json"))
     evidence_payload = {
@@ -305,11 +379,14 @@ def evaluate_decision(
         feasible = not failures
         if feasible:
             feasible_ids.append(option.option_id)
-        evaluations[option.option_id] = OptionEvaluation(
-            option_id=option.option_id,
-            feasible=feasible,
-            failed_constraints=failures,
-        )
+        evaluation_parts[option.option_id] = {
+            "feasible": feasible,
+            "failed_constraints": failures,
+            "objective_contributions": [],
+            "base_score": 0.0,
+            "risk_penalty": 0.0,
+            "final_score": 0.0,
+        }
 
     blockers: list[str] = []
     warnings: list[str] = []
@@ -330,7 +407,7 @@ def evaluate_decision(
                     direction=objective.direction,
                 )
                 contribution = normalized * (objective.weight / total_weight)
-                evaluations[option_id].objective_contributions.append(
+                evaluation_parts[option_id]["objective_contributions"].append(
                     ObjectiveContribution(
                         objective_id=objective.objective_id,
                         metric_id=objective.metric_id,
@@ -341,16 +418,30 @@ def evaluate_decision(
                 )
 
         for option_id in feasible_ids:
-            evaluation = evaluations[option_id]
-            base_score = sum(item.weighted_contribution for item in evaluation.objective_contributions)
+            parts = evaluation_parts[option_id]
+            base_score = sum(item.weighted_contribution for item in parts["objective_contributions"])
             risk_penalty = sum(
                 risk.probability * risk.impact * risk.penalty_weight
                 for risk in spec.risks
                 if risk.option_id == option_id
             )
-            evaluation.base_score = round(base_score, 12)
-            evaluation.risk_penalty = round(risk_penalty, 12)
-            evaluation.final_score = round(max(0.0, base_score - risk_penalty), 12)
+            parts["base_score"] = round(base_score, 12)
+            parts["risk_penalty"] = round(risk_penalty, 12)
+            parts["final_score"] = round(max(0.0, base_score - risk_penalty), 12)
+
+    evaluations = tuple(
+        OptionEvaluation(
+            option_id=option_id,
+            feasible=parts["feasible"],
+            failed_constraints=parts["failed_constraints"],
+            objective_contributions=tuple(parts["objective_contributions"]),
+            base_score=parts["base_score"],
+            risk_penalty=parts["risk_penalty"],
+            final_score=parts["final_score"],
+        )
+        for option_id, parts in sorted(evaluation_parts.items())
+    )
+    evaluation_by_id = {item.option_id: item for item in evaluations}
 
     contradicted = sorted(
         assumption.assumption_id
@@ -375,7 +466,7 @@ def evaluate_decision(
     warnings.extend(f"BIAS_CHECK_WARNING:{item}" for item in bias_warnings)
 
     ranked = sorted(
-        (evaluation for evaluation in evaluations.values() if evaluation.feasible),
+        (item for item in evaluations if item.feasible),
         key=lambda item: (-item.final_score, item.option_id),
     )
     recommended = ranked[0].option_id if ranked else None
@@ -383,9 +474,10 @@ def evaluate_decision(
 
     flip_conditions: list[FlipCondition] = []
     if recommended is not None and runner_up is not None:
-        margin = evaluations[recommended].final_score - evaluations[runner_up].final_score
+        margin = evaluation_by_id[recommended].final_score - evaluation_by_id[runner_up].final_score
         winner_by_objective = {
-            item.objective_id: item for item in evaluations[recommended].objective_contributions
+            item.objective_id: item
+            for item in evaluation_by_id[recommended].objective_contributions
         }
         for objective in spec.objectives:
             normalized_shift = margin / (objective.weight / total_weight)
@@ -405,7 +497,6 @@ def evaluate_decision(
             )
 
     state = PackageState.BLOCKED if blockers else PackageState.READY_FOR_HUMAN_REVIEW
-    plan = build_governed_agent_plan(spec.program_id)
     payload = {
         "program_id": spec.program_id,
         "version": version,
@@ -417,14 +508,11 @@ def evaluate_decision(
         "package_state": state.value,
         "recommended_option_id": recommended,
         "runner_up_option_id": runner_up,
-        "option_evaluations": [
-            item.model_dump(mode="json")
-            for item in sorted(evaluations.values(), key=lambda item: item.option_id)
-        ],
+        "option_evaluations": [item.model_dump(mode="json") for item in evaluations],
         "flip_conditions": [item.model_dump(mode="json") for item in flip_conditions],
         "blockers": sorted(blockers),
         "warnings": sorted(warnings),
-        "agentic_plan": [item.model_dump(mode="json") for item in plan],
+        "agentic_plan": [item.model_dump(mode="json") for item in build_governed_agent_plan(spec.program_id)],
         "parent_package_hash": parent_package_hash,
         "human_signoff": False,
         "claims_boundary": CLAIMS_BOUNDARY,
@@ -447,4 +535,4 @@ def refresh_decision_program(spec: DecisionSpec, epochs: list[DecisionEpoch]) ->
         )
         packages.append(package)
         parent = package.package_hash
-    return DecisionHistory(program_id=spec.program_id, packages=packages)
+    return DecisionHistory(program_id=spec.program_id, packages=tuple(packages))
