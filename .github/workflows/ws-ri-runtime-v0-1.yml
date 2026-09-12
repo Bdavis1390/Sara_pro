@@ -5,22 +5,28 @@ on:
     paths:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_runtime.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_runtime_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_handoff.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_evidence_export.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_feedback.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_ledger.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/operational_improvement.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_runtime.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_runtime_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_handoff_export.py'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/ws-ri-runtime-v0-1.yml'
   push:
     paths:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_runtime.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_runtime_cli.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_handoff.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_evidence_export.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_feedback.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_ledger.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/operational_improvement.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_runtime.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_runtime_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_handoff_export.py'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/ws-ri-runtime-v0-1.yml'
   workflow_dispatch:
@@ -55,12 +61,15 @@ jobs:
         run: |
           python -m py_compile worldshepherd_sara/improvement_runtime.py
           python -m py_compile worldshepherd_sara/improvement_runtime_cli.py
+          python -m py_compile worldshepherd_sara/improvement_handoff.py
+          python -m py_compile worldshepherd_sara/improvement_evidence_export.py
 
       - name: Run runtime contract tests
         run: |
           python -m pytest \
             tests/test_improvement_runtime.py \
             tests/test_improvement_runtime_cli.py \
+            tests/test_improvement_handoff_export.py \
             -q
 
       - name: Verify CLI entry point
