@@ -42,6 +42,7 @@ class IndependentReviewVerificationResult(BaseModel):
     status: Literal["PASS", "FAIL"]
     code: Literal[
         "VERIFIED",
+        "INPUT_READ_ERROR",
         "UNSUPPORTED_INPUT_TYPE",
         "INPUT_TOO_LARGE",
         "INVALID_UTF8",
@@ -83,6 +84,18 @@ def _result(
         code=code,
         detail=normalized_detail,
         bundle_digest_sha256=bundle_digest_sha256,
+    )
+
+
+def build_independent_review_input_error_result(
+    detail: str,
+) -> IndependentReviewVerificationResult:
+    """Return a non-authorizing result when serialized input cannot be read."""
+
+    return _result(
+        status="FAIL",
+        code="INPUT_READ_ERROR",
+        detail=detail,
     )
 
 
