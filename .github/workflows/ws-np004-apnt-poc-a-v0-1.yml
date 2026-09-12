@@ -1,0 +1,95 @@
+name: WS NP004 APNT POC-A v0.1 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/apnt_awareness.py'
+      - 'deployments/sara_verified_local_v1/tests/test_apnt_awareness.py'
+      - 'deployments/sara_verified_local_v1/fixtures/apnt_operator_awareness_synthetic_v1.json'
+      - 'deployments/sara_verified_local_v1/docs/WS_NP004_APNT_POC_A_V0_1.md'
+      - '.github/workflows/ws-np004-apnt-poc-a-v0-1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/apnt_awareness.py'
+      - 'deployments/sara_verified_local_v1/tests/test_apnt_awareness.py'
+      - 'deployments/sara_verified_local_v1/fixtures/apnt_operator_awareness_synthetic_v1.json'
+      - 'deployments/sara_verified_local_v1/docs/WS_NP004_APNT_POC_A_V0_1.md'
+      - '.github/workflows/ws-np004-apnt-poc-a-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  synthetic-apnt-awareness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Record source and claims boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR"
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile module
+        run: python -m compileall -q worldshepherd_sara/apnt_awareness.py
+
+      - name: Run focused regression suite
+        run: python -m pytest tests/test_apnt_awareness.py -q
+
+      - name: Execute and preserve POC-A evidence
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+          from worldshepherd_sara.apnt_awareness import APNTEvent, OperatorInput, run_scenario
+
+          fixture = json.loads(Path('fixtures/apnt_operator_awareness_synthetic_v1.json').read_text())
+          result = run_scenario(
+              scenario_id=fixture['scenario_id'],
+              events=[APNTEvent.model_validate(x) for x in fixture['events']],
+              operator_inputs=[OperatorInput.model_validate(x) for x in fixture['operator_inputs']],
+          )
+          expected = fixture['expected']
+          assert len(result.alerts) == expected['event_count']
+          assert len(result.recommendations) == expected['recommendation_count']
+          assert result.final_integrity_state.value == expected['final_integrity_state']
+          assert result.trace_complete is True
+          assert result.action_states[2].value == expected['event_2_action_state']
+          assert result.action_states[5].value == expected['event_5_action_state']
+
+          evidence = {
+              'tested_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+              'fixture_claims_boundary': fixture['claims_boundary'],
+              'expected': expected,
+              'result': result.model_dump(mode='json'),
+          }
+          Path('ws_np004_apnt_poc_a_evidence.json').write_text(json.dumps(evidence, indent=2, sort_keys=True) + '\n')
+          PY
+
+      - name: Upload POC-A evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-np004-apnt-poc-a-v0-1-evidence
+          path: deployments/sara_verified_local_v1/ws_np004_apnt_poc_a_evidence.json
+          if-no-files-found: error
