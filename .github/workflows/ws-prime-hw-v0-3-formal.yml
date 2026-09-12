@@ -1,0 +1,93 @@
+name: WS PRIME-HW v0.3 Formal Safety Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller_formal.sv'
+      - 'hardware/prime_hw_v0_1/PRIME_HW_V0_3_FORMAL.md'
+      - '.github/workflows/ws-prime-hw-v0-3-formal.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller_formal.sv'
+      - 'hardware/prime_hw_v0_1/PRIME_HW_V0_3_FORMAL.md'
+      - '.github/workflows/ws-prime-hw-v0-3-formal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bounded-formal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record source and claims boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=BOUNDED SMT SAFETY-PROPERTY VERIFICATION ONLY / NO FPGA OR ASIC VALIDATION"
+
+      - name: Install formal tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yosys z3
+          yosys -V
+          yosys-smtbmc --help | head -n 3
+          z3 --version
+
+      - name: Build symbolic SMT model
+        run: |
+          mkdir -p build/prime_hw_v0_3
+          yosys -Q -l build/prime_hw_v0_3/yosys-formal.log -p '
+            read_verilog -formal -sv hardware/prime_hw_v0_1/prime_hw_policy_controller.sv hardware/prime_hw_v0_1/prime_hw_policy_controller_formal.sv;
+            hierarchy -check -top prime_hw_policy_controller_formal;
+            prep -top prime_hw_policy_controller_formal;
+            check -assert;
+            write_smt2 -wires build/prime_hw_v0_3/prime_hw_formal.smt2;
+          '
+          test -s build/prime_hw_v0_3/prime_hw_formal.smt2
+
+      - name: Prove declared bounded safety properties
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 20 --presat \
+            --dump-vcd build/prime_hw_v0_3/proof-failure.vcd \
+            build/prime_hw_v0_3/prime_hw_formal.smt2 \
+            | tee build/prime_hw_v0_3/proof.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_3/proof.log
+
+      - name: Prove principal-state reachability covers
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 20 -c \
+            --dump-vcd build/prime_hw_v0_3/cover.vcd \
+            build/prime_hw_v0_3/prime_hw_formal.smt2 \
+            | tee build/prime_hw_v0_3/cover.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_3/cover.log
+
+      - name: Preserve formal evidence custody
+        run: |
+          {
+            echo "tested_sha=$(git rev-parse HEAD)"
+            echo "proof_horizon=20"
+            echo "solver=z3"
+            echo "claims_boundary=BOUNDED SMT SAFETY-PROPERTY VERIFICATION ONLY / NO FPGA OR ASIC VALIDATION"
+            sha256sum \
+              hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
+              hardware/prime_hw_v0_1/prime_hw_policy_controller_formal.sv \
+              build/prime_hw_v0_3/prime_hw_formal.smt2
+          } > build/prime_hw_v0_3/evidence.txt
+
+      - name: Upload bounded formal evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-prime-hw-v0-3-formal-evidence
+          path: build/prime_hw_v0_3/
+          if-no-files-found: error
