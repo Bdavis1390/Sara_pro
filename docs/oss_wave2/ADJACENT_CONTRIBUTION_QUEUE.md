@@ -47,6 +47,25 @@ Worldshepherd contribution shape:
 
 Claims state: **SOURCE-SUPPORTED LIFETIME MISMATCH / THIRD-PARTY WORKAROUND VALIDATION / ROOT CAUSE REQUIRES WORLDSHEPHERD REPRODUCTION**.
 
+### OPA #8772 — load-aware health and backpressure signals
+
+Status: **OPEN / UNASSIGNED / NO MATCHING FIX PR FOUND**  
+Internal screening score: **95/100**
+
+OPA can report healthy plugin/evaluation state without expressing saturation. Current source confirms the decision-log plugin marks itself `StateOK` while independent counters can record decisions dropped by rate limiting and buffer-size limits. A deployment can therefore look healthy while audit evidence is being discarded.
+
+Worldshepherd contribution shape:
+
+- keep default `/health` behavior backward compatible;
+- begin with opt-in evidence-pipeline pressure rather than a broad all-purpose load controller;
+- distinguish live, ready, evidence-degraded, and unready semantics;
+- derive the signal from the same internal queue/drop state that governs evidence delivery;
+- add current-pressure observability where cumulative drop counters are insufficient;
+- recover readiness automatically when pressure drains;
+- only then consider request-level `503` / `Retry-After` backpressure.
+
+Claims state: **SOURCE-CONFIRMED SEMANTIC-HEALTH GAP / DESIGN REQUIRES MAINTAINER AGREEMENT**.
+
 ### ROS 2 rclcpp #2962 — TimeSource clock-thread teardown deadlock
 
 Status: **OPEN / NO MATCHING FIX PR FOUND / CLIENT-LIBRARY WG REQUESTED INDEPENDENT REPRODUCTION**  
@@ -145,23 +164,6 @@ Worldshepherd contribution shape:
 
 ## P1 — promoted bounded design / validation lanes
 
-### in-toto Witness #789 — accepted non-zero command outcomes
-
-Status: **OPEN / UNASSIGNED / NO MATCHING FIX PR FOUND / MAINTAINER DISCUSSION ACTIVE**  
-Internal screening score: **91/100**
-
-Security and compliance tools can legitimately use non-zero exit codes to report findings. Current go-witness source already records the child exit code in the command-run attestation, then returns `exec.ExitError`; the outer Witness runner propagates that error before signed output is written.
-
-Worldshepherd contribution shape:
-
-- separate command outcome, evidence-generation outcome, and wrapper/CI outcome;
-- define `--accept-exit-codes` as permission to complete evidence generation without rewriting the observed exit code;
-- retain truthful stdout/stderr and exit status in the signed record;
-- test accepted/unaccepted findings codes, executable launch failures, signing failures, and signal termination;
-- let maintainers choose return-code/pass-through compatibility separately from evidence acceptance.
-
-This is likely a cross-repo `witness` + `go-witness` design. A maintainer is already discussing semantics, so contribution should begin with contract/tests rather than unilateral API behavior.
-
 ### Keylime #1941 — push-attestation cadence contract
 
 Status: **OPEN / UNASSIGNED / NO MATCHING FIX PR FOUND IN KEYLIME OR RUST-KEYLIME**  
@@ -178,6 +180,23 @@ Worldshepherd contribution shape:
 - expose/log the reason/source of the selected next interval so degraded cadence is observable.
 
 Claims state: **SOURCE-CONFIRMED CROSS-REPO CONFIGURATION MISMATCH / CONTRACT REQUIRES MAINTAINER AGREEMENT**.
+
+### in-toto Witness #789 — accepted non-zero command outcomes
+
+Status: **OPEN / UNASSIGNED / NO MATCHING FIX PR FOUND / MAINTAINER DISCUSSION ACTIVE**  
+Internal screening score: **91/100**
+
+Security and compliance tools can legitimately use non-zero exit codes to report findings. Current go-witness source already records the child exit code in the command-run attestation, then returns `exec.ExitError`; the outer Witness runner propagates that error before signed output is written.
+
+Worldshepherd contribution shape:
+
+- separate command outcome, evidence-generation outcome, and wrapper/CI outcome;
+- define `--accept-exit-codes` as permission to complete evidence generation without rewriting the observed exit code;
+- retain truthful stdout/stderr and exit status in the signed record;
+- test accepted/unaccepted findings codes, executable launch failures, signing failures, and signal termination;
+- let maintainers choose return-code/pass-through compatibility separately from evidence acceptance.
+
+This is likely a cross-repo `witness` + `go-witness` design. A maintainer is already discussing semantics, so contribution should begin with contract/tests rather than unilateral API behavior.
 
 ### Keylime #1909 — cumulative attestation-failure counter
 
@@ -313,7 +332,7 @@ These are not yet promoted to P0 because duplicate/root-cause review is incomple
 
 **Active Task A — Autonomy & Resilience OSS:** rclcpp #3213, rclcpp #2962, Autoware #12460, rclpy #1720, plus existing Open-RMF/Zenoh/PX4 lanes. Fast DDS #6502 moves to WATCH/COLLABORATE because a credible implementation design already exists in the issue.
 
-**Active Task B — Trust, Governance & Evidence OSS:** Kyverno #17542, SPIRE #7236/#7111, Witness #789, Keylime #1941/#1909, plus OpenTelemetry/Keylime/Witness/Sigstore/Chainloop/OPA. Gatekeeper, Keylime #1932, and the occupied KubeEdge fixes remain WATCH.
+**Active Task B — Trust, Governance & Evidence OSS:** OPA #8772, Kyverno #17542, SPIRE #7236/#7111, Witness #789, Keylime #1941/#1909, plus OpenTelemetry/Keylime/Witness/Sigstore/Chainloop/OPA. Gatekeeper, Keylime #1932, and the occupied KubeEdge fixes remain WATCH.
 
 **Active Task C — Simulation / Physical-AI Frontier OSS:** Gazebo #3979/#3977, GNU Radio #8195, ArduPilot #34365, plus continuing Autoware/Gazebo/RF/fault-injection and edge-middleware scans. ArduPilot #34365 remains lab-gated; its timing claims do not advance beyond source/counter derivation until hardware waveforms exist.
 
