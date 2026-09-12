@@ -25,6 +25,12 @@ class _DuplicateJsonKeyError(ValueError):
         self.key = key
 
 
+class _NonStandardJsonConstantError(ValueError):
+    def __init__(self, value: str) -> None:
+        super().__init__(f"non-standard JSON numeric constant: {value}")
+        self.value = value
+
+
 class IndependentReviewVerificationResult(BaseModel):
     """Evidence-only PASS/FAIL result for a serialized reviewer bundle."""
 
@@ -87,6 +93,10 @@ def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
             raise _DuplicateJsonKeyError(key)
         value[key] = item
     return value
+
+
+def _reject_non_standard_constant(value: str) -> None:
+    raise _NonStandardJsonConstantError(value)
 
 
 def _validation_detail(exc: ValidationError) -> str:
@@ -161,11 +171,21 @@ def verify_serialized_independent_review_export(
         text = serialized
 
     try:
-        parsed = json.loads(text, object_pairs_hook=_reject_duplicate_keys)
+        parsed = json.loads(
+            text,
+            object_pairs_hook=_reject_duplicate_keys,
+            parse_constant=_reject_non_standard_constant,
+        )
     except _DuplicateJsonKeyError as exc:
         return _result(
             status="FAIL",
             code="DUPLICATE_JSON_KEY",
+            detail=str(exc),
+        )
+    except _NonStandardJsonConstantError as exc:
+        return _result(
+            status="FAIL",
+            code="INVALID_JSON",
             detail=str(exc),
         )
     except json.JSONDecodeError as exc:
@@ -175,6 +195,12 @@ def verify_serialized_independent_review_export(
             detail=(
                 f"invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
             ),
+        )
+    except RecursionError:
+        return _result(
+            status="FAIL",
+            code="INVALID_JSON",
+            detail="serialized reviewer bundle exceeds safe JSON nesting depth",
         )
 
     if not isinstance(parsed, dict):
