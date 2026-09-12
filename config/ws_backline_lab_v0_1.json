@@ -1,0 +1,88 @@
+{
+  "schema": "worldshepherd.backline.lab",
+  "version": "0.1",
+  "date": "2026-09-12",
+  "status": "LAB_PREPARATION_NOT_EXECUTED",
+  "claims_control": {
+    "backline_software": "IMPLEMENTED_EXTERNALLY_OPEN_SOURCE",
+    "worldshepherd_backline_integration": "REQUIRES_LAB_VALIDATION",
+    "worldshepherd_sub_3us_performance": "NOT_CURRENTLY_CLAIMED",
+    "hardware_qpu_integration": "NOT_CURRENTLY_CLAIMED",
+    "quantum_advantage": "NOT_CURRENTLY_CLAIMED",
+    "vendor_latency_results": "EXTERNAL_BENCHMARK_ONLY"
+  },
+  "architecture": {
+    "sara_role": "PREPARE_AND_SUBMIT_APPROVED_JOB",
+    "prime_sentinel_role": "PREAUTHORIZE_WORKLOAD_CONFIGURATION_AND_TARGET",
+    "echo_sentinel_role": "CAPTURE_SOURCE_CONFIG_VERSION_RESULT_PROVENANCE",
+    "overwatch_role": "CAPTURE_TIMING_JITTER_ERRORS_AND_EVIDENCE_LINKS",
+    "hot_loop_rule": "NO_NETWORKED_GOVERNANCE_OR_HUMAN_APPROVAL_ROUND_TRIP_INSIDE_LATENCY_CRITICAL_QEC_LOOP"
+  },
+  "upstream": {
+    "backline": {
+      "repository": "https://github.com/PennyLaneAI/backline",
+      "tag": "v0.1.0b1"
+    },
+    "catalyst": {
+      "repository": "https://github.com/PennyLaneAI/catalyst",
+      "tag": "v0.16.0b1"
+    },
+    "pennylane_release_line": "v0.46.0b1",
+    "official_demo": "https://www.pennylane.ai/demos/backline",
+    "official_install": "https://github.com/PennyLaneAI/backline/blob/main/INSTALL.md"
+  },
+  "qbl_g1": {
+    "name": "LOCAL_CPU_TO_CPU_STEANE_QEC",
+    "transport": "memcpy",
+    "quantum_device": "lightning.qubit",
+    "logical_wires": 3,
+    "qec_code": "steane",
+    "shots_per_call": 10,
+    "decoder_library_relative_to_catalyst_root": "runtime/build/lib/libsteane_coprocessor_cpu.so",
+    "decoder_symbol": "steane_coprocessor",
+    "minimum_warm_repetitions": 10,
+    "expected_sample_invariant": "EACH_SHOT_ALL_ZERO_OR_ALL_ONE",
+    "pass_requires": [
+      "DECODER_LIBRARY_EXISTS",
+      "PENNYLANE_BACKLINE_API_IMPORTS",
+      "QJIT_COMPILE_AND_EXECUTE_SUCCESS",
+      "GHZ_SAMPLE_INVARIANT_PASS",
+      "MINIMUM_10_WARM_REPETITIONS_WITHOUT_RUNTIME_FAILURE",
+      "ENVIRONMENT_AND_OUTPUT_EVIDENCE_PRESERVED"
+    ]
+  },
+  "qbl_g2": {
+    "name": "HOST_OBSERVED_REPEATABILITY_BENCHMARK",
+    "measurement_scope": "PYTHON_CALLER_OBSERVED_END_TO_END_INCLUDES_DISPATCH_AND_RUNTIME_OVERHEAD",
+    "not_transport_only_measurement": true,
+    "required_statistics": [
+      "cold_call_ns",
+      "count",
+      "min_ns",
+      "median_ns",
+      "p95_ns",
+      "p99_ns",
+      "max_ns",
+      "mean_ns",
+      "stdev_ns",
+      "ghz_validation_failures"
+    ]
+  },
+  "future_gates": {
+    "QBL-G3": "SARA_PRIME_ECHO_OVERWATCH_WRAPPER",
+    "QBL-G4": "REMOTE_CPU_GPU_RDMA",
+    "QBL-G5": "FPGA_RDMA",
+    "QBL-G6": "PHYSICAL_QPU_OR_QUANTUM_SENSOR_PARTNER_VALIDATION"
+  },
+  "evidence_policy": {
+    "run_artifacts_default": "OUTSIDE_PUBLIC_VERSION_CONTROL_UNTIL_REVIEWED",
+    "forbid_public_commit": [
+      "SECRETS",
+      "CREDENTIALS",
+      "PRIVATE_IP_ADDRESSES",
+      "SENSITIVE_HOST_IDENTIFIERS",
+      "PARTNER_CONTROLLED_INFORMATION"
+    ],
+    "promotion_rule": "PROMOTE_ONLY_AFTER_REPRODUCIBLE_PASS_EVIDENCE"
+  }
+}
