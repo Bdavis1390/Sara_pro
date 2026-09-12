@@ -18,6 +18,7 @@ on:
       - 'worldshepherd_sara/archive_readiness.py'
       - 'worldshepherd_sara/external_observer.py'
       - 'worldshepherd_sara/control_admission.py'
+      - 'worldshepherd_sara/observer_authority.py'
       - 'tests/test_fusion_control.py'
       - 'tests/test_fair_mast_adapter.py'
       - 'tests/test_fair_mast_manifest.py'
@@ -29,6 +30,7 @@ on:
       - 'tests/test_archive_readiness.py'
       - 'tests/test_external_observer.py'
       - 'tests/test_control_admission.py'
+      - 'tests/test_observer_authority.py'
       - 'scripts/run_fusion_control_demo.py'
       - 'scripts/probe_fair_mast_data.py'
       - 'data/fair_mast/shot_30420_amc_manifest.json'
@@ -65,6 +67,7 @@ jobs:
           worldshepherd_sara/archive_readiness.py
           worldshepherd_sara/external_observer.py
           worldshepherd_sara/control_admission.py
+          worldshepherd_sara/observer_authority.py
           scripts/probe_fair_mast_data.py
       - name: Run fusion-control test suite
         run: >-
@@ -80,6 +83,7 @@ jobs:
           tests/test_archive_readiness.py
           tests/test_external_observer.py
           tests/test_control_admission.py
+          tests/test_observer_authority.py
 
   fair-mast-source-probe:
     if: >-
