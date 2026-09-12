@@ -131,9 +131,26 @@ module tb_prime_hw_policy_controller;
         tick();
         expect_state(ST_OPERATIONAL, "validated recovery returns operational");
 
+        health_degraded = 1'b1;
         policy_valid = 1'b0;
         tick();
-        expect_state(ST_SAFE, "policy loss fails safe");
+        expect_state(ST_SAFE, "simultaneous trust loss and degradation prioritize safe state");
+        if (safe_state !== 1'b1 || allow !== 1'b0) begin
+            $fatal(1, "simultaneous trust loss did not assert safe state immediately");
+        end
+
+        policy_valid = 1'b1;
+        health_degraded = 1'b0;
+        recovery_authorized = 1'b1;
+        tick();
+        expect_state(ST_RECOVERY, "second authorized recovery enters recovery state");
+        recovery_authorized = 1'b0;
+        tick();
+        expect_state(ST_OPERATIONAL, "second recovery returns operational");
+
+        policy_valid = 1'b0;
+        tick();
+        expect_state(ST_SAFE, "policy loss alone fails safe");
         if (safe_state !== 1'b1) begin
             $fatal(1, "policy-loss safe state not asserted");
         end
