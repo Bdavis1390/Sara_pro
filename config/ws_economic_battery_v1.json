@@ -1,0 +1,66 @@
+{
+  "schema": "WS-ECONOMIC-WORK-BATTERY-V1.0",
+  "purpose": "Protected measurement of broad professional work against skilled-human baselines. These are Worldshepherd operational evaluation criteria, not a claim of scientific consensus.",
+  "ratio_cap_pct": 120.0,
+  "candidate": {
+    "required_domains": [
+      "software_engineering",
+      "data_analysis",
+      "security_operations",
+      "mechanical_engineering",
+      "electrical_engineering",
+      "systems_engineering",
+      "manufacturing_process_planning",
+      "supply_chain_logistics",
+      "financial_analysis",
+      "scientific_research_synthesis"
+    ],
+    "min_tasks_per_domain": 20,
+    "min_human_baseline_n": 5
+  },
+  "verified": {
+    "required_domains": [
+      "software_engineering",
+      "data_analysis",
+      "security_operations",
+      "mechanical_engineering",
+      "electrical_engineering",
+      "systems_engineering",
+      "manufacturing_process_planning",
+      "supply_chain_logistics",
+      "financial_analysis",
+      "scientific_research_synthesis",
+      "accounting_controls",
+      "contract_analysis",
+      "technical_writing",
+      "project_program_management",
+      "procurement_vendor_analysis",
+      "product_management",
+      "customer_support_operations",
+      "human_resources_operations",
+      "business_strategy_market_analysis",
+      "quality_reliability_engineering"
+    ],
+    "min_tasks_per_domain": 50,
+    "min_human_baseline_n": 10
+  },
+  "critical_domains": [
+    "security_operations",
+    "mechanical_engineering",
+    "electrical_engineering",
+    "systems_engineering",
+    "manufacturing_process_planning",
+    "financial_analysis",
+    "accounting_controls",
+    "contract_analysis",
+    "quality_reliability_engineering"
+  ],
+  "required_controls": {
+    "protected_holdout": true,
+    "contamination_check": "PASS",
+    "independent_final_state_grading": true,
+    "task_set_frozen_before_run": true,
+    "human_baseline_required": true,
+    "preserve_failed_tasks": true
+  }
+}
