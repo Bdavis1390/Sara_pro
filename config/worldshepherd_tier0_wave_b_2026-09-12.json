@@ -1,0 +1,153 @@
+{
+  "wave_id": "WS-CAPTURE-WAVE-B-2026-09-12",
+  "status": "ACTIVE_INTERNAL_CAPTURE_LEDGER",
+  "claims_note": "Internal capture prioritization only. No award, eligibility, clearance, integration, or operational performance is implied.",
+  "opportunities": [
+    {
+      "opportunity_id": "DON26BZ05-NV074",
+      "title": "Automated Post-Mission De-Brief and Re-Planning for Collaborative Combat Aircraft Missions",
+      "issuer": "U.S. Navy",
+      "source_url": "https://www.sbir.gov/topics/12857",
+      "source_status": "GOVERNMENT_SECONDARY_VERIFIED",
+      "status": "OPEN",
+      "deadline": "2026-09-23",
+      "capture_tier": "TIER_0",
+      "capture_score": 95,
+      "routing_state": "PRIME",
+      "technical_fit": [
+        "post-mission analytics",
+        "uncertainty characterization",
+        "explainable recommendations",
+        "multiple courses of action",
+        "traceable rationale",
+        "operator review and approval",
+        "autonomous replanning"
+      ],
+      "evidence_fit": [
+        "SARA governed workflows",
+        "PRIME human-authorization doctrine",
+        "ECHO provenance",
+        "OVERWATCH decision support",
+        "PRE evidence refresh"
+      ],
+      "missing_evidence": [
+        "CCA-specific mission-data demonstration",
+        "Blue/Red force model adapter",
+        "SBIR eligibility verification",
+        "future facility/personnel clearance path"
+      ],
+      "eligibility_gates": [
+        "SBIR eligibility must be verified",
+        "prospective contractor must satisfy U.S. ownership/control requirements or approved mitigation"
+      ],
+      "security_gates": [
+        "advanced phases may become classified",
+        "Secret facility and personnel clearance capability required for advanced phases"
+      ],
+      "partner_need": [
+        "cleared NAVAIR/CCA partner if clearance path cannot be independently established"
+      ],
+      "claims_boundary": [
+        "Worldshepherd is not currently claimed as an operational CCA mission-planning system",
+        "software governance evidence does not establish classified NAVAIR integration"
+      ],
+      "next_actions": [
+        "build an unclassified synthetic post-mission debrief and replanning demonstration",
+        "map decision objects to uncertainty, confidence, tradeoffs, and human approval",
+        "verify SBIR eligibility and clearance/partner route"
+      ],
+      "follow_on_path": "Phase I -> Phase II, with advanced work potentially classified and transition dependent on Navy validation",
+      "last_verified_utc": "2026-09-12T23:55:00Z"
+    },
+    {
+      "opportunity_id": "DAF26BZ05-DV033",
+      "title": "Dynamic Open Systems Enclave",
+      "issuer": "U.S. Air Force",
+      "source_url": "https://www.sbir.gov/topics/12883",
+      "source_status": "GOVERNMENT_SECONDARY_VERIFIED",
+      "status": "OPEN",
+      "deadline": "2026-09-23",
+      "capture_tier": "TIER_0",
+      "capture_score": 90,
+      "routing_state": "PARTNER",
+      "technical_fit": [
+        "open architecture",
+        "edge computing",
+        "sensor/data processing",
+        "resilient BLOS data",
+        "rapid software insertion",
+        "legacy aircraft modernization"
+      ],
+      "evidence_fit": [
+        "SARA modular orchestration",
+        "ECHO data provenance",
+        "PRIME bounded authorization",
+        "DDIL mission mesh concept"
+      ],
+      "missing_evidence": [
+        "F-16 airworthiness integration evidence",
+        "flight-qualified compute/hardware evidence",
+        "aircraft mission-system integration experience"
+      ],
+      "eligibility_gates": ["SBIR eligibility must be verified"],
+      "security_gates": ["program-specific aircraft and classified requirements must be verified"],
+      "partner_need": ["aircraft mission-systems integrator or qualified avionics partner"],
+      "claims_boundary": [
+        "Worldshepherd does not currently claim F-16 airworthiness approval or flight-qualified hardware"
+      ],
+      "next_actions": [
+        "package SARA/ECHO/PRIME as a software enclave control and provenance layer",
+        "identify qualified avionics/mission-system prime",
+        "map MOSA/open-interface and DDIL requirements into adapter backlog"
+      ],
+      "follow_on_path": "SBIR prototype -> aircraft modernization transition subject to Air Force qualification and integration",
+      "last_verified_utc": "2026-09-12T23:55:00Z"
+    },
+    {
+      "opportunity_id": "DON26BZ05-NV076",
+      "title": "Open, Layered, Yielding Modular Platform for Unified Systems (OLYMPUS/Zeus)",
+      "issuer": "U.S. Navy",
+      "source_url": "https://www.sbir.gov/topics/12859",
+      "source_status": "GOVERNMENT_SECONDARY_VERIFIED",
+      "status": "OPEN",
+      "deadline": "2026-09-23",
+      "capture_tier": "TIER_0",
+      "capture_score": 91,
+      "routing_state": "PARTNER",
+      "technical_fit": [
+        "modular open architecture",
+        "data fusion",
+        "real-time analytics",
+        "secure communications",
+        "AI/ML",
+        "digital engineering",
+        "fleet interoperability",
+        "sustainment modernization"
+      ],
+      "evidence_fit": [
+        "SARA orchestration",
+        "ECHO provenance",
+        "OVERWATCH situational awareness",
+        "digital-twin assurance architecture"
+      ],
+      "missing_evidence": [
+        "shipboard hardware qualification",
+        "Navy platform integration evidence",
+        "below-deck infrastructure experience"
+      ],
+      "eligibility_gates": ["SBIR eligibility must be verified"],
+      "security_gates": ["platform-specific requirements must be verified"],
+      "partner_need": ["shipboard systems integrator or Navy-qualified hardware partner"],
+      "claims_boundary": [
+        "software architecture fit does not establish shipboard qualification or fleet interoperability"
+      ],
+      "next_actions": [
+        "define Worldshepherd modular software/services layer for OLYMPUS",
+        "identify shipboard integration partner",
+        "map commonality, data fusion, provenance, and sustainment requirements to reusable modules"
+      ],
+      "follow_on_path": "SBIR effort -> Engineering Change Proposal / sustainment technology refresh subject to Navy validation",
+      "last_verified_utc": "2026-09-12T23:55:00Z"
+    }
+  ]
+}
