@@ -209,7 +209,7 @@ def _prune_expired_terminal_authorizations(
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     retained: dict[str, Any] = {}
     for authorization_id, entry in records.items():
-        if not isinstance(entry, dict) or entry.get("status") not in {"CONSUMED", "SUPERSEDED"}:
+        if not isinstance(entry, dict) or entry.get("status") not in {"VERIFIED", "CONSUMED", "SUPERSEDED"}:
             retained[authorization_id] = entry
             continue
         try:
