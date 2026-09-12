@@ -213,12 +213,7 @@ def _assert_passport_release_binding(
     prime_id: str,
     entry: dict[str, Any],
 ) -> None:
-    """Fail closed when a stored passport release record diverges from its ledger entry.
-
-    Unit-level authorization tests may omit the passport namespace entirely. When the
-    namespace is present, any release-bearing passport must bind authorization ID,
-    target environment, and signing-key ID to the same ledger record.
-    """
+    """Fail closed when a stored passport release record diverges from its ledger entry."""
     passports = registry.get("PRIME_DIGITAL_PASSPORTS")
     if passports is None:
         return
@@ -249,20 +244,32 @@ def _prune_expired_terminal_authorizations(
     *,
     now: datetime | None = None,
 ) -> dict[str, Any]:
-    """Discard terminal records only after their signed replay window closes."""
+    """Prune only expired unconsumed VERIFIED records.
+
+    CONSUMED and SUPERSEDED records are custody outcomes used by issuance
+    reconciliation. They remain as terminal tombstones even after expires_at.
+    If retained history fills the bounded registry, issuance fails closed rather
+    than silently erasing an outcome and misclassifying it as never presented.
+    """
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     retained: dict[str, Any] = {}
     for authorization_id, entry in records.items():
-        if not isinstance(entry, dict) or entry.get("status") not in {"VERIFIED", "CONSUMED", "SUPERSEDED"}:
+        if not isinstance(entry, dict):
+            retained[authorization_id] = entry
+            continue
+        status = entry.get("status")
+        if status in {"CONSUMED", "SUPERSEDED"}:
+            retained[authorization_id] = entry
+            continue
+        if status != "VERIFIED":
             retained[authorization_id] = entry
             continue
         try:
             expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
         except (KeyError, ValueError):
-            # Preserve malformed records so corruption remains visible and fail-closed.
             retained[authorization_id] = entry
             continue
-        if current < expires.astimezone(timezone.utc):
+        if expires.tzinfo is None or current < expires.astimezone(timezone.utc):
             retained[authorization_id] = entry
     return retained
 
@@ -278,9 +285,7 @@ def verified_authorization_registry_patch(
         if isinstance(entry, dict) and entry.get("nonce") == verified.nonce:
             raise PrimeSentinelAuthorizationError("authorization nonce has already been recorded")
     if len(records) >= MAX_AUTHORIZATION_RECORDS:
-        raise PrimeSentinelAuthorizationError(
-            "authorization registry active-window capacity exhausted"
-        )
+        raise PrimeSentinelAuthorizationError("authorization registry capacity exhausted")
     records[verified.authorization_id] = {
         "status": "VERIFIED",
         "prime_id": verified.prime_id,
