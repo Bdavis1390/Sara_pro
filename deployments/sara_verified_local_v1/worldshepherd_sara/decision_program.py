@@ -237,6 +237,13 @@ class DecisionHistory(FrozenModel):
     def verify_chain(self) -> "DecisionHistory":
         previous_hash: str | None = None
         for expected_version, package in enumerate(self.packages, start=1):
+            # Pydantic model_copy(update=...) intentionally does not revalidate the
+            # copied model. Recompute the hash at the custody boundary so even an
+            # unchecked/stale nested DecisionPackage cannot enter a valid history.
+            package_payload = package.model_dump(mode="json", exclude={"package_hash"})
+            expected_package_hash = _sha256(package_payload)
+            if package.package_hash != expected_package_hash:
+                raise ValueError("DecisionHistory package_hash does not match package contents")
             if package.program_id != self.program_id:
                 raise ValueError("DecisionHistory package program_id mismatch")
             if package.version != expected_version:
