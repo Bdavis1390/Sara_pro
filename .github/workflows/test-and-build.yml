@@ -39,9 +39,13 @@ jobs:
         run: |
           set -euo pipefail
           test -d docs/oss_contributions
-          mapfile -d '' patches < <(find docs/oss_contributions -type f -name '*.patch' -print0 | sort -z)
+          test -d docs/oss/patches
+          mapfile -d '' patches < <(
+            find docs/oss_contributions docs/oss/patches \
+              -type f -name '*.patch' -print0 | sort -z
+          )
           if (( ${#patches[@]} < 5 )); then
-            echo "Expected at least five patch-ready artifacts; found ${#patches[@]}" >&2
+            echo "Expected at least five patch-ready artifacts across OSS patch directories; found ${#patches[@]}" >&2
             exit 1
           fi
           for patch in "${patches[@]}"; do
@@ -60,7 +64,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -R -n -E '^(<<<<<<< |>>>>>>> )' tools/oss_health docs/oss_contributions; then
+          if grep -R -n -E '^(<<<<<<< |>>>>>>> )' tools/oss_health docs/oss_contributions docs/oss/patches; then
             echo "Unresolved merge-conflict marker found" >&2
             exit 1
           fi
