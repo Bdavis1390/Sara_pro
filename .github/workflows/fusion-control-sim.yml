@@ -11,9 +11,11 @@ on:
       - 'worldshepherd_sara/fusion_control.py'
       - 'worldshepherd_sara/fair_mast_adapter.py'
       - 'worldshepherd_sara/fusion_replay.py'
+      - 'worldshepherd_sara/fusion_audit_bridge.py'
       - 'tests/test_fusion_control.py'
       - 'tests/test_fair_mast_adapter.py'
       - 'tests/test_fusion_replay.py'
+      - 'tests/test_fusion_audit_bridge.py'
       - 'scripts/run_fusion_control_demo.py'
       - 'docs/WS_FUSION_CTRL_001.md'
       - '.github/workflows/fusion-control-sim.yml'
@@ -40,9 +42,11 @@ jobs:
           worldshepherd_sara/fusion_control.py
           worldshepherd_sara/fair_mast_adapter.py
           worldshepherd_sara/fusion_replay.py
-      - name: Run fusion-control, FAIR-MAST, and replay tests
+          worldshepherd_sara/fusion_audit_bridge.py
+      - name: Run fusion-control test suite
         run: >-
           python -m pytest -q
           tests/test_fusion_control.py
           tests/test_fair_mast_adapter.py
           tests/test_fusion_replay.py
+          tests/test_fusion_audit_bridge.py
