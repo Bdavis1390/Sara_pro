@@ -1,7 +1,7 @@
 # PRIME custody reconciliation — current-main staged port
 
-**Status:** DRAFT / IMPLEMENTATION COMPLETE / VALIDATION PENDING / BLOCK MERGE  
-**Issue:** #176  
+**Status:** DRAFT / REVIEW REMEDIATION APPLIED / VALIDATION PENDING / BLOCK MERGE
+**Issue:** #176
 **Source lineage:** stale draft PR #149, reconciled against current `main` rather than merged or rebased blindly.
 
 ## Stage A — safely ported
@@ -31,6 +31,16 @@ Ported behavior:
 5. READY cleanup does not consume a nonexistent legacy authorization and removes false authorization attribution from successful activation provenance;
 6. current-main API regressions cover corrupt passport state, corrupt top-level authorization registry, malformed authorization records, overlong stored windows, and legacy READY cleanup;
 7. the existing QUARANTINED requalification flow remains separately gated and one-time consumable.
+
+## Fresh-review remediation applied on current branch
+
+A later exact-head review identified three additional custody defects. The branch now contains targeted remediation for each, pending exact-head CI and fresh independent review:
+
+1. consumption-time authorization validation rechecks the persisted signed lifetime, time-zone awareness, future skew, expiry, and configured public-key fingerprint rather than trusting checks performed only at assertion-recording time;
+2. when a release-bearing PRIME passport is present, its stored release authorization ID, target environment, and signing-key ID must match the same authorization-ledger record before consumption can proceed;
+3. malformed durable registry bytes or resource-invalid registry state are promoted to a dedicated server-integrity exception and HTTP 500-class response instead of being misclassified as signer rejection.
+
+Focused regressions exercise persisted signed-window corruption, passport-to-ledger key-binding mismatch, and invalid durable registry JSON.
 
 ## Current incorporation gate
 
