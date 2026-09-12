@@ -11,6 +11,7 @@ from .improvement_feedback import (
     ImprovementFeedbackCursor,
     ImprovementFeedbackPolicy,
     ImprovementFeedbackReport,
+    feedback_cursor_digest,
     run_operational_feedback_cycle,
 )
 from .improvement_ledger import ImprovementLedger
@@ -62,6 +63,8 @@ class ImprovementRuntime:
     def load_cursor(self) -> ImprovementFeedbackCursor:
         if not self.state_path.exists():
             return ImprovementFeedbackCursor()
+        if self.state_path.is_symlink():
+            raise ImprovementRuntimeError("WS-RI runtime state must not be a symbolic link")
         try:
             value = json.loads(self.state_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -71,12 +74,22 @@ class ImprovementRuntime:
         raw = value.get("feedback_cursor")
         if not isinstance(raw, dict):
             raise ImprovementRuntimeError("WS-RI runtime feedback cursor is malformed")
-        return ImprovementFeedbackCursor.model_validate(raw)
+        try:
+            cursor = ImprovementFeedbackCursor.model_validate(raw)
+        except ValueError as exc:
+            raise ImprovementRuntimeError("WS-RI runtime feedback cursor is invalid") from exc
+        stored_digest = value.get("feedback_cursor_digest")
+        if not isinstance(stored_digest, str):
+            raise ImprovementRuntimeError("WS-RI runtime cursor digest is missing")
+        if stored_digest != feedback_cursor_digest(cursor):
+            raise ImprovementRuntimeError("WS-RI runtime cursor digest mismatch")
+        return cursor
 
     def _save_cursor(self, cursor: ImprovementFeedbackCursor) -> None:
         payload = {
             "schema": RUNTIME_STATE_SCHEMA,
             "feedback_cursor": cursor.model_dump(mode="json"),
+            "feedback_cursor_digest": feedback_cursor_digest(cursor),
             "claims_boundary": (
                 "operational cursor state only; not qualification evidence, "
                 "authorization, claim promotion, or deployment evidence"
@@ -116,6 +129,7 @@ class ImprovementRuntime:
             "head_record_digest": None if head is None else head.record_digest,
             "state_counts": counts,
             "feedback_cursor": cursor.model_dump(mode="json"),
+            "feedback_cursor_digest": feedback_cursor_digest(cursor),
             "autonomous_scheduler_active": False,
             "claim_promotion_performed": False,
             "deployment_performed": False,
