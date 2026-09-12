@@ -1,9 +1,9 @@
 # Worldshepherd comment candidate — NIST AI 300-1 ipd
 
-**Status:** PREPARED_NOT_SUBMITTED  
-**External-action gate:** Human review and explicit submission authorization required.  
-**Public-comment deadline referenced by NIST:** September 16, 2026.  
-**Proprietary content:** None intended. Review before release.  
+**Status:** PREPARED_NOT_SUBMITTED
+**External-action gate:** Human review and explicit submission authorization required.
+**Public-comment deadline referenced by NIST:** September 16, 2026.
+**Proprietary content:** None intended. Review before release.
 **AI-assistance disclosure:** An AI assistant was used to help organize and draft this candidate. The submitter must independently review the content for accuracy, relevance, and real-world grounding before any submission.
 
 ## Source under review
