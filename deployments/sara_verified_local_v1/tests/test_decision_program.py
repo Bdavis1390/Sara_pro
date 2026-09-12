@@ -33,6 +33,8 @@ def test_point_trade_study_is_deterministic_and_never_auto_signs():
     repeated = evaluate_decision(spec, epochs[0])
 
     assert first.package_hash == repeated.package_hash
+    assert first.spec_hash == repeated.spec_hash
+    assert first.evidence_hash == repeated.evidence_hash
     assert first.recommended_option_id == expected["epoch_1_recommendation"]
     assert first.package_state == PackageState.READY_FOR_HUMAN_REVIEW
     assert first.human_signoff is False
@@ -51,6 +53,7 @@ def test_longitudinal_refresh_preserves_prior_package_and_changes_recommendation
     assert history.packages[1].package_hash != history.packages[0].package_hash
     assert history.packages[0].epoch_id == "EPOCH-001"
     assert history.packages[1].epoch_id == "EPOCH-002"
+    assert history.packages[1].change_reason.startswith("Synthetic option-B")
 
 
 def test_decision_package_exposes_what_flips_the_decision():
@@ -134,3 +137,27 @@ def test_duplicate_option_metric_evidence_is_rejected_before_evaluation():
 
     with pytest.raises(ValueError, match="duplicate option/metric evidence"):
         DecisionEpoch.model_validate(payload)
+
+
+def test_evidence_source_change_changes_evidence_and_package_hash_even_when_values_do_not():
+    spec, epochs, _ = _spec_and_epochs()
+    baseline = evaluate_decision(spec, epochs[0])
+    payload = epochs[0].model_dump(mode="json")
+    payload["evidence"][0]["source_ref"] = "synthetic://alternate-provenance/same-value"
+    changed = evaluate_decision(spec, DecisionEpoch.model_validate(payload))
+
+    assert changed.recommended_option_id == baseline.recommended_option_id
+    assert changed.evidence_hash != baseline.evidence_hash
+    assert changed.package_hash != baseline.package_hash
+
+
+def test_spec_provenance_change_changes_spec_and_package_hash():
+    spec, epochs, _ = _spec_and_epochs()
+    baseline = evaluate_decision(spec, epochs[0])
+    payload = spec.model_dump(mode="json")
+    payload["assumptions"][0]["source_ref"] = "synthetic://revalidated-interface-envelope-v2"
+    changed = evaluate_decision(DecisionSpec.model_validate(payload), epochs[0])
+
+    assert changed.recommended_option_id == baseline.recommended_option_id
+    assert changed.spec_hash != baseline.spec_hash
+    assert changed.package_hash != baseline.package_hash
