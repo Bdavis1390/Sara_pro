@@ -206,6 +206,44 @@ def _authorization_map(registry: dict[str, Any]) -> dict[str, Any]:
     return dict(raw)
 
 
+def _assert_passport_release_binding(
+    registry: dict[str, Any],
+    *,
+    authorization_id: str,
+    prime_id: str,
+    entry: dict[str, Any],
+) -> None:
+    """Fail closed when a stored passport release record diverges from its ledger entry.
+
+    Unit-level authorization tests may omit the passport namespace entirely. When the
+    namespace is present, any release-bearing passport must bind authorization ID,
+    target environment, and signing-key ID to the same ledger record.
+    """
+    passports = registry.get("PRIME_DIGITAL_PASSPORTS")
+    if passports is None:
+        return
+    if not isinstance(passports, dict):
+        raise PrimeSentinelAuthorizationError("PRIME passport registry is invalid")
+    passport = passports.get(prime_id)
+    if passport is None:
+        return
+    if not isinstance(passport, dict):
+        raise PrimeSentinelAuthorizationError("PRIME passport entry is invalid")
+    custody = passport.get("custody")
+    if not isinstance(custody, dict):
+        raise PrimeSentinelAuthorizationError("PRIME passport custody record is invalid")
+
+    stored_authorization_id = custody.get("requalification_release_authorization_id")
+    if stored_authorization_id is None:
+        return
+    if stored_authorization_id != authorization_id:
+        raise PrimeSentinelAuthorizationError("passport release authorization ID mismatch")
+    if custody.get("requalification_release_key_id") != entry.get("key_id"):
+        raise PrimeSentinelAuthorizationError("passport release signing key mismatch")
+    if custody.get("requalification_release_target_environment") != entry.get("target_environment"):
+        raise PrimeSentinelAuthorizationError("passport release target environment mismatch")
+
+
 def _prune_expired_terminal_authorizations(
     records: dict[str, Any],
     *,
@@ -302,6 +340,13 @@ def assert_recorded_authorization_usable(
         raise PrimeSentinelAuthorizationError("authorization issued_at is too far in the future")
     if current >= expires_utc:
         raise PrimeSentinelAuthorizationError("authorization is expired")
+
+    _assert_passport_release_binding(
+        registry,
+        authorization_id=authorization_id,
+        prime_id=prime_id,
+        entry=entry,
+    )
     return entry
 
 
