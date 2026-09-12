@@ -13,15 +13,35 @@ This branch implements an adversarial reduced-model screening pipeline for warp/
 - HLL finite-volume fluxes.
 - Explicit rejection of `gamma > 2` in the gamma-law model because the asymptotic sound-speed limit becomes acausal.
 - Resolution-based shock-suspicion gate.
+- 20-seed, 5% perturbation ensemble gate.
 - Machine-readable promotion/claims states.
 
 ## Current result
 
 The earlier nonrelativistic pressure proxy produced an apparent survivor around `gamma=3`, but this implementation rejects that EOS family as a general relativistic candidate.
 
-In the causal SRHD search (`gamma=2`, compact candidate walls), pressure can trade compression against profile retention, but the steepening indicator grows materially with resolution. Therefore the current campaign does **not** promote a full reduced survivor.
+The causal SRHD campaign tested 40 compact-wall candidates. No candidate passed every reduced gate.
 
-This is a useful negative result: scalar pressure alone has not yet passed the combined density + operational-amplitude + causality + shock-convergence gates.
+The closest unperturbed case was:
+
+- `gamma = 2`
+- `sigma R = 8`
+- `c_s0 = 0.18 c`
+- high-resolution density ratio: `1.9967`
+- peak velocity retention: `0.9218`
+- peak sound speed: `0.2619 c`
+- gradient growth ratio when resolution doubled: `1.826`
+
+It therefore passed density, amplitude, and causality gates but failed the steepening/shock-convergence gate.
+
+A 20-seed ensemble with 5% correlated perturbations then produced:
+
+- full-pass fraction: `0/20`
+- shock/convergence pass fraction: `0/20`
+- median gradient growth ratio: about `2.20`
+- worst gradient growth ratio: about `2.46`
+
+This is a useful negative result: scalar pressure alone has not yet passed the combined density + operational-amplitude + causality + shock-convergence + perturbation gates.
 
 ## Gate logic
 
@@ -31,6 +51,7 @@ A reduced candidate must simultaneously satisfy:
 - peak velocity retention `>= 0.90` through the five-baseline-caustic-time horizon
 - `c_s < c`
 - resolution gradient growth ratio `<= 1.50`
+- perturbation ensemble pass fraction `>= 0.95`
 
 A passing reduced candidate still does **not** imply:
 
