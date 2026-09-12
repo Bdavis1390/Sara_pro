@@ -47,6 +47,26 @@ Worldshepherd contribution shape:
 
 Claims state: **SOURCE-SUPPORTED LIFETIME MISMATCH / THIRD-PARTY WORKAROUND VALIDATION / ROOT CAUSE REQUIRES WORLDSHEPHERD REPRODUCTION**.
 
+### ROS 2 rclcpp #2962 — TimeSource clock-thread teardown deadlock
+
+Status: **OPEN / NO MATCHING FIX PR FOUND / CLIENT-LIBRARY WG REQUESTED INDEPENDENT REPRODUCTION**  
+Internal screening score: **94/100**
+
+Rolling tests can intermittently hang while `TimeSource::NodeState::destroy_clock_sub()` waits for the dedicated clock executor thread to join. The issue is strongly scheduling-sensitive: the reporter reproduced it on constrained systems and failed to reproduce it on a much higher-core machine even after far more iterations.
+
+Current source acquires `clock_sub_lock_`, cancels the dedicated executor, joins the executor thread, removes the callback group, and then resets the clock subscription. That is a narrow lifecycle path suitable for evidence capture, but the exact blocking resource cycle is not yet proven.
+
+Worldshepherd contribution shape:
+
+- reproduce current Rolling and compare with Jazzy/control revisions;
+- increase probability with cpuset/cgroup CPU constraints rather than production-code sleeps;
+- collect full thread stacks automatically on watchdog timeout;
+- instrument cancel/join/callback-group lifecycle with monotonic timestamps and thread IDs;
+- identify the exact blocking resource before drafting a fix;
+- replace brute-force timing with a barrier/latch regression once the vulnerable ordering is known.
+
+Claims state: **SOURCE-REVIEWED REPRODUCTION CANDIDATE / ROOT CAUSE NOT PROVEN INTERNALLY**.
+
 ### Kyverno #17542 — distinguish not-applicable from pass
 
 Status: **OPEN / NO MATCHING FIX PR FOUND**  
@@ -275,7 +295,7 @@ These are not yet promoted to P0 because duplicate/root-cause review is incomple
 
 ## Consolidation into the three Worldshepherd active tasks
 
-**Active Task A — Autonomy & Resilience OSS:** rclcpp #3213, Autoware #12460, rclpy #1720, plus existing Open-RMF/Zenoh/PX4 lanes. Fast DDS #6502 moves to WATCH/COLLABORATE because a credible implementation design already exists in the issue.
+**Active Task A — Autonomy & Resilience OSS:** rclcpp #3213, rclcpp #2962, Autoware #12460, rclpy #1720, plus existing Open-RMF/Zenoh/PX4 lanes. Fast DDS #6502 moves to WATCH/COLLABORATE because a credible implementation design already exists in the issue.
 
 **Active Task B — Trust, Governance & Evidence OSS:** Kyverno #17542, SPIRE #7236/#7111, Witness #789, Keylime #1909, plus OpenTelemetry/Keylime/Witness/Sigstore/Chainloop/OPA. Gatekeeper, Keylime #1932, and the occupied KubeEdge fixes remain WATCH.
 
