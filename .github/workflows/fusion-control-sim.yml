@@ -16,6 +16,7 @@ on:
       - 'worldshepherd_sara/fusion_faults.py'
       - 'worldshepherd_sara/fusion_consensus.py'
       - 'worldshepherd_sara/archive_readiness.py'
+      - 'worldshepherd_sara/external_observer.py'
       - 'tests/test_fusion_control.py'
       - 'tests/test_fair_mast_adapter.py'
       - 'tests/test_fair_mast_manifest.py'
@@ -25,6 +26,7 @@ on:
       - 'tests/test_fusion_faults.py'
       - 'tests/test_fusion_consensus.py'
       - 'tests/test_archive_readiness.py'
+      - 'tests/test_external_observer.py'
       - 'scripts/run_fusion_control_demo.py'
       - 'scripts/probe_fair_mast_data.py'
       - 'data/fair_mast/shot_30420_amc_manifest.json'
@@ -59,6 +61,7 @@ jobs:
           worldshepherd_sara/fusion_faults.py
           worldshepherd_sara/fusion_consensus.py
           worldshepherd_sara/archive_readiness.py
+          worldshepherd_sara/external_observer.py
           scripts/probe_fair_mast_data.py
       - name: Run fusion-control test suite
         run: >-
@@ -72,6 +75,7 @@ jobs:
           tests/test_fusion_faults.py
           tests/test_fusion_consensus.py
           tests/test_archive_readiness.py
+          tests/test_external_observer.py
 
   fair-mast-source-probe:
     if: >-
