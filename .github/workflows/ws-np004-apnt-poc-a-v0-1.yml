@@ -42,7 +42,7 @@ jobs:
       - name: Record source and claims boundary
         run: |
           echo "tested_sha=$(git rev-parse HEAD)"
-          echo "claims_boundary=SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR"
+          echo "claims_boundary=SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR / INFORMATIONAL DECISION AID ONLY"
 
       - name: Install package and tests
         run: |
@@ -83,8 +83,10 @@ jobs:
           assert len(result.recommendations) == expected['recommendation_count']
           assert result.final_integrity_state.value == expected['final_integrity_state']
           assert result.trace_complete is True
+          assert result.execution_attempted is expected['execution_attempted'] is False
           assert result.action_states[2].value == expected['event_2_action_state']
           assert result.action_states[5].value == expected['event_5_action_state']
+          assert all(step.stage != 'SIMULATED_ACTION' for step in result.audit_steps)
 
           evidence = {
               'tested_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
