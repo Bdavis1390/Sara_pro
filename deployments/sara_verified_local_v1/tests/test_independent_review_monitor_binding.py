@@ -15,6 +15,7 @@ from worldshepherd_sara.fasa import (
 )
 from worldshepherd_sara.fasa_admission_evidence import build_admission_evidence
 from worldshepherd_sara.independent_checkpoint_corroboration import (
+    IndependentCheckpointCorroborationError,
     corroborate_overwatch_checkpoint,
     verify_independent_checkpoint_corroboration,
 )
@@ -129,7 +130,10 @@ def test_corroboration_digest_binds_claimed_monitor_identity(
     assert corroboration.monitor_id == "OVERWATCH-CORROBORATED"
 
     tampered = corroboration.model_copy(update={"monitor_id": "OVERWATCH-SUBSTITUTED"})
-    with pytest.raises(Exception, match="corroboration digest mismatch"):
+    with pytest.raises(
+        IndependentCheckpointCorroborationError,
+        match="corroboration digest mismatch",
+    ):
         verify_independent_checkpoint_corroboration(tampered)
 
 
