@@ -1,9 +1,9 @@
-"""Worldshepherd QCRYPTO width-time-exposure and QEC-evidence risk gate.
+"""Worldshepherd QCRYPTO width-time-exposure, QEC and roadmap risk gate.
 
 Defensive analysis only. This module does not implement key recovery, Shor's
 algorithm, wallet interaction, transaction signing, or network access. It
-converts externally published resource estimates and measured QEC evidence
-into claims-controlled states for migration planning.
+converts externally published resource estimates, measured QEC evidence and
+vendor hardware roadmaps into claims-controlled states for migration planning.
 """
 
 from __future__ import annotations
@@ -62,12 +62,48 @@ class QECEvidence:
 
 
 @dataclass(frozen=True)
+class HardwareRoadmapTarget:
+    """Forward-looking hardware target.
+
+    Roadmaps are planning evidence, not demonstrated capability. The
+    `same_architecture_family` flag means a physical-resource comparison is
+    technically relevant enough to monitor; it does not prove that the future
+    target will implement the exact attack/QEC stack or meet its runtime.
+    """
+
+    vendor: str
+    source: str
+    target_year: int
+    physical_qubits: Optional[int] = None
+    logical_qubits: Optional[int] = None
+    logical_error_rate: Optional[float] = None
+    same_architecture_family: bool = False
+    demonstrated: bool = False
+
+
+@dataclass(frozen=True)
 class QECBridgeAssessment:
     evidence_state: str
     physical_per_logical: float
     codeblock_floor_physical_qubits: int
     attack_projection_state: str
     blocking_gaps: tuple[str, ...]
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class RoadmapCollisionAssessment:
+    collision_state: str
+    evidence_state: str
+    target_year: int
+    years_to_target: int
+    logical_headroom: Optional[int]
+    physical_headroom: Optional[int]
+    migration_margin_years: Optional[float]
+    urgency: str
+    reasons: tuple[str, ...]
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -143,6 +179,91 @@ def assess_qec_bridge(estimate: AttackEstimate, qec: QECEvidence) -> QECBridgeAs
     )
 
 
+def assess_roadmap_collision(
+    estimate: AttackEstimate,
+    roadmap: HardwareRoadmapTarget,
+    *,
+    current_year: int,
+    migration_years: Optional[float] = None,
+) -> RoadmapCollisionAssessment:
+    """Compare a published attack envelope with a forward hardware roadmap.
+
+    This function is intentionally conservative. A roadmap collision can raise
+    migration urgency, but it can never establish Q2/Q3/Q4 or a production
+    break because a roadmap is not demonstrated hardware.
+    """
+
+    reasons: list[str] = []
+    years_to_target = roadmap.target_year - current_year
+    logical_headroom: Optional[int] = None
+    physical_headroom: Optional[int] = None
+    migration_margin_years: Optional[float] = None
+
+    if roadmap.logical_qubits is not None:
+        logical_headroom = roadmap.logical_qubits - estimate.logical_qubits
+    if roadmap.physical_qubits is not None and estimate.physical_qubits is not None:
+        physical_headroom = roadmap.physical_qubits - estimate.physical_qubits
+
+    logical_collision = logical_headroom is not None and logical_headroom >= 0
+    near_logical_collision = logical_headroom is not None and -50 <= logical_headroom < 0
+    physical_collision = (
+        roadmap.same_architecture_family
+        and physical_headroom is not None
+        and physical_headroom >= 0
+    )
+
+    if (
+        logical_collision
+        and physical_collision
+        and roadmap.same_architecture_family
+        and estimate.runtime_seconds is not None
+    ):
+        collision_state = "SAME_ARCHITECTURE_ATTACK_ENVELOPE_COLLISION"
+        reasons.append("Roadmap logical and physical targets overlap the published same-architecture attack envelope.")
+    elif logical_collision and roadmap.same_architecture_family:
+        collision_state = "SAME_ARCHITECTURE_LOGICAL_WIDTH_COLLISION"
+        reasons.append("Roadmap logical width reaches the published attack width, but the complete physical/runtime envelope is not established.")
+    elif logical_collision:
+        collision_state = "CROSS_ARCHITECTURE_LOGICAL_WIDTH_COLLISION"
+        reasons.append("Roadmap logical width reaches the published attack width, but architectures are not directly interchangeable.")
+    elif near_logical_collision:
+        collision_state = "NEAR_LOGICAL_WIDTH_COLLISION"
+        reasons.append("Roadmap target is within 50 logical qubits of the published attack width.")
+    else:
+        collision_state = "NO_COLLISION"
+        reasons.append("Roadmap target does not reach the published attack width.")
+
+    evidence_state = "DEMONSTRATED_HARDWARE_CAPABILITY" if roadmap.demonstrated else "VENDOR_ROADMAP_TARGET"
+
+    if migration_years is not None:
+        migration_margin_years = years_to_target - migration_years
+
+    urgency = "MONITOR"
+    if collision_state != "NO_COLLISION":
+        urgency = "PREPARE_MIGRATION"
+        if years_to_target <= 2:
+            urgency = "ACCELERATE_MIGRATION_VALIDATION"
+        if migration_margin_years is not None and migration_margin_years <= 0:
+            urgency = "MIGRATION_SCHEDULE_AT_RISK"
+
+    if not roadmap.demonstrated:
+        reasons.append("Roadmap target is forward-looking and cannot be treated as demonstrated cryptanalytic capability.")
+    if roadmap.same_architecture_family:
+        reasons.append("Same-architecture comparison is relevant for planning but still requires future hardware, QEC and runtime validation.")
+
+    return RoadmapCollisionAssessment(
+        collision_state=collision_state,
+        evidence_state=evidence_state,
+        target_year=roadmap.target_year,
+        years_to_target=years_to_target,
+        logical_headroom=logical_headroom,
+        physical_headroom=physical_headroom,
+        migration_margin_years=migration_margin_years,
+        urgency=urgency,
+        reasons=tuple(reasons),
+    )
+
+
 def assess(
     estimate: AttackEstimate,
     *,
@@ -158,10 +279,10 @@ def assess(
     Q3: Q2 plus migration margin is exhausted/negative.
     Q4: production-strength break demonstrated in a controlled, authorized setting.
 
-    Low logical-qubit count or low QEC code-block overhead alone can never
-    produce Q2+. This separates width, time, QEC overhead and application-scale
-    fault-tolerant execution so cross-paper arithmetic cannot become a false
-    operational claim.
+    Low logical-qubit count, low QEC code-block overhead, or a forward hardware
+    roadmap alone can never produce Q2+. This separates width, time, QEC
+    overhead, roadmap maturity and application-scale fault-tolerant execution so
+    cross-paper arithmetic cannot become a false operational claim.
     """
     reasons: list[str] = []
     band = width_band(estimate.logical_qubits)
