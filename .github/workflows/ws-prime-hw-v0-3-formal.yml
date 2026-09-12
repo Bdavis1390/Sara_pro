@@ -65,7 +65,7 @@ jobs:
             | tee build/prime_hw_v0_3/proof.log
           grep -q 'Status: PASSED' build/prime_hw_v0_3/proof.log
 
-      - name: Prove principal-state reachability covers
+      - name: Prove reachability and anti-vacuity covers
         run: |
           set -o pipefail
           yosys-smtbmc -s z3 -t 20 -c \
@@ -73,15 +73,21 @@ jobs:
             build/prime_hw_v0_3/prime_hw_formal.smt2 \
             | tee build/prime_hw_v0_3/cover.log
           grep -q 'Status: PASSED' build/prime_hw_v0_3/cover.log
+          cover_count="$(grep -c 'Reached cover statement' build/prime_hw_v0_3/cover.log)"
+          test "$cover_count" -eq 12
+          echo "Verified all $cover_count declared cover statements were reached."
 
       - name: Preserve formal evidence custody
         run: |
+          cover_count="$(grep -c 'Reached cover statement' build/prime_hw_v0_3/cover.log)"
           {
             echo "tested_sha=$(git rev-parse HEAD)"
             echo "proof_horizon=20"
             echo "solver=z3"
             echo "formal_clock=YOSYS_GCLK_INTENTIONALLY_UNDRIVEN"
             echo "reset_lowering=async2sync+dffunmap"
+            echo "declared_cover_statements=12"
+            echo "cover_statements_reached=$cover_count"
             echo "claims_boundary=BOUNDED SMT SAFETY-PROPERTY VERIFICATION ONLY / NO FPGA OR ASIC VALIDATION"
             sha256sum \
               hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
