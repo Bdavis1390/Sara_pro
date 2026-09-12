@@ -1,0 +1,59 @@
+{
+  "schema": "WS-QCRYPTO-EVIDENCE-REGISTER-v1",
+  "as_of": "2026-09-12",
+  "purpose": "Claims-controlled external evidence register for defensive quantum-cryptography migration analysis.",
+  "claims_boundary": "External publications support the scientific premises listed here. They do not constitute external validation of Worldshepherd, proof of a production key break, or proof that a cryptographically relevant quantum computer exists today.",
+  "items": [
+    {
+      "id": "GOOGLE-PRXQ-2026-ECDLP",
+      "source_family": "Google Quantum AI / academic coauthors",
+      "evidence_class": "peer-reviewed resource estimate",
+      "source": "https://research.google/pubs/securing-elliptic-curve-cryptocurrencies-against-quantum-vulnerabilities-resource-estimates-and-mitigations-2/",
+      "peer_reviewed": true,
+      "hardware_demonstrated": false,
+      "finding": "Complete secp256k1 ECDLP circuits are reported at <=1200 logical qubits and <=90M Toffoli gates or <=1450 logical qubits and <=70M Toffoli gates; stated superconducting scenarios execute in minutes with fewer than 500,000 physical qubits under the paper's assumptions.",
+      "allowed_use": "External benchmark and migration-risk input only."
+    },
+    {
+      "id": "IONQ-2026-WALKING-CAT-ECDLP",
+      "source_family": "IonQ",
+      "evidence_class": "architecture-specific end-to-end resource estimate",
+      "source": "https://arxiv.org/abs/2609.05625",
+      "peer_reviewed": false,
+      "hardware_demonstrated": false,
+      "finding": "A trapped-ion Walking Cat architecture estimate reports about 1,457 logical qubits, 39M Toffoli gates, 19,397 physical qubits and 25.7 days per secp256k1 ECDLP attempt with a stated 63% success estimate.",
+      "allowed_use": "Architecture-specific sensitivity bound; not a demonstrated cryptographic break."
+    },
+    {
+      "id": "LUO-2026-LOW-WIDTH-ECDLP",
+      "source_family": "Luo et al.",
+      "evidence_class": "complete algorithmic resource estimate",
+      "source": "https://arxiv.org/abs/2607.13816",
+      "peer_reviewed": false,
+      "hardware_demonstrated": false,
+      "finding": "A complete prime-field ECDLP Shor construction is reported at 835 logical qubits for a 256-bit curve, with a large Toffoli cost whose leading term is 919*n^3/log2(n).",
+      "allowed_use": "Logical-width frontier only; no physical runtime may be inferred without architecture-specific compilation."
+    },
+    {
+      "id": "QUANTINUUM-2026-C4-HELIX",
+      "source_family": "Quantinuum / C4-Helix authors",
+      "evidence_class": "hardware-validated quantum error correction",
+      "source": "https://arxiv.org/abs/2609.03194",
+      "peer_reviewed": false,
+      "hardware_demonstrated": true,
+      "finding": "The [[20,2,6]] C4-Helix architecture was experimentally validated on Quantinuum Helios, including repeated QEC, logical Clifford benchmarking and heterogeneous-code logical entanglement, with encoded results outperforming physical baselines without postselection.",
+      "allowed_use": "Hardware-QEC progress input only; do not multiply the measured code-block ratio into an attack estimate without a complete architecture-specific fault-tolerant overhead model."
+    },
+    {
+      "id": "WORLDSHEPHERD-QCRYPTO-CI",
+      "source_family": "Worldshepherd / Sara_pro",
+      "evidence_class": "internal reproducible software validation",
+      "source": "https://github.com/Bdavis1390/Sara_pro/actions/runs/34720324003",
+      "peer_reviewed": false,
+      "hardware_demonstrated": false,
+      "internal_reproducible": true,
+      "finding": "The QCRYPTO Risk Gate completed successfully on the exact branch head 4c39d73b965969e1617bea0485175d4654784611 before this evidence-register update.",
+      "allowed_use": "Internal software-quality evidence only; not independent scientific validation or external certification."
+    }
+  ]
+}
