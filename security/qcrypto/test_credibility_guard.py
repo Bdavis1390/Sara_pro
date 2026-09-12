@@ -25,6 +25,7 @@ class CredibilityGuardTests(unittest.TestCase):
         self.assertTrue(result.internal_reproducible_present)
         self.assertFalse(result.standards_authority_present)
         self.assertFalse(result.operational_migration_present)
+        self.assertFalse(result.national_security_transition_present)
 
     def test_multi_axis_record_requires_standards_and_real_migration(self):
         evidence = [
@@ -51,6 +52,35 @@ class CredibilityGuardTests(unittest.TestCase):
         self.assertTrue(result.standards_authority_present)
         self.assertTrue(result.operational_migration_present)
         self.assertTrue(any("CREDIBILITY WARRANTED FOR PROCESS" in c for c in result.warranted_claims))
+
+    def test_national_security_transition_axis_requires_distinct_official_evidence(self):
+        evidence = [
+            EvidenceItem("Google PRX Quantum", "Google Quantum AI", peer_reviewed=True),
+            EvidenceItem("IonQ Walking Cat", "IonQ"),
+            EvidenceItem("C4-Helix", "Quantinuum", hardware_demonstrated=True),
+            EvidenceItem("NIST PQC transition", "NIST", standards_authority=True),
+            EvidenceItem(
+                "Algorand Falcon mainnet",
+                "Algorand Foundation",
+                operational_migration_deployment=True,
+            ),
+            EvidenceItem(
+                "NSA CSfC CNSA 2.0 transition",
+                "NSA CSfC",
+                national_security_transition_policy=True,
+            ),
+            EvidenceItem(
+                "QCRYPTO CI",
+                "Worldshepherd",
+                external=False,
+                internal_reproducible=True,
+            ),
+        ]
+        result = assess_credibility(evidence)
+        self.assertEqual(result.warrant_state, "NATIONAL_SECURITY_TRANSITION_AWARE_ENGINEERING_RECORD")
+        self.assertTrue(result.national_security_transition_present)
+        self.assertTrue(any("NATIONAL_SECURITY_TRANSITION_AWARE" in c for c in result.warranted_claims))
+        self.assertTrue(any("TRANSITION RELEVANCE" in c for c in result.warranted_claims))
 
     def test_external_findings_alone_do_not_warrant_implementation(self):
         result = assess_credibility(
@@ -79,6 +109,7 @@ class CredibilityGuardTests(unittest.TestCase):
         joined = " ".join(result.excluded_claims)
         self.assertIn("Original authorship", joined)
         self.assertIn("Independent external validation", joined)
+        self.assertIn("Government approval", joined)
         self.assertIn("production-strength cryptographic key break", joined)
         self.assertIn("cryptographically relevant quantum computer", joined)
         self.assertIn("partial post-quantum deployment", joined)
