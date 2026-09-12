@@ -1,0 +1,82 @@
+{
+  "schema": "WS-MARKETPLACE-TOP-TARGET-SOLUTION-PACKAGES-V1",
+  "as_of": "2026-09-03",
+  "evidence_class": "PUBLIC_SOURCE_REQUIREMENT_MAPPING_AND_INTERNAL_TEST_DESIGN_ONLY",
+  "contact_gate_effect": "NONE",
+  "targets": [
+    {
+      "id": "WS-MKT-025",
+      "organization": "Redwire Corporation / Edge Autonomy",
+      "public_basis": "Current public filings identify acquisition integration plus process-level and ITGC program-change/access weaknesses in specified operations.",
+      "solution": ["SARA multi-entity control/configuration graph", "PRIME access/change/SoD approval controls", "ECHO UAS/manufacturing evidence provenance", "OVERWATCH integration exception state"],
+      "required_controls": ["authorized_access", "segregation_of_duties", "approved_program_change", "process_control_operating_evidence", "configuration_revision_match", "supplier_evidence_provenance", "release_authority_explicit"],
+      "external_metrics": ["unauthorized-access escape rate", "unapproved-change escape rate", "stale-configuration escape rate", "evidence retrieval latency", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/1819810/000181981026000124/rdw-20260630.htm"]
+    },
+    {
+      "id": "WS-MKT-001",
+      "organization": "AeroVironment / BlueHalo",
+      "public_basis": "Current public filings identify BlueHalo user/privileged-access and segregation-of-duties weakness, with program-change controls included in remediation and acquisition integration continuing.",
+      "solution": ["SARA acquired-system evidence graph", "PRIME privileged-access/SoD/change governance", "ECHO supplier/manufacturing provenance", "OVERWATCH remediation evidence state"],
+      "required_controls": ["authorized_access", "segregation_of_duties", "approved_program_change", "periodic_access_review", "change_evidence_complete", "supplier_evidence_provenance", "release_authority_explicit"],
+      "external_metrics": ["privileged-access exception rate", "change-control exception rate", "supplier evidence completeness", "closure latency", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/1368622/000110465926078906/avav-20260430x10k.htm"]
+    },
+    {
+      "id": "WS-MKT-030",
+      "organization": "Gogo / Satcom Direct",
+      "public_basis": "Current public filings identify an unremediated Satcom Direct acquisition-related material weakness involving user access, segregation of duties, program-change management and legacy-system migration/integration.",
+      "solution": ["SARA legacy-to-target-system evidence lineage", "PRIME access/change/SoD governance", "ECHO avionics/network/software configuration provenance", "OVERWATCH migration exception observability"],
+      "required_controls": ["authorized_access", "segregation_of_duties", "approved_program_change", "legacy_data_source_traceable", "migration_reconciliation_complete", "configuration_revision_match", "release_authority_explicit"],
+      "external_metrics": ["legacy-data reconciliation exception rate", "access/change escape rate", "configuration mismatch rate", "migration evidence retrieval latency", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/1537054/000119312526337921/gogo-20260630.htm"]
+    },
+    {
+      "id": "WS-MKT-031",
+      "organization": "CECO Environmental / Verantis / Thermon",
+      "public_basis": "Current public filings state Verantis was not appropriately integrated into CECO's governance/control framework and identify segregation-of-duties, IT-control and monitoring weaknesses while CECO completes a major Thermon merger.",
+      "solution": ["SARA acquired-entity governance/control graph", "PRIME SoD/access/change authority", "ECHO industrial process/supplier provenance", "OVERWATCH integration/monitoring evidence"],
+      "required_controls": ["governance_owner_assigned", "segregation_of_duties", "authorized_access", "approved_program_change", "monitoring_evidence_current", "supplier_evidence_provenance", "integration_dependency_reviewed"],
+      "external_metrics": ["unowned-control rate", "SoD/access exception rate", "integration dependency closure latency", "monitoring evidence completeness", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/3197/000119312526342536/ceco-20260630.htm"]
+    },
+    {
+      "id": "WS-MKT-002",
+      "organization": "Air Industries Group / Tenax Aerospace",
+      "public_basis": "Current public filings retain an unremediated IT material weakness involving user access, program change management, segregation of duties and third-party IT control evidence while a strategic aerospace-defense combination is pending.",
+      "solution": ["SARA merger and flight-critical evidence graph", "PRIME access/change/vendor authority", "ECHO manufacturing/configuration provenance", "AEROSHEPHERD work-transfer and acceptance lineage"],
+      "required_controls": ["authorized_access", "segregation_of_duties", "approved_program_change", "third_party_control_evidence", "configuration_revision_match", "work_transfer_reviewed", "release_authority_explicit"],
+      "external_metrics": ["vendor/control evidence completeness", "access/change exception rate", "work-transfer stale dependency rate", "configuration escape rate", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/1009891/000121390026088334/ea0300847-10q_airindus.htm"]
+    },
+    {
+      "id": "WS-MKT-019",
+      "organization": "Kopin Corporation",
+      "public_basis": "Public filings identify ongoing ITGC and business-process control weaknesses in a defense/industrial microdisplay manufacturer with new configurations/products entering production.",
+      "solution": ["SARA requirement/product/process evidence graph", "PRIME access/change/SoD governance", "ECHO manufacturing/measurement provenance", "OVERWATCH evidence-quality and production-change observability"],
+      "required_controls": ["authorized_access", "segregation_of_duties", "approved_program_change", "information_evidence_reviewed", "configuration_revision_match", "process_evidence_complete", "release_authority_explicit"],
+      "external_metrics": ["IPE/evidence completeness", "access/change exception rate", "configuration mismatch rate", "process evidence retrieval latency", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/form10-k.htm"]
+    },
+    {
+      "id": "WS-MKT-026",
+      "organization": "Symbotic / Walmart ASR / ARMS Innovations",
+      "public_basis": "Current public filings identify an unremediated business-process material weakness and planned ERP vendor-management automation while the physical-AI platform expands through acquisitions.",
+      "solution": ["SARA vendor/receipt/deployment evidence graph", "PRIME ERP/change/release authority", "ECHO robot/system/deployment provenance", "OVERWATCH vendor/deployment exception observability"],
+      "required_controls": ["vendor_receipt_evidence_complete", "service_period_match", "approved_program_change", "authorized_access", "deployment_configuration_match", "acquisition_dependency_reviewed", "release_authority_explicit"],
+      "external_metrics": ["vendor receipt mismatch rate", "deployment configuration escape rate", "change exception rate", "evidence retrieval latency", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/1837240/000183724026000043/sym-20260627.htm"]
+    },
+    {
+      "id": "WS-MKT-032",
+      "organization": "Mobix Labs / Vision Aerial / Special Project Delivery",
+      "public_basis": "Public filings identify ITGC weaknesses while Mobix expands a defense/aerospace electronics platform through pending drone and critical-materials acquisitions and manufacturing consolidation.",
+      "solution": ["SARA cross-domain acquisition/requirement graph", "PRIME access/change/program-development governance", "ECHO RF/UAS/material provenance", "OVERWATCH production/integration evidence state"],
+      "required_controls": ["authorized_access", "segregation_of_duties", "approved_program_change", "program_development_approved", "computer_operations_evidence", "configuration_revision_match", "controlled_information_boundary_known"],
+      "external_metrics": ["access/change exception rate", "software/program-development approval completeness", "configuration mismatch rate", "evidence retrieval latency", "false-positive/false-negative rate against partner ground truth"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/1855467/000149315226038848/form10-q.htm"]
+    }
+  ],
+  "deployment_rule": "These packages are target-specific public-source mappings and internal test designs. No package may inherit evidence from Boeing/Spirit or another target. No internal/synthetic PASS closes partner_data_access, partner_pilot, measured_effect_size, security_compliance_fit or independent_review.",
+  "claims_boundary": "This artifact does not establish customer-specific operational root cause, product quality, safety, regulatory compliance, production effectiveness, remediation probability, customer interest, contracting or permission to contact."
+}

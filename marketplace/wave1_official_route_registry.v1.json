@@ -1,0 +1,123 @@
+{
+  "schema": "WS-MARKETPLACE-WAVE1-OFFICIAL-ROUTE-REGISTRY-V1",
+  "as_of": "2026-09-03",
+  "purpose": "Verify lawful official public intake routes for Wave 1 marketplace targets without sending outreach or changing any external evidence gate.",
+  "route_used_count": 0,
+  "contact_gate_effect": "NONE",
+  "precontact_evidence_class": "P5_ROUTE_VERIFICATION",
+  "targets": [
+    {
+      "id": "WS-MKT-025",
+      "organization": "Redwire Corporation / Edge Autonomy",
+      "route_type": "official sales / mission-needs intake",
+      "route_url": "https://redwirespace.com/capabilities/solar-arrays-and-deployable-structures/",
+      "public_contact": "sales@redwirespace.com",
+      "route_evidence": "Redwire's official site presents a Contact Redwire Sales path and lists sales@redwirespace.com for mission needs.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official Redwire route is verified. Before any future use, re-verify whether Edge Autonomy or a supplier/teaming portal is a more precise route for the proposed bounded pilot."
+    },
+    {
+      "id": "WS-MKT-001",
+      "organization": "AeroVironment / BlueHalo",
+      "route_type": "official supplier portal",
+      "route_url": "https://www.avinc.com/contact/",
+      "public_contact": "Supplier Portal accessible from the official contact page",
+      "route_evidence": "AeroVironment's official contact page explicitly asks 'Want to Become a Vendor or Supplier?' and links to its Supplier Portal.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Strong supplier-route fit; no registration or submission is performed before contact-gate authorization."
+    },
+    {
+      "id": "WS-MKT-030",
+      "organization": "Gogo / Satcom Direct",
+      "route_type": "official sales / aviation expert intake",
+      "route_url": "https://www.gogoair.com/how-to-buy/contact-sales",
+      "public_contact": "connect@gogoair.com",
+      "route_evidence": "Gogo's official site provides a Contact Sales form, connect@gogoair.com, and regional aviation experts.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Verified general commercial route; partnership/supplier-specific routing should be rechecked before any future use."
+    },
+    {
+      "id": "WS-MKT-031",
+      "organization": "CECO Environmental / Verantis / Thermon",
+      "route_type": "official brand/general contact intake",
+      "route_url": "https://www.cecoenviro.com/contact/",
+      "public_contact": "Official brand-specific and general Contact Us forms",
+      "route_evidence": "CECO's official contact page routes inquiries to brand-specific personnel or a general corporate form.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Route is official but broad; re-verify business-development or supplier specificity before future use."
+    },
+    {
+      "id": "WS-MKT-002",
+      "organization": "Air Industries Group / Tenax Aerospace",
+      "route_type": "official supplier page plus business-development contact",
+      "route_url": "https://airindustriesgroup.com/suppliers/",
+      "secondary_route_url": "https://investors.airindustriesgroup.com/ir-resources/investor-faqs",
+      "public_contact": "gary.settoducato@airindustriesgroup.com",
+      "route_evidence": "Air Industries maintains an official suppliers page with supplier information/quality clauses, while its official investor FAQ identifies its VP Business Development for business, product or service questions.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Strong supplier/business-development route fit; no message, supplier registration or document submission is performed."
+    },
+    {
+      "id": "WS-MKT-019",
+      "organization": "Kopin Corporation",
+      "route_type": "official sales/contact intake",
+      "route_url": "https://www.kopin.com/about/contact/",
+      "secondary_route_url": "https://www.kopin.com/our-locations/",
+      "public_contact": "sales@kopin.com",
+      "route_evidence": "Kopin's official contact page includes inquiry type/area-of-interest routing, and its official locations page lists sales@kopin.com for headquarters.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official sales route is verified; defense/business-development specificity should be rechecked before any future use."
+    },
+    {
+      "id": "WS-MKT-026",
+      "organization": "Symbotic / Walmart ASR / ARMS Innovations",
+      "route_type": "official contact form with Partnerships option",
+      "route_url": "https://www.symbotic.com/contact-us/",
+      "public_contact": "Official Contact Us form",
+      "route_evidence": "Symbotic's official contact page explicitly includes Sales, Solutions experts and Partnerships as inquiry categories.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Strong future partnership-intake fit; form remains unused until contact authorization."
+    },
+    {
+      "id": "WS-MKT-032",
+      "organization": "Mobix Labs / Vision Aerial / Special Project Delivery",
+      "route_type": "official sales intake",
+      "route_url": "https://www.mobixlabs.com/resources/contact-sales",
+      "public_contact": "sales@mobixlabs.com",
+      "route_evidence": "Mobix Labs' official Contact Sales page lists sales@mobixlabs.com and a sales inquiry form.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official sales route verified; re-check defense partnership/vendor route specificity before future use."
+    },
+    {
+      "id": "WS-MKT-035",
+      "organization": "inTEST Corporation / Alfamation",
+      "route_type": "official corporate and business-unit contact",
+      "route_url": "https://www.intest.com/contact-us",
+      "public_contact": "info@intest.com; Alfamation info@alfamationglobal.com",
+      "route_evidence": "inTEST's official contact page lists headquarters and business-unit contacts, including Alfamation.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official route verified; future use should prefer the appropriate corporate or Alfamation business unit after authorization."
+    },
+    {
+      "id": "WS-MKT-036",
+      "organization": "Quantum Computing Inc. / NHanced / LSI / NuCrypt",
+      "route_type": "official expert/contact intake",
+      "route_url": "https://quantumcomputinginc.com/contact",
+      "public_contact": "Official 'Talk with our experts' form / +1 703-436-2161",
+      "route_evidence": "QCi's official Contact page invites organizations to talk with its experts regarding scalable quantum and photonic technology.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official technical/commercial route verified; partnership-specific routing should be rechecked before future use."
+    }
+  ],
+  "claims_boundary": "Route verification establishes only that an official public channel exists. It does not establish target interest, authorization to submit sensitive material, supplier qualification, partnership, procurement eligibility, remediation probability, or permission under the Worldshepherd 98.7 contact policy to use the route."
+}

@@ -1,0 +1,74 @@
+{
+  "schema": "WS-PALACE-EVIDENCE-INGEST-POLICY-V1",
+  "as_of": "2026-09-04",
+  "purpose": "Bind PALACE snapshot evidence ingestion to the existing SARA role separation and evidence-custody model without granting the repo process authority over the live solver run.",
+  "existing_role_model": {
+    "relay_role": "relay",
+    "admin_role": "admin",
+    "separate_tokens_required": true,
+    "admin_required_for_registry_mutation": true
+  },
+  "live_solver_boundary": {
+    "live_worldshepherd_folder_is_read_write_target": false,
+    "ingester_may_launch_palace": false,
+    "ingester_may_stop_or_restart_palace": false,
+    "ingester_may_delete_live_outputs": false,
+    "ingester_may_infer_completed_anchor_ids_from_count": false
+  },
+  "ingest_modes": [
+    {
+      "mode": "SNAPSHOT_READ",
+      "minimum_role": "relay",
+      "source_requirement": "copied or snapshotted evidence tree",
+      "allowed": ["read", "hash", "validate identity", "calculate bounded numerical metrics"],
+      "writes_into_snapshot": false
+    },
+    {
+      "mode": "EVIDENCE_REGISTER",
+      "minimum_role": "admin",
+      "source_requirement": "validated snapshot report with manifest and file digests",
+      "allowed": ["register evidence metadata", "link configuration digest", "record pass/fail/null state"],
+      "writes_into_live_solver_tree": false
+    },
+    {
+      "mode": "EXTERNAL_EVIDENCE_PROMOTION",
+      "minimum_role": "admin",
+      "source_requirement": "valid evidence contract plus external authority when the requested evidence class requires it",
+      "allowed": ["request evidence-state transition through existing fail-closed gate"],
+      "automatic_promotion": false
+    }
+  ],
+  "required_snapshot_fields": [
+    "anchor_id",
+    "run_id",
+    "run_hash",
+    "angle_deg",
+    "control_state",
+    "polarization",
+    "mesh_level",
+    "status",
+    "status_file_sha256"
+  ],
+  "audit_events": [
+    "palace_snapshot_ingest_started",
+    "palace_snapshot_ingest_rejected",
+    "palace_snapshot_ingest_completed",
+    "palace_evidence_registration_requested",
+    "palace_evidence_registration_completed",
+    "palace_evidence_transition_rejected",
+    "palace_evidence_transition_completed"
+  ],
+  "fail_closed_conditions": [
+    "unknown anchor id",
+    "manifest identity mismatch",
+    "duplicate anchor record",
+    "missing digest",
+    "write target inside snapshot root",
+    "attempted live solver mutation",
+    "insufficient role for evidence registration",
+    "attempted evidence-class promotion without required external authority"
+  ],
+  "claims_boundary": "Access control and evidence custody do not convert simulation, PALACE convergence or cross-solver agreement into physical, partner, independent, qualified or certified evidence.",
+  "boeing_spirit_contact_effect": "NONE",
+  "contact_authority_created": false
+}

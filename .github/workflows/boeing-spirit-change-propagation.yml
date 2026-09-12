@@ -1,0 +1,83 @@
+name: Boeing Spirit Change Propagation Stress
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/change_propagation_stress_pilot.py'
+      - '.github/workflows/boeing-spirit-change-propagation.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/change_propagation_stress_pilot.py'
+      - '.github/workflows/boeing-spirit-change-propagation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  change-propagation-stress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile stress pilot
+        run: python -m py_compile boeing_spirit/change_propagation_stress_pilot.py
+
+      - name: Run deterministic stress corpus
+        run: >-
+          python boeing_spirit/change_propagation_stress_pilot.py
+          --output boeing_spirit/evidence/change-propagation-stress-report.json
+
+      - name: Verify fail-closed results and boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/change-propagation-stress-report.json').read_text())
+          assert r['schema'] == 'WS-BOEING-SPIRIT-CHANGE-PROPAGATION-STRESS-V1'
+          assert r['evidence_class'] == 'INTERNAL SYNTHETIC CHANGE PROPAGATION STRESS TEST ONLY'
+          assert r['result'] == 'PASS'
+          assert r['scenario_count'] == 2000
+          assert r['exact_match_count'] == r['scenario_count']
+          assert r['stale_release_escape_count'] == 0
+          assert r['false_release_block_count'] == 0
+          assert r['clean_control_release_allowed'] is True
+          assert r['contact_gate_effect'] == 'NONE'
+          b = r['claims_boundary']
+          assert 'does not use Boeing/Spirit data' in b
+          assert 'does not establish Boeing/Spirit configuration correctness' in b
+          assert 'remediation probability' in b
+          print(json.dumps({k: r[k] for k in [
+              'result', 'scenario_count', 'exact_match_count',
+              'stale_release_escape_count', 'false_release_block_count',
+              'scenario_digest_sha256', 'results_digest_sha256',
+              'contact_gate_effect'
+          ]}, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: |
+          sha256sum boeing_spirit/evidence/change-propagation-stress-report.json > boeing_spirit/evidence/CHANGE_PROPAGATION_SHA256SUMS.txt
+          cat boeing_spirit/evidence/CHANGE_PROPAGATION_SHA256SUMS.txt
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-change-propagation-stress
+          path: |
+            boeing_spirit/evidence/change-propagation-stress-report.json
+            boeing_spirit/evidence/CHANGE_PROPAGATION_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

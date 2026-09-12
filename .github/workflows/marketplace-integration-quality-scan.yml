@@ -1,0 +1,73 @@
+name: Marketplace Integration Quality Scan
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'marketplace/integration_quality_targets.v1.json'
+      - 'marketplace/validate_integration_quality_targets.py'
+      - '.github/workflows/marketplace-integration-quality-scan.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'marketplace/integration_quality_targets.v1.json'
+      - 'marketplace/validate_integration_quality_targets.py'
+      - '.github/workflows/marketplace-integration-quality-scan.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-marketplace-targets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_integration_quality_targets.py
+
+      - name: Validate marketplace target registry
+        run: >-
+          python marketplace/validate_integration_quality_targets.py
+          --registry marketplace/integration_quality_targets.v1.json
+          --output marketplace/evidence/integration-quality-target-report.json
+
+      - name: Verify no new target is contact-authorized
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('marketplace/evidence/integration-quality-target-report.json').read_text())
+          assert r['result'] == 'PASS'
+          assert r['target_count'] >= 15
+          assert r['task_route_count'] == 5
+          assert r['default_contact_threshold_pct'] == 98.7
+          assert r['default_precontact_external_evidence_cap_pct'] == 55.0
+          assert r['all_new_target_contact_permitted'] is False
+          assert len(r['high_priority_90_plus_ids']) >= 7
+          print(json.dumps(r, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: sha256sum marketplace/evidence/integration-quality-target-report.json > marketplace/evidence/MARKETPLACE_TARGET_SHA256SUMS.txt
+
+      - name: Upload marketplace evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-integration-quality-scan
+          path: |
+            marketplace/evidence/integration-quality-target-report.json
+            marketplace/evidence/MARKETPLACE_TARGET_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

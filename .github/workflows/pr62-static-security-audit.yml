@@ -1,0 +1,74 @@
+name: PR62 Static Security Sink Audit
+
+on:
+  push:
+    paths:
+      - 'security/audit_changed_python_sinks.py'
+      - 'security/premerge_security_gate.v1.json'
+      - '.github/workflows/pr62-static-security-audit.yml'
+  pull_request:
+    paths:
+      - 'security/audit_changed_python_sinks.py'
+      - 'security/premerge_security_gate.v1.json'
+      - '.github/workflows/pr62-static-security-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-security-sink-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile audit
+        run: python -m py_compile security/audit_changed_python_sinks.py
+      - name: Run audit
+        run: python security/audit_changed_python_sinks.py --output security/evidence/changed-python-sink-audit.json
+      - name: Verify security-gate consistency
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          gate=json.loads(Path('security/premerge_security_gate.v1.json').read_text())
+          audit=json.loads(Path('security/evidence/changed-python-sink-audit.json').read_text())
+
+          assert audit['merge_gate_effect'] == 'NONE_DIAGNOSTIC_ONLY'
+          assert audit['high_review_count'] == 0, 'high-review dangerous API findings require manual security disposition'
+
+          sev=gate['codeql']['severity_counts']
+          blocking=int(sev.get('critical',0))+int(sev.get('high',0))+int(sev.get('medium',0))
+          assert int(gate['codeql']['new_alert_count']) == sum(int(v) for v in sev.values())
+          assert gate['codeql']['status'] == 'completed'
+          assert gate['codeql']['conclusion'] == 'success'
+
+          if blocking == 0:
+              assert gate['merge_allowed'] is True, 'zero blocking CodeQL alerts must agree with cleared changed-code gate'
+          else:
+              assert gate['merge_allowed'] is False, 'blocking CodeQL alerts must keep changed-code gate closed'
+
+          print(json.dumps({
+            'merge_allowed': gate['merge_allowed'],
+            'codeql_blocking_alerts': blocking,
+            'audit_finding_count': audit['finding_count'],
+            'cli_derived_filesystem_sink_count': audit['cli_derived_filesystem_sink_count'],
+            'dynamic_network_call_count': audit['dynamic_network_call_count'],
+            'high_review_count': audit['high_review_count'],
+            'findings_sha256': audit['findings_sha256']
+          }, indent=2))
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum security/evidence/changed-python-sink-audit.json > security/evidence/PR62_STATIC_SECURITY_AUDIT_SHA256SUMS.txt
+          cat security/evidence/PR62_STATIC_SECURITY_AUDIT_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr62-static-security-sink-audit
+          path: |
+            security/evidence/changed-python-sink-audit.json
+            security/evidence/PR62_STATIC_SECURITY_AUDIT_SHA256SUMS.txt
+          retention-days: 90

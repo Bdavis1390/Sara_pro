@@ -1,0 +1,84 @@
+name: Boeing Spirit Public Manufacturing Analog
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/public_manufacturing_analog_benchmark.py'
+      - '.github/workflows/boeing-spirit-public-analog.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/public_manufacturing_analog_benchmark.py'
+      - '.github/workflows/boeing-spirit-public-analog.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-manufacturing-analog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile benchmark
+        run: python -m py_compile boeing_spirit/public_manufacturing_analog_benchmark.py
+
+      - name: Run independent public manufacturing analog benchmark
+        run: >-
+          python boeing_spirit/public_manufacturing_analog_benchmark.py
+          --output boeing_spirit/evidence/public-manufacturing-analog-report.json
+          --timeout 60
+
+      - name: Verify evidence and claims boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/public-manufacturing-analog-report.json').read_text())
+          assert r['schema'] == 'WS-BOEING-SPIRIT-PUBLIC-MANUFACTURING-ANALOG-V1'
+          assert r['evidence_class'] == 'INDEPENDENT PUBLIC MANUFACTURING ANALOG BENCHMARK'
+          assert r['result'] == 'PASS'
+          assert r['contact_gate_effect'] == 'NONE'
+          assert len(r['datasets']) == 2
+          ids = {d['uci_id'] for d in r['datasets']}
+          assert ids == {179, 198}
+          assert all(r['minimum_sanity_checks'].values())
+          boundary = r['claims_boundary']
+          for phrase in ['not Boeing/Spirit data or partner validation', 'does not establish Boeing/Spirit root cause', 'statistical probability of remediation']:
+              assert phrase in boundary
+          print(json.dumps({
+              'result': r['result'],
+              'contact_gate_effect': r['contact_gate_effect'],
+              'datasets': [{
+                  'uci_id': d['uci_id'],
+                  'dataset': d['dataset'],
+                  'metrics': d['metrics'],
+                  'dataset_zip_sha256': d['dataset_zip_sha256'],
+              } for d in r['datasets']],
+          }, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: sha256sum boeing_spirit/evidence/public-manufacturing-analog-report.json > boeing_spirit/evidence/PUBLIC_ANALOG_SHA256SUMS.txt
+
+      - name: Upload public analog evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-public-manufacturing-analog
+          path: |
+            boeing_spirit/evidence/public-manufacturing-analog-report.json
+            boeing_spirit/evidence/PUBLIC_ANALOG_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

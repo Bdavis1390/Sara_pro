@@ -1,0 +1,217 @@
+{
+  "schema": "WS-MARKETPLACE-PRECONTACT-EVIDENCE-ACQUISITION-V1",
+  "as_of": "2026-09-03",
+  "purpose": "Maximize legitimate non-contact evidence and solution preparation for high-priority marketplace targets without treating public/internal evidence as target-authorized remediation evidence.",
+  "target_contact_threshold_pct": 98.7,
+  "precontact_evidence_cap_pct": 55.0,
+  "contact_state": "DO_NOT_CONTACT_UNTIL_EXTERNAL_GATES_VERIFIED",
+  "five_task_routing_only": true,
+  "no_sixth_chatgpt_automation": true,
+  "precontact_evidence_classes": {
+    "P1_TARGET_PUBLIC_PRIMARY": "Target SEC filings, official releases, public supplier/quality/security pages, public job descriptions and other first-party public evidence.",
+    "P2_INDEPENDENT_AUTHORITATIVE_PUBLIC": "Government, regulator, standards-body, court, procurement, safety/incident, certification or other authoritative independent public records where applicable.",
+    "P3_REPRODUCIBLE_PUBLIC_ANALOG": "Independent public datasets, peer-reviewed benchmarks or reproducible analogs testing the same evidence-control failure mode without pretending to measure the target.",
+    "P4_APPLICABILITY_AND_BOUNDARY": "Public standards/security/export/safety/quality applicability mapping that identifies what would need target-specific confirmation and what cannot be claimed.",
+    "P5_ROUTE_VERIFICATION": "Verification of a lawful official supplier, partnership, small-business, business-development or public intake route without sending a message."
+  },
+  "precontact_scoring_ceiling": {
+    "public_problem_signal_and_provenance": 10,
+    "target_specific_solution_mapping": 10,
+    "deterministic_internal_adversarial_reproduction": 10,
+    "independent_public_analog_or_authoritative_corrobation": 10,
+    "applicability_security_quality_export_boundary": 10,
+    "lawful_official_route_verified_but_unused": 5,
+    "maximum_without_target_authorized_evidence": 55
+  },
+  "external_gates_not_closable_by_precontact_work": [
+    "partner_data_access",
+    "partner_pilot",
+    "measured_effect_size",
+    "security_compliance_fit",
+    "independent_review"
+  ],
+  "targets": [
+    {
+      "id": "WS-MKT-025",
+      "organization": "Redwire Corporation / Edge Autonomy",
+      "priority": 98,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress exists",
+      "noncontact_evidence_plan": ["SEC acquisition/control/integration disclosures", "DoD/USASpending public contract and program records", "FAA/UAS or other government records where directly applicable", "public CMMC/NIST/export applicability mapping", "official supplier/business route verification"],
+      "next_actions": ["bind each public control statement to an exact SARA/PRIME/ECHO control assertion", "search authoritative public UAS/program records for independent corroboration without inferring defects", "verify official Redwire/Edge supplier or partnership route without contacting"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-001",
+      "organization": "AeroVironment / BlueHalo",
+      "priority": 97,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress exists",
+      "noncontact_evidence_plan": ["SEC merger/integration disclosures", "DoD/USASpending/contract award records", "public program and product technical material", "CUI/export/security applicability mapping", "official supplier/teaming route verification"],
+      "next_actions": ["map acquired-system privilege/change risks to bounded evidence controls", "collect independent government program evidence relevant to provenance/configuration", "verify official teaming/supplier intake route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-030",
+      "organization": "Gogo / Satcom Direct",
+      "priority": 97,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress and bounded pilot definition exist",
+      "noncontact_evidence_plan": ["SEC Satcom Direct integration/ITGC disclosures", "FAA public approvals/certification references only where product-specific and public", "public aviation connectivity installation/security requirements", "independent communications/configuration benchmark analogs", "official partner/supplier route verification"],
+      "next_actions": ["build a product-neutral avionics/network change-custody evidence crosswalk", "locate independent public aviation configuration/installation records relevant to evidence retrieval", "verify official Gogo partner/supplier route without contacting"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-031",
+      "organization": "CECO Environmental / Verantis / Thermon",
+      "priority": 97,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress and bounded pilot definition exist",
+      "noncontact_evidence_plan": ["SEC acquisition/control disclosures", "EPA/state environmental public records only where entity-specific and relevant", "public industrial quality/safety standards applicability", "independent process-control analog datasets", "official supplier/business route verification"],
+      "next_actions": ["separate financial-control evidence from environmental/product claims in every mapping", "search authoritative public integration/compliance records without inferring operational failure", "verify official corporate/supplier intake route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-002",
+      "organization": "Air Industries Group / Tenax Aerospace",
+      "priority": 96,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress exists",
+      "noncontact_evidence_plan": ["SEC merger/integration disclosures", "FAA public production/repair/certification records where applicable", "DoD public contract records", "AS9100/quality/export applicability mapping", "official supplier/business route verification"],
+      "next_actions": ["construct work-transfer/configuration evidence chain using public program facts only", "search independent aviation/defense records for authoritative context", "verify lawful supplier/partner route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-019",
+      "organization": "Kopin Corporation",
+      "priority": 96,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress exists",
+      "noncontact_evidence_plan": ["SEC ITGC/manufacturing disclosures", "DoD public contract/program records", "public microdisplay/MicroLED technical publications", "defense/export/security applicability mapping", "official business/supplier route verification"],
+      "next_actions": ["bind microdisplay configuration/process provenance to public evidence only", "seek independent manufacturing-readiness analogs and government program context", "verify official Kopin business route without contacting"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-026",
+      "organization": "Symbotic / Walmart ASR / ARMS Innovations",
+      "priority": 96,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress exists",
+      "noncontact_evidence_plan": ["SEC acquisition/control/vendor-process disclosures", "public warehouse automation deployment material", "OSHA/public safety records only if entity-specific and relevant", "independent robotics/deployment benchmark analogs", "official supplier/business route verification"],
+      "next_actions": ["build vendor/receipt/deployment evidence ontology", "collect independent public physical-AI integration analogs", "verify official Symbotic supplier/business route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-032",
+      "organization": "Mobix Labs / Vision Aerial / Special Project Delivery",
+      "priority": 96,
+      "wave": 1,
+      "internal_state": "target-specific synthetic stress exists",
+      "noncontact_evidence_plan": ["SEC acquisition/control disclosures", "DoD/USASpending public program records", "FAA/UAS public records where directly applicable", "CUI/export/critical-material applicability mapping", "official business/partner route verification"],
+      "next_actions": ["map RF/UAS/material acquisition dependencies to provenance controls", "collect authoritative public defense/UAS context without product-performance inference", "verify official business route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-035",
+      "organization": "inTEST Corporation / Alfamation",
+      "priority": 96,
+      "wave": 1,
+      "internal_state": "45-case Round 6 stress includes this target; bounded partner-pilot package validated",
+      "noncontact_evidence_plan": ["SEC Alfamation inventory/process disclosures", "public manufacturing/test-system technical material", "ISO/quality/calibration applicability mapping without certification claims", "independent inventory/WIP/process-control analogs", "official corporate/supplier route verification"],
+      "next_actions": ["build independent inventory/WIP discrepancy benchmark fixture from public or synthetic data", "map calibration/test-system boundaries without implying current deficiency", "verify official inTEST supplier/business route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-036",
+      "organization": "Quantum Computing Inc. / NHanced / LSI / NuCrypt",
+      "priority": 96,
+      "wave": 1,
+      "internal_state": "45-case Round 6 stress includes this target; bounded partner-pilot package validated",
+      "noncontact_evidence_plan": ["SEC acquisition/ITGC/fab disclosures", "public government awards and research-program records", "peer-reviewed photonics/advanced-packaging manufacturing literature", "export/defense/cybersecurity applicability mapping", "official partner/business route verification"],
+      "next_actions": ["construct Fab1/Fab2 provenance and access-control crosswalk from public facts", "collect independent photonics/packaging process-control analog evidence", "verify official QCi partner route without contacting"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-003",
+      "organization": "Airbus / former Spirit AeroSystems sites",
+      "priority": 95,
+      "wave": 2,
+      "internal_state": "target-specific solution mapping exists; dedicated synthetic expansion still required",
+      "noncontact_evidence_plan": ["Airbus/Spirit public transaction and site-transfer records", "FAA/EASA public certification/airworthiness records where relevant", "public supplier-quality requirements", "independent aerospace work-transfer/FOD/tool-control analogs", "official supplier route verification"],
+      "next_actions": ["build dedicated former-Spirit work-transfer stress suite", "crosswalk public Airbus supplier-quality requirements to SARA/ECHO evidence fields", "verify Airbus supplier route without contacting"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-020",
+      "organization": "Serve Robotics / Diligent / Vayu / Vebu",
+      "priority": 95,
+      "wave": 2,
+      "internal_state": "target-specific solution mapping exists; dedicated synthetic expansion still required",
+      "noncontact_evidence_plan": ["SEC acquisition/integration disclosures", "NHTSA/local autonomous-device records where legally relevant", "healthcare/privacy applicability material for acquired use cases", "independent robotics configuration benchmark analogs", "official business route verification"],
+      "next_actions": ["build dedicated multi-acquisition robot/software/hardware stress suite", "separate public autonomy/healthcare boundary evidence by use case", "verify official Serve business route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-021",
+      "organization": "Pioneer Power Solutions",
+      "priority": 94,
+      "wave": 2,
+      "internal_state": "target-specific solution mapping exists; dedicated synthetic expansion still required",
+      "noncontact_evidence_plan": ["SEC ERP/interface disclosures", "DOE/utility/public equipment records where entity-specific", "public electrical equipment standards applicability", "independent ERP/source-interface analogs", "official business route verification"],
+      "next_actions": ["build dedicated ERP/source-interface/privileged-access stress suite", "collect independent energy-equipment provenance analog evidence", "verify official Pioneer business route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-027",
+      "organization": "VSE Corporation / PAG / NorthStar / Aero 3",
+      "priority": 93,
+      "wave": 2,
+      "internal_state": "target-specific solution mapping exists; dedicated synthetic expansion still required",
+      "noncontact_evidence_plan": ["SEC acquisition/MRO integration records", "FAA public repair-station/certification records where relevant", "DoD public contract records", "independent MRO/configuration/repair traceability analogs", "official supplier/business route verification"],
+      "next_actions": ["build 61-location MRO/distribution evidence stress suite", "map public repair/configuration provenance requirements", "verify official VSE/PAG route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-016",
+      "organization": "BOXABL Inc.",
+      "priority": 93,
+      "wave": 2,
+      "internal_state": "target-specific solution mapping exists; dedicated synthetic expansion still required",
+      "noncontact_evidence_plan": ["SEC/post-combination public disclosures", "building-code/ICC/public certification records where entity-specific", "public manufacturing/inventory material", "independent modular-manufacturing traceability analogs", "official business route verification"],
+      "next_actions": ["build dedicated manufacturing/inventory/role-access stress suite", "separate building-code/certification evidence from financial-control evidence", "verify official BOXABL business route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-037",
+      "organization": "ADTRAN Holdings / Adtran Networks",
+      "priority": 93,
+      "wave": 2,
+      "internal_state": "45-case Round 6 stress includes this target; bounded partner-pilot package validated",
+      "noncontact_evidence_plan": ["SEC group/control disclosures", "FCC/public telecom records where product/entity-specific", "public optical/network standards applicability", "independent network configuration/change analogs", "official corporate/supplier route verification"],
+      "next_actions": ["build independent cross-entity configuration contradiction benchmark", "map public telecom/security boundaries without product-defect inference", "verify official ADTRAN supplier/business route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-038",
+      "organization": "Super Micro Computer / Supermicro",
+      "priority": 92,
+      "wave": 3,
+      "internal_state": "45-case Round 6 stress includes this target; bounded partner-pilot package validated",
+      "noncontact_evidence_plan": ["SEC ITGC/manufacturing disclosures", "public manufacturing expansion and product documentation", "NIST/security and data-center standards applicability mapping", "independent server/rack/configuration public analogs", "official supplier/business route verification"],
+      "next_actions": ["build independent rack/component/configuration mismatch benchmark", "map cooling/firmware/acceptance boundaries without performance claims", "verify official Supermicro supplier route without outreach"],
+      "external_gate_closures": 0
+    },
+    {
+      "id": "WS-MKT-039",
+      "organization": "Cyngn Inc.",
+      "priority": 91,
+      "wave": 3,
+      "internal_state": "45-case Round 6 stress includes this target; bounded partner-pilot package validated",
+      "noncontact_evidence_plan": ["SEC OEM/supplier/deployment disclosures", "public industrial autonomy deployment material", "NHTSA/OSHA/local regulatory records only where directly applicable", "independent sensor/calibration/configuration analogs", "official business route verification"],
+      "next_actions": ["build independent calibration-freshness/configuration benchmark", "map ODD/lost-link/fail-safe authority boundaries", "verify official Cyngn business route without outreach"],
+      "external_gate_closures": 0
+    }
+  ],
+  "execution_rule": "Precontact work may improve preparedness, falsification quality and source coverage but must not change any external gate to verified, exceed the 55% evidence ceiling, or authorize contact. Target-authorized evidence remains mandatory for the 98.7 contact gate.",
+  "claims_boundary": "This matrix is a research and evidence-acquisition plan. It does not assert that any target has an operational defect beyond the exact public evidence cited elsewhere, that Worldshepherd will remediate it, or that any contact, partnership, eligibility, compliance, safety or commercial outcome is authorized or likely."
+}

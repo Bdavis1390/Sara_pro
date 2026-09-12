@@ -1,0 +1,139 @@
+{
+  "schema": "WS-ALTI-M1-MSZ-PRIME-VALIDATION-V1",
+  "as_of": "2026-09-04",
+  "platform_name": "WS-AlTi M1-MSZ-Prime",
+  "platform_thesis": "Programmable deposited aluminum meta-alloy platform; current evidence is IP/design-stage until physical coupon evidence exists.",
+  "source_basis": "The technical-commercial package identifies filing, modeling, coupon validation and partner interest as sequential value-unlock steps.",
+  "current_claim_state": {
+    "commercial_value_class": "IP_STAGE",
+    "physical_material_performance": "NOT_YET_VALIDATED_BY_THIS_CONTRACT",
+    "programmable_deposited_behavior": "HYPOTHESIS_REQUIRES_COUPON_VALIDATION",
+    "partner_interest": "NOT_ESTABLISHED_BY_INTERNAL_WORK",
+    "qualification_or_certification": "NOT_CLAIMED"
+  },
+  "stages": [
+    {
+      "stage_id": "A0_IP_AND_DESIGN_CUSTODY",
+      "objective": "Freeze design identity, versioned claims boundary and provenance before downstream testing.",
+      "required_evidence": [
+        "design_id",
+        "design_version",
+        "composition_or_zone_definition_digest",
+        "process-intent digest",
+        "inventorship/IP review state",
+        "claims boundary"
+      ],
+      "closes": "DESIGN_CUSTODY_ONLY",
+      "does_not_close": ["material performance", "printability", "coupon repeatability", "partner validation"]
+    },
+    {
+      "stage_id": "A1_MODELING",
+      "objective": "Generate reproducible computational predictions with explicit assumptions and uncertainty before coupon manufacture.",
+      "required_evidence": [
+        "model identifier and version",
+        "input material/property sources",
+        "process parameter envelope",
+        "prediction outputs",
+        "sensitivity or uncertainty analysis",
+        "negative or infeasible regions retained"
+      ],
+      "closes": "SIMULATED_ONLY",
+      "does_not_close": ["physical material performance", "manufacturing qualification", "partner validation"]
+    },
+    {
+      "stage_id": "A2_COUPON_BUILD",
+      "objective": "Manufacture traceable coupons from a frozen design/process record.",
+      "required_evidence": [
+        "coupon_id",
+        "machine_id",
+        "build file digest",
+        "feedstock lot identifiers",
+        "process log digest",
+        "as-built geometry record",
+        "deviation/nonconformance log"
+      ],
+      "closes": "PHYSICAL_COUPON_EXISTS",
+      "does_not_close": ["target properties achieved", "repeatability", "qualification"]
+    },
+    {
+      "stage_id": "A3_COUPON_CHARACTERIZATION",
+      "objective": "Measure predeclared properties on traceable coupons using calibrated methods.",
+      "required_measurement_families": [
+        "chemistry/composition verification",
+        "microstructure characterization",
+        "density/porosity",
+        "mechanical response appropriate to intended use",
+        "thermal response appropriate to intended use",
+        "electrical or electromagnetic response only when claimed for that design",
+        "dimensional/process quality"
+      ],
+      "required_evidence": [
+        "test method",
+        "instrument/equipment identity",
+        "calibration state",
+        "specimen/coupon linkage",
+        "raw data digest",
+        "uncertainty statement",
+        "all failures and nulls retained"
+      ],
+      "closes": "INTERNAL_PHYSICAL_COUPON_EVIDENCE",
+      "does_not_close": ["production qualification", "partner replication", "certification"]
+    },
+    {
+      "stage_id": "A4_REPEATABILITY_AND_PROCESS_WINDOW",
+      "objective": "Demonstrate repeatability across independently built coupons and map failure boundaries.",
+      "minimum_independent_builds": 3,
+      "minimum_coupons_per_build": 3,
+      "required_evidence": [
+        "between-build variation",
+        "within-build variation",
+        "process-window excursions",
+        "failure modes",
+        "predeclared acceptance criteria"
+      ],
+      "closes": "BOUNDED_INTERNAL_REPEATABILITY",
+      "does_not_close": ["external replication", "production qualification", "certification"]
+    },
+    {
+      "stage_id": "A5_EXTERNAL_PARTNER_REPLICATION",
+      "objective": "Obtain independent or partner-run replication under written scope with digest-bound evidence.",
+      "required_evidence": [
+        "external organization identity",
+        "written test scope",
+        "independence/conflict disclosure",
+        "external build/test authority",
+        "raw data digests",
+        "methods and calibration",
+        "adverse/inconclusive results retained"
+      ],
+      "self_close_allowed": false,
+      "closes": "PARTNER_VALIDATION_ONLY_WITH_VALID_EXTERNAL_EVIDENCE",
+      "does_not_close": ["regulatory approval", "airworthiness", "production qualification unless explicitly performed"]
+    }
+  ],
+  "programmability_evidence_rule": {
+    "required_for_claim": [
+      "at least two intentionally different programmed material/process states",
+      "measured state-to-property difference exceeding stated uncertainty",
+      "repeatability across independent builds",
+      "configuration/provenance linkage from command or zone definition to measured property"
+    ],
+    "internal_modeling_alone_sufficient": false
+  },
+  "production_transition_gates": [
+    "feedstock specification and lot acceptance",
+    "machine/process configuration control",
+    "inspection and nonconformance workflow",
+    "repeatability/capability evidence",
+    "application-specific allowables or design values where required",
+    "partner/customer requirements",
+    "applicable standards and legal/IP review"
+  ],
+  "commercialization_boundary": {
+    "partner_interest_is_evidence_of_market_interest_only": true,
+    "partner_interest_is_not_material_validation": true,
+    "valuation_must_not_be_upgraded_by_internal_readiness_alone": true,
+    "licensing_or_investor_material_must_state_evidence_class": true
+  },
+  "contact_authority_created": false
+}

@@ -1,0 +1,52 @@
+name: ION-EP Component Plasma Model
+
+on:
+  push:
+    paths:
+      - 'ion_ep/component_plasma_model.py'
+      - '.github/workflows/ion-ep-component-plasma.yml'
+  pull_request:
+    paths:
+      - 'ion_ep/component_plasma_model.py'
+      - '.github/workflows/ion-ep-component-plasma.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  component-plasma-model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Execute bounded component/plasma model
+        run: python ion_ep/component_plasma_model.py
+      - name: Verify physics and claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('ion_ep/evidence/component-plasma-report.json')
+          r=json.loads(p.read_text())
+          assert r['schema']=='WS-ION-EP-0D-COMPONENT-PLASMA-V1'
+          assert r['evidence_class']=='SIMULATED ONLY'
+          assert r['result']=='PASS'
+          assert all(r['acceptance_sanity'].values())
+          assert r['results']['extraction_loading_fraction'] <= 1.0
+          assert 'does not establish calibrated thrust' in r['claims_boundary']
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum ion_ep/component_plasma_model.py ion_ep/evidence/component-plasma-report.json | sort > ion_ep/evidence/SHA256SUMS.txt
+          cat ion_ep/evidence/SHA256SUMS.txt
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ion-ep-component-plasma-evidence
+          path: ion_ep/evidence/
+          retention-days: 90

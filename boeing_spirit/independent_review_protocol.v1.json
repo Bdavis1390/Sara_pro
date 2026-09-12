@@ -1,0 +1,89 @@
+{
+  "schema": "WS-BOEING-SPIRIT-INDEPENDENT-REVIEW-PROTOCOL-V1",
+  "as_of": "2026-09-03",
+  "status": "INTERNAL PREPARATION ONLY — NO INDEPENDENT REVIEW PERFORMED",
+  "purpose": "Define the evidence, independence, reproducibility and disposition requirements that a future qualified reviewer must satisfy before independent_review may close for WS-BOEING-01.",
+  "reviewer_independence_requirements": [
+    "reviewer is not the author/operator of the evaluated Worldshepherd implementation",
+    "financial, employment, subcontract, authorship and other material conflicts are disclosed",
+    "reviewer can issue an adverse, qualified or null conclusion without approval from Worldshepherd",
+    "reviewer receives immutable/digest-bound evidence inputs rather than curated screenshots alone",
+    "reviewer identity, qualifications, organization and review date are retained",
+    "reviewer scope and limitations are written before review begins"
+  ],
+  "minimum_review_package": [
+    "frozen source revision/commit SHA",
+    "software bill of materials or dependency manifest appropriate to the reviewed implementation",
+    "machine-readable configuration and claims-boundary files",
+    "input data provenance, authorization and dataset digests",
+    "predeclared metrics and acceptance thresholds",
+    "baseline and intervention definitions if partner effects are evaluated",
+    "raw or partner-authorized ground truth sufficient to reproduce reported metrics",
+    "CI/workflow definitions and retained evidence artifacts",
+    "analysis scripts/notebooks or equivalent executable method",
+    "known limitations, adverse results and null results",
+    "security/data-handling scope relevant to the reviewed data",
+    "partner-supplied requirement/acceptance authority for any partner-specific conclusion"
+  ],
+  "review_tests": [
+    {
+      "id": "IR-01",
+      "test": "Reproduce synthetic quality, APQP/PPAP, program-risk and change-propagation results from frozen source and fixtures.",
+      "required_output": "independent hashes, result comparison and discrepancy log"
+    },
+    {
+      "id": "IR-02",
+      "test": "Reproduce public manufacturing-analog results from source URLs/dataset digests without using retained metric outputs as inputs.",
+      "required_output": "dataset digest match, independently generated confusion metrics and discrepancies"
+    },
+    {
+      "id": "IR-03",
+      "test": "Audit train/test separation, missing-data handling, class-imbalance reporting and metric selection for leakage or favorable-metric substitution.",
+      "required_output": "methodological audit finding"
+    },
+    {
+      "id": "IR-04",
+      "test": "Verify external Boeing/Spirit partner claims only against partner-authorized evidence and applicable authority/requirements.",
+      "required_output": "claim-by-claim evidence matrix with unsupported claims rejected"
+    },
+    {
+      "id": "IR-05",
+      "test": "Verify contact-gate calculation, hard caps and required external states from raw gate inputs.",
+      "required_output": "independent recomputation and gate disposition"
+    },
+    {
+      "id": "IR-06",
+      "test": "Review security/data-boundary applicability and confirm no controlled-information authorization is inferred from public-source preparation.",
+      "required_output": "security-scope qualification or rejection"
+    }
+  ],
+  "permitted_dispositions": [
+    "PASS_WITHIN_STATED_SCOPE",
+    "PASS_WITH_QUALIFICATIONS",
+    "INCONCLUSIVE",
+    "FAIL",
+    "REJECT_UNSUPPORTED_CLAIM"
+  ],
+  "closure_requirements": [
+    "reviewer independence requirements satisfied",
+    "minimum review package complete",
+    "all material discrepancies resolved or explicitly retained as qualifications",
+    "partner-specific conclusions use partner-authorized evidence",
+    "review disposition is signed/attributed and date-stamped",
+    "review report and evidence digests are retained",
+    "claims are bounded to the exact reviewed scope",
+    "no unresolved FAIL or REJECT_UNSUPPORTED_CLAIM disposition is represented as a closed validation gate"
+  ],
+  "automatic_nonclosure_conditions": [
+    "review performed only by Worldshepherd author/operator",
+    "review based only on synthetic/public analog evidence for a Boeing/Spirit production-effect claim",
+    "missing partner authorization for partner-specific data",
+    "unresolved provenance/digest mismatch",
+    "unresolved data leakage or ground-truth ambiguity",
+    "reviewer conflict not disclosed",
+    "reviewer cannot issue an adverse conclusion independently",
+    "review scope is narrower than the claim being made"
+  ],
+  "contact_gate_effect": "NONE. Preparing this protocol does not satisfy independent_review. That gate remains missing until a qualified independent reviewer actually completes and retains the required review against the relevant evidence.",
+  "claims_boundary": "This protocol is not an independent review and does not establish independent replication, Boeing/Spirit validation, production effectiveness, security/compliance approval, certification, adoption, savings, defect reduction, or remediation probability."
+}

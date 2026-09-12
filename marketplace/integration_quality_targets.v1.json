@@ -1,0 +1,245 @@
+{
+  "schema": "WS-MARKETPLACE-INTEGRATION-QUALITY-TARGETS-V1",
+  "as_of": "2026-09-03",
+  "score_kind": "market_prioritization_not_probability_of_remediation_or_award",
+  "default_contact_threshold_pct": 98.7,
+  "default_precontact_external_evidence_cap_pct": 55.0,
+  "routing_policy": "Fold marketplace target development into the five existing active Worldshepherd task lanes; do not create a sixth ChatGPT automation for this scan.",
+  "contact_policy": "Public evidence may establish a credible need/fit hypothesis but cannot establish target-specific remediation probability. Except for previously existing relationship records, newly discovered targets remain DO_NOT_CONTACT until a target-specific fail-closed evidence gate is created and satisfies the user's 98.7 threshold with external evidence. Existing stricter holds remain controlling.",
+  "task_routes": [
+    "USPTO DOE WEF BDS + Boeing/Spirit Scan",
+    "Weekly Brief, Replies + Boeing/Spirit",
+    "Defense & Dual-Use + Boeing/Spirit Watch",
+    "Pentagon UAP + Boeing/Spirit Aerospace Lessons",
+    "Revenue, Partner Replies + Boeing/Spirit Oversight"
+  ],
+  "targets": [
+    {
+      "id": "WS-MKT-001",
+      "organization": "AeroVironment / BlueHalo",
+      "sector": "aerospace_defense_autonomy",
+      "signal_class": "CONFIRMED_ACQUISITION_CONTROL_STRESS",
+      "market_priority_score": 97,
+      "observed_signal": "AeroVironment completed the BlueHalo acquisition in 2025; 2026 filings retained material weaknesses involving BlueHalo IT general controls, user/privileged access and segregation of duties, and the company also reported a separate goodwill-control restatement weakness.",
+      "solution_wedge": ["SARA governed change/access evidence", "PRIME authorization and separation-of-duties controls", "ECHO provenance", "OVERWATCH cross-enterprise control observability", "supplier/manufacturing evidence integration"],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1368622/000110465926078906/avav-20260430x10k.htm",
+        "https://suppliers.avinc.com/"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strongest newly identified account because the need signal directly overlaps Worldshepherd access/change/provenance controls and AeroVironment maintains a public potential-supplier portal. Public supplier access does not establish interest or approval."
+    },
+    {
+      "id": "WS-MKT-002",
+      "organization": "Air Industries Group / Tenax Aerospace",
+      "sector": "aerospace_defense_manufacturing",
+      "signal_class": "CONFIRMED_PENDING_MERGER_PLUS_CONTROL_STRESS",
+      "market_priority_score": 96,
+      "observed_signal": "Air Industries is pursuing a strategic combination with Tenax Aerospace while reporting an unremediated IT-control material weakness involving segregation of duties, data validation, user access and program change management. Air Industries manufactures flight-critical aerospace/defense components.",
+      "solution_wedge": ["pre/post-merger control evidence graph", "configuration and supplier-quality lineage", "access/change-management evidence", "flight-critical manufacturing provenance", "integration readiness and rollback evidence"],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1009891/000121390026035731/ea0282298-10k_airindustries.htm",
+        "https://airindustriesgroup.gcs-web.com/news-releases/news-release-details/tenax-aerospace-and-air-industries-group-announce-strategic",
+        "https://airindustriesgroup.gcs-web.com/ir-resources/investor-faqs"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Very high fit: aerospace/defense manufacturing plus live merger plus IT/data/change-control weakness. Business-development route is public but must not be used before target-specific readiness gate closure."
+    },
+    {
+      "id": "WS-MKT-003",
+      "organization": "Airbus / former Spirit AeroSystems sites",
+      "sector": "commercial_aerospace_aerostructures",
+      "signal_class": "CONFIRMED_SPIRIT_INTEGRATION_PLUS_QUALITY_SIGNAL",
+      "market_priority_score": 95,
+      "observed_signal": "Airbus completed acquisition of multiple former Spirit industrial assets supporting A220, A320 and A350 programs and is integrating more than 4,000 employees/sites. In September 2026 Airbus temporarily slowed A330 deliveries after a stray tool was discovered in a tail structure, reinforcing a bounded FOD/tool-control quality signal.",
+      "solution_wedge": ["aerostructure configuration lineage", "tool/FOD custody evidence", "multi-site work-transfer governance", "supplier/process-change propagation", "inspection and acceptance provenance"],
+      "public_sources": [
+        "https://www.airbus.com/en/newsroom/press-releases/2025-12-airbus-completes-acquisition-of-spirit-aerosystems-sites",
+        "https://www.reuters.com/business/aerospace-defense/airbus-slows-a330-deliveries-after-discovering-quality-flaw-2026-09-03/"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Literal sister integration to Boeing/Spirit. The A330 tool event must not be generalized into a systemic Airbus failure claim."
+    },
+    {
+      "id": "WS-MKT-004",
+      "organization": "American Superconductor / Comtrafo",
+      "sector": "energy_grid_transformer_manufacturing",
+      "signal_class": "CONFIRMED_ACQUISITION_CONTROL_STRESS",
+      "market_priority_score": 92,
+      "observed_signal": "AMSC reported a material weakness around initial purchase accounting and continuing fair-value review associated with the Comtrafo acquisition and is implementing more precise acquisition-review controls.",
+      "solution_wedge": ["operational acquisition evidence graph", "manufacturing/supplier provenance", "contract-to-program assumption lineage", "change/approval traceability", "quality and delivery-risk observability"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/880807/000143774926025922/amsc20260630_10q.htm"],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Worldshepherd scope must remain operational evidence/control support only; no accounting, valuation, audit or fair-value opinions."
+    },
+    {
+      "id": "WS-MKT-005",
+      "organization": "Stratasys / Markforged",
+      "sector": "additive_manufacturing_aerospace_defense",
+      "signal_class": "PENDING_ACQUISITION_WITH_SELLER_INTEGRATION_STRESS",
+      "market_priority_score": 92,
+      "observed_signal": "Stratasys agreed in May 2026 to acquire Markforged's FFF business for $42.5 million. Seller Nano Dimension previously reported acquisition-accounting control weakness, integration difficulty and a full $40.4 million impairment of Markforged FFF goodwill, making the transition a strong pre-integration evidence-governance case without implying Stratasys has inherited those deficiencies.",
+      "solution_wedge": ["additive-manufacturing digital thread", "product/process/configuration custody", "pre-close data/control mapping", "quality evidence portability", "supplier and material provenance"],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1517396/000162828026038304/ssysform6-kxacquisitionofm.htm",
+        "https://www.sec.gov/Archives/edgar/data/1643303/000119312526338523/nndm-20260630.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Exceptional fit with WS-AlTi/additive evidence architecture, but acquisition has not yet closed and seller weaknesses are not Stratasys weaknesses."
+    },
+    {
+      "id": "WS-MKT-006",
+      "organization": "IonQ / SkyWater Technology / Fab 25",
+      "sector": "quantum_semiconductor_manufacturing",
+      "signal_class": "COMPLETED_VERTICAL_INTEGRATION_WITH_PREEXISTING_FAB_CONTROL_STRESS",
+      "market_priority_score": 91,
+      "observed_signal": "IonQ completed the SkyWater acquisition on July 31, 2026. Before closing, SkyWater disclosed material weaknesses involving revenue-accounting IT controls and Fab 25 account-reconciliation/business-process controls following its Fab 25 acquisition and ERP migration.",
+      "solution_wedge": ["semiconductor/fab configuration provenance", "change/access evidence", "foundry process lineage", "quantum-to-fab digital thread", "controlled integration evidence"],
+      "public_sources": [
+        "https://www.ionq.com/news/ionq-completes-acquisition-of-skywater-technology",
+        "https://www.sec.gov/Archives/edgar/data/1819974/000181997426000014/skyt-20260329.htm"
+      ],
+      "contact_state": "INBOUND_ONLY_EXISTING_CONTROL_HOLD",
+      "precontact_cap_pct": 55.0,
+      "notes": "An existing IonQ/Vector Atomic outreach-control incident already imposes an inbound-only hold. Do not create a second IonQ contact stream. This target is intelligence/solution-development only until that hold is explicitly resolved."
+    },
+    {
+      "id": "WS-MKT-007",
+      "organization": "Siemens Energy / Siemens Gamesa",
+      "sector": "energy_wind_global_supply_chain",
+      "signal_class": "CONFIRMED_SUPPLIER_SYSTEM_TRANSFORMATION",
+      "market_priority_score": 90,
+      "observed_signal": "Siemens Energy states its One Supplier Portal is intended to replace fragmented supplier systems with a single platform spanning procurement, logistics, quality and compliance while the company continues supplier/process modernization across Siemens Gamesa and other business areas.",
+      "solution_wedge": ["supplier evidence federation", "quality-document provenance", "cross-system workflow observability", "change and qualification lineage", "risk-based supplier monitoring"],
+      "public_sources": [
+        "https://www.siemens-energy.com/global/en/home/supplier/digital-procurement-tools/osp-portal.html",
+        "https://www.siemens-energy.com/us/en/home/supplier/supplier-information.html"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strong platform-fragmentation fit. Do not imply Worldshepherd should replace OSP; position only as bounded governance/evidence interoperability around existing systems."
+    },
+    {
+      "id": "WS-MKT-008",
+      "organization": "Bombardier / MHI Canada Aerospace",
+      "sector": "commercial_aerospace_aerostructures",
+      "signal_class": "PENDING_VERTICAL_INTEGRATION_WATCH",
+      "market_priority_score": 89,
+      "observed_signal": "Bombardier agreed in September 2026 to acquire MHI Canada Aerospace assets in Mississauga, adding approximately 750 employees and aerostructure manufacturing capabilities supporting Global aircraft wings.",
+      "solution_wedge": ["day-zero/day-100 integration controls", "wing/aerostructure configuration lineage", "work-transfer evidence", "supplier-to-internal transition governance", "quality/readiness dependency invalidation"],
+      "public_sources": [
+        "https://www.mhi.com/news/26090201.html",
+        "https://www.reuters.com/legal/transactional/bombardier-buy-canadian-factory-supplier-mitsubishi-heavy-industries-2026-09-01/"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Pre-integration opportunity signal, not distress. No claim that quality problems exist."
+    },
+    {
+      "id": "WS-MKT-009",
+      "organization": "Moog — Commercial Aircraft",
+      "sector": "aerospace_components_aftermarket",
+      "signal_class": "CONFIRMED_CONTROL_STRESS",
+      "market_priority_score": 88,
+      "observed_signal": "Moog continues to report a material weakness involving completeness/accuracy of key inputs for distinct long-term aftermarket service contracts in Commercial Aircraft; remediation includes access-rights, data-control and change-management improvements. Moog also operates detailed supplier nonconformance/change/corrective-action portals.",
+      "solution_wedge": ["contract/input evidence lineage", "data/change/access governance", "supplier NCR/CAPA provenance", "configuration and service-contract traceability", "audit-ready evidence retrieval"],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/67887/000162828026051294/mog-20260627.htm",
+        "https://www.moog.com/suppliers/partner-tipqa.html"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Direct software-governance fit, but financial reporting/accounting conclusions remain out of scope."
+    },
+    {
+      "id": "WS-MKT-010",
+      "organization": "L3Harris Missile Solutions",
+      "sector": "defense_missile_propulsion_manufacturing",
+      "signal_class": "CONFIRMED_CONSOLIDATION_AND_CAPACITY_SCALE",
+      "market_priority_score": 88,
+      "observed_signal": "L3Harris created Missile Solutions in early 2026 by combining missile capabilities including legacy Aerojet Rocketdyne and closed a $1 billion government investment to expand/modernize facilities and increase production capacity.",
+      "solution_wedge": ["multi-site production evidence", "supplier/configuration provenance", "capacity-change governance", "mission-assurance evidence", "quality and work-transfer observability"],
+      "public_sources": [
+        "https://www.l3harris.com/newsroom/press-release/2026/01/l3harris-accelerates-arsenal-freedom-creation-new-missile-solutions",
+        "https://www.l3harris.com/newsroom/press-release/2026/04/l3harris-closes-1b-investment-department-war-missile-solutions"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Scaling/integration signal, not public evidence of control failure. Defense/security/export constraints are high."
+    },
+    {
+      "id": "WS-MKT-011",
+      "organization": "RTX / Pratt & Whitney",
+      "sector": "aerospace_engines_mro_supply_chain",
+      "signal_class": "CONFIRMED_PRODUCT_SUPPORT_AND_SUPPLIER_QUALITY_STRESS",
+      "market_priority_score": 87,
+      "observed_signal": "Pratt & Whitney GTF availability/maintenance disruption is improving but remains material for larger A320neo fleets; RTX publicly maintains APQP/PPAP, flight-safety-part, supplier-quality and process-control requirements.",
+      "solution_wedge": ["APQP/PPAP evidence lineage", "MRO event provenance", "supplier process-change propagation", "flight-safety-part evidence custody", "quality action observability"],
+      "public_sources": [
+        "https://www.rtx.com/suppliers/united-technologies-suppliers/united-technologies-asqrd",
+        "https://www.reuters.com/business/aircraft-lessor-azorra-sees-engine-issues-improving-strong-demand-regional-jets-2026-09-03/"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Do not imply Worldshepherd can remediate GTF engineering defects; initial wedge is supplier/MRO evidence governance only."
+    },
+    {
+      "id": "WS-MKT-012",
+      "organization": "Eastern Company / Sungear / Crown Precision",
+      "sector": "aerospace_defense_precision_manufacturing",
+      "signal_class": "COMPLETED_ACQUISITION_PREINTEGRATION_WATCH",
+      "market_priority_score": 84,
+      "observed_signal": "Eastern acquired Sungear and Crown Precision in June 2026 to establish a fourth operating platform focused on aerospace/defense precision manufacturing.",
+      "solution_wedge": ["platform integration evidence", "precision-manufacturing configuration lineage", "supplier/quality data federation", "cross-company control mapping", "production readiness provenance"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/31107/000165495426005609/eml_ex991.htm"],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Pre-integration watch; no public distress/control-failure claim."
+    },
+    {
+      "id": "WS-MKT-013",
+      "organization": "Super Micro Computer",
+      "sector": "ai_compute_hardware_supply_chain",
+      "signal_class": "CONFIRMED_ITGC_AND_SUPPLIER_RISK",
+      "market_priority_score": 82,
+      "observed_signal": "Super Micro's 2026 Form 10-K reports an unremediated ITGC material weakness around access monitoring and notes significant dependence on suppliers/contract manufacturers meeting quality and delivery requirements.",
+      "solution_wedge": ["access/change evidence", "supplier-risk provenance", "configuration and build traceability", "data-integrity observability", "governed exception handling"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/1375365/000137536526000022/smci-20260630.htm"],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Adjacent rather than Boeing-like acquisition case; retained because governance/supplier-data pain is explicit."
+    },
+    {
+      "id": "WS-MKT-014",
+      "organization": "Solstice Advanced Materials / Element Solutions",
+      "sector": "specialty_materials_semiconductor_supply_chain",
+      "signal_class": "LARGE_PRE_CLOSE_INTEGRATION_WATCH",
+      "market_priority_score": 80,
+      "observed_signal": "Solstice announced a $14.5 billion agreement to acquire Element Solutions, creating a large specialty-materials/electronics-chemicals integration expected to close in the first half of 2027.",
+      "solution_wedge": ["pre-close requirement/data map", "quality/regulatory evidence federation", "supplier/material provenance", "integration change governance", "post-close value-realization evidence"],
+      "public_sources": ["https://www.reuters.com/business/honeywell-spinoff-solstice-buy-element-solutions-145-billion-2026-07-06/"],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "No distress signal yet; keep as predictive integration watch rather than active remediation target."
+    },
+    {
+      "id": "WS-MKT-015",
+      "organization": "Diodes Incorporated / ElevATE Semiconductor",
+      "sector": "semiconductor_test_analog_mixed_signal",
+      "signal_class": "PRE_CLOSE_INTEGRATION_WATCH",
+      "market_priority_score": 78,
+      "observed_signal": "Diodes announced a $250 million acquisition of ElevATE Semiconductor intended to combine ATE IC technology with Diodes manufacturing scale and global commercial reach.",
+      "solution_wedge": ["design-to-manufacturing evidence lineage", "ATE/product configuration governance", "supplier/foundry provenance", "integration requirement traceability"],
+      "public_sources": ["https://www.sec.gov/Archives/edgar/data/29002/000119312526302584/diod-ex99_1.htm"],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "No public control/quality distress signal; predictive integration target only."
+    }
+  ],
+  "claims_boundary": "The registry is a public-source market intelligence and solution-development artifact. Scores rank attention only. They are not probabilities of remediation success, contracting, adoption, partnership, savings, compliance or award. A public acquisition, material weakness, quality incident, supplier portal, transformation program or hiring signal does not establish root cause, customer interest, Worldshepherd fitness for production, or permission to contact."
+}

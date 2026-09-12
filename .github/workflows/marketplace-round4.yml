@@ -1,0 +1,76 @@
+name: Marketplace Round 4 Validation
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'marketplace/market_scan_round4_20260903.json'
+      - 'marketplace/validate_marketplace_round4.py'
+      - '.github/workflows/marketplace-round4.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'marketplace/market_scan_round4_20260903.json'
+      - 'marketplace/validate_marketplace_round4.py'
+      - '.github/workflows/marketplace-round4.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-round4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_marketplace_round4.py
+
+      - name: Validate marketplace round4 registry
+        run: >-
+          python marketplace/validate_marketplace_round4.py
+          --registry marketplace/market_scan_round4_20260903.json
+          --output marketplace/evidence/marketplace-round4-report.json
+
+      - name: Verify fail-closed state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('marketplace/evidence/marketplace-round4-report.json').read_text())
+          assert r['result'] == 'PASS'
+          assert r['target_count'] == 5
+          assert r['active_solution_development_target_count'] == 3
+          assert r['watch_only_target_count'] == 2
+          assert len(r['high_priority_90_plus_ids']) >= 4
+          assert r['new_contact_authorizations'] == 0
+          assert r['default_contact_threshold_pct'] == 98.7
+          assert r['default_precontact_cap_pct'] == 55.0
+          print(json.dumps(r, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: |
+          sha256sum marketplace/evidence/marketplace-round4-report.json > marketplace/evidence/MARKETPLACE_ROUND4_SHA256SUMS.txt
+          cat marketplace/evidence/MARKETPLACE_ROUND4_SHA256SUMS.txt
+
+      - name: Upload marketplace round4 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-round4-validation
+          path: |
+            marketplace/evidence/marketplace-round4-report.json
+            marketplace/evidence/MARKETPLACE_ROUND4_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

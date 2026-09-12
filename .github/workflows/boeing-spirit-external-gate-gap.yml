@@ -1,0 +1,78 @@
+name: Boeing Spirit External Gate Gap
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/confidence.v1.json'
+      - 'boeing_spirit/external_gate_gap_matrix.v1.json'
+      - 'boeing_spirit/validate_external_gate_gap.py'
+      - '.github/workflows/boeing-spirit-external-gate-gap.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/confidence.v1.json'
+      - 'boeing_spirit/external_gate_gap_matrix.v1.json'
+      - 'boeing_spirit/validate_external_gate_gap.py'
+      - '.github/workflows/boeing-spirit-external-gate-gap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  external-gate-gap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile validator
+        run: python -m py_compile boeing_spirit/validate_external_gate_gap.py
+
+      - name: Validate external-gate dependency matrix
+        run: >-
+          python boeing_spirit/validate_external_gate_gap.py
+          --matrix boeing_spirit/external_gate_gap_matrix.v1.json
+          --confidence boeing_spirit/confidence.v1.json
+          --output boeing_spirit/evidence/external-gate-gap-report.json
+
+      - name: Verify pre-contact barrier remains fail-closed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/external-gate-gap-report.json').read_text())
+          assert r['result'] == 'PASS'
+          assert r['required_gate_count'] == 5
+          assert r['active_pre_contact_hard_cap_pct'] == 55.0
+          assert r['target_contact_threshold_pct'] == 98.7
+          assert r['pre_contact_threshold_reachable_under_current_policy'] is False
+          assert r['contact_gate_effect'] == 'NONE'
+          assert 'does not close any Boeing/Spirit external gate' in r['claims_boundary']
+          print(json.dumps(r, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: |
+          sha256sum boeing_spirit/evidence/external-gate-gap-report.json > boeing_spirit/evidence/EXTERNAL_GATE_GAP_SHA256SUMS.txt
+          cat boeing_spirit/evidence/EXTERNAL_GATE_GAP_SHA256SUMS.txt
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-external-gate-gap
+          path: |
+            boeing_spirit/evidence/external-gate-gap-report.json
+            boeing_spirit/evidence/EXTERNAL_GATE_GAP_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

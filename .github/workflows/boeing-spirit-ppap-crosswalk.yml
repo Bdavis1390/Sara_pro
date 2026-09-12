@@ -1,0 +1,85 @@
+name: Boeing Spirit APQP PPAP Crosswalk
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/public_quality_crosswalk.v1.json'
+      - 'boeing_spirit/synthetic_ppap_crosswalk_pilot.py'
+      - '.github/workflows/boeing-spirit-ppap-crosswalk.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/public_quality_crosswalk.v1.json'
+      - 'boeing_spirit/synthetic_ppap_crosswalk_pilot.py'
+      - '.github/workflows/boeing-spirit-ppap-crosswalk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ppap-crosswalk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile pilot
+        run: python -m py_compile boeing_spirit/synthetic_ppap_crosswalk_pilot.py
+
+      - name: Validate public crosswalk structure
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d = json.loads(Path('boeing_spirit/public_quality_crosswalk.v1.json').read_text())
+          assert d['schema'] == 'WS-BOEING-SPIRIT-PUBLIC-QUALITY-CROSSWALK-V1'
+          assert len(d['sources']) >= 4
+          elements = {row['element'] for row in d['q017_ppap_artifacts']}
+          assert elements == {1,2,3,4,5,6,7,8,9,11}
+          assert len(d['sqs_crosswalk']) == 3
+          assert 'not a Boeing-approved interpretation' in d['claims_boundary']
+          PY
+
+      - name: Run synthetic APQP PPAP crosswalk pilot
+        run: >-
+          python boeing_spirit/synthetic_ppap_crosswalk_pilot.py
+          --output boeing_spirit/evidence/synthetic-ppap-crosswalk-report.json
+
+      - name: Verify evidence boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/synthetic-ppap-crosswalk-report.json').read_text())
+          assert r['result'] == 'PASS'
+          assert r['fixture_count'] >= 13
+          assert all(row['pass'] for row in r['results'])
+          b = r['claims_boundary']
+          assert 'not a Boeing-approved interpretation' in b
+          assert 'does not establish AS9145/AS9100/D6-82479/Q017 compliance' in b
+          print(json.dumps({'result': r['result'], 'fixture_count': r['fixture_count'], 'fixtures_sha256': r['fixtures_sha256']}, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: sha256sum boeing_spirit/evidence/synthetic-ppap-crosswalk-report.json > boeing_spirit/evidence/PPAP_CROSSWALK_SHA256SUMS.txt
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-ppap-crosswalk
+          path: |
+            boeing_spirit/evidence/synthetic-ppap-crosswalk-report.json
+            boeing_spirit/evidence/PPAP_CROSSWALK_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error
