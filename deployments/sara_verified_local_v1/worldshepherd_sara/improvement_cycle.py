@@ -126,6 +126,23 @@ def proposal_digest(proposal: ImprovementProposal) -> str:
     return canonical_digest(proposal.model_dump(mode="json"))
 
 
+def _validated_update(
+    proposal: ImprovementProposal,
+    **updates: Any,
+) -> ImprovementProposal:
+    """Reconstruct a proposal so every transition re-runs model validators.
+
+    Pydantic's model_copy(update=...) does not guarantee update revalidation.
+    Governance transitions therefore reconstruct from the complete payload and
+    fail closed if either the existing object or the update violates WS-RI
+    invariants.
+    """
+
+    payload = proposal.model_dump(mode="python")
+    payload.update(updates)
+    return ImprovementProposal.model_validate(payload)
+
+
 def assess_improvement(
     proposal: ImprovementProposal,
     test_results: dict[str, ResultStatus],
@@ -208,7 +225,7 @@ def apply_assessment(
         ImprovementState.QUARANTINED,
     }:
         raise ValueError("assessment disposition is not an automated validation state")
-    return proposal.model_copy(update={"state": assessment.disposition})
+    return _validated_update(proposal, state=assessment.disposition)
 
 
 def record_human_decision(
@@ -249,7 +266,7 @@ def record_human_decision(
         qualification_refs=list(dict.fromkeys(qualification_refs)),
         authorization_ref=authorization_ref,
     )
-    return proposal.model_copy(update={"state": state, "review": review})
+    return _validated_update(proposal, state=state, review=review)
 
 
 def supersede_improvement(
@@ -263,9 +280,8 @@ def supersede_improvement(
         raise ValueError("superseding improvement reference is required")
     negative = list(proposal.negative_evidence)
     negative.append({"superseded_by": superseded_by})
-    return proposal.model_copy(
-        update={
-            "state": ImprovementState.SUPERSEDED,
-            "negative_evidence": negative,
-        }
+    return _validated_update(
+        proposal,
+        state=ImprovementState.SUPERSEDED,
+        negative_evidence=negative,
     )
