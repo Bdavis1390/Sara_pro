@@ -1,8 +1,8 @@
 {
-  "schema": "WS-QCRYPTO-EVIDENCE-REGISTER-v1",
+  "schema": "WS-QCRYPTO-EVIDENCE-REGISTER-v2",
   "as_of": "2026-09-12",
   "purpose": "Claims-controlled external evidence register for defensive quantum-cryptography migration analysis.",
-  "claims_boundary": "External publications support the scientific premises listed here. They do not constitute external validation of Worldshepherd, proof of a production key break, or proof that a cryptographically relevant quantum computer exists today.",
+  "claims_boundary": "External publications and vendor roadmaps support the scientific and planning premises listed here. They do not constitute external validation of Worldshepherd, proof of a production key break, or proof that a cryptographically relevant quantum computer exists today. Vendor roadmaps are forward-looking evidence, not demonstrated capability.",
   "items": [
     {
       "id": "GOOGLE-PRXQ-2026-ECDLP",
@@ -21,8 +21,18 @@
       "source": "https://arxiv.org/abs/2609.05625",
       "peer_reviewed": false,
       "hardware_demonstrated": false,
-      "finding": "A trapped-ion Walking Cat architecture estimate reports about 1,457 logical qubits, 39M Toffoli gates, 19,397 physical qubits and 25.7 days per secp256k1 ECDLP attempt with a stated 63% success estimate.",
+      "finding": "A trapped-ion Walking Cat architecture estimate reports about 1,450 logical qubits, 40M Toffoli gates, 19,397 physical qubits and 25.7 days per secp256k1 ECDLP attempt with a stated success estimate under the paper's assumptions.",
       "allowed_use": "Architecture-specific sensitivity bound; not a demonstrated cryptographic break."
+    },
+    {
+      "id": "IONQ-ROADMAP-2027-2028",
+      "source_family": "IonQ",
+      "evidence_class": "vendor hardware roadmap",
+      "source": "https://www.ionq.com/roadmap",
+      "peer_reviewed": false,
+      "hardware_demonstrated": false,
+      "finding": "IonQ's public roadmap targets 10,000 physical / 800 logical qubits in 2027 and 20,000 physical / 1,600 logical qubits in 2028. The 2028 target numerically overlaps IonQ's own published Walking Cat secp256k1 attack envelope of 19,397 physical / about 1,450 logical qubits.",
+      "allowed_use": "Forward migration-planning trigger only. The overlap may increase migration urgency but must not be reported as demonstrated attack capability, Q-day, or proof that the roadmap will be achieved."
     },
     {
       "id": "LUO-2026-LOW-WIDTH-ECDLP",
@@ -52,8 +62,8 @@
       "peer_reviewed": false,
       "hardware_demonstrated": false,
       "internal_reproducible": true,
-      "finding": "The QCRYPTO Risk Gate completed successfully on the exact branch head 4c39d73b965969e1617bea0485175d4654784611 before this evidence-register update.",
-      "allowed_use": "Internal software-quality evidence only; not independent scientific validation or external certification."
+      "finding": "The earlier QCRYPTO Risk Gate completed successfully on exact branch head 4c39d73b965969e1617bea0485175d4654784611. Later roadmap-collision updates require their own CI status and are not covered by that historical run.",
+      "allowed_use": "Historical internal software-quality evidence only; not independent scientific validation or external certification."
     }
   ]
 }
