@@ -1,0 +1,109 @@
+From: Worldshepherd OSS contribution workbench
+Subject: [PATCH DRAFT] push-model agent: retain verifier cadence on malformed accepted response
+Upstream target: keylime/keylime#1941 (agent side: keylime/rust-keylime)
+Claims state: IMPLEMENTED AS PATCH DRAFT / REQUIRES UPSTREAM TESTS
+
+Design goal
+-----------
+Do not globally change the agent's configured attestation_interval_seconds from
+60 to 2. That value is also used for retrying registration/attestation failures,
+so lowering it globally would change outage behavior and could create a retry
+storm.
+
+Instead, distinguish two cases:
+
+1. Verifier accepted evidence and supplied a valid
+   seconds_to_next_attestation: remember and use that cadence.
+2. Verifier accepted evidence but the cadence field is missing/malformed:
+   reuse the last valid verifier-provided cadence. If none has ever been seen,
+   use a dedicated accepted-response fallback of 2 seconds, matching the
+   verifier default.
+
+Network/authentication/registration failures continue using the configured
+measurement_interval and are outside this patch.
+
+--- a/keylime-push-model-agent/src/state_machine.rs
++++ b/keylime-push-model-agent/src/state_machine.rs
+@@
+ use std::time::Duration;
+ use tokio::time;
++
++const DEFAULT_VERIFIER_RESPONSE_INTERVAL_SECONDS: u64 = 2;
+@@
+ pub struct StateMachine<'a> {
+@@
+     measurement_interval: Duration,
++    last_verifier_interval: Option<Duration>,
+@@
+         Self {
+@@
+             measurement_interval,
++            last_verifier_interval: None,
+             registrar_tls_config,
+             privileged_resources,
+         }
+@@
+-    fn extract_next_attestation_interval(
+-        &self,
++    fn extract_next_attestation_interval(
++        &mut self,
+         response_body: &str,
+     ) -> Duration {
+@@
+                     if let Some(seconds) = meta.seconds_to_next_attestation {
+                         debug!("Using verifier-provided interval: {seconds} seconds");
+-                        return Duration::from_secs(seconds);
++                        let interval = Duration::from_secs(seconds);
++                        self.last_verifier_interval = Some(interval);
++                        return interval;
+                     } else {
+-                        warn!("seconds_to_next_attestation field not found in meta object, using default interval of {} seconds", self.measurement_interval.as_secs());
++                        warn!("seconds_to_next_attestation field not found in meta object");
+                     }
+                 } else {
+-                    warn!("meta object not found in verifier response, using default interval of {} seconds", self.measurement_interval.as_secs());
++                    warn!("meta object not found in verifier response");
+                 }
+             }
+             Err(e) => {
+-                warn!("Failed to parse verifier response as EvidenceHandlingResponse: {}, using default interval of {} seconds", e, self.measurement_interval.as_secs());
++                warn!("Failed to parse verifier response as EvidenceHandlingResponse: {e}");
+             }
+         }
+ 
+-        // Fallback to the default interval.
+-        self.measurement_interval
++        if let Some(interval) = self.last_verifier_interval {
++            warn!(
++                "Using last valid verifier-provided interval of {} seconds",
++                interval.as_secs()
++            );
++            return interval;
++        }
++
++        let fallback = Duration::from_secs(DEFAULT_VERIFIER_RESPONSE_INTERVAL_SECONDS);
++        warn!(
++            "No valid verifier-provided interval has been observed; using verifier-default fallback of {} seconds",
++            fallback.as_secs()
++        );
++        fallback
+     }
+
+Required tests
+--------------
+Add focused unit tests around extract_next_attestation_interval:
+
+- valid response with 7 seconds returns 7 and stores last_verifier_interval=7;
+- valid 7-second response followed by accepted response missing meta returns 7;
+- valid 7-second response followed by malformed JSON returns 7;
+- first accepted response missing meta returns 2;
+- first malformed accepted response returns 2;
+- measurement_interval remains unchanged and is still used by
+  RegistrationFailed/AttestationFailed branches.
+
+Safety boundary
+---------------
+This proposal changes only cadence fallback after HTTP success/ACCEPTED. It does
+not shorten retries after transport failure, authentication failure, registrar
+failure, or rejected evidence. That separation avoids converting a semantic
+fallback fix into a verifier-outage retry-rate change.
