@@ -1,8 +1,8 @@
 {
-  "schema": "WS-QCRYPTO-RESOURCE-BASELINE-v1",
+  "schema": "WS-QCRYPTO-RESOURCE-BASELINE-v2",
   "as_of": "2026-09-12",
-  "claims_control": "External resource estimates only; no production key break is claimed.",
-  "estimates": [
+  "claims_control": "External resource estimates and measured QEC evidence only; no production key break is claimed, and cross-architecture physical-qubit extrapolation is prohibited without a complete fault-tolerant overhead model.",
+  "attack_estimates": [
     {
       "name": "Google Quantum AI 2026 low-width secp256k1 ECDLP",
       "source": "https://research.google/pubs/securing-elliptic-curve-cryptocurrencies-against-quantum-vulnerabilities-resource-estimates-and-mitigations-2/",
@@ -32,6 +32,27 @@
       "physical_qubits": null,
       "runtime_seconds": null,
       "runtime_note": "835 logical qubits is a complete Shor/ECDLP width result. The stored Toffoli value is the 919*n^3/log2(n) leading term evaluated at n=256; the paper also includes O(n^2). Do not infer fast runtime without architecture-specific compilation."
+    }
+  ],
+  "qec_evidence": [
+    {
+      "name": "Quantinuum C4-Helix on Helios",
+      "source": "https://arxiv.org/abs/2609.03194",
+      "hardware": "Quantinuum Helios trapped-ion processor",
+      "physical_qubits": 20,
+      "logical_qubits": 2,
+      "code_distance": 6,
+      "physical_per_logical_codeblock_ratio": 10.0,
+      "logical_memory_error_per_cycle": 0.000046,
+      "logical_two_qubit_clifford_error": 0.00028,
+      "postselection_used": false,
+      "encoded_outperformed_unencoded_baseline": true,
+      "universal_non_clifford_demonstrated": false,
+      "architecture_specific_secp256k1_attack_compilation": false,
+      "attack_scale_demonstrated": false,
+      "complete_fault_tolerant_overhead_model": false,
+      "independently_replicated": false,
+      "claims_note": "Hardware validates compact logical memory, Clifford computation and heterogeneous-code entanglement without postselection. The 10:1 code-block ratio must NOT be multiplied by an ECDLP logical-qubit estimate and reported as complete attack hardware. Full non-Clifford resources, factories/ancillas, routing, decoding, runtime reliability, scaling and attack-specific compilation are not established by this experiment."
     }
   ]
 }
