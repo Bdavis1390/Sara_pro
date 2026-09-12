@@ -33,7 +33,7 @@ def test_overwatch_provenance_is_in_signed_echo_checkpoint(
         model_id="MODEL-1",
         model_version="v1",
         observed_at=NOW,
-        signals=(OverwatchSignal.MONITOR_INTERFERENCE,),
+        signals=(OverwatchSignal.MONITORING_SUPPRESSION,),
     )
     decision = classify_overwatch_observation(observation)
     intent = record_overwatch_containment_intent(
