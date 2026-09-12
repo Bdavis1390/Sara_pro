@@ -289,7 +289,7 @@ def test_failed_tail_separator_write_keeps_outbox_pending(tmp_path, monkeypatch)
     original_write = storage_module.os.write
 
     def fail_separator(descriptor, data):
-        if data == b"\\n":
+        if data == b"\n":
             return 0
         return original_write(descriptor, data)
 
