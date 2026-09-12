@@ -1,0 +1,35 @@
+{
+  "schema": "worldshepherd.fair_mast.source_manifest.v1",
+  "status": "SOURCE_MANIFEST_ONLY_NO_ARCHIVED_VALUES_EMBEDDED",
+  "archive": "FAIR-MAST",
+  "shot_id": 30420,
+  "data_level": "level1",
+  "diagnostic_group": "amc",
+  "signals": [
+    "time",
+    "plasma_current"
+  ],
+  "zarr_uri": "s3://mast/level1/shots/30420.zarr/amc",
+  "s3_endpoint": "https://s3.echo.stfc.ac.uk",
+  "metadata_api_base": "https://mastapp.site/json",
+  "source_evidence": [
+    {
+      "type": "upstream_repository",
+      "organization": "UK Atomic Energy Authority",
+      "repository": "ukaea/fair-mast",
+      "reference": "https://github.com/ukaea/fair-mast"
+    },
+    {
+      "type": "upstream_usage_example",
+      "organization": "UK Atomic Energy Authority FAIR-MAST",
+      "reference": "https://github.com/ukaea/fair-mast/issues/107",
+      "supports": "shot 30420 level1 AMC Zarr path and plasma_current signal"
+    }
+  ],
+  "claims_boundary": {
+    "real_archive_values_in_repository": false,
+    "live_machine_data": false,
+    "machine_control_authority": false,
+    "purpose": "Pin a reproducible public archive target before downloading or replaying real diagnostic arrays."
+  }
+}

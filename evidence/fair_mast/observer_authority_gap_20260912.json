@@ -1,0 +1,39 @@
+{
+  "schema": "worldshepherd.fusion.observer_authority_gap.v1",
+  "recorded_date": "2026-09-12",
+  "claims_state": "SUPPORTED BY EXTERNAL SOURCE EVIDENCE",
+  "scope": "MAST equilibrium/state-observer authority requirements",
+  "source": {
+    "repository": "ukaea/fair-mast",
+    "issue_number": 231,
+    "title": "Community tool: FAIR-MAST → FreeGSNKE shot-only pipeline; request for equilibrium reconstruction authorities",
+    "url": "https://github.com/ukaea/fair-mast/issues/231",
+    "opened": "2026-07-24",
+    "source_role": "community request hosted in the UKAEA FAIR-MAST issue tracker"
+  },
+  "observed_requests": [
+    "probe and flux-loop geometry and calibration",
+    "passive structure model",
+    "Green's tables or response matrices, or documentation of their generation",
+    "EFIT++ run settings or namelists",
+    "coordinate conventions including flux convention and COCOS",
+    "optional profile or kinetic constraints"
+  ],
+  "worldshepherd_required_authorities": [
+    "diagnostic_geometry_and_calibration",
+    "passive_structure_model",
+    "response_matrices_or_generation_method",
+    "reconstruction_settings",
+    "coordinate_conventions"
+  ],
+  "worldshepherd_optional_authorities": [
+    "profile_or_kinetic_constraints"
+  ],
+  "interpretation": {
+    "supports": "These categories are independently recognized as necessary inputs/authorities for reproducible MAST equilibrium reconstruction work.",
+    "does_not_support": "The issue does not prove that UKAEA lacks these materials, that the listed materials are complete for every reconstruction method, or that any Worldshepherd observer is scientifically validated.",
+    "policy": "Missing authority remains a hard fail for promotion of an external observer beyond analysis-only integration."
+  },
+  "machine_control_authority": false,
+  "control_evidence_eligible": false
+}

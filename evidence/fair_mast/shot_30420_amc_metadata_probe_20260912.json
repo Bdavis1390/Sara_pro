@@ -1,0 +1,107 @@
+{
+  "schema": "worldshepherd.fair_mast.metadata_evidence.v1",
+  "captured_utc": "2026-09-12T17:45:24Z",
+  "source": {
+    "archive": "FAIR-MAST",
+    "organization": "UK Atomic Energy Authority",
+    "storage_provider": "STFC Echo",
+    "shot_id": 30420,
+    "data_level": "level1",
+    "diagnostic_group": "amc",
+    "zarr_uri": "s3://mast/level1/shots/30420.zarr/amc",
+    "http_base": "https://s3.echo.stfc.ac.uk/mast/level1/shots/30420.zarr/amc",
+    "source_license": "CC BY-SA 4.0 except where otherwise noted by the archive",
+    "source_license_reference": "https://mastapp.site/"
+  },
+  "capture": {
+    "repository": "Bdavis1390/Sara_pro",
+    "branch": "worldshepherd/fusion-control-sim-v0-1-20260912",
+    "commit": "f6ea2ed004524fd29204d73221668ec2bf91663a",
+    "github_actions_run_id": 34709145877,
+    "probe_job": "fair-mast-source-probe",
+    "report_sha256": "ffddced3a27e0b479298e5a09203ad59bba1460dd58ef43954d0e248eb416c0b",
+    "array_chunks_fetched": false,
+    "machine_control_authority": false
+  },
+  "root_metadata": {
+    "zarr_format": 2,
+    "zgroup_sha256": "2383746e67b4bcc2762b3f100f06c3fa2d5f149ab5a8e5da5d33521464a01959",
+    "zattrs_sha256": "43895f7222fa640bb25a8cef60be08e44601a1409a3474a4bf4c025274b846fd",
+    "description": "Plasma Current and PF/TF Coil Currents",
+    "file_name": "amc0304.20",
+    "format": "IDA3",
+    "quality": "Not Checked",
+    "signal_type": "Analysed",
+    "source": "amc",
+    "uda_name": "AMC",
+    "uuid": "01aad0c4-2a84-59e2-8b1b-168b4bd66aa3",
+    "version": 0
+  },
+  "signals": {
+    "time": {
+      "shape": [30000],
+      "chunks": [30000],
+      "dtype": "<f4",
+      "fill_value": "NaN",
+      "order": "C",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0
+      },
+      "units": "s",
+      "zarray_sha256": "d641ce0bc6f1e17cb4d0faad3967db557185c235203f8089a7b6ad6695a17036",
+      "zattrs_sha256": "0a5ec58451e5ebf607605328c92866060e306e608429e4da3e36f3d1b66edba8"
+    },
+    "plasma_current": {
+      "shape": [30000],
+      "chunks": [30000],
+      "dtype": "<f4",
+      "fill_value": "NaN",
+      "order": "C",
+      "compressor": {
+        "id": "blosc",
+        "cname": "lz4",
+        "clevel": 5,
+        "shuffle": 1,
+        "blocksize": 0
+      },
+      "units": "kA",
+      "description": "Plasma Current",
+      "quality": "Not Checked",
+      "rank": 1,
+      "signal_type": "Analysed",
+      "source": "amc",
+      "time_index": 0,
+      "uda_name": "AMC_PLASMA CURRENT",
+      "uuid": "6327e756-e587-5c74-8aed-4e595d3546cf",
+      "version": 0,
+      "zarray_sha256": "d641ce0bc6f1e17cb4d0faad3967db557185c235203f8089a7b6ad6695a17036",
+      "zattrs_sha256": "df5c1ed3dcd9a0fd447c57a131269bbabd8d7abc6718d61ea9469059e32aefdd"
+    }
+  },
+  "readiness_assessment": {
+    "source_identity_confirmed": true,
+    "metadata_object_integrity_hashed": true,
+    "time_and_signal_shapes_match": true,
+    "units_identified": true,
+    "upstream_quality_label": "Not Checked",
+    "uncertainty_metadata_observed": false,
+    "real_signal_values_fetched": false,
+    "real_signal_replay_completed": false,
+    "control_evidence_eligible": false,
+    "reason_control_evidence_blocked": [
+      "No signal array chunks were fetched in this metadata-only gate.",
+      "The upstream archive labels the source/signal quality as Not Checked.",
+      "No uncertainty field was observed in the probed time or plasma_current attributes."
+    ]
+  },
+  "claims_boundary": {
+    "proven_external_archive_structure": true,
+    "proven_real_values_ingested": false,
+    "proven_real_plasma_state_estimation": false,
+    "proven_real_machine_control": false
+  }
+}
