@@ -1,0 +1,135 @@
+name: Worldshepherd Backline QBL-G1/G2 Lab
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ws-backline-qbl-g1.yml'
+      - 'docs/WS_BACKLINE_VALIDATION_PLAN_2026-09-12.md'
+      - 'config/ws_backline_lab_v0_1.json'
+      - 'experiments/backline_cpu_cpu.py'
+      - 'experiments/backline_benchmark.py'
+      - 'experiments/backline/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ws-backline-qbl-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qbl-g1-g2:
+    name: QBL-G1/G2 isolated CPU lab
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      IMAGE_NAME: worldshepherd-qbl-g1:${{ github.sha }}
+      EVIDENCE_DIR: ${{ github.workspace }}/qbl-evidence
+
+    steps:
+      - name: Check out exact tested source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Record claims boundary and source state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
+          {
+            echo "classification=INTERNAL_CI_LAB_ONLY"
+            echo "qbl_g1_status=REQUIRES_EXECUTION"
+            echo "qbl_g2_status=REQUIRES_EXECUTION"
+            echo "sub_3us_worldshepherd_performance=NOT_CURRENTLY_CLAIMED"
+            echo "physical_qpu_integration=NOT_CURRENTLY_CLAIMED"
+            echo "quantum_advantage=NOT_CURRENTLY_CLAIMED"
+            echo "runner=${RUNNER_NAME}"
+            echo "os=${RUNNER_OS}"
+            echo "arch=${RUNNER_ARCH}"
+            echo "github_sha=${GITHUB_SHA}"
+          } | tee "$EVIDENCE_DIR/claims-and-runner.txt"
+          git rev-parse HEAD | tee "$EVIDENCE_DIR/tested-commit.txt"
+          git status --short | tee "$EVIDENCE_DIR/tested-status.txt"
+
+      - name: Build pinned QBL image
+        shell: bash
+        run: |
+          set -o pipefail
+          docker build \
+            --file experiments/backline/Dockerfile.qbl-g1 \
+            --tag "$IMAGE_NAME" \
+            . 2>&1 | tee "$EVIDENCE_DIR/docker-build.log"
+          docker image inspect "$IMAGE_NAME" > "$EVIDENCE_DIR/docker-image-inspect.json"
+
+      - name: Run QBL-G1 local CPU-to-CPU Steane QEC
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          docker run --rm "$IMAGE_NAME" \
+            python /workspace/backline_cpu_cpu.py --repeat 10 --json \
+            > "$EVIDENCE_DIR/qbl-g1.json" \
+            2> "$EVIDENCE_DIR/qbl-g1.stderr.log"
+          rc=$?
+          set -e
+          echo "$rc" > "$EVIDENCE_DIR/qbl-g1.exit-code.txt"
+          cat "$EVIDENCE_DIR/qbl-g1.json" || true
+          if [[ "$rc" -ne 0 ]]; then
+            cat "$EVIDENCE_DIR/qbl-g1.stderr.log" >&2 || true
+            exit "$rc"
+          fi
+
+      - name: Run QBL-G2 caller-observed repeatability benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --volume "$EVIDENCE_DIR:/evidence" \
+            "$IMAGE_NAME" \
+            python /workspace/backline_benchmark.py \
+              --warmup 3 \
+              --iterations 100 \
+              --output /evidence/qbl-g2.json \
+            > "$EVIDENCE_DIR/qbl-g2.stdout.log" \
+            2> "$EVIDENCE_DIR/qbl-g2.stderr.log"
+          cat "$EVIDENCE_DIR/qbl-g2.json"
+
+      - name: Hash evidence inputs
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum \
+            config/ws_backline_lab_v0_1.json \
+            docs/WS_BACKLINE_VALIDATION_PLAN_2026-09-12.md \
+            experiments/backline_cpu_cpu.py \
+            experiments/backline_benchmark.py \
+            experiments/backline/Dockerfile.qbl-g1 \
+            experiments/backline/run_qbl_g1_container.sh \
+            > "$EVIDENCE_DIR/input-sha256.txt"
+
+      - name: Upload QBL evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-backline-qbl-${{ github.sha }}
+          path: qbl-evidence/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Claims-control summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Worldshepherd Backline QBL lab'
+            echo ''
+            echo '- Classification: **INTERNAL CI LAB ONLY**'
+            echo '- QBL-G1 is only promoted if the executable gate completed successfully.'
+            echo '- QBL-G2 measures Python-caller-observed end-to-end invocation time, not raw transport latency.'
+            echo '- Vendor microsecond benchmarks are external comparison evidence only.'
+            echo '- Physical QPU integration: **NOT CURRENTLY CLAIMED**.'
+            echo '- Quantum advantage: **NOT CURRENTLY CLAIMED**.'
+          } >> "$GITHUB_STEP_SUMMARY"
