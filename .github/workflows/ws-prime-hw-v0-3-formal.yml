@@ -49,6 +49,8 @@ jobs:
             hierarchy -check -top prime_hw_policy_controller_formal;
             prep -top prime_hw_policy_controller_formal;
             check;
+            async2sync;
+            dffunmap;
             write_smt2 -wires build/prime_hw_v0_3/prime_hw_formal.smt2;
           '
           test -s build/prime_hw_v0_3/prime_hw_formal.smt2
@@ -79,6 +81,7 @@ jobs:
             echo "proof_horizon=20"
             echo "solver=z3"
             echo "formal_clock=YOSYS_GCLK_INTENTIONALLY_UNDRIVEN"
+            echo "reset_lowering=async2sync+dffunmap"
             echo "claims_boundary=BOUNDED SMT SAFETY-PROPERTY VERIFICATION ONLY / NO FPGA OR ASIC VALIDATION"
             sha256sum \
               hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
