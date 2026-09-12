@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from worldshepherd_sara.echo_event_store import EchoEventStore
 from worldshepherd_sara.improvement_runtime import ImprovementRuntime, ImprovementRuntimeError
 from worldshepherd_sara.models import AuditRecord
@@ -14,15 +16,13 @@ def operational_signal(event_id: str) -> AuditRecord:
             "_outbox_event_id": event_id,
             "_delivery_semantics": "AT_LEAST_ONCE",
             "_ws_improvement_signal": {
+                "source": "OVERWATCH",
                 "trigger_kind": "OPERATOR_FEEDBACK",
-                "title": "Operational improvement input",
+                "statement": "evaluate the recorded operational improvement input",
                 "affected_lanes": ["OVERWATCH", "WS-RI"],
-                "proposed_change": "evaluate the recorded operational improvement input",
-                "expected_benefit": "improve the affected workflow after validation",
                 "required_tests": ["source-gate"],
                 "success_metrics": ["required validation passes"],
                 "risk_level": "MODERATE",
-                "source_refs": [event_id],
             },
         },
     )
@@ -46,6 +46,7 @@ def test_runtime_cursor_survives_restart(tmp_path):
     assert restarted.load_cursor() == cursor
     assert restarted.status()["ledger_chain_verified"] is True
     assert restarted.status()["record_count"] == 1
+    assert restarted.status()["feedback_cursor_digest"]
 
 
 def test_runtime_checkpoint_payload_preserves_claims_boundary(tmp_path):
@@ -72,3 +73,24 @@ def test_runtime_requires_echo_source_for_feedback(tmp_path):
         assert "ECHO source" in str(exc)
     else:
         raise AssertionError("feedback must require configured ECHO source")
+
+
+def test_runtime_rejects_tampered_cursor_state(tmp_path):
+    wsri = (tmp_path / "wsri").resolve()
+    echo_dir = (tmp_path / "echo").resolve()
+    echo_dir.mkdir(mode=0o700)
+    echo = EchoEventStore(echo_dir)
+    echo.ingest(operational_signal("SARA-EVENT-runtime-0003"))
+    runtime = ImprovementRuntime(wsri, echo_data_dir=echo_dir)
+    runtime.run_feedback_once(actor="admin")
+
+    state = json.loads(runtime.state_path.read_text(encoding="utf-8"))
+    state["feedback_cursor"]["cycle_index"] += 1
+    runtime.state_path.write_text(json.dumps(state), encoding="utf-8")
+
+    try:
+        runtime.load_cursor()
+    except ImprovementRuntimeError as exc:
+        assert "digest mismatch" in str(exc)
+    else:
+        raise AssertionError("tampered cursor state must be rejected")
