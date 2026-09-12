@@ -26,6 +26,7 @@ class CredibilityGuardTests(unittest.TestCase):
         self.assertFalse(result.standards_authority_present)
         self.assertFalse(result.operational_migration_present)
         self.assertFalse(result.national_security_transition_present)
+        self.assertFalse(result.federal_execution_mandate_present)
 
     def test_multi_axis_record_requires_standards_and_real_migration(self):
         evidence = [
@@ -82,6 +83,56 @@ class CredibilityGuardTests(unittest.TestCase):
         self.assertTrue(any("NATIONAL_SECURITY_TRANSITION_AWARE" in c for c in result.warranted_claims))
         self.assertTrue(any("TRANSITION RELEVANCE" in c for c in result.warranted_claims))
 
+    def test_federal_dual_track_state_requires_civilian_execution_and_nss_policy(self):
+        evidence = [
+            EvidenceItem("Google PRX Quantum", "Google Quantum AI", peer_reviewed=True),
+            EvidenceItem("IonQ Walking Cat", "IonQ"),
+            EvidenceItem("C4-Helix", "Quantinuum", hardware_demonstrated=True),
+            EvidenceItem("NIST PQC transition", "NIST", standards_authority=True),
+            EvidenceItem(
+                "Algorand Falcon mainnet",
+                "Algorand Foundation",
+                operational_migration_deployment=True,
+            ),
+            EvidenceItem(
+                "NSA CSfC CNSA 2.0 transition",
+                "NSA CSfC",
+                national_security_transition_policy=True,
+            ),
+            EvidenceItem(
+                "EO 14412 and OMB M-26-15 civilian execution",
+                "Executive Office of the President / OMB",
+                federal_execution_mandate=True,
+            ),
+            EvidenceItem(
+                "QCRYPTO CI",
+                "Worldshepherd",
+                external=False,
+                internal_reproducible=True,
+            ),
+        ]
+        result = assess_credibility(evidence)
+        self.assertEqual(result.warrant_state, "FEDERAL_DUAL_TRACK_PQC_TRANSITION_ENGINEERING_RECORD")
+        self.assertTrue(result.national_security_transition_present)
+        self.assertTrue(result.federal_execution_mandate_present)
+        self.assertTrue(any("FEDERAL_EXECUTION_AWARE" in c for c in result.warranted_claims))
+        self.assertTrue(any("DUAL-TRACK TRANSITION RELEVANCE" in c for c in result.warranted_claims))
+
+    def test_federal_execution_without_nss_policy_does_not_reach_dual_track_state(self):
+        evidence = [
+            EvidenceItem("Google PRX Quantum", "Google Quantum AI", peer_reviewed=True),
+            EvidenceItem("C4-Helix", "Quantinuum", hardware_demonstrated=True),
+            EvidenceItem("NIST PQC transition", "NIST", standards_authority=True),
+            EvidenceItem("Algorand Falcon mainnet", "Algorand Foundation", operational_migration_deployment=True),
+            EvidenceItem("OMB M-26-15", "Executive Office of the President / OMB", federal_execution_mandate=True),
+            EvidenceItem("extra independent source", "Independent family"),
+            EvidenceItem("QCRYPTO CI", "Worldshepherd", external=False, internal_reproducible=True),
+        ]
+        result = assess_credibility(evidence)
+        self.assertNotEqual(result.warrant_state, "FEDERAL_DUAL_TRACK_PQC_TRANSITION_ENGINEERING_RECORD")
+        self.assertFalse(result.national_security_transition_present)
+        self.assertTrue(result.federal_execution_mandate_present)
+
     def test_external_findings_alone_do_not_warrant_implementation(self):
         result = assess_credibility(
             [
@@ -110,6 +161,8 @@ class CredibilityGuardTests(unittest.TestCase):
         self.assertIn("Original authorship", joined)
         self.assertIn("Independent external validation", joined)
         self.assertIn("Government approval", joined)
+        self.assertIn("Federal contractor compliance", joined)
+        self.assertIn("procurement qualification", joined)
         self.assertIn("production-strength cryptographic key break", joined)
         self.assertIn("cryptographically relevant quantum computer", joined)
         self.assertIn("partial post-quantum deployment", joined)
