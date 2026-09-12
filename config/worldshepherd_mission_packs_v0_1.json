@@ -1,0 +1,51 @@
+{
+  "schema": "worldshepherd_mission_packs_v0_1",
+  "status": "IMPLEMENTED_AS_ARCHITECTURE_DEFINITION",
+  "effective_date": "2026-09-12",
+  "claims_boundary": "Mission-pack definitions describe software architecture and planned demonstrations only. They do not establish government certification, operational deployment, physical-system performance, clearance, CMMC status, or customer acceptance.",
+  "packs": {
+    "APNT_DECISION_PACK": {
+      "version": "0.1",
+      "maps_to": ["DON26BX05-NP004", "SDA_PWSA_STEC", "GPS_GEN4_GROUND"],
+      "inputs": ["source_health", "timing_integrity", "navigation_confidence", "interference_indicators", "spoofing_indicators", "mission_context"],
+      "outputs": ["fused_status", "confidence", "threat_hypothesis", "operational_impact", "recovery_options", "evidence_references"],
+      "controls": ["retain_uncertainty", "preserve_source_lineage", "human_approval_for_external_action", "audit_recovery_recommendations"],
+      "demo_target": "containerized synthetic multi-source APNT degradation scenario with DDIL mode and operator approval"
+    },
+    "MISSION_REPLAY_REPLAN_PACK": {
+      "version": "0.1",
+      "maps_to": ["DON26BZ05-NV074", "ARM26BX06-NV012"],
+      "inputs": ["mission_logs", "sensor_tracks", "operator_actions", "platform_state", "objectives", "constraints"],
+      "outputs": ["reconstructed_timeline", "evidence_graph", "courses_of_action", "confidence", "tradeoffs", "rationale", "approval_package"],
+      "controls": ["separate_observed_from_inferred", "retain_negative_evidence", "explicit_assumptions", "human_approval_required"],
+      "demo_target": "synthetic mission replay generating three traceable COAs with confidence and signer-ready decision package"
+    },
+    "DIGITAL_TWIN_ASSURANCE_PACK": {
+      "version": "0.2",
+      "maps_to": ["DON26BZ05-DV087", "MSTIC-RPP-27-01-02", "MOSAIC_25_15"],
+      "inputs": ["telemetry", "configuration", "maintenance_history", "model_state"],
+      "outputs": ["synchronized_twin_state", "anomalies", "failure_hypotheses", "uncertainty", "maintenance_options", "evidence_package"],
+      "controls": ["configuration_digest_required", "model_version_required", "prediction_not_equal_proof", "DDIL_reconciliation"],
+      "demo_target": "portable synthetic machine-health twin with offline synchronization and explainable maintenance recommendation"
+    },
+    "MULTI_INT_PROVENANCE_FUSION_PACK": {
+      "version": "0.1",
+      "maps_to": ["PROJ00716", "SENSEI_FUSION_ENGINE", "DPA26BZ05-DV019"],
+      "inputs": ["sensor_streams", "imagery", "video", "geospatial", "reports", "metadata"],
+      "outputs": ["entities", "relations", "tracks", "conflicts", "confidence", "provenance", "machine_api", "operator_view"],
+      "controls": ["source_lineage", "contradictory_evidence_visible", "confidence_separate_from_source_authority", "model_data_documentation"],
+      "demo_target": "synthetic multi-source fusion scenario with conflicting observations and provenance-preserving outputs"
+    }
+  },
+  "shared_backlog": [
+    "containerized_demo_harness",
+    "DDIL_store_forward_event_bus",
+    "evidence_graph_store",
+    "signer_ready_decision_package_generator",
+    "MOSA_API_adapter_contract",
+    "NIST_800_171_CMMC_gap_matrix",
+    "partner_clearance_gate_registry",
+    "SBOM_and_software_provenance",
+    "model_data_card_generator"
+  ]
+}
