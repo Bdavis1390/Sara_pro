@@ -34,7 +34,9 @@ on:
       - 'scripts/run_fusion_control_demo.py'
       - 'scripts/probe_fair_mast_data.py'
       - 'data/fair_mast/shot_30420_amc_manifest.json'
+      - 'evidence/fair_mast/shot_30420_amc_metadata_probe_20260912.json'
       - 'evidence/fair_mast/shot_30420_amc_data_probe_20260912.json'
+      - 'evidence/fair_mast/observer_authority_gap_20260912.json'
       - 'docs/WS_FUSION_CTRL_001.md'
       - '.github/workflows/fusion-control-sim.yml'
 
