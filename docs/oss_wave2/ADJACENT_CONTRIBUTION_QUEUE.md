@@ -162,6 +162,23 @@ Worldshepherd contribution shape:
 
 This is likely a cross-repo `witness` + `go-witness` design. A maintainer is already discussing semantics, so contribution should begin with contract/tests rather than unilateral API behavior.
 
+### Keylime #1941 — push-attestation cadence contract
+
+Status: **OPEN / UNASSIGNED / NO MATCHING FIX PR FOUND IN KEYLIME OR RUST-KEYLIME**  
+Internal screening score: **92/100**
+
+Current source confirms inconsistent fallback semantics for the same cadence contract: most verifier paths use `quote_interval` fallback 2 seconds, the rejection/backoff path uses 60 seconds, one attestation-model read has no fallback, and the Rust push agent explicitly defaults its local fallback interval to 60 seconds. A malformed successful response can therefore fall back from verifier-directed cadence to the local 60-second interval.
+
+Worldshepherd contribution shape:
+
+- define steady-state cadence, failure backoff, and agent-local fallback as separate semantics;
+- make all Python verifier reads use one intentional missing-config contract;
+- align or explicitly separate the Rust agent fallback default;
+- test missing `meta`, missing field, malformed JSON, rejection, verifier outage, and missing configuration;
+- expose/log the reason/source of the selected next interval so degraded cadence is observable.
+
+Claims state: **SOURCE-CONFIRMED CROSS-REPO CONFIGURATION MISMATCH / CONTRACT REQUIRES MAINTAINER AGREEMENT**.
+
 ### Keylime #1909 — cumulative attestation-failure counter
 
 Status: **OPEN / UNASSIGNED / NO MATCHING FIX PR FOUND**  
@@ -291,13 +308,12 @@ These are not yet promoted to P0 because duplicate/root-cause review is incomple
 - SPIRE #7146 — opt-in federation behavior when a referenced bundle is missing; strong failure-isolation relevance but wider data-model/operator-UX implications.
 - SPIRE #5624 — alternative event-cache reconciliation algorithm; high provenance/state-convergence relevance but large architectural scope.
 - SPIRE #7233 — proposed KMIP-backed KeyManager/UpstreamAuthority; strategically relevant to custody but requires careful cryptographic/plugin review and should not be treated as a quick contribution.
-- Keylime #1941 — push-attestation cadence fallback mismatch; no open PR found in this scan, but semantics overlap with retry/recovery policy and need a broader source review before promotion.
 
 ## Consolidation into the three Worldshepherd active tasks
 
 **Active Task A — Autonomy & Resilience OSS:** rclcpp #3213, rclcpp #2962, Autoware #12460, rclpy #1720, plus existing Open-RMF/Zenoh/PX4 lanes. Fast DDS #6502 moves to WATCH/COLLABORATE because a credible implementation design already exists in the issue.
 
-**Active Task B — Trust, Governance & Evidence OSS:** Kyverno #17542, SPIRE #7236/#7111, Witness #789, Keylime #1909, plus OpenTelemetry/Keylime/Witness/Sigstore/Chainloop/OPA. Gatekeeper, Keylime #1932, and the occupied KubeEdge fixes remain WATCH.
+**Active Task B — Trust, Governance & Evidence OSS:** Kyverno #17542, SPIRE #7236/#7111, Witness #789, Keylime #1941/#1909, plus OpenTelemetry/Keylime/Witness/Sigstore/Chainloop/OPA. Gatekeeper, Keylime #1932, and the occupied KubeEdge fixes remain WATCH.
 
 **Active Task C — Simulation / Physical-AI Frontier OSS:** Gazebo #3979/#3977, GNU Radio #8195, ArduPilot #34365, plus continuing Autoware/Gazebo/RF/fault-injection and edge-middleware scans. ArduPilot #34365 remains lab-gated; its timing claims do not advance beyond source/counter derivation until hardware waveforms exist.
 
