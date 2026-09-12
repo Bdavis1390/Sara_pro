@@ -1,0 +1,42 @@
+name: WS QPHONON L2 Check
+
+on:
+  pull_request:
+    paths:
+      - "config/ws_qphonon_l2_v0_1.json"
+      - "docs/WS_QPHONON_L2_INTEGRATION.md"
+      - "tools/qphonon/**"
+      - ".github/workflows/ws-qphonon-l2-check.yml"
+  push:
+    branches:
+      - "worldshepherd/qphonon-l2-architecture-v0-1-20260912"
+    paths:
+      - "config/ws_qphonon_l2_v0_1.json"
+      - "docs/WS_QPHONON_L2_INTEGRATION.md"
+      - "tools/qphonon/**"
+      - ".github/workflows/ws-qphonon-l2-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  qphonon-l2-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m compileall -q tools/qphonon
+
+      - name: Validate governed config
+        run: python tools/qphonon/validate_config.py config/ws_qphonon_l2_v0_1.json
+
+      - name: Run governance regression tests
+        working-directory: tools/qphonon
+        run: python -m unittest -v test_validate_config.py
