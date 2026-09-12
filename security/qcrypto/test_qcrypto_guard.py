@@ -1,6 +1,6 @@
 import unittest
 
-from qcrypto_guard import AttackEstimate, assess
+from qcrypto_guard import AttackEstimate, QECEvidence, assess, assess_qec_bridge
 
 
 class QCryptoGuardTests(unittest.TestCase):
@@ -68,6 +68,51 @@ class QCryptoGuardTests(unittest.TestCase):
         result = assess(demonstrated)
         self.assertEqual(result.threat_level, "Q4")
         self.assertEqual(result.claim_state, "PRODUCTION_BREAK_DEMONSTRATED")
+
+    def test_measured_low_overhead_qec_does_not_become_attack_projection(self):
+        luo = AttackEstimate(
+            name="Luo 835q",
+            source="arXiv:2607.13816",
+            full_attack=True,
+            logical_qubits=835,
+            toffoli_gates=1_927_282_688,
+        )
+        helix = QECEvidence(
+            name="Quantinuum C4-Helix",
+            source="arXiv:2609.03194",
+            physical_qubits=20,
+            logical_qubits=2,
+            code_distance=6,
+            logical_memory_error_per_cycle=4.6e-5,
+            logical_clifford_error=2.8e-4,
+            postselection_used=False,
+        )
+        bridge = assess_qec_bridge(luo, helix)
+        self.assertEqual(bridge.evidence_state, "HARDWARE_VALIDATED_QEC_WITHOUT_POSTSELECTION")
+        self.assertEqual(bridge.physical_per_logical, 10.0)
+        self.assertEqual(bridge.codeblock_floor_physical_qubits, 8350)
+        self.assertEqual(bridge.attack_projection_state, "CROSS_ARCHITECTURE_PROJECTION_BLOCKED")
+        self.assertGreaterEqual(len(bridge.blocking_gaps), 4)
+
+    def test_qec_codeblock_floor_is_not_physical_attack_estimate(self):
+        attack = AttackEstimate(
+            name="complete attack",
+            source="test",
+            full_attack=True,
+            logical_qubits=1000,
+            toffoli_gates=1_000_000,
+        )
+        qec = QECEvidence(
+            name="measured code",
+            source="test",
+            physical_qubits=20,
+            logical_qubits=2,
+            logical_memory_error_per_cycle=1e-5,
+        )
+        bridge = assess_qec_bridge(attack, qec)
+        self.assertEqual(bridge.codeblock_floor_physical_qubits, 10000)
+        self.assertNotEqual(bridge.attack_projection_state, "MODEL_READY_NOT_PRODUCTION_BREAK")
+        self.assertTrue(any("overhead" in gap.lower() for gap in bridge.blocking_gaps))
 
 
 if __name__ == "__main__":
