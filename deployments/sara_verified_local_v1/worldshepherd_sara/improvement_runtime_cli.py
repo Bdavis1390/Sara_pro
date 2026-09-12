@@ -5,7 +5,9 @@ import json
 from datetime import datetime, timezone
 from typing import Sequence
 
+from .improvement_evidence_export import build_evidence_manifest
 from .improvement_feedback import ImprovementFeedbackPolicy
+from .improvement_handoff import build_scheduler_handoff
 from .improvement_runtime import ImprovementRuntime, ImprovementRuntimeError
 
 
@@ -18,6 +20,10 @@ def _runtime() -> ImprovementRuntime:
     if runtime is None:
         raise ImprovementRuntimeError("WSRI_DATA_DIR is required")
     return runtime
+
+
+def _utc(value: str | None) -> str:
+    return value or datetime.now(timezone.utc).isoformat()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -43,6 +49,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="emit a ledger checkpoint payload for the governed SARA/ECHO provenance path",
     )
     checkpoint.add_argument("--created-utc")
+
+    handoff = sub.add_parser(
+        "handoff",
+        help="emit a human/authorized-scheduler-gated one-cycle feedback handoff",
+    )
+    handoff.add_argument("--requested-by", required=True)
+    handoff.add_argument("--generated-utc")
+    handoff.add_argument("--max-events", type=int, default=64)
+    handoff.add_argument("--max-proposals", type=int, default=32)
+
+    manifest = sub.add_parser(
+        "evidence-manifest",
+        help="emit a deterministic manifest of current WS-RI custody and cursor state",
+    )
+    manifest.add_argument("--generated-utc")
     return parser
 
 
@@ -78,8 +99,27 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
         if args.command == "checkpoint-payload":
-            created = args.created_utc or datetime.now(timezone.utc).isoformat()
-            _json(runtime.checkpoint_outbox_payload(created_utc=created))
+            _json(runtime.checkpoint_outbox_payload(created_utc=_utc(args.created_utc)))
+            return 0
+        if args.command == "handoff":
+            policy = ImprovementFeedbackPolicy(
+                max_echo_events_per_cycle=args.max_events,
+                max_new_proposals_per_cycle=args.max_proposals,
+            )
+            handoff = build_scheduler_handoff(
+                runtime,
+                requested_by=args.requested_by,
+                generated_utc=_utc(args.generated_utc),
+                policy=policy,
+            )
+            _json(handoff.model_dump(mode="json"))
+            return 0
+        if args.command == "evidence-manifest":
+            manifest = build_evidence_manifest(
+                runtime,
+                generated_utc=_utc(args.generated_utc),
+            )
+            _json(manifest.model_dump(mode="json"))
             return 0
     except (ImprovementRuntimeError, OSError, ValueError) as exc:
         parser = build_parser()
