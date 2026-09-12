@@ -2,9 +2,12 @@ import unittest
 
 from qcrypto_guard import (
     AttackEstimate,
+    ClassicalDecoderEvidence,
     HardwareRoadmapTarget,
+    PlatformMaturityEvidence,
     QECEvidence,
     assess,
+    assess_full_stack_convergence,
     assess_qec_bridge,
     assess_roadmap_collision,
 )
@@ -192,6 +195,97 @@ class QCryptoGuardTests(unittest.TestCase):
         self.assertEqual(result.collision_state, "NEAR_LOGICAL_WIDTH_COLLISION")
         self.assertEqual(result.logical_headroom, -35)
         self.assertEqual(result.evidence_state, "VENDOR_ROADMAP_TARGET")
+
+    def test_full_stack_convergence_detects_multiple_planes_without_claiming_attack_ready(self):
+        attack = AttackEstimate(
+            name="IonQ Walking Cat",
+            source="arXiv:2609.05625",
+            full_attack=True,
+            logical_qubits=1457,
+            toffoli_gates=39_000_000,
+            physical_qubits=19_397,
+            runtime_seconds=25.7 * 86400,
+        )
+        roadmap = HardwareRoadmapTarget(
+            vendor="IonQ",
+            source="https://www.ionq.com/roadmap",
+            target_year=2028,
+            physical_qubits=20_000,
+            logical_qubits=1600,
+            same_architecture_family=True,
+        )
+        platform = PlatformMaturityEvidence(
+            vendor="IonQ",
+            source="IonQ Superion 256 announcement",
+            platform="Superion 256 / Walking Cat lineage",
+            physical_qubits=256,
+            qpu_fabricated=True,
+            qubits_trapped_or_operated=True,
+            customer_orders_open=True,
+            customer_delivery_year=2027,
+            qec_component_validated_on_related_hardware=True,
+            same_architecture_family=True,
+            target_scale_demonstrated=False,
+        )
+        decoder = ClassicalDecoderEvidence(
+            name="Generalized qLDPC predecoder FPGA design",
+            source="arXiv:2605.03180",
+            code_family="qLDPC / bivariate bicycle",
+            supported_logical_qubits=1200,
+            implementation_kind="FPGA_DESIGN",
+            demonstrated_hardware=False,
+            workload_processed_fraction=0.90,
+            decoder_utilization_reduction=3963,
+            exact_attack_code_compatible=False,
+            attack_specific_integration=False,
+        )
+        result = assess_full_stack_convergence(
+            attack, roadmap, platform, decoder, current_year=2026, migration_years=1.5
+        )
+        self.assertEqual(result.convergence_state, "MULTI_PLANE_CONVERGENCE_SIGNAL")
+        self.assertEqual(result.platform_maturity_state, "PROTOTYPE_PLATFORM_PLUS_RELATED_QEC_VALIDATED")
+        self.assertEqual(result.decoder_state, "PROPOSED_DECODER_CAPACITY_ONLY")
+        self.assertGreater(result.decoder_capacity_ratio, 0.80)
+        self.assertEqual(result.urgency, "ACCELERATE_MIGRATION_VALIDATION")
+        self.assertTrue(any("not demonstrated" in gap.lower() for gap in result.blocking_gaps))
+
+    def test_proposed_decoder_capacity_can_never_be_treated_as_integrated_attack_decoder(self):
+        decoder = ClassicalDecoderEvidence(
+            name="proposed decoder",
+            source="test",
+            code_family="qLDPC",
+            supported_logical_qubits=100000,
+            implementation_kind="CRYO_ASIC_DESIGN",
+            demonstrated_hardware=False,
+            exact_attack_code_compatible=True,
+            attack_specific_integration=True,
+        )
+        attack = AttackEstimate("attack", "test", True, 1000, 1_000_000, 20000, 86400)
+        roadmap = HardwareRoadmapTarget("vendor", "test", 2028, 20000, 1600, same_architecture_family=True)
+        platform = PlatformMaturityEvidence(
+            "vendor", "test", "prototype", 256, True, True, True, 2027, True, True, False
+        )
+        result = assess_full_stack_convergence(attack, roadmap, platform, decoder, current_year=2026)
+        self.assertEqual(result.decoder_state, "PROPOSED_DECODER_CAPACITY_ONLY")
+        self.assertNotIn("ATTACK_INTEGRATED", result.decoder_state)
+
+    def test_target_scale_platform_required_before_prototype_can_be_called_target_scale(self):
+        platform = PlatformMaturityEvidence(
+            vendor="IonQ",
+            source="test",
+            platform="Superion 256",
+            physical_qubits=256,
+            qpu_fabricated=True,
+            qubits_trapped_or_operated=True,
+            qec_component_validated_on_related_hardware=True,
+            target_scale_demonstrated=False,
+        )
+        attack = AttackEstimate("attack", "test", True, 1457, 39_000_000, 19_397, 25.7 * 86400)
+        roadmap = HardwareRoadmapTarget("IonQ", "test", 2028, 20_000, 1600, same_architecture_family=True)
+        decoder = ClassicalDecoderEvidence("decoder", "test", "qLDPC", 1200, "FPGA_DESIGN")
+        result = assess_full_stack_convergence(attack, roadmap, platform, decoder, current_year=2026)
+        self.assertNotEqual(result.platform_maturity_state, "TARGET_SCALE_DEMONSTRATED")
+        self.assertTrue(any("attack-scale" in gap.lower() for gap in result.blocking_gaps))
 
 
 if __name__ == "__main__":
