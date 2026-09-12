@@ -15,6 +15,9 @@ AWS_GROUND_STATION_API_REF = (
 AWS_GROUND_STATION_LIST_CONTACTS_REF = (
     "https://docs.aws.amazon.com/ground-station/latest/APIReference/API_ListContacts.html"
 )
+AWS_GROUND_STATION_DESCRIBE_CONTACT_REF = (
+    "https://docs.aws.amazon.com/ground-station/latest/APIReference/API_DescribeContact.html"
+)
 AWS_GROUND_STATION_RESERVE_CONTACT_REF = (
     "https://docs.aws.amazon.com/ground-station/latest/APIReference/API_ReserveContact.html"
 )
@@ -142,14 +145,14 @@ class SyntheticGroundNetworkAdapter:
 
 
 class AwsGroundStationContactAdapter:
-    """Normalize documented AWS Ground Station contact response fields.
+    """Normalize documented AWS Ground Station ListContacts/DescribeContact fields.
 
     This adapter performs schema normalization only. It makes no AWS API call,
     reserves no contact, transmits no command, receives no telemetry, and does
     not establish partner validation or operational interoperability.
     """
 
-    adapter_name = "aws_ground_station_contact_schema_v1"
+    adapter_name = "aws_ground_station_contact_schema_v2"
 
     def normalize_contact(self, payload: dict[str, Any]) -> NormalizedSpaceContact:
         raw_status = payload.get("contactStatus", payload.get("status"))
@@ -160,9 +163,15 @@ class AwsGroundStationContactAdapter:
         if not isinstance(contact_id, str) or not contact_id:
             raise ValueError("AWS Ground Station contact payload lacks contactId")
 
-        version_id = payload.get("versionId")
-        if version_id is None and isinstance(payload.get("version"), dict):
-            version_id = payload["version"].get("versionId")
+        version = payload.get("version") if isinstance(payload.get("version"), dict) else {}
+        version_id = payload.get("versionId", version.get("versionId"))
+        last_updated = payload.get("lastUpdated", version.get("lastUpdated"))
+        failure_codes = payload.get("failureCodes", version.get("failureCodes", []))
+        failure_message = payload.get(
+            "failureMessage",
+            version.get("failureMessage", payload.get("errorMessage")),
+        )
+        is_describe_shape = bool(version)
 
         return NormalizedSpaceContact(
             provider="AWS_GROUND_STATION",
@@ -173,17 +182,20 @@ class AwsGroundStationContactAdapter:
             ground_station=_optional_str(payload.get("groundStation")),
             start_time=_coerce_datetime(payload.get("startTime")),
             end_time=_coerce_datetime(payload.get("endTime")),
-            last_updated=_coerce_datetime(payload.get("lastUpdated")),
-            failure_codes=_string_list(payload.get("failureCodes", [])),
-            failure_message=_optional_str(
-                payload.get("failureMessage", payload.get("errorMessage"))
+            last_updated=_coerce_datetime(last_updated),
+            failure_codes=_string_list(failure_codes),
+            failure_message=_optional_str(failure_message),
+            authoritative_spec_ref=(
+                AWS_GROUND_STATION_DESCRIBE_CONTACT_REF
+                if is_describe_shape
+                else AWS_GROUND_STATION_LIST_CONTACTS_REF
             ),
-            authoritative_spec_ref=AWS_GROUND_STATION_LIST_CONTACTS_REF,
             attributes={
                 "adapter_name": self.adapter_name,
                 "status_field": (
                     "contactStatus" if "contactStatus" in payload else "status"
                 ),
+                "provider_shape": "DescribeContact" if is_describe_shape else "ListContacts",
             },
         )
 
