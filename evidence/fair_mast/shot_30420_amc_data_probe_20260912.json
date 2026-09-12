@@ -1,0 +1,92 @@
+{
+  "schema": "worldshepherd.fair_mast.data_evidence.v1",
+  "captured_utc": "2026-09-12T17:49:38Z",
+  "source": {
+    "archive": "FAIR-MAST",
+    "organization": "UK Atomic Energy Authority",
+    "storage_provider": "STFC Echo",
+    "shot_id": 30420,
+    "data_level": "level1",
+    "diagnostic_group": "amc",
+    "zarr_uri": "s3://mast/level1/shots/30420.zarr/amc"
+  },
+  "capture": {
+    "repository": "Bdavis1390/Sara_pro",
+    "branch": "worldshepherd/fusion-control-sim-v0-1-20260912",
+    "commit": "d6e24054cc42cc25ea3938547a934c8297ab31d8",
+    "github_actions_run_id": 34709281836,
+    "job": "fair-mast-data-probe",
+    "report_sha256": "4d7823c39cca64353a35aa848542fc12b6e783377242a7f4b46dca427e552489",
+    "raw_values_persisted": false,
+    "machine_control_authority": false
+  },
+  "time": {
+    "chunk_url": "https://s3.echo.stfc.ac.uk/mast/level1/shots/30420.zarr/amc/time/0",
+    "compressed_bytes": 23258,
+    "compressed_sha256": "3d1f90c80e334a581dc2185e0718c4a0c26e0dddf00d1bb8898fdca46c0f8aae",
+    "decoded_bytes": 120000,
+    "decoded_sha256": "5d1079d3f7c9125fbcea01dccf461d5df9784efd7f883959fb3af883a250bfb2",
+    "count": 30000,
+    "dtype": "float32",
+    "units": "s",
+    "finite_count": 30000,
+    "finite_fraction": 1.0,
+    "min": -2.000000238418579,
+    "max": 3.9997994899749756,
+    "monotonic_non_decreasing": true,
+    "strictly_increasing": true,
+    "dt_min": 0.00019979476928710938,
+    "dt_median": 0.00020003318786621094,
+    "dt_max": 0.0002002716064453125
+  },
+  "plasma_current": {
+    "chunk_url": "https://s3.echo.stfc.ac.uk/mast/level1/shots/30420.zarr/amc/plasma_current/0",
+    "compressed_bytes": 107553,
+    "compressed_sha256": "6766652b81e6af1586222aa9f5496f61f5dcf813d810fe1e2a7f2e55025a7a64",
+    "decoded_bytes": 120000,
+    "decoded_sha256": "a546c1d0bd2775bbe61aac99c3cbf3331d27290ff882bb2d3773515bb5fafaef",
+    "count": 30000,
+    "dtype": "float32",
+    "units": "kA",
+    "finite_count": 30000,
+    "finite_fraction": 1.0,
+    "min": -24.034608840942383,
+    "max": 864.7200927734375,
+    "mean": 26.950964319972858,
+    "std": 127.59275483305682,
+    "upstream_quality": "Not Checked"
+  },
+  "paired_window_0_to_0_35_s": {
+    "finite_sample_count": 1750,
+    "first_index": 10001,
+    "last_index": 11750,
+    "paired_values_sha256": "636d6da6e4f74e112789d239e45c177bc78bfc4feffe169ab1e244f49f1b5f75",
+    "raw_values_in_evidence_record": false
+  },
+  "readiness": {
+    "archive_reachability_confirmed": true,
+    "chunk_integrity_hashed": true,
+    "decoded_shape_confirmed": true,
+    "all_values_finite": true,
+    "time_strictly_increasing": true,
+    "bounded_analysis_window_fingerprinted": true,
+    "uncertainty_metadata_available": false,
+    "upstream_quality": "Not Checked",
+    "analysis_evidence_eligible": true,
+    "control_evidence_eligible": false
+  },
+  "control_blockers": [
+    "Upstream signal quality is Not Checked.",
+    "No uncertainty metadata was present in the probed attributes.",
+    "Plasma current is a measured signal, not a validated Worldshepherd plasma-position estimator.",
+    "This evidence establishes archive-data integrity/statistics only, not safe real-time control performance."
+  ],
+  "claims_boundary": {
+    "real_archive_values_fetched_transiently": true,
+    "real_archive_values_persisted": false,
+    "real_archive_statistics_and_hashes_persisted": true,
+    "real_data_replayed_through_control_estimator": false,
+    "real_plasma_state_estimation_validated": false,
+    "real_machine_control_validated": false
+  }
+}
