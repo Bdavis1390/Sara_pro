@@ -221,13 +221,16 @@ def test_history_rechecks_hash_after_unvalidated_model_copy():
     original = history.packages[0]
 
     # Pydantic explicitly does not validate model_copy(update=...). The copied
-    # package therefore keeps the stale original hash unless the history custody
-    # boundary independently recomputes it.
+    # package therefore keeps the stale original hash unless a custody guard
+    # recomputes or revalidates it at the history boundary.
     tampered = original.model_copy(update={"recommended_option_id": "OPTION-C"})
     assert tampered.package_hash == original.package_hash
     assert tampered.recommended_option_id == "OPTION-C"
 
-    with pytest.raises(ValueError, match="DecisionHistory package_hash does not match"):
+    # Either nested DecisionPackage revalidation or DecisionHistory's independent
+    # recomputation may reject first. The invariant is that stale content/hash
+    # custody cannot be accepted.
+    with pytest.raises(ValueError, match="package_hash does not match"):
         DecisionHistory(
             program_id=history.program_id,
             packages=(tampered, history.packages[1]),
