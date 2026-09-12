@@ -284,3 +284,26 @@ def test_active_window_capacity_exhaustion_fails_closed():
     )
     with pytest.raises(PrimeSentinelAuthorizationError, match="capacity exhausted"):
         verified_authorization_registry_patch(records, overflow)
+
+
+def test_expired_verified_authorizations_are_pruned_before_capacity():
+    private, verifier = _keys()
+    now = datetime.now(timezone.utc)
+    records = {"PRIME_SENTINEL_AUTHORIZATIONS": {
+        f"EXPIRED-{i}": {
+            "status": "VERIFIED",
+            "nonce": f"old-nonce-{i}",
+            "expires_at": (now - timedelta(seconds=1)).isoformat(),
+        } for i in range(64)
+    }}
+    fresh = verifier.verify(
+        _signed_assertion(
+            private,
+            now=now,
+            authorization_id="AUTH-FRESH",
+            nonce="nonce-fresh-0123456789abcdef",
+        ),
+        now=now,
+    )
+    patch = verified_authorization_registry_patch(records, fresh)
+    assert list(patch["PRIME_SENTINEL_AUTHORIZATIONS"]) == ["AUTH-FRESH"]
