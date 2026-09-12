@@ -1,8 +1,8 @@
 {
-  "schema": "WS-QCRYPTO-EVIDENCE-REGISTER-v2",
+  "schema": "WS-QCRYPTO-EVIDENCE-REGISTER-v3",
   "as_of": "2026-09-12",
   "purpose": "Claims-controlled external evidence register for defensive quantum-cryptography migration analysis.",
-  "claims_boundary": "External publications and vendor roadmaps support the scientific and planning premises listed here. They do not constitute external validation of Worldshepherd, proof of a production key break, or proof that a cryptographically relevant quantum computer exists today. Vendor roadmaps are forward-looking evidence, not demonstrated capability.",
+  "claims_boundary": "External publications, measured demonstrations, vendor roadmaps, prototype/manufacturing evidence, and proposed decoder architectures support the scientific and planning premises listed here. They do not constitute external validation of Worldshepherd, proof of a production key break, or proof that a cryptographically relevant quantum computer exists today.",
   "items": [
     {
       "id": "GOOGLE-PRXQ-2026-ECDLP",
@@ -21,7 +21,7 @@
       "source": "https://arxiv.org/abs/2609.05625",
       "peer_reviewed": false,
       "hardware_demonstrated": false,
-      "finding": "A trapped-ion Walking Cat architecture estimate reports about 1,450 logical qubits, 40M Toffoli gates, 19,397 physical qubits and 25.7 days per secp256k1 ECDLP attempt with a stated success estimate under the paper's assumptions.",
+      "finding": "A trapped-ion Walking Cat architecture estimate reports 1,457 logical qubits, about 39M Toffoli gates, 19,397 physical qubits and 25.7 days per secp256k1 ECDLP attempt under the paper's assumptions.",
       "allowed_use": "Architecture-specific sensitivity bound; not a demonstrated cryptographic break."
     },
     {
@@ -31,8 +31,38 @@
       "source": "https://www.ionq.com/roadmap",
       "peer_reviewed": false,
       "hardware_demonstrated": false,
-      "finding": "IonQ's public roadmap targets 10,000 physical / 800 logical qubits in 2027 and 20,000 physical / 1,600 logical qubits in 2028. The 2028 target numerically overlaps IonQ's own published Walking Cat secp256k1 attack envelope of 19,397 physical / about 1,450 logical qubits.",
-      "allowed_use": "Forward migration-planning trigger only. The overlap may increase migration urgency but must not be reported as demonstrated attack capability, Q-day, or proof that the roadmap will be achieved."
+      "finding": "IonQ's public roadmap targets 10,000 physical / 800 logical qubits in 2027 and 20,000 physical / 1,600 logical qubits in 2028. The 2028 target numerically overlaps IonQ's own published Walking Cat secp256k1 attack envelope.",
+      "allowed_use": "Forward migration-planning trigger only; never Q-day or demonstrated capability."
+    },
+    {
+      "id": "IONQ-SUPERION-256-2026",
+      "source_family": "IonQ / SkyWater",
+      "evidence_class": "prototype and manufacturing maturity",
+      "source": "https://www.ionq.com/news/ionq-launches-superion-product-line-industry-leading-upgradeable-platform-designed-to-scale-manufacturable-fault-tolerant-quantum-computing",
+      "peer_reviewed": false,
+      "hardware_demonstrated": true,
+      "finding": "IonQ reports fully integrated 256-qubit Superion QPUs fabricated at SkyWater, first ions trapped in prototype systems, orders open, customer deliveries planned for 2027, and prior breakeven qLDPC QEC on a Tempo engineering system as validation of key Walking Cat elements.",
+      "allowed_use": "Roadmap-maturity evidence. It raises confidence that the platform is progressing beyond slideware but remains far below the 20,000-qubit attack-scale target."
+    },
+    {
+      "id": "IONQ-QLDPC-BREAKEVEN-2026",
+      "source_family": "IonQ / academic coauthors",
+      "evidence_class": "hardware QEC demonstration",
+      "source": "https://arxiv.org/abs/2606.06455",
+      "peer_reviewed": false,
+      "hardware_demonstrated": true,
+      "finding": "A trapped-ion experiment demonstrates multiple QEC codes including a qLDPC code encoding four logical qubits in 18 physical qubits, with reported breakeven behavior in some instances.",
+      "allowed_use": "Component-level QEC maturity evidence only; not an attack-scale overhead estimate or proof that the full Walking Cat cryptanalytic stack has been built."
+    },
+    {
+      "id": "QLDPC-PREDECODER-2026",
+      "source_family": "academic research",
+      "evidence_class": "proposed classical QEC decoder architecture",
+      "source": "https://arxiv.org/abs/2605.03180",
+      "peer_reviewed": false,
+      "hardware_demonstrated": false,
+      "finding": "The paper proposes generalized qLDPC predecoding that processes over 90% of the decoding workload, reports up to 3,963x decoder-utilization reduction, and gives hardware designs sized for about 1,200 bivariate-bicycle logical qubits on one FPGA or 36,000-360,000 on a cryogenic ASIC.",
+      "allowed_use": "Classical-decoding bottleneck sensitivity input only. Exact Walking Cat code compatibility, physical implementation at stated capacity, and attack-specific integration are unproven."
     },
     {
       "id": "LUO-2026-LOW-WIDTH-ECDLP",
@@ -52,18 +82,28 @@
       "peer_reviewed": false,
       "hardware_demonstrated": true,
       "finding": "The [[20,2,6]] C4-Helix architecture was experimentally validated on Quantinuum Helios, including repeated QEC, logical Clifford benchmarking and heterogeneous-code logical entanglement, with encoded results outperforming physical baselines without postselection.",
-      "allowed_use": "Hardware-QEC progress input only; do not multiply the measured code-block ratio into an attack estimate without a complete architecture-specific fault-tolerant overhead model."
+      "allowed_use": "Independent trapped-ion hardware-QEC progress input only; no cross-vendor resource multiplication."
     },
     {
-      "id": "WORLDSHEPHERD-QCRYPTO-CI",
+      "id": "TRAPPED-ION-UNIVERSAL-LOGICAL-2026",
+      "source_family": "peer-reviewed trapped-ion research",
+      "evidence_class": "fault-tolerant universal logical operation demonstration",
+      "source": "https://www.nature.com/articles/s41467-026-68533-x",
+      "peer_reviewed": true,
+      "hardware_demonstrated": true,
+      "finding": "A trapped-ion experiment demonstrates a fault-tolerant universal logical toolbox and a small encoded Grover search on logical qubits.",
+      "allowed_use": "Independent technology-trend evidence that non-Clifford/universal logical operations are hardware-demonstrated at small scale; not evidence of attack-scale integration."
+    },
+    {
+      "id": "WORLDSHEPHERD-QCRYPTO-PR208",
       "source_family": "Worldshepherd / Sara_pro",
       "evidence_class": "internal reproducible software validation",
-      "source": "https://github.com/Bdavis1390/Sara_pro/actions/runs/34720324003",
+      "source": "https://github.com/Bdavis1390/Sara_pro/pull/208",
       "peer_reviewed": false,
       "hardware_demonstrated": false,
       "internal_reproducible": true,
-      "finding": "The earlier QCRYPTO Risk Gate completed successfully on exact branch head 4c39d73b965969e1617bea0485175d4654784611. Later roadmap-collision updates require their own CI status and are not covered by that historical run.",
-      "allowed_use": "Historical internal software-quality evidence only; not independent scientific validation or external certification."
+      "finding": "QCRYPTO migration-risk controls are under draft review in PR #208. Exact-head CI evidence must be refreshed after each convergence-model update before any readiness claim is promoted.",
+      "allowed_use": "Internal software-quality evidence only; not independent scientific validation or external certification."
     }
   ]
 }
