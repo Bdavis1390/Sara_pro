@@ -189,7 +189,8 @@ class DurableStore:
                         # Preserve an interrupted tail as visible corruption,
                         # then frame the replayed event as its own JSONL record.
                         # A crash before the new record keeps the outbox pending.
-                        os.write(descriptor, b"\n")
+                        if os.write(descriptor, b"\n") != 1:
+                            raise OSError("audit tail separator write made no progress")
                 payload = (line + "\n").encode("utf-8")
                 while payload:
                     written = os.write(descriptor, payload)
