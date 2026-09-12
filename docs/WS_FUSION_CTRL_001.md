@@ -1,22 +1,25 @@
-# WS-FUSION-CTRL-001 — Simulator-Only Fusion Control Demonstrator
+# WS-FUSION-CTRL-001 — Simulator-Only Fusion Control Assurance Demonstrator
 
 ## Purpose
 
-Establish an auditable Worldshepherd control pattern for fusion research without creating any live hardware command path.
+Establish an auditable Worldshepherd control-assurance pattern for fusion research without creating any live hardware command path.
 
-The demonstrator now exercises:
+The branch now exercises:
 
-1. diagnostic sample validation and provenance;
-2. state estimation from paired demonstration optical signals;
-3. a model-generated virtual-actuator proposal;
+1. provenance-bearing diagnostic validation;
+2. a demonstration optical state estimator;
+3. abstract virtual-actuator proposals;
 4. an independent deterministic PRIME-style safety gate;
-5. append-only hash-chained audit/replay evidence;
-6. strict read-only FAIR-MAST source identity and metadata access;
-7. deterministic replay with evidence fingerprints;
-8. non-mutating mapping into the existing SARA audit event shape;
-9. offline diagnostic fault injection and safe-failure verification.
+5. SHA-256 hash-chained audit and deterministic replay;
+6. strict read-only FAIR-MAST source/data validation;
+7. non-mutating mapping into the existing SARA audit shape;
+8. offline diagnostic fault injection;
+9. estimator-consensus/disagreement handling;
+10. provenance-gated external observer intake;
+11. archive evidence readiness classification;
+12. an explicit archive-to-control admission gate.
 
-## Safety boundary
+## Hard safety boundary
 
 This branch intentionally contains **no**:
 
@@ -27,157 +30,235 @@ This branch intentionally contains **no**:
 - neutral-beam or RF-heating command interface;
 - plasma-facing hardware actuator transport.
 
-The only actuator enabled by the default demo is `virtual_vertical_balance`, measured in arbitrary simulator units.
+The default actuator remains `virtual_vertical_balance` in arbitrary simulator units.
 
-The FAIR-MAST client is GET-only, HTTPS-only, host-allowlisted, and provides no arbitrary-URL fetch method. Zarr array reading is deliberately kept outside the control core so archive access cannot be mistaken for actuator authority.
+## Control architecture
 
-## Core data contract
+```text
+measurement / archive source
+        |
+        v
+provenance + validity checks
+        |
+        v
+state estimator(s)
+        |
+        +---- external observer adapter (source validated only)
+        |
+        v
+estimator consensus / disagreement gate
+        |
+        v
+model-generated virtual proposal
+        |
+        v
+independent PRIME-style deterministic safety gate
+        |
+        v
+virtual actuator only
+        |
+        v
+hash-chained audit + deterministic replay
+```
 
-Every `SensorSample` carries:
+Archive data has a separate claims gate:
 
-- timestamp;
-- shot identifier;
-- diagnostic identifier;
-- value and unit;
-- uncertainty;
-- validity flag;
-- quality label;
-- provenance identifier.
+```text
+FAIR-MAST evidence -> archive readiness -> control admission
+                                      |
+                                      +-> analysis allowed when justified
+                                      +-> control denied unless all control evidence requirements pass
+```
 
-Every state estimate carries estimator identity, confidence, and source diagnostics.
-Every control proposal carries model identity, confidence, rationale, target virtual actuator, and requested value.
+## Core contracts
+
+Every `SensorSample` carries timestamp, shot identity, diagnostic identity, value/unit, uncertainty, validity, quality, and provenance.
+
+Every `PlasmaStateEstimate` carries timestamp, shot identity, displacement estimate, confidence, estimator identity, and source diagnostics.
+
+Every `ControlProposal` carries timestamp, shot identity, virtual actuator, requested value/unit, model identity, confidence, and rationale.
 
 ## PRIME-style safety gate
 
-The deterministic gate operates independently from the proposal generator and rejects proposals when any of the following holds:
+The deterministic gate is independent of the proposal generator and rejects:
 
-- actuator is not allowlisted;
-- units do not match the configured envelope;
-- model identity is missing;
-- value or confidence is invalid;
-- confidence is below threshold;
-- command is outside min/max bounds;
-- command timing is non-monotonic;
-- slew rate exceeds the configured limit.
+- non-allowlisted actuators;
+- unit mismatches;
+- missing model identity;
+- non-finite values or invalid confidence;
+- confidence below threshold;
+- values outside configured bounds;
+- non-monotonic command timing;
+- excessive slew.
 
 Rejected proposals receive `applied_value = null`.
 
-## Demonstration estimator
+## Demonstration estimator and controller
 
-`DifferentialOpticalEstimator` uses a normalized difference between upper and lower synthetic optical-emission channels. It exists only to exercise the control/data architecture. It is **not** represented as a validated plasma-position estimator.
+`DifferentialOpticalEstimator` uses a normalized difference between upper/lower synthetic optical-emission channels. It exists to exercise the data/control architecture and is **not** a validated plasma-position estimator.
 
-## Virtual controller
+`ProportionalVirtualActuatorController` produces an abstract correction from the demonstration displacement. It has no physical actuator semantics.
 
-`ProportionalVirtualActuatorController` generates an abstract correction from the simulated vertical displacement. It has no hardware semantics.
+## Estimator consensus and external observers
+
+`StateConsensusGate` requires multiple distinct estimator identities and rejects:
+
+- insufficient estimators;
+- duplicate estimator identity presented as independence;
+- cross-shot estimates;
+- low-confidence estimates;
+- excessive estimator time skew;
+- disagreement outside a configured tolerance.
+
+The tolerance is a software policy parameter, **not** a validated plasma-physics threshold.
+
+`ExternalObserverAdapter` does not implement magnetic or equilibrium reconstruction. It only admits an externally produced estimate when method, diagnostics, provenance, quality, confidence, estimator identity, and source validation are explicit. This creates a partner/laboratory integration point without fabricating a second physics model.
 
 ## Audit, replay, and SARA bridge
 
-`FusionAuditLedger` creates a sequence-numbered SHA-256 hash chain over sensor, state, proposal, and gate-decision events. The goal is deterministic replay evidence, not cryptographic non-repudiation.
+`FusionAuditLedger` creates a sequence-numbered SHA-256 hash chain over control-pipeline events.
 
-`FusionReplayRunner` requires paired series, matching shot identity, bounded pair-time skew, and strictly increasing replay time. A canonical SHA-256 fingerprint changes when replay input changes and remains stable for identical input/configuration.
+`FusionReplayRunner` requires paired series, matching shot identity, bounded pair-time skew, and strictly increasing time. Identical inputs/configuration produce a stable evidence fingerprint; changed inputs change that fingerprint.
 
-`fusion_audit_bridge.py` maps fusion audit records into the existing SARA `ts/event/actor/payload` structure without writing the SARA audit file or invoking an admin endpoint. It refuses to impersonate `admin`, `operator`, or `SSPADAWANZZ_ADMIN`.
+`fusion_audit_bridge.py` maps fusion records into SARA's existing `ts/event/actor/payload` event shape without writing the SARA audit file or invoking privileged endpoints. It rejects impersonation of `admin`, `operator`, and `SSPADAWANZZ_ADMIN`.
 
-## FAIR-MAST source lane
+## FAIR-MAST source and data evidence
 
-`fair_mast_adapter.py` provides:
-
-- a strict source identity (`FairMastSource`);
-- stable source provenance for each sample index;
-- GET-only host-allowlisted shot metadata access;
-- conversion of already-read archive series into `SensorSample` objects;
-- Level-1/Level-2 quality labels;
-- a conservative quality rule that blocks derivative-sensitive Level-2 magnetics by default because upstream FAIR-MAST issue #211 documented severe quantization for at least one Level-2 magnetics case and recommended Level-1 raw data for derivative-sensitive work.
-
-The repository pins a reproducible public source target at:
+The pinned source manifest is:
 
 `data/fair_mast/shot_30420_amc_manifest.json`
 
-That manifest identifies FAIR-MAST shot `30420`, Level-1 source `amc`, signals `time` and `plasma_current`, and the public Zarr location `s3://mast/level1/shots/30420.zarr/amc`.
+It identifies historical MAST shot `30420`, Level-1 group `amc`, signals `time` and `plasma_current`, and:
 
-**Important:** the manifest is source identity only. It explicitly states that no archived diagnostic values are embedded in this repository. Therefore this branch does not yet claim a completed replay of real FAIR-MAST signal arrays.
+`s3://mast/level1/shots/30420.zarr/amc`
 
-## Fault campaign
+### Metadata-only live probe
 
-`fusion_faults.py` injects faults only into offline `SensorSample` fixtures and checks for safe failure. The standard campaign covers:
+The bounded live metadata probe confirmed directly from the STFC public archive:
 
-- dropped lower-channel sample;
-- excessive pair timestamp skew;
-- shot-identity mismatch;
+- Zarr format 2;
+- `time`: shape `[30000]`, dtype `<f4`, units `s`;
+- `plasma_current`: shape `[30000]`, dtype `<f4`, units `kA`;
+- source description: `Plasma Current and PF/TF Coil Currents`;
+- upstream quality label: `Not Checked`;
+- no uncertainty field observed in the probed signal attributes.
+
+Metadata evidence is persisted at:
+
+`evidence/fair_mast/shot_30420_amc_metadata_probe_20260912.json`
+
+Metadata probe report SHA-256:
+
+`ffddced3a27e0b479298e5a09203ad59bba1460dd58ef43954d0e248eb416c0b`
+
+### Bounded real-value integrity probe
+
+A one-shot GitHub Actions job fetched only the pinned `time/0` and `plasma_current/0` compressed chunks, decoded them according to the declared Zarr metadata, calculated hashes/statistics, and discarded the raw arrays. Raw values were **not** committed.
+
+Evidence is persisted at:
+
+`evidence/fair_mast/shot_30420_amc_data_probe_20260912.json`
+
+Validated results:
+
+- 30,000 finite time samples;
+- time range approximately `-2.00000024 s` to `3.99979949 s`;
+- strictly increasing time base;
+- median sample interval approximately `0.000200033 s` (~5 kHz);
+- 30,000 finite plasma-current samples;
+- plasma-current units `kA`;
+- time compressed-chunk SHA-256: `3d1f90c80e334a581dc2185e0718c4a0c26e0dddf00d1bb8898fdca46c0f8aae`;
+- current compressed-chunk SHA-256: `6766652b81e6af1586222aa9f5496f61f5dcf813d810fe1e2a7f2e55025a7a64`;
+- bounded paired `0–0.35 s` window: 1,750 finite pairs;
+- paired-window SHA-256: `636d6da6e4f74e112789d239e45c177bc78bfc4feffe169ab1e244f49f1b5f75`;
+- probe report SHA-256: `4d7823c39cca64353a35aa848542fc12b6e783377242a7f4b46dca427e552489`.
+
+This establishes real archive reachability, decoding, time-base integrity, finite-value coverage, and reproducible content fingerprints. It does **not** establish plasma-position estimation or safe control.
+
+## FAIR-MAST quality guard
+
+FAIR-MAST issue #211 documented severe quantization in at least one Level-2 MAST magnetics dataset and derivative artifacts, while Level-1 raw data avoided that specific issue. `FairMastQualityPolicy` therefore blocks derivative-sensitive Level-2 magnetic-looking signals by default. This is a conservative workaround for the documented case, not a claim that every Level-2 signal is defective.
+
+## Archive readiness and control admission
+
+`archive_readiness.py` classifies the real shot-30420 evidence as:
+
+- **analysis evidence eligible:** yes;
+- **control evidence eligible:** no.
+
+Current control blockers include:
+
+- upstream quality is `Not Checked`;
+- no uncertainty metadata was observed;
+- real plasma-state estimation has not been validated;
+- real machine control has not been validated.
+
+`control_admission.py` enforces this distinction. Supplying an ad-hoc uncertainty or manually flipping a `control_evidence_eligible` flag is insufficient to admit the source. The additional validation blockers must also be resolved explicitly.
+
+## Offline diagnostic fault campaign
+
+The standard campaign verifies safe failure for:
+
+- dropped paired sample;
+- excessive timestamp skew;
+- shot mismatch;
 - missing provenance;
-- non-finite diagnostic value;
+- non-finite value;
 - explicit invalid-sensor flag.
 
-These checks enforce data-integrity invariants. They are not substitutes for validated plasma-physics anomaly thresholds.
+These are data-integrity invariants, not plasma-physics anomaly thresholds.
 
 ## CI validation
 
-Branch-scoped GitHub Actions CI uses:
+Branch-scoped GitHub Actions uses:
 
 - `actions/checkout@v7`;
 - `actions/setup-python@v7`;
 - CPython 3.11;
 - pinned `pytest==9.1.1`;
-- `contents: read` workflow permissions;
-- an explicit Python compile gate before tests.
+- `contents: read` permissions;
+- explicit Python compile gate.
 
-At commit `bf33f96d367668b1d0ada3bc07e03a887581310d`, the complete targeted suite reported:
+At commit `a5d8f3825dc28af06d43f7c4ec3f8cfd2962b270`, the complete targeted suite reported:
 
 ```text
-29 passed in 0.09s
+50 passed in 0.14s
 ```
 
-The successful suite covers simulator control, FAIR-MAST adapter/source manifest, deterministic replay, SARA audit mapping, and the diagnostic fault campaign.
-
-## Run the simulator
-
-From the repository root on this branch:
-
-```bash
-PYTHONPATH=. python scripts/run_fusion_control_demo.py
-```
-
-Expected result: one accepted or rejected virtual-actuator decision plus `ledger_ok: true` when the chain is intact.
-
-## Run the targeted tests
-
-```bash
-python -m pytest -q \
-  tests/test_fusion_control.py \
-  tests/test_fair_mast_adapter.py \
-  tests/test_fair_mast_manifest.py \
-  tests/test_fusion_replay.py \
-  tests/test_fusion_audit_bridge.py \
-  tests/test_fusion_faults.py
-```
+The suite covers simulator control, FAIR-MAST adapter/manifest/probe, deterministic replay, SARA audit mapping, fault injection, estimator consensus, archive readiness, external-observer admission, and archive-to-control admission.
 
 ## Claims state
 
 ### IMPLEMENTED IN SOFTWARE + CI VALIDATED
 
 - provenance-bearing simulator data contract;
-- demonstration differential estimator;
+- demonstration optical estimator;
 - virtual controller;
-- independent deterministic PRIME-style gate;
+- independent PRIME-style gate;
 - hash-chained audit ledger;
-- strict read-only FAIR-MAST source adapter;
-- FAIR-MAST source manifest and quality guard;
-- deterministic replay/fingerprint engine;
+- read-only FAIR-MAST adapters/probes;
+- deterministic replay/fingerprinting;
 - non-mutating SARA audit bridge;
-- six-case diagnostic fault campaign.
+- six-case diagnostic fault campaign;
+- estimator-consensus gate;
+- external-observer adapter;
+- archive readiness classifier;
+- archive-to-control admission gate.
 
-### SUPPORTED BY EXTERNAL SOURCE EVIDENCE
+### EXTERNALLY VERIFIED ARCHIVE EVIDENCE
 
-- FAIR-MAST exposes historical MAST metadata/data for research;
-- upstream examples identify the shot-30420 Level-1 AMC path and `plasma_current` signal;
-- upstream issue #211 documents Level-2 magnetics quantization risk relevant to derivative-sensitive analysis.
+- real FAIR-MAST shot-30420 Level-1 AMC metadata retrieved and hashed;
+- real time/plasma-current chunks retrieved and decoded transiently;
+- archive content hashes and statistics persisted without raw sample persistence;
+- time and plasma-current arrays each contain 30,000 finite samples in this probe.
 
-### REQUIRES DATA VALIDATION
+### REQUIRES FURTHER DATA/PARTNER VALIDATION
 
-- retrieval and checksum/provenance capture of actual FAIR-MAST arrays;
-- replay against those retrieved arrays;
-- verification of units, calibration, signal quality, time bases, missing values, and diagnostic-specific metadata;
-- comparison against an independent state-estimation method.
+- calibration/quality interpretation beyond the archive's `Not Checked` label;
+- a defensible uncertainty model supplied by source metadata, calibration evidence, or validated methodology;
+- a genuine independent state estimator/observer supplied by a qualified external method or implemented and validated separately;
+- comparison against authoritative plasma-state/equilibrium reconstruction;
+- real state-estimation accuracy and latency validation.
 
 ### REQUIRES LAB/PARTNER VALIDATION
 
@@ -188,14 +269,13 @@ Any claim that Worldshepherd estimates or controls real plasma position, improve
 - control of a real tokamak;
 - improved fusion performance;
 - net fusion power;
-- propulsion from these control effects;
-- plasma shielding or other unsupported macroscopic protective effects.
+- propulsion from these effects;
+- plasma shielding or unsupported macroscopic protective effects.
 
 ## Next gates
 
-1. Acquire a bounded real FAIR-MAST diagnostic slice with exact archive provenance and content hash; keep it read-only.
-2. Validate units, time base, calibration/quality metadata, and missing-value behavior before replay.
-3. Replay that recorded public slice through the evidence pipeline and capture a deterministic report.
-4. Add an independent second estimator/observer and explicit disagreement handling.
-5. Expand fault injection to delayed, duplicated, contradictory, and metadata-corrupted streams using justified invariants.
-6. Only after those gates pass, evaluate a **non-actuating** EPICS-compatible telemetry adapter.
+1. Obtain authoritative calibration/uncertainty/quality information for selected FAIR-MAST diagnostics instead of inventing uncertainty.
+2. Attach a genuinely independent equilibrium/state observer through `ExternalObserverAdapter` and exercise disagreement handling against the demonstration estimator.
+3. Extend fault injection to duplicated, delayed, contradictory, reordered, and metadata-corrupted streams.
+4. Build analysis-only replay for selected real public signals where the physics mapping is justified; keep control admission closed until validation requirements are actually met.
+5. Only after these gates pass, evaluate a **non-actuating, read-only EPICS-compatible telemetry adapter**.
