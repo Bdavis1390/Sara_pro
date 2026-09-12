@@ -36,6 +36,7 @@ class G6ConvergenceSummary(BaseModel):
     temporal_hartmann: float = Field(gt=0.0)
     temporal_grid_size: int = Field(ge=5)
     temporal_dts: tuple[float, float, float]
+    temporal_effective_dts: tuple[float, float, float]
     temporal_errors: tuple[float, float, float]
     temporal_orders: tuple[float, float]
     temporal_order_floor: float = Field(gt=0.0)
@@ -191,11 +192,11 @@ def transient_hartmann_exact_velocity(
 
 
 def steady_hartmann_exact_velocity(y: float, hartmann: float) -> float:
+    if abs(y) > 1.0:
+        raise ValueError("steady Hartmann reference requires y in [-1, 1]")
     ha = abs(hartmann)
     if ha == 0.0:
         return 0.5 * (1.0 - y * y)
-    if abs(y) > 1.0:
-        raise ValueError("steady Hartmann reference requires y in [-1, 1]")
     if ha < 20.0:
         cosh_ratio = math.cosh(ha * y) / math.cosh(ha)
     else:
@@ -548,6 +549,7 @@ def run_nsb_g6_benchmark(
             temporal_hartmann=temporal_hartmann,
             temporal_grid_size=temporal_grid_size,
             temporal_dts=temporal_dts,
+            temporal_effective_dts=tuple(case.effective_dt for case in temporal_cases),
             temporal_errors=temporal_errors,
             temporal_orders=temporal_orders,
             temporal_order_floor=temporal_order_floor,
