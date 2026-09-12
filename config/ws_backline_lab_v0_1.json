@@ -25,11 +25,19 @@
     },
     "catalyst": {
       "repository": "https://github.com/PennyLaneAI/catalyst",
-      "tag": "v0.16.0b1"
+      "tag": "v0.16.0b1",
+      "python_minimum": "3.12"
     },
     "pennylane_release_line": "v0.46.0b1",
     "official_demo": "https://www.pennylane.ai/demos/backline",
-    "official_install": "https://github.com/PennyLaneAI/backline/blob/main/INSTALL.md"
+    "official_install": "https://github.com/PennyLaneAI/backline/blob/main/INSTALL.md",
+    "catalyst_release_notes": "https://docs.pennylane.ai/projects/catalyst/en/latest/dev/release_notes.html"
+  },
+  "environment": {
+    "isolate_from_host_system_python": true,
+    "python_required": ">=3.12",
+    "preferred_mode": "CONTAINER_OR_ISOLATED_VIRTUAL_ENVIRONMENT",
+    "host_system_python_replacement_allowed": false
   },
   "qbl_g1": {
     "name": "LOCAL_CPU_TO_CPU_STEANE_QEC",
@@ -43,6 +51,7 @@
     "minimum_warm_repetitions": 10,
     "expected_sample_invariant": "EACH_SHOT_ALL_ZERO_OR_ALL_ONE",
     "pass_requires": [
+      "PYTHON_3_12_OR_NEWER",
       "DECODER_LIBRARY_EXISTS",
       "PENNYLANE_BACKLINE_API_IMPORTS",
       "QJIT_COMPILE_AND_EXECUTE_SUCCESS",
