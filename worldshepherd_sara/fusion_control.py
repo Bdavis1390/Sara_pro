@@ -44,6 +44,10 @@ class SensorSample:
             return False, "uncertainty_invalid"
         if not self.diagnostic.strip():
             return False, "diagnostic_missing"
+        if not self.unit.strip():
+            return False, "unit_missing"
+        if not self.quality.strip():
+            return False, "quality_missing"
         if not self.provenance.strip():
             return False, "provenance_missing"
         return True, "ok"
@@ -288,6 +292,8 @@ class DifferentialOpticalEstimator:
             raise ValueError("optical sample unit mismatch")
         if upper.shot_id != lower.shot_id:
             raise ValueError("shot mismatch")
+        if upper.diagnostic == lower.diagnostic:
+            raise ValueError("optical diagnostic identity collision")
 
         denominator = abs(upper.value) + abs(lower.value)
         if denominator <= 0:
