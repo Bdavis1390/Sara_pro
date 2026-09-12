@@ -1,5 +1,6 @@
 import unittest
 
+# Federal dual-track classification is a claims-control state only; it never establishes compliance or approval.
 from credibility_guard import EvidenceItem, assess_credibility
 
 
