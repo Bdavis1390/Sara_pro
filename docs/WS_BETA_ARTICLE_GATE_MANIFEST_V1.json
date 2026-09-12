@@ -1,0 +1,126 @@
+{
+  "schema": "WS-BETA-ARTICLE-GATE-MANIFEST-V1",
+  "status": "DRAFT_BLOCKED_PENDING_PHYSICAL_EVIDENCE",
+  "claims_boundary": "This manifest defines benign physical-validation custody only. It does not establish measured capability, flight readiness, human-use readiness, weapon capability, certification, or external validation.",
+  "lineage": {
+    "lane": "BETA — Engineering, Prototypes, Materials & Qualification",
+    "engineering_epic": 6,
+    "article_gate_issue": 194,
+    "evidence_baseline_pr": 5
+  },
+  "global_rules": {
+    "article_identity_required": true,
+    "weighed_or_measured_bom_required": true,
+    "calibration_records_required": true,
+    "raw_data_retention_required": true,
+    "configuration_hash_required": true,
+    "contradictory_evidence_retained": true,
+    "independent_stop_authority_required": true,
+    "simulation_may_not_promote_measured_claim": true,
+    "vendor_specification_may_not_promote_measured_claim": true,
+    "external_partner_result_may_not_be_claimed_as_worldshepherd_measurement": true,
+    "promotion_requires_frozen_acceptance_criteria": true
+  },
+  "gates": [
+    {
+      "gate_id": "WS-X10-MODULE-GATE-A",
+      "article": "WS-X10 representative protected lift module",
+      "current_state": "BLOCKED",
+      "purpose": "Establish repeatable component-level lift-module evidence before any multi-drive or untethered progression.",
+      "required_measurements": [
+        "thrust_or_reaction_force",
+        "electrical_voltage",
+        "electrical_current",
+        "electrical_power",
+        "motor_or_drive_temperature",
+        "structural_temperature",
+        "vibration",
+        "acoustic_level",
+        "article_mass",
+        "ambient_conditions"
+      ],
+      "required_records": [
+        "article_identity",
+        "weighed_bom",
+        "instrument_calibrations",
+        "test_configuration_hash",
+        "synchronized_raw_data",
+        "test_video_or_equivalent_observation_record",
+        "failure_and_anomaly_log",
+        "post_test_teardown_findings"
+      ],
+      "minimum_repeat_rule": "Five repeat profiles on the frozen article/configuration before promotion consideration.",
+      "stop_conditions": [
+        "frozen_acceptance_threshold_missed",
+        "unexplained_measurement_residual",
+        "thermal_excursion",
+        "unstable_mode",
+        "instrumentation_invalid_or_out_of_calibration",
+        "uncontained_or_uncontrolled_failure"
+      ],
+      "prohibited_promotions": [
+        "untethered_flight",
+        "payload_ratio_claim",
+        "system_level_pass"
+      ]
+    },
+    {
+      "gate_id": "WHX-170-JOINT-GATE-A",
+      "article": "WHX-170 representative joint actuator assembly",
+      "current_state": "BLOCKED",
+      "purpose": "Close actuator behavior and safe-state evidence before representative-limb progression.",
+      "required_measurements": [
+        "torque",
+        "speed",
+        "electrical_power",
+        "efficiency",
+        "backlash_or_compliance",
+        "thermal_rise",
+        "backdrive_behavior",
+        "force_limiting_response",
+        "stall_response",
+        "power_loss_state",
+        "repeatability"
+      ],
+      "required_fault_trials": [
+        "sensor_fault",
+        "power_fault",
+        "communications_fault",
+        "software_fault",
+        "independent_stop"
+      ],
+      "promotion_condition": "Representative-limb testing only after the frozen joint article passes its predeclared acceptance sheet with retained evidence."
+    },
+    {
+      "gate_id": "CHX-01-HEARTH-GATE-A",
+      "article": "CHX-01 HEARTH bounded household-interaction rig",
+      "current_state": "BLOCKED",
+      "purpose": "Establish bounded interaction safety, privacy, authorization, replay, and recovery evidence before supervised human-use consideration.",
+      "required_measurements": [
+        "contact_force",
+        "balance_or_stability_margin",
+        "stop_latency",
+        "command_authorization_result",
+        "replay_integrity",
+        "recovery_result"
+      ],
+      "required_assurance_records": [
+        "explicit_exclusion_set",
+        "privacy_and_data_handling_record",
+        "independent_emergency_stop_evidence",
+        "normal_trial_raw_data",
+        "fault_injection_raw_data",
+        "contradiction_and_failure_log"
+      ],
+      "promotion_condition": "No supervised human use until interaction-force, stability, privacy/cyber, and safe-stop criteria receive independent review."
+    }
+  ],
+  "evidence_custody": {
+    "SARA": "orchestrate test workflow",
+    "PRIME_PRE": "authorize progression and reject out-of-scope steps",
+    "ECHO": "retain raw-data, configuration, calibration, and article provenance",
+    "OVERWATCH": "retain independent stop and safety authority",
+    "BR3D_WMAF_GDS": "compare predictions with measurements without upgrading evidence class"
+  },
+  "claims_state_after_manifest_creation": "IMPLEMENTED_IN_GOVERNANCE_ARTIFACT_ONLY"
+}
