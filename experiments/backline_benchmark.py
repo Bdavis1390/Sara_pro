@@ -2,8 +2,8 @@
 """Worldshepherd QBL-G2 caller-observed repeatability benchmark.
 
 This benchmark measures the Python caller's end-to-end invocation time around
-an already constructed QBL-G1 QNode. It is not a transport-only, kernel-only,
-FPGA, GPU, or physical-QPU latency measurement.
+the QBL-G1B ``lightning.qubit`` QNode. It is not a transport-only, kernel-only,
+FPGA, GPU, physical-QPU, or vendor-benchmark latency measurement.
 """
 
 from __future__ import annotations
@@ -65,11 +65,12 @@ def main() -> int:
     if args.shots < 1 or args.warmup < 0 or args.iterations < 1:
         parser.error("--shots/--iterations must be positive and --warmup non-negative")
 
+    device_name = "lightning.qubit"
     decoder_path = decoder_library_path()
-    manifest = environment_manifest(decoder_path)
+    manifest = environment_manifest(decoder_path, device_name)
 
     try:
-        ghz = build_ghz_qnode(shots=args.shots)
+        ghz = build_ghz_qnode(shots=args.shots, device_name=device_name)
 
         cold_ns, cold_samples = timed_call(ghz)
         validation_failures = 0 if ghz_samples_valid(cold_samples) else 1
@@ -88,6 +89,7 @@ def main() -> int:
 
         report = {
             "gate": "QBL-G2",
+            "depends_on": "QBL-G1B",
             "status": "PASS" if validation_failures == 0 else "FAIL",
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "measurement_scope": (
@@ -104,12 +106,13 @@ def main() -> int:
             "claims_boundary": {
                 "sub_3us_performance": "NOT_CURRENTLY_CLAIMED",
                 "hardware_qpu_integration": "NOT_CURRENTLY_CLAIMED",
-                "quantum_advantage": "NOT_CURRENTLY_CLAIMED"
-            }
+                "quantum_advantage": "NOT_CURRENTLY_CLAIMED",
+            },
         }
     except Exception as exc:
         report = {
             "gate": "QBL-G2",
+            "depends_on": "QBL-G1B",
             "status": "ERROR",
             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
             "measurement_scope": (
@@ -119,8 +122,11 @@ def main() -> int:
             "error_type": type(exc).__name__,
             "error": str(exc),
             "claims_boundary": {
-                "worldshepherd_backline_integration": "REQUIRES_LAB_VALIDATION"
-            }
+                "worldshepherd_backline_integration": "REQUIRES_LAB_VALIDATION",
+                "sub_3us_performance": "NOT_CURRENTLY_CLAIMED",
+                "hardware_qpu_integration": "NOT_CURRENTLY_CLAIMED",
+                "quantum_advantage": "NOT_CURRENTLY_CLAIMED",
+            },
         }
 
     rendered = json.dumps(report, indent=2, sort_keys=True)
