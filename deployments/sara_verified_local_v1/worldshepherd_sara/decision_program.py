@@ -176,6 +176,9 @@ class DecisionPackage(BaseModel):
     version: int = Field(ge=1)
     epoch_id: str
     evaluated_utc: str
+    change_reason: str
+    spec_hash: str
+    evidence_hash: str
     package_state: PackageState
     recommended_option_id: str | None
     runner_up_option_id: str | None
@@ -283,6 +286,18 @@ def evaluate_decision(
 ) -> DecisionPackage:
     evidence = _evidence_index(spec, epoch)
     evaluations: dict[str, OptionEvaluation] = {}
+
+    spec_hash = _sha256(spec.model_dump(mode="json"))
+    evidence_payload = {
+        "epoch_id": epoch.epoch_id,
+        "evaluated_utc": epoch.evaluated_utc,
+        "change_reason": epoch.change_reason,
+        "evidence": [
+            item.model_dump(mode="json")
+            for item in sorted(epoch.evidence, key=lambda datum: datum.evidence_id)
+        ],
+    }
+    evidence_hash = _sha256(evidence_payload)
 
     feasible_ids: list[str] = []
     for option in spec.options:
@@ -396,10 +411,16 @@ def evaluate_decision(
         "version": version,
         "epoch_id": epoch.epoch_id,
         "evaluated_utc": epoch.evaluated_utc,
+        "change_reason": epoch.change_reason,
+        "spec_hash": spec_hash,
+        "evidence_hash": evidence_hash,
         "package_state": state.value,
         "recommended_option_id": recommended,
         "runner_up_option_id": runner_up,
-        "option_evaluations": [item.model_dump(mode="json") for item in sorted(evaluations.values(), key=lambda x: x.option_id)],
+        "option_evaluations": [
+            item.model_dump(mode="json")
+            for item in sorted(evaluations.values(), key=lambda item: item.option_id)
+        ],
         "flip_conditions": [item.model_dump(mode="json") for item in flip_conditions],
         "blockers": sorted(blockers),
         "warnings": sorted(warnings),
