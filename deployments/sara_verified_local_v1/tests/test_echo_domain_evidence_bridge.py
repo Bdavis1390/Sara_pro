@@ -121,6 +121,19 @@ def test_execution_bearing_envelope_is_rejected_fail_closed():
         _apnt_envelope(execution_attempted=True)
 
 
+def test_unvalidated_model_copy_execution_state_is_rechecked_at_emission_and_ingest(tmp_path):
+    envelope = _apnt_envelope()
+    bypass = envelope.model_copy(update={"execution_attempted": True})
+    assert bypass.execution_attempted is True
+
+    with pytest.raises(ValueError, match="execution_attempted must be false"):
+        bypass.semantic_payload()
+    with pytest.raises(ValueError, match="execution_attempted must be false"):
+        bypass.to_audit_record()
+    with pytest.raises(ValueError, match="execution_attempted must be false"):
+        ingest_domain_evidence(EchoEventStore(tmp_path.resolve()), bypass)
+
+
 def test_non_finite_nested_payload_is_rejected():
     for value in (math.nan, math.inf, -math.inf):
         # Either the shared repository resource guard or this bridge's canonical
@@ -135,6 +148,32 @@ def test_duplicate_parent_refs_are_rejected():
         _apnt_envelope(parent_refs=("same", "same"))
 
 
+def test_input_payload_is_detached_and_deeply_sealed():
+    caller_payload = {"outer": {"inner": [1, 2, 3]}}
+    envelope = _army_envelope(payload=caller_payload)
+    original_digest = envelope.bridge_payload_sha256()
+
+    caller_payload["outer"]["inner"].append(4)
+    assert envelope.bridge_payload_sha256() == original_digest
+    assert tuple(envelope.payload["outer"]["inner"]) == (1, 2, 3)
+
+    with pytest.raises(TypeError, match="immutable"):
+        envelope.payload["outer"]["new"] = "mutation"
+
+
+def test_emitted_audit_record_payload_is_sealed_against_post_hash_mutation():
+    envelope = _army_envelope()
+    record = envelope.to_audit_record()
+    baseline = semantic_sha256(record)
+
+    with pytest.raises(TypeError, match="immutable"):
+        record.payload["payload"]["recommended_option_id"] = "OPTION-C"
+    with pytest.raises(ValidationError):
+        record.payload = {"tampered": True}
+
+    assert semantic_sha256(record) == baseline
+
+
 def test_artifact_evidence_uses_existing_evidence_contract():
     envelope = _apnt_envelope()
     artifact = envelope.to_artifact_evidence(locator="echo://domain/APNT_AWARENESS/WS-NP004-POC-A-001")
@@ -142,6 +181,15 @@ def test_artifact_evidence_uses_existing_evidence_contract():
     assert artifact.role == ArtifactRole.SOURCE
     assert artifact.sha256.startswith("sha256:")
     assert artifact.media_type == "application/json"
+
+
+def test_artifact_identity_uses_full_source_identity_tuple():
+    first = _army_envelope(source_id="run-1")
+    second = _army_envelope(domain="OTHER_DOMAIN", source_id="run-1")
+    third = _army_envelope(source_kind="OtherPackage", source_id="run-1")
+
+    assert len({first.artifact_id(), second.artifact_id(), third.artifact_id()}) == 3
+    assert len({first.stable_event_id(), second.stable_event_id(), third.stable_event_id()}) == 3
 
 
 def test_event_identity_is_source_identity_not_mutable_payload():
