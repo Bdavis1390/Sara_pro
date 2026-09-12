@@ -2,7 +2,9 @@
 
 Status: **INTERNAL SOFTWARE VALIDATION PASS THROUGH v0.4 / EXTERNAL PROVIDER VALIDATION OPEN**
 
-Current validated head: `3d4bf428a82ee1c4a9e3b926ac03cb5c501dff5f`
+Current validated head: `71723c23b75a3322d2dab6b0e0eefa3405fd1b0e`
+
+Current release-evidence-index digest: `sha256:66f41f6849597f7e71a3a075c87fe6eba21c887e5532a34302c8d8855ca63471`
 
 ## Purpose
 
@@ -28,7 +30,15 @@ Authoritative references:
 
 ## Internally validated behavior
 
-The exact current head passed all seven principal repository workflows, including SARA Verified Local v1 Gate #1946, Commit Closure Evidence #1720, Operational Resilience Drill #632, NIST 800-171 SSP Precursor #608, TLS Private Backend Architecture #1198, Replacement Environment Restore #1212, and Rollback Drill #1220.
+The exact current head passed all seven principal repository workflows:
+
+- SARA Verified Local v1 Gate #1948
+- SARA Commit Closure Evidence #1734
+- SARA Operational Resilience Drill #642
+- SARA NIST 800-171 SSP Precursor #618
+- SARA TLS Private Backend Architecture #1200
+- SARA Replacement Environment Restore #1214
+- SARA Rollback Drill #1222
 
 Validated software behavior includes:
 
