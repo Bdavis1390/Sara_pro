@@ -123,7 +123,7 @@ def test_deletion_of_checkpointed_overwatch_event_blocks_next_checkpoint(
     echo_checkpoint_key,
 ):
     key, _path = echo_checkpoint_key
-    _sara, echo, _decision, _intent, receipt = _record_and_deliver(
+    sara, echo, _decision, _intent, receipt = _record_and_deliver(
         tmp_path,
         _observation("OBS-DELETE-AFTER-CHECKPOINT"),
     )
@@ -133,6 +133,20 @@ def test_deletion_of_checkpointed_overwatch_event_blocks_next_checkpoint(
         key_id="ECHO-CHECKPOINT-OVERWATCH-DELETION-V1",
     )
     manager.create_checkpoint()
+
+    second_observation = _observation("OBS-REMAINS-AFTER-DELETION")
+    second_decision = classify_overwatch_observation(second_observation)
+    second_intent = record_overwatch_containment_intent(
+        sara,
+        decision=second_decision,
+        now=NOW + timedelta(seconds=2),
+    )
+    second_receipt = deliver_overwatch_intent_provenance(
+        sara,
+        echo,
+        intent=second_intent,
+    )
+    assert echo.get(second_receipt.provenance_event_id) is not None
 
     connection = sqlite3.connect(echo.db_path)
     try:
