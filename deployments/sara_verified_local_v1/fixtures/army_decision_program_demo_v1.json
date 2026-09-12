@@ -1,0 +1,148 @@
+{
+  "claims_boundary": "SIMULATED_ONLY / INTERNAL SOFTWARE DEMONSTRATOR",
+  "spec": {
+    "program_id": "WS-ADM-DEMO-001",
+    "title": "Synthetic ground-vehicle subsystem acquisition trade study",
+    "objectives": [
+      {
+        "objective_id": "OBJ-MASS",
+        "metric_id": "mass_kg",
+        "label": "Minimize subsystem mass",
+        "direction": "MINIMIZE",
+        "weight": 0.30
+      },
+      {
+        "objective_id": "OBJ-COST",
+        "metric_id": "unit_cost_usd",
+        "label": "Minimize unit acquisition cost",
+        "direction": "MINIMIZE",
+        "weight": 0.35
+      },
+      {
+        "objective_id": "OBJ-READINESS",
+        "metric_id": "reliability_fraction",
+        "label": "Maximize demonstrated reliability",
+        "direction": "MAXIMIZE",
+        "weight": 0.35
+      }
+    ],
+    "options": [
+      {"option_id": "OPTION-A", "label": "Synthetic architecture A"},
+      {"option_id": "OPTION-B", "label": "Synthetic architecture B"},
+      {"option_id": "OPTION-C", "label": "Synthetic architecture C"}
+    ],
+    "constraints": [
+      {
+        "constraint_id": "CON-MASS",
+        "metric_id": "mass_kg",
+        "operator": "<=",
+        "threshold": 120.0,
+        "rationale": "Synthetic packaging mass ceiling for the bounded demonstration."
+      },
+      {
+        "constraint_id": "CON-COST",
+        "metric_id": "unit_cost_usd",
+        "operator": "<=",
+        "threshold": 40000.0,
+        "rationale": "Synthetic unit-cost ceiling for the bounded demonstration."
+      }
+    ],
+    "assumptions": [
+      {
+        "assumption_id": "ASM-INTERFACE",
+        "statement": "All options use the same synthetic interface envelope.",
+        "status": "VALIDATED",
+        "source_ref": "synthetic://interface-envelope-v1"
+      },
+      {
+        "assumption_id": "ASM-LEADTIME",
+        "statement": "Supplier lead-time equivalence has not yet been externally validated.",
+        "status": "UNVALIDATED",
+        "source_ref": "synthetic://lead-time-placeholder-v1"
+      }
+    ],
+    "risks": [
+      {
+        "risk_id": "RISK-A-SUPPLY",
+        "statement": "Synthetic sole-source exposure for option A.",
+        "probability": 0.35,
+        "impact": 0.40,
+        "penalty_weight": 0.10,
+        "option_id": "OPTION-A",
+        "source_ref": "synthetic://risk-register/a"
+      },
+      {
+        "risk_id": "RISK-B-INTEGRATION",
+        "statement": "Synthetic integration-change exposure for option B.",
+        "probability": 0.20,
+        "impact": 0.25,
+        "penalty_weight": 0.10,
+        "option_id": "OPTION-B",
+        "source_ref": "synthetic://risk-register/b"
+      },
+      {
+        "risk_id": "RISK-C-MATURITY",
+        "statement": "Synthetic maturity uncertainty for option C.",
+        "probability": 0.50,
+        "impact": 0.50,
+        "penalty_weight": 0.10,
+        "option_id": "OPTION-C",
+        "source_ref": "synthetic://risk-register/c"
+      }
+    ],
+    "bias_checks": [
+      {
+        "bias_check_id": "BIAS-ANCHORING",
+        "check": "Recommendation is recomputed from declared evidence rather than inheriting the prior winner.",
+        "status": "PASS",
+        "evidence_ref": "synthetic://bias-check/anchoring-v1"
+      },
+      {
+        "bias_check_id": "BIAS-SOURCE-DIVERSITY",
+        "check": "External source diversity remains incomplete in the synthetic demonstration.",
+        "status": "WARN",
+        "evidence_ref": "synthetic://bias-check/source-diversity-v1"
+      }
+    ]
+  },
+  "epochs": [
+    {
+      "epoch_id": "EPOCH-001",
+      "evaluated_utc": "2026-09-12T19:15:00Z",
+      "change_reason": "Initial bounded point trade-study evidence set.",
+      "evidence": [
+        {"evidence_id": "E1-A-MASS", "option_id": "OPTION-A", "metric_id": "mass_kg", "value": 100.0, "unit": "kg", "source_ref": "synthetic://epoch1/a/mass"},
+        {"evidence_id": "E1-A-COST", "option_id": "OPTION-A", "metric_id": "unit_cost_usd", "value": 35000.0, "unit": "USD", "source_ref": "synthetic://epoch1/a/cost"},
+        {"evidence_id": "E1-A-REL", "option_id": "OPTION-A", "metric_id": "reliability_fraction", "value": 0.92, "unit": "fraction", "source_ref": "synthetic://epoch1/a/reliability"},
+        {"evidence_id": "E1-B-MASS", "option_id": "OPTION-B", "metric_id": "mass_kg", "value": 110.0, "unit": "kg", "source_ref": "synthetic://epoch1/b/mass"},
+        {"evidence_id": "E1-B-COST", "option_id": "OPTION-B", "metric_id": "unit_cost_usd", "value": 30000.0, "unit": "USD", "source_ref": "synthetic://epoch1/b/cost"},
+        {"evidence_id": "E1-B-REL", "option_id": "OPTION-B", "metric_id": "reliability_fraction", "value": 0.85, "unit": "fraction", "source_ref": "synthetic://epoch1/b/reliability"},
+        {"evidence_id": "E1-C-MASS", "option_id": "OPTION-C", "metric_id": "mass_kg", "value": 90.0, "unit": "kg", "source_ref": "synthetic://epoch1/c/mass"},
+        {"evidence_id": "E1-C-COST", "option_id": "OPTION-C", "metric_id": "unit_cost_usd", "value": 39000.0, "unit": "USD", "source_ref": "synthetic://epoch1/c/cost"},
+        {"evidence_id": "E1-C-REL", "option_id": "OPTION-C", "metric_id": "reliability_fraction", "value": 0.80, "unit": "fraction", "source_ref": "synthetic://epoch1/c/reliability"}
+      ]
+    },
+    {
+      "epoch_id": "EPOCH-002",
+      "evaluated_utc": "2026-09-12T19:20:00Z",
+      "change_reason": "Synthetic option-B cost and reliability evidence changed; refresh without overwriting epoch 1.",
+      "evidence": [
+        {"evidence_id": "E2-A-MASS", "option_id": "OPTION-A", "metric_id": "mass_kg", "value": 100.0, "unit": "kg", "source_ref": "synthetic://epoch2/a/mass"},
+        {"evidence_id": "E2-A-COST", "option_id": "OPTION-A", "metric_id": "unit_cost_usd", "value": 36000.0, "unit": "USD", "source_ref": "synthetic://epoch2/a/cost"},
+        {"evidence_id": "E2-A-REL", "option_id": "OPTION-A", "metric_id": "reliability_fraction", "value": 0.90, "unit": "fraction", "source_ref": "synthetic://epoch2/a/reliability"},
+        {"evidence_id": "E2-B-MASS", "option_id": "OPTION-B", "metric_id": "mass_kg", "value": 110.0, "unit": "kg", "source_ref": "synthetic://epoch2/b/mass"},
+        {"evidence_id": "E2-B-COST", "option_id": "OPTION-B", "metric_id": "unit_cost_usd", "value": 28000.0, "unit": "USD", "source_ref": "synthetic://epoch2/b/cost"},
+        {"evidence_id": "E2-B-REL", "option_id": "OPTION-B", "metric_id": "reliability_fraction", "value": 0.94, "unit": "fraction", "source_ref": "synthetic://epoch2/b/reliability"},
+        {"evidence_id": "E2-C-MASS", "option_id": "OPTION-C", "metric_id": "mass_kg", "value": 90.0, "unit": "kg", "source_ref": "synthetic://epoch2/c/mass"},
+        {"evidence_id": "E2-C-COST", "option_id": "OPTION-C", "metric_id": "unit_cost_usd", "value": 39000.0, "unit": "USD", "source_ref": "synthetic://epoch2/c/cost"},
+        {"evidence_id": "E2-C-REL", "option_id": "OPTION-C", "metric_id": "reliability_fraction", "value": 0.80, "unit": "fraction", "source_ref": "synthetic://epoch2/c/reliability"}
+      ]
+    }
+  ],
+  "expected": {
+    "epoch_1_recommendation": "OPTION-A",
+    "epoch_2_recommendation": "OPTION-B",
+    "human_signoff": false,
+    "history_length": 2
+  }
+}
