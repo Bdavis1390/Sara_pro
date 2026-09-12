@@ -208,7 +208,22 @@ def build_independent_evaluator_report(
 
 
 def verify_independent_evaluator_report(report: IndependentEvaluatorReport) -> None:
-    """Raise if any digest-bound reviewer field has changed."""
+    """Raise if reviewer evidence or fixed non-authority invariants changed."""
+
+    invariant_expectations = {
+        "schema": INDEPENDENT_EVALUATOR_REPORT_SCHEMA,
+        "monitor_verification_status": "UNVERIFIED",
+        "evidence_binding_status": "BOUND",
+        "review_outcome": "EVIDENCE_ONLY",
+        "authority_status": "NO_AUTHORITY",
+        "readiness_effect": "NONE",
+        "execution_effect_applied": False,
+    }
+    for field_name, expected_value in invariant_expectations.items():
+        if getattr(report, field_name) != expected_value:
+            raise IndependentEvaluatorError(
+                f"independent evaluator invariant mismatch: {field_name}"
+            )
 
     expected = hashlib.sha256(
         _canonical_payload(
