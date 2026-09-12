@@ -153,6 +153,10 @@ def build_independent_review_package(
         raise IndependentReviewPackageError(
             "evaluator/corroboration observation binding mismatch"
         )
+    if evaluator_report.overwatch_monitor_id != checkpoint_corroboration.monitor_id:
+        raise IndependentReviewPackageError(
+            "evaluator/corroboration monitor binding mismatch"
+        )
     if (
         evaluator_report.overwatch_decision_digest_sha256
         != checkpoint_corroboration.decision_digest_sha256
