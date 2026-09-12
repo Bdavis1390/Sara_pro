@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:worldshepherd:schema:claim-record:0.1",
+  "title": "Worldshepherd Claim Record v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "claim_id",
+    "statement",
+    "claim_class",
+    "evidence_classes",
+    "supporting_record_ids",
+    "contradicting_record_ids",
+    "validity_domain",
+    "confidence_status",
+    "review_state"
+  ],
+  "properties": {
+    "claim_id": {"type": "string", "minLength": 1},
+    "statement": {"type": "string", "minLength": 1},
+    "claim_class": {
+      "enum": [
+        "OBSERVATION",
+        "DERIVED_RESULT",
+        "MODEL_PREDICTION",
+        "LITERATURE_ASSERTION",
+        "ENGINEERING_CONCLUSION",
+        "HYPOTHESIS",
+        "ANOMALOUS_RESIDUAL"
+      ]
+    },
+    "evidence_classes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["MEASURED", "CALCULATED", "LITERATURE", "SIMULATED", "HYPOTHESIS", "NULL_CONTROL", "ARTIFACT"]
+      }
+    },
+    "supporting_record_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "contradicting_record_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "validity_domain": {
+      "type": "object",
+      "description": "Declared conditions over which the claim is permitted to apply.",
+      "additionalProperties": true
+    },
+    "uncertainty_ref": {"type": ["string", "null"]},
+    "replication_ids": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "confidence_status": {
+      "enum": [
+        "UNASSESSED",
+        "HYPOTHESIS_ONLY",
+        "PRELIMINARY",
+        "SUPPORTED_WITHIN_DOMAIN",
+        "CONTRADICTED",
+        "INDEPENDENTLY_REPRODUCED"
+      ]
+    },
+    "promotion_gate": {
+      "type": ["string", "null"],
+      "description": "Identifier of the gate required before this claim can be promoted."
+    },
+    "review_state": {
+      "enum": ["DRAFT", "OPERATOR_REVIEWED", "CRE1AWS_REVIEWED", "FROZEN"]
+    },
+    "notes": {"type": ["string", "null"]}
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "schema": "WS-BETA-ACCEPTANCE-SHEET-V1",
+  "status": "TEMPLATE_ONLY_NOT_A_TEST_RESULT",
+  "claims_boundary": "This template freezes acceptance criteria and evidence custody before a benign physical test. It does not itself establish measured performance or readiness.",
+  "identity": {
+    "gate_id": "REQUIRED",
+    "article_id": "REQUIRED",
+    "article_revision": "REQUIRED",
+    "configuration_digest_sha256": "REQUIRED",
+    "weighed_or_measured_bom_ref": "REQUIRED",
+    "test_plan_revision": "REQUIRED"
+  },
+  "pretest_freeze": {
+    "frozen_before_test": false,
+    "freeze_timestamp": null,
+    "authorized_by": null,
+    "scope_statement": "REQUIRED",
+    "explicit_exclusions": [],
+    "environmental_limits": [],
+    "stop_conditions": [],
+    "required_repetitions": null
+  },
+  "measurement_channels": [
+    {
+      "channel_id": "REQUIRED",
+      "quantity": "REQUIRED",
+      "unit": "REQUIRED",
+      "instrument_id": "REQUIRED",
+      "calibration_record_id": "REQUIRED",
+      "calibration_valid_at_test": null,
+      "sample_rate_hz": null,
+      "uncertainty_record_id": "REQUIRED_WHEN_QUANTITATIVE",
+      "raw_data_ref": null
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "criterion_id": "REQUIRED",
+      "requirement_source": "REQUIRED",
+      "metric": "REQUIRED",
+      "acceptance_rule": "MUST_BE_FROZEN_BEFORE_TEST",
+      "rationale": "REQUIRED",
+      "evidence_class_allowed": ["MEASURED"],
+      "result": "NOT_RUN",
+      "evidence_refs": []
+    }
+  ],
+  "controls": {
+    "null_or_reference_control_required": false,
+    "null_or_reference_control_refs": [],
+    "fault_injection_required": false,
+    "fault_injection_cases": [],
+    "independent_stop_required": true,
+    "independent_stop_verified": null
+  },
+  "execution_record": {
+    "start_timestamp": null,
+    "end_timestamp": null,
+    "operator": null,
+    "independent_observer": null,
+    "raw_data_manifest_ref": null,
+    "video_or_observation_ref": null,
+    "anomaly_log_ref": null,
+    "failure_log_ref": null,
+    "teardown_record_ref": null
+  },
+  "disposition": {
+    "overall": "BLOCKED",
+    "criterion_results_frozen": false,
+    "contradictory_evidence_refs": [],
+    "redesign_required": null,
+    "redesign_record_ref": null,
+    "independent_review_complete": false,
+    "claims_state": "NOT_PROMOTED",
+    "promotion_rationale": null
+  },
+  "promotion_rules": [
+    "No criterion may be edited after test execution to convert a failure into a pass.",
+    "Missing calibration, raw data, article identity, configuration digest, required repetitions, or independent review remains BLOCKED.",
+    "Simulation, literature, vendor specification, or another organization's measurement cannot substitute for required Worldshepherd MEASURED evidence.",
+    "Negative, null, anomalous, and contradictory evidence must be retained.",
+    "A PASS applies only to the exact frozen article, configuration, acceptance criteria, and validity domain supported by the retained evidence."
+  ]
+}

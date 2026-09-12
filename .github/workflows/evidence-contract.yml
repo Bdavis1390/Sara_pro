@@ -1,0 +1,55 @@
+name: Evidence Contract CI
+
+on:
+  pull_request:
+    paths:
+      - "worldshepherd_sara/evidence_*.py"
+      - "tests/test_evidence_*.py"
+      - "payloads/*evidence*.json"
+      - "payloads/*experiment*.json"
+      - "payloads/*claim*.json"
+      - "requirements-dev.txt"
+      - ".github/workflows/evidence-contract.yml"
+  push:
+    branches:
+      - "agent/evidence-governed-physical-engineering"
+    paths:
+      - "worldshepherd_sara/evidence_*.py"
+      - "tests/test_evidence_*.py"
+      - "payloads/*evidence*.json"
+      - "payloads/*experiment*.json"
+      - "payloads/*claim*.json"
+      - "requirements-dev.txt"
+      - ".github/workflows/evidence-contract.yml"
+
+jobs:
+  evidence-contract:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Compile evidence modules
+        run: python -m compileall worldshepherd_sara/evidence_contract.py worldshepherd_sara/evidence_calibration.py worldshepherd_sara/evidence_registry.py worldshepherd_sara/evidence_api.py worldshepherd_sara/evidence_server.py
+
+      - name: Run evidence tests
+        env:
+          PYTHONPATH: .
+          SARA_ADMIN_TOKEN: ci-admin-token
+          SARA_RELAY_TOKEN: ci-relay-token
+          SARA_DATA_DIR: ${{ runner.temp }}/sara-data
+        run: pytest -q tests/test_evidence_contract.py tests/test_evidence_calibration.py tests/test_evidence_registry.py tests/test_evidence_runtime.py

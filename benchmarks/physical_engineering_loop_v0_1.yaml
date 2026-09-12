@@ -1,0 +1,92 @@
+benchmark_id: WS-PELB-0.1
+name: Worldshepherd Physical Engineering Loop Benchmark
+status: draft
+purpose: >-
+  Quantify whether Worldshepherd improves the speed, cost, predictive accuracy,
+  provenance, reproducibility, design-space coverage, failure reuse, and safely
+  automated fraction of physical engineering work.
+
+metrics:
+  T_H:
+    name: hypothesis_to_first_model
+    unit: hours
+    objective: minimize
+  T_P:
+    name: hypothesis_to_first_physical_prototype
+    unit: hours
+    objective: minimize
+  T_V:
+    name: hypothesis_to_validated_result
+    unit: hours
+    objective: minimize
+  C_V:
+    name: cost_per_validated_result
+    unit: USD
+    objective: minimize
+  E_P:
+    name: prediction_error_against_measurement
+    unit: declared_by_campaign
+    objective: minimize
+  P_R:
+    name: provenance_completeness
+    unit: fraction
+    range: [0.0, 1.0]
+    objective: maximize
+  R_R:
+    name: reproducibility_rate
+    unit: fraction
+    range: [0.0, 1.0]
+    objective: maximize
+  D_R:
+    name: validated_design_space_coverage_per_engineering_hour
+    unit: campaign_defined
+    objective: maximize
+  F_R:
+    name: failure_and_null_data_reuse_rate
+    unit: fraction
+    range: [0.0, 1.0]
+    objective: maximize
+  A_R:
+    name: safely_automated_workflow_fraction
+    unit: fraction
+    range: [0.0, 1.0]
+    objective: maximize
+
+minimum_campaign_requirements:
+  - explicit_H0_and_H1
+  - predeclared_acceptance_conditions
+  - calibration_provenance
+  - raw_data_digest
+  - uncertainty_model
+  - at_least_one_null_or_control_condition
+  - model_version_or_no_model_declaration
+  - test_article_configuration_digest
+  - result_class_WS_R0_to_WS_R4
+  - claim_record_or_no_claim_declaration
+
+comparison_policy:
+  baseline_methods:
+    - conventional_manual_workflow
+    - random_DOE_where_applicable
+    - latin_hypercube_where_applicable
+    - sobol_sequence_where_applicable
+    - bayesian_optimization_where_applicable
+  glob_policy: >-
+    Glob/permutation methods may be treated as proprietary exploration methods
+    only after comparison against appropriate baselines on coverage, bias
+    detection, convergence, cost, or predictive performance. Numeric coincidence
+    with a physical datum is not evidence of causal significance.
+
+first_reference_campaign:
+  id: ITX01-CAMPAIGN-A
+  objectives:
+    - establish_force_metrology
+    - characterize_powered_null_artifacts
+    - operate_validated_force_propulsion_article
+    - synchronize_force_power_thermal_magnetic_environmental_data
+    - operate_field_skin_sensing_if_available
+    - compare_model_predictions_to_measurements
+    - execute_deterministic_DOE_ordering
+    - execute_withheld_blind_condition
+    - inject_bounded_faults
+    - preserve_full_SARA_provenance

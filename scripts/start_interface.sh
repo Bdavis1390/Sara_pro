@@ -35,9 +35,10 @@ source .env
 set +a
 
 echo "Starting Worldshepherd SARA interface:"
-echo "  UI:     http://localhost:9530/ui"
-echo "  Health: http://localhost:9530/health"
+echo "  UI:       http://localhost:9530/ui"
+echo "  Health:   http://localhost:9530/health"
+echo "  Evidence: http://localhost:9530/v1/evidence/metrics"
 echo
 echo "Use SARA_ADMIN_TOKEN from .env for admin access."
 
-exec uvicorn worldshepherd_sara.server:app --host 127.0.0.1 --port 9530
+exec uvicorn worldshepherd_sara.evidence_server:app --host 127.0.0.1 --port 9530

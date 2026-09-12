@@ -1,0 +1,67 @@
+{
+  "experiment_id": "WS-EXP-20260817-001",
+  "campaign_id": "ITX01-CAMPAIGN-A",
+  "test_article_id": "ITX01-EAD-TILE-001",
+  "timestamp_utc": "2026-08-17T13:30:00Z",
+  "evidence_class": ["MEASURED", "NULL_CONTROL"],
+  "hardware": {
+    "geometry_digest": "sha256:geometry-placeholder",
+    "configuration_digest": "sha256:configuration-placeholder",
+    "material_batch_ids": ["REF-AL-001"]
+  },
+  "software": {
+    "sara_version": "0.1",
+    "commit": "replace-with-runtime-commit",
+    "solver_name": "reference",
+    "solver_version": null,
+    "solver_commit": null,
+    "model_id": null
+  },
+  "calibration_ids": ["CAL-FORCE-001"],
+  "sensor_manifest": [
+    {
+      "sensor_id": "FORCE-X",
+      "quantity": "force",
+      "units": "N",
+      "sample_rate_hz": 1000,
+      "calibration_id": "CAL-FORCE-001",
+      "location_frame": "UPB",
+      "orientation": "+X",
+      "clock_source": "ITX-MASTER"
+    }
+  ],
+  "environment": {
+    "pressure_pa": 101325,
+    "temperature_k": 295.15,
+    "relative_humidity": 0.45,
+    "magnetic_field_t": [0.0, 0.0, 0.00005]
+  },
+  "power_trace_ref": "data/raw/ws-exp-001-power.csv",
+  "command_history_ref": "data/raw/ws-exp-001-commands.jsonl",
+  "raw_data": {
+    "location": "data/raw/ws-exp-001.csv",
+    "digest": "sha256:raw-placeholder",
+    "format": "csv"
+  },
+  "processed_data": null,
+  "glob": {
+    "seed": "99073",
+    "operator": "PA",
+    "orbit_state": "30979",
+    "test_order": 17
+  },
+  "uncertainty": {
+    "model_id": "UF-001",
+    "expanded_uncertainty": 0.0001,
+    "coverage_factor": 2.0,
+    "units": "N"
+  },
+  "null_article_id": "ITX01-EAD-NULL-001",
+  "hypotheses": {
+    "H0": "Observed force is fully explained by known apparatus and EHD effects.",
+    "H1": "The active configuration produces repeatable force beyond the powered-null condition."
+  },
+  "result_class": "WS-R1",
+  "claim_ids": [],
+  "review_state": "DRAFT"
+}
