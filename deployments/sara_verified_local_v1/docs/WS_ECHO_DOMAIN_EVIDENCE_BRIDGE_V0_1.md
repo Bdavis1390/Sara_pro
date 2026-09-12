@@ -1,7 +1,9 @@
 # WS ECHO Domain Evidence Bridge v0.1
 
-**Status:** DRAFT / IMPLEMENTED IN SOFTWARE / VALIDATION PENDING / BLOCK MERGE  
-**Date:** 2026-09-12  
+**Status:** DRAFT / IMPLEMENTED IN SOFTWARE / VALIDATION PENDING / BLOCK MERGE
+
+**Date:** 2026-09-12
+
 **Claims boundary:** Evidence/provenance transport only. This bridge does not validate domain capability, authorize execution, or elevate maturity.
 
 ## Purpose
