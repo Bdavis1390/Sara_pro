@@ -1,0 +1,59 @@
+name: WS Army Decision Program v0.1 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/decision_program.py'
+      - 'deployments/sara_verified_local_v1/tests/test_decision_program.py'
+      - 'deployments/sara_verified_local_v1/fixtures/army_decision_program_demo_v1.json'
+      - 'deployments/sara_verified_local_v1/docs/WS_ARMY_DECISION_PROGRAM_V0_1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-army-decision-program-v0-1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/decision_program.py'
+      - 'deployments/sara_verified_local_v1/tests/test_decision_program.py'
+      - 'deployments/sara_verified_local_v1/fixtures/army_decision_program_demo_v1.json'
+      - 'deployments/sara_verified_local_v1/docs/WS_ARMY_DECISION_PROGRAM_V0_1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-army-decision-program-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  decision-program:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record tested source
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=SIMULATED_ONLY / INTERNAL SOFTWARE DEMONSTRATOR"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile decision-program module
+        run: python -m compileall -q worldshepherd_sara/decision_program.py
+
+      - name: Run bounded decision-program tests
+        run: python -m pytest tests/test_decision_program.py -q
