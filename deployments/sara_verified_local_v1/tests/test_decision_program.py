@@ -7,6 +7,7 @@ import pytest
 
 from worldshepherd_sara.decision_program import (
     DecisionEpoch,
+    DecisionHistory,
     DecisionPackage,
     DecisionSpec,
     PackageState,
@@ -212,3 +213,22 @@ def test_package_is_frozen_after_validation():
 
     with pytest.raises(ValueError):
         package.recommended_option_id = "OPTION-C"
+
+
+def test_history_rechecks_hash_after_unvalidated_model_copy():
+    spec, epochs, _ = _spec_and_epochs()
+    history = refresh_decision_program(spec, epochs)
+    original = history.packages[0]
+
+    # Pydantic explicitly does not validate model_copy(update=...). The copied
+    # package therefore keeps the stale original hash unless the history custody
+    # boundary independently recomputes it.
+    tampered = original.model_copy(update={"recommended_option_id": "OPTION-C"})
+    assert tampered.package_hash == original.package_hash
+    assert tampered.recommended_option_id == "OPTION-C"
+
+    with pytest.raises(ValueError, match="DecisionHistory package_hash does not match"):
+        DecisionHistory(
+            program_id=history.program_id,
+            packages=(tampered, history.packages[1]),
+        )
