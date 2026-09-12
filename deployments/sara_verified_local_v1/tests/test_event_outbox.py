@@ -262,3 +262,18 @@ def test_mission_completion_quarantines_even_when_outbox_is_saturated(client, to
     assert persisted.json()["passport"]["custody"]["state"] == (
         "QUARANTINED_FOR_REQUALIFICATION"
     )
+
+
+
+def test_replay_after_partial_audit_tail_preserves_a_valid_event(tmp_path):
+    store = DurableStore(tmp_path / "data")
+    event_id = queue_fixed_event(store, "SARA-EVENT-PARTIAL-001")
+    store.audit_path.write_bytes(b'{"event":"interrupted"')
+    assert drain_event_outbox(store, limit=1) == 1
+    records = store.read_audit(50)
+    assert records[0] == {"event": "audit_corruption_detected", "reason": "invalid_line"}
+    delivered = [item for item in records if item.get("event") == "test_provenance"]
+    assert len(delivered) == 1
+    assert delivered[0]["payload"]["_outbox_event_id"] == event_id
+    assert outbox_status(store.get_registry())["pending"] == 0
+    assert store.audit_path.read_bytes().endswith(b"\\n")
