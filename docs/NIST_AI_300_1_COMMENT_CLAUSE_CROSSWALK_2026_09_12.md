@@ -1,7 +1,7 @@
 # NIST AI 300-1 ipd — Worldshepherd comment clause crosswalk
 
-**Status:** SUPPORTING REVIEW MATERIAL / NOT SUBMITTED  
-**Purpose:** Tie the prepared Worldshepherd comment candidate to exact draft clauses and avoid broad comments that the source does not support.  
+**Status:** SUPPORTING REVIEW MATERIAL / NOT SUBMITTED
+**Purpose:** Tie the prepared Worldshepherd comment candidate to exact draft clauses and avoid broad comments that the source does not support.
 **AI-assistance disclosure:** An AI assistant was used to help analyze and organize this crosswalk. Human review is required before any external use.
 
 ## Source anchors
