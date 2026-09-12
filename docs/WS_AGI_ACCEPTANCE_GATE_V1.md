@@ -1,4 +1,4 @@
-# Worldshepherd AGI Acceptance Gate v1.1 — 2026-09-11
+# Worldshepherd AGI Acceptance Gate v1.4 — 2026-09-11
 
 ## Purpose
 
@@ -98,15 +98,25 @@ Each result must record model/system identifier and immutable version hash where
 
 Allowed claim states are `PROVEN_INTERNALLY`, `EXTERNALLY_REPLICATED`, `VENDOR_REPORTED`, `UNVERIFIED`, and `BLOCKED`.
 
+## External evaluation controls
+
+Protected and independently replicated evidence must follow three additional protocols:
+
+- `docs/WS_AGI_EXTERNAL_EVALUATOR_HANDOFF_V1.md` defines the minimum independent-evaluator package, including frozen hashes, role identities, pre-run commitments, sealed result sets, complete failure retention, and controlled-access evidence references.
+- `docs/WS_SKILLED_HUMAN_BASELINE_PROTOCOL_V1.md` defines how economic-work skilled-human baselines are selected, frozen, scored, versioned, and handed off without allowing candidate-system performance to influence the baseline.
+- `docs/WS_INDEPENDENT_REPLICATION_PROTOCOL_V1.md` defines what qualifies as a distinct replication, how shared dependencies are disclosed, and how contradictory replication evidence blocks promotion until resolved.
+
+A result that is numerically high but lacks these integrity and independence controls is diagnostic evidence only and cannot promote the intelligence state.
+
 ## Worldshepherd architecture changes
 
 ### SARA
 
-Add an evaluation orchestrator that dispatches benchmark adapters, normalizes results, and emits signed evidence records. SARA does not decide that AGI exists; it computes gate status from evidence.
+SARA hosts the evaluation/orchestration path that normalizes benchmark adapters, merges evidence bundles, validates protected manifests, prioritizes the weakest lane, and computes gate status from evidence. SARA does not decide that AGI exists by declaration.
 
 ### ECHO SENTINEL LINK
 
-Record the complete provenance chain: model version, prompts, tools, environment, task hashes, outputs, grader version, human adjudication, and reruns.
+Record the complete provenance chain: model version, prompts, tools, environment, task hashes, outputs, grader version, human adjudication, reruns, protected-run commitment hashes, and result seals.
 
 ### PRIME SENTINEL
 
@@ -119,7 +129,7 @@ No change to deployment authority occurs solely because `intelligence_state` cha
 
 ### OVERWATCH
 
-Display gate status, failed lanes, unknown metrics, replication status, evidence age, and integrity alerts. A green aggregate indicator is prohibited while any required metric is unknown.
+Display gate status, failed lanes, unknown metrics, replication status, evidence age, integrity alerts, and sealed-run verification status. A green aggregate indicator is prohibited while any required metric is unknown.
 
 ## Advancement loop
 
@@ -137,11 +147,13 @@ Worldshepherd should continuously iterate through this loop:
 
 `intelligence_state = BELOW_AGI`
 
-The reason is no longer that frontier systems are uniformly weak on novel interactive reasoning. Astra's Provider Adapter ARC-AGI-3 result is near saturation and therefore closes a major historical gap. The remaining blockers are stricter and more important:
+The remaining blockers are evidence-heavy rather than branding-heavy:
 
 - Astra's provider-neutral Standard-harness ARC-AGI-3 score is 62.7%, below the Worldshepherd candidate threshold.
 - ARC Prize itself says ARC-AGI-3 saturation is not proof of AGI because the benchmark is bounded and does not capture real-world open-endedness.
 - METR's latest public time-horizon page remains based on measurements through May 2026 and explicitly warns that measurements above 16 hours are unreliable with its current suite, so it does not yet supply the required long-horizon evidence for this gate.
-- Independent, contamination-resistant evidence across broad economically valuable work, robust self-correction, low false-completion rates, and multiple independent replications is still incomplete.
+- Evaluator-controlled protected task sets and frozen skilled-human baselines have not yet produced candidate-scale economic-breadth evidence.
+- Candidate-scale protected workflow, recovery, integrity, and transfer runs remain to be executed under the sealed evidence protocol.
+- Genuine distinct full-gate replications remain incomplete.
 
 This status changes only from measured evidence, never from branding, executive declarations, or a single near-saturated benchmark.
