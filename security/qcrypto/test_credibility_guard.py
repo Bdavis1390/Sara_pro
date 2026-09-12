@@ -23,6 +23,34 @@ class CredibilityGuardTests(unittest.TestCase):
         self.assertTrue(result.peer_reviewed_external_present)
         self.assertTrue(result.hardware_external_present)
         self.assertTrue(result.internal_reproducible_present)
+        self.assertFalse(result.standards_authority_present)
+        self.assertFalse(result.operational_migration_present)
+
+    def test_multi_axis_record_requires_standards_and_real_migration(self):
+        evidence = [
+            EvidenceItem("Google PRX Quantum", "Google Quantum AI", peer_reviewed=True),
+            EvidenceItem("IonQ Walking Cat", "IonQ"),
+            EvidenceItem("Luo low-width ECDLP", "Luo et al."),
+            EvidenceItem("C4-Helix", "Quantinuum", hardware_demonstrated=True),
+            EvidenceItem("NIST PQC transition", "NIST", standards_authority=True),
+            EvidenceItem(
+                "Algorand Falcon-1024 mainnet accounts",
+                "Algorand Foundation",
+                operational_migration_deployment=True,
+            ),
+            EvidenceItem(
+                "QCRYPTO CI",
+                "Worldshepherd",
+                external=False,
+                internal_reproducible=True,
+            ),
+        ]
+        result = assess_credibility(evidence)
+        self.assertEqual(result.warrant_state, "MULTI_AXIS_TRIANGULATED_ENGINEERING_RECORD")
+        self.assertEqual(result.independent_external_families, 6)
+        self.assertTrue(result.standards_authority_present)
+        self.assertTrue(result.operational_migration_present)
+        self.assertTrue(any("CREDIBILITY WARRANTED FOR PROCESS" in c for c in result.warranted_claims))
 
     def test_external_findings_alone_do_not_warrant_implementation(self):
         result = assess_credibility(
@@ -53,6 +81,7 @@ class CredibilityGuardTests(unittest.TestCase):
         self.assertIn("Independent external validation", joined)
         self.assertIn("production-strength cryptographic key break", joined)
         self.assertIn("cryptographically relevant quantum computer", joined)
+        self.assertIn("partial post-quantum deployment", joined)
 
 
 if __name__ == "__main__":
