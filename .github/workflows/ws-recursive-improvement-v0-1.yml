@@ -5,10 +5,12 @@ on:
     paths:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_cycle.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/pre_improvement.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/recursive_discovery.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/config_custody.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_cycle.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/tests/test_pre_improvement.py'
       - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_V0_1.md'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/ws-recursive-improvement-v0-1.yml'
@@ -16,10 +18,12 @@ on:
     paths:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_cycle.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/pre_improvement.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/recursive_discovery.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/config_custody.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_cycle.py'
       - 'deployments/sara_verified_local_v1/tests/test_improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/tests/test_pre_improvement.py'
       - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_V0_1.md'
       - 'deployments/sara_verified_local_v1/pyproject.toml'
       - '.github/workflows/ws-recursive-improvement-v0-1.yml'
@@ -55,7 +59,12 @@ jobs:
         run: |
           python -m py_compile worldshepherd_sara/improvement_cycle.py
           python -m py_compile worldshepherd_sara/improvement_routing.py
+          python -m py_compile worldshepherd_sara/pre_improvement.py
 
       - name: Run recursive-improvement tests
         run: |
-          python -m pytest tests/test_improvement_cycle.py tests/test_improvement_routing.py -q
+          python -m pytest \
+            tests/test_improvement_cycle.py \
+            tests/test_improvement_routing.py \
+            tests/test_pre_improvement.py \
+            -q
