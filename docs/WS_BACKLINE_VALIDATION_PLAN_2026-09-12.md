@@ -17,6 +17,7 @@ Pinned initial upstream versions from the official Backline Tier-1 instructions:
 - Backline: `v0.1.0b1`
 - Catalyst: `v0.16.0b1`
 - PennyLane/PennyLane Lightning beta line: `v0.46.0b1`
+- Python: `>=3.12` for Catalyst 0.16
 - Transport for QBL-G1: `memcpy`
 - Quantum device for QBL-G1: `lightning.qubit`
 - QEC code: `steane`
@@ -26,12 +27,13 @@ Upstream sources:
 - https://github.com/PennyLaneAI/backline/blob/main/INSTALL.md
 - https://www.pennylane.ai/demos/backline
 - https://github.com/PennyLaneAI/demos/blob/master/demonstrations_v2/backline/demo.py
+- https://docs.pennylane.ai/projects/catalyst/en/latest/dev/release_notes.html
 
 ## Claims boundary
 
 Until Worldshepherd executes and records a gate successfully:
 
-- `BACKLINE_SOFTWARE`: IMPLEMENTED_EXTERNALLY / OPEN_SOURCE
+- `BACKLINE_SOFTWARE`: IMPLEMENTED_EXTERNALLY / OPEN SOURCE
 - `WORLDSHEPHERD_BACKLINE_INTEGRATION`: REQUIRES_LAB_VALIDATION
 - `WORLDSHEPHERD_SUB_3US_PERFORMANCE`: NOT CURRENTLY CLAIMED
 - `HARDWARE_QPU_INTEGRATION`: NOT CURRENTLY CLAIMED
@@ -60,6 +62,7 @@ Pass criteria:
 - upstream versions pinned;
 - source URLs and commit/tag identifiers recorded;
 - Python/Catalyst/Backline environment isolated from the system Python;
+- Python 3.12+ requirement satisfied without replacing the host system Python;
 - decoder library path recorded;
 - hardware and OS inventory captured;
 - claims boundary recorded before execution.
@@ -114,7 +117,9 @@ Requires external or partner hardware. Promote claims only after a reproducible 
 
 ## Initial execution environment
 
-Preferred Worldshepherd path: isolated container or virtual environment. Do not replace or upgrade the host system Python to satisfy Backline.
+Preferred Worldshepherd path: isolated Python 3.12+ container or virtual environment. Do not replace or upgrade the Ubuntu 22.04 host system Python to satisfy Catalyst.
+
+Catalyst 0.16 requires Python 3.12 or newer. That is therefore a hard QBL-G0 environment gate, not an optional optimization.
 
 For the official Tier-1 wheel path, the upstream guide currently specifies:
 
