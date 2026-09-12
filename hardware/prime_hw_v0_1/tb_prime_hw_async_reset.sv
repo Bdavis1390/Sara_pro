@@ -90,8 +90,9 @@ module tb_prime_hw_async_reset;
         expect_state(ST_RESET, "mid-cycle asynchronous reset assertion");
         expect_blocked("mid-cycle reset immediately blocks request");
 
-        // Releasing reset between edges must not advance state until the next posedge.
-        #1;
+        // Release immediately after the assertion check, still strictly before the
+        // next posedge. Sample one nanosecond later so this hold check cannot race
+        // with that clock edge.
         reset_n = 1'b1;
         #1;
         expect_state(ST_RESET, "mid-cycle reset release holds reset state until clock");
