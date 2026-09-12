@@ -26,6 +26,7 @@ from .prime_passport import (
     update_requalification_evidence,
 )
 from .prime_sentinel_authorization import (
+    MAX_ASSERTION_LIFETIME,
     PrimeSentinelAuthorizationAssertion,
     PrimeSentinelAuthorizationError,
     PrimeSentinelVerifier,
@@ -333,7 +334,10 @@ def authorize_prime_requalification(
                 expires = datetime.fromisoformat(entry["expires_at"].replace("Z", "+00:00"))
             except ValueError as exc:
                 raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed") from exc
-            if issued.tzinfo is None or expires.tzinfo is None or issued >= expires:
+            if (
+                issued.tzinfo is None or expires.tzinfo is None
+                or issued >= expires or expires - issued > MAX_ASSERTION_LIFETIME
+            ):
                 raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
         verified = verifier.verify(body)
         updated, payload = apply_verified_requalification_authorization(passport, verified)
