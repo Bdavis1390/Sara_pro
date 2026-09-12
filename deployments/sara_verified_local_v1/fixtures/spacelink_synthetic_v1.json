@@ -1,0 +1,83 @@
+{
+  "fixture_id": "WS-SPACELINK-SYNTHETIC-V1",
+  "claims_scope": "Synthetic contact-lifecycle data only. No RF, provider, partner, spectrum, satellite, or telemetry validation is implied.",
+  "authoritative_provider_docs": [
+    "https://docs.aws.amazon.com/ground-station/latest/APIReference/API_ListContacts.html",
+    "https://docs.aws.amazon.com/ground-station/latest/APIReference/API_ReserveContact.html",
+    "https://docs.aws.amazon.com/ground-station/latest/ug/digital-twin.html"
+  ],
+  "contacts": [
+    {
+      "provider": "SYNTHETIC_GS",
+      "contact_id": "fixture-contact-001",
+      "status": "SCHEDULING",
+      "version_id": 1,
+      "ground_station": "Digital Twin Fixture 1",
+      "start_time": "2026-09-30T16:00:00Z",
+      "end_time": "2026-09-30T16:10:00Z",
+      "last_updated": "2026-09-30T15:00:00Z"
+    },
+    {
+      "provider": "SYNTHETIC_GS",
+      "contact_id": "fixture-contact-001",
+      "status": "SCHEDULED",
+      "version_id": 1,
+      "ground_station": "Digital Twin Fixture 1",
+      "start_time": "2026-09-30T16:00:00Z",
+      "end_time": "2026-09-30T16:10:00Z",
+      "last_updated": "2026-09-30T15:00:02Z"
+    },
+    {
+      "provider": "SYNTHETIC_GS",
+      "contact_id": "fixture-contact-001",
+      "status": "PREPASS",
+      "version_id": 1,
+      "ground_station": "Digital Twin Fixture 1",
+      "start_time": "2026-09-30T16:00:00Z",
+      "end_time": "2026-09-30T16:10:00Z",
+      "last_updated": "2026-09-30T15:55:00Z"
+    },
+    {
+      "provider": "SYNTHETIC_GS",
+      "contact_id": "fixture-contact-001",
+      "status": "PASS",
+      "version_id": 1,
+      "ground_station": "Digital Twin Fixture 1",
+      "start_time": "2026-09-30T16:00:00Z",
+      "end_time": "2026-09-30T16:10:00Z",
+      "last_updated": "2026-09-30T16:00:00Z"
+    },
+    {
+      "provider": "SYNTHETIC_GS",
+      "contact_id": "fixture-contact-001",
+      "status": "POSTPASS",
+      "version_id": 1,
+      "ground_station": "Digital Twin Fixture 1",
+      "start_time": "2026-09-30T16:00:00Z",
+      "end_time": "2026-09-30T16:10:00Z",
+      "last_updated": "2026-09-30T16:10:00Z"
+    },
+    {
+      "provider": "SYNTHETIC_GS",
+      "contact_id": "fixture-contact-001",
+      "status": "COMPLETED",
+      "version_id": 1,
+      "ground_station": "Digital Twin Fixture 1",
+      "start_time": "2026-09-30T16:00:00Z",
+      "end_time": "2026-09-30T16:10:00Z",
+      "last_updated": "2026-09-30T16:11:00Z"
+    },
+    {
+      "provider": "SYNTHETIC_GS",
+      "contact_id": "fixture-contact-failure-001",
+      "status": "FAILED_TO_SCHEDULE",
+      "version_id": 1,
+      "ground_station": "Digital Twin Fixture 2",
+      "start_time": "2026-09-30T17:00:00Z",
+      "end_time": "2026-09-30T17:10:00Z",
+      "last_updated": "2026-09-30T16:00:02Z",
+      "failure_codes": ["SYNTHETIC_RESOURCE_CONFLICT"],
+      "failure_message": "Synthetic failure injection for governance testing."
+    }
+  ]
+}
