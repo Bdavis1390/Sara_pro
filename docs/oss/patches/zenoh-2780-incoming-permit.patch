@@ -1,0 +1,113 @@
+From: Worldshepherd contribution preparation
+Subject: [PATCH] transport: make incoming accept accounting cancellation-safe
+
+Target: eclipse-zenoh/zenoh at 646f2d1b730e584a570015a77bee9f6db08be9d1
+Issue: https://github.com/eclipse-zenoh/zenoh/issues/2780
+
+STATUS: DRAFT / REQUIRES UPSTREAM TESTING
+
+This hardening patch does two things around unicast incoming acceptance:
+
+1. Replaces the separate `load >= limit` / `fetch_add` sequence with an atomic
+   permit acquisition, preventing concurrent arrivals from racing past
+   `accept_pending`.
+2. Associates the increment with an RAII guard whose Drop implementation
+   decrements the counter. If the spawned accept future is cancelled or unwinds,
+   accounting is restored without relying on reaching the last statement of the
+   task.
+
+It also raises saturation visibility from trace to debug and reports pending/limit.
+This does not by itself prove the root cause of #2780; it makes the counter
+invariant robust across cancellation and unwind and should be paired with a
+restart/connect-disconnect stress regression.
+
+---
+ io/zenoh-transport/src/unicast/manager.rs | 43 ++++++++++++++++++++++++++-----
+ 1 file changed, 37 insertions(+), 6 deletions(-)
+
+diff --git a/io/zenoh-transport/src/unicast/manager.rs b/io/zenoh-transport/src/unicast/manager.rs
+--- a/io/zenoh-transport/src/unicast/manager.rs
++++ b/io/zenoh-transport/src/unicast/manager.rs
+@@
+ pub struct TransportManagerStateUnicast {
+     // Incoming uninitialized transports
+     pub(super) incoming: Arc<AtomicUsize>,
+@@
+     pub(super) authenticator: Arc<Auth>,
+ }
++
++struct IncomingAcceptPermit {
++    incoming: Arc<AtomicUsize>,
++}
++
++impl IncomingAcceptPermit {
++    fn try_acquire(incoming: Arc<AtomicUsize>, limit: usize) -> Option<Self> {
++        incoming
++            .fetch_update(SeqCst, SeqCst, |current| {
++                (current < limit).then_some(current + 1)
++            })
++            .ok()?;
++
++        Some(Self { incoming })
++    }
++}
++
++impl Drop for IncomingAcceptPermit {
++    fn drop(&mut self) {
++        self.incoming.fetch_sub(1, SeqCst);
++    }
++}
+@@
+     pub(crate) async fn handle_new_link_unicast(&self, link: LinkUnicast) {
+         let incoming_counter = self.state.unicast.incoming.clone();
+-        if incoming_counter.load(SeqCst) >= self.config.unicast.accept_pending {
++        let incoming_permit = match IncomingAcceptPermit::try_acquire(
++            incoming_counter.clone(),
++            self.config.unicast.accept_pending,
++        ) {
++            Some(permit) => permit,
++            None => {
+             // We reached the limit of concurrent incoming transport, this means two things:
+             // - the values configured for ZN_OPEN_INCOMING_PENDING and ZN_OPEN_TIMEOUT
+             //   are too small for the scenario zenoh is deployed in;
+             // - there is a tentative of DoS attack.
+             // In both cases, let's close the link straight away with no additional notification
+-            tracing::trace!("Closing link for preventing potential DoS: {}", link);
+-            let _ = link.close().await;
+-            return;
+-        }
++                tracing::debug!(
++                    "Closing link because incoming accept limit is reached ({}/{}): {}",
++                    incoming_counter.load(SeqCst),
++                    self.config.unicast.accept_pending,
++                    link
++                );
++                let _ = link.close().await;
++                return;
++            }
++        };
+ 
+         // A new link is available
+         tracing::trace!("Accepting link... {}", link);
+-        self.state.unicast.incoming.fetch_add(1, SeqCst);
+ 
+         // Spawn a task to accept the link
+         let c_manager = self.clone();
+         self.task_controller
+             .spawn_with_rt(zenoh_runtime::ZRuntime::Acceptor, async move {
++                // Keep the permit for the full lifetime of the accept future.
++                // Cancellation or unwind drops it and restores accounting.
++                let _incoming_permit = incoming_permit;
+                 if tokio::time::timeout(
+                     c_manager.config.unicast.accept_timeout,
+                     super::establishment::accept::accept_link(link, &c_manager),
+@@
+                         c_manager.config.unicast.accept_timeout.as_millis()
+                     );
+                 }
+-                incoming_counter.fetch_sub(1, SeqCst);
+             });
+     }
+ }
+-- 
+2.43.0
