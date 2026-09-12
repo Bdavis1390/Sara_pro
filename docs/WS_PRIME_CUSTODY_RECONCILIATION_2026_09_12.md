@@ -1,6 +1,6 @@
 # PRIME custody reconciliation — current-main staged port
 
-**Status:** DRAFT / PARTIAL SAFE PORT / BLOCK MERGE  
+**Status:** DRAFT / IMPLEMENTATION COMPLETE / VALIDATION PENDING / BLOCK MERGE  
 **Issue:** #176  
 **Source lineage:** stale draft PR #149, reconciled against current `main` rather than merged or rebased blindly.
 
@@ -20,22 +20,27 @@ Ported behavior:
 - preserve authorization-ID and nonce replay protections;
 - regressions for replay-window retention, live capacity exhaustion, and expired VERIFIED pruning.
 
-## Stage B — not yet ported
+## Stage B — conflict-aware current-main port completed
 
-`prime_passport_api.py` changed on current `main` after PR #149's merge-base. Its stale-branch file must **not** replace current mainline code wholesale.
+`prime_passport_api.py` had changed on current `main` after PR #149's merge-base, so the stale file was not copied wholesale. The remaining fixes were ported into the current event-outbox/provenance implementation:
 
-The remaining conflict-aware work is:
+1. malformed passport/authorization-registry durable state is classified as a server-side integrity failure rather than signer rejection;
+2. stored authorization entries are structurally validated before new signer assertions are processed;
+3. stored authorization windows longer than the signed 15-minute maximum are rejected as corrupt durable state;
+4. successful activation of legacy READY records clears obsolete pre-ledger release authorization/target/key custody fields;
+5. READY cleanup does not consume a nonexistent legacy authorization and removes false authorization attribution from successful activation provenance;
+6. current-main API regressions cover corrupt passport state, corrupt top-level authorization registry, malformed authorization records, overlong stored windows, and legacy READY cleanup;
+7. the existing QUARANTINED requalification flow remains separately gated and one-time consumable.
 
-1. classify malformed authorization-registry state as a server-side integrity failure rather than signer rejection;
-2. validate stored authorization record structure and signed lifetime before processing new signer assertions;
-3. clear obsolete pre-ledger READY authorization custody fields after a successful activation;
-4. ensure successful READY cleanup provenance does not attribute authorization to a nonexistent legacy authorization;
-5. preserve current-main event-outbox/provenance behavior and all newer custody semantics while adding the above fixes;
-6. add current-main API regressions for each condition.
+## Current incorporation gate
 
-## Incorporation gate
+Implementation completion is not merge authorization. No merge or readiness promotion until:
 
-No merge or readiness promotion until Stage B is complete, the full exact-head workflow set is green, independent exact-head review is clean, applicable review threads are dispositioned, and CRE1AWS explicitly authorizes incorporation.
+- the complete exact-head workflow set is green on the final head;
+- independent exact-head review reports no unresolved major defect;
+- applicable stale PR #149 findings are dispositioned against the current-main implementation;
+- issue #176 is updated with final evidence; and
+- CRE1AWS explicitly authorizes incorporation.
 
 ## Claims boundary
 
