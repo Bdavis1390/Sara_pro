@@ -37,19 +37,19 @@ class ActionState(str, Enum):
 
 
 class PositionEstimate(BaseModel):
-    x_m: float
-    y_m: float
-    z_m: float
+    x_m: float = Field(allow_inf_nan=False)
+    y_m: float = Field(allow_inf_nan=False)
+    z_m: float = Field(allow_inf_nan=False)
 
 
 class APNTEvent(BaseModel):
     sequence: int = Field(ge=1)
-    timestamp_s: float = Field(ge=0)
+    timestamp_s: float = Field(ge=0, allow_inf_nan=False)
     source: str = Field(min_length=1)
     integrity_state: IntegrityState
     position: PositionEstimate
-    confidence: float = Field(ge=0, le=1)
-    integrity_indicator: float = Field(ge=0, le=1)
+    confidence: float = Field(ge=0, le=1, allow_inf_nan=False)
+    integrity_indicator: float = Field(ge=0, le=1, allow_inf_nan=False)
     anomaly_code: str | None = None
     reason_code: str = Field(min_length=1)
     recommended_recovery_candidate: str | None = None
@@ -102,7 +102,13 @@ class APNTReplayResult(BaseModel):
 
 
 def _canonical(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
+    )
 
 
 def _sha256(value: Any) -> str:
