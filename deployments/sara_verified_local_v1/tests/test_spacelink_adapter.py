@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pytest
 
@@ -31,6 +33,22 @@ def test_synthetic_adapter_normalizes_completed_contact():
     assert contact.status == SpaceContactStatus.COMPLETED
     assert contact.disposition == ContactDisposition.SUCCEEDED
     assert contact.attributes["claims_scope"] == "synthetic fixture only"
+
+
+def test_frozen_synthetic_fixture_normalizes_every_contact():
+    fixture_path = (
+        Path(__file__).resolve().parent.parent
+        / "fixtures"
+        / "spacelink_synthetic_v1.json"
+    )
+    fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    adapter = SyntheticGroundNetworkAdapter()
+    contacts = [adapter.normalize_contact(item) for item in fixture["contacts"]]
+    assert len(contacts) == 7
+    assert contacts[0].status == SpaceContactStatus.SCHEDULING
+    assert contacts[-2].status == SpaceContactStatus.COMPLETED
+    assert contacts[-1].status == SpaceContactStatus.FAILED_TO_SCHEDULE
+    assert contacts[-1].disposition == ContactDisposition.FAILED
 
 
 def test_aws_adapter_normalizes_documented_contact_fields():
