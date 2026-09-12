@@ -1,4 +1,4 @@
-name: Worldshepherd Backline QBL-G1/G2 Lab
+name: Worldshepherd Backline QBL-G1A/G1B/G2 Lab
 
 on:
   pull_request:
@@ -20,17 +20,19 @@ concurrency:
 
 jobs:
   qbl-g1-g2:
-    name: QBL-G1/G2 isolated CPU lab
+    name: QBL-G1A/G1B/G2 isolated CPU lab
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 90
     env:
-      IMAGE_NAME: worldshepherd-qbl-g1:${{ github.sha }}
+      TESTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      IMAGE_NAME: worldshepherd-qbl-g1:${{ github.event.pull_request.head.sha || github.sha }}
       EVIDENCE_DIR: ${{ github.workspace }}/qbl-evidence
 
     steps:
       - name: Check out exact tested source
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Record claims boundary and source state
@@ -38,9 +40,15 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$EVIDENCE_DIR"
+          actual_sha="$(git rev-parse HEAD)"
+          if [[ "$actual_sha" != "$TESTED_SHA" ]]; then
+            echo "checkout mismatch: expected=$TESTED_SHA actual=$actual_sha" >&2
+            exit 1
+          fi
           {
             echo "classification=INTERNAL_CI_LAB_ONLY"
-            echo "qbl_g1_status=REQUIRES_EXECUTION"
+            echo "qbl_g1a_status=REQUIRES_EXECUTION"
+            echo "qbl_g1b_status=REQUIRES_EXECUTION"
             echo "qbl_g2_status=REQUIRES_EXECUTION"
             echo "sub_3us_worldshepherd_performance=NOT_CURRENTLY_CLAIMED"
             echo "physical_qpu_integration=NOT_CURRENTLY_CLAIMED"
@@ -48,9 +56,10 @@ jobs:
             echo "runner=${RUNNER_NAME}"
             echo "os=${RUNNER_OS}"
             echo "arch=${RUNNER_ARCH}"
-            echo "github_sha=${GITHUB_SHA}"
+            echo "tested_sha=${TESTED_SHA}"
+            echo "github_event_sha=${GITHUB_SHA}"
           } | tee "$EVIDENCE_DIR/claims-and-runner.txt"
-          git rev-parse HEAD | tee "$EVIDENCE_DIR/tested-commit.txt"
+          printf '%s\n' "$actual_sha" | tee "$EVIDENCE_DIR/tested-commit.txt"
           git status --short | tee "$EVIDENCE_DIR/tested-status.txt"
 
       - name: Build pinned QBL image
@@ -62,22 +71,47 @@ jobs:
             --tag "$IMAGE_NAME" \
             . 2>&1 | tee "$EVIDENCE_DIR/docker-build.log"
           docker image inspect "$IMAGE_NAME" > "$EVIDENCE_DIR/docker-image-inspect.json"
+          docker run --rm "$IMAGE_NAME" python -m pip freeze > "$EVIDENCE_DIR/package-freeze.txt"
 
-      - name: Run QBL-G1 local CPU-to-CPU Steane QEC
+      - name: Run QBL-G1A upstream-reference parity
         shell: bash
         run: |
           set -euo pipefail
           set +e
           docker run --rm "$IMAGE_NAME" \
-            python /workspace/backline_cpu_cpu.py --repeat 10 --json \
-            > "$EVIDENCE_DIR/qbl-g1.json" \
-            2> "$EVIDENCE_DIR/qbl-g1.stderr.log"
+            python /workspace/backline_cpu_cpu.py \
+              --device null.qubit \
+              --repeat 10 \
+              --json \
+            > "$EVIDENCE_DIR/qbl-g1a.json" \
+            2> "$EVIDENCE_DIR/qbl-g1a.stderr.log"
           rc=$?
           set -e
-          echo "$rc" > "$EVIDENCE_DIR/qbl-g1.exit-code.txt"
-          cat "$EVIDENCE_DIR/qbl-g1.json" || true
+          echo "$rc" > "$EVIDENCE_DIR/qbl-g1a.exit-code.txt"
+          cat "$EVIDENCE_DIR/qbl-g1a.json" || true
           if [[ "$rc" -ne 0 ]]; then
-            cat "$EVIDENCE_DIR/qbl-g1.stderr.log" >&2 || true
+            cat "$EVIDENCE_DIR/qbl-g1a.stderr.log" >&2 || true
+            exit "$rc"
+          fi
+
+      - name: Run QBL-G1B Lightning compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          docker run --rm "$IMAGE_NAME" \
+            python /workspace/backline_cpu_cpu.py \
+              --device lightning.qubit \
+              --repeat 10 \
+              --json \
+            > "$EVIDENCE_DIR/qbl-g1b.json" \
+            2> "$EVIDENCE_DIR/qbl-g1b.stderr.log"
+          rc=$?
+          set -e
+          echo "$rc" > "$EVIDENCE_DIR/qbl-g1b.exit-code.txt"
+          cat "$EVIDENCE_DIR/qbl-g1b.json" || true
+          if [[ "$rc" -ne 0 ]]; then
+            cat "$EVIDENCE_DIR/qbl-g1b.stderr.log" >&2 || true
             exit "$rc"
           fi
 
@@ -85,6 +119,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          set +e
           docker run --rm \
             --volume "$EVIDENCE_DIR:/evidence" \
             "$IMAGE_NAME" \
@@ -94,13 +129,21 @@ jobs:
               --output /evidence/qbl-g2.json \
             > "$EVIDENCE_DIR/qbl-g2.stdout.log" \
             2> "$EVIDENCE_DIR/qbl-g2.stderr.log"
-          cat "$EVIDENCE_DIR/qbl-g2.json"
+          rc=$?
+          set -e
+          echo "$rc" > "$EVIDENCE_DIR/qbl-g2.exit-code.txt"
+          cat "$EVIDENCE_DIR/qbl-g2.json" || true
+          if [[ "$rc" -ne 0 ]]; then
+            cat "$EVIDENCE_DIR/qbl-g2.stderr.log" >&2 || true
+            exit "$rc"
+          fi
 
       - name: Hash evidence inputs
         if: always()
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p "$EVIDENCE_DIR"
           sha256sum \
             config/ws_backline_lab_v0_1.json \
             docs/WS_BACKLINE_VALIDATION_PLAN_2026-09-12.md \
@@ -108,13 +151,14 @@ jobs:
             experiments/backline_benchmark.py \
             experiments/backline/Dockerfile.qbl-g1 \
             experiments/backline/run_qbl_g1_container.sh \
+            .github/workflows/ws-backline-qbl-g1.yml \
             > "$EVIDENCE_DIR/input-sha256.txt"
 
       - name: Upload QBL evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ws-backline-qbl-${{ github.sha }}
+          name: ws-backline-qbl-${{ github.event.pull_request.head.sha || github.sha }}
           path: qbl-evidence/
           if-no-files-found: error
           retention-days: 30
@@ -127,9 +171,12 @@ jobs:
             echo '## Worldshepherd Backline QBL lab'
             echo ''
             echo '- Classification: **INTERNAL CI LAB ONLY**'
-            echo '- QBL-G1 is only promoted if the executable gate completed successfully.'
+            echo "- Exact tested source requested: **${TESTED_SHA}**"
+            echo '- QBL-G1A is upstream-reference parity using `null.qubit`.'
+            echo '- QBL-G1B is Worldshepherd compatibility testing using `lightning.qubit`.'
             echo '- QBL-G2 measures Python-caller-observed end-to-end invocation time, not raw transport latency.'
             echo '- Vendor microsecond benchmarks are external comparison evidence only.'
             echo '- Physical QPU integration: **NOT CURRENTLY CLAIMED**.'
+            echo '- Worldshepherd sub-3 μs performance: **NOT CURRENTLY CLAIMED**.'
             echo '- Quantum advantage: **NOT CURRENTLY CLAIMED**.'
           } >> "$GITHUB_STEP_SUMMARY"
