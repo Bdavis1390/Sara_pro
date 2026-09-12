@@ -276,4 +276,4 @@ def test_replay_after_partial_audit_tail_preserves_a_valid_event(tmp_path):
     assert len(delivered) == 1
     assert delivered[0]["payload"]["_outbox_event_id"] == event_id
     assert outbox_status(store.get_registry())["pending"] == 0
-    assert store.audit_path.read_bytes().endswith(b"\\n")
+    assert store.audit_path.read_bytes().endswith(b"\n")
