@@ -1,7 +1,7 @@
 {
-  "schema": "WS-QCRYPTO-RESOURCE-BASELINE-v2",
+  "schema": "WS-QCRYPTO-RESOURCE-BASELINE-v3",
   "as_of": "2026-09-12",
-  "claims_control": "External resource estimates and measured QEC evidence only; no production key break is claimed, and cross-architecture physical-qubit extrapolation is prohibited without a complete fault-tolerant overhead model.",
+  "claims_control": "External resource estimates, measured QEC evidence, and vendor roadmaps only; no production key break is claimed. Cross-architecture physical-qubit extrapolation is prohibited without a complete fault-tolerant overhead model, and roadmap targets are never treated as demonstrated capability.",
   "attack_estimates": [
     {
       "name": "Google Quantum AI 2026 low-width secp256k1 ECDLP",
@@ -11,7 +11,7 @@
       "toffoli_gates": 90000000,
       "physical_qubits": 500000,
       "runtime_seconds": null,
-      "runtime_note": "Published scenario says minutes with fewer than 500,000 physical superconducting qubits under stated assumptions; no exact runtime is encoded here."
+      "runtime_note": "Published superconducting scenario says minutes with fewer than 500,000 physical qubits under stated assumptions; no exact runtime is encoded here."
     },
     {
       "name": "IonQ Walking Cat trapped-ion secp256k1 ECDLP",
@@ -21,7 +21,7 @@
       "toffoli_gates": 40000000,
       "physical_qubits": 19397,
       "runtime_seconds": 2220480,
-      "runtime_note": "25.7 days per attempt under the published architecture assumptions."
+      "runtime_note": "25.7 days per attempt under the published Walking Cat architecture assumptions."
     },
     {
       "name": "Luo et al. 2026 space-efficient complete ECDLP",
@@ -32,6 +32,30 @@
       "physical_qubits": null,
       "runtime_seconds": null,
       "runtime_note": "835 logical qubits is a complete Shor/ECDLP width result. The stored Toffoli value is the 919*n^3/log2(n) leading term evaluated at n=256; the paper also includes O(n^2). Do not infer fast runtime without architecture-specific compilation."
+    }
+  ],
+  "hardware_roadmaps": [
+    {
+      "vendor": "IonQ",
+      "source": "https://www.ionq.com/roadmap",
+      "target_year": 2027,
+      "physical_qubits": 10000,
+      "logical_qubits": 800,
+      "logical_error_state": "<1e-7",
+      "same_architecture_family_as_walking_cat": true,
+      "demonstrated": false,
+      "claims_note": "Forward-looking vendor target only. It is 35 logical qubits below the Luo 835-qubit width result and far below the published Walking Cat physical/width envelope. No attack capability is inferred."
+    },
+    {
+      "vendor": "IonQ",
+      "source": "https://www.ionq.com/roadmap",
+      "target_year": 2028,
+      "physical_qubits": 20000,
+      "logical_qubits": 1600,
+      "logical_error_state": "<1e-7",
+      "same_architecture_family_as_walking_cat": true,
+      "demonstrated": false,
+      "claims_note": "Forward-looking vendor target only. The target numerically overlaps IonQ's published Walking Cat attack envelope of about 19,397 physical and about 1,450 logical qubits. This is a migration-planning trigger, not evidence that the target will be achieved or that the attack will execute as modeled."
     }
   ],
   "qec_evidence": [
@@ -54,5 +78,10 @@
       "independently_replicated": false,
       "claims_note": "Hardware validates compact logical memory, Clifford computation and heterogeneous-code entanglement without postselection. The 10:1 code-block ratio must NOT be multiplied by an ECDLP logical-qubit estimate and reported as complete attack hardware. Full non-Clifford resources, factories/ancillas, routing, decoding, runtime reliability, scaling and attack-specific compilation are not established by this experiment."
     }
-  ]
+  ],
+  "roadmap_collision_policy": {
+    "purpose": "Detect when a forward hardware roadmap numerically reaches a published attack envelope early enough to threaten migration schedules.",
+    "hard_rule": "A roadmap collision may increase migration urgency but never establishes Q2, Q3, Q4, Q-day, or a demonstrated production break.",
+    "current_trigger": "IonQ's 2028 roadmap target of 20,000 physical / 1,600 logical qubits numerically overlaps IonQ's own Walking Cat secp256k1 attack estimate of 19,397 physical / about 1,450 logical qubits."
+  }
 }
