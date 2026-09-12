@@ -1,0 +1,79 @@
+From: Worldshepherd contribution preparation
+Subject: [PATCH] fleet_adapter: validate reachable charger before async participant creation
+
+Target: open-rmf/rmf_ros2, humble branch
+Issue: https://github.com/open-rmf/rmf_ros2/issues/553
+
+This draft moves the nearest-charger validation into FleetUpdateHandle::add_robot()
+itself. The invalid-start condition is therefore reported synchronously to the
+caller instead of throwing from async_make_participant's worker callback, where
+it can escape to std::terminate and abort the whole fleet adapter process.
+
+The asynchronous callback receives the already validated charger waypoint and
+contains no throw for this recoverable per-robot condition.
+
+---
+ rmf_fleet_adapter/src/rmf_fleet_adapter/agv/FleetUpdateHandle.cpp | 21 ++++++++++-----------
+ 1 file changed, 10 insertions(+), 11 deletions(-)
+
+diff --git a/rmf_fleet_adapter/src/rmf_fleet_adapter/agv/FleetUpdateHandle.cpp b/rmf_fleet_adapter/src/rmf_fleet_adapter/agv/FleetUpdateHandle.cpp
+--- a/rmf_fleet_adapter/src/rmf_fleet_adapter/agv/FleetUpdateHandle.cpp
++++ b/rmf_fleet_adapter/src/rmf_fleet_adapter/agv/FleetUpdateHandle.cpp
+@@
+   if (start.empty())
+   {
+     // *INDENT-OFF*
+     throw std::runtime_error(
+       "[FleetUpdateHandle::add_robot] StartSet is empty. Adding a robot to a "
+       "fleet requires at least one rmf_traffic::agv::Plan::Start to be "
+       "specified.");
+     // *INDENT-ON*
+   }
++
++  const auto charger_wp = _pimpl->get_nearest_charger(start[0]);
++  if (!charger_wp.has_value())
++  {
++    // *INDENT-OFF*
++    throw std::runtime_error(
++      "[FleetUpdateHandle::add_robot] Unable to find nearest charging "
++      "waypoint. Adding a robot to a fleet requires at least one reachable "
++      "charging waypoint to be present in its navigation graph.");
++    // *INDENT-ON*
++  }
+ 
+   rmf_traffic::schedule::ParticipantDescription description(
+     name,
+     _pimpl->name,
+     rmf_traffic::schedule::ParticipantDescription::Rx::Responsive,
+@@
+     [worker = _pimpl->worker,
+     command = std::move(command),
+     start = std::move(start),
++    charger_wp = charger_wp.value(),
+     handle_cb = std::move(handle_cb),
+     fleet_wptr = weak_from_this()](
+       rmf_traffic::schedule::Participant participant)
+     {
+       auto fleet = fleet_wptr.lock();
+       if (!fleet)
+         return;
+-
+-      const auto charger_wp = fleet->_pimpl->get_nearest_charger(start[0]);
+-
+-      if (!charger_wp.has_value())
+-      {
+-        // *INDENT-OFF*
+-        throw std::runtime_error(
+-          "[FleetUpdateHandle::add_robot] Unable to find nearest charging "
+-          "waypoint. Adding a robot to a fleet requires at least one charging"
+-          "waypoint to be present in its navigation graph.");
+-        // *INDENT-ON*
+-      }
+ 
+       rmf_task::State state;
+-      state.load_basic(start[0], charger_wp.value(), 1.0);
++      state.load_basic(start[0], charger_wp, 1.0);
+ 
+       auto context = std::make_shared<RobotContext>(
+-- 
+2.43.0

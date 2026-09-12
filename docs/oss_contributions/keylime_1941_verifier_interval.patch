@@ -1,0 +1,55 @@
+From: Worldshepherd OSS contribution workbench
+Subject: [PATCH DRAFT] verifier: use consistent quote_interval fallback
+Upstream target: keylime/keylime#1941
+Claims state: IMPLEMENTED AS PATCH DRAFT / REQUIRES UPSTREAM TESTS
+
+Problem
+-------
+The verifier documents quote_interval=2 seconds as its default but two push
+model paths diverge: attestation_controller.py caps retry delay with
+fallback=60 and Attestation.next_attestation_expected_after reads quote_interval
+without a fallback. The config option also accepts floating-point values, so
+using getfloat is the least surprising common behavior.
+
+--- a/keylime/web/verifier/attestation_controller.py
++++ b/keylime/web/verifier/attestation_controller.py
+@@
+-            max_interval = config.getint("verifier", "quote_interval", fallback=60)
++            max_interval = config.getfloat("verifier", "quote_interval", fallback=2.0)
+             consecutive_failures = agent.consecutive_attestation_failures or 1  # type: ignore[union-attr]
+
+--- a/keylime/models/verifier/attestation.py
++++ b/keylime/models/verifier/attestation.py
+@@
+     @property
+     def next_attestation_expected_after(self):
+         if self.evidence_received_at:
+-            return self.evidence_received_at + timedelta(seconds=config.getint("verifier", "quote_interval"))
++            quote_interval = config.getfloat("verifier", "quote_interval", fallback=2.0)
++            return self.evidence_received_at + timedelta(seconds=quote_interval)
+         return self.capabilities_received_at
+
+Test changes required
+---------------------
+1. In test/test_attestation_model.py, patch config.getfloat for
+   next_attestation_expected_after tests instead of config.getint.
+2. Add a test that config.getfloat is called with
+   ("verifier", "quote_interval", fallback=2.0).
+3. Add a test using quote_interval=2.5 and assert the resulting timestamp is
+   evidence_received_at + 2.5 seconds. This protects the documented support
+   for floating-point intervals.
+4. In test/test_attestation_controller.py, update the quote-interval mock from
+   getint to getfloat and assert the cap uses fallback=2.0 when the option is
+   absent.
+5. Preserve existing exponential-backoff assertions: this patch changes only
+   the configured cap source and fallback, not retry.retry_time semantics.
+
+Why this is deliberately limited
+--------------------------------
+This patch fixes the verifier-side inconsistency only. It does not change the
+Rust agent's general retry interval. The agent's 60-second local measurement
+interval is also used for registration/attestation failure retries, so globally
+changing it to 2 seconds could unintentionally create a retry storm during a
+verifier outage. A separate rust-keylime patch should distinguish 'accepted
+response is malformed/missing cadence metadata' from 'network/authentication
+failure retry cadence'.

@@ -1,0 +1,34 @@
+name: OSS Semantic Health Reference
+
+on:
+  pull_request:
+    paths:
+      - "tools/oss_health/**"
+      - ".github/workflows/oss-semantic-health.yml"
+  push:
+    branches:
+      - main
+      - oss-contrib-2026-09-12
+    paths:
+      - "tools/oss_health/**"
+      - ".github/workflows/oss-semantic-health.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run semantic health tests
+        working-directory: tools/oss_health
+        run: python -m unittest -v test_semantic_health.py
