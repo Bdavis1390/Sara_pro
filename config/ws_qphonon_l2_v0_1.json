@@ -1,0 +1,140 @@
+{
+  "schema": "WS-QPHONON-L2-V0.1",
+  "integration_level": "L2_ARCHITECTURE",
+  "status": "ARCHITECTURE_INTEGRATED_PHYSICAL_CAPABILITY_NOT_CLAIMED",
+  "claims_boundary": "Worldshepherd may claim a governed quantum-experiment architecture and software integration plan only. No Worldshepherd quantum-hardware, coherent phonon-transfer, quantum-network, or fault-tolerant-computing capability is claimed without reproducible partner/lab evidence and promotion through the L3 gate.",
+  "physical_baseline": {
+    "qubit_families": ["SiV", "SnV"],
+    "preferred_near_term_platform": "TFLN_ON_DIAMOND_SIV",
+    "strategic_parallel_platform": "SNV",
+    "evidence_state": "EXTERNAL_LITERATURE_AND_EXTERNAL_HARDWARE_ONLY",
+    "worldshepherd_owned_quantum_hardware": false
+  },
+  "governance": {
+    "sara_role": "experiment_orchestration_and_policy_routing",
+    "prime_role": "operating_envelope_and_authorization_gate",
+    "echo_role": "measurement_decision_and_model_provenance",
+    "overwatch_role": "drift_thermal_and_model_discrepancy_monitoring",
+    "pre_role": "quantum_requirements_and_opportunity_readiness",
+    "doctrine": "AI_PROPOSES_HUMAN_APPROVES_AUTOMATION_BOUNDED_ACTIONS_AND_EVIDENCE_LOGGED"
+  },
+  "parameter_registry": {
+    "g1_hz": {"class": "inferred_or_measured", "authorization_cv_max": 0.05},
+    "g2_hz": {"class": "inferred_or_measured", "authorization_cv_max": 0.05},
+    "kappa_m_hz": {"class": "measured_preferred", "authorization_cv_max": 0.05},
+    "gamma_eff_hz": {"class": "inferred", "must_not_be_silently_equated_to_kappa_m": true},
+    "t2_s": {"class": "measured", "authorization_cv_max": 0.10},
+    "t1_s": {"class": "measured"},
+    "detuning_hz": {"class": "tracked", "authorization_95ci_halfwidth_hz_max": 100000.0},
+    "device_temperature_k": {"class": "measured", "preferred_max": 0.100, "hard_screen_max": 0.125, "authorization_uncertainty_k_max": 0.005},
+    "thermal_occupation": {"class": "derived_from_frequency_and_temperature"},
+    "acoustic_drive_hz": {"class": "measured_transfer_function"},
+    "orbital_leakage_probability": {"class": "measured_or_bounded"},
+    "transducer_response": {"class": "measured_or_validated_simulation", "prediction_error_fraction_max": 0.05}
+  },
+  "prime_authorization": {
+    "posterior_violation_probability_max": 0.01,
+    "coherent_transfer_attempt_requires": {
+      "cooperativity_ct2_min": 1.0,
+      "temperature_k_max": 0.125,
+      "parameter_confidence_gates_pass": true,
+      "model_holdout_validation_pass": true,
+      "claims_state_allows_experiment": true
+    },
+    "stretch_targets_not_claims": {
+      "cooperativity_ct2": 10.0,
+      "initial_transfer_fidelity": 0.90,
+      "development_transfer_fidelity": 0.99
+    },
+    "abort_or_recharacterize_on": [
+      "temperature_out_of_validated_envelope",
+      "mechanical_linewidth_drift_out_of_envelope",
+      "detuning_posterior_out_of_envelope",
+      "model_discrepancy_above_threshold",
+      "orbital_leakage_bound_exceeded",
+      "unmodeled_mode_or_resonance_detected"
+    ]
+  },
+  "candidate_control_policies": [
+    {"name": "FAST_SWAP", "status": "WS_SIMULATION_DESIGN"},
+    {"name": "STIRAP_DARK", "status": "SUPPORTED_BY_THEORY_WS_SIMULATION_DESIGN"},
+    {"name": "STA_CD", "status": "SUPPORTED_BY_EXTERNAL_THEORY_AND_EXPERIMENT_OTHER_PLATFORMS"},
+    {"name": "PMP_LEAKAGE_AWARE", "status": "SUPPORTED_BY_EXTERNAL_THEORY"},
+    {"name": "QOSTE_ENERGY_AWARE", "status": "SUPPORTED_BY_EXTERNAL_THEORY"}
+  ],
+  "bayesian_identification": {
+    "required_measurement_classes": [
+      "mechanical_ringdown_or_linewidth",
+      "exchange_or_purcell_detuning_scan",
+      "ramsey",
+      "echo_or_noise_spectroscopy",
+      "t1",
+      "sideband_or_calibrated_thermometry",
+      "acoustic_rabi_sweep",
+      "power_temperature_sweep",
+      "out_of_manifold_leakage_spectroscopy"
+    ],
+    "transfer_trace_alone_is_sufficient": false,
+    "model_discrepancy_is_first_class_state": true,
+    "competing_model_hypotheses_required": true
+  },
+  "echo_record_required_fields": [
+    "raw_data_hash",
+    "model_version",
+    "prior",
+    "posterior",
+    "experiment_proposed",
+    "expected_information_gain",
+    "prime_decision",
+    "control_waveform_or_parameters",
+    "environmental_state",
+    "measurement_result",
+    "model_discrepancy",
+    "claims_state"
+  ],
+  "overwatch": {
+    "track_fast_state": ["detuning", "device_temperature", "t2", "acoustic_drive_efficiency"],
+    "track_slow_state": ["g1", "g2", "kappa_m", "transducer_response", "orbital_leakage_model"],
+    "fallback_mode": "CHARACTERIZE",
+    "no_blind_compensation": true
+  },
+  "pre": {
+    "demand_state": "EMERGING_DEMAND",
+    "requirements": [
+      "autonomous_calibration",
+      "heterogeneous_quantum_interconnects",
+      "cryogenic_control",
+      "quantum_networking",
+      "ai_assisted_experiment_design",
+      "scientific_provenance",
+      "fault_and_drift_detection",
+      "human_authorized_autonomy"
+    ]
+  },
+  "promotion_gates": {
+    "L3_CAPABILITY_INTEGRATION": [
+      "real_external_quantum_hardware_used",
+      "worldshepherd_control_or_governance_layer_used_in_experiment",
+      "reproducible_result_observed",
+      "holdout_prediction_passed",
+      "uncertainty_bounds_reported",
+      "full_echo_provenance_recorded",
+      "independent_human_or_partner_can_reproduce_result"
+    ],
+    "L4_OPERATIONAL": [
+      "repeatable_hardware_configuration",
+      "controlled_interfaces",
+      "partner_or_customer_validation",
+      "evidence_package_complete",
+      "applicable_security_safety_and_legal_reviews_complete"
+    ]
+  },
+  "next_gates": [
+    "IMPLEMENT_QPHONON_REGISTRY_ADAPTER",
+    "IMPLEMENT_ECHO_QUANTUM_EVIDENCE_SCHEMA",
+    "IMPLEMENT_PRIME_POSTERIOR_RISK_CHECK",
+    "IMPLEMENT_OVERWATCH_DRIFT_STATE",
+    "VALIDATE_WITH_SYNTHETIC_DATA",
+    "IDENTIFY_EXTERNAL_LAB_PARTNER_FOR_L3"
+  ]
+}
