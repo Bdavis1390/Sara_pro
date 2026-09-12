@@ -30,35 +30,33 @@ Add an optional **System Context** field or profile extension to the model docum
 
 This bridge would preserve the draft’s model/dataset scope while reducing the risk that model-level documentation is interpreted as a system-level assurance claim.
 
-## Comment 2 — Make artifact identity, version, supersession, and freshness machine-visible
+## Comment 2 — Make supersession and freshness machine-visible
 
 ### Concern
 
-The draft appropriately emphasizes freshness and maintainability. For operational reuse, however, consumers also need to determine whether they are reading documentation for the exact dataset/model version actually used and whether a newer artifact supersedes it.
+The draft already includes model/documentation identity and version information and appropriately emphasizes freshness and maintainability. A remaining interoperability need is to make the relationship among current, superseded, deprecated, and withdrawn artifacts independently checkable.
 
 ### Suggested change
 
-For conformant profiles, consider stable fields for:
+Using the draft’s existing identity/version fields, consider adding or clarifying fields for:
 
-- documentation artifact identifier and version;
-- documented model/dataset identifier and version;
 - publication and last-reviewed timestamps;
 - supersedes / superseded-by relationships;
 - withdrawn, deprecated, or revoked status when applicable;
 - material change categories that trigger documentation review; and
 - optional content digest or other integrity reference for machine-readable artifacts.
 
-The objective is not to prescribe a particular registry technology. It is to make version custody and freshness independently checkable.
+The objective is not to prescribe a particular registry technology or duplicate existing identity/version fields. It is to make supersession and freshness independently checkable.
 
 ## Comment 3 — Distinguish claims from their supporting evidence and evidence scope
 
 ### Concern
 
-Public documentation frequently combines a performance statement, evaluation description, and broad conclusion into one narrative. This can encourage unsupported promotion from a bounded test result to a broader system or operational claim.
+Public documentation can combine a performance statement, evaluation description, and broad conclusion into one narrative. When that occurs, a bounded result can be read more broadly than its evidence supports.
 
 ### Suggested change
 
-For reported performance, safety, reliability, robustness, or other evaluated characteristics, consider fields that distinguish:
+For reported performance, safety, reliability, robustness, or other evaluated characteristics of the documented dataset/model, consider fields that distinguish:
 
 1. **Claim or finding** — what is being asserted;
 2. **Evidence reference** — test/report/dataset identifier or public citation;
@@ -68,7 +66,7 @@ For reported performance, safety, reliability, robustness, or other evaluated ch
 6. **Known limitations and unresolved contradictions**; and
 7. **Applicability boundary** — what the evidence does *not* establish.
 
-This structure would make documentation more useful for procurement, risk assessment, replication, and later TEVV without requiring NIST to prescribe specific evaluation methods.
+Separate integrated-system or deployment evidence should remain outside the model-profile evidence fields and, when relevant, be referenced through System Context or separate documentation. This structure would improve later comparison and evaluation without requiring NIST to prescribe specific evaluation methods.
 
 ## Comment 4 — Preserve negative, null, failed, and contradictory evaluation evidence when material
 
@@ -78,48 +76,41 @@ Documentation processes can unintentionally favor successful or canonical evalua
 
 ### Suggested change
 
-Within evaluation/performance documentation, recommend that providers disclose material negative, null, failed, or contradictory evidence when omission would change a reasonable consumer’s interpretation of model suitability. Where details cannot be public for security, privacy, proprietary, or legal reasons, allow a bounded disclosure that such evidence exists together with the reason for withholding detail.
+Within evaluation/performance documentation, recommend that providers disclose material negative, null, failed, or contradictory evidence when omission would change a reasonable consumer’s interpretation of model suitability. Where details cannot be public for privacy, proprietary, legal, or other documented reasons, allow a bounded disclosure that such evidence exists together with the reason for withholding detail.
 
 This is consistent with artifact correctness and informativeness while still respecting judiciousness.
 
-## Comment 5 — Use stable field semantics for interoperable machine-readable documentation
+## Comment 5 — Use the existing field identifiers for interoperable machine-readable documentation
 
 ### Concern
 
-Human-readable PDFs and web pages are valuable, but automated comparison and reuse become fragile when field names and meanings vary across providers or versions.
+Human-readable PDFs and web pages are valuable, but automated comparison and reuse become fragile when field semantics, value types, null states, and profile-version behavior are not represented in a reference serialization.
 
 ### Suggested change
 
-Consider assigning stable identifiers and normative semantics to template fields and publishing a machine-readable schema or reference serialization for the default dataset/model profiles. Providers could still render the same information as HTML, PDF, or other media.
+Using the draft’s existing stable numeric field identifiers, consider publishing a normative or reference machine-readable schema/serialization for the default dataset/model profiles. Providers could still render the same information as HTML, PDF, or other media.
 
 Useful schema properties would include:
 
-- stable field identifiers;
 - data type and cardinality;
 - enumerated status values where appropriate;
 - explicit unknown/not-applicable/not-disclosed representations;
 - profile/version identifier; and
 - extension rules that preserve forward compatibility.
 
-The goal is semantic interoperability, not a requirement for one storage format.
+The goal is semantic interoperability, not a requirement for one storage format and not a request to add a second identifier scheme.
 
-## Comment 6 — Clarify model-level versus operational/system-level assurance language
+## Comment 6 — Clarify model-level assurance language and references to wider evidence
 
 ### Concern
 
-A reader may interpret a model card statement such as “safe,” “secure,” “robust,” or “validated” as applying to the deployed system even when the evidence applies only to a bounded model evaluation.
+A reader may interpret a model card statement such as “safe,” “secure,” “robust,” or “validated” as applying to a deployed system even when the evidence applies only to a bounded dataset/model evaluation.
 
 ### Suggested change
 
-Add guidance that assurance-relevant statements identify the **subject and evidence class** explicitly. Examples:
+Add guidance that assurance-relevant statements in the model profile identify whether the evidence concerns the documented dataset or model object and state the applicable evidence class and boundary. If broader integrated-system, deployment, or external-assessment evidence is relevant, reference it through the optional System Context bridge or separate documentation rather than representing it as model-profile evaluation evidence.
 
-- model-level evaluation result;
-- dataset characteristic;
-- integrated-system test;
-- deployment/field observation; or
-- independent external assessment.
-
-Where the template remains model-only, system-level or operational conclusions should be clearly marked as outside the artifact’s evidentiary scope unless separately supported.
+Where the template remains model-only, broader operational conclusions should be clearly marked as outside the artifact’s evidentiary scope unless separately supported.
 
 ## Comment 7 — Treat redaction/withholding as a documented state rather than silent absence
 
@@ -129,23 +120,23 @@ The draft appropriately recognizes privacy, proprietary information, malicious-u
 
 ### Suggested change
 
-For fields where disclosure is optional or may be unsafe, support explicit states such as:
+For fields where disclosure is optional or may be inappropriate, support explicit states such as:
 
 - `not_available`;
 - `not_applicable`;
 - `not_publicly_disclosed`;
-- `withheld_security_risk`;
 - `withheld_privacy`;
-- `withheld_proprietary_or_legal`.
+- `withheld_proprietary_or_legal`;
+- `withheld_other_documented_reason`.
 
-A short rationale should be encouraged when safe. This preserves judiciousness without converting absence into apparent completeness.
+A short rationale should be encouraged when appropriate. This preserves judiciousness without converting absence into apparent completeness.
 
 ## Proposed future-work note — agentic AI system documentation
 
-Because the present draft deliberately leaves full AI-system documentation to future work, NIST/INCITS/SC 42 should consider a future profile or companion standard for agentic AI systems. Candidate system-level fields include component/version graph, tool/action permissions, external side-effect boundaries, human-approval points, identity/credential separation, event/decision provenance, replay/recovery behavior, and deployment-state changes.
+Because the present draft deliberately leaves full AI-system documentation to future work, NIST/INCITS/SC 42 should consider a future profile or companion standard for agentic AI systems. Candidate system-level fields include component/version graph, tool/action permissions, external side-effect boundaries, human-approval points, identity separation, event/decision provenance, replay/recovery behavior, and deployment-state changes.
 
 This is proposed as **future work**, not as a request to expand every model-documentation artifact into a complete system dossier.
 
 ## Claims boundary
 
-This document is a Worldshepherd review candidate based on internal software-governance experience and public NIST material. It does not claim NIST participation, acceptance, endorsement, standards conformity, independent validation, or external adoption. It is not legal advice and should not contain confidential, proprietary, CUI, classified, export-controlled, partner-restricted, or personal data.
+This document is a Worldshepherd review candidate based on internal software-governance experience and public NIST material. It does not claim NIST participation, acceptance, endorsement, standards conformity, independent validation, or external adoption. It is not legal advice and should contain only material approved for public release.
