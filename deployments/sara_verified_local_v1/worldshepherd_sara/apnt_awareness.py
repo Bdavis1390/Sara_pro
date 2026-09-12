@@ -8,7 +8,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
-CLAIMS_BOUNDARY = "SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR"
+CLAIMS_BOUNDARY = "SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR / INFORMATIONAL DECISION AID ONLY"
 
 
 class IntegrityState(str, Enum):
@@ -27,12 +27,13 @@ class OperatorDecision(str, Enum):
 
 
 class ActionState(str, Enum):
+    """Operator evaluation state only; never represents platform execution."""
+
     NONE = "NONE"
     PROPOSED = "PROPOSED"
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
     DEFERRED = "DEFERRED"
-    SIMULATED_APPLIED = "SIMULATED_APPLIED"
 
 
 class PositionEstimate(BaseModel):
@@ -75,6 +76,7 @@ class RecoveryRecommendation(BaseModel):
     candidate: str
     rationale: str
     action_state: ActionState = ActionState.PROPOSED
+    informational_only: bool = True
 
 
 class AuditStep(BaseModel):
@@ -94,6 +96,7 @@ class APNTReplayResult(BaseModel):
     audit_steps: list[AuditStep]
     final_integrity_state: IntegrityState
     trace_complete: bool
+    execution_attempted: bool = False
     deterministic_digest: str
     claims_boundary: str = CLAIMS_BOUNDARY
 
@@ -163,8 +166,9 @@ def recommendation_for_event(event: APNTEvent) -> RecoveryRecommendation | None:
         event_sequence=event.sequence,
         candidate=event.recommended_recovery_candidate,
         rationale=(
-            f"Candidate supplied by synthetic upstream integrity event after {event.integrity_state.value}: "
-            f"{event.reason_code}. Worldshepherd does not independently validate the navigation estimator."
+            f"Informational candidate supplied by synthetic upstream integrity event after "
+            f"{event.integrity_state.value}: {event.reason_code}. Worldshepherd does not "
+            "independently validate the navigation estimator and this POC cannot execute recovery actions."
         ),
     )
 
@@ -214,7 +218,7 @@ def run_scenario(
     non_actionable_decisions = sorted(set(decisions) - set(recommendations_by_event))
     if non_actionable_decisions:
         raise ValueError(
-            f"operator decision references events without actionable recommendations: {non_actionable_decisions}"
+            f"operator decision references events without informational recommendations: {non_actionable_decisions}"
         )
 
     for event_sequence, operator in decisions.items():
@@ -252,8 +256,8 @@ def run_scenario(
             _append_audit(
                 audit_steps,
                 event_sequence=event.sequence,
-                stage="NO_ACTION",
-                detail={"action_state": ActionState.NONE.value},
+                stage="NO_RECOMMENDATION",
+                detail={"operator_response_state": ActionState.NONE.value},
             )
             continue
 
@@ -262,7 +266,7 @@ def run_scenario(
         _append_audit(
             audit_steps,
             event_sequence=event.sequence,
-            stage="RECOMMEND",
+            stage="INFORMATIONAL_RECOMMENDATION",
             detail={"recommendation": recommendation.model_dump(mode="json")},
         )
 
@@ -272,13 +276,14 @@ def run_scenario(
             _append_audit(
                 audit_steps,
                 event_sequence=event.sequence,
-                stage="OPERATOR_DECISION",
+                stage="OPERATOR_EVALUATION_RESPONSE",
                 detail={
                     "recommendation_id": recommendation.recommendation_id,
                     "decision": OperatorDecision.DEFER.value,
                     "operator_id": "NO_DECISION_RECORDED",
-                    "reason": "No explicit operator decision supplied; action remains non-executable.",
-                    "action_state": ActionState.DEFERRED.value,
+                    "reason": "No operator evaluation response supplied.",
+                    "operator_response_state": ActionState.DEFERRED.value,
+                    "execution_permitted": False,
                 },
             )
             continue
@@ -293,29 +298,17 @@ def run_scenario(
         _append_audit(
             audit_steps,
             event_sequence=event.sequence,
-            stage="OPERATOR_DECISION",
+            stage="OPERATOR_EVALUATION_RESPONSE",
             detail={
                 "recommendation_id": operator.recommendation_id,
                 "decision": operator.decision.value,
                 "operator_id": operator.operator_id,
                 "reason": operator.reason,
-                "action_state": action_states[event.sequence].value,
+                "operator_response_state": action_states[event.sequence].value,
+                "execution_permitted": False,
+                "boundary": "Phase-I POC is an informational decision aid only; no action routing or platform command exists.",
             },
         )
-
-        if action_states[event.sequence] == ActionState.APPROVED:
-            action_states[event.sequence] = ActionState.SIMULATED_APPLIED
-            _append_audit(
-                audit_steps,
-                event_sequence=event.sequence,
-                stage="SIMULATED_ACTION",
-                detail={
-                    "recommendation_id": recommendation.recommendation_id,
-                    "candidate": recommendation.candidate,
-                    "action_state": ActionState.SIMULATED_APPLIED.value,
-                    "boundary": "Synthetic state transition only; no PNT hardware, estimator, or platform command executed.",
-                },
-            )
 
     expected_trace_events = {event.sequence for event in ordered}
     audited_ingest_events = {
@@ -338,6 +331,7 @@ def run_scenario(
         "audit_steps": [item.model_dump(mode="json") for item in audit_steps],
         "final_integrity_state": ordered[-1].integrity_state.value,
         "trace_complete": trace_complete,
+        "execution_attempted": False,
         "claims_boundary": CLAIMS_BOUNDARY,
     }
     return APNTReplayResult(
