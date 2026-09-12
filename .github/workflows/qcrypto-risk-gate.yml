@@ -1,0 +1,31 @@
+name: QCRYPTO Risk Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/**'
+      - '.github/workflows/qcrypto-risk-gate.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'security/qcrypto/**'
+      - '.github/workflows/qcrypto-risk-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qcrypto-risk-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile QCRYPTO guard
+        run: python -m py_compile security/qcrypto/qcrypto_guard.py
+      - name: Run QCRYPTO claims-control tests
+        run: python -m unittest discover -s security/qcrypto -p 'test_*.py' -v
+      - name: Validate baseline JSON
+        run: python -m json.tool security/qcrypto/baseline_2026-09-12.json >/dev/null
