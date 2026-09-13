@@ -1,12 +1,24 @@
 name: WS-CAE Conformance Check
-description: Read-only WS-CAE authority-profile conformance gate
+description: Read-only WS-CAE authority-profile conformance and consumer-policy gate
 inputs:
   profile:
     description: Path to a WS-CAE JSON profile or batch document in the caller workspace
     required: true
+  policy:
+    description: Optional path to a WS-CAE consumer policy JSON in the caller workspace
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
     - name: Validate WS-CAE profile
       shell: bash
-      run: python "${{ github.action_path }}/../../../security/qcrypto/ws_cae_cli.py" "${{ inputs.profile }}" --pretty
+      env:
+        WS_CAE_PROFILE: ${{ inputs.profile }}
+        WS_CAE_POLICY: ${{ inputs.policy }}
+      run: |
+        if [ -n "$WS_CAE_POLICY" ]; then
+          python "${{ github.action_path }}/../../../security/qcrypto/ws_cae_cli.py" "$WS_CAE_PROFILE" --policy "$WS_CAE_POLICY" --pretty
+        else
+          python "${{ github.action_path }}/../../../security/qcrypto/ws_cae_cli.py" "$WS_CAE_PROFILE" --pretty
+        fi
