@@ -1,0 +1,81 @@
+name: WS-CAE DATL Transparency Attestation
+
+on:
+  push:
+    branches:
+      - ws-cae-standalone-v0-1
+    paths:
+      - 'ws_cae/scitt_statement.py'
+      - 'ws_cae/scitt_statement_cli.py'
+      - 'ws_cae/scitt_statement.schema.json'
+      - 'ws_cae/examples/ethereum.patch.json'
+      - '.github/workflows/ws-cae-datl-attestation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  datl-attestation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build deterministic DATL statement
+        shell: bash
+        run: |
+          mkdir -p /tmp/datl-proof
+          PYTHONPATH=. python -m ws_cae.scitt_statement_cli \
+            ws_cae/examples/ethereum.patch.json \
+            --issuer https://github.com/Bdavis1390/Sara_pro \
+            --observed-at 2026-09-13T22:00:00Z \
+            --pretty > /tmp/datl-proof/datl-statement.json
+          python -m json.tool /tmp/datl-proof/datl-statement.json >/dev/null
+          sha256sum /tmp/datl-proof/datl-statement.json > /tmp/datl-proof/datl-statement.sha256
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          statement = json.loads(Path('/tmp/datl-proof/datl-statement.json').read_text())
+          digest = hashlib.sha256(Path('/tmp/datl-proof/datl-statement.json').read_bytes()).hexdigest()
+          predicate = {
+              'spec': 'WS-CAE-DATL-ATTESTATION-1',
+              'statementSha256': digest,
+              'subjectId': statement['subject']['id'],
+              'sourcePatchSha256': statement['subject']['source_patch_sha256'],
+              'claims': statement['claims'],
+              'evidenceCount': len(statement['evidence']),
+          }
+          Path('/tmp/datl-proof/datl-predicate.json').write_text(
+              json.dumps(predicate, indent=2, sort_keys=True) + '\n'
+          )
+          PY
+      - name: Install current Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+        with:
+          cosign-release: v3.1.3
+      - name: Keylessly attest DATL statement
+        shell: bash
+        run: |
+          cosign attest-blob --yes \
+            --predicate /tmp/datl-proof/datl-predicate.json \
+            --type urn:ws-cae:predicate:datl:v0.1 \
+            --bundle /tmp/datl-proof/datl-statement.attestation.sigstore.json \
+            /tmp/datl-proof/datl-statement.json
+      - name: Verify identity-bound DATL attestation
+        shell: bash
+        run: |
+          cosign verify-blob-attestation \
+            --bundle /tmp/datl-proof/datl-statement.attestation.sigstore.json \
+            --type urn:ws-cae:predicate:datl:v0.1 \
+            --certificate-identity-regexp '^https://github.com/Bdavis1390/Sara_pro/.github/workflows/ws-cae-datl-attestation.yml@refs/heads/ws-cae-standalone-v0-1$' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+            --certificate-github-workflow-repository 'Bdavis1390/Sara_pro' \
+            --certificate-github-workflow-ref 'refs/heads/ws-cae-standalone-v0-1' \
+            /tmp/datl-proof/datl-statement.json
+      - name: Preserve DATL transparency proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cae-datl-transparency-${{ github.sha }}
+          path: /tmp/datl-proof/
+          if-no-files-found: error
+          retention-days: 30
