@@ -1,0 +1,36 @@
+{
+  "schema": "WS-CAE-REFERENCE-PROFILES-v1",
+  "status_date": "2026-09-13",
+  "claims_boundary": "Reference profiles classify documented authority-state maturity. They do not certify production security or post-quantum consensus.",
+  "profiles": [
+    {
+      "ecosystem": "Algorand",
+      "adapter_class": "NATIVE_REKEY",
+      "implementation_maturity": "MAINNET",
+      "stable_authority_id": true,
+      "authenticator_replaceable": true,
+      "pq_authorization_state": "PQ_MAINNET",
+      "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+      "evidence": [
+        "https://dev.algorand.co/concepts/accounts/post-quantum/",
+        "https://algorand.co/technology/post-quantum"
+      ],
+      "note": "Native Falcon-1024 account authorization is live; account-level protection does not establish PQ consensus."
+    },
+    {
+      "ecosystem": "Ethereum",
+      "adapter_class": "NATIVE_ACCOUNT_ABSTRACTION",
+      "implementation_maturity": "DEVNET",
+      "stable_authority_id": true,
+      "authenticator_replaceable": true,
+      "pq_authorization_state": "PLUGGABLE_AUTH_ONLY",
+      "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+      "evidence": [
+        "https://blog.ethereum.org/2026/09/07/protocol-hegota-eips",
+        "https://github.com/ethereum/execution-specs/issues/3532",
+        "https://github.com/ethereum/go-ethereum/pull/35666"
+      ],
+      "note": "EIP-8141 has active devnet fixtures and client implementation work; it enables replaceable validation but is not itself evidence of a deployed PQ signature scheme or mainnet activation."
+    }
+  ]
+}
