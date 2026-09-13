@@ -9,6 +9,8 @@ from dataclasses import asdict, dataclass
 import hashlib
 import json
 
+from .continuity_validation import valid_date
+
 SUBJECT_TYPES = {"CHAIN", "ASSET", "WALLET", "CUSTODIAN", "EXCHANGE", "BRIDGE", "ROLLUP", "ISSUER", "PROTOCOL", "OTHER"}
 
 
@@ -63,8 +65,8 @@ def validate(manifest: ContinuityManifest) -> tuple[str, ...]:
         issues.append("subject_type is not recognized")
     if not manifest.version.strip():
         issues.append("version must be non-empty")
-    if len(manifest.as_of) != 10 or manifest.as_of[4] != "-" or manifest.as_of[7] != "-":
-        issues.append("as_of must use YYYY-MM-DD")
+    if not valid_date(manifest.as_of):
+        issues.append("as_of must be a real ISO date in YYYY-MM-DD form")
     if not manifest.evidence:
         issues.append("at least one evidence reference is required")
     for index, item in enumerate(manifest.evidence):
