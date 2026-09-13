@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install current SCITT client tooling
-        run: python -m pip install --disable-pip-version-check pyscitt 'scitt-cose>=0.1.0'
+        run: python -m pip install --disable-pip-version-check pyscitt 'scitt-cose>=0.1.0' check-jsonschema
       - name: Build deterministic WS-CAE transparency payload
         run: |
           PYTHONPATH=. python -m ws_cae.scitt_statement_cli \
@@ -28,6 +28,7 @@ jobs:
             --observed-at 2026-09-13T22:00:00Z \
             --pretty > /tmp/ws-cae-scitt-payload.json
           python -m json.tool /tmp/ws-cae-scitt-payload.json >/dev/null
+          check-jsonschema --schemafile ws_cae/scitt_statement.schema.json /tmp/ws-cae-scitt-payload.json
       - name: Wrap payload in SCITT COSE signed statement and verify decode
         shell: bash
         run: |
