@@ -18,7 +18,8 @@ PROFILE_FIELDS = {
 }
 PROFILE_REQUIRED = PROFILE_FIELDS - {"consensus_pq_state", "protocol_commitment_state"}
 POLICY_FIELDS = {
-    "name", "minimum_maturity", "accepted_pq_authorization_states", "accepted_consensus_states",
+    "name", "minimum_maturity", "minimum_protocol_commitment",
+    "accepted_pq_authorization_states", "accepted_consensus_states",
     "require_stable_authority_id", "require_authenticator_replaceable",
     "require_policy_state_documented", "require_recovery_state_documented",
     "require_domain_binding_documented", "require_evidence_state_documented",
@@ -100,6 +101,7 @@ def parse_policy(raw: Any) -> Policy:
     return Policy(
         name=name,
         minimum_maturity=raw.get("minimum_maturity", "ROADMAP"),
+        minimum_protocol_commitment=raw.get("minimum_protocol_commitment", "UNSPECIFIED"),
         accepted_pq_authorization_states=tuple(pq),
         accepted_consensus_states=tuple(consensus),
         require_stable_authority_id=_bool(raw, "require_stable_authority_id", False),
