@@ -1,0 +1,153 @@
+{
+  "schema": "worldshepherd_capture_engine_v1_1",
+  "status": "IMPLEMENTED_AS_GOVERNANCE_AND_ROUTING",
+  "effective_date": "2026-09-12",
+  "principles": [
+    "discover_everything_credible",
+    "source_verify_before_capture",
+    "separate_opportunity_facts_from_worldshepherd_capability_claims",
+    "prime_when_evidence_and_eligibility_support_it",
+    "partner_when_hardware_clearance_certification_or_domain_evidence_is_missing",
+    "prediction_informs_preparation_never_maturity",
+    "reuse_each_capture_to_raise_cross_program_readiness",
+    "compliance_gates_override_capture_score",
+    "human_authorization_required_for_external_commitments"
+  ],
+  "capture_tiers": {
+    "TIER_0": {
+      "definition": "Unusually high-value or high-leverage opportunity with strong fit and credible award, transition, acquisition-channel, financing, or reusable program access.",
+      "auto_escalate": true
+    },
+    "TIER_1": {
+      "definition": "High-fit actionable opportunity with manageable evidence or partner gaps.",
+      "auto_escalate": false
+    },
+    "TIER_2": {
+      "definition": "Good fit requiring material maturation, teaming, or timing improvement.",
+      "auto_escalate": false
+    },
+    "TIER_3": {
+      "definition": "Strategic preparation target or future demand signal.",
+      "auto_escalate": false
+    },
+    "TIER_4": {
+      "definition": "Remote or speculative fit; monitor only.",
+      "auto_escalate": false
+    }
+  },
+  "score_weights": {
+    "technical_fit": 20,
+    "evidence_maturity": 15,
+    "eligibility": 15,
+    "team_probability": 10,
+    "gap_to_demo": 10,
+    "award_value": 10,
+    "strategic_value": 10,
+    "follow_on": 5,
+    "deadline_feasibility": 5
+  },
+  "routing_states": ["PRIME", "PARTNER", "PREPARE", "NO_BID"],
+  "deadline_flags": {
+    "CRITICAL_DAYS": 14,
+    "URGENT_DAYS": 30
+  },
+  "claims_states": [
+    "PROVEN INTERNALLY",
+    "IMPLEMENTED IN SOFTWARE",
+    "SUPPORTED BY LITERATURE",
+    "SIMULATED ONLY",
+    "HYPOTHESIS",
+    "SPECULATIVE EXTENSION",
+    "REQUIRES LAB VALIDATION",
+    "REQUIRES PARTNER VALIDATION",
+    "REQUIRES LEGAL REVIEW",
+    "NOT CURRENTLY CLAIMED"
+  ],
+  "required_fields": [
+    "opportunity_id",
+    "title",
+    "issuer",
+    "source_url",
+    "source_status",
+    "status",
+    "deadline",
+    "capture_tier",
+    "capture_score",
+    "routing_state",
+    "technical_fit",
+    "evidence_fit",
+    "missing_evidence",
+    "eligibility_gates",
+    "security_gates",
+    "compliance_gate_status",
+    "compliance_evidence_refs",
+    "partner_need",
+    "claims_boundary",
+    "next_actions",
+    "follow_on_path",
+    "last_verified_utc"
+  ],
+  "compliance_policy": {
+    "baseline": "security/compliance/worldshepherd-federal-compliance-baseline-v1.json",
+    "cmmc_nist_crosswalk": "security/compliance/cmmc-nist-basis-crosswalk.json",
+    "public_repository_policy": "SECURITY.md",
+    "states": [
+      "PASS_EVIDENCED",
+      "PASS_NOT_APPLICABLE",
+      "CONDITIONAL_PARTNER_PATH",
+      "BLOCKED_MISSING_EVIDENCE",
+      "REQUIRES_LEGAL_REVIEW",
+      "UNKNOWN"
+    ],
+    "prime_rule": "PRIME is prohibited when a mandatory eligibility, registration, cybersecurity, data-handling, clearance, export-control, or certification gate is BLOCKED_MISSING_EVIDENCE, REQUIRES_LEGAL_REVIEW, or UNKNOWN unless the solicitation expressly permits resolution after selection and the risk is documented.",
+    "downgrade_rule": "When a mandatory gate cannot be satisfied by Worldshepherd directly, route to PARTNER, PREPARE, or NO_BID rather than overstate compliance.",
+    "data_rule": "The public repository is PUBLIC_ONLY and is not an authorized FCI, CUI, classified, or export-controlled technical-data environment.",
+    "certification_rule": "Automated checks may produce evidence but may not certify compliance or make government representations."
+  },
+  "common_product_modules": {
+    "SARA": "governed workflow and orchestration",
+    "PRIME": "authorization, policy, claims and decision governance",
+    "ECHO": "telemetry, evidence and provenance",
+    "OVERWATCH": "operational awareness, monitoring and decision support",
+    "PRE": "predictive requirements and requirement-delta management",
+    "QUALIFICATION_ACCELERATOR": "requirement-to-test-to-evidence-to-human-review chain",
+    "SUPPLY_CHAIN_ILLUMINATION": "multi-tier supplier, component, software and material provenance/risk",
+    "DIGITAL_TWIN_ASSURANCE": "configuration-custodied digital twin, CBM+ and predictive sustainment",
+    "DDIL_MISSION_MESH": "degraded-state orchestration and resilient mission data workflows"
+  },
+  "cross_program_readiness_backlog": [
+    "NIST_800_171_Rev2_CMMC_assessment_gap_matrix",
+    "NIST_800_171_Rev3_forward_engineering_crosswalk",
+    "FAR_52_204_21_FCI_safeguard_matrix",
+    "DFARS_7012_incident_reporting_and_evidence_preservation_process",
+    "SAM_UEI_CAGE_representation_verification",
+    "Section_889_reasonable_inquiry",
+    "export_control_and_JCP_screening",
+    "SBOM_and_software_provenance",
+    "MOSA_open_API_adapter_pack",
+    "DDIL_degraded_state_test_harness",
+    "digital_twin_evidence_adapter",
+    "PNT_APNT_adapter",
+    "sensor_fusion_provenance_adapter",
+    "signer_ready_decision_package_generator",
+    "partner_and_clearance_gate_registry",
+    "qualification_evidence_store"
+  ],
+  "external_action_policy": {
+    "allowed_without_new_approval": [
+      "research",
+      "internal_scoring",
+      "internal_artifact_generation",
+      "repository_branch_work"
+    ],
+    "requires_explicit_authorization": [
+      "submit",
+      "send_outreach",
+      "sign",
+      "spend",
+      "join_paid_vehicle",
+      "certify_compliance",
+      "make_binding_commitment"
+    ]
+  }
+}
