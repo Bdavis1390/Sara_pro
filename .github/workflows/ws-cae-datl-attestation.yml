@@ -10,6 +10,13 @@ on:
       - 'ws_cae/scitt_statement.schema.json'
       - 'ws_cae/examples/ethereum.patch.json'
       - '.github/workflows/ws-cae-datl-attestation.yml'
+  pull_request:
+    paths:
+      - 'ws_cae/scitt_statement.py'
+      - 'ws_cae/scitt_statement_cli.py'
+      - 'ws_cae/scitt_statement.schema.json'
+      - 'ws_cae/examples/ethereum.patch.json'
+      - '.github/workflows/ws-cae-datl-attestation.yml'
   workflow_dispatch:
 
 permissions:
@@ -67,10 +74,10 @@ jobs:
           cosign verify-blob-attestation \
             --bundle /tmp/datl-proof/datl-statement.attestation.sigstore.json \
             --type urn:ws-cae:predicate:datl:v0.1 \
-            --certificate-identity-regexp '^https://github.com/Bdavis1390/Sara_pro/.github/workflows/ws-cae-datl-attestation.yml@refs/heads/ws-cae-standalone-v0-1$' \
+            --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/ws-cae-datl-attestation.yml@${GITHUB_REF}" \
             --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
-            --certificate-github-workflow-repository 'Bdavis1390/Sara_pro' \
-            --certificate-github-workflow-ref 'refs/heads/ws-cae-standalone-v0-1' \
+            --certificate-github-workflow-repository "${GITHUB_REPOSITORY}" \
+            --certificate-github-workflow-ref "${GITHUB_REF}" \
             /tmp/datl-proof/datl-statement.json
       - name: Preserve DATL transparency proof
         uses: actions/upload-artifact@v4
