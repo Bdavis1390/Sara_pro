@@ -9,7 +9,13 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 
 MATURITY_ORDER = {"ROADMAP": 0, "DRAFT": 1, "DEVNET": 2, "TESTNET": 3, "MAINNET": 4}
-PQ_AUTH_STATES = {"NONE", "PLUGGABLE_AUTH_ONLY", "PQ_NON_MAINNET", "PQ_MAINNET"}
+PQ_AUTH_STATES = {
+    "NONE",
+    "PLUGGABLE_AUTH_ONLY",
+    "PQ_NON_MAINNET",
+    "PQ_MAINNET_LIMITED",
+    "PQ_MAINNET",
+}
 CONSENSUS_STATES = {"CLASSICAL_OR_UNPROVEN", "PQ_RESEARCH_OR_PARTIAL", "PQ_DEPLOYED"}
 
 
