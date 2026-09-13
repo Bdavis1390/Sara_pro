@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .continuity_validation import valid_content_id, valid_datetime
+
 
 @dataclass(frozen=True)
 class WitnessReceipt:
@@ -50,6 +52,11 @@ def assess_witnesses(
 ) -> WitnessAssessment:
     if threshold < 1:
         raise ValueError("threshold must be at least 1")
+    if expected_tree_size < 0:
+        raise ValueError("expected_tree_size must be non-negative")
+    if not valid_content_id(expected_root_hash):
+        raise ValueError("expected_root_hash must be a canonical lowercase SHA-256 content identifier")
+
     equivocation = set(detect_equivocation(receipts))
     agreeing: set[str] = set()
     rejected: list[str] = []
@@ -59,8 +66,8 @@ def assess_witnesses(
         valid_shape = (
             bool(issuer)
             and receipt.tree_size >= 0
-            and receipt.root_hash.startswith("sha256:")
-            and bool(receipt.observed_at.strip())
+            and valid_content_id(receipt.root_hash)
+            and valid_datetime(receipt.observed_at)
             and bool(receipt.verification_method.strip())
             and bool(receipt.receipt_ref.strip())
         )
