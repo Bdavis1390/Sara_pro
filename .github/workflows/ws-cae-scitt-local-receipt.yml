@@ -1,0 +1,118 @@
+name: WS-CAE SCITT Local Receipt Proof
+
+on:
+  pull_request:
+    paths:
+      - 'ws_cae/continuity_*.py'
+      - 'ws_cae/examples/*.patch.json'
+      - '.github/workflows/ws-cae-scitt-local-receipt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-transparency-receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Build deterministic WS-CAE continuity manifest
+        shell: bash
+        run: |
+          mkdir -p /tmp/ws-cae-scitt-receipt
+          PYTHONPATH=. python -m ws_cae.continuity_cli \
+            ws_cae/examples/ethereum.patch.json \
+            --version 1 \
+            --as-of 2026-09-13 \
+            --pretty > /tmp/ws-cae-scitt-receipt/continuity.json
+          python -m json.tool /tmp/ws-cae-scitt-receipt/continuity.json >/dev/null
+          sha256sum /tmp/ws-cae-scitt-receipt/continuity.json \
+            > /tmp/ws-cae-scitt-receipt/continuity.sha256
+
+      - name: Pin and build Microsoft SCITT CCF reference service
+        shell: bash
+        run: |
+          git clone --quiet https://github.com/microsoft/scitt-ccf-ledger.git /tmp/scitt-ccf-ledger
+          cd /tmp/scitt-ccf-ledger
+          git checkout --quiet bffdf529185ba7767db5f2cfc4c1898ec8ad3364
+          ./docker/build.sh
+
+      - name: Start local SCITT transparency service
+        shell: bash
+        run: |
+          cd /tmp/scitt-ccf-ledger
+          ./docker/run-dev.sh > /tmp/ws-cae-scitt-receipt/scitt-service.log 2>&1 &
+          echo $! > /tmp/ws-cae-scitt-receipt/scitt-service.pid
+          for i in $(seq 1 90); do
+            if grep -q 'SCITT is running:' /tmp/ws-cae-scitt-receipt/scitt-service.log; then
+              exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/ws-cae-scitt-receipt/scitt-service.pid)" 2>/dev/null; then
+              cat /tmp/ws-cae-scitt-receipt/scitt-service.log
+              exit 1
+            fi
+            sleep 1
+          done
+          cat /tmp/ws-cae-scitt-receipt/scitt-service.log
+          exit 1
+
+      - name: Sign continuity manifest as SCITT statement
+        shell: bash
+        run: |
+          source /tmp/scitt-ccf-ledger/venv/bin/activate
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from pyscitt import crypto
+
+          payload = json.loads(Path('/tmp/ws-cae-scitt-receipt/continuity.json').read_text())
+          private_key, _ = crypto.generate_ec_keypair('P-256')
+          cert = crypto.generate_cert(private_key, cn='ws-cae-continuity-ci')
+          signer = crypto.Signer(
+              private_key,
+              issuer='did:web:example.invalid',
+              algorithm='ES256',
+              x5c=[cert],
+          )
+          signed = crypto.sign_json_statement(
+              signer,
+              payload,
+              content_type='application/vnd.ws-cae.continuity+json',
+              feed='ws-cae/continuity/ethereum',
+              cwt=True,
+          )
+          Path('/tmp/ws-cae-scitt-receipt/continuity.cose').write_bytes(signed)
+          PY
+
+      - name: Register statement and verify SCITT receipt
+        shell: bash
+        run: |
+          source /tmp/scitt-ccf-ledger/venv/bin/activate
+          mkdir -p /tmp/ws-cae-scitt-receipt/service-trust
+          curl -k -f https://localhost:8000/.well-known/scitt-keys \
+            -o /tmp/ws-cae-scitt-receipt/service-trust/scitt-keys.cbor
+          scitt submit /tmp/ws-cae-scitt-receipt/continuity.cose \
+            --development \
+            --url https://localhost:8000 \
+            --transparent-statement /tmp/ws-cae-scitt-receipt/continuity.transparent.cose \
+            --wait-for-commit
+          scitt pretty-receipt /tmp/ws-cae-scitt-receipt/continuity.transparent.cose \
+            > /tmp/ws-cae-scitt-receipt/receipt.txt
+          scitt validate /tmp/ws-cae-scitt-receipt/continuity.transparent.cose \
+            --service-trust-store /tmp/ws-cae-scitt-receipt/service-trust
+          test -s /tmp/ws-cae-scitt-receipt/continuity.transparent.cose
+          test -s /tmp/ws-cae-scitt-receipt/receipt.txt
+
+      - name: Preserve local receipt proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cae-scitt-local-receipt-${{ github.sha }}
+          path: /tmp/ws-cae-scitt-receipt/
+          if-no-files-found: error
+          retention-days: 30
