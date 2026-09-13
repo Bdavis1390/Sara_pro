@@ -1,0 +1,21 @@
+{
+  "schema": "WS-STANDARDS-INTEROP-CORPUS-LOCK-V0.1",
+  "corpus_path": "fixtures/standards_interop/corpus_v0_1.json",
+  "corpus_schema": "WS-STANDARDS-INTEROP-CORPUS-V0.1",
+  "canonical_sha256": "sha256:702ed3ed00edd77b12a04061bcadba5c62e894787d88db3bcb0b1a6e7b736ac7",
+  "case_count": 7,
+  "case_ids": [
+    "INT-REMOTE-POLICY-ALLOW",
+    "INT-REMOTE-HUMAN-ALLOW",
+    "INT-REMOTE-DENY",
+    "INT-LOCAL-PROCESS",
+    "INT-FILE-READ-HOSTLESS",
+    "INT-READONLY-MISMATCH",
+    "INT-INTERRUPTED"
+  ],
+  "ocsf_target": "OCSF-1.10.0-dev-PROPOSAL-COMPATIBLE",
+  "gemara_target": "GEMARA-1.1-COMPATIBLE",
+  "internal_freeze_status": "FROZEN_AFTER_INTERNAL_CI_PASS",
+  "external_validation_status": "NOT_RUN",
+  "claims_boundary": "This lock freezes the internal v0.1 regression corpus only. It does not establish OCSF or Gemara certification, partner validation, government acceptance, or production interoperability."
+}
