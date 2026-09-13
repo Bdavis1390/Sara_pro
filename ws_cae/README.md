@@ -4,13 +4,17 @@ Version: `0.1.0-research`
 
 WS-CAE is a read-only interoperability profile for comparing digital-asset authority agility across heterogeneous blockchain account models during cryptographic and post-quantum migration.
 
-The package now includes the **WS-CAE Chain Patch**: a one-file, evidence-bound chain status contract that can be adopted without changing consensus, transaction validity, validators, signing algorithms, wallets, SDKs, or custody systems.
+The package includes the **WS-CAE Chain Patch**: a one-file, evidence-bound chain status contract that can be adopted without changing consensus, transaction validity, validators, signing algorithms, wallets, SDKs, or custody systems.
 
 It is **not** a signature scheme, wallet, consensus protocol, certification program, regulatory standard, or claim that a chain is fully post-quantum secure.
 
 ## One-file chain patch
 
-A chain can publish:
+Start from:
+
+`examples/chain.patch.template.json`
+
+A chain can publish the completed file conventionally as:
 
 `ws-cae.patch.json`
 
@@ -22,11 +26,13 @@ python -m ws_cae.patch_cli ws-cae.patch.json --pretty
 
 See `CHAIN_PATCH.md` and the four reference patches for Algorand, Ethereum, Sui, and Bitcoin/QSB.
 
-The patch keeps **deployment maturity** and **protocol commitment** separate. For example, a protocol feature may be implemented on devnet and already scheduled for a future fork without being mislabeled as mainnet-deployed.
+The patch keeps **deployment maturity** and **protocol commitment** separate. A feature may therefore be implemented on devnet and already scheduled for a future fork without being mislabeled as mainnet-deployed.
 
 ## Why a chain can adopt now
 
 A chain does not need to be PQ-ready. The vocabulary represents `ROADMAP`, `DRAFT`, `DEVNET`, `TESTNET`, `MAINNET`, `NONE`, `PLUGGABLE_AUTH_ONLY`, `PQ_MAINNET_LIMITED`, and full `PQ_MAINNET` authorization states.
+
+Protocol commitment is separately represented as `UNSPECIFIED`, `RESEARCH`, `GOVERNANCE_SELECTED`, `FORK_SCHEDULED`, or `MAINNET`.
 
 The minimum adoption act is one JSON profile or one evidence-bound chain patch. Publishing either requires no consensus change, signature change, validator change, wallet migration, SDK dependency, or Worldshepherd runtime.
 
@@ -43,6 +49,8 @@ python -m ws_cae.cli ws_cae/examples/reference_pair.json --policy ws_cae/example
 ```
 
 The broad interoperability policy accepts the current reference pair. The stricter institutional policy passes Algorand's reference account-authority state while rejecting Ethereum's current devnet/pluggable-auth state. That is expected: failure is a machine-readable gap, not a reason a chain cannot publish a truthful profile.
+
+A separate `fork_committed_policy.json` demonstrates a different institutional question: whether a migration mechanism has enough implementation maturity **and** governance commitment to plan against. That policy can recognize a fork-scheduled devnet mechanism without promoting it to mainnet.
 
 ## Reusable CI actions
 
