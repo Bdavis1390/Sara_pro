@@ -1,0 +1,60 @@
+{
+  "schema": "WS-QCRYPTO-BITCOIN-MITIGATION-STACK-v1",
+  "as_of": "2026-09-12",
+  "claims_boundary": "Public proposals are tracked by maturity and dependency. Draft specifications and reference implementations are not consensus deployment, and a rescue design that depends on PQ authorization is not operational until a suitable PQ authorization/output path is active.",
+  "components": [
+    {
+      "name": "SHRINCS",
+      "role": "pq_authorization",
+      "source": "https://github.com/SHRINCS/shrincs-bip/blob/main/SHRINCS.md",
+      "status": "Draft",
+      "reference_implementation": true,
+      "security_proof_complete": false,
+      "test_vectors_complete": false,
+      "production_implementation": false,
+      "consensus_activated": false,
+      "stateful_primary": true,
+      "stateless_fallback": true,
+      "public_key_bytes": 48,
+      "stateful_signature_bytes_min": 548,
+      "stateful_signature_bytes_max": 4619,
+      "stateless_signature_bytes": 5777,
+      "claims_note": "Executable draft specification with a demonstration Python implementation. The draft explicitly marks the security proof and comprehensive test vectors as TODO and warns that the reference implementation is non-constant-time and not for production."
+    },
+    {
+      "name": "DropKick",
+      "role": "rescue",
+      "source": "https://conduition.io/bitcoin/dropkick/",
+      "status": "Proposal",
+      "requires_pq_authorization": true,
+      "production_implementation": false,
+      "consensus_activated": false,
+      "claims_note": "Commit/reveal rescue design for legacy coins. Its author explicitly states that on-chain PQ signatures/addresses are a prerequisite, so it cannot independently make Bitcoin PQ-ready."
+    },
+    {
+      "name": "BIP-361",
+      "role": "sunset",
+      "source": "https://github.com/bitcoin/bips/blob/master/bip-0361.mediawiki",
+      "status": "Draft",
+      "requires_pq_authorization": true,
+      "production_implementation": false,
+      "consensus_activated": false,
+      "claims_note": "Draft legacy-signature sunset framework. The BIP itself requires a future post-quantum signature BIP, so its migration phases are dependency-blocked until a PQ output/signature mechanism exists."
+    }
+  ],
+  "current_assessment": {
+    "pq_authorization_state": "PQ_AUTHORIZATION_EXECUTABLE_DRAFT",
+    "rescue_state": "RESCUE_BLOCKED_ON_PQ_AUTHORIZATION",
+    "sunset_state": "SUNSET_BLOCKED_ON_PQ_AUTHORIZATION",
+    "deployment_state": "DEPENDENCY_COMPLETE_RESEARCH_STACK",
+    "urgency": "ACCELERATE_SECURITY_PROOF_INTEROP_AND_ACTIVATION_PLANNING"
+  },
+  "blocking_gaps": [
+    "SHRINCS security proof is not complete in the public draft.",
+    "Comprehensive SHRINCS test vectors are not complete.",
+    "No production Bitcoin implementation is represented by the draft reference code.",
+    "No PQ authorization/output mechanism represented here is consensus-active.",
+    "DropKick requires an already-functioning PQ authorization/output destination.",
+    "BIP-361 requires a future PQ signature BIP and remains Draft."
+  ]
+}

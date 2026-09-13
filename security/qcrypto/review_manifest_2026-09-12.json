@@ -1,0 +1,53 @@
+{
+  "schema": "WS-QCRYPTO-INDEPENDENT-REVIEW-v1",
+  "as_of": "2026-09-12",
+  "purpose": "Reviewer-facing provenance map for claims-control and migration-readiness methodology.",
+  "review_scope": "Methodology, provenance, evidence classification, migration-readiness reasoning, and reproducible software behavior.",
+  "external_anchors": [
+    {
+      "organization": "NIST",
+      "category": "standards_authority",
+      "source": "https://www.nist.gov/pqc",
+      "supported_use": "Authoritative post-quantum standards and migration guidance."
+    },
+    {
+      "organization": "Ethereum Foundation",
+      "category": "major_chain_migration_program",
+      "source": "https://blog.ethereum.org/2026/09/07/protocol-priorities",
+      "supported_use": "Evidence that a major blockchain protocol has established a dated, multi-layer post-quantum migration target."
+    },
+    {
+      "organization": "Algorand Foundation",
+      "category": "operational_migration_evidence",
+      "source": "https://algorand.co/technology/post-quantum",
+      "supported_use": "Evidence that post-quantum account authorization has been deployed on a live public blockchain."
+    },
+    {
+      "organization": "Google Quantum AI",
+      "category": "peer_reviewed_scientific_analysis",
+      "source": "https://research.google/pubs/securing-elliptic-curve-cryptocurrencies-against-quantum-vulnerabilities-resource-estimates-and-mitigations-2/",
+      "supported_use": "External scientific benchmark supporting migration-risk analysis."
+    }
+  ],
+  "internal_artifacts": [
+    "security/qcrypto/credibility_guard.py",
+    "security/qcrypto/qcrypto_guard.py",
+    "security/qcrypto/test_credibility_guard.py",
+    "security/qcrypto/test_qcrypto_guard.py",
+    "security/qcrypto/INDEPENDENT_REVIEW_PROTOCOL.md",
+    ".github/workflows/qcrypto-risk-gate.yml"
+  ],
+  "allowed_claims": [
+    "SUPPORTED BY LITERATURE",
+    "STANDARDS ALIGNED",
+    "DEPLOYMENT AWARE",
+    "IMPLEMENTED IN SOFTWARE",
+    "PROVEN INTERNALLY for exact-head tested software behavior"
+  ],
+  "excluded_claims": [
+    "third-party certification unless explicitly obtained",
+    "external endorsement unless explicitly obtained",
+    "independent validation until an external reviewer reproduces and records the result",
+    "original authorship of external scientific findings"
+  ]
+}
