@@ -1,0 +1,30 @@
+{
+  "profiles": [
+    {
+      "ecosystem": "Algorand",
+      "adapter_class": "NATIVE_REKEY",
+      "implementation_maturity": "MAINNET",
+      "stable_authority_id": true,
+      "authenticator_replaceable": true,
+      "pq_authorization_state": "PQ_MAINNET",
+      "policy_state_documented": true,
+      "recovery_state_documented": true,
+      "domain_binding_documented": true,
+      "evidence_state_documented": true,
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN"
+    },
+    {
+      "ecosystem": "Ethereum",
+      "adapter_class": "NATIVE_ACCOUNT_ABSTRACTION",
+      "implementation_maturity": "DEVNET",
+      "stable_authority_id": true,
+      "authenticator_replaceable": true,
+      "pq_authorization_state": "PLUGGABLE_AUTH_ONLY",
+      "policy_state_documented": true,
+      "recovery_state_documented": true,
+      "domain_binding_documented": true,
+      "evidence_state_documented": true,
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN"
+    }
+  ]
+}
