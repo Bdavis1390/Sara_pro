@@ -31,6 +31,12 @@ READINESS_ORDER = {
 }
 
 
+def valid_role(role: str) -> bool:
+    if role in COMPONENT_ROLES:
+        return True
+    return role.startswith("X_") and len(role) > 2 and role.replace("_", "").isalnum()
+
+
 @dataclass(frozen=True)
 class ComponentState:
     role: str
@@ -67,8 +73,8 @@ def assess_system(patch: CryptoSystemPatch) -> CryptoSystemAssessment:
 
     critical = []
     for index, component in enumerate(patch.components):
-        if component.role not in COMPONENT_ROLES:
-            issues.append(f"component[{index}] role is not recognized")
+        if not valid_role(component.role):
+            issues.append(f"component[{index}] role is not recognized or namespaced")
         if not component.name.strip():
             issues.append(f"component[{index}] name must be non-empty")
         if component.readiness_state not in READINESS_ORDER:
