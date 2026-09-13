@@ -112,6 +112,10 @@ jobs:
           docker run --rm -v /tmp:/work cyclonedx/cyclonedx-cli:0.33.1 \
             validate --input-file /work/ws-cae-stablecoin.cdx.json \
             --input-format json --input-version v1_7 --fail-on-errors
+      - name: Use Python 3.14 for current standards validators
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
       - name: Install format validators
         run: python -m pip install --disable-pip-version-check spdx3-validate check-jsonschema ocsf-schema-compiler
       - name: Export and validate SPDX 3.0.1
