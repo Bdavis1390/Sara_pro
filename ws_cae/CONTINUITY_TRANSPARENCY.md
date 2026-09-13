@@ -6,6 +6,8 @@ Status: research protocol candidate. Read-only metadata only.
 
 Represent the exact cryptographic authority/dependency state of a digital-asset system as a portable, content-addressed object and make that state independently auditable over time.
 
+The central invariant is **stable subject identity, immutable state identity**: a chain, asset, wallet, custodian, exchange, bridge, issuer, rollup, or protocol may retain its stable subject identifier while moving through content-addressed cryptographic states.
+
 This layer does not define a cryptocurrency, token, consensus protocol, signature algorithm, wallet, custody system, transaction format, or registry operator.
 
 ## Objects
@@ -18,6 +20,18 @@ A chain-neutral record containing subject identity/type, evidence date/version, 
 
 Canonical JSON bytes are SHA-256 addressed as `sha256:<64 hex>`.
 
+### State transition
+
+A content-addressed continuity transition links two immutable manifest states for the same stable `subject_id`. Recognized transition reasons include algorithm migration, authority rotation, dependency change, recovery change, governance change, and evidence update.
+
+A transition between different subject identifiers, a no-op transition, or an invalid content ID fails closed.
+
+### Lineage and resolution
+
+A lineage begins at a declared genesis content ID. Every valid transition advances from one immutable state to another. The reference implementation detects fork points, multiple predecessors, cycles back to genesis, unreachable states, and mixed subject identifiers.
+
+Resolution succeeds only when the lineage has exactly one terminal state and that terminal manifest is available, valid, content-ID matched, and bound to the requested stable subject. Forked or incomplete histories do not resolve.
+
 ### Continuity snapshot
 
 `WS-CAE-CONTINUITY-SNAPSHOT-1`
@@ -28,7 +42,7 @@ A deterministic digest over a sorted set of manifest content IDs. This is useful
 
 `WS-CAE-CONTINUITY-TRANSPARENCY-1`
 
-An append-order Merkle tree over manifest content IDs. Leaves use SHA-256 with domain separator `0x00`; internal nodes use SHA-256 with domain separator `0x01`. Inclusion proofs bind one manifest content ID to one checkpoint root.
+An append-order Merkle tree over content IDs. Leaves use SHA-256 with domain separator `0x00`; internal nodes use SHA-256 with domain separator `0x01`. Inclusion proofs bind one content ID to one checkpoint root.
 
 ### Linked checkpoint
 
@@ -44,7 +58,7 @@ Independent externally verifiable receipts can be evaluated under an N-of-M poli
 
 ### Proof bundle
 
-`WS-CAE-CONTINUITY-PROOF-BUNDLE-1` binds a manifest content ID, Merkle inclusion proof, and checkpoint into one portable verification object.
+`WS-CAE-CONTINUITY-PROOF-BUNDLE-1` binds a content ID, Merkle inclusion proof, and checkpoint into one portable verification object.
 
 ## Interoperability vectors
 
@@ -56,4 +70,4 @@ The protocol describes and verifies metadata. It does not access private keys, g
 
 ## Claims boundary
 
-Passing these checks establishes only structural/content-addressing/transparency properties of the supplied metadata. It does not establish that the evidence is true, that a system is fully post-quantum secure, that a migration will succeed, or that any standards body has adopted WS-CAE.
+Passing these checks establishes only structural/content-addressing/transparency/lineage properties of the supplied metadata. It does not establish that the evidence is true, that a system is fully post-quantum secure, that a migration will succeed, or that any standards body has adopted WS-CAE.
