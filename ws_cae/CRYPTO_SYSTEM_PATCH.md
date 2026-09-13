@@ -26,6 +26,8 @@ The initial vocabulary supports:
 
 Not every asset uses every role. A patch should declare only the components that are material to the evaluated ownership or transfer path.
 
+Architectures that do not fit a standard role may use an uppercase namespaced extension beginning with `X_`, for example `X_PRIVACY_PROOF_COORDINATOR`. Unknown unnamespaced roles fail closed. This lets new consensus, privacy, sequencing, staking, proof, or recovery architectures be represented without silently redefining a standard role.
+
 ## Readiness states
 
 - `UNASSESSED`
@@ -61,10 +63,24 @@ Synthetic examples are included for:
 
 They are intentionally synthetic and demonstrate semantics only. They do not make claims about the current security of any real cryptocurrency, issuer, bridge, exchange, or wallet.
 
+## Portfolio view
+
+`ws_cae.crypto_portfolio` aggregates many system patches, preserves per-asset weakest-link results, and counts repeated blocker roles. That allows an exchange, fund, custodian, treasury, or ecosystem operator to prioritize shared migration dependencies rather than reviewing each asset in isolation.
+
 ## Local use
 
 ```bash
 python -m ws_cae.crypto_system_cli ws_cae/examples/system_stablecoin.json --pretty
+```
+
+Portfolio example:
+
+```bash
+python -m ws_cae.crypto_portfolio \
+  ws_cae/examples/system_native_coin.json \
+  ws_cae/examples/system_stablecoin.json \
+  ws_cae/examples/system_bridged_asset.json \
+  --pretty
 ```
 
 ## Reusable CI action
