@@ -68,6 +68,16 @@ jobs:
             ws_cae/examples/bitcoin-qsb.patch.json \
             --pretty >/tmp/ws-cae-catalog.json
           python -m json.tool /tmp/ws-cae-catalog.json >/dev/null
+      - name: Native-coin system dependency path
+        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_native_coin.json --pretty
+      - name: Stablecoin weakest-link path
+        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_stablecoin.json --pretty
+      - name: Bridged-asset weakest-link path
+        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_bridged_asset.json --pretty
+      - name: Exchange-balance weakest-link path
+        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_exchange_balance.json --pretty
+      - name: Rollup-asset weakest-link path
+        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_rollup_asset.json --pretty
       - name: Strict institutional policy must distinguish maturity
         shell: bash
         run: |
