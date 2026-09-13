@@ -58,6 +58,16 @@ jobs:
         uses: ./.github/actions/ws-cae-chain-patch
         with:
           patch: ws_cae/examples/bitcoin-qsb.patch.json
+      - name: Build four-chain catalog
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.catalog \
+            ws_cae/examples/algorand.patch.json \
+            ws_cae/examples/ethereum.patch.json \
+            ws_cae/examples/sui.patch.json \
+            ws_cae/examples/bitcoin-qsb.patch.json \
+            --pretty >/tmp/ws-cae-catalog.json
+          python -m json.tool /tmp/ws-cae-catalog.json >/dev/null
       - name: Strict institutional policy must distinguish maturity
         shell: bash
         run: |
