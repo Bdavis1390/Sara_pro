@@ -11,7 +11,8 @@
       "recovery_state_documented": true,
       "domain_binding_documented": true,
       "evidence_state_documented": true,
-      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN"
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "protocol_commitment_state": "MAINNET"
     },
     {
       "ecosystem": "Ethereum",
@@ -24,7 +25,8 @@
       "recovery_state_documented": true,
       "domain_binding_documented": true,
       "evidence_state_documented": true,
-      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN"
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "protocol_commitment_state": "FORK_SCHEDULED"
     }
   ]
 }
