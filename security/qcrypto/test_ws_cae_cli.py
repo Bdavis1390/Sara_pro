@@ -26,6 +26,26 @@ class WSCAECLITests(unittest.TestCase):
         profile.update(overrides)
         return profile
 
+    def policy(self, **overrides):
+        policy = {
+            "name": "institutional-pq-authority-minimum",
+            "minimum_maturity": "MAINNET",
+            "accepted_pq_authorization_states": ["PQ_MAINNET"],
+            "accepted_consensus_states": [
+                "CLASSICAL_OR_UNPROVEN",
+                "PQ_RESEARCH_OR_PARTIAL",
+                "PQ_DEPLOYED",
+            ],
+            "require_stable_authority_id": True,
+            "require_authenticator_replaceable": True,
+            "require_policy_state_documented": True,
+            "require_recovery_state_documented": True,
+            "require_domain_binding_documented": True,
+            "require_evidence_state_documented": True,
+        }
+        policy.update(overrides)
+        return policy
+
     def write_json(self, payload):
         handle = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
         with handle:
@@ -57,6 +77,34 @@ class WSCAECLITests(unittest.TestCase):
         self.assertTrue(result["all_valid"])
         states = [item["assessment"]["maturity_state"] for item in result["results"]]
         self.assertEqual(states, ["IMPLEMENTATION_MAINNET", "IMPLEMENTATION_DEVNET"])
+
+    def test_consumer_policy_passes_qualifying_profile(self):
+        profile_path = self.write_json(self.valid_profile())
+        policy_path = self.write_json(self.policy())
+        result = assess_path(profile_path, policy_path)
+        self.assertTrue(result["all_valid"])
+        self.assertTrue(result["all_policy_pass"])
+        self.assertTrue(result["results"][0]["policy"]["passed"])
+
+    def test_consumer_policy_rejects_devnet_pluggable_auth(self):
+        profile_path = self.write_json(
+            self.valid_profile(
+                ecosystem="Ethereum",
+                implementation_maturity="DEVNET",
+                pq_authorization_state="PLUGGABLE_AUTH_ONLY",
+            )
+        )
+        policy_path = self.write_json(self.policy())
+        cli = Path(__file__).with_name("ws_cae_cli.py")
+        completed = subprocess.run(
+            [sys.executable, str(cli), str(profile_path), "--policy", str(policy_path)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 1)
+        payload = json.loads(completed.stdout)
+        self.assertFalse(payload["all_policy_pass"])
 
     def test_unknown_fields_fail_closed(self):
         profile = self.valid_profile(extra_claim=True)
