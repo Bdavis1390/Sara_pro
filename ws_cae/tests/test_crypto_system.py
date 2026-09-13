@@ -35,6 +35,26 @@ class CryptoSystemTests(unittest.TestCase):
         self.assertTrue(result.valid)
         self.assertEqual(result.system_state, "ALL_DECLARED_CRITICAL_DEPENDENCIES_PQ_DEPLOYED")
 
+    def test_namespaced_extension_role_supports_unfamiliar_architecture(self):
+        patch = CryptoSystemPatch(
+            "synthetic",
+            (
+                ComponentState("CHAIN_AUTHORITY", "chain", "PQ_DEPLOYED", True, True),
+                ComponentState("X_PRIVACY_PROOF_COORDINATOR", "custom-component", "PQ_PARTIAL", True, True),
+            ),
+        )
+        result = assess_system(patch)
+        self.assertTrue(result.valid)
+        self.assertEqual(result.weakest_readiness_state, "PQ_PARTIAL")
+        self.assertIn("X_PRIVACY_PROOF_COORDINATOR:custom-component", result.blocking_components)
+
+    def test_unnamespaced_unknown_role_fails_closed(self):
+        patch = CryptoSystemPatch(
+            "synthetic",
+            (ComponentState("MYSTERY_ROLE", "unknown", "PQ_DEPLOYED", True, True),),
+        )
+        self.assertFalse(assess_system(patch).valid)
+
     def test_missing_evidence_fails_closed(self):
         patch = CryptoSystemPatch(
             "synthetic",
