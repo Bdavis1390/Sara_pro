@@ -87,19 +87,19 @@ The machine-readable file `bitcoin_mitigation_stack_2026-09-12.json` currently r
 
 ## Cross-ecosystem migration horizon
 
-`ecosystem_migration_horizon.py` compares protocol transition targets with an external planning horizon while preserving scope and evidence maturity.
+`ecosystem_migration_horizon.py` compares stated protocol transition targets against an external planning horizon while preserving scope and evidence maturity. Current evidence identifies a portfolio-level migration deficit against an aggressive 2028 planning horizon: Bitcoin's proposed full sunset schedule extends beyond it; Ethereum's core PQ target is around 2029 with broader ecosystem migration beyond that; Algorand targets broader resilience by end-2027 but still has incomplete full-protocol scope despite live PQ accounts.
 
-Using 2028 as an aggressive planning horizon:
+This is a scheduling signal only. The 2028 horizon is forward-looking evidence, not Q-day.
 
-- Bitcoin's nominal five-year BIP-361 full legacy-signature sunset would reach roughly 2031 if started in 2026, creating a best-case margin of about **-3 years**.
-- Ethereum targets core post-quantum infrastructure around **2029**, while execution-layer and ecosystem migration extends beyond that, creating at least a **-1 year** core-infrastructure margin against the 2028 horizon.
-- Algorand targets broad quantum resilience by the end of **2027** and already has native Falcon-1024 accounts live, producing nominal schedule headroom but not full-protocol completion because consensus-level PQ work remains incomplete.
+## Institutional custody transition
 
-The portfolio state is therefore `MULTI_ECOSYSTEM_MIGRATION_DEFICIT`: more than one major ecosystem is nominally outside the aggressive planning horizon, while the ecosystem inside the horizon still has incomplete protocol scope. The operational implication is parallel work across protocol, wallet, custody, validator, relay, recovery, and governance layers rather than sequential migration.
+`institutional_custody_readiness.py` tracks whether regulated and institutional custody infrastructure has moved from planning into deployed migration controls. Current evidence records a material transition: BitGo has deployed Bitcoin quantum-risk scoring and exposed-address remediation and separately completed an ML-DSA-based PQ-MPC transaction simulation in a regulated custody workflow; Taurus reports production hybrid X25519 + ML-KEM infrastructure and crypto-agile custody; Thales has launched a PQ-capable Luna 8 HSM platform.
+
+QCRYPTO classifies this as `INSTITUTIONAL_CUSTODY_TRANSITION_UNDERWAY`, not end-to-end blockchain PQ readiness. The remaining primary dependency is chain-native PQ transaction authorization plus independent end-to-end validation.
 
 ## Claims-control rule
 
-Hardware progress, roadmap targets, QEC evidence, classical decoder capacity, platform maturity, attack-algorithm progress, mitigation proposals, and migration schedules are tracked independently. Cross-paper multiplication is prohibited unless architecture compatibility and complete fault-tolerant overhead are established. Roadmap or convergence evidence is a migration-planning signal, never a production-break claim.
+Hardware progress, roadmap targets, QEC evidence, classical decoder capacity, platform maturity, attack-algorithm progress, mitigation proposals, protocol schedules, ecosystem migration targets, and custody readiness are tracked independently. Cross-paper multiplication is prohibited unless architecture compatibility and complete fault-tolerant overhead are established. Roadmap or convergence evidence is a migration-planning signal, never a production-break claim.
 
 ## Safety boundary
 
@@ -113,11 +113,13 @@ Run:
 python -m py_compile security/qcrypto/qcrypto_guard.py
 python -m py_compile security/qcrypto/bitcoin_mitigation_readiness.py
 python -m py_compile security/qcrypto/ecosystem_migration_horizon.py
+python -m py_compile security/qcrypto/institutional_custody_readiness.py
 python -m unittest discover -s security/qcrypto -p 'test_*.py' -v
 python -m json.tool security/qcrypto/baseline_2026-09-12.json >/dev/null
 python -m json.tool security/qcrypto/evidence_register_2026-09-12.json >/dev/null
 python -m json.tool security/qcrypto/bitcoin_mitigation_stack_2026-09-12.json >/dev/null
 python -m json.tool security/qcrypto/ecosystem_migration_horizon_2026-09-13.json >/dev/null
+python -m json.tool security/qcrypto/institutional_custody_readiness_2026-09-13.json >/dev/null
 ```
 
 The GitHub Actions workflow `.github/workflows/qcrypto-risk-gate.yml` enforces the package checks for changes to this package.
