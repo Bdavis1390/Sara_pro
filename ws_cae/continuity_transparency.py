@@ -9,6 +9,8 @@ from __future__ import annotations
 import hashlib
 from dataclasses import dataclass
 
+from .continuity_validation import valid_content_id
+
 
 def _sha256(data: bytes) -> bytes:
     return hashlib.sha256(data).digest()
@@ -16,12 +18,8 @@ def _sha256(data: bytes) -> bytes:
 
 def leaf_hash(content_id: str) -> bytes:
     value = content_id.strip()
-    if not value.startswith("sha256:") or len(value) != 71:
-        raise ValueError("content_id must be sha256:<64 hex characters>")
-    try:
-        bytes.fromhex(value[7:])
-    except ValueError as exc:
-        raise ValueError("content_id digest must be hexadecimal") from exc
+    if not valid_content_id(value):
+        raise ValueError("content_id must be canonical lowercase sha256:<64 hex characters>")
     return _sha256(b"\x00" + value.encode("ascii"))
 
 
@@ -108,12 +106,12 @@ def _rebuild(index: int, size: int, leaf: bytes, path: tuple[bytes, ...]) -> byt
 def verify_inclusion(proof: InclusionProof) -> bool:
     if proof.tree_size < 1 or proof.leaf_index < 0 or proof.leaf_index >= proof.tree_size:
         return False
-    if not proof.root.startswith("sha256:"):
+    if not valid_content_id(proof.root):
+        return False
+    if any(not valid_content_id(item) for item in proof.audit_path):
         return False
     try:
-        path = tuple(bytes.fromhex(item[7:]) for item in proof.audit_path if item.startswith("sha256:"))
-        if len(path) != len(proof.audit_path):
-            return False
+        path = tuple(bytes.fromhex(item[7:]) for item in proof.audit_path)
         rebuilt = _rebuild(proof.leaf_index, proof.tree_size, leaf_hash(proof.content_id), path)
         return proof.root == "sha256:" + rebuilt.hex()
     except (ValueError, IndexError):
