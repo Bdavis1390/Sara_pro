@@ -7,6 +7,7 @@ on:
       - '.github/actions/ws-cae-conformance/**'
       - '.github/actions/ws-cae-chain-patch/**'
       - '.github/actions/ws-cae-crypto-system/**'
+      - '.github/actions/ws-cae-cyclonedx/**'
       - '.github/workflows/ws-cae-standalone-selftest.yml'
   workflow_dispatch:
 
@@ -100,6 +101,17 @@ jobs:
             ws_cae/examples/system_rollup_asset.json \
             --pretty >/tmp/ws-cae-crypto-portfolio.json
           python -m json.tool /tmp/ws-cae-crypto-portfolio.json >/dev/null
+      - name: Export crypto dependency graph as CycloneDX 1.7
+        uses: ./.github/actions/ws-cae-cyclonedx
+        with:
+          patch: ws_cae/examples/system_stablecoin.json
+          output: /tmp/ws-cae-stablecoin.cdx.json
+      - name: Validate CycloneDX export with upstream CLI
+        shell: bash
+        run: |
+          docker run --rm -v /tmp:/work cyclonedx/cyclonedx-cli:0.33.1 \
+            validate --input-file /work/ws-cae-stablecoin.cdx.json \
+            --input-format json --input-version v1_7 --fail-on-errors
       - name: Strict institutional policy must distinguish maturity
         shell: bash
         run: |
