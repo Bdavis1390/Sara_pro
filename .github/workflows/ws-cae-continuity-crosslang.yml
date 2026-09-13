@@ -1,0 +1,24 @@
+name: WS-CAE Continuity Cross-Language Vectors
+
+on:
+  pull_request:
+    paths:
+      - 'ws_cae/continuity_*.py'
+      - 'ws_cae/examples/continuity_*.json'
+      - 'ws_cae/tests/test_continuity_*.py'
+      - 'interop/continuity_verify.mjs'
+      - '.github/workflows/ws-cae-continuity-crosslang.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python continuity tests
+        run: python -m unittest discover -s ws_cae/tests -p 'test_continuity_*.py' -v
+      - name: Independent Node.js vector reproduction
+        run: node interop/continuity_verify.mjs
