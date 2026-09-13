@@ -1,0 +1,23 @@
+name: WS-CAE Conformance Self-Test
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/ws_cae_*.py'
+      - 'security/qcrypto/ws_cae_profile.schema.json'
+      - 'security/qcrypto/examples/**'
+      - '.github/actions/ws-cae-conformance/**'
+      - '.github/workflows/ws-cae-conformance-selftest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-reference-pair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ws-cae-conformance
+        with:
+          profile: security/qcrypto/examples/ws_cae_reference_pair.json
