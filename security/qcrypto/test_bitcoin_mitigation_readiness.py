@@ -1,4 +1,6 @@
+import json
 import unittest
+from pathlib import Path
 
 from bitcoin_mitigation_readiness import MitigationEvidence, assess_bitcoin_mitigation_stack
 
@@ -101,6 +103,14 @@ class BitcoinMitigationReadinessTests(unittest.TestCase):
         result = assess_bitcoin_mitigation_stack(pq, rescue, sunset)
         self.assertEqual(result.deployment_state, "DEPLOYABLE_MITIGATION_STACK")
         self.assertEqual(result.urgency, "MAINTAIN_AND_EXERCISE")
+
+    def test_evidence_json_matches_claims_control_state(self):
+        path = Path(__file__).with_name("bitcoin_mitigation_stack_2026-09-12.json")
+        with path.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        self.assertEqual(payload["schema"], "WS-QCRYPTO-BITCOIN-MITIGATION-STACK-v1")
+        self.assertEqual(payload["current_assessment"]["deployment_state"], "DEPENDENCY_COMPLETE_RESEARCH_STACK")
+        self.assertFalse(payload["components"][0]["consensus_activated"])
 
 
 if __name__ == "__main__":
