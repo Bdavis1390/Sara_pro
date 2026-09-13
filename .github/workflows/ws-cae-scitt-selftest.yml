@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install current SCITT client tooling
-        run: python -m pip install --disable-pip-version-check pyscitt
+        run: python -m pip install --disable-pip-version-check pyscitt 'scitt-cose>=0.1.0'
       - name: Build deterministic WS-CAE transparency payload
         run: |
           PYTHONPATH=. python -m ws_cae.scitt_statement_cli \
@@ -63,3 +63,11 @@ jobs:
           assert len(signed) > len(decoded)
           print(f'signed_statement_bytes={len(signed)}')
           PY
+      - name: Validate official IETF SCITT cross-implementation vectors
+        shell: bash
+        run: |
+          git clone --quiet --depth 1 https://github.com/ietf-wg-scitt/examples.git /tmp/ietf-scitt-examples
+          cd /tmp/ietf-scitt-examples/test-vectors/scitt-cose
+          sha256sum -c SHA256SUMS
+          cd /tmp/ietf-scitt-examples
+          python -m scitt_cose.vectors test-vectors/scitt-cose
