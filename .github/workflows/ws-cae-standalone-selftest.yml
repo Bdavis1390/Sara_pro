@@ -112,6 +112,42 @@ jobs:
           docker run --rm -v /tmp:/work cyclonedx/cyclonedx-cli:0.33.1 \
             validate --input-file /work/ws-cae-stablecoin.cdx.json \
             --input-format json --input-version v1_7 --fail-on-errors
+      - name: Install format validators
+        run: python -m pip install --disable-pip-version-check spdx3-validate check-jsonschema ocsf-schema-compiler
+      - name: Export and validate SPDX 3.0.1
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.spdx_cdx_cli ws_cae/examples/system_stablecoin.json --pretty >/tmp/ws-cae.spdx3.json
+          spdx3-validate --json /tmp/ws-cae.spdx3.json
+      - name: Export and validate SARIF 2.1.0
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.sarif_cdx_cli ws_cae/examples/system_bridged_asset.json --pretty >/tmp/ws-cae.sarif.json
+          check-jsonschema --schemafile https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json /tmp/ws-cae.sarif.json
+      - name: Export and validate CloudEvents 1.0
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.cloudevents_cdx_cli ws_cae/examples/system_exchange_balance.json --pretty >/tmp/ws-cae.cloudevent.json
+          check-jsonschema --schemafile https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json /tmp/ws-cae.cloudevent.json
+      - name: Build OCSF 1.8 validation schema
+        shell: bash
+        run: |
+          git clone --quiet --depth 1 --branch v1.8.0 https://github.com/ocsf/ocsf-schema.git /tmp/ocsf-schema-v1.8.0
+          ocsf-schema-compiler /tmp/ocsf-schema-v1.8.0 >/tmp/ocsf-schema-v1.8.0.json
+          mkdir -p /tmp/ocsf-toolkit
+          curl --fail --location --silent --show-error \
+            https://github.com/ocsf/ocsf-toolkit/releases/download/v0.9.0/ocsf-toolkit_v0.9.0_linux_amd64.tar.gz \
+            --output /tmp/ocsf-toolkit.tar.gz
+          tar -xzf /tmp/ocsf-toolkit.tar.gz -C /tmp/ocsf-toolkit
+      - name: Export and validate OCSF 1.8 Detection Finding
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.ocsf_cdx_cli ws_cae/examples/system_rollup_asset.json --pretty >/tmp/ws-cae.ocsf.json
+          /tmp/ocsf-toolkit/ocsf-toolkit \
+            --schema /tmp/ocsf-schema-v1.8.0.json \
+            --event /tmp/ws-cae.ocsf.json \
+            --validate --fail-on-validation-errors \
+            --report-output -
       - name: Strict institutional policy must distinguish maturity
         shell: bash
         run: |
