@@ -15,7 +15,12 @@
         "additionalProperties": false,
         "required": ["role", "name", "readiness_state", "critical", "evidence_documented"],
         "properties": {
-          "role": {"enum": ["CHAIN_AUTHORITY", "CONSENSUS_VALIDATOR", "ASSET_ISSUER_ADMIN", "BRIDGE_MESSAGING", "CUSTODY_SIGNING", "EXCHANGE_WITHDRAWAL", "WALLET_DEVICE", "RECOVERY", "ORACLE_ADMIN", "ROLLUP_PROVER", "PROTOCOL_ADMIN"]},
+          "role": {
+            "anyOf": [
+              {"enum": ["CHAIN_AUTHORITY", "CONSENSUS_VALIDATOR", "ASSET_ISSUER_ADMIN", "BRIDGE_MESSAGING", "CUSTODY_SIGNING", "EXCHANGE_WITHDRAWAL", "WALLET_DEVICE", "RECOVERY", "ORACLE_ADMIN", "ROLLUP_PROVER", "PROTOCOL_ADMIN"]},
+              {"type": "string", "pattern": "^X_[A-Z0-9_]+$"}
+            ]
+          },
           "name": {"type": "string", "minLength": 1},
           "readiness_state": {"enum": ["UNASSESSED", "CLASSICAL_DEPENDENCY", "CRYPTO_AGILE", "PQ_PARTIAL", "PQ_DEPLOYED"]},
           "critical": {"type": "boolean"},
