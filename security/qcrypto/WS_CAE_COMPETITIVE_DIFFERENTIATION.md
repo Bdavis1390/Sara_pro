@@ -6,7 +6,7 @@ Status date: 2026-09-13
 
 This document makes the WS-CAE research position falsifiable by comparing it with the strongest adjacent public work found in the current prior-art review.
 
-The claim under evaluation is narrow: WS-CAE is a cross-chain authority-agility conformance profile for persistent digital-asset authority during post-quantum migration. It is not a new signature scheme, wallet standard, DLT interoperability standard, or cryptographic inventory format.
+The claim under evaluation is narrow: WS-CAE is a cross-chain authority-agility conformance profile for persistent digital-asset authority during post-quantum migration. It is not a new signature scheme, wallet standard, DLT interoperability standard, agent-governance standard, or cryptographic inventory format.
 
 ## Adjacent work
 
@@ -17,8 +17,10 @@ The claim under evaluation is narrow: WS-CAE is a cross-chain authority-agility 
 | IETF Crypto-Agility Manifest draft | Machine-readable posture publication | CBOM summary, readiness, migration policy, conformance declaration | Describes project cryptographic posture, not persistent account/authority semantics across chains |
 | ISO/TS 23516:2026 | Broad DLT interoperability | DLT interoperability framework | Broader scope; no public evidence found of the WS-CAE PQ authority-state maturity model |
 | ISO/AWI PAS 26347 | Wallet interoperability | Interoperable protocol between blockchain/DLT wallets, under development | Public project metadata does not show cross-chain PQ authority-state conformance semantics |
+| Q-Sign Verifiable Authority Substrate | Vendor-neutral PQ authority and accountability conformance | Delegation chains, replayable accountability, multiple PQ families for autonomous-agent authority | Strong adjacent authority work, but not a cross-chain digital-asset account/vault maturity and adapter profile |
 | Project Eleven Quantum Vault / libqc | Audited migration implementation | ERC-4337 account abstraction, Bitcoin support, crypto-agile wallet infrastructure | Implementation/reference architecture, not a protocol-neutral conformance vocabulary across unrelated account models |
 | LayerQu | Independent readiness measurement | 72-chain readiness scoring, deployed-vs-announced distinctions, migration stages | Measurement framework, not an authority interoperability contract |
+| Shell Chain native AA | Protocol-native PQ account abstraction | Stable account identity, native PQ validation, replaceable validation logic | Single-chain implementation rather than a cross-chain authority conformance model |
 | Ethereum EIP-8141 | Native authority abstraction on Ethereum | Native key rotation, programmable validation, off-ramp from ECDSA | Ethereum-specific mechanism, not cross-chain conformance |
 | Algorand PQ accounts/rekey | Live native PQ authorization | Native PQ accounts and stable account rekey semantics | Algorand-specific implementation |
 | Sui address aliases / PQ roadmap | Stable identity and replaceable authentication | Persistent alias layer and differentiated PQ design direction | Sui-specific mechanism |
@@ -36,7 +38,9 @@ WS-CAE combines the following properties in one cross-chain authority profile:
 7. chain-adapter mapping across unrelated account architectures;
 8. a common conformance vocabulary designed to permit independent implementations to reach the same classification.
 
-The current public review did not identify another specification that combines all eight properties in the same narrow digital-asset authority role.
+The strongest neighboring efforts now cover nearly every ingredient individually: authority substrates, account abstraction, PQ wallet implementations, readiness scoring, algorithm interoperability, wallet interoperability, and crypto-posture publication. The current public review still did not identify another specification that combines all eight properties in the same narrow cross-chain digital-asset authority role.
+
+That is the lead position under evaluation: not ownership of the individual ingredients, but normalization of their authority semantics across heterogeneous chains while preserving deployment and consensus claims boundaries.
 
 ## Claims boundary
 
