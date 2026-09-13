@@ -1,0 +1,38 @@
+name: WS-CAE Standalone Self-Test
+
+on:
+  pull_request:
+    paths:
+      - 'ws_cae/**'
+      - '.github/actions/ws-cae-conformance/**'
+      - '.github/workflows/ws-cae-standalone-selftest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: python -m unittest discover -s ws_cae/tests -p 'test_*.py' -v
+      - name: Reference profile conformance
+        uses: ./.github/actions/ws-cae-conformance
+        with:
+          profile: ws_cae/examples/reference_pair.json
+      - name: Interoperability consumer policy
+        uses: ./.github/actions/ws-cae-conformance
+        with:
+          profile: ws_cae/examples/reference_pair.json
+          policy: ws_cae/examples/interop_policy.json
+      - name: Strict institutional policy must distinguish maturity
+        shell: bash
+        run: |
+          set +e
+          PYTHONPATH=. python -m ws_cae.cli ws_cae/examples/reference_pair.json --policy ws_cae/examples/institutional_policy.json >/tmp/ws-cae-strict.json
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+          python -m json.tool /tmp/ws-cae-strict.json >/dev/null
