@@ -2,6 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
+from ws_cae.continuity_digests import digest_set
 from ws_cae.continuity_manifest import ContinuityManifest, DependencyRef, EvidenceRef, content_id
 from ws_cae.continuity_transparency import inclusion_proof, root_hash
 
@@ -13,9 +14,9 @@ class ContinuityInteropVectorTests(unittest.TestCase):
         cls.base = base
         cls.vectors = json.loads((base / "continuity_interop_vectors.json").read_text())
 
-    def test_canonical_manifest_content_id(self):
+    def _manifest(self):
         raw = json.loads((self.base / "continuity_manifest_reference.json").read_text())
-        manifest = ContinuityManifest(
+        return ContinuityManifest(
             subject_id=raw["subject_id"],
             subject_type=raw["subject_type"],
             version=raw["version"],
@@ -30,7 +31,14 @@ class ContinuityInteropVectorTests(unittest.TestCase):
             dependencies=tuple(DependencyRef(**item) for item in raw["dependencies"]),
             evidence=tuple(EvidenceRef(**item) for item in raw["evidence"]),
         )
+
+    def test_canonical_manifest_content_id(self):
+        manifest = self._manifest()
         self.assertEqual(content_id(manifest), self.vectors["canonical_manifest"]["expected_content_id"])
+
+    def test_canonical_manifest_digest_set(self):
+        got = dict(digest_set(self._manifest()).digests)
+        self.assertEqual(got, self.vectors["canonical_manifest"]["expected_digests"])
 
     def test_transparency_roots(self):
         ids = tuple(self.vectors["transparency"]["content_ids"])
