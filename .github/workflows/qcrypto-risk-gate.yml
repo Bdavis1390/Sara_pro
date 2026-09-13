@@ -33,6 +33,7 @@ jobs:
           python -m py_compile security/qcrypto/migration_timeline_collision.py
           python -m py_compile security/qcrypto/ecosystem_migration_horizon.py
           python -m py_compile security/qcrypto/institutional_custody_readiness.py
+          python -m py_compile security/qcrypto/financial_sector_coordination.py
       - name: Run QCRYPTO regression tests
         run: python -m unittest discover -s security/qcrypto -p 'test_*.py' -v
       - name: Validate structured evidence
@@ -43,3 +44,4 @@ jobs:
           python -m json.tool security/qcrypto/bitcoin_mitigation_stack_2026-09-12.json >/dev/null
           python -m json.tool security/qcrypto/ecosystem_migration_horizon_2026-09-13.json >/dev/null
           python -m json.tool security/qcrypto/institutional_custody_readiness_2026-09-13.json >/dev/null
+          python -m json.tool security/qcrypto/financial_sector_coordination_2026-09-13.json >/dev/null
