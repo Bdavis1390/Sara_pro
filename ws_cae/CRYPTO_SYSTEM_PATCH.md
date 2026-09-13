@@ -10,7 +10,7 @@ A chain-level PQ result must therefore not be promoted into an end-to-end asset-
 
 ## Component roles
 
-The initial vocabulary supports:
+The standard vocabulary supports:
 
 - `CHAIN_AUTHORITY`
 - `CONSENSUS_VALIDATOR`
@@ -24,9 +24,9 @@ The initial vocabulary supports:
 - `ROLLUP_PROVER`
 - `PROTOCOL_ADMIN`
 
-Not every asset uses every role. A patch should declare only the components that are material to the evaluated ownership or transfer path.
+Architectures that do not fit the standard vocabulary may declare controlled extension roles using an `X_` prefix. Unknown unnamespaced roles fail closed. This allows future consensus, staking, privacy, proof, sequencer, or recovery architectures to be represented without corrupting the common vocabulary.
 
-Architectures that do not fit a standard role may use an uppercase namespaced extension beginning with `X_`, for example `X_PRIVACY_PROOF_COORDINATOR`. Unknown unnamespaced roles fail closed. This lets new consensus, privacy, sequencing, staking, proof, or recovery architectures be represented without silently redefining a standard role.
+Not every asset uses every role. A patch should declare only the components that are material to the evaluated ownership or transfer path.
 
 ## Readiness states
 
@@ -63,24 +63,10 @@ Synthetic examples are included for:
 
 They are intentionally synthetic and demonstrate semantics only. They do not make claims about the current security of any real cryptocurrency, issuer, bridge, exchange, or wallet.
 
-## Portfolio view
-
-`ws_cae.crypto_portfolio` aggregates many system patches, preserves per-asset weakest-link results, and counts repeated blocker roles. That allows an exchange, fund, custodian, treasury, or ecosystem operator to prioritize shared migration dependencies rather than reviewing each asset in isolation.
-
 ## Local use
 
 ```bash
 python -m ws_cae.crypto_system_cli ws_cae/examples/system_stablecoin.json --pretty
-```
-
-Portfolio example:
-
-```bash
-python -m ws_cae.crypto_portfolio \
-  ws_cae/examples/system_native_coin.json \
-  ws_cae/examples/system_stablecoin.json \
-  ws_cae/examples/system_bridged_asset.json \
-  --pretty
 ```
 
 ## Reusable CI action
@@ -94,10 +80,24 @@ python -m ws_cae.crypto_portfolio \
 
 Pin an immutable commit for reproducibility.
 
+## CycloneDX / CBOM bridge
+
+A crypto-system patch can be exported as CycloneDX 1.7 JSON:
+
+```bash
+python -m ws_cae.cyclonedx_cli ws_cae/examples/system_stablecoin.json --pretty > ws-cae.cdx.json
+```
+
+The exporter preserves WS-CAE dependency roles, readiness states, criticality, evidence state, and the weakest-link assessment as namespaced properties while representing the asset/component graph through standard CycloneDX components and dependencies.
+
+The repository self-test validates the generated BOM with the upstream CycloneDX CLI using its v1.7 schema validator. This bridge is intended to let digital-asset dependency information enter existing CBOM/xBOM inventory, audit, procurement, and PQ-migration tooling rather than requiring a WS-CAE-only consumer stack.
+
+WS-CAE does not replace CycloneDX or CBOM. It supplies a digital-asset authority/dependency profile that can be transported through that broader standards ecosystem.
+
 ## Execution boundary
 
-The system patch is read-only metadata/conformance tooling. It has no key generation, signing, wallet access, transaction construction, transaction broadcast, custody action, exchange action, bridge action, or asset-movement capability.
+The system patch and CycloneDX bridge are read-only metadata/conformance tooling. They have no key generation, signing, wallet access, transaction construction, transaction broadcast, custody action, exchange action, bridge action, or asset-movement capability.
 
 ## Claims boundary
 
-A system assessment applies only to the dependencies declared in the supplied patch. It is not certification, regulatory compliance, an investment recommendation, a custody approval, a guarantee of quantum resistance, or proof that undeclared dependencies do not exist.
+A system assessment applies only to the dependencies declared in the supplied patch. It is not certification, regulatory compliance, an investment recommendation, a custody approval, a guarantee of quantum resistance, proof that undeclared dependencies do not exist, or an assertion that CycloneDX/OWASP/NIST endorses WS-CAE.
