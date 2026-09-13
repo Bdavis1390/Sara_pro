@@ -13,16 +13,30 @@ This is not a claim of industry-standard status, standards-body adoption, extern
 ## Start here
 
 1. `WS_CAE_1_CORE.md` — compact profile definition and core semantics.
-2. `WS_CAE_MULTI_CHAIN_PROFILE_MATRIX.md` — same vocabulary applied to Algorand, Ethereum, Sui, and Shell.
-3. `WS_CAE_FRONTIER_MAP.md` — strongest neighboring work grouped by standards, migration frameworks, implementations, authority substrates, and readiness measurement.
-4. `WS_CAE_COMPETITIVE_DIFFERENTIATION.md` — comparison against NIST, IETF, ISO, Project Eleven, Q-Sign, LayerQu, and chain-native implementations.
-5. `WS_CAE_PRIOR_ART_AND_SCOPE.md` — prior-art boundary and novelty caveats.
-6. `WS_CAE_STANDARDS_ALIGNMENT.md` — non-overlap and composability with NIST/IETF/ISO work.
-7. `WS_CAE_TWO_CHAIN_REPRODUCIBILITY_CHALLENGE.md` — independent reproduction challenge.
-8. `WS_CAE_SPEARHEAD_GATE.md` — evidence gate and current claims state.
+2. `ws_cae_reference_conformance.py` — executable reference-profile classifier; performs no signing, key generation, transaction construction, or asset movement.
+3. `test_ws_cae_reference_conformance.py` — reference regression tests for Algorand MAINNET PQ authority and Ethereum EIP-8141 DEVNET authority abstraction, plus fail-closed maturity/evidence tests.
+4. `ws_cae_reference_profiles_2026-09-13.json` — evidence-bound Algorand and Ethereum reference profiles.
+5. `WS_CAE_MULTI_CHAIN_PROFILE_MATRIX.md` — same vocabulary applied to Algorand, Ethereum, Sui, and Shell.
+6. `WS_CAE_FRONTIER_MAP.md` — strongest neighboring work grouped by standards, migration frameworks, implementations, authority substrates, and readiness measurement.
+7. `WS_CAE_COMPETITIVE_DIFFERENTIATION.md` — comparison against NIST, IETF, ISO, Project Eleven, Q-Sign, LayerQu, and chain-native implementations.
+8. `WS_CAE_DIFFERENTIATION_SCORECARD.md` — feature-by-feature scope comparison using `NOT IDENTIFIED` rather than unsupported absence claims.
+9. `WS_CAE_PRIOR_ART_AND_SCOPE.md` — prior-art boundary and novelty caveats.
+10. `WS_CAE_STANDARDS_ALIGNMENT.md` — non-overlap and composability with NIST/IETF/ISO work.
+11. `WS_CAE_TWO_CHAIN_REPRODUCIBILITY_CHALLENGE.md` — independent reproduction challenge.
+12. `WS_CAE_SPEARHEAD_GATE.md` — evidence gate and current claims state.
+
+## New concrete threshold
+
+Ethereum EIP-8141 is now backed by active client implementation work and released devnet fixtures. WS-CAE therefore has two materially different evidence-backed reference classes:
+
+- Algorand: `MAINNET` native rekey plus native Falcon-1024 PQ account authorization;
+- Ethereum: `DEVNET` native account-abstraction implementation with replaceable validation, but no claim that a PQ signature scheme or Hegota is already live on mainnet.
+
+The reference classifier is designed to preserve exactly that distinction and to keep account-level authority results separate from consensus-level PQ claims.
 
 ## Public falsification surfaces
 
+- GitHub PR #218: clean research review and CI surface.
 - GitHub issue #214: independent technical review and prior-art challenge.
 - GitHub issue #215: Ethereum EIP-8141 threshold event and maturity tracking.
 - GitHub issue #216: external-validation track.
@@ -47,7 +61,7 @@ The adjacent ecosystem already contains strong work in:
 WS-CAE does not claim ownership of those ingredients. Its proposed contribution is the common authority-state vocabulary across unrelated digital-asset account models, including explicit separation of:
 
 - authority identity from authenticator;
-- deployed capability from roadmap capability;
+- `ROADMAP`, `DRAFT`, `DEVNET`, `TESTNET`, and `MAINNET` maturity;
 - account/vault PQ authorization from consensus/validator PQ security;
 - cryptographic algorithm state from policy/recovery/evidence state.
 
