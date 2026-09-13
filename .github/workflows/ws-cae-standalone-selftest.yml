@@ -6,6 +6,7 @@ on:
       - 'ws_cae/**'
       - '.github/actions/ws-cae-conformance/**'
       - '.github/actions/ws-cae-chain-patch/**'
+      - '.github/actions/ws-cae-crypto-system/**'
       - '.github/workflows/ws-cae-standalone-selftest.yml'
   workflow_dispatch:
 
@@ -69,15 +70,25 @@ jobs:
             --pretty >/tmp/ws-cae-catalog.json
           python -m json.tool /tmp/ws-cae-catalog.json >/dev/null
       - name: Native-coin system dependency path
-        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_native_coin.json --pretty
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_native_coin.json
       - name: Stablecoin weakest-link path
-        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_stablecoin.json --pretty
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_stablecoin.json
       - name: Bridged-asset weakest-link path
-        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_bridged_asset.json --pretty
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_bridged_asset.json
       - name: Exchange-balance weakest-link path
-        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_exchange_balance.json --pretty
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_exchange_balance.json
       - name: Rollup-asset weakest-link path
-        run: PYTHONPATH=. python -m ws_cae.crypto_system_cli ws_cae/examples/system_rollup_asset.json --pretty
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_rollup_asset.json
       - name: Strict institutional policy must distinguish maturity
         shell: bash
         run: |
