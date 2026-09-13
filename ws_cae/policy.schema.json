@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WS-CAE-1 Consumer Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name"],
+  "properties": {
+    "name": {"type":"string","minLength":1},
+    "minimum_maturity": {"enum":["ROADMAP","DRAFT","DEVNET","TESTNET","MAINNET"],"default":"ROADMAP"},
+    "accepted_pq_authorization_states": {"type":"array","minItems":1,"uniqueItems":true,"items":{"enum":["NONE","PLUGGABLE_AUTH_ONLY","PQ_NON_MAINNET","PQ_MAINNET"]}},
+    "accepted_consensus_states": {"type":"array","minItems":1,"uniqueItems":true,"items":{"enum":["CLASSICAL_OR_UNPROVEN","PQ_RESEARCH_OR_PARTIAL","PQ_DEPLOYED"]}},
+    "require_stable_authority_id": {"type":"boolean","default":false},
+    "require_authenticator_replaceable": {"type":"boolean","default":false},
+    "require_policy_state_documented": {"type":"boolean","default":false},
+    "require_recovery_state_documented": {"type":"boolean","default":false},
+    "require_domain_binding_documented": {"type":"boolean","default":true},
+    "require_evidence_state_documented": {"type":"boolean","default":true}
+  }
+}
