@@ -14,8 +14,11 @@ const examples = resolve(repo, 'ws_cae', 'examples');
 const vectors = JSON.parse(readFileSync(resolve(examples, 'continuity_interop_vectors.json'), 'utf8'));
 const manifest = JSON.parse(readFileSync(resolve(examples, 'continuity_manifest_reference.json'), 'utf8'));
 
+function hash(name, buf) {
+  return createHash(name).update(buf).digest();
+}
 function sha256(buf) {
-  return createHash('sha256').update(buf).digest();
+  return hash('sha256', buf);
 }
 
 function canonical(value) {
@@ -34,6 +37,7 @@ function canonical(value) {
   throw new Error(`unsupported JSON type: ${typeof value}`);
 }
 
+const canonicalBytes = Buffer.from(canonical(manifest), 'utf8');
 function contentId(value) {
   return 'sha256:' + sha256(Buffer.from(canonical(value), 'utf8')).toString('hex');
 }
@@ -77,6 +81,14 @@ if (gotManifestId !== vectors.canonical_manifest.expected_content_id) {
   failures.push(`manifest content id mismatch: ${gotManifestId}`);
 }
 
+const gotDigests = {
+  sha256: hash('sha256', canonicalBytes).toString('hex'),
+  'sha3-256': hash('sha3-256', canonicalBytes).toString('hex')
+};
+if (JSON.stringify(gotDigests) !== JSON.stringify(vectors.canonical_manifest.expected_digests)) {
+  failures.push(`digest set mismatch: ${JSON.stringify(gotDigests)}`);
+}
+
 const ids = vectors.transparency.content_ids;
 for (const [sizeText, expected] of Object.entries(vectors.transparency.roots)) {
   const size = Number(sizeText);
@@ -102,6 +114,7 @@ console.log(JSON.stringify({
   passed: true,
   implementation: 'nodejs-stdlib-independent',
   canonical_manifest_content_id: gotManifestId,
+  canonical_manifest_digests: gotDigests,
   verified_root_sizes: Object.keys(vectors.transparency.roots).map(Number),
   verified_inclusion_tree_size: iv.tree_size,
   verified_inclusion_leaf_index: iv.leaf_index
