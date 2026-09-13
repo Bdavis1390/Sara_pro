@@ -14,9 +14,9 @@ PROFILE_FIELDS = {
     "ecosystem", "adapter_class", "implementation_maturity", "stable_authority_id",
     "authenticator_replaceable", "pq_authorization_state", "policy_state_documented",
     "recovery_state_documented", "domain_binding_documented", "evidence_state_documented",
-    "consensus_pq_state",
+    "consensus_pq_state", "protocol_commitment_state",
 }
-PROFILE_REQUIRED = PROFILE_FIELDS - {"consensus_pq_state"}
+PROFILE_REQUIRED = PROFILE_FIELDS - {"consensus_pq_state", "protocol_commitment_state"}
 POLICY_FIELDS = {
     "name", "minimum_maturity", "accepted_pq_authorization_states", "accepted_consensus_states",
     "require_stable_authority_id", "require_authenticator_replaceable",
@@ -62,8 +62,11 @@ def parse_profile(raw: Any) -> Profile:
         if not isinstance(raw[field], str) or not raw[field].strip():
             raise InputError(f"{field} must be a non-empty string")
     consensus = raw.get("consensus_pq_state", "CLASSICAL_OR_UNPROVEN")
+    commitment = raw.get("protocol_commitment_state", "UNSPECIFIED")
     if not isinstance(consensus, str) or not consensus:
         raise InputError("consensus_pq_state must be a non-empty string")
+    if not isinstance(commitment, str) or not commitment:
+        raise InputError("protocol_commitment_state must be a non-empty string")
     return Profile(
         ecosystem=raw["ecosystem"], adapter_class=raw["adapter_class"],
         implementation_maturity=raw["implementation_maturity"],
@@ -75,6 +78,7 @@ def parse_profile(raw: Any) -> Profile:
         domain_binding_documented=_bool(raw, "domain_binding_documented"),
         evidence_state_documented=_bool(raw, "evidence_state_documented"),
         consensus_pq_state=consensus,
+        protocol_commitment_state=commitment,
     )
 
 
