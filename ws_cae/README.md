@@ -4,17 +4,31 @@ Version: `0.1.0-research`
 
 WS-CAE is a read-only interoperability profile for comparing digital-asset authority agility across heterogeneous blockchain account models during cryptographic and post-quantum migration.
 
+The package now includes the **WS-CAE Chain Patch**: a one-file, evidence-bound chain status contract that can be adopted without changing consensus, transaction validity, validators, signing algorithms, wallets, SDKs, or custody systems.
+
 It is **not** a signature scheme, wallet, consensus protocol, certification program, regulatory standard, or claim that a chain is fully post-quantum secure.
+
+## One-file chain patch
+
+A chain can publish:
+
+`ws-cae.patch.json`
+
+and validate it with:
+
+```bash
+python -m ws_cae.patch_cli ws-cae.patch.json --pretty
+```
+
+See `CHAIN_PATCH.md` and the four reference patches for Algorand, Ethereum, Sui, and Bitcoin/QSB.
+
+The patch keeps **deployment maturity** and **protocol commitment** separate. For example, a protocol feature may be implemented on devnet and already scheduled for a future fork without being mislabeled as mainnet-deployed.
 
 ## Why a chain can adopt now
 
-A chain does not need to be PQ-ready. The vocabulary explicitly represents `ROADMAP`, `DRAFT`, `DEVNET`, `TESTNET`, `MAINNET`, `NONE`, and `PLUGGABLE_AUTH_ONLY` states.
+A chain does not need to be PQ-ready. The vocabulary represents `ROADMAP`, `DRAFT`, `DEVNET`, `TESTNET`, `MAINNET`, `NONE`, `PLUGGABLE_AUTH_ONLY`, `PQ_MAINNET_LIMITED`, and full `PQ_MAINNET` authorization states.
 
-The minimum adoption act is one JSON profile. Publishing that profile requires no consensus change, signature change, validator change, wallet migration, SDK dependency, or Worldshepherd runtime.
-
-Start from:
-
-`examples/chain_profile_template.json`
+The minimum adoption act is one JSON profile or one evidence-bound chain patch. Publishing either requires no consensus change, signature change, validator change, wallet migration, SDK dependency, or Worldshepherd runtime.
 
 ## Why downstream users care
 
@@ -28,9 +42,11 @@ For example:
 python -m ws_cae.cli ws_cae/examples/reference_pair.json --policy ws_cae/examples/interop_policy.json --pretty
 ```
 
-The broad interoperability policy accepts the current reference pair. The stricter institutional policy passes Algorand's reference account-authority state while rejecting Ethereum's current DEVNET/pluggable-auth state. That is expected: failure is a machine-readable gap, not a reason a chain cannot publish a truthful profile.
+The broad interoperability policy accepts the current reference pair. The stricter institutional policy passes Algorand's reference account-authority state while rejecting Ethereum's current devnet/pluggable-auth state. That is expected: failure is a machine-readable gap, not a reason a chain cannot publish a truthful profile.
 
-## Reusable CI action
+## Reusable CI actions
+
+Profile check:
 
 ```yaml
 - uses: actions/checkout@v4
@@ -40,9 +56,18 @@ The broad interoperability policy accepts the current reference pair. The strict
     policy: path/to/optional-consumer-policy.json
 ```
 
+Chain patch check:
+
+```yaml
+- uses: actions/checkout@v4
+- uses: Bdavis1390/Sara_pro/.github/actions/ws-cae-chain-patch@<pinned-commit>
+  with:
+    patch: path/to/ws-cae.patch.json
+```
+
 Pin an immutable commit for reproducibility.
 
-The action and CLI have no key-generation, signing, wallet-access, transaction-construction, broadcast, or asset-movement capability.
+Both actions are read-only and have no key-generation, signing, wallet-access, transaction-construction, broadcast, or asset-movement capability.
 
 ## Interoperability model
 
@@ -51,18 +76,19 @@ The profile keeps these concepts separate:
 - persistent authority identity;
 - replaceable authenticator;
 - implementation maturity;
+- protocol/governance commitment state;
 - account/vault PQ authorization;
 - authorization policy and recovery documentation;
 - replay/domain binding and evidence state;
 - residual consensus/validator PQ state.
 
-The separation prevents account-level progress from being promoted into a claim of PQ consensus security.
+The separation prevents roadmap, governance, account-level, or application-level progress from being promoted into a claim of mainnet or PQ consensus security.
 
 ## No-lock-in design
 
 The formats are ordinary JSON and JSON Schema. The reference implementation is Python-standard-library only. Equivalent evidence in another format can satisfy a relying party if that party chooses to accept it.
 
-WS-CAE should be treated as an interoperability vocabulary, not a requirement to run Worldshepherd software.
+WS-CAE should be treated as an interoperability vocabulary and chain patch contract, not a requirement to run Worldshepherd software.
 
 ## Governance and compatibility
 
@@ -83,4 +109,4 @@ The licensing point is material: no license is granted merely by publishing sour
 
 ## Claims boundary
 
-Conformance means only that the supplied profile satisfies the published reference rules. Consumer-policy pass means only that the supplied profile satisfies that relying party's selected policy. Neither is certification, compliance, security approval, nor authorization to custody or move assets.
+Conformance means only that the supplied profile or patch satisfies the published reference rules. Consumer-policy pass means only that the supplied profile satisfies that relying party's selected policy. Neither is certification, compliance, security approval, nor authorization to custody or move assets.
