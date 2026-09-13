@@ -1,60 +1,57 @@
 {
-  "schema": "WS-QCRYPTO-BITCOIN-MITIGATION-STACK-v1",
-  "as_of": "2026-09-12",
-  "claims_boundary": "Public proposals are tracked by maturity and dependency. Draft specifications and reference implementations are not consensus deployment, and a rescue design that depends on PQ authorization is not operational until a suitable PQ authorization/output path is active.",
+  "schema": "WS-QCRYPTO-BITCOIN-MITIGATION-STACK-v2",
+  "as_of": "2026-09-13",
+  "claims_boundary": "Bitcoin post-quantum work now includes a consensus-compatible mainnet proof-of-concept (QSB) plus protocol-level research on SHRINCS, DropKick, and BIP-361. These are different maturity planes. QSB does not make Bitcoin quantum-safe, and draft protocol work is not consensus-active.",
   "components": [
+    {
+      "name": "QSB",
+      "role": "consensus-compatible opt-in mainnet proof",
+      "status": "Mainnet proof-of-concept",
+      "mainnet_confirmed": true,
+      "consensus_change_required": false,
+      "standard_relay": false,
+      "production_wallet_support": false,
+      "network_wide_migration_path": false,
+      "classification": "CONSENSUS_COMPATIBLE_MAINNET_PROOF",
+      "source": "https://starkware.co/blog/the-first-quantum-safe-bitcoin-transaction-has-been-mined/"
+    },
     {
       "name": "SHRINCS",
       "role": "pq_authorization",
-      "source": "https://github.com/SHRINCS/shrincs-bip/blob/main/SHRINCS.md",
       "status": "Draft",
       "reference_implementation": true,
-      "security_proof_complete": false,
-      "test_vectors_complete": false,
-      "production_implementation": false,
       "consensus_activated": false,
-      "stateful_primary": true,
-      "stateless_fallback": true,
-      "public_key_bytes": 48,
-      "stateful_signature_bytes_min": 548,
-      "stateful_signature_bytes_max": 4619,
-      "stateless_signature_bytes": 5777,
-      "claims_note": "Executable draft specification with a demonstration Python implementation. The draft explicitly marks the security proof and comprehensive test vectors as TODO and warns that the reference implementation is non-constant-time and not for production."
+      "source": "https://github.com/SHRINCS/shrincs-bip/blob/main/SHRINCS.md"
+    },
+    {
+      "name": "libshrincs WOTS+C",
+      "role": "verified_component_support",
+      "status": "Proof-of-concept verified component",
+      "machine_checked_component_proof": true,
+      "full_shrincs_proof": false,
+      "source": "https://github.com/remix7531/libshrincs"
     },
     {
       "name": "DropKick",
-      "role": "rescue",
-      "source": "https://conduition.io/bitcoin/dropkick/",
+      "role": "legacy_rescue",
       "status": "Proposal",
       "requires_pq_authorization": true,
-      "production_implementation": false,
       "consensus_activated": false,
-      "claims_note": "Commit/reveal rescue design for legacy coins. Its author explicitly states that on-chain PQ signatures/addresses are a prerequisite, so it cannot independently make Bitcoin PQ-ready."
+      "source": "https://conduition.io/bitcoin/dropkick/"
     },
     {
       "name": "BIP-361",
-      "role": "sunset",
-      "source": "https://github.com/bitcoin/bips/blob/master/bip-0361.mediawiki",
+      "role": "legacy_signature_sunset",
       "status": "Draft",
       "requires_pq_authorization": true,
-      "production_implementation": false,
       "consensus_activated": false,
-      "claims_note": "Draft legacy-signature sunset framework. The BIP itself requires a future post-quantum signature BIP, so its migration phases are dependency-blocked until a PQ output/signature mechanism exists."
+      "source": "https://github.com/bitcoin/bips/blob/master/bip-0361.mediawiki"
     }
   ],
   "current_assessment": {
-    "pq_authorization_state": "PQ_AUTHORIZATION_EXECUTABLE_DRAFT",
-    "rescue_state": "RESCUE_BLOCKED_ON_PQ_AUTHORIZATION",
-    "sunset_state": "SUNSET_BLOCKED_ON_PQ_AUTHORIZATION",
-    "deployment_state": "DEPENDENCY_COMPLETE_RESEARCH_STACK",
-    "urgency": "ACCELERATE_SECURITY_PROOF_INTEROP_AND_ACTIVATION_PLANNING"
-  },
-  "blocking_gaps": [
-    "SHRINCS security proof is not complete in the public draft.",
-    "Comprehensive SHRINCS test vectors are not complete.",
-    "No production Bitcoin implementation is represented by the draft reference code.",
-    "No PQ authorization/output mechanism represented here is consensus-active.",
-    "DropKick requires an already-functioning PQ authorization/output destination.",
-    "BIP-361 requires a future PQ signature BIP and remains Draft."
-  ]
+    "qsb": "Demonstrates an opt-in prepositioning path on Bitcoin mainnet using existing consensus rules, but requires nonstandard handling and does not cover already-exposed keys or network-wide migration.",
+    "protocol_stack": "SHRINCS + DropKick + BIP-361 remain a dependency-complete research stack, not deployed protocol protection.",
+    "proof_maturity": "libshrincs materially improves implementation-assurance evidence for the WOTS+C component, but it is explicitly a proof-of-concept component toward full SHRINCS and must not be reported as a complete proof of the full signature scheme.",
+    "priority": "Integrate QSB into contingency planning while accelerating protocol-level PQ authorization, independent review, wallet interoperability, relay policy, rescue, and sunset engineering."
+  }
 }
