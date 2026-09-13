@@ -36,10 +36,24 @@ jobs:
         uses: ./.github/actions/ws-cae-chain-patch
         with:
           patch: ws_cae/examples/ethereum.patch.json
+      - name: Ethereum fork-commitment policy
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/ethereum.patch.json
+          policy: ws_cae/examples/fork_committed_policy.json
       - name: Sui chain patch
         uses: ./.github/actions/ws-cae-chain-patch
         with:
           patch: ws_cae/examples/sui.patch.json
+      - name: Sui must not satisfy fork-scheduled policy yet
+        shell: bash
+        run: |
+          set +e
+          PYTHONPATH=. python -m ws_cae.patch_cli ws_cae/examples/sui.patch.json --policy ws_cae/examples/fork_committed_policy.json >/tmp/ws-cae-sui-policy.json
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+          python -m json.tool /tmp/ws-cae-sui-policy.json >/dev/null
       - name: Bitcoin limited-mainnet patch
         uses: ./.github/actions/ws-cae-chain-patch
         with:
