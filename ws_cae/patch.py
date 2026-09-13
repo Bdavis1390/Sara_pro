@@ -17,6 +17,8 @@ class EvidenceRef:
 class ChainPatch:
     spec: str
     chain: str
+    revision: int
+    as_of: str
     profile: Profile
     evidence: tuple[EvidenceRef, ...]
 
