@@ -1,0 +1,25 @@
+name: WS-CAE Conformance Check
+description: Read-only cross-chain authority profile and consumer-policy gate
+inputs:
+  profile:
+    description: Path to a WS-CAE profile or batch JSON in the caller workspace
+    required: true
+  policy:
+    description: Optional path to a relying-party policy JSON in the caller workspace
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Run WS-CAE conformance
+      shell: bash
+      env:
+        WS_CAE_ROOT: ${{ github.action_path }}/../../..
+        WS_CAE_PROFILE: ${{ inputs.profile }}
+        WS_CAE_POLICY: ${{ inputs.policy }}
+      run: |
+        if [ -n "$WS_CAE_POLICY" ]; then
+          PYTHONPATH="$WS_CAE_ROOT" python -m ws_cae.cli "$WS_CAE_PROFILE" --policy "$WS_CAE_POLICY" --pretty
+        else
+          PYTHONPATH="$WS_CAE_ROOT" python -m ws_cae.cli "$WS_CAE_PROFILE" --pretty
+        fi
