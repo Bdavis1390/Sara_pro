@@ -1,7 +1,7 @@
 # WS-CAE-1 — Canonical Authority Envelope
 
-Status: **Worldshepherd Draft Specification v0.1**  
-Date: 2026-09-13  
+Status: **Worldshepherd Draft Specification v0.1**
+Date: 2026-09-13
 Scope: defensive post-quantum migration, authority abstraction, interoperability, and evidence.
 
 ## 1. Purpose
