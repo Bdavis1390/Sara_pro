@@ -5,6 +5,12 @@ from hashlib import sha256
 
 CONTEXT = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld"
 BASE = "https://worldshepherd.dev/ws-cae/spdx"
+PROFILE_BASE = "https://spdx.org/rdf/3.0.1/terms/Core/ProfileIdentifierType"
+PROFILE_CONFORMANCE = [
+    f"{PROFILE_BASE}/core",
+    f"{PROFILE_BASE}/software",
+    f"{PROFILE_BASE}/extension",
+]
 
 
 def _token(value: str) -> str:
@@ -79,7 +85,7 @@ def to_spdx(name: str, entries: list[dict], summary: dict[str, str]) -> dict:
                 "type": "software_Sbom",
                 "spdxId": sbom_id,
                 "creationInfo": creation,
-                "profileConformance": ["core", "software", "extension"],
+                "profileConformance": PROFILE_CONFORMANCE,
                 "rootElement": [root_id],
                 "element": element_ids,
                 "software_sbomType": ["analyzed"],
@@ -88,7 +94,7 @@ def to_spdx(name: str, entries: list[dict], summary: dict[str, str]) -> dict:
                 "type": "SpdxDocument",
                 "spdxId": document_id,
                 "creationInfo": creation,
-                "profileConformance": ["core", "software", "extension"],
+                "profileConformance": PROFILE_CONFORMANCE,
                 "rootElement": [sbom_id],
                 "element": [agent, sbom_id, *element_ids],
             },
