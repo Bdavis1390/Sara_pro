@@ -1,7 +1,7 @@
 {
   "name": "cross-chain-authority-agility-minimum",
   "minimum_maturity": "DEVNET",
-  "accepted_pq_authorization_states": ["PLUGGABLE_AUTH_ONLY", "PQ_NON_MAINNET", "PQ_MAINNET"],
+  "accepted_pq_authorization_states": ["PLUGGABLE_AUTH_ONLY", "PQ_NON_MAINNET", "PQ_MAINNET_LIMITED", "PQ_MAINNET"],
   "accepted_consensus_states": ["CLASSICAL_OR_UNPROVEN", "PQ_RESEARCH_OR_PARTIAL", "PQ_DEPLOYED"],
   "require_stable_authority_id": true,
   "require_authenticator_replaceable": true,
