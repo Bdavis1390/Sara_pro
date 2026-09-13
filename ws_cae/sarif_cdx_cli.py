@@ -13,9 +13,17 @@ def _props(items: list[dict]) -> dict[str, str]:
     return {str(x.get("name")): str(x.get("value")) for x in items if x.get("name")}
 
 
+def _source_uri(path: Path) -> str:
+    parts = path.as_posix().split("/")
+    if "ws_cae" in parts:
+        return "/".join(parts[parts.index("ws_cae") :])
+    return path.name
+
+
 def run(path: Path) -> dict:
     bom = run_cyclonedx(path)
     root = bom["metadata"]["component"]
+    source_uri = _source_uri(path)
     results = []
     for component in bom.get("components", []):
         props = _props(component.get("properties", []))
@@ -30,10 +38,21 @@ def run(path: Path) -> dict:
                 "message": {
                     "text": f"{component.get('name', 'component')} is a critical declared dependency with readiness state {state}."
                 },
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {
+                                "uri": source_uri,
+                                "uriBaseId": "%SRCROOT%",
+                            }
+                        }
+                    }
+                ],
                 "properties": {
                     "ws-cae:role": props.get("ws-cae:role", "UNSPECIFIED"),
                     "ws-cae:readiness-state": state,
                     "ws-cae:asset": root.get("name", "asset"),
+                    "ws-cae:evidence-source": source_uri,
                 },
             }
         )
