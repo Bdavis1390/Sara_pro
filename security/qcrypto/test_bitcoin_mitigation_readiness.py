@@ -108,9 +108,15 @@ class BitcoinMitigationReadinessTests(unittest.TestCase):
         path = Path(__file__).with_name("bitcoin_mitigation_stack_2026-09-12.json")
         with path.open("r", encoding="utf-8") as handle:
             payload = json.load(handle)
-        self.assertEqual(payload["schema"], "WS-QCRYPTO-BITCOIN-MITIGATION-STACK-v1")
-        self.assertEqual(payload["current_assessment"]["deployment_state"], "DEPENDENCY_COMPLETE_RESEARCH_STACK")
-        self.assertFalse(payload["components"][0]["consensus_activated"])
+
+        self.assertEqual(payload["schema"], "WS-QCRYPTO-BITCOIN-MITIGATION-STACK-v2")
+        self.assertIn("dependency-complete research stack", payload["current_assessment"]["protocol_stack"].lower())
+        components = {item["name"]: item for item in payload["components"]}
+        self.assertTrue(components["QSB"]["mainnet_confirmed"])
+        self.assertFalse(components["QSB"]["standard_relay"])
+        self.assertFalse(components["SHRINCS"]["consensus_activated"])
+        self.assertTrue(components["libshrincs WOTS+C"]["machine_checked_component_proof"])
+        self.assertFalse(components["libshrincs WOTS+C"]["full_shrincs_proof"])
 
 
 if __name__ == "__main__":
