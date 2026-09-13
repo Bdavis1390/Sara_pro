@@ -10,7 +10,7 @@
     "implementation_maturity": {"enum":["ROADMAP","DRAFT","DEVNET","TESTNET","MAINNET"]},
     "stable_authority_id": {"type":"boolean"},
     "authenticator_replaceable": {"type":"boolean"},
-    "pq_authorization_state": {"enum":["NONE","PLUGGABLE_AUTH_ONLY","PQ_NON_MAINNET","PQ_MAINNET"]},
+    "pq_authorization_state": {"enum":["NONE","PLUGGABLE_AUTH_ONLY","PQ_NON_MAINNET","PQ_MAINNET_LIMITED","PQ_MAINNET"]},
     "policy_state_documented": {"type":"boolean"},
     "recovery_state_documented": {"type":"boolean"},
     "domain_binding_documented": {"type":"boolean"},
