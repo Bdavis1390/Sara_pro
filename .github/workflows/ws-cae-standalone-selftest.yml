@@ -143,11 +143,15 @@ jobs:
             https://github.com/ocsf/ocsf-toolkit/releases/download/v0.9.0/ocsf-toolkit_v0.9.0_linux_amd64.tar.gz \
             --output /tmp/ocsf-toolkit.tar.gz
           tar -xzf /tmp/ocsf-toolkit.tar.gz -C /tmp/ocsf-toolkit
+          OCSF_TOOLKIT_BIN="$(find /tmp/ocsf-toolkit -type f -perm -111 -print -quit)"
+          test -n "$OCSF_TOOLKIT_BIN"
+          printf '%s\n' "$OCSF_TOOLKIT_BIN" >/tmp/ocsf-toolkit-bin
       - name: Export and validate OCSF 1.8 Detection Finding
         shell: bash
         run: |
           PYTHONPATH=. python -m ws_cae.ocsf_cdx_cli ws_cae/examples/system_rollup_asset.json --pretty >/tmp/ws-cae.ocsf.json
-          /tmp/ocsf-toolkit/ocsf-toolkit \
+          OCSF_TOOLKIT_BIN="$(cat /tmp/ocsf-toolkit-bin)"
+          "$OCSF_TOOLKIT_BIN" \
             --schema /tmp/ocsf-schema-v1.8.0.json \
             --event /tmp/ws-cae.ocsf.json \
             --validate --fail-on-validation-errors \
