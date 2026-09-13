@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://worldshepherd.invalid/schemas/ws-cae-1-profile.schema.json",
+  "$id": "https://raw.githubusercontent.com/Bdavis1390/Sara_pro/worldshepherd-ws-cae-1-review-v0-1/security/qcrypto/ws_cae_profile.schema.json",
   "title": "WS-CAE-1 Reference Authority Profile",
   "type": "object",
   "additionalProperties": false,
