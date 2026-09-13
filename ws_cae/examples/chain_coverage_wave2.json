@@ -1,0 +1,74 @@
+{
+  "spec": "WS-CAE-CHAIN-COVERAGE-1",
+  "as_of": "2026-09-13",
+  "entries": [
+    {
+      "name": "Aptos",
+      "kind": "CHAIN",
+      "authority_model": "STABLE_ACCOUNT_ADDRESS_WITH_ROTATABLE_AUTHENTICATION_AND_KEYLESS_OPTIONS",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://aptos.dev/",
+        "https://legacy.aptos.dev/assets/files/Aptos-Whitepaper-47099b4b907b432f81fc0effd34f3b6a.pdf",
+        "https://siwa.aptos.dev/docs"
+      ]
+    },
+    {
+      "name": "Cosmos SDK v0.55",
+      "kind": "FRAMEWORK",
+      "authority_model": "CONFIGURABLE_ACCOUNT_AND_VALIDATOR_KEY_TYPES",
+      "pq_state": "ML_DSA_65_IMPLEMENTED_OPT_IN",
+      "consensus_pq_state": "ML_DSA_65_CAPABLE_NOT_DEFAULT",
+      "deployment_boundary": "CHAIN_SPECIFIC_OPT_IN_REQUIRED",
+      "evidence": [
+        "https://github.com/cosmos/cosmos-sdk/blob/main/UPGRADING.md",
+        "https://pkg.go.dev/github.com/cosmos/cosmos-sdk/x/genutil"
+      ]
+    },
+    {
+      "name": "Tezos",
+      "kind": "CHAIN",
+      "authority_model": "MULTI_SCHEME_ACCOUNT_KEYS",
+      "pq_state": "ML_DSA_44_IMPLEMENTED_BEHIND_FEATURE_FLAG",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "deployment_boundary": "PQ_FEATURE_DISABLED_ON_MAINNET",
+      "evidence": [
+        "https://octez.tezos.com/docs/introduction/howtouse.html"
+      ]
+    },
+    {
+      "name": "NEAR",
+      "kind": "CHAIN",
+      "authority_model": "ACCOUNT_AND_ACCESS_KEY_MODEL_UNDER_REVIEW",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence_state": "PARTIAL_CONSENSUS_EVIDENCE_ONLY",
+      "evidence": [
+        "https://docs.near.org/assets/files/PoST-dadcf9287d98201817066853315db91f.pdf",
+        "https://docs.near.org/assets/files/Nightshade-201ea58f8dd6bc547f457d26ed5e8138.pdf"
+      ]
+    },
+    {
+      "name": "Hedera",
+      "kind": "DLT",
+      "authority_model": "ED25519_OR_ECDSA_KEY_MODEL",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://github.com/hashgraph/hedera-sdk-reference/blob/main/reference/cryptography/PublicKey.md"
+      ]
+    },
+    {
+      "name": "JAM / Polkadot roadmap",
+      "kind": "ROADMAP_PROTOCOL",
+      "authority_model": "VALIDATOR_KEY_TUPLES_WITH_BANDERSNATCH_ED25519_AND_BLS",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "deployment_boundary": "ROADMAP_NOT_EQUIVALENT_TO_CURRENT_POLKADOT_MAINNET",
+      "evidence": [
+        "https://wiki.polkadot.network/assets/files/graypaper_inverted_no_background-c91065921202b42b4203049d643a76a4.pdf"
+      ]
+    }
+  ]
+}
