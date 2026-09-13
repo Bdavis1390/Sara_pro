@@ -6,7 +6,7 @@ WS-CAE is a Worldshepherd research profile for comparing persistent digital-asse
 
 ## Current determination
 
-`RESEARCH_SPEARHEAD` in the narrow cross-chain authority-agility conformance lane.
+`RESEARCH_SPEARHEAD_WITH_ACTIVE_PRIOR_ART_CHALLENGE` in the narrow cross-chain authority-agility conformance lane.
 
 This is not a claim of industry-standard status, standards-body adoption, external certification, production security certification, or full-chain post-quantum security.
 
@@ -14,11 +14,12 @@ This is not a claim of industry-standard status, standards-body adoption, extern
 
 1. `WS_CAE_1_CORE.md` — compact profile definition and core semantics.
 2. `WS_CAE_MULTI_CHAIN_PROFILE_MATRIX.md` — same vocabulary applied to Algorand, Ethereum, Sui, and Shell.
-3. `WS_CAE_COMPETITIVE_DIFFERENTIATION.md` — comparison against NIST, IETF, ISO, Project Eleven, Q-Sign, LayerQu, and chain-native implementations.
-4. `WS_CAE_PRIOR_ART_AND_SCOPE.md` — prior-art boundary and novelty caveats.
-5. `WS_CAE_STANDARDS_ALIGNMENT.md` — non-overlap and composability with NIST/IETF/ISO work.
-6. `WS_CAE_TWO_CHAIN_REPRODUCIBILITY_CHALLENGE.md` — independent reproduction challenge.
-7. `WS_CAE_SPEARHEAD_GATE.md` — evidence gate and current claims state.
+3. `WS_CAE_FRONTIER_MAP.md` — strongest neighboring work grouped by standards, migration frameworks, implementations, authority substrates, and readiness measurement.
+4. `WS_CAE_COMPETITIVE_DIFFERENTIATION.md` — comparison against NIST, IETF, ISO, Project Eleven, Q-Sign, LayerQu, and chain-native implementations.
+5. `WS_CAE_PRIOR_ART_AND_SCOPE.md` — prior-art boundary and novelty caveats.
+6. `WS_CAE_STANDARDS_ALIGNMENT.md` — non-overlap and composability with NIST/IETF/ISO work.
+7. `WS_CAE_TWO_CHAIN_REPRODUCIBILITY_CHALLENGE.md` — independent reproduction challenge.
+8. `WS_CAE_SPEARHEAD_GATE.md` — evidence gate and current claims state.
 
 ## Public falsification surfaces
 
@@ -35,21 +36,26 @@ The adjacent ecosystem already contains strong work in:
 - crypto-agility guidance;
 - machine-readable crypto posture;
 - DLT/wallet interoperability;
+- chain-agnostic wallet and light-client migration blueprints;
+- international DLT PQ migration coordination;
 - PQ authority substrates;
 - multi-chain wallet implementations;
 - independent chain readiness scoring;
-- native account abstraction and rekey mechanisms.
+- native account abstraction and rekey mechanisms;
+- academic blockchain migration/governance frameworks.
 
-WS-CAE does not claim ownership of those ingredients. Its proposed contribution is the missing common authority-state vocabulary across unrelated digital-asset account models, including explicit separation of:
+WS-CAE does not claim ownership of those ingredients. Its proposed contribution is the common authority-state vocabulary across unrelated digital-asset account models, including explicit separation of:
 
 - authority identity from authenticator;
 - deployed capability from roadmap capability;
 - account/vault PQ authorization from consensus/validator PQ security;
 - cryptographic algorithm state from policy/recovery/evidence state.
 
+The current public review has found strong neighboring work around this lane but has not yet identified an artifact that fills the same narrow role across heterogeneous blockchain account models.
+
 ## Promotion path
 
-Current: `RESEARCH_SPEARHEAD`
+Current: `RESEARCH_SPEARHEAD_WITH_ACTIVE_PRIOR_ART_CHALLENGE`
 
 Next: `EXTERNALLY_REPRODUCED_PROFILE`
 
