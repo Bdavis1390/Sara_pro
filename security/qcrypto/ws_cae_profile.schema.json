@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldshepherd.invalid/schemas/ws-cae-1-profile.schema.json",
+  "title": "WS-CAE-1 Reference Authority Profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ecosystem",
+    "adapter_class",
+    "implementation_maturity",
+    "stable_authority_id",
+    "authenticator_replaceable",
+    "pq_authorization_state",
+    "policy_state_documented",
+    "recovery_state_documented",
+    "domain_binding_documented",
+    "evidence_state_documented"
+  ],
+  "properties": {
+    "ecosystem": {"type": "string", "minLength": 1},
+    "adapter_class": {"type": "string", "minLength": 1},
+    "implementation_maturity": {
+      "type": "string",
+      "enum": ["ROADMAP", "DRAFT", "DEVNET", "TESTNET", "MAINNET"]
+    },
+    "stable_authority_id": {"type": "boolean"},
+    "authenticator_replaceable": {"type": "boolean"},
+    "pq_authorization_state": {
+      "type": "string",
+      "enum": ["NONE", "PLUGGABLE_AUTH_ONLY", "PQ_NON_MAINNET", "PQ_MAINNET"]
+    },
+    "policy_state_documented": {"type": "boolean"},
+    "recovery_state_documented": {"type": "boolean"},
+    "domain_binding_documented": {"type": "boolean"},
+    "evidence_state_documented": {"type": "boolean"},
+    "consensus_pq_state": {
+      "type": "string",
+      "enum": ["CLASSICAL_OR_UNPROVEN", "PQ_RESEARCH_OR_PARTIAL", "PQ_DEPLOYED"],
+      "default": "CLASSICAL_OR_UNPROVEN"
+    }
+  }
+}
