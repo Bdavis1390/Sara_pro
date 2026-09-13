@@ -20,6 +20,7 @@ class StandaloneTests(unittest.TestCase):
             stable_authority_id=True, authenticator_replaceable=True, pq_authorization_state="PQ_MAINNET",
             policy_state_documented=True, recovery_state_documented=True, domain_binding_documented=True,
             evidence_state_documented=True, consensus_pq_state="CLASSICAL_OR_UNPROVEN",
+            protocol_commitment_state="MAINNET",
         )
         data.update(overrides)
         return Profile(**data)
@@ -44,11 +45,25 @@ class StandaloneTests(unittest.TestCase):
             pq_authorization_state="PQ_MAINNET_LIMITED",
             policy_state_documented=False,
             recovery_state_documented=False,
+            protocol_commitment_state="UNSPECIFIED",
         )
         result = assess(profile)
         self.assertTrue(result.valid)
         self.assertEqual(result.authority_state, "AUTHORITY_ABSTRACTION_NOT_ESTABLISHED")
         self.assertEqual(result.pq_authorization_state, "PQ_MAINNET_LIMITED")
+
+    def test_fork_commitment_does_not_promote_deployment_maturity(self):
+        profile = self.algorand(
+            ecosystem="Ethereum",
+            adapter_class="NATIVE_ACCOUNT_ABSTRACTION",
+            implementation_maturity="DEVNET",
+            pq_authorization_state="PLUGGABLE_AUTH_ONLY",
+            protocol_commitment_state="FORK_SCHEDULED",
+        )
+        result = assess(profile)
+        self.assertTrue(result.valid)
+        self.assertEqual(result.maturity_state, "IMPLEMENTATION_DEVNET")
+        self.assertEqual(result.protocol_commitment_state, "FORK_SCHEDULED")
 
     def test_consumer_policy_is_independent_of_chain_profile(self):
         profile = self.algorand()
@@ -58,7 +73,10 @@ class StandaloneTests(unittest.TestCase):
             require_policy_state_documented=True, require_recovery_state_documented=True,
         )
         self.assertTrue(evaluate(profile, assess(profile), strict).passed)
-        ethereum = self.algorand(ecosystem="Ethereum", implementation_maturity="DEVNET", pq_authorization_state="PLUGGABLE_AUTH_ONLY")
+        ethereum = self.algorand(
+            ecosystem="Ethereum", implementation_maturity="DEVNET",
+            pq_authorization_state="PLUGGABLE_AUTH_ONLY", protocol_commitment_state="FORK_SCHEDULED",
+        )
         self.assertFalse(evaluate(ethereum, assess(ethereum), strict).passed)
 
     def test_unknown_profile_fields_fail_closed(self):
@@ -70,6 +88,9 @@ class StandaloneTests(unittest.TestCase):
         result = run(ROOT / "ws_cae/examples/reference_pair.json", ROOT / "ws_cae/examples/interop_policy.json")
         self.assertTrue(result["all_valid"])
         self.assertTrue(result["all_policy_pass"])
+        by_name = {x["ecosystem"]: x for x in result["results"]}
+        self.assertEqual(by_name["Ethereum"]["assessment"]["protocol_commitment_state"], "FORK_SCHEDULED")
+        self.assertEqual(by_name["Ethereum"]["assessment"]["maturity_state"], "IMPLEMENTATION_DEVNET")
 
     def test_institutional_policy_distinguishes_algorand_and_ethereum(self):
         result = run(ROOT / "ws_cae/examples/reference_pair.json", ROOT / "ws_cae/examples/institutional_policy.json")
