@@ -35,6 +35,21 @@ class StandaloneTests(unittest.TestCase):
         self.assertTrue(result.valid)
         self.assertEqual(result.consensus_boundary, "ACCOUNT_AUTHORITY_RESULT_DOES_NOT_ESTABLISH_PQ_CONSENSUS")
 
+    def test_utxo_style_limited_mainnet_path_is_representable_without_stable_identity(self):
+        profile = self.algorand(
+            ecosystem="UTXO-reference",
+            adapter_class="UTXO_HASH_PREPOSITIONING",
+            stable_authority_id=False,
+            authenticator_replaceable=False,
+            pq_authorization_state="PQ_MAINNET_LIMITED",
+            policy_state_documented=False,
+            recovery_state_documented=False,
+        )
+        result = assess(profile)
+        self.assertTrue(result.valid)
+        self.assertEqual(result.authority_state, "AUTHORITY_ABSTRACTION_NOT_ESTABLISHED")
+        self.assertEqual(result.pq_authorization_state, "PQ_MAINNET_LIMITED")
+
     def test_consumer_policy_is_independent_of_chain_profile(self):
         profile = self.algorand()
         strict = Policy(
