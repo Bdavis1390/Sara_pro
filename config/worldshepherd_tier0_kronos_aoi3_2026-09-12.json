@@ -1,0 +1,70 @@
+{
+  "schema": "worldshepherd_tier0_capture_v1",
+  "opportunity_id": "FA8806-26-S-0001_Kronos_FoS_CSO_AOI3_FAS01_02_03_04_05",
+  "parent_vehicle": "FA8806-26-S-0001 Kronos FoS CSO 2.0",
+  "issuer": "U.S. Space Force, Space Systems Command, SSC SYD 85",
+  "title": "Kronos Family of Systems CSO — AOI 3 Space Intelligence",
+  "status": "OPEN",
+  "capture_tier": "TIER_0",
+  "deadline_local": "2026-09-25T17:00:00-07:00",
+  "urgency": "CRITICAL",
+  "funding": "Not stated in the call materials reviewed; parent vehicle anticipates rolling prototype awards beginning November 2026.",
+  "award_path": [
+    "Commercial Solutions Opening",
+    "possible FAR-based award",
+    "possible prototype Other Transaction",
+    "possible follow-on production after successful prototype where legally supported"
+  ],
+  "fit": {
+    "recommended_posture": "PARTNER_OR_PREPARE",
+    "rationale": "Strong fit to SARA/ECHO/OVERWATCH for sensor orchestration, provenance, tactical-edge/DDIL workflow, event reporting and human-governed decision support; direct PRIME status is blocked pending entity and security evidence.",
+    "strongest_focus_areas": [
+      "enterprise collection-management orchestration",
+      "radar/sensor data ingestion and characterization support",
+      "commercial RF data analysis governance/provenance",
+      "tactical-edge disconnected operations",
+      "space-event reporting and auditability"
+    ]
+  },
+  "compliance": {
+    "public_repo_boundary": "PUBLIC_ONLY",
+    "sam_uei_cage": "UNKNOWN_NOT_VERIFIED",
+    "far_52_204_21": "UNKNOWN_PENDING_FINAL_AWARD_AND_FCI_SCOPE",
+    "dfars_252_204_7012": "UNKNOWN_PENDING_FINAL_AWARD_AND_CDI_CUI_SCOPE",
+    "dfars_252_204_7019_7020_sprs": "UNKNOWN_NOT_VERIFIED",
+    "dfars_252_204_7021_cmmc": "UNKNOWN_NOT_VERIFIED",
+    "cmmc_assessment_type": "UNKNOWN_PENDING_AWARD_AND_SYSTEM_SCOPE",
+    "section_889": "UNKNOWN_REQUIRES_REASONABLE_INQUIRY",
+    "dd2345_jcp": "UNKNOWN_IF_CONTROLLED_TECHNICAL_DATA_REQUIRED",
+    "export_control": "REQUIRES_ITEM_AND_DATA_REVIEW",
+    "facility_clearance": "UNKNOWN_NOT_CLAIMED",
+    "personnel_clearance": "UNKNOWN_NOT_CLAIMED",
+    "data_classification": "CALL REQUIRES U.S.-only and coalition operational contexts; actual handling markings and classification must be determined before access",
+    "subcontractor_flowdowns": "REQUIRES_AWARD_SPECIFIC_REVIEW"
+  },
+  "evidence_status": {
+    "worldshepherd_current": "Software governance, telemetry provenance, workflow orchestration and audit precursors exist; no Kronos qualification, Space Force authorization, clearance, CMMC, SPRS or classified integration status is claimed.",
+    "missing": [
+      "verified entity registration and reps/certs",
+      "award-specific cyber/security clauses",
+      "authorized controlled-data environment if required",
+      "Kronos integration evidence",
+      "space-domain demonstration evidence",
+      "qualified cleared/integration partner if classified access is needed"
+    ]
+  },
+  "artifacts_required": [
+    "Phase 1A quad chart",
+    "Phase 1A white paper (parent CSO maximum applies)",
+    "focus-area mapping",
+    "evidence/claims matrix",
+    "partner/compliance matrix"
+  ],
+  "next_actions": [
+    "Build an internal AOI-3 concept centered on governed collection orchestration + provenance + DDIL/event reporting, using only public/synthetic data.",
+    "Map qualified Space Force/space-domain integration partners with clearance and Kronos-adjacent experience; do not contact without authorization.",
+    "Verify the parent CSO's current legal/cyber/OTA eligibility clauses and entity-registration gates before any PRIME routing."
+  ],
+  "claims_boundary": "No award, eligibility, security clearance, CMMC, SPRS, SAM, JCP, export authorization, Kronos integration maturity or classified handling authorization is claimed.",
+  "last_verified_utc": "2026-09-13T00:19:00Z"
+}
