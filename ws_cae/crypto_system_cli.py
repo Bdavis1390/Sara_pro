@@ -9,11 +9,11 @@ from typing import Any
 
 from .cli import InputError, _json
 from .crypto_system import (
-    COMPONENT_ROLES,
     READINESS_ORDER,
     ComponentState,
     CryptoSystemPatch,
     assess_system,
+    valid_role,
 )
 
 PATCH_FIELDS = {"spec", "asset", "components"}
@@ -53,8 +53,8 @@ def parse_system_patch(raw: Any) -> CryptoSystemPatch:
         role = item["role"]
         state = item["readiness_state"]
         name = item["name"]
-        if role not in COMPONENT_ROLES:
-            raise InputError(f"component[{index}] role is not recognized")
+        if not isinstance(role, str) or not valid_role(role):
+            raise InputError(f"component[{index}] role is not recognized or namespaced")
         if state not in READINESS_ORDER:
             raise InputError(f"component[{index}] readiness_state is not recognized")
         if not isinstance(name, str) or not name.strip():
