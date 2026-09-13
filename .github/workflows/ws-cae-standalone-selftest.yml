@@ -89,6 +89,17 @@ jobs:
         uses: ./.github/actions/ws-cae-crypto-system
         with:
           patch: ws_cae/examples/system_rollup_asset.json
+      - name: Build all-crypto dependency portfolio
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.crypto_portfolio \
+            ws_cae/examples/system_native_coin.json \
+            ws_cae/examples/system_stablecoin.json \
+            ws_cae/examples/system_bridged_asset.json \
+            ws_cae/examples/system_exchange_balance.json \
+            ws_cae/examples/system_rollup_asset.json \
+            --pretty >/tmp/ws-cae-crypto-portfolio.json
+          python -m json.tool /tmp/ws-cae-crypto-portfolio.json >/dev/null
       - name: Strict institutional policy must distinguish maturity
         shell: bash
         run: |
