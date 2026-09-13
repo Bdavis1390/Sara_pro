@@ -10,6 +10,8 @@ from dataclasses import asdict, dataclass
 import hashlib
 import json
 
+from .continuity_validation import valid_content_id, valid_datetime
+
 REASONS = {
     "ALGORITHM_MIGRATION",
     "AUTHORITY_ROTATION",
@@ -34,30 +36,20 @@ class ContinuityTransition:
         return asdict(self)
 
 
-def _valid_content_id(value: str) -> bool:
-    if not value.startswith("sha256:") or len(value) != 71:
-        return False
-    try:
-        bytes.fromhex(value[7:])
-    except ValueError:
-        return False
-    return True
-
-
 def validate_transition(transition: ContinuityTransition) -> tuple[str, ...]:
     issues: list[str] = []
     if not transition.subject_id.strip():
         issues.append("subject_id must be non-empty")
-    if not _valid_content_id(transition.previous_content_id):
-        issues.append("previous_content_id is invalid")
-    if not _valid_content_id(transition.new_content_id):
-        issues.append("new_content_id is invalid")
+    if not valid_content_id(transition.previous_content_id):
+        issues.append("previous_content_id must be a canonical lowercase sha256 content ID")
+    if not valid_content_id(transition.new_content_id):
+        issues.append("new_content_id must be a canonical lowercase sha256 content ID")
     if transition.previous_content_id == transition.new_content_id:
         issues.append("transition must change content state")
     if transition.reason not in REASONS:
         issues.append("transition reason is not recognized")
-    if not transition.effective_at.strip():
-        issues.append("effective_at must be non-empty")
+    if not valid_datetime(transition.effective_at):
+        issues.append("effective_at must be an ISO-8601 datetime with an explicit timezone")
     if any(not ref.strip() for ref in transition.evidence_refs):
         issues.append("evidence_refs must not contain empty values")
     return tuple(issues)
