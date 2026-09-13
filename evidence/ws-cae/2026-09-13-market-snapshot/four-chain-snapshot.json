@@ -1,0 +1,39 @@
+{
+  "spec": "WS-CAE-NAMED-MARKET-SNAPSHOT-1",
+  "as_of": "2026-09-13",
+  "chains": [
+    {
+      "chain": "Algorand",
+      "implementation_maturity": "MAINNET",
+      "protocol_commitment_state": "MAINNET",
+      "pq_authorization_state": "PQ_MAINNET",
+      "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+      "source_patch": "ws_cae/examples/algorand.patch.json"
+    },
+    {
+      "chain": "Bitcoin",
+      "implementation_maturity": "MAINNET",
+      "protocol_commitment_state": "UNSPECIFIED",
+      "pq_authorization_state": "PQ_MAINNET_LIMITED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "source_patch": "ws_cae/examples/bitcoin-qsb.patch.json"
+    },
+    {
+      "chain": "Ethereum",
+      "implementation_maturity": "DEVNET",
+      "protocol_commitment_state": "FORK_SCHEDULED",
+      "pq_authorization_state": "PLUGGABLE_AUTH_ONLY",
+      "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+      "source_patch": "ws_cae/examples/ethereum.patch.json"
+    },
+    {
+      "chain": "Sui",
+      "implementation_maturity": "MAINNET",
+      "protocol_commitment_state": "GOVERNANCE_SELECTED",
+      "pq_authorization_state": "PLUGGABLE_AUTH_ONLY",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "source_patch": "ws_cae/examples/sui.patch.json"
+    }
+  ],
+  "claims_boundary": "This snapshot compares documented migration state. It does not certify any chain as fully post-quantum secure."
+}
