@@ -15,6 +15,7 @@
     "recovery_state_documented": {"type":"boolean"},
     "domain_binding_documented": {"type":"boolean"},
     "evidence_state_documented": {"type":"boolean"},
-    "consensus_pq_state": {"enum":["CLASSICAL_OR_UNPROVEN","PQ_RESEARCH_OR_PARTIAL","PQ_DEPLOYED"],"default":"CLASSICAL_OR_UNPROVEN"}
+    "consensus_pq_state": {"enum":["CLASSICAL_OR_UNPROVEN","PQ_RESEARCH_OR_PARTIAL","PQ_DEPLOYED"],"default":"CLASSICAL_OR_UNPROVEN"},
+    "protocol_commitment_state": {"enum":["UNSPECIFIED","RESEARCH","GOVERNANCE_SELECTED","FORK_SCHEDULED","MAINNET"],"default":"UNSPECIFIED"}
   }
 }
