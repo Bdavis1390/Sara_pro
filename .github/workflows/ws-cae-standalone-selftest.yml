@@ -5,6 +5,7 @@ on:
     paths:
       - 'ws_cae/**'
       - '.github/actions/ws-cae-conformance/**'
+      - '.github/actions/ws-cae-chain-patch/**'
       - '.github/workflows/ws-cae-standalone-selftest.yml'
   workflow_dispatch:
 
@@ -27,6 +28,22 @@ jobs:
         with:
           profile: ws_cae/examples/reference_pair.json
           policy: ws_cae/examples/interop_policy.json
+      - name: Algorand chain patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/algorand.patch.json
+      - name: Ethereum chain patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/ethereum.patch.json
+      - name: Sui chain patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/sui.patch.json
+      - name: Bitcoin limited-mainnet patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/bitcoin-qsb.patch.json
       - name: Strict institutional policy must distinguish maturity
         shell: bash
         run: |
