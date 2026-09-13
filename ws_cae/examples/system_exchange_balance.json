@@ -1,0 +1,9 @@
+{
+  "spec": "WS-CAE-CRYPTO-SYSTEM-PATCH-1",
+  "asset": "SYNTHETIC-EXCHANGE-BALANCE",
+  "components": [
+    {"role": "CHAIN_AUTHORITY", "name": "underlying-chain", "readiness_state": "PQ_DEPLOYED", "critical": true, "evidence_documented": true},
+    {"role": "EXCHANGE_WITHDRAWAL", "name": "exchange-control-plane", "readiness_state": "CLASSICAL_DEPENDENCY", "critical": true, "evidence_documented": true},
+    {"role": "RECOVERY", "name": "account-recovery", "readiness_state": "CRYPTO_AGILE", "critical": true, "evidence_documented": true}
+  ]
+}
