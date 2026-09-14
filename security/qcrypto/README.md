@@ -12,6 +12,28 @@ The package separates logical attack width, gate/depth cost, architecture-specif
 
 A low logical-qubit count does not imply a fast practical attack. A future vendor roadmap is not demonstrated hardware. A fabricated prototype is not attack-scale hardware. Account-layer PQ protection is not consensus-layer PQ protection. Commercial PQ signing availability is not Worldshepherd integration until exercised.
 
+## Federal PQC migration control plane
+
+The Federal-alignment modules convert public migration requirements into internal Worldshepherd planning controls without asserting Federal compliance, certification, authorization, procurement qualification, or government approval.
+
+`federal_pqc_control_map.py` maps public migration functions to SARA, ECHO, PRIME, and OVERWATCH responsibilities and evidence targets.
+
+`federal_pqc_readiness.py` enforces the evidence sequence:
+
+`UNMAPPED -> DESIGN_MAPPING -> IMPLEMENTED_IN_SOFTWARE -> PROVEN_INTERNALLY -> INDEPENDENTLY_REPRODUCED`
+
+A later state cannot be awarded when prerequisite evidence is absent.
+
+`cbom_inventory.py` provides an evidence-custodied cryptographic inventory model and conservative internal priority bands. Missing provenance produces `INCOMPLETE_EVIDENCE` rather than a migration recommendation.
+
+`federal_pqc_control_plane.py` carries a validated CBOM record through the governed path:
+
+`ECHO provenance -> PRIME recommendation -> SARA human-approval gate -> OVERWATCH tracking`
+
+The control plane never performs migration. Human approval authorizes a bounded plan only; `migration_executed` remains false by construction.
+
+`federal_pqc_pilot_bridge.py` converts the internal migration priority into a target WS-CAE-1 profile and safe pilot entry stage. It recommends C1/C2/C3 targets but does not self-award WS-CAE-1 conformance. Even with human approval, the bridge advances no further than `H1_ZERO_VALUE_DRY_RUN`; live-value authorization remains false.
+
 ## Defensive solution layers
 
 ### Pre-Protocol PQ Vault
@@ -34,4 +56,4 @@ The pilot requires dual-family PQ signing capability, stable authority identity,
 
 ## Claims boundary
 
-QCRYPTO does not sign transactions, access wallets, recover keys, move assets, authorize live-value deployment, or claim full-chain quantum safety. Any eventual live-value canary remains subject to explicit human approval, independent review, bounded scope, and chain-specific controls.
+QCRYPTO does not sign transactions, access wallets, recover keys, move assets, authorize live-value deployment, or claim full-chain quantum safety. Federal requirement mapping is internal engineering alignment only and does not establish Federal compliance. WS-CAE-1 target recommendations are not conformance findings. Any eventual live-value canary remains subject to explicit human approval, independent review, bounded scope, and chain-specific controls.
