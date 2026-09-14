@@ -183,6 +183,7 @@ def assess_session_partner_attestation_response(
     type so the v1.0 human-acceptance gate remains the next mandatory step.
     """
 
+    canonical_session_partner_request_bytes(request)
     if response.request_package_sha256 != request.package_sha256:
         raise ValueError("partner response is not bound to this session request package")
     if response.mission_id != request.mission_id:
