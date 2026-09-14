@@ -35,6 +35,12 @@ def _classification(case: InteropCaseDefinition) -> tuple[int, str, int, str, in
     if case.action_kind == "local_process":
         return 1007, "Process Activity", 1, "System Activity", 1, "Launch"
 
+    if case.action_kind == "file_operation" and case.hostless:
+        # File System Activity requires a device in the pinned OCSF schema. A
+        # hostless producer has no truthful device identity to provide, so use
+        # the concrete generic Base Event rather than manufacturing one.
+        return 0, "Base Event", 0, "Uncategorized", 99, "Other"
+
     if case.action_kind == "file_operation":
         activity_id = 2 if case.observed_operation == ObservedOperation.READ else 3
         activity_name = "Read" if activity_id == 2 else "Update"
@@ -91,6 +97,19 @@ def build_full_ocsf_event(case: InteropCaseDefinition) -> dict[str, Any]:
     status_id, status = _status(case)
     type_uid = class_uid * 100 + activity_id
 
+    native: dict[str, Any] = {
+        "ws_session_uid": correlation.ws_session_uid,
+        "ws_turn_uid": correlation.ws_turn_uid,
+        "ws_invocation_uid": correlation.ws_invocation_uid,
+        "ws_policy_decision_uid": correlation.ws_policy_decision_uid,
+        "source_fixture_digest": correlation.ws_evidence_digest,
+        "authorization_mode": case.authorization_mode.value,
+        "action_executed": case.expected_outcome == ExpectedOutcome.SUCCESS,
+        "declared_readonly": case.declared_readonly,
+        "observed_operation": case.observed_operation.value,
+        "hostless": case.hostless,
+    }
+
     event: dict[str, Any] = {
         "activity_id": activity_id,
         "activity_name": activity_name,
@@ -116,22 +135,14 @@ def build_full_ocsf_event(case: InteropCaseDefinition) -> dict[str, Any]:
                 "version": "0.1.0",
             },
         },
-        "actor": _actor(case, correlation.ws_policy_decision_uid),
-        "unmapped": {
-            "worldshepherd": {
-                "ws_session_uid": correlation.ws_session_uid,
-                "ws_turn_uid": correlation.ws_turn_uid,
-                "ws_invocation_uid": correlation.ws_invocation_uid,
-                "ws_policy_decision_uid": correlation.ws_policy_decision_uid,
-                "source_fixture_digest": correlation.ws_evidence_digest,
-                "authorization_mode": case.authorization_mode.value,
-                "action_executed": case.expected_outcome == ExpectedOutcome.SUCCESS,
-                "declared_readonly": case.declared_readonly,
-                "observed_operation": case.observed_operation.value,
-                "hostless": case.hostless,
-            }
-        },
+        "unmapped": {"worldshepherd": native},
     }
+
+    # Base Event does not define actor. Keep hostless producer/governance
+    # semantics in the vendor-neutral escape hatch rather than adding an
+    # unsupported top-level attribute.
+    if class_uid != 0:
+        event["actor"] = _actor(case, correlation.ws_policy_decision_uid)
 
     if case.action_kind == "remote_tool":
         event["api"] = {
@@ -150,6 +161,15 @@ def build_full_ocsf_event(case: InteropCaseDefinition) -> dict[str, Any]:
             "name": "fixture-command",
             "cmd_line": "fixture-command --dry-run",
         }
+
+    elif case.action_kind == "file_operation" and case.hostless:
+        native["source_file"] = {
+            "name": "fixture.txt",
+            "path": "/synthetic/fixture.txt",
+            "type_id": 1,
+            "type": "Regular File",
+        }
+        event["message"] = "Hostless file read observed; no device identity supplied by source."
 
     elif case.action_kind == "file_operation":
         event["file"] = {
