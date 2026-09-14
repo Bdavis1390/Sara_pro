@@ -14,6 +14,7 @@ from worldshepherd_sara.hmaa_authorized_session import (
 )
 from worldshepherd_sara.hmaa_attestation import HMAAAttestationState
 from worldshepherd_sara.hmaa_lattice_capture import SandboxReadCapturePlan
+from worldshepherd_sara.hmaa_session_partner import canonical_session_partner_request_bytes
 
 
 ENDPOINT = "https://session-test.env.sandboxes.developer.anduril.com"
@@ -74,7 +75,7 @@ def _request(*, authorized: bool = True, attempts: int = 3):
     )
 
 
-def test_three_distinct_authorized_captures_produce_partner_request_not_live_claim():
+def test_three_distinct_authorized_captures_produce_session_bound_partner_request():
     transport = DistinctHeartbeatTransport()
     run = run_authorized_read_session(
         _request(),
@@ -90,11 +91,18 @@ def test_three_distinct_authorized_captures_produce_partner_request_not_live_cla
     assert run.attestation.state is HMAAAttestationState.EXTERNAL_ATTESTATION_REQUIRED
     assert run.attestation.distinct_capture_count == 3
     assert run.partner_validation_request is not None
+    assert run.partner_validation_envelope is not None
     assert run.receipt.partner_request_package_sha256 == run.partner_validation_request.package_sha256
+    assert run.partner_validation_envelope.inner_request_package_sha256 == run.partner_validation_request.package_sha256
+    assert run.partner_validation_envelope.session_receipt_sha256 == run.receipt.receipt_sha256
+    assert run.partner_validation_envelope.preflight_report_sha256 == run.preflight.report_sha256
+    assert run.partner_validation_envelope.environment_endpoint == ENDPOINT
+    assert canonical_session_partner_request_bytes(run.partner_validation_envelope)
     assert run.receipt.external_environment_provenance_confirmed is False
     assert run.receipt.live_environment_validated is False
     assert run.receipt.partner_validated is False
     assert run.receipt.operationally_validated is False
+    assert run.partner_validation_envelope.live_environment_validated is False
     assert verify_authorized_read_session_receipt(run.receipt) is True
 
     encoded = run.model_dump_json()
@@ -114,6 +122,7 @@ def test_duplicate_captures_remain_candidate_only():
     assert run.attestation.capture_count == 3
     assert run.attestation.distinct_capture_count == 1
     assert run.partner_validation_request is None
+    assert run.partner_validation_envelope is None
     assert run.receipt.status is HMAAAuthorizedReadSessionStatus.CANDIDATE_EVIDENCE_CAPTURED
     assert run.receipt.partner_request_package_sha256 is None
 
@@ -164,7 +173,7 @@ def test_receipt_hash_detects_tampering():
     assert verify_authorized_read_session_receipt(tampered) is False
 
 
-def test_export_writes_hash_bound_local_evidence_and_separate_partner_package(tmp_path):
+def test_export_writes_hash_bound_local_evidence_and_session_bound_partner_package(tmp_path):
     run = run_authorized_read_session(
         _request(),
         env=_oauth_env(),
@@ -176,7 +185,8 @@ def test_export_writes_hash_bound_local_evidence_and_separate_partner_package(tm
     assert verify_session_artifact_manifest(manifest, out) is True
     assert (out / "manifest.json").is_file()
     assert (out / "session-receipt.json").is_file()
-    assert (out / "partner-validation-request.json").is_file()
+    assert (out / "partner-validation-request-v0.8.json").is_file()
+    assert (out / "partner-session-validation-request-v1.2.json").is_file()
     assert len(list(out.glob("local-capture-*.json"))) == 3
 
     all_text = "\n".join(path.read_text() for path in out.glob("*.json"))
@@ -184,9 +194,13 @@ def test_export_writes_hash_bound_local_evidence_and_separate_partner_package(tm
     assert "session-sandbox-token-do-not-leak" not in all_text
     assert "session-client-id" not in all_text
 
-    partner = json.loads((out / "partner-validation-request.json").read_text())
+    partner = json.loads((out / "partner-session-validation-request-v1.2.json").read_text())
     assert "steps" not in partner
+    assert partner["environment_endpoint"] == ENDPOINT
+    assert partner["session_receipt_sha256"] == run.receipt.receipt_sha256
+    assert partner["inner_request_package_sha256"] == run.partner_validation_request.package_sha256
     assert partner["live_environment_validated"] is False
+    assert manifest.partner_exchange_package_sha256 == run.partner_validation_envelope.package_sha256
     assert manifest.partner_package_excludes_raw_capture_payloads is True
 
     capture_path = out / "local-capture-01.json"
