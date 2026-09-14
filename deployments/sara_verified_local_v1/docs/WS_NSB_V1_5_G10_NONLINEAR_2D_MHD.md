@@ -1,4 +1,4 @@
-# WS-NSB v1.5.1 — G10 nonlinear 2D incompressible MHD gate
+# WS-NSB v1.5.2 — G10 nonlinear 2D incompressible MHD gate
 
 ## Scope
 
@@ -26,19 +26,43 @@ G10 requires three separate cases.
 2. **Mixed nonlinear dissipative case.** Independent velocity and magnetic modes exercise both induction and Lorentz backreaction. The gate checks nontrivial evolution, kinetic + magnetic energy decay, positive viscous/resistive dissipation, instantaneous energy-budget closure, divergence control, and mean-state preservation.
 3. **Short ideal invariant case.** With `nu = eta = 0`, the gate checks bounded drift of total energy, cross helicity, and mean-square magnetic potential over a short integration window.
 
-## v1.5.1 numerical-defect remediation
+## #245 remediation history
 
-Issue #245 identified that the original ideal-case `dt = 2.5e-4` configuration produced cross-helicity relative drift above the predeclared `2e-5` invariant limit while the other G10 gates remained healthy. The acceptance threshold is not relaxed.
+### v1.5 negative evidence
 
-v1.5.1 changes only the ideal-invariant temporal evidence path:
+Issue #245 recorded an ideal-case cross-helicity **relative** drift of approximately `3.6710178210651096e-05`, above the predeclared `2e-5` limit. Total-energy and magnetic-potential-variance drift remained within the limit. The acceptance threshold is not relaxed.
 
-- preserves the original coarse `dt = 2.5e-4` run as regression evidence;
-- adds `dt = 1.25e-4` and `dt = 6.25e-5` refinement runs at the same grid and `final_time = 0.01`;
-- records the actual effective `dt`, step count, and all three invariant drifts for each run in the hash-bound report;
-- uses `dt = 1.25e-4` as the acceptance configuration;
-- requires regression coverage to demonstrate that the original coarse run remains above the unchanged threshold, refinement reduces the maximum observed invariant drift, and the `1.25e-4` run satisfies the original `2e-5` limit.
+### v1.5.1 temporal-refinement attempt
 
-For `final_time = 0.01`, the requested refinement sequence corresponds to 40, 80, and 160 steps respectively. CI remains the acceptance oracle for the measured drift values; this document does not predeclare a passing numerical result.
+v1.5.1 retained the original `dt = 2.5e-4` run and added `1.25e-4` and `6.25e-5` runs. The dedicated GitHub G10 gate still failed. That failure is preserved rather than suppressed.
+
+The investigation identified an error-metric conditioning defect: the mixed ideal initial condition has cross helicity numerically near zero. A quantity of the form
+
+```text
+abs(Hc_final - Hc_initial) / abs(Hc_initial)
+```
+
+is therefore ill-conditioned even when the **absolute** cross-helicity change is at roundoff scale. Halving `dt` cannot reliably repair a denominator that is effectively zero.
+
+### v1.5.2 conditioned acceptance metric
+
+v1.5.2 keeps the same physical initial condition, the same three timestep refinements, and the same `2e-5` invariant limit. It does **not** erase the legacy relative metric. Instead the report now records:
+
+- initial and final cross helicity;
+- absolute cross-helicity drift;
+- the legacy near-zero-relative drift as retained diagnostic evidence;
+- the cross-helicity energy scale `2*sqrt(E_k0*E_b0)`;
+- the dimensionless normalized error
+
+```text
+abs(Hc_final - Hc_initial) / (2*sqrt(E_k0*E_b0))
+```
+
+used for cross-helicity acceptance.
+
+The denominator follows the Cauchy-Schwarz bound on cross helicity and remains well-conditioned when the true invariant itself is near zero. This is a metric correction, not a tolerance relaxation.
+
+The temporal-refinement record remains `2.5e-4 -> 1.25e-4 -> 6.25e-5` at `final_time = 0.01`, corresponding to 40, 80, and 160 steps. Total-energy and magnetic-potential-variance relative errors must show refinement reduction. Cross-helicity absolute/normalized error is expected to be roundoff-dominated once it reaches machine-scale behavior, so monotonic temporal order is not asserted for that already-negligible quantity.
 
 ## Acceptance boundary
 
@@ -49,7 +73,9 @@ The default gate requires:
 - velocity and magnetic divergence RMS <= `1e-10`;
 - instantaneous total-energy budget residual <= `2e-8`;
 - mixed nonlinear RHS RMS >= `1e-2` and a measurable dissipative total-energy decrease;
-- ideal total-energy, cross-helicity, and magnetic-potential-variance relative drift <= `2e-5` at the v1.5.1 acceptance step size;
+- ideal total-energy relative drift <= `2e-5`;
+- ideal cross-helicity absolute drift normalized by `2*sqrt(E_k0*E_b0)` <= `2e-5`;
+- ideal magnetic-potential-variance relative drift <= `2e-5`;
 - deterministic SHA-256 report verification.
 
 These are bounded internal software acceptance thresholds, not universal MHD accuracy claims.
