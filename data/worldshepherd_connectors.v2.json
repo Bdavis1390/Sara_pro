@@ -1,0 +1,177 @@
+{
+  "schema": "worldshepherd.connectors.v2",
+  "governance": {
+    "authority": "CRE1AWS",
+    "operator": "SSPADAWANZZ",
+    "doctrine": "AI proposes; human approves; automation remains bounded; actions and evidence are logged.",
+    "default_deny": true,
+    "external_write_requires_human_approval": true,
+    "credentials_in_manifest": false,
+    "claims_control_required": true
+  },
+  "data_classes": [
+    "PUBLIC",
+    "INTERNAL",
+    "CONTROLLED_UNCLASSIFIED",
+    "CREDENTIAL"
+  ],
+  "risk_classes": [
+    "READ",
+    "WRITE",
+    "EXTERNAL_EFFECT",
+    "PRIVILEGED"
+  ],
+  "connectors": [
+    {
+      "id": "sara_core",
+      "name": "SARA Core",
+      "kind": "local_control",
+      "status": "enabled",
+      "capabilities": ["workflow_orchestration", "relay", "audit"],
+      "allowed_actions": ["health.read", "workflow.propose", "relay.test"],
+      "roles": ["admin", "operator"],
+      "max_data_class": "INTERNAL",
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "prime_sentinel",
+      "name": "PRIME SENTINEL",
+      "kind": "policy",
+      "status": "enabled",
+      "capabilities": ["authorization", "policy_gate", "claims_control"],
+      "allowed_actions": ["policy.evaluate", "claim.classify", "action.authorize"],
+      "roles": ["admin"],
+      "max_data_class": "CONTROLLED_UNCLASSIFIED",
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "echo_sentinel",
+      "name": "ECHO SENTINEL LINK",
+      "kind": "provenance",
+      "status": "enabled",
+      "capabilities": ["evidence_chain", "event_hash", "source_lineage"],
+      "allowed_actions": ["evidence.record", "event.seal", "lineage.read"],
+      "roles": ["admin", "operator"],
+      "max_data_class": "CONTROLLED_UNCLASSIFIED",
+      "provenance": "self"
+    },
+    {
+      "id": "overwatch",
+      "name": "OVERWATCH",
+      "kind": "observability",
+      "status": "enabled",
+      "capabilities": ["health", "telemetry", "readiness", "alerts"],
+      "allowed_actions": ["health.read", "telemetry.read", "readiness.read"],
+      "roles": ["admin", "operator"],
+      "max_data_class": "INTERNAL",
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "kind": "external_dev",
+      "status": "external_connection",
+      "capabilities": ["repo_read", "branch", "file_write", "pull_request", "issues", "ci_status"],
+      "allowed_actions": ["repo.read", "branch.create", "file.create", "file.update", "pr.create", "issue.create"],
+      "roles": ["admin"],
+      "max_data_class": "INTERNAL",
+      "external_write_actions": ["branch.create", "file.create", "file.update", "pr.create", "issue.create"],
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "google_drive",
+      "name": "Google Drive",
+      "kind": "external_knowledge",
+      "status": "external_connection",
+      "capabilities": ["drive_search", "docs", "sheets", "slides", "sharing"],
+      "allowed_actions": ["file.read", "file.create", "file.update", "comment.read", "share.update"],
+      "roles": ["admin"],
+      "max_data_class": "INTERNAL",
+      "external_write_actions": ["file.create", "file.update", "share.update"],
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "gmail",
+      "name": "Gmail",
+      "kind": "external_communications",
+      "status": "external_connection",
+      "capabilities": ["search", "thread_read", "draft", "send", "labels"],
+      "allowed_actions": ["mail.read", "mail.draft", "mail.send", "mail.label"],
+      "roles": ["admin"],
+      "max_data_class": "INTERNAL",
+      "external_write_actions": ["mail.draft", "mail.send", "mail.label"],
+      "human_approval_actions": ["mail.send"],
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "google_calendar",
+      "name": "Google Calendar",
+      "kind": "external_scheduling",
+      "status": "external_connection",
+      "capabilities": ["event_read", "availability", "event_write"],
+      "allowed_actions": ["calendar.read", "calendar.availability", "calendar.create", "calendar.update", "calendar.delete"],
+      "roles": ["admin"],
+      "max_data_class": "INTERNAL",
+      "external_write_actions": ["calendar.create", "calendar.update", "calendar.delete"],
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "web_research",
+      "name": "Public Web Research",
+      "kind": "external_research",
+      "status": "enabled",
+      "capabilities": ["official_source_search", "market_scan", "partner_discovery", "literature_discovery"],
+      "allowed_actions": ["research.search", "source.verify", "opportunity.scan", "partner.scan"],
+      "roles": ["admin", "operator"],
+      "max_data_class": "PUBLIC",
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "airtable",
+      "name": "Airtable",
+      "kind": "external_ops_db",
+      "status": "connection_optional",
+      "capabilities": ["lead_tracking", "evidence_rows", "milestones", "relationship_views"],
+      "allowed_actions": ["record.read", "record.create", "record.update"],
+      "roles": ["admin"],
+      "max_data_class": "INTERNAL",
+      "external_write_actions": ["record.create", "record.update"],
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase",
+      "kind": "external_backend",
+      "status": "connection_optional",
+      "capabilities": ["structured_state", "query", "prototype_backend"],
+      "allowed_actions": ["db.read", "db.insert", "db.update"],
+      "roles": ["admin"],
+      "max_data_class": "INTERNAL",
+      "external_write_actions": ["db.insert", "db.update"],
+      "provenance": "ECHO_SENTINEL_LINK"
+    },
+    {
+      "id": "vercel",
+      "name": "Vercel",
+      "kind": "external_deployment",
+      "status": "connection_optional",
+      "capabilities": ["preview_deploy", "production_deploy", "web_app"],
+      "allowed_actions": ["deployment.read", "deployment.preview", "deployment.production"],
+      "roles": ["admin"],
+      "max_data_class": "PUBLIC",
+      "external_write_actions": ["deployment.preview", "deployment.production"],
+      "human_approval_actions": ["deployment.production"],
+      "provenance": "ECHO_SENTINEL_LINK"
+    }
+  ],
+  "tools": [
+    {"id": "pre.extract", "lane": "PRE", "risk": "READ", "description": "Extract recurring and emerging requirements into Requirement Delta Records."},
+    {"id": "opportunity.scan", "lane": "Opportunity Intelligence", "risk": "READ", "description": "Scan official opportunity sources and partner ecosystems."},
+    {"id": "evidence.grade", "lane": "Claims Control", "risk": "READ", "description": "Assign evidence and claims-control labels without upgrading maturity."},
+    {"id": "prime.authorize", "lane": "PRIME SENTINEL", "risk": "PRIVILEGED", "description": "Evaluate a proposed action against role, connector, approval, and data policy."},
+    {"id": "echo.seal", "lane": "ECHO SENTINEL LINK", "risk": "WRITE", "description": "Create a deterministic hash envelope for action/evidence provenance."},
+    {"id": "overwatch.snapshot", "lane": "OVERWATCH", "risk": "READ", "description": "Produce connector, workflow, and readiness health snapshots."},
+    {"id": "partner.track", "lane": "Capture", "risk": "WRITE", "description": "Track partner candidates, contact state, gaps, probability, and conflicts."},
+    {"id": "artifact.publish", "lane": "Delivery", "risk": "EXTERNAL_EFFECT", "description": "Publish an approved artifact through a configured external connector."}
+  ]
+}
