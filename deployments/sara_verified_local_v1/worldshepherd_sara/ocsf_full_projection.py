@@ -33,12 +33,14 @@ def _classification(case: InteropCaseDefinition) -> tuple[int, str, int, str, in
         return 6003, "API Activity", 6, "Application Activity", activity_id, activity_name
 
     if case.action_kind == "local_process":
-        return 1007, "Process Activity", 1, "System Activity", 1, "Launch"
+        # Process Activity requires a device in the pinned OCSF schema. The
+        # frozen v0.1 source case proves a local process occurred but does not
+        # contain a device identity, so use Base Event instead of inventing one.
+        return 0, "Base Event", 0, "Uncategorized", 99, "Other"
 
     if case.action_kind == "file_operation" and case.hostless:
-        # File System Activity requires a device in the pinned OCSF schema. A
-        # hostless producer has no truthful device identity to provide, so use
-        # the concrete generic Base Event rather than manufacturing one.
+        # File System Activity also requires a device. A hostless producer has
+        # no truthful device identity to supply.
         return 0, "Base Event", 0, "Uncategorized", 99, "Other"
 
     if case.action_kind == "file_operation":
@@ -138,9 +140,8 @@ def build_full_ocsf_event(case: InteropCaseDefinition) -> dict[str, Any]:
         "unmapped": {"worldshepherd": native},
     }
 
-    # Base Event does not define actor. Keep hostless producer/governance
-    # semantics in the vendor-neutral escape hatch rather than adding an
-    # unsupported top-level attribute.
+    # Base Event does not define actor. Keep producer/governance semantics in
+    # unmapped rather than adding unsupported attributes to obtain a false pass.
     if class_uid != 0:
         event["actor"] = _actor(case, correlation.ws_policy_decision_uid)
 
@@ -156,11 +157,12 @@ def build_full_ocsf_event(case: InteropCaseDefinition) -> dict[str, Any]:
         }
 
     elif case.action_kind == "local_process":
-        event["process"] = {
+        native["source_process"] = {
             "uid": correlation.ws_invocation_uid,
             "name": "fixture-command",
             "cmd_line": "fixture-command --dry-run",
         }
+        event["message"] = "Local process activity observed; source fixture contains no device identity."
 
     elif case.action_kind == "file_operation" and case.hostless:
         native["source_file"] = {
