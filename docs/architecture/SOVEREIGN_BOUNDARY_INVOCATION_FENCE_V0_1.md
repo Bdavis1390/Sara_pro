@@ -34,7 +34,7 @@ VERIFIED
    v
 CLAIMED
    |
-   | durable atomic invocation fence
+   | durable invocation fence
    v
 INVOKING
    |\
@@ -51,13 +51,15 @@ Once an authorization reaches `INVOKING`, it is never automatically returned to 
 
 ## 3. Central invariant
 
-> **A physical executor may be called only by the caller that successfully persists `CLAIMED -> INVOKING` for the matching authorization and execution ID.**
+> **Within one process using the same `DurableStore`, a physical executor may be called only by the caller that successfully persists `CLAIMED -> INVOKING` for the matching authorization and execution ID.**
 
 The transition is performed inside `DurableStore.transact_registry()`.
 
-Because that operation derives and writes the protected registry state under one lock, two callers using the same authoritative store cannot both derive `INVOKING` from the same `CLAIMED` record.
+That primitive is protected by the store's in-process `threading.RLock`. Therefore two concurrent threads/callers sharing the same `DurableStore` cannot both derive `INVOKING` from the same `CLAIMED` record.
 
 The winner persists `INVOKING` before external invocation. The loser observes a state other than `CLAIMED` and fails before its executor callback is called.
+
+**Important scope limit:** v0.1 has not yet established inter-process registry serialization. Two independent OS processes opening the same data directory are not covered by this concurrency proof. Cross-process locking is a separate assurance gate and must be completed before a multi-process hardware PEP deployment is claimed safe from duplicate invocation races.
 
 ## 4. What the fence binds
 
@@ -118,11 +120,11 @@ It does **not** make an external physical device and the local filesystem one di
 
 ## 7. Concurrency proof exercised by tests
 
-`test_sovereign_boundary_pep.py` includes an adversarial two-caller test:
+`test_sovereign_boundary_pep.py` includes an adversarial same-process two-caller test:
 
 1. caller A acquires `CLAIMED -> INVOKING`;
 2. caller A enters a deliberately blocked benign executor;
-3. while A is still inside the executor, caller B attempts the identical effect;
+3. while A is still inside the executor, caller B attempts the identical effect using the same store;
 4. caller B fails to acquire the invocation fence;
 5. caller B's executor is never called;
 6. caller A is released and completes;
@@ -135,23 +137,43 @@ The same suite also verifies that:
 - executor exceptions resolve to `INDETERMINATE`;
 - a consumed or indeterminate authorization cannot cross the fence again.
 
+The suite does **not** yet constitute a cross-process concurrency proof.
+
 ## 8. Security boundary
 
-This mechanism establishes a software invariant only for effectors routed through the Worldshepherd PEP and the same authoritative durable store.
+This mechanism establishes a software invariant only for effectors routed through the Worldshepherd PEP and concurrent callers serialized by the same in-process `DurableStore` lock.
 
 It does not prevent:
 
+- an independent OS process from racing registry read/derive/write operations before a process-shared lock is implemented;
 - a separate program from bypassing the PEP and driving hardware directly;
 - compromised firmware from ignoring the host-side interlock;
 - a second independent authority store from issuing conflicting commands;
 - a malicious operator with direct physical control;
 - actuator behavior that cannot provide trustworthy outcome evidence.
 
-Those are hardware, deployment, key-custody, systems-integration, and operational-control problems.
+Those are process-coordination, hardware, deployment, key-custody, systems-integration, and operational-control problems.
 
-## 9. Hardware implication
+## 9. Next assurance gate: process-shared serialization
 
-The next physical assurance experiment should not test advanced propulsion, RF, or autonomous capability.
+Before using the PEP from multiple worker processes, services, or containers that can mutate one registry, Worldshepherd should add a process-shared serialization mechanism and adversarial proof.
+
+Candidate mechanisms include:
+
+- POSIX advisory file locking around registry read/derive/write cycles on Linux;
+- a single-writer authority service;
+- a transactional database with compare-and-swap / serializable transitions;
+- a hardware or device-side monotonic execution token for the final interlock.
+
+The requirement is more important than the implementation choice:
+
+> **The `CLAIMED -> INVOKING` transition must have exactly one authoritative winner across every process capable of commanding the same effector.**
+
+Until that exists, deployment must preserve a single-process/single-writer authority boundary.
+
+## 10. Hardware implication
+
+The first physical assurance experiment should not test advanced propulsion, RF, or autonomous capability.
 
 It should test the **authority boundary itself** using a benign de-energized or low-energy fixture:
 
@@ -159,14 +181,14 @@ It should test the **authority boundary itself** using a benign de-energized or 
 unauthorized command --------------------> hardware refuses
 changed parameters after policy ---------> hardware refuses
 expired authorization -------------------> hardware refuses
-second concurrent invocation ------------> hardware refuses
+second same-process invocation ----------> hardware refuses
 valid complete chain --------------------> observable benign state transition
 ```
 
 The hardware adapter should expose an interlock interface that accepts only commands carrying the currently bound SBK execution identity. The first purpose of that fixture is to prove refusal behavior, not performance.
 
-## 10. Claims boundary
+## 11. Claims boundary
 
-This gate supports, subject to repository CI and review, an **IMPLEMENTED IN SOFTWARE** claim for a durable one-way invocation fence that prevents two compliant concurrent PEP callers from both invoking the same one-time physical authorization.
+This gate supports, subject to repository CI and review, an **IMPLEMENTED IN SOFTWARE** claim for a durable one-way invocation fence that prevents two compliant concurrent callers **within one process and one authoritative `DurableStore` lock domain** from both invoking the same one-time physical authorization.
 
-It does not support a claim of exactly-once physical actuation. External effects remain outside the local storage transaction, and uncertain outcomes are explicitly represented as `INDETERMINATE`.
+It does not support a claim of cross-process mutual exclusion or exactly-once physical actuation. External effects remain outside the local storage transaction, and uncertain outcomes are explicitly represented as `INDETERMINATE`.
