@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+from .qualification import canonical_digest
 from .sovereign_boundary_authority import VerifiedPrimeEffectAuthorization
 from .sovereign_boundary_kernel import SovereignBoundaryEnvelope, verify_boundary_envelope
 
@@ -63,6 +64,42 @@ def _authorization_expiry(entry: dict[str, Any]) -> datetime:
     return expires.astimezone(timezone.utc)
 
 
+def _envelope_custody(envelope: SovereignBoundaryEnvelope) -> dict[str, Any] | None:
+    custody = envelope.provenance.execution_custody
+    return None if custody is None else custody.model_dump(mode="json")
+
+
+def derive_execution_identity_digest(
+    entry: dict[str, Any],
+    *,
+    execution_id: str,
+) -> str:
+    """Derive the immutable identity later suitable for device-side grants.
+
+    This digest intentionally combines what is being executed, which release and
+    configuration may execute it, the governing policy revision, the signed
+    PRIME authorization identity, and the one-time execution ID. It is not a
+    device authorization by itself; it is the stable subject a future device
+    challenge/grant protocol can bind.
+    """
+
+    payload = {
+        "schema": "WS-SBK-EXECUTION-IDENTITY-V0.1",
+        "authorization_id": entry.get("authorization_id"),
+        "execution_id": execution_id,
+        "envelope_id": entry.get("envelope_id"),
+        "actor": entry.get("actor"),
+        "action_digest": entry.get("action_digest"),
+        "effect_scope": entry.get("effect_scope"),
+        "capability_status": entry.get("capability_status"),
+        "policy_revision": entry.get("policy_revision"),
+        "human_approval_ref": entry.get("human_approval_ref"),
+        "key_fingerprint_sha256": entry.get("key_fingerprint_sha256"),
+        "execution_custody": entry.get("execution_custody"),
+    }
+    return canonical_digest(payload)
+
+
 def _assert_envelope_binding(
     entry: dict[str, Any],
     *,
@@ -76,6 +113,8 @@ def _assert_envelope_binding(
         raise PrimeEffectAuthorizationLedgerError("execution claim envelope mismatch")
     if entry.get("action_digest") != envelope.action_digest:
         raise PrimeEffectAuthorizationLedgerError("execution claim action mismatch")
+    if entry.get("execution_custody") != _envelope_custody(envelope):
+        raise PrimeEffectAuthorizationLedgerError("execution custody binding mismatch")
     if envelope.prime_authorization_ref != authorization_id:
         raise PrimeEffectAuthorizationLedgerError(
             "envelope authorization reference mismatch"
@@ -83,6 +122,15 @@ def _assert_envelope_binding(
     if envelope.prime_execution_claim_ref != execution_id:
         raise PrimeEffectAuthorizationLedgerError(
             "envelope execution claim reference mismatch"
+        )
+    expected_identity = derive_execution_identity_digest(entry, execution_id=execution_id)
+    if entry.get("execution_identity_digest") != expected_identity:
+        raise PrimeEffectAuthorizationLedgerError(
+            "recorded execution identity digest does not verify"
+        )
+    if envelope.prime_execution_identity_digest != expected_identity:
+        raise PrimeEffectAuthorizationLedgerError(
+            "envelope execution identity digest mismatch"
         )
 
 
@@ -112,6 +160,11 @@ def verified_effect_authorization_registry_patch(
         "capability_status": verified.capability_status.value,
         "policy_revision": verified.policy_revision,
         "human_approval_ref": verified.human_approval_ref,
+        "execution_custody": (
+            None
+            if verified.execution_custody is None
+            else verified.execution_custody.model_dump(mode="json")
+        ),
         "key_id": verified.key_id,
         "key_fingerprint_sha256": verified.key_fingerprint_sha256,
         "nonce": verified.nonce,
@@ -157,6 +210,7 @@ def claim_effect_authorization_registry_patch(
         "capability_status": envelope.action.capability_status.value,
         "policy_revision": envelope.policy.policy_revision,
         "human_approval_ref": envelope.human_approval_ref,
+        "execution_custody": _envelope_custody(envelope),
         "key_fingerprint_sha256": envelope.prime_authorization_key_fingerprint_sha256,
     }
     mismatches = [name for name, value in expected.items() if entry.get(name) != value]
@@ -172,11 +226,15 @@ def claim_effect_authorization_registry_patch(
             "effect authorization expired before claim"
         )
 
+    execution_identity_digest = derive_execution_identity_digest(
+        entry, execution_id=execution_id
+    )
     updated = dict(entry)
     updated.update(
         {
             "status": "CLAIMED",
             "execution_id": execution_id,
+            "execution_identity_digest": execution_identity_digest,
             "claimed_at": _utc_iso(current),
         }
     )
@@ -222,14 +280,7 @@ def begin_effect_invocation_registry_patch(
     execution_id: str,
     now: datetime | None = None,
 ) -> dict[str, Any]:
-    """Persist the one-way execution fence before any physical executor is called.
-
-    Only one caller can transition a durable authorization from CLAIMED to
-    INVOKING under ``DurableStore.transact_registry``. A second caller sees
-    INVOKING and must fail before invoking an external side effect. If the
-    process dies after this fence is persisted, operators must treat the effect
-    as potentially invoked and reconcile it rather than replaying the claim.
-    """
+    """Persist the one-way execution fence before any physical executor is called."""
 
     if not verify_boundary_envelope(envelope):
         raise PrimeEffectAuthorizationLedgerError(
@@ -340,13 +391,7 @@ def indeterminate_effect_authorization_registry_patch(
     reason: str,
     observed_at: datetime | None = None,
 ) -> dict[str, Any]:
-    """Fail closed when the caller cannot prove whether a claimed effect occurred.
-
-    INDETERMINATE authorizations are never automatically reusable. Human review
-    must create a fresh authorization rather than retrying the same claim.
-    ``CLAIMED`` is accepted for conservative recovery when a caller cannot prove
-    whether invocation began; normal physical PEP failures occur from INVOKING.
-    """
+    """Fail closed when a claimed/invoking effect outcome cannot be proven."""
 
     if not reason:
         raise PrimeEffectAuthorizationLedgerError(
