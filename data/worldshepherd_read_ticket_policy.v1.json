@@ -42,9 +42,13 @@
   "clock_skew_live_validation": true,
   "clock_skew_validation_scope": "single_host_injected_issuer_and_claimant_absolute_offsets",
   "clock_skew_offset_test_seconds": 10000000,
-  "failure_injection_validation": false,
+  "failure_injection_validation": true,
+  "failure_injection_validation_scope": "single_host_postgres_transaction_abort_and_backend_termination",
+  "transaction_abort_recovery_validation": true,
+  "terminated_backend_recovery_validation": true,
+  "best_effort_dead_connection_cleanup": true,
   "multi_host_live_validation": false,
   "distributed_replay_protection": false,
   "multi_host_consensus": false,
-  "claims_boundary": "Default single-use enforcement remains process-local memory and durable_replay_protection remains false for the default path. SQLite is validated for restart-safe single-host claims. The credential-blind Postgres adapter is PROVEN INTERNALLY in ephemeral PostgreSQL 18.6 CI for single-host multi-connection and separate-process contention, reconnect replay rejection, database-authoritative expiry and consumption time, and injected opposite issuer/claimant absolute clock offsets. Network/failure injection, multi-host operation, distributed replay protection, and consensus remain NOT CURRENTLY CLAIMED."
+  "claims_boundary": "Default single-use enforcement remains process-local memory and durable_replay_protection remains false for the default path. SQLite is validated for restart-safe single-host claims. The credential-blind Postgres adapter is PROVEN INTERNALLY in ephemeral PostgreSQL 18.6 CI for single-host multi-connection and separate-process contention, reconnect replay rejection, database-authoritative expiry and consumption time, injected opposite issuer/claimant absolute clock offsets, transaction-abort rollback recovery, and forced backend-termination recovery. Multi-host operation, distributed replay protection, network-partition behavior, ambiguous commit outcomes, and consensus remain NOT CURRENTLY CLAIMED."
 }

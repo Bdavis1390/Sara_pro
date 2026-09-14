@@ -126,7 +126,7 @@ def test_real_postgres_rejects_expired_ticket_by_database_time_despite_client_sk
     assert claim["reason"] == "ticket expired"
 
 
-def test_policy_records_database_time_and_clock_skew_evidence_without_distributed_upgrade():
+def test_policy_records_single_host_resilience_evidence_without_distributed_upgrade():
     policy = json.loads(POLICY.read_text(encoding="utf-8"))
     assert policy["postgres_live_validation"] is True
     assert policy["postgres_live_validation_environment"] == "ephemeral_postgresql_18_6_github_actions"
@@ -143,7 +143,11 @@ def test_policy_records_database_time_and_clock_skew_evidence_without_distribute
     assert policy["clock_skew_live_validation"] is True
     assert policy["clock_skew_validation_scope"] == "single_host_injected_issuer_and_claimant_absolute_offsets"
     assert policy["clock_skew_offset_test_seconds"] == 10_000_000
-    assert policy["failure_injection_validation"] is False
+    assert policy["failure_injection_validation"] is True
+    assert policy["failure_injection_validation_scope"] == "single_host_postgres_transaction_abort_and_backend_termination"
+    assert policy["transaction_abort_recovery_validation"] is True
+    assert policy["terminated_backend_recovery_validation"] is True
+    assert policy["best_effort_dead_connection_cleanup"] is True
     assert policy["multi_host_live_validation"] is False
     assert policy["distributed_replay_protection"] is False
     assert policy["multi_host_consensus"] is False
