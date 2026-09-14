@@ -17,6 +17,8 @@ EXPECTED_EVENTS = frozenset(
         "qcrypto_overwatch_state",
     }
 )
+EXPECTED_RECONCILIATION_SCHEMA = "WS-ECHO-SARA-RECONCILIATION-V1"
+EXPECTED_RECONCILIATION_SCOPE = "PROVIDED_SARA_AUDIT_WINDOW"
 
 
 class QCryptoEchoForwarderError(RuntimeError):
@@ -92,6 +94,57 @@ def stdlib_json_transport(
     return status, value
 
 
+def _validate_reconciliation(
+    reconciliation: dict[str, Any],
+    *,
+    expected_event_ids: tuple[str, ...],
+) -> None:
+    """Validate the four submitted records without treating retained ECHO history as an error.
+
+    ECHO reconciliation is window-scoped on the SARA side but compares that window
+    against the persistent ECHO store. Therefore unrelated retained records may
+    legitimately be classified as ECHO_ONLY. The submitted QCRYPTO records still
+    must all be explicitly MATCHED with no SARA_ONLY or PAYLOAD_MISMATCH entries.
+    """
+    if reconciliation.get("schema") != EXPECTED_RECONCILIATION_SCHEMA:
+        raise QCryptoEchoForwarderError("ECHO reconciliation returned an unsupported schema")
+    if reconciliation.get("scope") != EXPECTED_RECONCILIATION_SCOPE:
+        raise QCryptoEchoForwarderError("ECHO reconciliation returned an unsupported scope")
+
+    counts = reconciliation.get("counts")
+    if not isinstance(counts, dict):
+        raise QCryptoEchoForwarderError("ECHO reconciliation response is missing counts")
+    required = {"MATCHED": 4, "SARA_ONLY": 0, "PAYLOAD_MISMATCH": 0}
+    if any(counts.get(key) != value for key, value in required.items()):
+        raise QCryptoEchoForwarderError(
+            "ECHO reconciliation did not confirm all four submitted records"
+        )
+    echo_only = counts.get("ECHO_ONLY")
+    if not isinstance(echo_only, int) or isinstance(echo_only, bool) or echo_only < 0:
+        raise QCryptoEchoForwarderError("ECHO reconciliation returned an invalid ECHO_ONLY count")
+
+    entries = reconciliation.get("entries")
+    if not isinstance(entries, list):
+        raise QCryptoEchoForwarderError("ECHO reconciliation response is missing entries")
+    submitted = set(expected_event_ids)
+    matched_submitted: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise QCryptoEchoForwarderError("ECHO reconciliation contains a malformed entry")
+        event_id = entry.get("event_id")
+        classification = entry.get("classification")
+        if event_id in submitted:
+            if classification != "MATCHED":
+                raise QCryptoEchoForwarderError(
+                    "ECHO reconciliation did not classify every submitted record as MATCHED"
+                )
+            matched_submitted.add(event_id)
+    if matched_submitted != submitted:
+        raise QCryptoEchoForwarderError(
+            "ECHO reconciliation omitted one or more submitted event IDs"
+        )
+
+
 class QCryptoEchoForwarder:
     def __init__(
         self,
@@ -146,8 +199,8 @@ class QCryptoEchoForwarder:
             raise QCryptoEchoConflict("ECHO reconciliation reported conflicting evidence")
         if status < 200 or status >= 300:
             raise QCryptoEchoForwarderError(f"ECHO reconciliation failed with HTTP {status}")
-        counts = reconciliation.get("counts")
-        required = {"MATCHED": 4, "SARA_ONLY": 0, "ECHO_ONLY": 0, "PAYLOAD_MISMATCH": 0}
-        if not isinstance(counts, dict) or any(counts.get(key) != value for key, value in required.items()):
-            raise QCryptoEchoForwarderError("ECHO reconciliation did not confirm an exact four-event match")
+        _validate_reconciliation(
+            reconciliation,
+            expected_event_ids=tuple(event_ids),
+        )
         return QCryptoEchoSyncResult(stored, deduplicated, tuple(event_ids), reconciliation)
