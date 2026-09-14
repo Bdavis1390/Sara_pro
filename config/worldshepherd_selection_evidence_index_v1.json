@@ -136,6 +136,52 @@
         "distributed concurrency/load-balancer behavior",
         "operational or mission-scale ISR performance"
       ]
+    },
+    {
+      "id": "E5_BOUNDED_AUDIT_HISTORY_AND_CONTENTION",
+      "workflow": "Worldshepherd API Path Benchmark",
+      "run_id": 34802767769,
+      "job_id": 103848601250,
+      "commit": "84157a63a86ff127acbcfac9af68365afaceb867",
+      "result": "SUCCESS",
+      "semantic_result": "BOUNDED_LOCAL_AUDIT_HISTORY_MEASURED_PARTIAL",
+      "artifact_id": 10331774233,
+      "artifact_digest": "sha256:a70009a1f261a61cadbe050dc728ccd36133e405e4f9a72042e564b44b4e908b",
+      "audit_events_expected": 87,
+      "audit_events_observed": 87,
+      "historical_retrieval": {
+        "1000_records_limit50_p95_ms": 0.7162,
+        "10000_records_limit50_p95_ms": 0.72709,
+        "50000_records_limit50_p95_ms": 0.790979,
+        "1000_records_limit500_p95_ms": 6.544023,
+        "10000_records_limit500_p95_ms": 7.00048,
+        "50000_records_limit500_p95_ms": 6.853868,
+        "50000_records_limit50_speedup_vs_forward_scan": 392.71639955043054,
+        "50000_records_limit500_speedup_vs_forward_scan": 46.18330846173284
+      },
+      "concurrency_profile": {
+        "one_worker_p95_ms": 5.317885,
+        "two_workers_p95_ms": 14.437987,
+        "four_workers_p95_ms": 29.926717,
+        "eight_workers_p95_ms": 72.622008,
+        "one_worker_requests_per_second": 180.1567679155209,
+        "eight_workers_requests_per_second": 157.59859534341953,
+        "deterministic_result_digest_all_profiles": true
+      },
+      "supports": [
+        "reverse bounded audit-tail reads preserve tested JSONL/corruption semantics",
+        "tested local audit-tail retrieval no longer scales materially with total history size for fixed requested tail",
+        "correct chronological tail retrieval through 50000 generated audit records",
+        "same-process governed requests remain successful and deterministic through 8 benchmark workers",
+        "durable synthetic-fusion audit completeness under the combined serial/concurrent benchmark"
+      ],
+      "does_not_support": [
+        "external database or object-store history performance",
+        "distributed or multi-host concurrency capacity",
+        "production request-rate SLA",
+        "real network/TLS/proxy behavior",
+        "mission-scale or classified operational performance"
+      ]
     }
   ],
   "negative_evidence": [
@@ -147,6 +193,16 @@
       "observed_cross_helicity_relative_drift": 0.000036710178210651096,
       "frozen_acceptance_limit": 0.00002,
       "rule": "Do not relax the acceptance limit merely to obtain a passing result. Validate temporal refinement/convergence and version any justified benchmark change."
+    },
+    {
+      "id": "N2_DURABLE_AUDIT_WRITE_CONTENTION",
+      "status": "OPEN_RETAINED_ENGINEERING_LIMIT",
+      "scope": "single-process governed synthetic-fusion benchmark with per-request durable audit fsync",
+      "one_worker_p95_ms": 5.317885,
+      "eight_workers_p95_ms": 72.622008,
+      "one_worker_requests_per_second": 180.1567679155209,
+      "eight_workers_requests_per_second": 157.59859534341953,
+      "interpretation": "Correctness and deterministic digests were preserved, but request latency increased materially as durable audit writes serialized. Optimize only if durable-before-response and fail-closed semantics remain intact."
     }
   ],
   "unresolved_external_or_business_gates": [
@@ -184,12 +240,13 @@
       "status": "PARTIAL_INTERNAL",
       "completed": [
         "bounded function-level synthetic fusion benchmark",
-        "governed in-process application/API path benchmark with durable audit persistence"
+        "governed in-process application/API path benchmark with durable audit persistence",
+        "bounded local audit-history retrieval benchmark through 50000 generated records",
+        "single-process governed contention profile through 8 benchmark workers"
       ],
       "needed": [
-        "persistence and historical retrieval benchmark",
+        "durable-write contention optimization or higher-concurrency characterization without weakening fail-closed durability",
         "representative multimodal pipeline benchmark",
-        "concurrency/peak-load benchmark",
         "real network/TLS/proxy benchmark",
         "external database/object-store integration benchmark"
       ]
