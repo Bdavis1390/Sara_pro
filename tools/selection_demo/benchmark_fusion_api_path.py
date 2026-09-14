@@ -8,6 +8,7 @@ import statistics
 import sys
 import tempfile
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -17,12 +18,19 @@ from fastapi.testclient import TestClient
 
 from worldshepherd_sara.app import app
 from worldshepherd_sara.limits import MAX_REQUEST_BYTES
+from worldshepherd_sara.storage import DurableStore
 from worldshepherd_sara.synthetic_fusion_api import SYNTHETIC_FUSION_SCOPE
 
 
 PROFILES = (16, 64, 128)
 REPETITIONS = 7
 WARMUP = 2
+CONCURRENCY_OBSERVATIONS = 64
+CONCURRENCY_LEVELS = (1, 2, 4, 8)
+REQUESTS_PER_WORKER = 4
+RETRIEVAL_HISTORY_SIZES = (1_000, 10_000, 50_000)
+RETRIEVAL_LIMITS = (50, 500)
+RETRIEVAL_REPETITIONS = 5
 ADMIN_TOKEN = "benchmark-admin-token-0123456789abcdef012345"
 RELAY_TOKEN = "benchmark-relay-token-0123456789abcdef012345"
 
@@ -51,9 +59,9 @@ def _observations(count: int) -> list[dict[str, Any]]:
     return observations
 
 
-def _request_body(count: int) -> dict[str, Any]:
+def _request_body(count: int, *, scenario_id: str | None = None) -> dict[str, Any]:
     return {
-        "scenario_id": f"API-PATH-BENCH-{count:04d}",
+        "scenario_id": scenario_id or f"API-PATH-BENCH-{count:04d}",
         "observations": _observations(count),
         "max_spatial_distance": 2.0,
         "max_time_delta_seconds": 1.0,
@@ -163,6 +171,118 @@ def _run_profile(client: TestClient, count: int) -> dict[str, Any]:
     }
 
 
+def _run_concurrency_profile(client: TestClient, workers: int) -> dict[str, Any]:
+    body = _request_body(
+        CONCURRENCY_OBSERVATIONS,
+        scenario_id=f"API-CONCURRENCY-{CONCURRENCY_OBSERVATIONS:04d}",
+    )
+    total_requests = workers * REQUESTS_PER_WORKER
+
+    def one_request(_: int) -> dict[str, Any]:
+        started = time.perf_counter_ns()
+        response = client.post("/v1/synthetic-fusion", headers=_auth(), json=body)
+        elapsed_ms = (time.perf_counter_ns() - started) / 1_000_000.0
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"concurrent request failed at workers={workers}: "
+                f"{response.status_code} {response.text}"
+            )
+        payload = response.json()
+        if payload["observation_count"] != CONCURRENCY_OBSERVATIONS:
+            raise RuntimeError("concurrent request changed observation count")
+        return {
+            "elapsed_ms": elapsed_ms,
+            "result_digest": payload["result_digest"],
+            "request_digest": payload["request_digest"],
+        }
+
+    batch_started = time.perf_counter_ns()
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        outcomes = list(executor.map(one_request, range(total_requests)))
+    batch_elapsed_s = (time.perf_counter_ns() - batch_started) / 1_000_000_000.0
+
+    latencies = [float(item["elapsed_ms"]) for item in outcomes]
+    result_digests = {str(item["result_digest"]) for item in outcomes}
+    request_digests = {str(item["request_digest"]) for item in outcomes}
+    deterministic = len(result_digests) == 1 and len(request_digests) == 1
+    if not deterministic:
+        raise RuntimeError(f"concurrency profile {workers} was not deterministic")
+
+    return {
+        "workers": workers,
+        "observations_per_request": CONCURRENCY_OBSERVATIONS,
+        "requests_per_worker": REQUESTS_PER_WORKER,
+        "total_requests": total_requests,
+        "batch_elapsed_ms": batch_elapsed_s * 1000.0,
+        "requests_per_second": total_requests / batch_elapsed_s,
+        "request_latency_p50_ms": statistics.median(latencies),
+        "request_latency_p95_ms": _nearest_rank(latencies, 0.95),
+        "request_latency_max_ms": max(latencies),
+        "deterministic_result_digest": True,
+        "request_digest": next(iter(request_digests)),
+        "result_digest": next(iter(result_digests)),
+    }
+
+
+def _fixture_line(sequence: int) -> str:
+    value = {
+        "event": "benchmark_history_fixture",
+        "actor": "benchmark",
+        "sequence": sequence,
+        "payload": {
+            "scenario": "historical-retrieval",
+            "digest": f"fixture-{sequence:08d}",
+        },
+    }
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
+
+
+def _write_history_fixture(store: DurableStore, count: int) -> int:
+    store.audit_path.parent.mkdir(parents=True, exist_ok=True)
+    with store.audit_path.open("w", encoding="utf-8") as handle:
+        for sequence in range(count):
+            handle.write(_fixture_line(sequence))
+            handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    store.audit_path.chmod(0o600)
+    return store.audit_path.stat().st_size
+
+
+def _run_retrieval_profile(root: Path, history_size: int, limit: int) -> dict[str, Any]:
+    store = DurableStore(root / f"history-{history_size}")
+    file_bytes = _write_history_fixture(store, history_size)
+    elapsed_ms: list[float] = []
+    for _ in range(RETRIEVAL_REPETITIONS):
+        started = time.perf_counter_ns()
+        records = store.read_audit(limit)
+        elapsed_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
+        expected_count = min(history_size, limit)
+        if len(records) != expected_count:
+            raise RuntimeError(
+                f"retrieval count mismatch history={history_size} limit={limit}: "
+                f"expected {expected_count}, got {len(records)}"
+            )
+        if any(record.get("event") == "audit_corruption_detected" for record in records):
+            raise RuntimeError("audit retrieval reported corruption for generated fixture")
+        if records:
+            expected_last = history_size - 1
+            if int(records[-1].get("sequence", -1)) != expected_last:
+                raise RuntimeError("audit retrieval did not return the newest fixture record")
+
+    return {
+        "history_records": history_size,
+        "history_file_bytes": file_bytes,
+        "retrieval_limit": limit,
+        "repetitions": RETRIEVAL_REPETITIONS,
+        "read_audit_p50_ms": statistics.median(elapsed_ms),
+        "read_audit_p95_ms": _nearest_rank(elapsed_ms, 0.95),
+        "read_audit_max_ms": max(elapsed_ms),
+        "correct_tail_returned": True,
+        "corruption_markers": 0,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", required=True)
@@ -174,17 +294,30 @@ def main() -> int:
         _prepare_environment(root)
         with TestClient(app) as client:
             profiles = [_run_profile(client, count) for count in PROFILES]
+            concurrency_profiles = [
+                _run_concurrency_profile(client, workers)
+                for workers in CONCURRENCY_LEVELS
+            ]
             audit_records = client.app.state.store.read_audit(500)
             fusion_audits = [
                 record
                 for record in audit_records
                 if record.get("event") == "synthetic_fusion_completed"
             ]
-            expected_audits = len(PROFILES) * (WARMUP + REPETITIONS)
+            expected_audits = (
+                len(PROFILES) * (WARMUP + REPETITIONS)
+                + sum(workers * REQUESTS_PER_WORKER for workers in CONCURRENCY_LEVELS)
+            )
             audit_persistence_complete = len(fusion_audits) == expected_audits
 
+        retrieval_profiles = [
+            _run_retrieval_profile(root, history_size, limit)
+            for history_size in RETRIEVAL_HISTORY_SIZES
+            for limit in RETRIEVAL_LIMITS
+        ]
+
     result = {
-        "schema": "WS-GOVERNED-FUSION-API-PATH-BENCHMARK-V1",
+        "schema": "WS-GOVERNED-FUSION-API-PATH-BENCHMARK-V2",
         "result": "PASS" if audit_persistence_complete else "FAIL",
         "software_commit": args.software_commit,
         "executed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -213,20 +346,36 @@ def main() -> int:
             "multimodal imagery/video/radar decoding",
             "AI/ML inference",
             "external databases/object stores",
-            "CUI/classified cross-domain controls",
             "operator UI rendering",
-            "distributed concurrency/load-balancer behavior",
+            "multi-host load-balancer behavior",
         ],
         "profiles": profiles,
+        "concurrency": {
+            "scope": "single-process TestClient contention benchmark against the same governed route and durable store",
+            "profiles": concurrency_profiles,
+        },
+        "historical_retrieval": {
+            "scope": "generated valid JSONL audit-history fixtures; fixture population excluded from timed reads",
+            "implementation_note": "DurableStore.read_audit reconstructs a bounded tail while scanning the audit file under the store lock.",
+            "profiles": retrieval_profiles,
+        },
         "audit_persistence": {
             "expected_synthetic_fusion_events": expected_audits,
             "observed_synthetic_fusion_events": len(fusion_audits),
             "complete": audit_persistence_complete,
         },
+        "acceptance_checks": {
+            "all_application_requests_succeeded": True,
+            "all_profiles_deterministic": True,
+            "audit_event_count_complete": audit_persistence_complete,
+            "historical_tail_correct_for_all_profiles": True,
+            "no_history_fixture_corruption_markers": True,
+        },
         "claims_boundary": [
-            "This is an in-process FastAPI TestClient application-path benchmark on the recorded CI host.",
-            "It materially includes service authorization, validation, fusion/evidence construction, response serialization, and durable audit persistence, but it is not a real-network or operational ISR benchmark.",
-            "No DIU, DoD, CUI/classified, edge-device, or mission-scale performance compliance is established by this result.",
+            "This is an in-process single-host benchmark on the recorded CI environment.",
+            "Concurrency results characterize same-process request contention and durable audit serialization, not distributed service capacity.",
+            "Historical retrieval results use generated audit fixtures and characterize the current local JSONL tail reader, not an external database.",
+            "No production-scale, mission-scale, or external-environment performance compliance is established by this result.",
         ],
     }
 
