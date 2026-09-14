@@ -6,6 +6,7 @@ module prime_hw_actuation_commit_bridge #(
     input  wire        clk,
     input  wire        reset_n,
     input  wire        upstream_execute_pulse,
+    input  wire        upstream_protocol_violation,
     input  wire [7:0]  command_seq,
     input  wire [63:0] command_digest,
     input  wire        actuator_ack_valid,
@@ -97,6 +98,7 @@ module prime_hw_actuation_commit_bridge #(
 
     assign fault_event =
         bridge_state_integrity_fault ||
+        upstream_protocol_violation ||
         unsolicited_ack ||
         bad_pending_ack ||
         overlapping_issue ||
