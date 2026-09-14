@@ -41,9 +41,12 @@ module prime_hw_policy_controller_diverse (
     localparam logic [2:0] ST_SAFE        = 3'd5;
     localparam logic [2:0] ST_RECOVERY    = 3'd6;
 
-    logic [7:0] primary_state_q;
+    // Keep the two representation-diverse state stores explicitly visible in
+    // the vendor-neutral evidence netlist. This supports structural auditing
+    // of the RTL implementation; it is not a physical-placement guarantee.
+    (* keep *) logic [7:0] primary_state_q;
     logic [7:0] primary_state_d;
-    logic [6:0] shadow_state_q;
+    (* keep *) logic [6:0] shadow_state_q;
     logic [6:0] shadow_state_d;
     logic       primary_valid;
     logic       shadow_valid;
