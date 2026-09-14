@@ -16,15 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
 
-      - name: Render RFCXML with pinned xml2rfc
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned official xml2rfc release
+        run: python -m pip install --disable-pip-version-check 'xml2rfc==3.34.0'
+
+      - name: Render RFCXML with xml2rfc
         shell: bash
         run: |
-          docker run --rm \
-            -v "$PWD:/data" \
-            -w /data \
-            ghcr.io/ietf-tools/xml2rfc-slim:v3.32.0 \
-            standards/draft-davis-scitt-digital-asset-continuity-00.xml \
-            --text --html
+          xml2rfc standards/draft-davis-scitt-digital-asset-continuity-00.xml --text --html
 
       - name: Verify rendered Internet-Draft artifacts
         shell: bash
