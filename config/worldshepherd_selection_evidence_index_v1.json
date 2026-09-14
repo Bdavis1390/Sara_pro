@@ -1,7 +1,7 @@
 {
   "schema": "worldshepherd_selection_evidence_index_v1",
   "status": "INTERNAL_EVIDENCE_INDEX",
-  "generated_date": "2026-09-13",
+  "generated_date": "2026-09-14",
   "selection_claim_state": "PREFERRED_WITHIN_EVIDENCED_GOVERNANCE_WEDGE_INTERNAL_ONLY",
   "claims_boundary": "This index establishes an internally reproducible evidence chain for a narrow software/governance selection wedge. It does not establish government preference, award, CMMC/NIST/SPRS status, classified authorization, operational deployment, open-source licensing, or competitor inferiority.",
   "evidence_chain": [
@@ -93,6 +93,49 @@
         "government acceptance",
         "external partner validation"
       ]
+    },
+    {
+      "id": "E4_GOVERNED_APPLICATION_PATH",
+      "workflow": "Worldshepherd API Path Benchmark",
+      "run_id": 34800898317,
+      "job_id": 103843194373,
+      "commit": "db792dbc0350c288872def4b426e3cd135f2f85e",
+      "result": "SUCCESS",
+      "semantic_result": "GOVERNED_APPLICATION_PATH_MEASURED_PARTIAL",
+      "artifact_id": 10330923078,
+      "artifact_digest": "sha256:f7845737260202a6f4a501bc792d9a19506bf34afeae5fcefa3c7ea45985d2ec",
+      "service_limits": {
+        "max_request_bytes": 65536,
+        "max_synthetic_observations": 128
+      },
+      "measurements": {
+        "16_observations_full_path_p95_ms": 3.622677,
+        "64_observations_full_path_p95_ms": 5.009813,
+        "128_observations_full_path_p95_ms": 9.423019,
+        "128_observations_server_fusion_graph_p95_ms": 5.138693,
+        "audit_events_expected": 27,
+        "audit_events_observed": 27,
+        "deterministic_result_digest_all_profiles": true
+      },
+      "supports": [
+        "authenticated and authorized bounded application-path execution",
+        "Pydantic request validation and JSON-safe rejected-input handling",
+        "synthetic fusion and evidence-graph construction through the FastAPI surface",
+        "request and result digest generation",
+        "durable audit append/fsync in the measured path",
+        "response-model validation and JSON serialization",
+        "non-finite numerical input rejection without audit mutation",
+        "fail-closed behavior when audit persistence is unavailable"
+      ],
+      "does_not_support": [
+        "real network/TLS/proxy latency",
+        "multimodal imagery/video/radar decoding",
+        "AI/ML inference performance",
+        "external database/object-store performance",
+        "CUI/classified cross-domain controls",
+        "distributed concurrency/load-balancer behavior",
+        "operational or mission-scale ISR performance"
+      ]
     }
   ],
   "negative_evidence": [
@@ -139,11 +182,16 @@
     {
       "id": "G4_END_TO_END_SCALE",
       "status": "PARTIAL_INTERNAL",
+      "completed": [
+        "bounded function-level synthetic fusion benchmark",
+        "governed in-process application/API path benchmark with durable audit persistence"
+      ],
       "needed": [
-        "application/API path benchmark",
         "persistence and historical retrieval benchmark",
         "representative multimodal pipeline benchmark",
-        "concurrency/peak-load benchmark"
+        "concurrency/peak-load benchmark",
+        "real network/TLS/proxy benchmark",
+        "external database/object-store integration benchmark"
       ]
     }
   ],
