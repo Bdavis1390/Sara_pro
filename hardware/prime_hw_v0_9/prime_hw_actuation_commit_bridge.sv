@@ -24,9 +24,9 @@ module prime_hw_actuation_commit_bridge #(
 );
     localparam [7:0] TIMEOUT_LAST_AGE = ACK_TIMEOUT_CYCLES - 1;
 
-    // Every safety-relevant stored field has a complementary representation.
-    // This proves a logical representation-diversity contract only; it does not
-    // establish physical placement or common-mode fault independence.
+    // Every safety-relevant stored field, including one-cycle issue/commit
+    // outputs, has a complementary logical representation. This is not a claim
+    // of physical placement or common-mode fault independence.
     (* keep *) reg        pending_valid_q;
     (* keep *) reg        pending_valid_inv_q;
     (* keep *) reg [7:0]  pending_seq_q;
@@ -37,12 +37,13 @@ module prime_hw_actuation_commit_bridge #(
     (* keep *) reg [7:0]  pending_age_inv_q;
     (* keep *) reg        actuation_fault_latched_q;
     (* keep *) reg        actuation_fault_latched_inv_q;
+    (* keep *) reg        actuator_issue_pulse_q;
+    (* keep *) reg        actuator_issue_pulse_inv_q;
+    (* keep *) reg        actuator_commit_pulse_q;
+    (* keep *) reg        actuator_commit_pulse_inv_q;
 
-    (* keep *) reg actuator_issue_pulse_q;
-    (* keep *) reg actuator_commit_pulse_q;
-
-    wire [81:0] state_primary;
-    wire [81:0] state_inverse;
+    wire [83:0] state_primary;
+    wire [83:0] state_inverse;
     wire bridge_state_valid;
     wire ack_tuple_match;
     wire unsolicited_ack;
@@ -55,6 +56,8 @@ module prime_hw_actuation_commit_bridge #(
     wire [7:0] next_age;
 
     assign state_primary = {
+        actuator_commit_pulse_q,
+        actuator_issue_pulse_q,
         actuation_fault_latched_q,
         pending_valid_q,
         pending_age_q,
@@ -62,6 +65,8 @@ module prime_hw_actuation_commit_bridge #(
         pending_digest_q
     };
     assign state_inverse = {
+        actuator_commit_pulse_inv_q,
+        actuator_issue_pulse_inv_q,
         actuation_fault_latched_inv_q,
         pending_valid_inv_q,
         pending_age_inv_q,
@@ -133,10 +138,14 @@ module prime_hw_actuation_commit_bridge #(
             actuation_fault_latched_q <= 1'b0;
             actuation_fault_latched_inv_q <= 1'b1;
             actuator_issue_pulse_q <= 1'b0;
+            actuator_issue_pulse_inv_q <= 1'b1;
             actuator_commit_pulse_q <= 1'b0;
+            actuator_commit_pulse_inv_q <= 1'b1;
         end else begin
             actuator_issue_pulse_q <= 1'b0;
+            actuator_issue_pulse_inv_q <= 1'b1;
             actuator_commit_pulse_q <= 1'b0;
+            actuator_commit_pulse_inv_q <= 1'b1;
 
             if (fault_event) begin
                 actuation_fault_latched_q <= 1'b1;
@@ -153,6 +162,7 @@ module prime_hw_actuation_commit_bridge #(
                 pending_age_q <= 8'h00;
                 pending_age_inv_q <= 8'hff;
                 actuator_issue_pulse_q <= 1'b1;
+                actuator_issue_pulse_inv_q <= 1'b0;
             end else if (accept_commit) begin
                 pending_valid_q <= 1'b0;
                 pending_valid_inv_q <= 1'b1;
@@ -163,6 +173,7 @@ module prime_hw_actuation_commit_bridge #(
                 pending_age_q <= 8'h00;
                 pending_age_inv_q <= 8'hff;
                 actuator_commit_pulse_q <= 1'b1;
+                actuator_commit_pulse_inv_q <= 1'b0;
             end else if (
                 pending_valid_q &&
                 bridge_state_valid &&
@@ -176,8 +187,13 @@ module prime_hw_actuation_commit_bridge #(
         end
     end
 
-    assign actuator_issue_pulse = actuator_issue_pulse_q;
-    assign actuator_commit_pulse = actuator_commit_pulse_q;
+    // The externally visible critical pulse bits are additionally gated by the
+    // complete bridge-state integrity result. A detected single-representation
+    // corruption therefore cannot directly assert either pulse.
+    assign actuator_issue_pulse =
+        actuator_issue_pulse_q && bridge_state_valid && !actuation_fault_latched_q;
+    assign actuator_commit_pulse =
+        actuator_commit_pulse_q && bridge_state_valid && !actuation_fault_latched_q;
     assign actuation_pending = pending_valid_q && bridge_state_valid;
     assign pending_seq = pending_seq_q;
     assign pending_digest = pending_digest_q;
