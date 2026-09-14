@@ -57,7 +57,6 @@ def test_all_seven_cases_build_with_required_ocsf_base_fields_and_type_uid_formu
         "severity_id",
         "time",
         "type_uid",
-        "actor",
     }
     for case in cases:
         event = build_full_ocsf_event(case)
@@ -66,6 +65,8 @@ def test_all_seven_cases_build_with_required_ocsf_base_fields_and_type_uid_formu
         assert event["metadata"]["version"] == OCSF_VERSION
         assert event["metadata"]["product"]["name"] == "Worldshepherd SARA"
         assert event["severity_id"] == 1
+        if event["class_uid"] != 0:
+            assert "actor" in event
 
 
 def test_worldshepherd_native_fields_are_kept_out_of_top_level_ocsf_namespace():
@@ -98,19 +99,33 @@ def test_class_specific_required_material_is_present():
             assert event["class_uid"] == 1007
             assert event["category_uid"] == 1
             assert event["process"]["uid"]
-        elif case.action_kind == "file_operation":
+        elif case.action_kind == "file_operation" and not case.hostless:
             assert event["class_uid"] == 1001
             assert event["category_uid"] == 1
             assert event["file"]["name"] == "fixture.txt"
             assert event["file"]["type_id"] == 1
 
 
-def test_hostless_source_does_not_fabricate_device_identity():
+def test_hostless_source_uses_generic_base_event_instead_of_fabricating_device():
     case = next(case for case in _cases() if case.case_id == "INT-FILE-READ-HOSTLESS")
     event = build_full_ocsf_event(case)
+    native = event["unmapped"]["worldshepherd"]
+
     assert case.hostless is True
+    assert event["class_uid"] == 0
+    assert event["class_name"] == "Base Event"
+    assert event["category_uid"] == 0
+    assert event["category_name"] == "Uncategorized"
+    assert event["activity_id"] == 99
+    assert event["activity_name"] == "Other"
+    assert event["type_uid"] == 99
     assert "device" not in event
-    assert event["unmapped"]["worldshepherd"]["hostless"] is True
+    assert "actor" not in event
+    assert "file" not in event
+    assert native["hostless"] is True
+    assert native["source_file"]["name"] == "fixture.txt"
+    assert native["source_file"]["path"] == "/synthetic/fixture.txt"
+    assert "no device identity" in event["message"].lower()
 
 
 def test_denied_interrupted_and_readonly_mismatch_states_remain_explicit():
