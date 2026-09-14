@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -29,6 +30,7 @@ from .prime_sentinel_authorization import (
 )
 from .storage import DurableStore
 from .synthetic_fusion_api import router as synthetic_fusion_router
+from .validation_errors import sanitized_request_validation_handler
 
 
 PROTECTED_REGISTRY_NAMESPACES = frozenset(
@@ -139,6 +141,10 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url=None,
     redoc_url=None,
+)
+app.add_exception_handler(
+    RequestValidationError,
+    sanitized_request_validation_handler,
 )
 app.add_middleware(RequestSizeLimitMiddleware)
 app.include_router(prime_passport_router)
