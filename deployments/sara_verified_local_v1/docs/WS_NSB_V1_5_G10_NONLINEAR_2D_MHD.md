@@ -1,4 +1,4 @@
-# WS-NSB v1.5 — G10 nonlinear 2D incompressible MHD gate
+# WS-NSB v1.5.1 — G10 nonlinear 2D incompressible MHD gate
 
 ## Scope
 
@@ -26,6 +26,20 @@ G10 requires three separate cases.
 2. **Mixed nonlinear dissipative case.** Independent velocity and magnetic modes exercise both induction and Lorentz backreaction. The gate checks nontrivial evolution, kinetic + magnetic energy decay, positive viscous/resistive dissipation, instantaneous energy-budget closure, divergence control, and mean-state preservation.
 3. **Short ideal invariant case.** With `nu = eta = 0`, the gate checks bounded drift of total energy, cross helicity, and mean-square magnetic potential over a short integration window.
 
+## v1.5.1 numerical-defect remediation
+
+Issue #245 identified that the original ideal-case `dt = 2.5e-4` configuration produced cross-helicity relative drift above the predeclared `2e-5` invariant limit while the other G10 gates remained healthy. The acceptance threshold is not relaxed.
+
+v1.5.1 changes only the ideal-invariant temporal evidence path:
+
+- preserves the original coarse `dt = 2.5e-4` run as regression evidence;
+- adds `dt = 1.25e-4` and `dt = 6.25e-5` refinement runs at the same grid and `final_time = 0.01`;
+- records the actual effective `dt`, step count, and all three invariant drifts for each run in the hash-bound report;
+- uses `dt = 1.25e-4` as the acceptance configuration;
+- requires regression coverage to demonstrate that the original coarse run remains above the unchanged threshold, refinement reduces the maximum observed invariant drift, and the `1.25e-4` run satisfies the original `2e-5` limit.
+
+For `final_time = 0.01`, the requested refinement sequence corresponds to 40, 80, and 160 steps respectively. CI remains the acceptance oracle for the measured drift values; this document does not predeclare a passing numerical result.
+
 ## Acceptance boundary
 
 The default gate requires:
@@ -35,7 +49,7 @@ The default gate requires:
 - velocity and magnetic divergence RMS <= `1e-10`;
 - instantaneous total-energy budget residual <= `2e-8`;
 - mixed nonlinear RHS RMS >= `1e-2` and a measurable dissipative total-energy decrease;
-- ideal total-energy, cross-helicity, and magnetic-potential-variance relative drift <= `2e-5`;
+- ideal total-energy, cross-helicity, and magnetic-potential-variance relative drift <= `2e-5` at the v1.5.1 acceptance step size;
 - deterministic SHA-256 report verification.
 
 These are bounded internal software acceptance thresholds, not universal MHD accuracy claims.
