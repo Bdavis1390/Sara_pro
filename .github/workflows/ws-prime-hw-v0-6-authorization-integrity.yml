@@ -1,0 +1,166 @@
+name: WS PRIME-HW v0.6 Authorization Integrity Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - 'hardware/prime_hw_v0_6/**'
+      - '.github/workflows/ws-prime-hw-v0-6-authorization-integrity.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - 'hardware/prime_hw_v0_6/**'
+      - '.github/workflows/ws-prime-hw-v0-6-authorization-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authorization-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record source and claims boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=RTL + YOSYS STRUCTURAL + BOUNDED FORMAL AUTHORIZATION-INTEGRITY EVIDENCE ONLY / NO PHYSICAL INDEPENDENCE OR SILICON FAULT QUALIFICATION"
+
+      - name: Install verification tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys z3
+          python3 --version
+          iverilog -V | head -n 2
+          yosys -V
+          z3 --version
+
+      - name: Exhaust authorization witness voter and live rail-fault contracts
+        run: |
+          mkdir -p build/prime_hw_v0_6
+          set -o pipefail
+          iverilog -g2012 \
+            -s tb_prime_hw_v0_6_authorization_integrity \
+            -o build/prime_hw_v0_6/authorization-integrity.vvp \
+            hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+            hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv \
+            hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv \
+            hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv \
+            hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv \
+            hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv \
+            hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv \
+            hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv \
+            hardware/prime_hw_v0_6/tb_prime_hw_v0_6_authorization_integrity.sv \
+            2>&1 | tee build/prime_hw_v0_6/iverilog.log
+          vvp build/prime_hw_v0_6/authorization-integrity.vvp \
+            | tee build/prime_hw_v0_6/authorization-integrity.log
+          grep -q 'PASS: PRIME-HW v0.6 witness truth-space=2048 voter truth-space=128 isolated rail faults=4' \
+            build/prime_hw_v0_6/authorization-integrity.log
+
+      - name: Synthesize and audit authorization decision cones
+        run: |
+          yosys -Q -l build/prime_hw_v0_6/yosys-synthesis.log -p '
+            read_verilog -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv;
+            hierarchy -check -top prime_hw_policy_controller_authorization_hardened;
+            prep -top prime_hw_policy_controller_authorization_hardened;
+            check;
+            stat;
+            write_json build/prime_hw_v0_6/prime_hw_v0_6.json;
+          '
+          test -s build/prime_hw_v0_6/prime_hw_v0_6.json
+          python3 hardware/prime_hw_v0_6/check_synthesized_authorization_cone.py \
+            build/prime_hw_v0_6/prime_hw_v0_6.json \
+            | tee build/prime_hw_v0_6/authorization-cone-audit.log
+          grep -q 'final allow fan-in contains both independent allow-vote rails and the sticky fault latch' \
+            build/prime_hw_v0_6/authorization-cone-audit.log
+          grep -q 'authorization-integrity-fault fan-in contains all four preserved allow/deny vote rails' \
+            build/prime_hw_v0_6/authorization-cone-audit.log
+
+      - name: Build authorization differential formal model
+        run: |
+          yosys -Q -l build/prime_hw_v0_6/yosys-formal.log -p '
+            read_verilog -formal -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened_formal.sv;
+            hierarchy -check -top prime_hw_policy_controller_authorization_hardened_formal;
+            prep -top prime_hw_policy_controller_authorization_hardened_formal;
+            check;
+            async2sync;
+            dffunmap;
+            write_smt2 -wires build/prime_hw_v0_6/prime_hw_v0_6_formal.smt2;
+          '
+          test -s build/prime_hw_v0_6/prime_hw_v0_6_formal.smt2
+
+      - name: Prove bounded authorization safety and nominal equivalence
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 50 --presat \
+            --dump-vcd build/prime_hw_v0_6/proof-failure.vcd \
+            build/prime_hw_v0_6/prime_hw_v0_6_formal.smt2 \
+            | tee build/prime_hw_v0_6/proof.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_6/proof.log
+
+      - name: Prove semantic and authorization fault-class witnesses
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 50 -c \
+            --dump-vcd build/prime_hw_v0_6/cover.vcd \
+            build/prime_hw_v0_6/prime_hw_v0_6_formal.smt2 \
+            | tee build/prime_hw_v0_6/cover.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_6/cover.log
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_6/cover.log)
+          echo "reached_cover_statements=$reached"
+          test "$reached" -eq 12
+
+      - name: Preserve v0.6 evidence custody
+        run: |
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_6/cover.log)
+          {
+            echo "tested_sha=$(git rev-parse HEAD)"
+            echo "witness_truth_cases=2048"
+            echo "voter_truth_cases=128"
+            echo "isolated_preserved_vote_rail_fault_classes=4"
+            echo "formal_horizon=50"
+            echo "solver=z3"
+            echo "declared_cover_statements=12"
+            echo "reached_cover_statements=$reached"
+            echo "formal_reset_lowering=async2sync+dffunmap"
+            echo "nominal_reference=hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv"
+            echo "post_synthesis_authorization_cone_audit=REQUIRED"
+            echo "single_path_disagreement_claim=DECLARED_MODEL_ONLY"
+            echo "common_mode_authorization_fault_claim=NONE"
+            echo "final_output_pin_fault_claim=NONE"
+            echo "physical_independence_claim=NONE"
+            echo "claims_boundary=RTL + YOSYS STRUCTURAL + BOUNDED FORMAL AUTHORIZATION-INTEGRITY EVIDENCE ONLY / NO PHYSICAL INDEPENDENCE OR SILICON FAULT QUALIFICATION"
+            sha256sum \
+              hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv \
+              hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv \
+              hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened_formal.sv \
+              hardware/prime_hw_v0_6/tb_prime_hw_v0_6_authorization_integrity.sv \
+              hardware/prime_hw_v0_6/check_synthesized_authorization_cone.py \
+              build/prime_hw_v0_6/prime_hw_v0_6.json \
+              build/prime_hw_v0_6/prime_hw_v0_6_formal.smt2 \
+              build/prime_hw_v0_6/authorization-integrity.log \
+              build/prime_hw_v0_6/authorization-cone-audit.log \
+              build/prime_hw_v0_6/proof.log \
+              build/prime_hw_v0_6/cover.log
+          } > build/prime_hw_v0_6/evidence.txt
+
+      - name: Upload v0.6 authorization-integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-prime-hw-v0-6-authorization-integrity-evidence
+          path: build/prime_hw_v0_6/
+          if-no-files-found: error
