@@ -8,7 +8,7 @@
     "ARM26BX06-NV012_ARM26TX06-NV003",
     "DON26BX05-NP004",
     "PROJ00716",
-    "HR001126S0011",
+    "DARPA_IPTO_RESEARCH_WEDGE",
     "GSA_OASIS_PLUS"
   ],
   "market_reference_classes": {
@@ -22,10 +22,10 @@
       "id": "D1",
       "dimension": "auditable_decision_as_program",
       "government_signal": "Army requires structured, auditable, signer-ready Decision Packages with reproducible workflows, explicit assumptions, risks, bias checks and human control.",
-      "worldshepherd_position": "SARA + PRIME + ECHO + PRE architecture is directionally aligned.",
-      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "worldshepherd_position": "SARA + PRIME + ECHO + PRE architecture is directionally aligned and is now exercised inside the green selection-core baseline.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_INTERNAL_REPRODUCIBLE_EVIDENCE",
       "proof_to_win": [
-        "two end-to-end decision demonstrations",
+        "two opportunity-specific end-to-end decision demonstrations",
         "machine-readable decision schema",
         "what-flips-the-decision analysis",
         "signer-ready package generation",
@@ -36,10 +36,10 @@
       "id": "D2",
       "dimension": "provenance_confidence_and_traceability",
       "government_signal": "DIU requires transparent reasoning, confidence scoring and data provenance; NAVWAR calls auditable history critical for operator trust.",
-      "worldshepherd_position": "ECHO provenance and SARA audit primitives provide a foundation.",
-      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "worldshepherd_position": "ECHO provenance, PRE qualification bundles and SARA audit primitives have reproducible internal evidence; the qualification compiler reported no bundle failures in the green selection baseline.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_INTERNAL_REPRODUCIBLE_EVIDENCE",
       "proof_to_win": [
-        "source-to-decision lineage",
+        "source-to-decision lineage in one evaluator-facing scenario",
         "contradictory-evidence retention",
         "confidence calculation with uncertainty",
         "operator decision and outcome replay",
@@ -50,10 +50,10 @@
       "id": "D3",
       "dimension": "human_authorization_and_bounded_ai",
       "government_signal": "Army and NAVWAR explicitly preserve human control/operator approval; DIU supports analyst/human-on-loop workflows.",
-      "worldshepherd_position": "PRIME policy/authorization doctrine is a strong architectural fit.",
-      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "worldshepherd_position": "PRIME policy/authorization controls are included in the passing selection-core test surface.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_INTERNAL_REPRODUCIBLE_EVIDENCE",
       "proof_to_win": [
-        "deny-by-default action policy",
+        "deny-by-default action policy in evaluator demo",
         "role-separated approval flow",
         "approval revocation",
         "policy decision trace",
@@ -64,50 +64,52 @@
       "id": "D4",
       "dimension": "modular_open_deployment",
       "government_signal": "NAVWAR favors API-first loose coupling and containerization; DIU requires modular cloud-native/containerized architecture and open standards.",
-      "worldshepherd_position": "Containerized SARA reference architecture and mission-pack concept align.",
-      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "worldshepherd_position": "Containerized verified-local SARA architecture, mission-pack adapters and versioned interface tests provide internal evidence; further evaluator-facing API packaging remains needed.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_INTERNAL_REPRODUCIBLE_EVIDENCE",
       "proof_to_win": [
         "documented public APIs",
         "replaceable adapters",
-        "containerized offline demo",
+        "containerized offline evaluator demo",
         "versioned interface contract",
-        "government-owned/non-proprietary export format"
+        "government-readable non-proprietary evidence export format"
       ]
     },
     {
       "id": "D5",
       "dimension": "ddil_resilience_and_recovery",
       "government_signal": "Multiple opportunities require degraded-state operation, replay, historical state, resilient operations or edge deployment.",
-      "worldshepherd_position": "DDIL Mission Mesh and operational-resilience drills are aligned but not yet mission-scale validated.",
-      "current_status": "INTERNAL_EVIDENCE_PARTIAL",
+      "worldshepherd_position": "DDIL tests and operational-resilience CI now provide reproducible internal evidence. In run 34798178408, a controlled runtime-loss drill restored readiness/state/build identity with measured recovery of 2.0 seconds on the CI host.",
+      "current_status": "INTERNAL_REPRODUCIBLE_EVIDENCE_PARTIAL_NOT_MISSION_SCALE",
       "proof_to_win": [
-        "network partition test",
+        "network partition test in evaluator scenario",
         "store-and-forward integrity",
         "deterministic reconciliation",
         "operator-visible stale-data/confidence state",
-        "measured recovery time objective"
+        "repeat recovery testing across representative failure modes"
       ]
     },
     {
       "id": "D6",
       "dimension": "performance_at_operational_scale",
       "government_signal": "DIU Space Threat sets a 5-second latency threshold, 2-second objective, nominal 20-30 MB/min and burst handling up to about 5 GB/min.",
-      "worldshepherd_position": "No evidence currently supports these rates.",
-      "current_status": "NOT_CURRENTLY_CLAIMED",
+      "worldshepherd_position": "Bounded synthetic in-process fusion performance is now measured. On CI commit f8d51e88af6cd82e9c649ad4095e89cb5ded4340, 10,000 synthetic observations (~1.10 MB serialized input) produced deterministic output at 36.97 ms p95, equivalent to about 1,788 MB/min for that function-only workload. This excludes network, API, persistence, imagery/video/radar decoding, inference, storage/retrieval, security-domain controls and UI, so it is not end-to-end DIU performance evidence.",
+      "current_status": "INTERNAL_BOUNDED_SYNTHETIC_PERFORMANCE_EVIDENCE_PARTIAL",
       "proof_to_win": [
-        "repeatable latency benchmark",
-        "burst-ingestion benchmark",
-        "multi-year retrieval benchmark or representative scaled substitute",
-        "stability under peak load",
-        "published hardware/software test configuration"
+        "application/API-path latency benchmark",
+        "bounded concurrent-ingestion benchmark",
+        "persistent-store write/read and historical retrieval benchmark",
+        "representative multimodal decode/model pipeline benchmark",
+        "peak-load stability benchmark",
+        "published exact hardware/software test configuration",
+        "eventual representative end-to-end evaluation against opportunity-specific targets"
       ]
     },
     {
       "id": "D7",
       "dimension": "cyber_and_controlled_environment_readiness",
-      "government_signal": "DIU requires NIST SP 800-171 and classified/CUI capabilities; NAVWAR projects CMMC Level 2 Self; larger incumbents publicly claim accredited/classified deployments.",
-      "worldshepherd_position": "Compliance readiness controls exist; certification/authorization is not claimed.",
-      "current_status": "BLOCKED_MISSING_EXTERNAL_EVIDENCE",
+      "government_signal": "DIU requires NIST SP 800-171 and classified/CUI capabilities; NAVWAR projects CMMC Level 2 Self and current Q&A states all NP004 Phase-I data/activity is CUI; larger incumbents publicly claim accredited/classified deployments.",
+      "worldshepherd_position": "Compliance readiness controls and a PUBLIC-ONLY boundary exist; certification/authorization and a controlled production enclave are not claimed.",
+      "current_status": "BLOCKED_MISSING_EXTERNAL_AND_ENVIRONMENT_EVIDENCE",
       "proof_to_win": [
         "authorized production boundary",
         "required NIST/CMMC evidence",
@@ -134,10 +136,10 @@
       "id": "D9",
       "dimension": "operational_reference_and_sustainment",
       "government_signal": "DIU differentiators include mission-critical support, 24/7 availability and resilient sustainment; incumbents have public operational deployments.",
-      "worldshepherd_position": "No equivalent operational reference is currently claimed.",
-      "current_status": "NOT_CURRENTLY_CLAIMED",
+      "worldshepherd_position": "Internal resilience evidence exists, but no equivalent independent operational customer/reference is currently claimed.",
+      "current_status": "BLOCKED_EXTERNAL_VALIDATION",
       "proof_to_win": [
-        "external pilot",
+        "external pilot or independent evaluator",
         "measured availability and incident metrics",
         "operator feedback",
         "maintainability and upgrade evidence",
@@ -146,9 +148,9 @@
     }
   ],
   "preferred_choice_gate": {
-    "minimum_condition": "Worldshepherd may be presented internally as PREFERRED_CHOICE_READY only when D1-D5 are evidenced by reproducible demos, D6 has opportunity-specific benchmark evidence where applicable, D7 passes the target contract's mandatory compliance gates, D8 is resolved for opportunities requiring open-source licensing, and at least one external reference or partner validation closes D9.",
-    "current_state": "NOT_YET_PREFERRED_CHOICE_READY",
-    "reason": "Architecture fit is strong, but operational-scale performance, controlled-environment compliance, licensing, and external reference evidence remain material gaps."
+    "minimum_condition": "Worldshepherd may be presented internally as PREFERRED_CHOICE_READY only when D1-D5 are evidenced by reproducible evaluator-facing demos, D6 has opportunity-specific end-to-end benchmark evidence where applicable, D7 passes the target contract's mandatory compliance gates, D8 is resolved for opportunities requiring open-source licensing, and at least one external reference or partner validation closes D9.",
+    "current_state": "DIFFERENTIATED_WEDGE_INTERNALLY_PROVEN_NOT_YET_PREFERRED_CHOICE_READY",
+    "reason": "Worldshepherd now has green reproducible selection-core evidence, qualification bundles, a controlled resilience drill, and bounded synthetic performance evidence. Remaining blockers are end-to-end operational scale, controlled-environment/compliance evidence, licensing where required, and independent external validation."
   },
-  "next_critical_artifact": "Worldshepherd Selection Demonstration v1: one unclassified, containerized, repeatable scenario that exercises provenance, uncertainty, decision schema, human approval, DDIL interruption/recovery, replay, and exported decision evidence with measured latency."
+  "next_critical_artifact": "Worldshepherd Evaluator Demonstration Pack v1: containerized synthetic scenario plus reproducibility instructions, requirements-to-evidence crosswalk, exact-commit evidence bundle, bounded performance report, known-negative-evidence register, and independent-review checklist."
 }
