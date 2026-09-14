@@ -1,88 +1,116 @@
 # Worldshepherd — NIST AITE model-provider readiness assessment
 
-**Status:** PREPARATION ONLY / NOT ENROLLED / NOT SUBMITTED  
-**Program:** NIST Artificial Intelligence Technology Evaluation (AITE)  
-**Date:** 2026-09-12
+**Original assessment:** 2026-09-12  
+**Updated:** 2026-09-14  
+**Relationship state:** AITE COMMUNITY MEMBER  
+**Model-provider state:** NOT READY / NOT ENROLLED / NOT SUBMITTED / NO AITE RESULT
 
 ## 1. Purpose
 
-Assess whether a bounded Worldshepherd model or model adapter could legitimately enter NIST AITE as a **model provider** without misrepresenting the broader Worldshepherd/SARA system as an AITE-compatible model or treating an eventual AITE score as AGI/system/deployment validation.
+Assess whether a bounded Worldshepherd model implementation can legitimately enter NIST AITE without treating the broader Worldshepherd/SARA governance stack as the scored model and without promoting a task-specific result into a system-wide claim.
 
-## 2. Authoritative AITE boundary
+## 2. Public-source record
 
-NIST describes AITE as a neutral third-party, sequestered testbed that evaluates AI model performance on blind data to reduce train/test contamination. AITE supports two participant tracks: data providers and model providers. Participation is open to participants that can abide by the AITE Participation Agreement and rules.
+Public AITE information used for this assessment was checked on 2026-09-14 against:
 
-Current Phase 1 accepts only a very limited number of additional application tests and models. Models are queued first-come, first-served as capacity permits. The initial tasks are image-analysis / vision-language-model tasks in quantum science, genomics, and public-safety video. NIST states that any model meeting the API and evaluation criteria may be submitted.
+- NIST AITE Overview & Road Map v1.0: https://ai-challenges.nist.gov/pub/22
+- NIST AITE FAQ: https://ai-challenges.nist.gov/aite_faq
+- NIST AITE program page: https://ai-challenges.nist.gov/aite
+- NIST launch announcement dated 2026-07-27: https://www.nist.gov/news-events/news/2026/07/announcing-nists-artificial-intelligence-technology-evaluation-aite
 
-NIST states that submitted models/data are treated as controlled unclassified information and that results are public. The AITE roadmap says published results identify model, dataset, task, metric, scores, and uncertainty. NIST expressly disclaims endorsement and cautions that performance on the current small task set should not be generalized automatically to new data or tasks.
+The public roadmap describes Phase 1 as accepting only a very limited number of additional models and application tests. It states that models are tested first-come, first-served as capacity permits and that early application-test selection considers anticipated integration ease and impact. The public materials also describe AITE as a sequestered blind-data evaluation environment and state that results are public and task-scoped, with NIST disclaiming endorsement.
 
-## 3. Worldshepherd fit
+These are time-sensitive program facts. Recheck the current NIST materials before any submission decision.
 
-### Potentially reusable internal concepts
+## 3. Current relationship state
 
-Pending PR #168 contains an internal AGI/evaluation stack with protected-artifact custody, pre-run commitments, post-run result sealing, provenance, external-evaluator handoff rules, and replication controls. Those controls are conceptually useful for preparing an external evaluation, but PR #168 remains open and is not itself AITE evidence.
+NIST has acknowledged Worldshepherd's inquiry, registered the interest, and indicated that participation-process information will follow. The contact address has been added to the AITE Community. An implementation-focused community inquiry was sent on 2026-09-14.
 
-### What AITE would evaluate
+Community membership and registered interest do not establish model-provider enrollment, model acceptance, application-test acceptance, submission, independent validation, certification, endorsement, or an AITE score.
 
-AITE evaluates the submitted **model implementation/API**, not the Worldshepherd governance architecture as a whole. SARA, PRIME SENTINEL, ECHO SENTINEL LINK, OVERWATCH, the AGI gate, human approvals, orchestration, and deployment controls must not be counted as model-performance evidence unless the relevant AITE specification explicitly includes them in the submitted artifact and scoring protocol.
+## 4. What AITE would evaluate
 
-## 4. Current readiness state
+The working assumption is that AITE evaluates the submitted model implementation/API required by the selected task. SARA, PRIME SENTINEL, ECHO SENTINEL LINK, OVERWATCH, approval gates, provenance infrastructure, and other governance components remain outside the scored artifact unless NIST's actual task specification explicitly includes them.
+
+Those components may still support internal version control, approvals, evidence custody, and post-result claims control.
+
+## 5. Current readiness state
 
 `AITE_MODEL_PROVIDER_STATE = NOT_READY`
 
-Blocking gaps:
+Open requirements:
 
-1. **Participation Agreement not reviewed/accepted.** No agreement, registration, or NIST invitation/acceptance is claimed.
-2. **Exact AITE API contract not implemented.** The public FAQ states compatible models must adhere to the API, but this branch does not claim an AITE-compatible adapter.
-3. **Initial-task compatibility not established.** The current tasks emphasize VLM/image analysis in quantum-dot, genomics, and public-safety domains. Worldshepherd has not demonstrated a submitted model matching those tasks.
-4. **CUI handling path not validated.** NIST states submitted models/data are treated as CUI. Worldshepherd's internal NIST 800-171 precursor work does not establish authorization or readiness to exchange/process CUI for AITE.
-5. **Public-result consent not given.** Results are intended to be public and associated with model identity; explicit organizational approval is required before participation.
-6. **Entity/submitter identity unresolved.** Curious nerdworX LLC remains in formation in current Worldshepherd records. A precise legal submitting organization must be established before representing an organizational participation state.
-7. **No external score exists.** Internal CI, public benchmarks, synthetic tests, or PR #168 evidence must not be represented as AITE results.
+1. **Participation terms:** current Participation Agreement has not yet been reviewed or accepted.
+2. **Exact interface:** the current model-provider API/submission protocol has not yet been obtained and implemented.
+3. **Task compatibility:** no specific Worldshepherd-associated model has yet been demonstrated compatible with an active AITE task.
+4. **Provider-side handling duties:** unresolved pending NIST's current agreement and handling instructions. NIST's public description of how it protects received submissions does not, by itself, establish the submitter's exact obligations.
+5. **Public-result authorization:** no model submission has been authorized and no publication-risk approval has been recorded.
+6. **Submitting identity:** the legal submitting identity must be accurate at the time of any submission.
+7. **External result:** none exists. Internal CI, public benchmarks, synthetic fixtures, or repository artifacts are not AITE results.
 
-## 5. Proposed bounded adapter architecture
+## 6. Requirements inquiry versus submission readiness
 
-If the participation/API requirements are obtained and approved, implement a dedicated `AITE_MODEL_ADAPTER` with these properties:
+The initial requirements inquiry is allowed precisely because some authoritative participation materials are not yet available to Worldshepherd. Obtaining those materials is **not** a prerequisite to asking NIST for them.
 
-- one fixed submitted model/version identity;
-- exact task-specific request/response schema required by NIST;
-- no hidden access to holdout/evaluation labels;
-- no training, self-modification, retrieval of protected answers, or state carryover unless explicitly permitted by the AITE specification;
-- deterministic configuration manifest and dependency lock;
-- bounded timeout/resource policy;
-- input/output hashing and local evidence record **outside** any prohibited interaction with the evaluator;
-- explicit separation between the submitted model and SARA/PRIME/ECHO/OVERWATCH governance components;
+The requirements below are gates for later **participation/submission readiness**, not for a non-proprietary information request.
+
+## 7. Bounded adapter architecture
+
+If the official requirements support participation, implement a dedicated `AITE_MODEL_ADAPTER` with:
+
+- one fixed model/version identity;
+- the exact NIST request/response schema for the selected task;
+- a reproducible dependency/configuration manifest;
+- bounded runtime/resource policy;
+- no access to protected evaluation answers;
+- no training, self-modification, external retrieval, persistence, or cross-trial state unless the official specification permits it;
 - version freeze before submission;
-- a mapping from NIST-reported metrics to Worldshepherd evidence records without promoting the score beyond the tested task;
-- public-result acknowledgement and claims-control language.
+- local validation using only permitted public/synthetic fixtures;
+- an evidence manifest that cannot be confused with a NIST-generated result.
 
-## 6. Acceptance criteria before contacting NIST for participation
+Preparation defaults above must yield to the official AITE specification when received.
 
-A preparation package is ready for a model-provider inquiry only after:
+## 8. Submission-readiness gates
 
-- [ ] the current AITE Evaluation Plan and Participation Agreement are obtained and reviewed;
-- [ ] at least one active AITE task is technically compatible with a model Worldshepherd can lawfully submit;
-- [ ] the task/API specification is implemented locally against public/synthetic fixtures;
-- [ ] the submitted model identity/version is frozen;
-- [ ] CUI handling implications are reviewed and an allowed exchange/deployment path is established;
-- [ ] the legal submitter/organization is accurately identified;
-- [ ] CRE1AWS explicitly accepts public-result publication risk;
-- [ ] the claims-control statement below is included in any participation inquiry.
+### Requirements gate
 
-## 7. External-safe claims statement
+- [ ] current Participation Agreement reviewed;
+- [ ] official model-provider API/submission protocol obtained;
+- [ ] selected task evaluation criteria obtained;
+- [ ] provider-side handling instructions reviewed.
 
-> Worldshepherd is evaluating whether a bounded model implementation can meet NIST AITE's model-provider API and participation requirements. Worldshepherd has not been accepted into AITE, has not submitted a model, and has no AITE result. Internal evaluation/governance artifacts are not NIST validation and are not being presented as evidence of AGI, certification, operational readiness, endorsement, or system-level performance.
+### Technical-fit gate
 
-## 8. Relationship to the Worldshepherd AGI gate
+- [ ] one active task matches a model that can lawfully be submitted;
+- [ ] official schema implemented;
+- [ ] local validator passes permitted fixtures;
+- [ ] dependency/runtime package is reproducible;
+- [ ] fixed model/version frozen.
 
-An AITE result, if later obtained, should enter the AGI/evaluation stack as **one externally generated, task-scoped evidence item**. It must not by itself change `intelligence_state`, establish AGI, establish replication across unrelated lanes, establish deployment authorization, or establish scientific consensus.
+### Administrative gate
 
-AITE is therefore valuable precisely because it supplies a neutral, blind-data measurement source while preserving the Worldshepherd rule that no single benchmark or evaluator can silently promote broader capability claims.
+- [ ] submitting identity confirmed;
+- [ ] publication implications accepted;
+- [ ] applicable security/data-handling path approved;
+- [ ] explicit submission authorization recorded.
 
-## 9. Next action
+### Claims-control gate
 
-Do **not** contact or enroll automatically. First obtain/review the current Participation Agreement and task/API specifications, then prepare a concise non-proprietary model-provider inquiry for CRE1AWS review. The public AITE contact listed by NIST is `aite-poc@list.nist.gov`.
+- [ ] no endorsement language;
+- [ ] no system-wide inference from a task-scoped score;
+- [ ] no internal benchmark described as AITE evidence;
+- [ ] uncertainty, dataset, task, model/version, and metric limits preserved in external statements.
 
-## Claims boundary
+## 9. Application-test/data-provider lane
 
-This document is internal preparation based on public NIST AITE material and repository state. It does not establish AITE participation, NIST acceptance, CUI authorization, standards conformity, certification, independent validation, AGI, or operational readiness.
+Because the public roadmap emphasizes integration ease and impact in early phases, any Worldshepherd-originated test concept should be a compact measurement problem rather than a broad system demonstration.
+
+Issue #267 records one internal candidate: Bounded Authorization Decision Evaluation (BADE). It is preparation only and has not been proposed to, accepted by, reviewed by, or scored by NIST.
+
+## 10. Result-ingestion rule
+
+Any eventual AITE result enters the Worldshepherd evidence system as one externally generated, task-scoped measurement record. It must not automatically establish general intelligence, system-wide operational readiness, certification, standards conformity, deployment authorization, scientific consensus, or performance on unrelated tasks.
+
+## External-safe status statement
+
+> Worldshepherd is a member of the NIST AITE Community and NIST has registered its interest in possible participation. Worldshepherd has not enrolled or submitted a model, has no AITE result, and does not represent internal evaluation artifacts as NIST validation, certification, endorsement, or system-wide performance evidence.
