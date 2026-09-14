@@ -6,6 +6,7 @@ on:
       - "worldshepherd/connectors-read-receipt-v1-*"
   pull_request:
     paths:
+      - "data/worldshepherd_connectors.v2.json"
       - "worldshepherd_sara/connector_receipt.py"
       - ".github/workflows/connector-read-receipt-ci.yml"
 
@@ -64,11 +65,18 @@ jobs:
           )
           assert verify_read_receipt(receipt, ticket=planned.ticket, result_bytes=raw)
           assert receipt['raw_result_embedded'] is False
+          assert receipt['raw_external_identifiers_embedded'] is False
           assert receipt['credential_material_embedded'] is False
           assert receipt['execution_attestation'] == 'host_reported'
+          assert 'host_result_id' not in receipt
+          assert 'source_refs' not in receipt
+          assert 'evidence_refs' not in receipt
+          assert len(receipt['host_result_id_sha256']) == 64
+          assert all(len(value) == 64 for value in receipt['source_ref_sha256s'])
+          assert all(len(value) == 64 for value in receipt['evidence_ref_sha256s'])
 
           tampered_receipt = dict(receipt)
-          tampered_receipt['host_result_id'] = 'tampered'
+          tampered_receipt['status'] = 'error'
           assert not verify_read_receipt(tampered_receipt, ticket=planned.ticket, result_bytes=raw)
 
           forged_ticket = dict(planned.ticket)
@@ -77,4 +85,16 @@ jobs:
 
           wrong_result = b'different result'
           assert not verify_read_receipt(receipt, ticket=planned.ticket, result_bytes=wrong_result)
+
+          try:
+              seal_read_receipt(
+                  ticket=planned.ticket,
+                  status='success',
+                  result_sha256=digest,
+                  completed_at=float(planned.ticket['issued_at']) - 1.0,
+              )
+          except ValueError as exc:
+              assert 'predate' in str(exc)
+          else:
+              raise AssertionError('receipt predating its ticket must be rejected')
           PY
