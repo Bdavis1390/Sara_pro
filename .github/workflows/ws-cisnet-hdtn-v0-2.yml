@@ -5,6 +5,7 @@ on:
     paths:
       - "cisnet/**"
       - "integrations/hdtn/**"
+      - "docs/WS_CISNET_HDTN_V0_2.md"
       - ".github/workflows/ws-cisnet-hdtn-v0-2.yml"
   workflow_dispatch:
 
@@ -17,8 +18,11 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - name: Validate contact plan
-        run: python -m json.tool integrations/hdtn/ws-cisnet-contact-plan.json >/dev/null
+      - name: Validate Worldshepherd HDTN artifacts
+        run: |
+          python -m compileall -q cisnet
+          python -m json.tool integrations/hdtn/ws-cisnet-contact-plan.json >/dev/null
+          python -c 'import json; from cisnet.hdtn import reference_cislunar_contacts,to_hdtn_contact_plan; assert to_hdtn_contact_plan(reference_cislunar_contacts()) == json.load(open("integrations/hdtn/ws-cisnet-contact-plan.json"))'
       - name: Install HDTN build dependencies
         run: sudo apt-get update && sudo apt-get install -y cmake build-essential libzmq3-dev libboost-all-dev openssl libssl-dev
       - name: Fetch pinned NASA HDTN
@@ -36,3 +40,7 @@ jobs:
         run: "$RUNNER_TEMP/HDTN/build/tests/unit_tests/unit-tests"
       - name: Run HDTN integrated tests
         run: "$RUNNER_TEMP/HDTN/build/tests/integrated_tests/integrated-tests"
+      - name: Verify BPv7 and contact-plan interfaces are present
+        run: |
+          "$RUNNER_TEMP/HDTN/build/common/bpcodec/apps/bpgen-async" --help 2>&1 | grep -q -- "--use-bp-version-7"
+          "$RUNNER_TEMP/HDTN/build/module/hdtn_one_process/hdtn-one-process" --help 2>&1 | grep -q -- "--contact-plan-file"
