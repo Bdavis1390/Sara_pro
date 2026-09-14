@@ -42,6 +42,32 @@ def records() -> list[AuditRecord]:
     ]
 
 
+def reconciliation(payload, *, echo_only: int = 0):
+    submitted = [item["payload"]["_outbox_event_id"] for item in payload["records"]]
+    entries = [
+        {"event_id": event_id, "classification": "MATCHED"}
+        for event_id in submitted
+    ]
+    entries.extend(
+        {
+            "event_id": f"SARA-EVENT-RETAINED-{index}",
+            "classification": "ECHO_ONLY",
+        }
+        for index in range(echo_only)
+    )
+    return {
+        "schema": "WS-ECHO-SARA-RECONCILIATION-V1",
+        "scope": "PROVIDED_SARA_AUDIT_WINDOW",
+        "counts": {
+            "MATCHED": 4,
+            "SARA_ONLY": 0,
+            "ECHO_ONLY": echo_only,
+            "PAYLOAD_MISMATCH": 0,
+        },
+        "entries": entries,
+    }
+
+
 def success_transport(base_url, path, payload, token):
     assert base_url == "http://echo:9550"
     assert token == "e" * 40
@@ -51,18 +77,10 @@ def success_transport(base_url, path, payload, token):
             "event_id": payload["payload"]["_outbox_event_id"],
         }
     assert path == "/v1/reconcile"
-    return 200, {
-        "schema": "WS-ECHO-SARA-RECONCILIATION-V1",
-        "counts": {
-            "MATCHED": 4,
-            "SARA_ONLY": 0,
-            "ECHO_ONLY": 0,
-            "PAYLOAD_MISMATCH": 0,
-        },
-    }
+    return 200, reconciliation(payload)
 
 
-def test_forwarder_requires_exact_reconciliation():
+def test_forwarder_requires_all_submitted_records_to_match():
     forwarder = QCryptoEchoForwarder(
         base_url="http://echo:9550",
         token="e" * 40,
@@ -76,6 +94,29 @@ def test_forwarder_requires_exact_reconciliation():
     assert result.to_dict()["live_value_authorized"] is False
 
 
+def test_forwarder_accepts_unrelated_retained_echo_history():
+    def transport(base_url, path, payload, token):
+        if path == "/v1/ingest":
+            return 200, {
+                "outcome": "STORED",
+                "event_id": payload["payload"]["_outbox_event_id"],
+            }
+        return 200, reconciliation(payload, echo_only=17)
+
+    forwarder = QCryptoEchoForwarder(
+        base_url="http://echo:9550",
+        token="e" * 40,
+        transport=transport,
+    )
+    result = forwarder.sync(records())
+    assert result.reconciliation["counts"] == {
+        "MATCHED": 4,
+        "SARA_ONLY": 0,
+        "ECHO_ONLY": 17,
+        "PAYLOAD_MISMATCH": 0,
+    }
+
+
 def test_forwarder_rejects_reconciliation_gap():
     def transport(base_url, path, payload, token):
         if path == "/v1/ingest":
@@ -83,21 +124,58 @@ def test_forwarder_rejects_reconciliation_gap():
                 "outcome": "STORED",
                 "event_id": payload["payload"]["_outbox_event_id"],
             }
-        return 200, {
-            "counts": {
-                "MATCHED": 3,
-                "SARA_ONLY": 1,
-                "ECHO_ONLY": 0,
-                "PAYLOAD_MISMATCH": 0,
-            }
-        }
+        body = reconciliation(payload)
+        body["counts"]["MATCHED"] = 3
+        body["counts"]["SARA_ONLY"] = 1
+        body["entries"][0]["classification"] = "SARA_ONLY"
+        return 200, body
 
     forwarder = QCryptoEchoForwarder(
         base_url="http://echo:9550",
         token="e" * 40,
         transport=transport,
     )
-    with pytest.raises(QCryptoEchoForwarderError, match="exact four-event match"):
+    with pytest.raises(QCryptoEchoForwarderError, match="all four submitted records"):
+        forwarder.sync(records())
+
+
+def test_forwarder_rejects_missing_submitted_event_entry_even_when_counts_claim_match():
+    def transport(base_url, path, payload, token):
+        if path == "/v1/ingest":
+            return 200, {
+                "outcome": "STORED",
+                "event_id": payload["payload"]["_outbox_event_id"],
+            }
+        body = reconciliation(payload, echo_only=1)
+        body["entries"] = body["entries"][1:]
+        return 200, body
+
+    forwarder = QCryptoEchoForwarder(
+        base_url="http://echo:9550",
+        token="e" * 40,
+        transport=transport,
+    )
+    with pytest.raises(QCryptoEchoForwarderError, match="omitted"):
+        forwarder.sync(records())
+
+
+def test_forwarder_rejects_wrong_reconciliation_schema_or_scope():
+    def bad_schema(base_url, path, payload, token):
+        if path == "/v1/ingest":
+            return 200, {
+                "outcome": "STORED",
+                "event_id": payload["payload"]["_outbox_event_id"],
+            }
+        body = reconciliation(payload)
+        body["schema"] = "UNSUPPORTED"
+        return 200, body
+
+    forwarder = QCryptoEchoForwarder(
+        base_url="http://echo:9550",
+        token="e" * 40,
+        transport=bad_schema,
+    )
+    with pytest.raises(QCryptoEchoForwarderError, match="unsupported schema"):
         forwarder.sync(records())
 
 
