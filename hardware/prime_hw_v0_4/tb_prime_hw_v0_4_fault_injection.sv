@@ -124,8 +124,6 @@ module tb_prime_hw_v0_4_fault_injection;
 
         // Exhaustively force every corruption at Hamming weight 1, 2, or 3
         // from every valid encoded state. No clock edges occur during a force.
-        // The static distance audit independently checks that none can alias a
-        // valid codeword; this test checks the live controller's fail-safe output.
         for (base_idx = 0; base_idx < 7; base_idx = base_idx + 1) begin
             for (mask = 1; mask < 256; mask = mask + 1) begin
                 if (popcount8(mask[7:0]) <= 3) begin
@@ -150,7 +148,23 @@ module tb_prime_hw_v0_4_fault_injection;
         if (injected_cases != 644)
             $fatal(1, "expected 644 <=3-bit fault injections, executed %0d", injected_cases);
 
-        expect_state(ST_OPERATIONAL, "state restored after non-clocked injection campaign");
+        // Do not assume simulator force/release restores the pre-force register
+        // value. Re-establish a deterministic architectural state explicitly.
+        reset_n = 1'b0;
+        #1;
+        expect_state(ST_RESET, "post-campaign asynchronous reset");
+        reset_n = 1'b1;
+        fatal_fault = 1'b0;
+        health_degraded = 1'b0;
+        recovery_authorized = 1'b0;
+        boot_verified = 1'b1;
+        policy_valid = 1'b1;
+        tick();
+        expect_state(ST_BOOT_LOCKED, "post-campaign boot lock");
+        tick();
+        expect_state(ST_VERIFY, "post-campaign verify");
+        tick();
+        expect_state(ST_OPERATIONAL, "post-campaign operational");
 
         // Verify normal fail-safe and recovery semantics remain intact.
         fatal_fault = 1'b1;
