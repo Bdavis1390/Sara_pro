@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - "worldshepherd/tools-connectors-v2-*"
+      - "worldshepherd/connectors-*"
   pull_request:
     paths:
       - "data/worldshepherd_connectors.v2.json"
       - "worldshepherd_sara/connector_control.py"
+      - "worldshepherd_sara/connector_gateway_mount.py"
+      - "worldshepherd_sara/__init__.py"
       - "tools/connector_control/**"
       - "tests/test_connector_control.py"
       - ".github/workflows/connector-control-ci.yml"
@@ -27,8 +30,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install test dependency
-        run: python -m pip install --disable-pip-version-check pytest
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check pytest fastapi
 
       - name: Compile connector modules
         run: python -m compileall worldshepherd_sara tools/connector_control
