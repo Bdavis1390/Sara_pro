@@ -110,6 +110,32 @@ PY
 admin_header=( -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" -H 'Content-Type: application/json' )
 echo_header=( -H "Authorization: Bearer ${echo_token}" -H 'Content-Type: application/json' )
 
+# Seed one unrelated retained event before QCRYPTO synchronization. A persistent
+# ECHO store is expected to contain prior evidence; that history must remain
+# ECHO_ONLY without causing the four submitted QCRYPTO records to fail.
+cat > "${secret_dir}/retained.json" <<'JSON'
+{
+  "timestamp": "2026-09-14T12:00:00+00:00",
+  "event": "retained_bridge_baseline",
+  "actor": "qcrypto_bridge_test",
+  "payload": {
+    "_outbox_event_id": "SARA-EVENT-QCRYPTO-RETAINED-BASELINE",
+    "_delivery_semantics": "AT_LEAST_ONCE",
+    "evidence_scope": "UNRELATED_RETAINED_HISTORY"
+  }
+}
+JSON
+curl --fail --silent --show-error -X POST "${echo_url}/v1/ingest" \
+  "${echo_header[@]}" --data @"${secret_dir}/retained.json" \
+  > "${secret_dir}/retained-ingest.json"
+python3 - "${secret_dir}/retained-ingest.json" <<'PY'
+import json, sys
+from pathlib import Path
+body=json.loads(Path(sys.argv[1]).read_text())
+assert body['outcome']=='STORED'
+assert body['event_id']=='SARA-EVENT-QCRYPTO-RETAINED-BASELINE'
+PY
+
 cat > "${secret_dir}/projection.json" <<'JSON'
 {
   "schema": "WS-QCRYPTO-CONTROL-DECISION-V1",
@@ -164,6 +190,7 @@ import json, sys
 from pathlib import Path
 first=json.loads(Path(sys.argv[1]).read_text()); replay=json.loads(Path(sys.argv[2]).read_text())
 instance=sys.argv[3]
+expected={'MATCHED':4,'SARA_ONLY':0,'ECHO_ONLY':1,'PAYLOAD_MISMATCH':0}
 for body in (first,replay):
     assert body['verification']['verdict']=='INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN'
     assert body['verification']['audit_instance_id']==instance
@@ -171,9 +198,7 @@ for body in (first,replay):
     assert body['verification']['consistent'] is True
     assert body['sync']['execution_authority'] is False
     assert body['sync']['live_value_authorized'] is False
-    assert body['sync']['reconciliation']['counts']=={
-        'MATCHED':4,'SARA_ONLY':0,'ECHO_ONLY':0,'PAYLOAD_MISMATCH':0
-    }
+    assert body['sync']['reconciliation']['counts']==expected
 assert first['sync']['stored_count']==4 and first['sync']['deduplicated_count']==0
 assert replay['sync']['stored_count']==0 and replay['sync']['deduplicated_count']==4
 assert first['sync']['event_ids']==replay['sync']['event_ids']
@@ -199,17 +224,21 @@ checkpoint=json.loads(Path(sys.argv[3]).read_text())
 first=json.loads(Path(sys.argv[4]).read_text())
 replay=json.loads(Path(sys.argv[5]).read_text())
 digest=sys.argv[6]; instance=sys.argv[7]; out=Path(sys.argv[8])
+expected={'MATCHED':4,'SARA_ONLY':0,'ECHO_ONLY':1,'PAYLOAD_MISMATCH':0}
 assert verify['verification']['verdict']=='INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN'
 assert verify['verification']['logical_event_count']==4
 assert verify['verification']['audit_instance_id']==instance
-assert status['ok'] is True and status['stored_events']==4
-assert checkpoint['manifest']['event_count']==4
+assert status['ok'] is True and status['stored_events']==5
+assert checkpoint['manifest']['event_count']==5
 assert checkpoint['manifest']['algorithm']=='Ed25519'
+assert first['sync']['reconciliation']['counts']==expected
+assert replay['sync']['reconciliation']['counts']==expected
 summary={
     'schema':'WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V1',
     'status':'PASS',
     'decision_digest':digest,
     'audit_instance_id':instance,
+    'retained_history_events':1,
     'first_sync':{
         'stored_count':first['sync']['stored_count'],
         'deduplicated_count':first['sync']['deduplicated_count'],
@@ -227,14 +256,14 @@ summary={
     'live_value_authorized':False,
     'claims_boundary':(
         'Internal containerized software evidence only. This exercise demonstrates bounded SARA-to-ECHO '
-        'evidence synchronization, exact four-record reconciliation, retry deduplication, instance-scoped '
-        'identity, and classical Ed25519 checkpoint creation. It does not establish post-quantum checkpoint '
-        'security, migration execution, live-value authorization, external attestation, Federal compliance, '
-        'WS-CAE conformance, or production deployment.'
+        'evidence synchronization against a non-empty retained ECHO history, explicit four-record matching, '
+        'retry deduplication, instance-scoped identity, and classical Ed25519 checkpoint creation. It does not '
+        'establish post-quantum checkpoint security, migration execution, live-value authorization, external '
+        'attestation, Federal compliance, WS-CAE conformance, or production deployment.'
     ),
 }
 out.parent.mkdir(parents=True,exist_ok=True)
 out.write_text(json.dumps(summary,sort_keys=True,indent=2)+'\n',encoding='utf-8')
 PY
 
-echo "QCRYPTO SARA-to-ECHO deployed bridge: PASS (${evidence_file})"
+echo "QCRYPTO SARA-to-ECHO deployed bridge with retained history: PASS (${evidence_file})"
