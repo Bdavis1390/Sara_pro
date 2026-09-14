@@ -36,6 +36,53 @@ def test_ticket_policy_matches_code_contract():
     assert policy["distributed_replay_protection"] is False
 
 
+def test_broker_allow_and_deny_contract_preserved():
+    broker, _ = make_broker()
+
+    public_read = broker.plan_read(
+        connector_id="web_research",
+        action="research.search",
+        actor="operator",
+        data_class="PUBLIC",
+    )
+    assert public_read.ok is True
+
+    github_read = broker.plan_read(
+        connector_id="github",
+        action="repo.read",
+        actor="admin",
+        data_class="PUBLIC",
+    )
+    assert github_read.ok is True
+
+    write_attempt = broker.plan_read(
+        connector_id="github",
+        action="file.update",
+        actor="admin",
+        data_class="INTERNAL",
+    )
+    assert write_attempt.ok is False
+    assert "explicitly classified" in write_attempt.reason
+
+    local_attempt = broker.plan_read(
+        connector_id="sara_core",
+        action="health.read",
+        actor="operator",
+        data_class="PUBLIC",
+    )
+    assert local_attempt.ok is False
+    assert "not an external handoff target" in local_attempt.reason
+
+    unknown = broker.plan_read(
+        connector_id="unknown_service",
+        action="read",
+        actor="operator",
+        data_class="PUBLIC",
+    )
+    assert unknown.ok is False
+    assert "unknown connector" in unknown.reason
+
+
 def test_ticket_contains_context_hash_not_raw_context():
     broker, _ = make_broker()
     context = {"query": "private-looking-context-value", "scope": "ci"}
