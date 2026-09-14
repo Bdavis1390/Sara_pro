@@ -3,10 +3,10 @@
   "as_of": "2026-09-13",
   "scope_rule": "Track materially active public L1, L2, DLT and shared protocol/framework families; add newly discovered chains rather than treating this list as permanently closed.",
   "covered_or_evidence_collected": [
-    "Bitcoin","Ethereum","Algorand","Sui","Solana","XRP Ledger","Cardano","Stellar","Avalanche","TRON","Aptos","Tezos","NEAR","Hedera","BNB Smart Chain","Arbitrum","ZKsync Era / Elastic Network","Monero","Cosmos SDK v0.55","JAM / Polkadot roadmap"
+    "Bitcoin","Ethereum","Algorand","Sui","Solana","XRP Ledger","Cardano","Stellar","Avalanche","TRON","Aptos","Tezos","NEAR","Hedera","BNB Smart Chain","Arbitrum","ZKsync Era / Elastic Network","Polygon PoS","Monero","Litecoin","Dogecoin","Zcash (partial)","Cosmos SDK v0.55","JAM / Polkadot roadmap"
   ],
   "primary_evidence_review_pending": [
-    "Cosmos Hub","Polkadot","Optimism / OP Stack","Base","Polygon PoS","Starknet","Litecoin","Dogecoin","Bitcoin Cash","Zcash","TON","Internet Computer","Kaspa","Sei","Injective","Celestia","Filecoin","MultiversX","EOS","VeChain","Flow","Mina","Kadena","Stacks","Rootstock","Mantle","Linea","Scroll","Blast","opBNB","Ronin","Cronos","Kava","Osmosis","dYdX Chain","Thorchain","IOTA","Chia","Nervos CKB","Ergo","Conflux","Harmony","Celo","Moonbeam","Astar","Kusama","Gnosis Chain","Fantom / Sonic","Hyperliquid L1"
+    "Cosmos Hub","Polkadot","Optimism / OP Stack","Base","Starknet","Bitcoin Cash","TON","Internet Computer","Kaspa","Sei","Injective","Celestia","Filecoin","MultiversX","EOS","VeChain","Flow","Mina","Kadena","Stacks","Rootstock","Mantle","Linea","Scroll","Blast","opBNB","Ronin","Cronos","Kava","Osmosis","dYdX Chain","Thorchain","IOTA","Chia","Nervos CKB","Ergo","Conflux","Harmony","Celo","Moonbeam","Astar","Kusama","Gnosis Chain","Fantom / Sonic","Hyperliquid L1"
   ],
   "required_dimensions": [
     "authorization_model","implementation_maturity","protocol_commitment","pq_authorization_state","consensus_pq_state","key_rotation_or_authority_abstraction","recovery_state","domain_or_replay_binding","critical_external_dependencies","primary_evidence","continuity_manifest_content_id"
