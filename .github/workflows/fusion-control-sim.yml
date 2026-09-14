@@ -1,0 +1,163 @@
+name: Fusion Control Simulator CI
+
+on:
+  push:
+    branches:
+      - worldshepherd/fusion-control-sim-v0-1-20260912
+  pull_request:
+    branches:
+      - worldshepherd-sspadawanzz-admin
+    paths:
+      - 'worldshepherd_sara/fusion_control.py'
+      - 'worldshepherd_sara/fair_mast_adapter.py'
+      - 'worldshepherd_sara/fair_mast_probe.py'
+      - 'worldshepherd_sara/fusion_replay.py'
+      - 'worldshepherd_sara/fusion_audit_bridge.py'
+      - 'worldshepherd_sara/fusion_faults.py'
+      - 'worldshepherd_sara/fusion_consensus.py'
+      - 'worldshepherd_sara/archive_readiness.py'
+      - 'worldshepherd_sara/external_observer.py'
+      - 'worldshepherd_sara/control_admission.py'
+      - 'worldshepherd_sara/observer_authority.py'
+      - 'tests/test_fusion_control.py'
+      - 'tests/test_fair_mast_adapter.py'
+      - 'tests/test_fair_mast_manifest.py'
+      - 'tests/test_fair_mast_probe.py'
+      - 'tests/test_fusion_replay.py'
+      - 'tests/test_fusion_audit_bridge.py'
+      - 'tests/test_fusion_faults.py'
+      - 'tests/test_fusion_consensus.py'
+      - 'tests/test_archive_readiness.py'
+      - 'tests/test_external_observer.py'
+      - 'tests/test_control_admission.py'
+      - 'tests/test_observer_authority.py'
+      - 'scripts/run_fusion_control_demo.py'
+      - 'scripts/probe_fair_mast_data.py'
+      - 'data/fair_mast/shot_30420_amc_manifest.json'
+      - 'evidence/fair_mast/shot_30420_amc_metadata_probe_20260912.json'
+      - 'evidence/fair_mast/shot_30420_amc_data_probe_20260912.json'
+      - 'evidence/fair_mast/observer_authority_gap_20260912.json'
+      - 'docs/WS_FUSION_CTRL_001.md'
+      - '.github/workflows/fusion-control-sim.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fusion-control-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install pinned test dependency
+        run: python -m pip install --disable-pip-version-check pytest==9.1.1
+      - name: Compile fusion modules
+        run: >-
+          python -m py_compile
+          worldshepherd_sara/fusion_control.py
+          worldshepherd_sara/fair_mast_adapter.py
+          worldshepherd_sara/fair_mast_probe.py
+          worldshepherd_sara/fusion_replay.py
+          worldshepherd_sara/fusion_audit_bridge.py
+          worldshepherd_sara/fusion_faults.py
+          worldshepherd_sara/fusion_consensus.py
+          worldshepherd_sara/archive_readiness.py
+          worldshepherd_sara/external_observer.py
+          worldshepherd_sara/control_admission.py
+          worldshepherd_sara/observer_authority.py
+          scripts/probe_fair_mast_data.py
+      - name: Run fusion-control test suite
+        run: >-
+          python -m pytest -q
+          tests/test_fusion_control.py
+          tests/test_fair_mast_adapter.py
+          tests/test_fair_mast_manifest.py
+          tests/test_fair_mast_probe.py
+          tests/test_fusion_replay.py
+          tests/test_fusion_audit_bridge.py
+          tests/test_fusion_faults.py
+          tests/test_fusion_consensus.py
+          tests/test_archive_readiness.py
+          tests/test_external_observer.py
+          tests/test_control_admission.py
+          tests/test_observer_authority.py
+
+  fair-mast-source-probe:
+    if: >-
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.message, '[probe-fair-mast]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Probe pinned FAIR-MAST Zarr metadata only
+        run: >-
+          python -m worldshepherd_sara.fair_mast_probe
+          --manifest data/fair_mast/shot_30420_amc_manifest.json
+          --output /tmp/fair-mast-shot-30420-amc-probe.json
+      - name: Verify probe safety flags
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/fair-mast-shot-30420-amc-probe.json').read_text())
+          assert report['array_chunks_fetched'] is False
+          assert report['machine_control_authority'] is False
+          assert set(report['signals']) == {'time', 'plasma_current'}
+          print('probe_report_sha256=' + report['report_sha256'])
+          for signal in ('time', 'plasma_current'):
+              zarray = report['signals'][signal]['.zarray']['metadata']
+              zattrs = report['signals'][signal]['.zattrs']['metadata']
+              print(signal + '_shape=' + repr(zarray.get('shape')))
+              print(signal + '_dtype=' + repr(zarray.get('dtype')))
+              print(signal + '_units=' + repr(zattrs.get('units')))
+          PY
+
+  fair-mast-data-probe:
+    if: >-
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.message, '[probe-fair-mast-data]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - name: Install pinned decoder dependencies
+        run: >-
+          python -m pip install --disable-pip-version-check
+          numpy==1.26.4 numcodecs==0.12.1
+      - name: Fetch and validate pinned FAIR-MAST time/current chunks
+        run: >-
+          python scripts/probe_fair_mast_data.py
+          --manifest data/fair_mast/shot_30420_amc_manifest.json
+          --output /tmp/fair-mast-shot-30420-amc-data-probe.json
+      - name: Verify data-probe claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('/tmp/fair-mast-shot-30420-amc-data-probe.json').read_text())
+          assert report['raw_values_persisted'] is False
+          assert report['machine_control_authority'] is False
+          assert report['control_evidence_eligible'] is False
+          assert report['time']['count'] == report['plasma_current']['count'] == 30000
+          print('data_probe_report_sha256=' + report['report_sha256'])
+          print('time_chunk_sha256=' + report['time']['compressed_sha256'])
+          print('plasma_current_chunk_sha256=' + report['plasma_current']['compressed_sha256'])
+          print('paired_window_sha256=' + str(report['paired_window_0_to_0_35_s']['paired_values_sha256']))
+          print('paired_window_count=' + str(report['paired_window_0_to_0_35_s']['finite_sample_count']))
+          PY
