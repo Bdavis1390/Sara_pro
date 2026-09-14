@@ -26,6 +26,7 @@ from worldshepherd_sara.sovereign_boundary_authorization_ledger import (
     PRIME_EFFECT_AUTHZ_LEDGER_KEY,
     PrimeEffectAuthorizationLedgerError,
     assert_claimed_effect_authorization_usable,
+    begin_effect_invocation_registry_patch,
     claim_effect_authorization_registry_patch,
     consumed_effect_authorization_registry_patch,
     verified_effect_authorization_registry_patch,
@@ -172,6 +173,20 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
         execution_id=execution_id,
     )
 
+    authorization_registry.update(
+        begin_effect_invocation_registry_patch(
+            authorization_registry,
+            authorization_id=verified.authorization_id,
+            envelope=claimed,
+            execution_id=execution_id,
+        )
+    )
+    invoking_entry = authorization_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][
+        verified.authorization_id
+    ]
+    assert invoking_entry["status"] == "INVOKING"
+    assert "invocation_started_at" in invoking_entry
+
     completed = record_execution(
         claimed,
         runtime_action=action,
@@ -190,7 +205,9 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
             terminal_envelope=completed,
         )
     )
-    ledger_entry = authorization_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][verified.authorization_id]
+    ledger_entry = authorization_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][
+        verified.authorization_id
+    ]
     assert ledger_entry["status"] == "CONSUMED"
     assert ledger_entry["terminal_envelope_digest"] == completed.envelope_digest
 
@@ -293,7 +310,9 @@ def test_prime_signature_is_purpose_bound_to_exact_envelope_and_action():
         public_keys_b64url={"prime-test-key-002": _b64url(public_raw)}
     )
 
-    changed = envelope.model_copy(update={"actor": "DIFFERENT-ACTOR", "envelope_digest": None})
+    changed = envelope.model_copy(
+        update={"actor": "DIFFERENT-ACTOR", "envelope_digest": None}
+    )
     from worldshepherd_sara.qualification import canonical_digest
 
     changed = changed.model_copy(
