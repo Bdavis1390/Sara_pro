@@ -22,6 +22,14 @@ from worldshepherd_sara.sovereign_boundary_authority import (
     boundary_policy_from_opa,
     canonical_prime_effect_authorization_message,
 )
+from worldshepherd_sara.sovereign_boundary_authorization_ledger import (
+    PRIME_EFFECT_AUTHZ_LEDGER_KEY,
+    PrimeEffectAuthorizationLedgerError,
+    assert_claimed_effect_authorization_usable,
+    claim_effect_authorization_registry_patch,
+    consumed_effect_authorization_registry_patch,
+    verified_effect_authorization_registry_patch,
+)
 from worldshepherd_sara.sovereign_boundary_kernel import (
     BoundaryAction,
     BoundaryContext,
@@ -32,6 +40,7 @@ from worldshepherd_sara.sovereign_boundary_kernel import (
     BoundaryState,
     ExecutionResultStatus,
     authorize_after_human_approval,
+    bind_prime_execution_claim,
     boundary_action_digest,
     create_boundary_envelope,
     queue_boundary_transition,
@@ -142,8 +151,29 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
     assert prime_bound.prime_authorization_ref == "PRIME-EFFECT-AUTH-001"
     assert verify_boundary_envelope(prime_bound) is True
 
+    authorization_registry: dict = {}
+    authorization_registry.update(
+        verified_effect_authorization_registry_patch(authorization_registry, verified)
+    )
+    execution_id = "WS-SBK-EXECUTION-001"
+    authorization_registry.update(
+        claim_effect_authorization_registry_patch(
+            authorization_registry,
+            authorization_id=verified.authorization_id,
+            envelope=prime_bound,
+            execution_id=execution_id,
+        )
+    )
+    claimed = bind_prime_execution_claim(prime_bound, execution_id=execution_id)
+    assert_claimed_effect_authorization_usable(
+        authorization_registry,
+        authorization_id=verified.authorization_id,
+        envelope=claimed,
+        execution_id=execution_id,
+    )
+
     completed = record_execution(
-        prime_bound,
+        claimed,
         runtime_action=action,
         status=ExecutionResultStatus.SUCCEEDED,
         outcome_ref="lab-record:non-operational-authority-chain-001",
@@ -152,12 +182,33 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
     assert completed.state == BoundaryState.EXECUTED
     assert verify_boundary_envelope(completed) is True
 
+    authorization_registry.update(
+        consumed_effect_authorization_registry_patch(
+            authorization_registry,
+            authorization_id=verified.authorization_id,
+            execution_id=execution_id,
+            terminal_envelope=completed,
+        )
+    )
+    ledger_entry = authorization_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][verified.authorization_id]
+    assert ledger_entry["status"] == "CONSUMED"
+    assert ledger_entry["terminal_envelope_digest"] == completed.envelope_digest
+
+    with pytest.raises(PrimeEffectAuthorizationLedgerError, match="not claimable"):
+        claim_effect_authorization_registry_patch(
+            authorization_registry,
+            authorization_id=verified.authorization_id,
+            envelope=prime_bound,
+            execution_id="WS-SBK-REPLAY-ATTEMPT",
+        )
+
     registry_patch, event_id = queue_boundary_transition({}, completed)
     _delivered_patch, audit = _delivery_patch(registry_patch, event_id=event_id)
     assert audit.payload["_outbox_event_id"] == event_id
     assert audit.payload["_delivery_semantics"] == "AT_LEAST_ONCE"
     assert "parameters" not in audit.payload
     assert audit.payload["prime_authorization_ref"] == "PRIME-EFFECT-AUTH-001"
+    assert audit.payload["prime_execution_claim_ref"] == execution_id
 
     store = EchoEventStore(tmp_path / "echo")
     first = store.ingest(audit)
@@ -169,8 +220,10 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
     assert reconciliation["counts"] == {"MATCHED": 1}
     assert store.health()["ok"] is True
 
-    replay = boundary_transition_events([proposed, human_authorized, prime_bound, completed])
-    assert [event.sequence for event in replay] == [1, 2, 3, 4]
+    replay = boundary_transition_events(
+        [proposed, human_authorized, prime_bound, claimed, completed]
+    )
+    assert [event.sequence for event in replay] == [1, 2, 3, 4, 5]
     assert replay[-1].payload["state"] == "EXECUTED"
 
     graph = sovereign_boundary_evidence_graph(
