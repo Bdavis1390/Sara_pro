@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from worldshepherd_sara.synthetic_fusion_api import (
     MAX_SYNTHETIC_FUSION_OBSERVATIONS,
     SYNTHETIC_FUSION_SCOPE,
@@ -28,6 +30,14 @@ def request_body(count: int = 4) -> dict[str, object]:
         "max_spatial_distance": 3.0,
         "max_time_delta_seconds": 5.0,
     }
+
+
+def post_raw_json(client, *, admin: str, body: dict[str, object]):
+    return client.post(
+        "/v1/synthetic-fusion",
+        headers={**auth(admin), "Content-Type": "application/json"},
+        content=json.dumps(body, allow_nan=True),
+    )
 
 
 def test_synthetic_fusion_is_admin_only(client, tokens):
@@ -102,6 +112,36 @@ def test_observation_count_is_bounded_without_audit_mutation(client, tokens):
         headers=auth(admin),
         json=request_body(MAX_SYNTHETIC_FUSION_OBSERVATIONS + 1),
     )
+    assert response.status_code == 422
+    assert client.app.state.store.audit_path.read_bytes() == before
+
+
+def test_nan_observation_value_is_rejected_without_audit_mutation(client, tokens):
+    _, admin = tokens
+    body = request_body(2)
+    body["observations"][0]["x"] = float("nan")
+    before = client.app.state.store.audit_path.read_bytes()
+    response = post_raw_json(client, admin=admin, body=body)
+    assert response.status_code == 422
+    assert client.app.state.store.audit_path.read_bytes() == before
+
+
+def test_infinite_observation_value_is_rejected_without_audit_mutation(client, tokens):
+    _, admin = tokens
+    body = request_body(2)
+    body["observations"][0]["y"] = float("inf")
+    before = client.app.state.store.audit_path.read_bytes()
+    response = post_raw_json(client, admin=admin, body=body)
+    assert response.status_code == 422
+    assert client.app.state.store.audit_path.read_bytes() == before
+
+
+def test_nonfinite_threshold_is_rejected_without_audit_mutation(client, tokens):
+    _, admin = tokens
+    body = request_body(2)
+    body["max_spatial_distance"] = float("inf")
+    before = client.app.state.store.audit_path.read_bytes()
+    response = post_raw_json(client, admin=admin, body=body)
     assert response.status_code == 422
     assert client.app.state.store.audit_path.read_bytes() == before
 
