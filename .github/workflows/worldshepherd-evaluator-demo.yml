@@ -1,0 +1,54 @@
+name: Worldshepherd Evaluator Demonstration
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'tools/selection_demo/run_evaluator_demo.py'
+      - '.github/workflows/worldshepherd-evaluator-demo.yml'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/autonomy_policy.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/ddil_reconcile.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime.py'
+      - 'deployments/sara_verified_local_v1/fixtures/sensor_fusion_synthetic_v1.json'
+      - 'deployments/sara_verified_local_v1/fixtures/mission_replay_synthetic_v1.json'
+
+permissions:
+  contents: read
+
+jobs:
+  evaluator-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Worldshepherd SARA
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e deployments/sara_verified_local_v1
+
+      - name: Run evaluator demonstration twice and verify deterministic semantic evidence
+        run: |
+          mkdir -p evaluator_evidence
+          python tools/selection_demo/run_evaluator_demo.py \
+            --out evaluator_evidence/worldshepherd-evaluator-demo-v1.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Upload evaluator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-evaluator-demo-${{ github.sha }}
+          path: evaluator_evidence/
+          if-no-files-found: error
+          retention-days: 30
