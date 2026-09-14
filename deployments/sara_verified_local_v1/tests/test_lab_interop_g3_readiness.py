@@ -20,6 +20,8 @@ def test_manifest_requires_two_devices_and_traceability():
 def test_command_envelope_fails_closed():
     assert validate_command(40.0)["decision"] == "ALLOW"
     assert validate_command(90.0)["decision"] == "DENY"
+    assert validate_command(float("nan"))["decision"] == "DENY"
+    assert validate_command(float("inf"))["decision"] == "DENY"
     assert validate_command(40.0, estop_engaged=True)["decision"] == "DENY"
 
 
@@ -34,6 +36,9 @@ def test_measurement_preserves_raw_normalized_and_uncertainty():
 def test_hard_abort_detects_out_of_bounds_measurement():
     report = assess_measurement(75.0, normalized_value=75.0)
     assert report["hard_abort"] is True
+    non_finite = assess_measurement(float("nan"), normalized_value=float("nan"))
+    assert non_finite["hard_abort"] is True
+    assert non_finite["normalization_ok"] is False
 
 
 def test_readiness_faults_block_physical_run():
@@ -46,6 +51,7 @@ def test_readiness_faults_block_physical_run():
     ):
         report = inject_readiness_fault(name)
         assert report["disposition"] == "BLOCK_PHYSICAL_RUN"
+        assert report["configuration_digest"].startswith("sha256:")
         assert report["evidence_digest"].startswith("sha256:")
 
 
