@@ -1,0 +1,80 @@
+name: connector-read-receipt-ci
+
+on:
+  push:
+    branches:
+      - "worldshepherd/connectors-read-receipt-v1-*"
+  pull_request:
+    paths:
+      - "worldshepherd_sara/connector_receipt.py"
+      - ".github/workflows/connector-read-receipt-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  receipt-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install runtime imports
+        run: python -m pip install --disable-pip-version-check fastapi
+      - name: Compile receipt chain
+        run: python -m py_compile worldshepherd_sara/connector_execution.py worldshepherd_sara/connector_receipt.py
+      - name: Verify receipt chain contract
+        run: |
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+
+          from worldshepherd_sara.connector_control import ConnectorControlPlane
+          from worldshepherd_sara.connector_execution import ReadExecutionBroker
+          from worldshepherd_sara.connector_receipt import (
+              seal_read_receipt,
+              verify_read_receipt,
+              verify_read_ticket,
+          )
+
+          control = ConnectorControlPlane(Path('data/worldshepherd_connectors.v2.json'))
+          broker = ReadExecutionBroker(control)
+          planned = broker.plan_read(
+              connector_id='web_research',
+              action='research.search',
+              actor='operator',
+              data_class='PUBLIC',
+              context={'query': 'receipt-contract'},
+          )
+          assert planned.ok and planned.ticket is not None
+          assert verify_read_ticket(planned.ticket)
+
+          raw = b'normalized synthetic connector result'
+          digest = hashlib.sha256(raw).hexdigest()
+          receipt = seal_read_receipt(
+              ticket=planned.ticket,
+              status='success',
+              result_sha256=digest,
+              host_result_id='ci-result-001',
+              source_refs=['source:synthetic'],
+              evidence_refs=['evidence:ci'],
+          )
+          assert verify_read_receipt(receipt, ticket=planned.ticket, result_bytes=raw)
+          assert receipt['raw_result_embedded'] is False
+          assert receipt['credential_material_embedded'] is False
+          assert receipt['execution_attestation'] == 'host_reported'
+
+          tampered_receipt = dict(receipt)
+          tampered_receipt['host_result_id'] = 'tampered'
+          assert not verify_read_receipt(tampered_receipt, ticket=planned.ticket, result_bytes=raw)
+
+          forged_ticket = dict(planned.ticket)
+          forged_ticket['write_enabled'] = True
+          assert not verify_read_ticket(forged_ticket)
+
+          wrong_result = b'different result'
+          assert not verify_read_receipt(receipt, ticket=planned.ticket, result_bytes=wrong_result)
+          PY
