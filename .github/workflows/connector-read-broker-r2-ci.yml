@@ -6,6 +6,8 @@ on:
       - "worldshepherd/connectors-read-broker-v1-r2-*"
   pull_request:
     paths:
+      - "data/worldshepherd_connectors.v2.json"
+      - "worldshepherd_sara/connector_control.py"
       - "worldshepherd_sara/connector_execution.py"
       - ".github/workflows/connector-read-broker-r2-ci.yml"
 
@@ -24,8 +26,8 @@ jobs:
           python-version: "3.11"
       - name: Install runtime imports
         run: python -m pip install --disable-pip-version-check fastapi
-      - name: Compile broker
-        run: python -m py_compile worldshepherd_sara/connector_execution.py
+      - name: Compile broker and policy
+        run: python -m py_compile worldshepherd_sara/connector_control.py worldshepherd_sara/connector_execution.py
       - name: Verify read broker contract
         run: |
           python - <<'PY'
@@ -34,7 +36,9 @@ jobs:
           from worldshepherd_sara.connector_execution import ReadExecutionBroker
 
           control = ConnectorControlPlane(Path('data/worldshepherd_connectors.v2.json'))
+          assert control.validate_manifest()['ok'] is True
           broker = ReadExecutionBroker(control)
+
           ok = broker.plan_read(
               connector_id='web_research',
               action='research.search',
@@ -47,12 +51,38 @@ jobs:
           assert ok.ticket['write_enabled'] is False
           assert len(ok.ticket['sha256']) == 64
 
-          denied = broker.plan_read(
+          github_read = broker.plan_read(
+              connector_id='github',
+              action='repo.read',
+              actor='admin',
+              data_class='PUBLIC',
+          )
+          assert github_read.ok
+
+          write_attempt = broker.plan_read(
+              connector_id='github',
+              action='file.update',
+              actor='admin',
+              data_class='INTERNAL',
+          )
+          assert not write_attempt.ok
+          assert 'explicitly classified' in write_attempt.reason
+
+          local_attempt = broker.plan_read(
+              connector_id='sara_core',
+              action='health.read',
+              actor='operator',
+              data_class='PUBLIC',
+          )
+          assert not local_attempt.ok
+          assert 'not an external handoff target' in local_attempt.reason
+
+          unknown = broker.plan_read(
               connector_id='unknown_service',
               action='read',
               actor='operator',
               data_class='PUBLIC',
           )
-          assert not denied.ok
-          assert 'unknown connector' in denied.reason
+          assert not unknown.ok
+          assert 'unknown connector' in unknown.reason
           PY
