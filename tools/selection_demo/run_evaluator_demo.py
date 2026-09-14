@@ -38,10 +38,7 @@ def _digest(value: Any) -> str:
 def _model_or_dataclass(value: Any) -> dict[str, Any]:
     if hasattr(value, "model_dump"):
         return value.model_dump(mode="json")
-    return {
-        key: getattr(value, key)
-        for key in value.__dataclass_fields__
-    }
+    return {key: getattr(value, key) for key in value.__dataclass_fields__}
 
 
 def _run_scenario(repo_root: Path) -> dict[str, Any]:
@@ -205,17 +202,17 @@ def _run_scenario(repo_root: Path) -> dict[str, Any]:
             "explicitly_denied_reasons": denied_reasons,
         },
         "ddil": {
-            "left": partition_left.model_dump(mode="json"),
-            "right": partition_right.model_dump(mode="json"),
+            "left": _model_or_dataclass(partition_left),
+            "right": _model_or_dataclass(partition_right),
             "unresolved": {
                 "state": unresolved.state.value,
-                "selected": None if unresolved.selected is None else unresolved.selected.model_dump(mode="json"),
+                "selected": None if unresolved.selected is None else _model_or_dataclass(unresolved.selected),
                 "reason": unresolved.reason,
             },
-            "human_resolution": human_resolution.model_dump(mode="json"),
+            "human_resolution": _model_or_dataclass(human_resolution),
             "resolved": {
                 "state": resolved.state.value,
-                "selected": None if resolved.selected is None else resolved.selected.model_dump(mode="json"),
+                "selected": None if resolved.selected is None else _model_or_dataclass(resolved.selected),
                 "reason": resolved.reason,
             },
         },
