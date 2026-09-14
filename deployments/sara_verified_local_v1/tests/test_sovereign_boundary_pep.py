@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from threading import Event, Thread
 
 import pytest
 
@@ -131,13 +132,14 @@ def test_pep_success_consumes_authority_and_queues_evidence_atomically(tmp_path)
     registry = store.get_registry()
     ledger = registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
     assert ledger["status"] == "CONSUMED"
+    assert "invocation_started_at" in ledger
     assert ledger["terminal_envelope_digest"] == receipt.terminal_envelope.envelope_digest
     event = registry[EVENT_OUTBOX_REGISTRY_KEY][receipt.outbox_event_id]
     assert event["status"] == "PENDING"
     assert event["payload"]["prime_execution_claim_ref"] == execution_id
     assert "parameters" not in event["payload"]
 
-    with pytest.raises(Exception):
+    with pytest.raises(SovereignBoundaryPepError, match="fence"):
         execute_claimed_physical_effect(
             store,
             envelope=claimed,
@@ -176,10 +178,13 @@ def test_pep_action_mutation_fails_before_executor_invocation(tmp_path):
         )
     assert calls == []
     registry = store.get_registry()
-    assert registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]["status"] == "CLAIMED"
+    assert (
+        registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]["status"]
+        == "CLAIMED"
+    )
 
 
-def test_executor_exception_moves_claim_to_indeterminate_and_blocks_retry(tmp_path):
+def test_executor_exception_moves_invoking_to_indeterminate_and_blocks_retry(tmp_path):
     store, action, claimed, authorization_id, execution_id = _prepare_claimed(
         tmp_path, suffix="003"
     )
@@ -202,9 +207,10 @@ def test_executor_exception_moves_claim_to_indeterminate_and_blocks_retry(tmp_pa
     registry = store.get_registry()
     entry = registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
     assert entry["status"] == "INDETERMINATE"
-    assert "executor raised after invocation" in entry["indeterminate_reason"]
+    assert "executor raised after INVOKING fence" in entry["indeterminate_reason"]
+    assert "invocation_started_at" in entry
 
-    with pytest.raises(Exception):
+    with pytest.raises(SovereignBoundaryPepError, match="fence"):
         execute_claimed_physical_effect(
             store,
             envelope=claimed,
@@ -213,4 +219,70 @@ def test_executor_exception_moves_claim_to_indeterminate_and_blocks_retry(tmp_pa
             execution_id=execution_id,
             executor=ambiguous_executor,
         )
+    assert calls == ["called"]
+
+
+def test_concurrent_pep_callers_cannot_both_cross_invocation_fence(tmp_path):
+    store, action, claimed, authorization_id, execution_id = _prepare_claimed(
+        tmp_path, suffix="004"
+    )
+    entered_executor = Event()
+    release_executor = Event()
+    calls = []
+    first_receipts = []
+    first_errors = []
+
+    def slow_executor(_runtime_action):
+        calls.append("called")
+        entered_executor.set()
+        assert release_executor.wait(timeout=5), "test did not release executor"
+        return PhysicalEffectResult(
+            status=ExecutionResultStatus.SUCCEEDED,
+            outcome_ref="fixture:concurrency-fence-pass",
+        )
+
+    def first_caller():
+        try:
+            first_receipts.append(
+                execute_claimed_physical_effect(
+                    store,
+                    envelope=claimed,
+                    runtime_action=action,
+                    authorization_id=authorization_id,
+                    execution_id=execution_id,
+                    executor=slow_executor,
+                )
+            )
+        except Exception as exc:  # pragma: no cover - diagnostic capture
+            first_errors.append(exc)
+
+    worker = Thread(target=first_caller, daemon=True)
+    worker.start()
+    assert entered_executor.wait(timeout=5), "first caller never reached executor"
+
+    registry_while_first_is_running = store.get_registry()
+    assert (
+        registry_while_first_is_running[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id][
+            "status"
+        ]
+        == "INVOKING"
+    )
+
+    with pytest.raises(SovereignBoundaryPepError, match="fence"):
+        execute_claimed_physical_effect(
+            store,
+            envelope=claimed,
+            runtime_action=action,
+            authorization_id=authorization_id,
+            execution_id=execution_id,
+            executor=slow_executor,
+        )
+
+    assert calls == ["called"]
+    release_executor.set()
+    worker.join(timeout=5)
+    assert not worker.is_alive()
+    assert first_errors == []
+    assert len(first_receipts) == 1
+    assert first_receipts[0].authorization_status == "CONSUMED"
     assert calls == ["called"]
