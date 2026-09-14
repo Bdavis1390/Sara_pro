@@ -1,7 +1,7 @@
 {
   "schema": "worldshepherd_preferred_choice_matrix_v0_2",
   "status": "INTERNAL_SELECTION_READINESS",
-  "generated_date": "2026-09-13",
+  "generated_date": "2026-09-14",
   "supersedes": "config/worldshepherd_preferred_choice_matrix_v0_1.json",
   "canonical_evidence_index": "config/worldshepherd_selection_evidence_index_v1.json",
   "claims_boundary": "Worldshepherd is internally preferred only for the evidenced software/governance wedge defined here. This is not a government selection, market-wide superiority claim, certification, classified authorization, or proof of production-scale operational performance.",
@@ -12,7 +12,11 @@
       "run_id": 34798178408,
       "result": "SUCCESS",
       "semantic_result": "BASELINE_PASS_WITH_UNRESOLVED_GATES",
-      "supports": ["46 scoped selection-core test files", "qualification evidence generation", "controlled resilience drill"]
+      "supports": [
+        "46 scoped selection-core test files",
+        "qualification evidence generation",
+        "controlled resilience drill"
+      ]
     },
     "bounded_scale_benchmark": {
       "run_id": 34798335924,
@@ -40,6 +44,22 @@
         "ddil_conflict_not_silently_resolved": true,
         "higher_authority_resolution_selected": true
       }
+    },
+    "governed_application_path": {
+      "run_id": 34800898317,
+      "job_id": 103843194373,
+      "commit": "db792dbc0350c288872def4b426e3cd135f2f85e",
+      "result": "SUCCESS",
+      "semantic_result": "GOVERNED_APPLICATION_PATH_MEASURED_PARTIAL",
+      "artifact_id": 10330923078,
+      "artifact_digest": "sha256:f7845737260202a6f4a501bc792d9a19506bf34afeae5fcefa3c7ea45985d2ec",
+      "profiles": {
+        "16_observations_p95_ms": 3.622677,
+        "64_observations_p95_ms": 5.009813,
+        "128_observations_p95_ms": 9.423019
+      },
+      "audit_persistence": "27/27 expected synthetic-fusion audit events observed",
+      "scope": "in-process authenticated/authorized FastAPI path including validation, fusion/evidence construction, request/result digests, durable audit append/fsync, response validation and JSON serialization; excludes real network/TLS, multimodal decode/inference, external stores and distributed load"
     }
   },
   "selection_dimensions": {
@@ -50,6 +70,8 @@
     "ddil_conflict_visibility_and_resolution": "INTERNALLY_PROVEN_SYNTHETIC",
     "containerized_modular_architecture": "INTERNALLY_PROVEN_PARTIAL",
     "bounded_synthetic_performance": "INTERNALLY_MEASURED_PARTIAL",
+    "governed_application_path_performance": "INTERNALLY_MEASURED_PARTIAL",
+    "application_path_audit_persistence": "INTERNALLY_PROVEN_BOUNDED",
     "end_to_end_operational_scale": "NOT_YET_PROVEN",
     "controlled_environment_compliance": "BLOCKED_EXTERNAL_ENVIRONMENT_EVIDENCE",
     "open_source_licensing_where_required": "BLOCKED_IP_BUSINESS_LEGAL_DECISION",
@@ -74,8 +96,9 @@
     "flight weapon sensor materials propulsion or other physical-system qualification is the decisive requirement"
   ],
   "market_position": {
-    "claim": "Worldshepherd does not claim to exceed major incumbents in deployment history or accredited classified footprint. Its internally evidenced differentiator is a composable evidence-and-authorization fabric with explicit claims boundaries and fail-closed governance.",
-    "recommended_procurement_posture": "Select directly for unclassified evaluator/pilot work inside the evidenced wedge; partner for controlled/classified or operational-scale programs until external gates close."
+    "claim": "Worldshepherd does not claim to exceed major incumbents in deployment history or accredited classified footprint. Its internally evidenced differentiator is a composable evidence-and-authorization fabric with explicit claims boundaries, fail-closed governance, and a now-measured bounded governed application path.",
+    "recommended_procurement_posture": "Select directly for unclassified evaluator/pilot work inside the evidenced wedge; partner for controlled/classified, multimodal production, or operational-scale programs until external and scale gates close."
   },
+  "next_internal_gate": "Persistence/historical-retrieval plus concurrent-load benchmarking, followed by a real network/TLS/proxy path benchmark and representative multimodal pipeline measurement.",
   "next_external_gate": "Independent reproduction or partner/customer evaluation of the exact-commit evaluator package without Worldshepherd operator assistance."
 }
