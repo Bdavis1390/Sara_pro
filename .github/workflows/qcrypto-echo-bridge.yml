@@ -91,18 +91,20 @@ jobs:
           evidence=json.loads(Path('qcrypto_echo_bridge_ci/evidence.json').read_text(encoding='utf-8'))
           assert evidence['schema']=='WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V1'
           assert evidence['status']=='PASS'
-          assert evidence['first_sync']['reconciliation_counts']=={
-              'MATCHED':4,'SARA_ONLY':0,'ECHO_ONLY':0,'PAYLOAD_MISMATCH':0
-          }
+          assert evidence['retained_history_events']==1
+          expected={'MATCHED':4,'SARA_ONLY':0,'ECHO_ONLY':1,'PAYLOAD_MISMATCH':0}
+          assert evidence['first_sync']['reconciliation_counts']==expected
+          assert evidence['replay_sync']['reconciliation_counts']==expected
           assert evidence['first_sync']['stored_count']==4
           assert evidence['replay_sync']['deduplicated_count']==4
-          assert evidence['echo_stored_events']==4
+          assert evidence['echo_stored_events']==5
           assert evidence['checkpoint_algorithm']=='Ed25519'
-          assert evidence['checkpoint_event_count']==4
+          assert evidence['checkpoint_event_count']==5
           assert evidence['execution_authority'] is False
           assert evidence['live_value_authorized'] is False
           boundary=evidence['claims_boundary'].lower()
           for phrase in (
+              'non-empty retained echo history',
               'does not establish post-quantum checkpoint security',
               'migration execution',
               'live-value authorization',
