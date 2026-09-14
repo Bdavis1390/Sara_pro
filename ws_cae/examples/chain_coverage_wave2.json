@@ -17,11 +17,12 @@
     {
       "name": "Cosmos SDK v0.55",
       "kind": "FRAMEWORK",
-      "authority_model": "CONFIGURABLE_ACCOUNT_AND_VALIDATOR_KEY_TYPES",
-      "pq_state": "ML_DSA_65_IMPLEMENTED_OPT_IN",
-      "consensus_pq_state": "ML_DSA_65_CAPABLE_NOT_DEFAULT",
-      "deployment_boundary": "CHAIN_SPECIFIC_OPT_IN_REQUIRED",
+      "authority_model": "CONFIGURABLE_ACCOUNT_AND_VALIDATOR_KEY_TYPES_WITH_CONSENSUS_KEY_ROTATION",
+      "pq_state": "ML_DSA_65_SHIPPED_FOR_ACCOUNT_KEYS_OPT_IN",
+      "consensus_pq_state": "ML_DSA_65_SHIPPED_FOR_VALIDATORS_OPT_IN_DEFAULT_ED25519",
+      "deployment_boundary": "EACH_CHAIN_MUST_UPGRADE_AND_OPT_IN; FRAMEWORK_CAPABILITY_DOES_NOT_ESTABLISH_COSMOS_HUB_DEPLOYMENT",
       "evidence": [
+        "https://github.com/cosmos/cosmos-sdk/releases/tag/v0.55.0",
         "https://github.com/cosmos/cosmos-sdk/blob/main/UPGRADING.md",
         "https://pkg.go.dev/github.com/cosmos/cosmos-sdk/x/genutil"
       ]
@@ -29,12 +30,13 @@
     {
       "name": "Tezos",
       "kind": "CHAIN",
-      "authority_model": "MULTI_SCHEME_ACCOUNT_KEYS",
-      "pq_state": "ML_DSA_44_IMPLEMENTED_BEHIND_FEATURE_FLAG",
+      "authority_model": "MULTI_SCHEME_ACCOUNT_KEYS_WITH_TZ5_ML_DSA_44_TESTNET_SUPPORT",
+      "pq_state": "PQ_NON_MAINNET_ML_DSA_44",
       "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
-      "deployment_boundary": "PQ_FEATURE_DISABLED_ON_MAINNET",
+      "deployment_boundary": "TZ5_FEATURE_FLAG_DISABLED_ON_MAINNET; PQ_KEYS_NOT_DELEGATE_OR_CONSENSUS_KEYS",
       "evidence": [
-        "https://octez.tezos.com/docs/introduction/howtouse.html"
+        "https://octez.tezos.com/docs/protocols/025_ushuaia.html",
+        "https://tezos.com/media-center/2026/ushuaia-is-live/"
       ]
     },
     {
