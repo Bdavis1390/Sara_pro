@@ -1,30 +1,25 @@
-# NIST AITE model-provider inquiry — review draft
+# NIST AITE model-provider inquiry — transmission record
 
-**Status:** DRAFT_ONLY / NOT_SENT  
-**Intended public route:** `aite-poc@list.nist.gov`  
-**External-action gate:** CRE1AWS explicit approval required before transmission.
+**Prepared:** 2026-09-12  
+**Current state:** SENT / REQUIREMENTS RESPONSE PENDING  
 
-## Proposed subject
-
-NIST AITE model-provider participation inquiry — requirements and current API package
-
-## Proposed body
+## Inquiry text
 
 Hello NIST AITE team,
 
 I am evaluating whether a bounded AI model implementation associated with the Worldshepherd research/development program could appropriately participate in NIST's Artificial Intelligence Technology Evaluation as a model provider.
 
-I am not requesting endorsement, certification, or special treatment, and I am not representing Worldshepherd as already enrolled or as having an AITE result. Before deciding whether participation is technically and administratively appropriate, I would appreciate the current materials governing model-provider submission.
+Worldshepherd is not enrolled as an AITE model provider, has not submitted a model, and has no AITE result. I am not requesting endorsement, certification, or special treatment. Before deciding whether participation is technically and administratively appropriate, I would appreciate the current materials governing model-provider submission.
 
 Could you please point me to or provide the current:
 
 - AITE Participation Agreement;
 - model-provider API/submission protocol and packaging requirements;
-- requirements for handling/submitting a model that NIST will treat as controlled unclassified information;
+- submission/data-handling instructions applicable to model providers;
 - process for identifying the legal submitting organization and model/version; and
-- guidance on whether new external models may currently enter one or more of the three Phase-1 tests, subject to capacity.
+- guidance on whether new external models may currently enter one or more Phase-1 tests, subject to capacity.
 
-I have reviewed the public AITE roadmap, FAQ, and current Quantum Dot Control, Human Genome Variant Curation, and Public Safety Visual Event Recognition test specifications. My intent is to determine whether a specific fixed model can satisfy the relevant API and task requirements; I am not proposing that a broader orchestration/governance system itself be treated as an AITE model.
+I have reviewed the public AITE roadmap, FAQ, and initial task specifications. My intent is to determine whether a specific fixed model can satisfy the relevant API and task requirements; I am not proposing that the broader Worldshepherd/SARA governance system itself be treated as an AITE model.
 
 If Phase-1 capacity is currently closed to additional model providers, a pointer to the appropriate future participation process would also be useful.
 
@@ -32,14 +27,10 @@ Thank you for your time.
 
 Best regards,
 Brandon Ray Davis
-Principal Architect, Worldshepherd
-CRE1AWS@proton.me
+Worldshepherd
 
-## Claims-control notes before any send
+## Post-send state
 
-- Run the mandatory Gmail SENT duplicate gate immediately before transmission.
-- Verify the legal submitting identity; do not imply Curious nerdworX LLC is fully formed if that remains unresolved.
-- Do not attach source code, model weights, CUI, proprietary partner data, protected evaluation artifacts, credentials, or enabling IP to an initial inquiry.
-- Do not describe internal CI, PR #168, AGI-gate logic, or synthetic tests as NIST validation.
-- Preserve NIST's public-results and non-endorsement boundary.
-- If NIST supplies controlled or agreement materials, route them through the appropriate custody/legal/security review before use.
+NIST acknowledged the inquiry, registered Worldshepherd's interest, and indicated that participation-process information would follow. The contact address was subsequently added to the AITE Community. A separate implementation-focused community inquiry was sent on 2026-09-14.
+
+These events establish contact and community membership only. They do not establish model-provider enrollment, model acceptance, submission, validation, endorsement, certification, or an AITE score.
