@@ -8,6 +8,7 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .qualification import CapabilityStatus, EvidenceScope, canonical_digest
+from .sovereign_boundary_custody import ExecutionCustody
 
 
 SOVEREIGN_BOUNDARY_SCHEMA = "WS-SOVEREIGN-BOUNDARY-KERNEL-V0.1"
@@ -93,6 +94,7 @@ class BoundaryProvenance(BaseModel):
     agent_version: str | None = Field(default=None, max_length=128)
     schema_version: str = Field(default=SOVEREIGN_BOUNDARY_SCHEMA, min_length=1, max_length=128)
     source_evidence_refs: tuple[str, ...] = ()
+    execution_custody: ExecutionCustody | None = None
 
 
 class BoundaryPolicyDecision(BaseModel):
@@ -146,8 +148,9 @@ class SovereignBoundaryEnvelope(BaseModel):
     claims_boundary: tuple[str, ...] = (
         "Authorization does not promote capability or qualification status.",
         "SIMULATED_ONLY evidence cannot authorize non-simulation effects.",
-        "Physical execution requires explicit human approval, purpose-bound PRIME authorization, and a one-time execution claim in v0.1.",
+        "Physical execution requires explicit human approval, purpose-bound PRIME authorization, a one-time execution claim, and release/configuration custody in v0.1.",
         "Operational physical effects require PROVEN_INTERNALLY status and a physical validation reference.",
+        "Execution custody binds evidence identity; it does not by itself prove runtime binary integrity or verify external Sigstore signatures.",
     )
     envelope_digest: str | None = None
 
@@ -161,6 +164,10 @@ class SovereignBoundaryEnvelope(BaseModel):
             raise ValueError("SIMULATED_ONLY capability cannot authorize a non-simulation effect")
 
         if self.action.effect_scope == EvidenceScope.PHYSICAL:
+            if self.provenance.execution_custody is None:
+                raise ValueError(
+                    "physical effects require release/configuration execution custody"
+                )
             if not self.policy.human_approval_required:
                 raise ValueError("physical effects require explicit human approval in v0.1")
             if self.context.environment == BoundaryEnvironment.OPERATIONAL:
@@ -337,6 +344,8 @@ def record_execution(
     if runtime_digest != envelope.action_digest:
         raise BoundaryKernelError("runtime action differs from the policy-bound action; re-evaluation required")
     if envelope.action.effect_scope == EvidenceScope.PHYSICAL:
+        if envelope.provenance.execution_custody is None:
+            raise BoundaryKernelError("physical execution requires release/configuration custody")
         if not envelope.prime_authorization_ref:
             raise BoundaryKernelError("physical execution requires purpose-bound PRIME authorization")
         if not envelope.prime_authorization_key_fingerprint_sha256:
@@ -364,6 +373,7 @@ def record_execution(
 def boundary_event_payload(envelope: SovereignBoundaryEnvelope) -> dict[str, Any]:
     if not verify_boundary_envelope(envelope):
         raise BoundaryKernelError("cannot emit evidence from an unverified envelope")
+    custody = envelope.provenance.execution_custody
     return {
         "schema": SOVEREIGN_BOUNDARY_EVENT_SCHEMA,
         "envelope_id": envelope.envelope_id,
@@ -383,12 +393,20 @@ def boundary_event_payload(envelope: SovereignBoundaryEnvelope) -> dict[str, Any
         "prime_authorization_ref": envelope.prime_authorization_ref,
         "prime_authorization_key_fingerprint_sha256": envelope.prime_authorization_key_fingerprint_sha256,
         "prime_execution_claim_ref": envelope.prime_execution_claim_ref,
+        "release_index_digest": None if custody is None else custody.release_index_digest,
+        "release_commit_sha": None if custody is None else custody.release_commit_sha,
+        "release_merge_state": None if custody is None else custody.release_merge_state,
+        "configuration_digest": None if custody is None else custody.configuration_digest,
+        "release_attestation_id": None if custody is None else custody.attestation_id,
         "source_evidence_refs": list(envelope.provenance.source_evidence_refs),
         "execution_evidence_refs": (
             [] if envelope.execution_result is None else list(envelope.execution_result.evidence_refs)
         ),
         "claims_boundary": list(envelope.claims_boundary),
-        "privacy_boundary": "Raw action parameters are intentionally excluded; action_digest binds the exact evaluated action.",
+        "privacy_boundary": (
+            "Raw action parameters and runtime configuration are intentionally excluded; "
+            "action_digest and configuration_digest bind the exact evaluated identities."
+        ),
     }
 
 
