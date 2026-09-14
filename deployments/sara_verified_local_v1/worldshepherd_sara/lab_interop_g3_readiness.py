@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -150,6 +151,8 @@ def validate_command(
 ) -> dict[str, Any]:
     if estop_engaged:
         return {"decision": "DENY", "reason": "estop_engaged", "safe_value": envelope.command_min}
+    if not math.isfinite(value):
+        return {"decision": "DENY", "reason": "non_finite_command", "safe_value": envelope.command_min}
     if value < envelope.command_min or value > envelope.command_max:
         return {"decision": "DENY", "reason": "outside_command_envelope", "safe_value": envelope.command_min}
     return {"decision": "ALLOW", "reason": "within_envelope", "safe_value": envelope.command_min}
@@ -164,9 +167,10 @@ def assess_measurement(
     uncertainty: UncertaintyBudget = DEFAULT_UNCERTAINTY,
 ) -> dict[str, Any]:
     calibration_ok = channel.calibration_valid
-    agreement_error = abs(raw_value - normalized_value)
-    normalization_ok = agreement_error <= max(uncertainty.rss, 1e-12)
-    hard_abort = raw_value < envelope.hard_abort_low or raw_value > envelope.hard_abort_high
+    finite_measurement = math.isfinite(raw_value) and math.isfinite(normalized_value)
+    agreement_error = abs(raw_value - normalized_value) if finite_measurement else math.inf
+    normalization_ok = finite_measurement and agreement_error <= max(uncertainty.rss, 1e-12)
+    hard_abort = (not math.isfinite(raw_value)) or raw_value < envelope.hard_abort_low or raw_value > envelope.hard_abort_high
     return {
         "raw_value": raw_value,
         "normalized_value": normalized_value,
@@ -203,6 +207,9 @@ def inject_readiness_fault(name: str) -> dict[str, Any]:
         raise ValueError(f"unknown readiness fault: {name}")
 
     manifest["fault"] = name
+    manifest["configuration_digest"] = _digest({
+        k: v for k, v in manifest.items() if k not in {"configuration_digest", "evidence_digest", "disposition"}
+    })
     manifest["disposition"] = disposition
     manifest["evidence_digest"] = _digest(manifest)
     return manifest
@@ -227,7 +234,20 @@ def evaluate_g3_readiness() -> dict[str, Any]:
         "missing_raw_retention",
         "unsafe_default",
     )
-    fail_closed = all(inject_readiness_fault(name)["disposition"] == "BLOCK_PHYSICAL_RUN" for name in fault_names)
+    def _fault_is_detected(name: str) -> bool:
+        faulted = inject_readiness_fault(name)
+        f_channels = faulted["channels"]
+        f_controls = faulted["required_controls"]
+        return not all((
+            len({c["device_id"] for c in f_channels}) >= 2,
+            all(c["calibration_valid"] for c in f_channels),
+            all(bool(c["clock_source"]) for c in f_channels),
+            all(c["min_value"] <= c["safe_value"] <= c["max_value"] for c in f_channels),
+            all(f_controls.values()),
+            faulted["uncertainty_budget"]["rss"] > 0.0,
+        ))
+
+    fail_closed = all(_fault_is_detected(name) for name in fault_names)
 
     checks = {
         "two_distinct_devices": two_distinct_devices,
