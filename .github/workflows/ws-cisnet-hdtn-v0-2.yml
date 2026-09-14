@@ -39,6 +39,9 @@ jobs:
         run: cmake --build "$RUNNER_TEMP/HDTN/build" --target hdtn-one-process bpsendfile bpreceivefile bpgen-async unit-tests integrated-tests --parallel 4
       - name: Run HDTN unit tests
         shell: bash
+        env:
+          HDTN_SOURCE_ROOT: ${{ runner.temp }}/HDTN
+          HDTN_BUILD_ROOT: ${{ runner.temp }}/HDTN/build
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
@@ -50,6 +53,9 @@ jobs:
           exit "$rc"
       - name: Run HDTN integrated tests
         shell: bash
+        env:
+          HDTN_SOURCE_ROOT: ${{ runner.temp }}/HDTN
+          HDTN_BUILD_ROOT: ${{ runner.temp }}/HDTN/build
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
