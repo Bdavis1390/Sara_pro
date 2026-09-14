@@ -79,7 +79,9 @@ class SharedReadTicketLedger(ReadTicketLedger):
         )
 
     def status(self, ticket_id: str) -> Dict[str, Any]:
-        return self.store.status(str(ticket_id))
+        status = dict(self.store.status(str(ticket_id)))
+        status.pop("ticket_sha256", None)
+        return status
 
 
 class ThreadSafeSharedClaimStore:
