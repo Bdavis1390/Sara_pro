@@ -1,0 +1,228 @@
+name: WS CISNET HDTN v0.3 Multinode Persistence
+
+on:
+  pull_request:
+    paths:
+      - "integrations/hdtn/v0_3/**"
+      - ".github/workflows/ws-cisnet-hdtn-v0-3-multinode.yml"
+      - "docs/WS_CISNET_HDTN_V0_3.md"
+      - "cisnet/provenance.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  three-node-relay-restart-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WS_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate v0.3 topology artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in integrations/hdtn/v0_3/*.json; do python -m json.tool "$f" >/dev/null; done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("integrations/hdtn/v0_3")
+          n1 = json.load(open(root / "node1.json"))
+          n2a = json.load(open(root / "node2-initial.json"))
+          n2b = json.load(open(root / "node2-restore.json"))
+          n3 = json.load(open(root / "node3.json"))
+          plan = json.load(open(root / "multinode-contact-plan.json"))
+          assert [n1["myNodeId"], n2a["myNodeId"], n3["myNodeId"]] == [1, 2, 3]
+          assert n2a["storageConfig"]["autoDeleteFilesOnExit"] is False
+          assert n2a["storageConfig"]["tryToRestoreFromDisk"] is False
+          assert n2b["storageConfig"]["autoDeleteFilesOnExit"] is False
+          assert n2b["storageConfig"]["tryToRestoreFromDisk"] is True
+          assert [(c["source"], c["dest"]) for c in plan["contacts"]] == [(1,2),(2,3),(3,4)]
+          assert plan["contacts"][0]["endTime"] < plan["contacts"][1]["startTime"]
+          ports = [4601, 4602, 4603, 4604]
+          assert len(set(ports)) == len(ports)
+          PY
+
+      - name: Install HDTN build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential libzmq3-dev libboost-all-dev openssl libssl-dev
+
+      - name: Fetch exact pinned NASA HDTN
+        shell: bash
+        run: |
+          set -euo pipefail
+          pin=$(python -c 'import json; print(json.load(open("integrations/hdtn/upstream.json"))["commit"])')
+          git clone --no-tags https://github.com/nasa/HDTN.git "$RUNNER_TEMP/HDTN"
+          git -C "$RUNNER_TEMP/HDTN" checkout --detach "$pin"
+          test "$(git -C "$RUNNER_TEMP/HDTN" rev-parse HEAD)" = "$pin"
+
+      - name: Configure and build multinode runtime
+        run: |
+          cmake -S "$RUNNER_TEMP/HDTN" -B "$RUNNER_TEMP/HDTN/build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_BPSEC=OFF \
+            -DUSE_X86_HARDWARE_ACCELERATION=OFF \
+            -DLTP_RNG_USE_RDSEED=OFF
+          cmake --build "$RUNNER_TEMP/HDTN/build" \
+            --target hdtn-one-process bpsendfile bpreceivefile --parallel 4
+
+      - name: Prove store restart restore forward delivery
+        shell: bash
+        run: |
+          set -euo pipefail
+          HDTN="$RUNNER_TEMP/HDTN"
+          CFG="$GITHUB_WORKSPACE/integrations/hdtn/v0_3"
+          PLAN="$CFG/multinode-contact-plan.json"
+          LAB="$RUNNER_TEMP/ws-cisnet-v0-3"
+          export LAB
+          mkdir -p "$LAB"/{source,node1,node2,node3,received,logs} artifacts
+
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, os
+          target = Path(os.environ["LAB"]) / "source" / "payload.bin"
+          seed = hashlib.sha256(b"WS-CISNET-HDTN-v0.3-PERSISTENT-RELAY").digest()
+          size = 8 * 1024 * 1024
+          target.write_bytes((seed * ((size + len(seed) - 1) // len(seed)))[:size])
+          PY
+
+          SOURCE="$LAB/source/payload.bin"
+          SRC_SHA=$(sha256sum "$SOURCE" | awk '{print $1}')
+          SIZE=$(stat -c%s "$SOURCE")
+          PLAN_SHA=$(sha256sum "$PLAN" | awk '{print $1}')
+          HDTN_SHA=$(git -C "$HDTN" rev-parse HEAD)
+
+          cleanup() {
+            for pid in "${SEND_PID:-}" "${NODE1_PID:-}" "${NODE2_PID:-}" "${NODE3_PID:-}" "${RECV_PID:-}"; do
+              if [ -n "$pid" ]; then kill -INT "$pid" 2>/dev/null || true; fi
+            done
+          }
+          trap cleanup EXIT
+
+          "$HDTN/build/common/bpcodec/apps/bpreceivefile" \
+            --save-directory="$LAB/received" \
+            --my-uri-eid=ipn:4.1 \
+            --inducts-config-file="$CFG/sink-induct.json" \
+            >"$LAB/logs/receiver.log" 2>&1 &
+          RECV_PID=$!
+
+          (cd "$LAB/node3" && "$HDTN/build/module/hdtn_one_process/hdtn-one-process" \
+            --hdtn-config-file="$CFG/node3.json" --contact-plan-file="$PLAN") \
+            >"$LAB/logs/node3.log" 2>&1 &
+          NODE3_PID=$!
+
+          (cd "$LAB/node2" && "$HDTN/build/module/hdtn_one_process/hdtn-one-process" \
+            --hdtn-config-file="$CFG/node2-initial.json" --contact-plan-file="$PLAN") \
+            >"$LAB/logs/node2-initial.log" 2>&1 &
+          NODE2_PID=$!
+
+          (cd "$LAB/node1" && "$HDTN/build/module/hdtn_one_process/hdtn-one-process" \
+            --hdtn-config-file="$CFG/node1.json" --contact-plan-file="$PLAN") \
+            >"$LAB/logs/node1.log" 2>&1 &
+          NODE1_PID=$!
+
+          sleep 5
+          START=$(date +%s)
+
+          (cd "$LAB/source" && "$HDTN/build/common/bpcodec/apps/bpsendfile" \
+            --use-bp-version-7 \
+            --force-disable-custody \
+            --max-bundle-size-bytes=500000 \
+            --file-or-folder-path="payload.bin" \
+            --my-uri-eid=ipn:100.1 \
+            --dest-uri-eid=ipn:4.1 \
+            --outducts-config-file="$CFG/source-outduct.json") \
+            >"$LAB/logs/sender.log" 2>&1 &
+          SEND_PID=$!
+
+          sleep 9
+          PRE_RESTART_BYTES=0
+          EARLY=$(find "$LAB/received" -type f -name payload.bin -print -quit || true)
+          if [ -n "$EARLY" ]; then PRE_RESTART_BYTES=$(stat -c%s "$EARLY"); fi
+          test "$PRE_RESTART_BYTES" -lt "$SIZE"
+
+          RELAY_STORE_BEFORE=$(find "$LAB/node2" -maxdepth 1 -type f -name 'store*.bin' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          test "$RELAY_STORE_BEFORE" -gt 0
+
+          kill -INT "$NODE1_PID" 2>/dev/null || true
+          wait "$NODE1_PID" 2>/dev/null || true
+          NODE1_PID=""
+
+          kill -INT "$NODE2_PID" 2>/dev/null || true
+          wait "$NODE2_PID" 2>/dev/null || true
+          NODE2_PID=""
+          RESTART_AT=$(( $(date +%s) - START ))
+
+          POST_STOP_BYTES=0
+          EARLY=$(find "$LAB/received" -type f -name payload.bin -print -quit || true)
+          if [ -n "$EARLY" ]; then POST_STOP_BYTES=$(stat -c%s "$EARLY"); fi
+          test "$POST_STOP_BYTES" -lt "$SIZE"
+
+          (cd "$LAB/node2" && "$HDTN/build/module/hdtn_one_process/hdtn-one-process" \
+            --hdtn-config-file="$CFG/node2-restore.json" --contact-plan-file="$PLAN") \
+            >"$LAB/logs/node2-restored.log" 2>&1 &
+          NODE2_PID=$!
+
+          RECEIVED=""
+          for _ in $(seq 1 120); do
+            RECEIVED=$(find "$LAB/received" -type f -name payload.bin -print -quit || true)
+            if [ -n "$RECEIVED" ] && [ "$(stat -c%s "$RECEIVED")" -eq "$SIZE" ]; then break; fi
+            sleep 1
+          done
+          test -n "$RECEIVED"
+          test "$(stat -c%s "$RECEIVED")" -eq "$SIZE"
+          DST_SHA=$(sha256sum "$RECEIVED" | awk '{print $1}')
+          test "$SRC_SHA" = "$DST_SHA"
+          ELAPSED=$(( $(date +%s) - START ))
+          test "$ELAPSED" -gt "$RESTART_AT"
+
+          RELAY_STORE_AFTER=$(find "$LAB/node2" -maxdepth 1 -type f -name 'store*.bin' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          export SRC_SHA DST_SHA SIZE PLAN_SHA HDTN_SHA PRE_RESTART_BYTES POST_STOP_BYTES RESTART_AT ELAPSED RELAY_STORE_BEFORE RELAY_STORE_AFTER
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from cisnet.provenance import EchoLedger
+
+          ledger = EchoLedger()
+          ledger.append(0, "bpv7_source_prepared", payload_bytes=int(os.environ["SIZE"]), sha256=os.environ["SRC_SHA"])
+          ledger.append(int(os.environ["RESTART_AT"]), "source_node_stopped", destination_bytes=int(os.environ["PRE_RESTART_BYTES"]))
+          ledger.append(int(os.environ["RESTART_AT"]), "relay_stopped_for_restart", relay_store_bytes=int(os.environ["RELAY_STORE_BEFORE"]))
+          ledger.append(int(os.environ["RESTART_AT"]), "relay_restore_started", destination_bytes=int(os.environ["POST_STOP_BYTES"]))
+          ledger.append(int(os.environ["ELAPSED"]), "bpv7_delivery_after_relay_restore", sha256=os.environ["DST_SHA"])
+
+          evidence = {
+              "claim": "byte-identical BPv7 delivery through three independently running HDTN routing/storage nodes after source-node shutdown and persistent-relay restart",
+              "bp_version": 7,
+              "payload_bytes": int(os.environ["SIZE"]),
+              "source_sha256": os.environ["SRC_SHA"],
+              "destination_sha256": os.environ["DST_SHA"],
+              "pre_restart_destination_bytes": int(os.environ["PRE_RESTART_BYTES"]),
+              "post_relay_stop_destination_bytes": int(os.environ["POST_STOP_BYTES"]),
+              "relay_store_bytes_before_restart": int(os.environ["RELAY_STORE_BEFORE"]),
+              "relay_store_bytes_after_delivery": int(os.environ["RELAY_STORE_AFTER"]),
+              "relay_restart_at_s": int(os.environ["RESTART_AT"]),
+              "delivery_elapsed_s": int(os.environ["ELAPSED"]),
+              "contact_plan_sha256": os.environ["PLAN_SHA"],
+              "hdtn_commit": os.environ["HDTN_SHA"],
+              "worldshepherd_head_commit": os.environ.get("WS_HEAD_SHA", "unknown"),
+              "ledger_valid": ledger.verify(),
+              "source_node_was_off_before_relay_restore": True,
+              "result": "PASS",
+              "events": ledger.as_dicts(),
+          }
+          Path("artifacts/cisnet-v0-3-multinode-evidence.json").write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
+          assert evidence["ledger_valid"]
+          PY
+
+          cp "$LAB/logs/"*.log artifacts/
+
+      - name: Upload multinode proof record
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cisnet-v0-3-multinode-persistence
+          path: artifacts/
+          if-no-files-found: warn
