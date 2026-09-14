@@ -1,0 +1,18 @@
+{
+  "schema": "worldshepherd.connector.read-ticket-policy.v1",
+  "ticket_schema": "worldshepherd.connector.read-ticket.v2",
+  "execution_mode": "host_connector_handoff",
+  "single_use": true,
+  "default_ttl_seconds": 60,
+  "min_ttl_seconds": 5,
+  "max_ttl_seconds": 300,
+  "raw_context_in_ticket": false,
+  "raw_context_in_policy_envelope": false,
+  "context_binding": "canonical_sha256",
+  "credential_handling": "outside_sara_broker",
+  "write_enabled": false,
+  "claim_scope": "process_local_atomic",
+  "durable_replay_protection": false,
+  "distributed_replay_protection": false,
+  "claims_boundary": "Single-use enforcement is PROVEN INTERNALLY only within one running SARA process. Restart-safe and multi-instance anti-replay require a durable shared claim store and are not currently claimed."
+}
