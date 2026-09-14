@@ -42,8 +42,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Use a fresh isolated project so retained events from another validation run
-# cannot make exact four-record reconciliation appear successful or fail spuriously.
 "${compose[@]}" down -v --remove-orphans >/dev/null 2>&1 || true
 
 echo_token="$(openssl rand -hex 32)"
@@ -65,8 +63,6 @@ export ECHO_INGEST_TOKEN_HOST_PATH="$token_file"
 export ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH="$checkpoint_key_file"
 export ECHO_CHECKPOINT_KEY_ID="ECHO-QCRYPTO-BRIDGE-${GITHUB_SHA:-LOCAL}"
 
-# Render first: this catches network, mount, profile, and interpolation errors
-# before any service starts.
 "${compose[@]}" config --quiet
 "${compose[@]}" up -d --build sara echo
 
@@ -90,8 +86,6 @@ wait_url "${echo_url}/readyz" || {
   exit 1
 }
 
-# Prove the opt-in topology is narrow: SARA joins the ECHO private network for
-# HTTP evidence transport, but does not receive ECHO data/checkpoint-key mounts.
 sara_container="$("${compose[@]}" ps -q sara)"
 echo_container="$("${compose[@]}" ps -q echo)"
 docker inspect "$sara_container" > "${secret_dir}/sara-inspect.json"
@@ -163,7 +157,8 @@ sync_url="${sara_url}/admin/qcrypto/audit/echo-sync?decision_digest=${digest}&au
 curl --fail --silent --show-error -X POST "$sync_url" -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" \
   > "${secret_dir}/sync-first.json"
 curl --fail --silent --show-error -X POST "$sync_url" -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" \
-  > "${secret_dir}/sync-replay.json"\n
+  > "${secret_dir}/sync-replay.json"
+
 python3 - "${secret_dir}/sync-first.json" "${secret_dir}/sync-replay.json" "$instance" <<'PY'
 import json, sys
 from pathlib import Path
