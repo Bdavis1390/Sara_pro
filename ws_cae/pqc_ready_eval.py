@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
+from .consensus_continuity import ConsensusContinuityProfile, assess_consensus
 from .reference import Profile, assess as assess_profile
 
 
@@ -22,6 +23,7 @@ class PQCReadyEvidence:
     key_management_evaluation_documented: bool
     external_dependencies_enumerated: bool
     interoperability_evidence: bool
+    consensus_profile: ConsensusContinuityProfile | None = None
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,8 @@ class PQCReadyAssessment:
     evaluation_state: str
     authorization_state: str
     consensus_state: str
+    consensus_validation_state: str
+    self_validation_state: str
     implementation_state: str
     protocol_commitment_state: str
     evidence_gaps: tuple[str, ...]
@@ -56,11 +60,31 @@ def assess_pqc_ready(evidence: PQCReadyEvidence) -> PQCReadyAssessment:
         if not passed:
             gaps.append(message)
 
+    consensus_result = (
+        assess_consensus(evidence.consensus_profile)
+        if evidence.consensus_profile is not None
+        else None
+    )
+    if consensus_result is not None and not consensus_result.valid:
+        gaps.extend(f"consensus: {item}" for item in consensus_result.issues)
+
     profile = evidence.profile
     authorization_mainnet = profile.pq_authorization_state == "PQ_MAINNET"
     authorization_limited = profile.pq_authorization_state == "PQ_MAINNET_LIMITED"
-    consensus_mainnet = profile.consensus_pq_state == "PQ_DEPLOYED"
     implementation_mainnet = profile.implementation_maturity == "MAINNET"
+
+    # Full-stack readiness requires more than the chain profile's consensus flag.
+    # It also requires a valid consensus-continuity profile showing that the
+    # participant-key plane is PQ-mainnet consistent and that local/self-validation
+    # has been explicitly characterized.
+    consensus_claim_mainnet = profile.consensus_pq_state == "PQ_DEPLOYED"
+    consensus_evidence_mainnet = (
+        consensus_result is not None
+        and consensus_result.valid
+        and consensus_result.state == "CONSENSUS_PQ_DEPLOYED"
+        and consensus_result.self_validation_state != "SELF_VALIDATION_NOT_ESTABLISHED"
+    )
+    consensus_mainnet = consensus_claim_mainnet and consensus_evidence_mainnet
 
     if authorization_mainnet and consensus_mainnet and implementation_mainnet and not gaps:
         state = "FULL_STACK_PQC_READY_CANDIDATE"
@@ -78,8 +102,12 @@ def assess_pqc_ready(evidence: PQCReadyEvidence) -> PQCReadyAssessment:
 
     if not authorization_mainnet:
         gaps.append("general mainnet PQ authorization is not established")
-    if not consensus_mainnet:
+    if not consensus_claim_mainnet:
         gaps.append("PQ consensus deployment is not established")
+    elif evidence.consensus_profile is None:
+        gaps.append("PQ consensus claim lacks a consensus-continuity evidence profile")
+    elif not consensus_evidence_mainnet:
+        gaps.append("consensus-continuity evidence does not establish full PQ consensus readiness")
     if not implementation_mainnet:
         gaps.append("implementation is not mainnet")
     if not profile.recovery_state_documented:
@@ -87,13 +115,27 @@ def assess_pqc_ready(evidence: PQCReadyEvidence) -> PQCReadyAssessment:
 
     # Preserve deterministic order while removing duplicates.
     unique_gaps = tuple(dict.fromkeys(gaps))
-    evidence_complete = all(checks.values())
+    evidence_complete = all(checks.values()) and (
+        consensus_result is None or consensus_result.valid
+    )
 
     return PQCReadyAssessment(
-        valid=profile_result.valid and evidence.primary_evidence_documented,
+        valid=(
+            profile_result.valid
+            and evidence.primary_evidence_documented
+            and (consensus_result.valid if consensus_result is not None else True)
+        ),
         evaluation_state=state,
         authorization_state=profile.pq_authorization_state,
         consensus_state=profile.consensus_pq_state,
+        consensus_validation_state=(
+            consensus_result.state if consensus_result is not None else "CONSENSUS_PROFILE_NOT_SUPPLIED"
+        ),
+        self_validation_state=(
+            consensus_result.self_validation_state
+            if consensus_result is not None
+            else "SELF_VALIDATION_NOT_ESTABLISHED"
+        ),
         implementation_state=profile.implementation_maturity,
         protocol_commitment_state=profile.protocol_commitment_state,
         evidence_gaps=unique_gaps,
