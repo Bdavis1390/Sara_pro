@@ -1,0 +1,38 @@
+name: WS CISNET HDTN v0.2
+
+on:
+  pull_request:
+    paths:
+      - "cisnet/**"
+      - "integrations/hdtn/**"
+      - ".github/workflows/ws-cisnet-hdtn-v0-2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hdtn-upstream-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate contact plan
+        run: python -m json.tool integrations/hdtn/ws-cisnet-contact-plan.json >/dev/null
+      - name: Install HDTN build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential libzmq3-dev libboost-all-dev openssl libssl-dev
+      - name: Fetch pinned NASA HDTN
+        run: |
+          set -euo pipefail
+          pin=$(python -c 'import json; print(json.load(open("integrations/hdtn/upstream.json"))["commit"])')
+          git clone --no-tags https://github.com/nasa/HDTN.git "$RUNNER_TEMP/HDTN"
+          git -C "$RUNNER_TEMP/HDTN" checkout --detach "$pin"
+          test "$(git -C "$RUNNER_TEMP/HDTN" rev-parse HEAD)" = "$pin"
+      - name: Configure HDTN
+        run: cmake -S "$RUNNER_TEMP/HDTN" -B "$RUNNER_TEMP/HDTN/build" -DCMAKE_BUILD_TYPE=Release -DENABLE_BPSEC=OFF -DUSE_X86_HARDWARE_ACCELERATION=OFF -DLTP_RNG_USE_RDSEED=OFF
+      - name: Build HDTN
+        run: cmake --build "$RUNNER_TEMP/HDTN/build" --parallel 2
+      - name: Run HDTN unit tests
+        run: "$RUNNER_TEMP/HDTN/build/tests/unit_tests/unit-tests"
+      - name: Run HDTN integrated tests
+        run: "$RUNNER_TEMP/HDTN/build/tests/integrated_tests/integrated-tests"
