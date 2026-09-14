@@ -22,7 +22,7 @@
          struct {
 --- a/src/threading/SerialTypes.cc
 +++ b/src/threading/SerialTypes.cc
-@@ -105,6 +105,15 @@ Value::Value(const Value& other) {
+@@ -105,6 +105,16 @@ Value::Value(const Value& other) {
                  val.vector_val.vals[i] = new Value(*other.val.vector_val.vals[i]);
              break;
          }
@@ -39,7 +39,7 @@
          default: {
              // Deal with simple/atomic types.
              val = other.val;
-@@ -153,6 +162,15 @@ Value::~Value() {
+@@ -153,6 +163,16 @@ Value::~Value() {
  
          delete[] val.vector_val.vals;
      }
@@ -56,7 +56,7 @@
  }
  
  bool Value::IsCompatibleType(Type* t, bool atomic_only) {
-@@ -186,7 +204,11 @@ bool Value::IsCompatibleType(Type* t, bool atomic_only) {
+@@ -186,7 +206,11 @@ bool Value::IsCompatibleType(Type* t, bool atomic_only) {
              if ( atomic_only )
                  return false;
  
@@ -69,7 +69,7 @@
          }
  
          default: return false;
-@@ -327,6 +349,31 @@ bool Value::Read(detail::SerializationFormat* fmt) {
+@@ -327,6 +351,32 @@ bool Value::Read(detail::SerializationFormat* fmt) {
              return true;
          }
  
@@ -103,7 +103,7 @@
          default: {
              reporter->InternalWarning("unsupported type %s (%d) in Value::Read", type_name(type),
                                        static_cast<int>(type));
-@@ -395,6 +442,19 @@ bool Value::Write(detail::SerializationFormat* fmt) const {
+@@ -395,6 +445,18 @@ bool Value::Write(detail::SerializationFormat* fmt) const {
              return true;
          }
  
@@ -124,7 +124,7 @@
              return false;
 --- a/src/logging/Manager.cc
 +++ b/src/logging/Manager.cc
-@@ -1512,6 +1512,45 @@ threading::Value Manager::ValToLogVal(WriterInfo* info, const Stream* stream, s
+@@ -1512,6 +1512,42 @@ threading::Value Manager::ValToLogVal(WriterInfo* info, const Stream* stream, s
              break;
          }
  
@@ -169,7 +169,7 @@
  
 --- a/src/threading/formatters/JSON.cc
 +++ b/src/threading/formatters/JSON.cc
-@@ -222,6 +222,18 @@ void JSON::BuildJSON(zeek::json::detail::NullDoubleWriter& writer, Value* val,
+@@ -222,6 +222,19 @@ void JSON::BuildJSON(zeek::json::detail::NullDoubleWriter& writer, Value* val,
              break;
          }
  
