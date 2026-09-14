@@ -51,6 +51,20 @@ WHERE ticket_id = %s
 """.strip()
 
 
+def _best_effort_rollback(connection: Any) -> None:
+    try:
+        connection.rollback()
+    except Exception:
+        pass
+
+
+def _best_effort_close(connection: Any) -> None:
+    try:
+        connection.close()
+    except Exception:
+        pass
+
+
 class PostgresClaimStore:
     """Credential-blind Postgres compare-and-set adapter for shared ticket claims.
 
@@ -63,6 +77,10 @@ class PostgresClaimStore:
     which removes issuer/claimant absolute clock offsets from the database claim
     decision. The atomic UPDATE ... WHERE consumed_at IS NULL statement remains the
     anti-replay compare-and-set primitive.
+
+    Transaction and connection errors fail closed. Cleanup is best-effort so a
+    severed connection cannot mask the original database exception by failing a
+    secondary rollback or close operation.
     """
 
     def __init__(self, connection_factory: Callable[[], Any]) -> None:
@@ -75,10 +93,10 @@ class PostgresClaimStore:
             cursor.execute(CREATE_TABLE_SQL)
             connection.commit()
         except Exception:
-            connection.rollback()
+            _best_effort_rollback(connection)
             raise
         finally:
-            connection.close()
+            _best_effort_close(connection)
 
     def register(
         self,
@@ -102,16 +120,16 @@ class PostgresClaimStore:
                 (ticket_id, ticket_sha256, ttl_seconds),
             )
             if cursor.rowcount != 1:
-                connection.rollback()
+                _best_effort_rollback(connection)
                 raise ValueError("duplicate ticket_id")
             connection.commit()
         except ValueError:
             raise
         except Exception:
-            connection.rollback()
+            _best_effort_rollback(connection)
             raise
         finally:
-            connection.close()
+            _best_effort_close(connection)
 
     def claim(
         self,
@@ -140,12 +158,12 @@ class PostgresClaimStore:
                     float(row[1]),
                 )
 
-            connection.rollback()
+            _best_effort_rollback(connection)
         except Exception:
-            connection.rollback()
+            _best_effort_rollback(connection)
             raise
         finally:
-            connection.close()
+            _best_effort_close(connection)
 
         status = self.status(ticket_id)
         if not status.get("known"):
@@ -165,7 +183,7 @@ class PostgresClaimStore:
             cursor.execute(STATUS_SQL, (ticket_id,))
             row = cursor.fetchone()
         finally:
-            connection.close()
+            _best_effort_close(connection)
 
         if row is None:
             return {"known": False, "ticket_id": ticket_id}
