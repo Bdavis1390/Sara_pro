@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from worldshepherd_sara.event_outbox import (
@@ -9,6 +11,9 @@ from worldshepherd_sara.event_outbox import (
     queue_events_outbox_patch,
 )
 from worldshepherd_sara.qcrypto_audit_adapter import QCRYPTO_AUDIT_SCHEMA
+
+
+AUDIT_INSTANCE_PATTERN = re.compile(r"^QCRYPTO-AUDIT-[0-9a-f]{32}$")
 
 
 def auth(token: str) -> dict[str, str]:
@@ -61,6 +66,7 @@ def test_admin_can_record_and_verify_qcrypto_governance_evidence(client, tokens)
     assert body["asset_id"] == "asset-api-001"
     assert body["decision_digest"].startswith("sha256:")
     assert len(body["decision_digest"]) == 71
+    assert AUDIT_INSTANCE_PATTERN.fullmatch(body["audit_instance_id"])
     assert len(body["event_ids"]) == 4
     assert len(set(body["event_ids"])) == 4
     assert body["provenance_delivery"] == "DELIVERED"
@@ -80,16 +86,22 @@ def test_admin_can_record_and_verify_qcrypto_governance_evidence(client, tokens)
     assert all(record["actor"] == "admin" for record in records)
     assert all(record["payload"]["asset_id"] == "asset-api-001" for record in records)
     assert all(record["payload"]["decision_digest"] == body["decision_digest"] for record in records)
+    assert all(record["payload"]["audit_instance_id"] == body["audit_instance_id"] for record in records)
     assert all(record["payload"]["_delivery_semantics"] == "AT_LEAST_ONCE" for record in records)
 
     verification = client.get(
         "/admin/qcrypto/audit/verify",
         headers=auth(admin),
-        params={"decision_digest": body["decision_digest"], "limit": 100},
+        params={
+            "decision_digest": body["decision_digest"],
+            "audit_instance_id": body["audit_instance_id"],
+            "limit": 100,
+        },
     )
     assert verification.status_code == 200
     result = verification.json()
     assert result["verification"]["verdict"] == "INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN"
+    assert result["verification"]["audit_instance_id"] == body["audit_instance_id"]
     assert result["verification"]["complete"] is True
     assert result["verification"]["consistent"] is True
     assert result["verification"]["execution_authority"] is False
@@ -150,19 +162,29 @@ def test_api_rejects_extra_fields(client, tokens):
     response = client.post(
         "/admin/qcrypto/audit",
         headers=auth(admin),
-        json={**projection(), "execute_now": True},
+        json={**projection(), "audit_instance_id": "caller-controlled", "execute_now": True},
     )
     assert response.status_code == 422
 
 
-def test_verify_rejects_malformed_digest(client, tokens):
+def test_verify_rejects_malformed_digest_or_instance(client, tokens):
     _, admin = tokens
-    response = client.get(
+    bad_digest = client.get(
         "/admin/qcrypto/audit/verify",
         headers=auth(admin),
         params={"decision_digest": "not-a-digest"},
     )
-    assert response.status_code == 422
+    assert bad_digest.status_code == 422
+
+    bad_instance = client.get(
+        "/admin/qcrypto/audit/verify",
+        headers=auth(admin),
+        params={
+            "decision_digest": "sha256:" + "0" * 64,
+            "audit_instance_id": "caller-controlled",
+        },
+    )
+    assert bad_instance.status_code == 422
 
 
 def test_saturated_outbox_fails_closed_without_qcrypto_audit(client, tokens):
@@ -196,7 +218,7 @@ def test_saturated_outbox_fails_closed_without_qcrypto_audit(client, tokens):
     assert outbox_status(store.get_registry())["pending"] == MAX_PENDING_OUTBOX_EVENTS
 
 
-def test_audit_delivery_failure_preserves_events_for_replay(client, tokens, monkeypatch):
+def test_audit_delivery_failure_preserves_instance_for_replay(client, tokens, monkeypatch):
     _, admin = tokens
     store = client.app.state.store
     original_append = store.append_audit
@@ -214,6 +236,7 @@ def test_audit_delivery_failure_preserves_events_for_replay(client, tokens, monk
     body = response.json()
     assert body["provenance_delivery"] == "PENDING_REPLAY"
     assert body["decision_digest"].startswith("sha256:")
+    assert AUDIT_INSTANCE_PATTERN.fullmatch(body["audit_instance_id"])
     assert outbox_status(store.get_registry())["pending"] == 4
 
     monkeypatch.setattr(store, "append_audit", original_append)
@@ -223,14 +246,20 @@ def test_audit_delivery_failure_preserves_events_for_replay(client, tokens, monk
     records = qcrypto_records(client, admin)
     assert len(records) == 4
     assert all(record["payload"]["asset_id"] == "asset-replay-001" for record in records)
+    assert all(record["payload"]["audit_instance_id"] == body["audit_instance_id"] for record in records)
 
     verification = client.get(
         "/admin/qcrypto/audit/verify",
         headers=auth(admin),
-        params={"decision_digest": body["decision_digest"]},
+        params={
+            "decision_digest": body["decision_digest"],
+            "audit_instance_id": body["audit_instance_id"],
+        },
     )
     assert verification.status_code == 200
-    assert verification.json()["verification"]["verdict"] == "INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN"
+    result = verification.json()["verification"]
+    assert result["verdict"] == "INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN"
+    assert result["audit_instance_id"] == body["audit_instance_id"]
 
 
 def test_health_advertises_qcrypto_governance_endpoint(client):
