@@ -71,11 +71,17 @@ def test_cross_helicity_metric_remains_well_conditioned_near_zero(report: NSBG10
     coarse = report.ideal_temporal_refinement[0]
     limit = report.acceptance.ideal_invariant_drift_limit
 
-    # #245 negative evidence is retained: the legacy relative metric divides
-    # by a near-zero initial invariant and can exceed the threshold even when
-    # the absolute invariant error is roundoff-scale.
+    # #245 historical negative evidence is retained in the issue and benchmark
+    # documentation. Do not require a particular roundoff-sized legacy drift
+    # to reproduce across Python/CPU/runner combinations. Instead prove the
+    # denominator pathology directly: the initial invariant is effectively
+    # zero while the physical Cauchy-Schwarz scale is many orders larger.
     assert abs(coarse.cross_helicity_initial) <= 1e-12
-    assert coarse.cross_helicity_relative_drift > limit
+    legacy_scale = max(abs(coarse.cross_helicity_initial), 1e-12)
+    assert coarse.cross_helicity_scale / legacy_scale >= 1e8
+    assert coarse.cross_helicity_relative_drift == pytest.approx(
+        coarse.cross_helicity_absolute_drift / legacy_scale
+    )
     assert coarse.cross_helicity_absolute_drift <= 1e-14
 
     # Acceptance uses the Cauchy-Schwarz energy scale for cross helicity,
