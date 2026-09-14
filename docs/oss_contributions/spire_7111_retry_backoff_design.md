@@ -1,124 +1,94 @@
 # SPIRE #7111 — decouple agent API retry backoff from reconciliation cadence
 
-Upstream: `spiffe/spire#7111`
+Upstream issue: `spiffe/spire#7111`
 
-Claims state: **SOURCE-REVIEWED DESIGN / REQUIRES UPSTREAM TESTING AND MAINTAINER API SELECTION**
+Current upstream implementation: `spiffe/spire#7286` — **OPEN / MERGEABLE / FIX IN REVIEW**
 
-## Problem confirmed in current source
+Claims state: **UPSTREAM FIX IN REVIEW / WORLDSHEPHERD DESIGN ALIGNED / DO NOT DUPLICATE**
 
-The agent manager currently derives the synchronize retry ceiling from the reconciliation interval:
+## Status change
 
-- `SyncInterval` is the normal synchronization cadence.
-- `synchronizeMaxIntervalMultiple = 48`.
-- `synchronizeMaxInterval = 8 * time.Minute`.
-- the manager computes `min(8m, 48 * SyncInterval)` and constructs the synchronize backoff using `SyncInterval` as its base interval.
+Worldshepherd previously source-reviewed #7111 and proposed separating normal `SyncInterval` from transient synchronization retry policy while preserving legacy defaults.
 
-With the default 5-second sync interval this permits roughly a four-minute retry ceiling after transient upstream/API errors. This couples two distinct control loops: steady-state reconciliation frequency and failure-recovery retry policy.
+Upstream PR #7286 now implements that lane directly. It is open, non-draft, mergeable, and has maintainer reviewers requested. Worldshepherd should therefore stop implementation work and track/review the upstream fix.
 
-## Contribution objective
+## Confirmed problem
 
-Separate **normal reconcile cadence** from **transient-failure retry cadence** without changing default behavior unexpectedly for existing deployments.
+SPIRE derives synchronize retry timing from the reconciliation interval:
 
-The preferred shape is an explicit retry policy that can be tuned independently while preserving the existing backoff implementation and clock injection used by tests.
+- normal `SyncInterval` controls steady-state synchronization cadence;
+- retry backoff also starts from that cadence;
+- the retry ceiling is bounded by `min(8m, 48 * SyncInterval)`.
 
-Candidate manager configuration fields:
+With the normal 5-second sync interval this can allow roughly a four-minute retry ceiling after transient synchronization failures. Normal operating cadence and degraded-state recovery policy are separate control concerns and should be independently configurable.
 
-```go
-// SyncRetryInitialInterval controls the initial retry delay after a failed
-// synchronize attempt. Zero preserves the legacy behavior and uses SyncInterval.
-SyncRetryInitialInterval time.Duration
+## How PR #7286 addresses it
 
-// SyncRetryMaxInterval caps the synchronize retry delay. Zero preserves the
-// legacy computed ceiling min(8m, 48*SyncInterval).
-SyncRetryMaxInterval time.Duration
-```
-
-The zero-value compatibility rule is deliberate. Existing configs should behave identically unless the new knobs are configured.
-
-## Proposed manager construction
-
-Conceptually:
-
-```go
-retryInitial := m.c.SyncRetryInitialInterval
-if retryInitial == 0 {
-    retryInitial = m.c.SyncInterval
-}
-
-retryMax := m.c.SyncRetryMaxInterval
-if retryMax == 0 {
-    retryMax = min(synchronizeMaxInterval,
-        synchronizeMaxIntervalMultiple*m.c.SyncInterval)
-}
-
-// Reject or clamp an invalid max below initial during config validation rather
-// than silently constructing a nonsensical backoff policy.
-m.synchronizeBackoff = backoff.NewBackoff(
-    m.clk,
-    retryInitial,
-    backoff.WithMaxInterval(retryMax),
-)
-```
-
-No change is proposed to `svidSyncBackoff` or size-limited backoff behavior unless maintainers explicitly want those exposed separately.
-
-## HCL surface
-
-`cmd/spire-agent/cli/run/run.go` already exposes `experimental.sync_interval` and parses it into the agent configuration. A low-risk first upstream version can keep the new settings in the same experimental block:
+The upstream PR adds an experimental `sync_retry_backoff` configuration block with optional fields:
 
 ```hcl
 agent {
   experimental {
-    sync_interval = "5s"
-    sync_retry_initial_interval = "1s"
-    sync_retry_max_interval = "30s"
+    sync_retry_backoff {
+      initial_interval = "1s"
+      max_interval = "30s"
+      backoff_multiplier = 2
+      jitter = 0.1
+    }
   }
 }
 ```
 
-Candidate raw fields:
+Important properties from the PR description:
 
-```go
-SyncRetryInitialInterval string `hcl:"sync_retry_initial_interval"`
-SyncRetryMaxInterval     string `hcl:"sync_retry_max_interval"`
+- unset fields preserve current behavior;
+- configured durations must be positive;
+- max must not be less than initial;
+- multiplier must be at least 1;
+- jitter must be in `[0, 1)`;
+- existing backoff plumbing is reused rather than replaced;
+- the current default multiplier is preserved at 1.5 when unset;
+- attestation and manager-init loops remain outside this change.
+
+This is broader than the initial Worldshepherd sketch, which focused primarily on independent initial/max intervals. The upstream version appropriately exposes multiplier and jitter as part of one coherent retry policy.
+
+## Upstream test coverage claimed by #7286
+
+The PR reports:
+
+- unit tests for backoff multiplier and randomization options;
+- fake-clock manager tests for defaults, ceilings, configured backoff, and partial configuration fallback;
+- CLI config parsing and validation cases;
+- `go test` for agent/CLI packages;
+- `go vet` and lint execution.
+
+These are **upstream author claims** until independently reproduced; Worldshepherd should not restate them as its own validation.
+
+## Worldshepherd review targets
+
+If contributing review/validation rather than code, focus on invariants:
+
+1. no configuration -> byte-for-behavior compatibility with the legacy retry sequence;
+2. successful synchronization resets retry state and returns to normal reconciliation cadence;
+3. configured max is never exceeded;
+4. jitter cannot create zero/negative effective delay;
+5. partial configuration inherits the documented legacy value for every omitted field;
+6. a large `sync_interval` can coexist with fast bounded transient retry when configured;
+7. no change leaks into attestation or manager-init backoff loops;
+8. observability still makes degraded retry state distinguishable from healthy steady-state synchronization.
+
+## Worldshepherd mapping
+
+This remains a SARA/OVERWATCH assurance-plane case:
+
+```text
+steady_state_cadence != degraded_state_retry_policy
 ```
 
-Parsing should use `time.ParseDuration`, reject non-positive configured values, and reject `max < initial`.
-
-## Required tests
-
-1. **Legacy compatibility** — with both new values zero/unset, verify the existing 5-second base and computed max behavior remain unchanged.
-2. **Independent retry base** — `SyncInterval=5s`, retry initial `1s`, retry max `30s`; first failure waits according to the retry policy rather than five seconds.
-3. **Ceiling** — repeated failures never exceed the configured retry max.
-4. **Recovery** — a successful synchronization resets the retry sequence and steady-state reconciliation returns to `SyncInterval`.
-5. **Large sync interval** — a large reconciliation interval no longer forces an excessively large transient retry when explicit retry settings are supplied.
-6. **Validation** — reject zero/negative explicit durations and `max < initial`.
-7. **Fake-clock deterministic test** — use the existing injected clock/backoff test structure; do not add wall-clock sleeps.
-8. **No retry storm regression** — repeated failure still uses exponential backoff/jitter semantics already provided by the backoff package rather than a tight fixed retry loop.
-
-## Observability recommendation
-
-If the current telemetry surface does not expose retry state, add or reuse metrics/log fields for:
-
-- synchronize attempt result;
-- current retry interval;
-- consecutive synchronize failures;
-- successful recovery/reset.
-
-This should be implemented using existing SPIRE telemetry conventions rather than a Worldshepherd-specific namespace.
-
-## Worldshepherd relevance
-
-This issue directly matches the Worldshepherd assurance-plane principle that **normal operating cadence, degraded-state recovery, and semantic health must be modeled independently**. A process that remains alive while waiting several minutes after a transient control-plane failure may be operationally degraded even though ordinary liveness checks stay green.
-
-Worldshepherd should contribute the smallest upstream-compatible retry-policy change and a deterministic fake-clock regression suite; SARA/ECHO can then consume the resulting retry/recovery telemetry without embedding SPIRE-specific recovery logic.
+A live process waiting minutes after a transient control-plane failure is semantically degraded even if PID/liveness checks remain green.
 
 ## Submission boundary
 
-Do not claim upstream acceptance. Before submission:
+Do not submit a competing SPIRE #7111 implementation while PR #7286 is active. Current posture is **WATCH / REVIEW / INDEPENDENT VALIDATION IF REQUESTED**.
 
-- verify current `main` has no competing PR for #7111;
-- inspect maintainers' preference for experimental versus stable configuration placement;
-- run manager and CLI config test suites;
-- update `doc/spire_agent.md` if the configuration surface is accepted;
-- preserve backward-compatible zero-value behavior unless maintainers request a default change.
+Do not mark #7111 resolved until #7286 is merged and the relevant release/integration state is known.

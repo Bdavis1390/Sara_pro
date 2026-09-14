@@ -1,15 +1,20 @@
 From: Worldshepherd OSS contribution workbench
 Subject: [PATCH DRAFT] verifier: use consistent quote_interval fallback
 Upstream target: keylime/keylime#1941
-Claims state: IMPLEMENTED AS PATCH DRAFT / REQUIRES UPSTREAM TESTS
+Reviewed upstream master: 3476366881d7931407154597d88577895f2f818e
+Ownership audit: OPEN / UNASSIGNED / NO MATCHING PR FOUND
+Claims state: SOURCE-REVIEWED PATCH DRAFT / REQUIRES KEYLIME TESTS
 
 Problem
 -------
-The verifier documents quote_interval=2 seconds as its default but two push
-model paths diverge: attestation_controller.py caps retry delay with
+The verifier documents quote_interval=2 seconds as its normal default, but two
+push-model paths diverge: attestation_controller.py caps retry delay with
 fallback=60 and Attestation.next_attestation_expected_after reads quote_interval
 without a fallback. The config option also accepts floating-point values, so
 using getfloat is the least surprising common behavior.
+
+Current-source revalidation confirms these two inconsistent paths still exist
+on the reviewed master commit.
 
 --- a/keylime/web/verifier/attestation_controller.py
 +++ b/keylime/web/verifier/attestation_controller.py
@@ -36,20 +41,29 @@ Test changes required
 2. Add a test that config.getfloat is called with
    ("verifier", "quote_interval", fallback=2.0).
 3. Add a test using quote_interval=2.5 and assert the resulting timestamp is
-   evidence_received_at + 2.5 seconds. This protects the documented support
-   for floating-point intervals.
+   evidence_received_at + 2.5 seconds. This protects floating-point intervals.
 4. In test/test_attestation_controller.py, update the quote-interval mock from
    getint to getfloat and assert the cap uses fallback=2.0 when the option is
    absent.
 5. Preserve existing exponential-backoff assertions: this patch changes only
    the configured cap source and fallback, not retry.retry_time semantics.
 
-Why this is deliberately limited
---------------------------------
-This patch fixes the verifier-side inconsistency only. It does not change the
-Rust agent's general retry interval. The agent's 60-second local measurement
-interval is also used for registration/attestation failure retries, so globally
-changing it to 2 seconds could unintentionally create a retry storm during a
-verifier outage. A separate rust-keylime patch should distinguish 'accepted
-response is malformed/missing cadence metadata' from 'network/authentication
-failure retry cadence'.
+Why this remains deliberately limited
+--------------------------------------
+This patch fixes verifier-side inconsistency only. It does not globally change
+rust-keylime's configured attestation_interval_seconds. That interval is also
+used for registration/attestation failure retries, so globally lowering it
+would alter verifier-outage behavior and could create a retry storm.
+
+The coordinated rust-keylime draft therefore changes only the fallback after an
+HTTP-success/ACCEPTED verifier response whose cadence metadata is missing or
+malformed. Network/authentication/registration failures retain the operator's
+configured measurement interval.
+
+Submission boundary
+-------------------
+Before upstream submission, re-check ownership, apply this patch to current
+keylime master, run the focused model/controller tests and the relevant verifier
+suite, and verify that project maintainers agree that 2.0 seconds is the
+intended fallback for these push-model paths. Do not claim this draft has been
+executed upstream.
