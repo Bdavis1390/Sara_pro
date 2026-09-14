@@ -67,7 +67,7 @@ printf '[selection] PRE qualification/evidence compiler\n'
 
 printf '[selection] operational resilience drill\n'
 OPS_RESILIENCE_EVIDENCE_DIR="$OUT/operational_resilience_evidence" \
-  "$DEPLOY/scripts/operational_resilience_drill.sh"
+  bash "$DEPLOY/scripts/operational_resilience_drill.sh"
 
 export REPO_ROOT OUT SOURCE_SHA EXECUTED_UTC MANIFEST G10_STATUS
 python - <<'PY'
