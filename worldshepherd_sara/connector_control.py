@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import hashlib
 import json
 import time
@@ -36,20 +37,23 @@ class ConnectorControlPlane:
 
     @property
     def manifest(self) -> Dict[str, Any]:
-        return self._manifest
+        """Return a detached view so callers cannot mutate live authorization policy."""
+        return deepcopy(self._manifest)
 
     def _load_manifest(self) -> Dict[str, Any]:
         return json.loads(self.manifest_path.read_text(encoding="utf-8"))
 
     def reload(self) -> None:
-        self._manifest = self._load_manifest()
-        self.validate_manifest()
+        """Atomically replace the active policy only after the candidate validates."""
+        candidate = self._load_manifest()
+        self.validate_manifest(candidate)
+        self._manifest = candidate
 
     def connectors(self) -> List[Dict[str, Any]]:
-        return list(self._manifest.get("connectors", []))
+        return deepcopy(list(self._manifest.get("connectors", [])))
 
     def tools(self) -> List[Dict[str, Any]]:
-        return list(self._manifest.get("tools", []))
+        return deepcopy(list(self._manifest.get("tools", [])))
 
     def connector(self, connector_id: str) -> Dict[str, Any]:
         for item in self.connectors():
@@ -57,21 +61,24 @@ class ConnectorControlPlane:
                 return item
         raise KeyError(f"unknown connector: {connector_id}")
 
-    def validate_manifest(self) -> Dict[str, Any]:
+    def validate_manifest(self, manifest: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+        candidate = self._manifest if manifest is None else manifest
         errors: List[str] = []
         warnings: List[str] = []
 
-        if self._manifest.get("schema") != "worldshepherd.connectors.v2":
+        if candidate.get("schema") != "worldshepherd.connectors.v2":
             errors.append("schema must be worldshepherd.connectors.v2")
 
-        connector_ids = [c.get("id") for c in self.connectors()]
-        tool_ids = [t.get("id") for t in self.tools()]
+        connectors = list(candidate.get("connectors", []))
+        tools = list(candidate.get("tools", []))
+        connector_ids = [c.get("id") for c in connectors]
+        tool_ids = [t.get("id") for t in tools]
         if len(connector_ids) != len(set(connector_ids)):
             errors.append("connector ids must be unique")
         if len(tool_ids) != len(set(tool_ids)):
             errors.append("tool ids must be unique")
 
-        for connector in self.connectors():
+        for connector in connectors:
             cid = connector.get("id", "<missing>")
             if not connector.get("allowed_actions"):
                 warnings.append(f"{cid}: no allowed actions")
