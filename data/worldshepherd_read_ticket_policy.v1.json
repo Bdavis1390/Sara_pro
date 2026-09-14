@@ -11,8 +11,19 @@
   "context_binding": "canonical_sha256",
   "credential_handling": "outside_sara_broker",
   "write_enabled": false,
-  "claim_scope": "process_local_atomic",
+  "default_claim_backend": "process_local_memory",
+  "default_claim_scope": "process_local_atomic",
   "durable_replay_protection": false,
+  "durable_single_host_backend": "sqlite_optional",
+  "sqlite_restart_safe": true,
+  "sqlite_shared_file_multi_process": true,
+  "sqlite_persisted_fields": [
+    "ticket_id",
+    "ticket_sha256",
+    "expires_at",
+    "consumed_at"
+  ],
   "distributed_replay_protection": false,
-  "claims_boundary": "Single-use enforcement is PROVEN INTERNALLY only within one running SARA process. Restart-safe and multi-instance anti-replay require a durable shared claim store and are not currently claimed."
+  "multi_host_consensus": false,
+  "claims_boundary": "Default single-use enforcement remains process-local memory and durable_replay_protection remains false for the default path. When explicitly configured, the SQLite adapter provides restart-safe and shared-file multi-process single-host claims. Multi-host and distributed anti-replay require a shared consensus-capable claim service and are not currently claimed."
 }
