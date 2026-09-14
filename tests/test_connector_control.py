@@ -1,4 +1,7 @@
+import json
 from pathlib import Path
+
+import pytest
 
 from worldshepherd_sara.connector_control import ConnectorControlPlane
 
@@ -76,3 +79,55 @@ def test_data_class_ceiling_is_enforced():
     )
     assert decision.allowed is False
     assert "exceeds connector maximum" in decision.reason
+
+
+def test_policy_views_cannot_mutate_live_authorization_state():
+    control = ConnectorControlPlane(MANIFEST)
+
+    manifest_view = control.manifest
+    github_view = next(c for c in manifest_view["connectors"] if c["id"] == "github")
+    github_view["external_write_actions"].remove("file.update")
+
+    connector_view = control.connector("github")
+    connector_view["allowed_actions"].remove("file.update")
+
+    decision = control.authorize(
+        connector_id="github",
+        action="file.update",
+        actor="admin",
+        data_class="INTERNAL",
+    )
+    assert decision.allowed is False
+    assert decision.requires_human_approval is True
+    assert decision.reason == "human approval required"
+
+
+def test_failed_reload_preserves_last_known_good_policy(tmp_path):
+    manifest_path = tmp_path / "connectors.json"
+    original = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    manifest_path.write_text(json.dumps(original), encoding="utf-8")
+
+    control = ConnectorControlPlane(manifest_path)
+    baseline = control.authorize(
+        connector_id="github",
+        action="repo.read",
+        actor="admin",
+        data_class="PUBLIC",
+    )
+    assert baseline.allowed is True
+
+    invalid = dict(original)
+    invalid["schema"] = "invalid.schema"
+    manifest_path.write_text(json.dumps(invalid), encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        control.reload()
+
+    assert control.validate_manifest()["ok"] is True
+    after_failed_reload = control.authorize(
+        connector_id="github",
+        action="repo.read",
+        actor="admin",
+        data_class="PUBLIC",
+    )
+    assert after_failed_reload.allowed is True
