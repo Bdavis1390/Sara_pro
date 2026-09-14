@@ -1,0 +1,154 @@
+{
+  "schema": "worldshepherd_preferred_choice_matrix_v0_1",
+  "status": "INTERNAL_SELECTION_READINESS",
+  "generated_date": "2026-09-13",
+  "purpose": "Define the objective evidence Worldshepherd must show before presenting itself as the preferred selection for recurring defense and federal decision-support opportunities.",
+  "claims_boundary": "This matrix does not claim Worldshepherd is superior to named competitors, selected by government, certified for controlled environments, or production-proven at required scales. It defines evidence needed to make a defensible selection case.",
+  "target_opportunities": [
+    "ARM26BX06-NV012_ARM26TX06-NV003",
+    "DON26BX05-NP004",
+    "PROJ00716",
+    "HR001126S0011",
+    "GSA_OASIS_PLUS"
+  ],
+  "market_reference_classes": {
+    "Palantir": "decision-centric ontology, human/AI workflows, deployment and operational lineage",
+    "Scale_Donovan": "mission-tailored AI agents, traceability, model agnosticism, classified/air-gapped deployment and T&E",
+    "Anduril_Lattice": "open edge data mesh, C2, autonomy integration and production operational deployment",
+    "C3_AI": "defense AI applications, predictive readiness, multi-source decision support and accredited environments"
+  },
+  "selection_dimensions": [
+    {
+      "id": "D1",
+      "dimension": "auditable_decision_as_program",
+      "government_signal": "Army requires structured, auditable, signer-ready Decision Packages with reproducible workflows, explicit assumptions, risks, bias checks and human control.",
+      "worldshepherd_position": "SARA + PRIME + ECHO + PRE architecture is directionally aligned.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "proof_to_win": [
+        "two end-to-end decision demonstrations",
+        "machine-readable decision schema",
+        "what-flips-the-decision analysis",
+        "signer-ready package generation",
+        "evidence refresh and supersession trace"
+      ]
+    },
+    {
+      "id": "D2",
+      "dimension": "provenance_confidence_and_traceability",
+      "government_signal": "DIU requires transparent reasoning, confidence scoring and data provenance; NAVWAR calls auditable history critical for operator trust.",
+      "worldshepherd_position": "ECHO provenance and SARA audit primitives provide a foundation.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "proof_to_win": [
+        "source-to-decision lineage",
+        "contradictory-evidence retention",
+        "confidence calculation with uncertainty",
+        "operator decision and outcome replay",
+        "tamper-evident evidence manifest"
+      ]
+    },
+    {
+      "id": "D3",
+      "dimension": "human_authorization_and_bounded_ai",
+      "government_signal": "Army and NAVWAR explicitly preserve human control/operator approval; DIU supports analyst/human-on-loop workflows.",
+      "worldshepherd_position": "PRIME policy/authorization doctrine is a strong architectural fit.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "proof_to_win": [
+        "deny-by-default action policy",
+        "role-separated approval flow",
+        "approval revocation",
+        "policy decision trace",
+        "human override under degraded conditions"
+      ]
+    },
+    {
+      "id": "D4",
+      "dimension": "modular_open_deployment",
+      "government_signal": "NAVWAR favors API-first loose coupling and containerization; DIU requires modular cloud-native/containerized architecture and open standards.",
+      "worldshepherd_position": "Containerized SARA reference architecture and mission-pack concept align.",
+      "current_status": "IMPLEMENTED_IN_SOFTWARE_PARTIAL",
+      "proof_to_win": [
+        "documented public APIs",
+        "replaceable adapters",
+        "containerized offline demo",
+        "versioned interface contract",
+        "government-owned/non-proprietary export format"
+      ]
+    },
+    {
+      "id": "D5",
+      "dimension": "ddil_resilience_and_recovery",
+      "government_signal": "Multiple opportunities require degraded-state operation, replay, historical state, resilient operations or edge deployment.",
+      "worldshepherd_position": "DDIL Mission Mesh and operational-resilience drills are aligned but not yet mission-scale validated.",
+      "current_status": "INTERNAL_EVIDENCE_PARTIAL",
+      "proof_to_win": [
+        "network partition test",
+        "store-and-forward integrity",
+        "deterministic reconciliation",
+        "operator-visible stale-data/confidence state",
+        "measured recovery time objective"
+      ]
+    },
+    {
+      "id": "D6",
+      "dimension": "performance_at_operational_scale",
+      "government_signal": "DIU Space Threat sets a 5-second latency threshold, 2-second objective, nominal 20-30 MB/min and burst handling up to about 5 GB/min.",
+      "worldshepherd_position": "No evidence currently supports these rates.",
+      "current_status": "NOT_CURRENTLY_CLAIMED",
+      "proof_to_win": [
+        "repeatable latency benchmark",
+        "burst-ingestion benchmark",
+        "multi-year retrieval benchmark or representative scaled substitute",
+        "stability under peak load",
+        "published hardware/software test configuration"
+      ]
+    },
+    {
+      "id": "D7",
+      "dimension": "cyber_and_controlled_environment_readiness",
+      "government_signal": "DIU requires NIST SP 800-171 and classified/CUI capabilities; NAVWAR projects CMMC Level 2 Self; larger incumbents publicly claim accredited/classified deployments.",
+      "worldshepherd_position": "Compliance readiness controls exist; certification/authorization is not claimed.",
+      "current_status": "BLOCKED_MISSING_EXTERNAL_EVIDENCE",
+      "proof_to_win": [
+        "authorized production boundary",
+        "required NIST/CMMC evidence",
+        "current SPRS evidence when required",
+        "clearance path for classified work",
+        "incident response and continuous monitoring evidence"
+      ]
+    },
+    {
+      "id": "D8",
+      "dimension": "commercial_open_source_requirement",
+      "government_signal": "Army Agentic AI Phase II expects a commercial open-source platform usable by DoW and commercial enterprises.",
+      "worldshepherd_position": "Repository is public, but no LICENSE file was detected in the branch root. Public source visibility does not establish open-source licensing.",
+      "current_status": "BLOCKED_IP_LICENSE_DECISION",
+      "proof_to_win": [
+        "documented IP ownership review",
+        "deliberate licensing strategy",
+        "license file if legally/business appropriate",
+        "third-party dependency license audit",
+        "clear government/commercial reuse terms"
+      ]
+    },
+    {
+      "id": "D9",
+      "dimension": "operational_reference_and_sustainment",
+      "government_signal": "DIU differentiators include mission-critical support, 24/7 availability and resilient sustainment; incumbents have public operational deployments.",
+      "worldshepherd_position": "No equivalent operational reference is currently claimed.",
+      "current_status": "NOT_CURRENTLY_CLAIMED",
+      "proof_to_win": [
+        "external pilot",
+        "measured availability and incident metrics",
+        "operator feedback",
+        "maintainability and upgrade evidence",
+        "transition/sustainment plan"
+      ]
+    }
+  ],
+  "preferred_choice_gate": {
+    "minimum_condition": "Worldshepherd may be presented internally as PREFERRED_CHOICE_READY only when D1-D5 are evidenced by reproducible demos, D6 has opportunity-specific benchmark evidence where applicable, D7 passes the target contract's mandatory compliance gates, D8 is resolved for opportunities requiring open-source licensing, and at least one external reference or partner validation closes D9.",
+    "current_state": "NOT_YET_PREFERRED_CHOICE_READY",
+    "reason": "Architecture fit is strong, but operational-scale performance, controlled-environment compliance, licensing, and external reference evidence remain material gaps."
+  },
+  "next_critical_artifact": "Worldshepherd Selection Demonstration v1: one unclassified, containerized, repeatable scenario that exercises provenance, uncertainty, decision schema, human approval, DDIL interruption/recovery, replay, and exported decision evidence with measured latency."
+}
