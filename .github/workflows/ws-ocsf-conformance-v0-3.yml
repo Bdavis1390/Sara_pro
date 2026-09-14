@@ -106,12 +106,18 @@ jobs:
           count=0
           for event in "$ROOT"/*.event.json; do
             report="${event%.event.json}.report.json"
-            "$GITHUB_WORKSPACE/build/ocsf-toolkit" \
+            if ! "$GITHUB_WORKSPACE/build/ocsf-toolkit" \
               --schema "$SCHEMA" \
               --event "$event" \
               --validate \
               --fail-on-validation-errors \
-              --report-output "$report"
+              --report-output "$report"; then
+              echo "OCSF validation failed for $event" >&2
+              if [[ -f "$report" ]]; then
+                cat "$report" >&2
+              fi
+              exit 1
+            fi
             count=$((count + 1))
           done
           test "$count" -eq 7
