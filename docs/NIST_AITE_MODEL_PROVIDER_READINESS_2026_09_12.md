@@ -1,8 +1,8 @@
 # Worldshepherd — NIST AITE model-provider readiness assessment
 
-**Original assessment:** 2026-09-12  
-**Updated:** 2026-09-14  
-**Relationship state:** AITE COMMUNITY MEMBER  
+**Original assessment:** 2026-09-12
+**Updated:** 2026-09-14
+**Relationship state:** AITE COMMUNITY MEMBER
 **Model-provider state:** NOT READY / NOT ENROLLED / NOT SUBMITTED / NO AITE RESULT
 
 ## 1. Purpose
