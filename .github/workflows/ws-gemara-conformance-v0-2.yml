@@ -1,0 +1,100 @@
+name: Worldshepherd Gemara Conformance v0.2
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/gemara_full_projection.py'
+      - 'deployments/sara_verified_local_v1/tools/build_gemara_projection.py'
+      - 'deployments/sara_verified_local_v1/tests/test_gemara_full_projection.py'
+      - '.github/workflows/ws-gemara-conformance-v0-2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gemara-conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out Worldshepherd source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Worldshepherd test package and Gemara structural models
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[test]'
+          python -m pip install 'gemara-python==0.1.0'
+
+      - name: Run internal projection tests
+        working-directory: deployments/sara_verified_local_v1
+        run: pytest -q tests/test_gemara_full_projection.py tests/test_standards_interop.py tests/test_standards_interop_corpus_lock.py
+
+      - name: Build full Gemara projection documents
+        working-directory: deployments/sara_verified_local_v1
+        run: python tools/build_gemara_projection.py
+
+      - name: Structurally validate all generated Gemara documents
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from gemara.v1 import loads
+
+          out = Path('build/gemara_projection_v0_2')
+          docs = sorted(p for p in out.glob('*.json') if p.name != 'manifest.json')
+          assert len(docs) == 21, len(docs)
+          for path in docs:
+              text = path.read_text(encoding='utf-8')
+              loads(text)
+              doc = json.loads(text)
+              assert doc['metadata']['gemara-version'] == 'v0.17.0-dev'
+          print(f'validated {len(docs)} Gemara documents structurally')
+          PY
+
+      - name: Check out exact Gemara schema commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: gemaraproj/gemara
+          ref: 24e52e93bc71e28507e1942ce543e26ab58a7f25
+          path: external/gemara
+          persist-credentials: false
+
+      - name: Set up CUE
+        uses: cue-lang/setup-cue@a93fa358375740cd8b0078f76355512b9208acb1
+        with:
+          version: v0.15.1
+
+      - name: Run Gemara CUE semantic validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE/deployments/sara_verified_local_v1/build/gemara_projection_v0_2"
+          cd external/gemara
+          for f in "$ROOT"/*-evaluation.json; do cue vet -d '#EvaluationLog' . "$f"; done
+          for f in "$ROOT"/*-enforcement.json; do cue vet -d '#EnforcementLog' . "$f"; done
+          for f in "$ROOT"/*-audit.json; do cue vet -d '#AuditLog' . "$f"; done
+
+      - name: Publish conformance summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Worldshepherd Gemara conformance v0.2'
+            echo '- Source corpus: frozen v0.1 interoperability corpus'
+            echo '- Gemara schema commit: `24e52e93bc71e28507e1942ce543e26ab58a7f25`'
+            echo '- Gemara schema version: `v0.17.0-dev`'
+            echo '- Structural validator: `gemara-python==0.1.0`'
+            echo '- Semantic validator: CUE `v0.15.1`'
+            echo '- Claim boundary: test evidence only; no certification or upstream acceptance implied.'
+          } >> "$GITHUB_STEP_SUMMARY"
