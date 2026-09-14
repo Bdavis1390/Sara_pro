@@ -4,18 +4,17 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from .event_outbox import EVENT_OUTBOX_REGISTRY_KEY, queue_event_outbox_patch
+from .event_outbox import queue_event_outbox_patch
 from .qualification import EvidenceScope
 from .sovereign_boundary_authorization_ledger import (
     PRIME_EFFECT_AUTHZ_LEDGER_KEY,
-    assert_claimed_effect_authorization_usable,
+    begin_effect_invocation_registry_patch,
     consumed_effect_authorization_registry_patch,
     indeterminate_effect_authorization_registry_patch,
 )
 from .sovereign_boundary_kernel import (
     SOVEREIGN_BOUNDARY_EVENT,
     BoundaryAction,
-    BoundaryKernelError,
     ExecutionResultStatus,
     SovereignBoundaryEnvelope,
     boundary_action_digest,
@@ -55,8 +54,7 @@ class PhysicalEffectReceipt:
 PhysicalEffectExecutor = Callable[[BoundaryAction], PhysicalEffectResult]
 
 
-def _assert_preconditions(
-    store: DurableStore,
+def _assert_local_preconditions(
     *,
     envelope: SovereignBoundaryEnvelope,
     runtime_action: BoundaryAction,
@@ -66,7 +64,9 @@ def _assert_preconditions(
     if not verify_boundary_envelope(envelope):
         raise SovereignBoundaryPepError("SBK envelope failed digest verification")
     if envelope.action.effect_scope != EvidenceScope.PHYSICAL:
-        raise SovereignBoundaryPepError("physical-effect PEP accepts only PHYSICAL actions")
+        raise SovereignBoundaryPepError(
+            "physical-effect PEP accepts only PHYSICAL actions"
+        )
     if envelope.prime_authorization_ref != authorization_id:
         raise SovereignBoundaryPepError("PRIME authorization reference mismatch")
     if envelope.prime_execution_claim_ref != execution_id:
@@ -76,13 +76,36 @@ def _assert_preconditions(
             "runtime action differs from the policy-bound action; re-evaluation required"
         )
 
-    registry = store.get_registry()
-    assert_claimed_effect_authorization_usable(
-        registry,
-        authorization_id=authorization_id,
-        envelope=envelope,
-        execution_id=execution_id,
-    )
+
+def _begin_invocation_fence(
+    store: DurableStore,
+    *,
+    envelope: SovereignBoundaryEnvelope,
+    authorization_id: str,
+    execution_id: str,
+) -> None:
+    """Atomically move CLAIMED -> INVOKING before the executor can run.
+
+    This is the concurrency fence. A second process or thread attempting the
+    same authorization observes INVOKING and fails before it can call the
+    external executor.
+    """
+
+    def operation(registry: dict[str, Any]):
+        patch = begin_effect_invocation_registry_patch(
+            registry,
+            authorization_id=authorization_id,
+            envelope=envelope,
+            execution_id=execution_id,
+        )
+        return patch, None
+
+    try:
+        store.transact_registry(operation)
+    except Exception as exc:
+        raise SovereignBoundaryPepError(
+            "physical-effect invocation fence could not be acquired"
+        ) from exc
 
 
 def _mark_indeterminate_best_effort(
@@ -105,7 +128,8 @@ def _mark_indeterminate_best_effort(
         store.transact_registry(operation)
     except Exception:
         # The original failure is more important. If durable state cannot be
-        # updated, operators must treat the claim as unresolved/unsafe to retry.
+        # updated, operators must treat the authorization as unresolved and
+        # unsafe to retry.
         pass
 
 
@@ -116,7 +140,7 @@ def _consume_and_queue_atomically(
     execution_id: str,
     terminal_envelope: SovereignBoundaryEnvelope,
 ) -> tuple[str, str]:
-    """Persist CONSUMED authority and a pending ECHO event in one registry write."""
+    """Persist INVOKING->CONSUMED plus a pending ECHO event in one registry write."""
 
     def operation(registry: dict[str, Any]):
         consumed_patch = consumed_effect_authorization_registry_patch(
@@ -150,30 +174,42 @@ def execute_claimed_physical_effect(
     execution_id: str,
     executor: PhysicalEffectExecutor,
 ) -> PhysicalEffectReceipt:
-    """Run one already-claimed physical effect through the Worldshepherd PEP.
+    """Run one claimed physical effect through the Worldshepherd PEP.
 
     Safety/authority sequence:
 
-    1. Verify sealed SBK envelope and exact runtime action.
-    2. Re-read durable PRIME ledger and require matching CLAIMED state.
+    1. Verify the sealed SBK envelope and exact runtime action locally.
+    2. Atomically persist CLAIMED -> INVOKING in the durable PRIME ledger.
+       This is a one-way execution fence acquired before external actuation.
     3. Invoke exactly one executor callback.
     4. Convert the explicit executor result into a terminal SBK envelope.
-    5. Atomically persist PRIME CLAIMED->CONSUMED plus the pending SARA/ECHO
+    5. Atomically persist PRIME INVOKING -> CONSUMED plus the pending SARA/ECHO
        outbox event in one DurableStore registry transaction.
 
-    If the executor raises, the claim is moved to INDETERMINATE best-effort and
-    is never automatically retried. If durable finalization fails after the
-    executor returns, the claim is likewise marked INDETERMINATE best-effort.
+    Two concurrent callers cannot both invoke the same claimed authorization:
+    only one can acquire the CLAIMED -> INVOKING transition. A process failure
+    after INVOKING is persisted is deliberately treated as potentially having
+    crossed the external-effect boundary and therefore requires reconciliation.
+
+    If the executor raises, the authorization is moved to INDETERMINATE
+    best-effort and is never automatically retried. If durable finalization
+    fails after the executor returns, the authorization is likewise marked
+    INDETERMINATE best-effort.
 
     This does not make an external physical side effect transactionally atomic
-    with local storage. It intentionally converts uncertainty into a fail-closed
-    human-review state instead of pretending exactly-once actuation is possible.
+    with local storage. It converts uncertainty into a fail-closed human-review
+    state instead of pretending exactly-once physical actuation is possible.
     """
 
-    _assert_preconditions(
-        store,
+    _assert_local_preconditions(
         envelope=envelope,
         runtime_action=runtime_action,
+        authorization_id=authorization_id,
+        execution_id=execution_id,
+    )
+    _begin_invocation_fence(
+        store,
+        envelope=envelope,
         authorization_id=authorization_id,
         execution_id=execution_id,
     )
@@ -185,7 +221,7 @@ def execute_claimed_physical_effect(
             store,
             authorization_id=authorization_id,
             execution_id=execution_id,
-            reason=f"executor raised after invocation: {type(exc).__name__}",
+            reason=f"executor raised after INVOKING fence: {type(exc).__name__}",
         )
         raise SovereignBoundaryPepError(
             "executor outcome is indeterminate; authorization is unsafe to retry"
@@ -196,7 +232,7 @@ def execute_claimed_physical_effect(
             store,
             authorization_id=authorization_id,
             execution_id=execution_id,
-            reason="executor returned an invalid result object after invocation",
+            reason="executor returned an invalid result object after INVOKING fence",
         )
         raise SovereignBoundaryPepError(
             "executor returned invalid result; authorization is unsafe to retry"
@@ -206,7 +242,7 @@ def execute_claimed_physical_effect(
             store,
             authorization_id=authorization_id,
             execution_id=execution_id,
-            reason="executor returned an empty outcome reference after invocation",
+            reason="executor returned an empty outcome reference after INVOKING fence",
         )
         raise SovereignBoundaryPepError(
             "executor omitted outcome evidence; authorization is unsafe to retry"
