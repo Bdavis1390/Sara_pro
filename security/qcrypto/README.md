@@ -32,6 +32,10 @@ A later state cannot be awarded when prerequisite evidence is absent.
 
 The control plane never performs migration. Human approval authorizes a bounded plan only; `migration_executed` remains false by construction.
 
+The same module exposes the data-only `WS-QCRYPTO-CONTROL-DECISION-V1` audit projection. The projection carries explicit negative authority and claims flags: migration execution, execution authority, live-value authorization, Federal compliance, and WS-CAE-1 conformance all remain false at the persistence boundary.
+
+`deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_adapter.py` is the native SARA persistence bridge. It validates the QCRYPTO projection, converts the ECHO/PRIME/SARA/OVERWATCH states into four governed audit events, and queues them through SARA's existing durable event outbox. Delivery therefore inherits the existing `AuditRecord` and at-least-once evidence semantics rather than introducing a second audit schema. The adapter rejects any projection that attempts to assert migration execution, execution authority, live-value authorization, Federal compliance, or WS-CAE-1 conformance.
+
 `federal_pqc_pilot_bridge.py` converts the internal migration priority into a target WS-CAE-1 profile and safe pilot entry stage. It recommends C1/C2/C3 targets but does not self-award WS-CAE-1 conformance. Even with human approval, the bridge advances no further than `H1_ZERO_VALUE_DRY_RUN`; live-value authorization remains false.
 
 ## Defensive solution layers
@@ -56,4 +60,4 @@ The pilot requires dual-family PQ signing capability, stable authority identity,
 
 ## Claims boundary
 
-QCRYPTO does not sign transactions, access wallets, recover keys, move assets, authorize live-value deployment, or claim full-chain quantum safety. Federal requirement mapping is internal engineering alignment only and does not establish Federal compliance. WS-CAE-1 target recommendations are not conformance findings. Any eventual live-value canary remains subject to explicit human approval, independent review, bounded scope, and chain-specific controls.
+QCRYPTO does not sign transactions, access wallets, recover keys, move assets, authorize live-value deployment, or claim full-chain quantum safety. Federal requirement mapping is internal engineering alignment only and does not establish Federal compliance. SARA audit persistence records governance evidence only and does not confer execution authority. WS-CAE-1 target recommendations are not conformance findings. Any eventual live-value canary remains subject to explicit human approval, independent review, bounded scope, and chain-specific controls.
