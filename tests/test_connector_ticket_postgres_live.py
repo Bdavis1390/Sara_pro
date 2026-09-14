@@ -1,3 +1,4 @@
+import json
 import os
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
@@ -11,6 +12,7 @@ from worldshepherd_sara.connector_ticket_shared import SharedReadTicketLedger
 
 
 MANIFEST = Path("data/worldshepherd_connectors.v2.json")
+POLICY = Path("data/worldshepherd_read_ticket_policy.v1.json")
 DSN = os.environ["WORLDSHEPHERD_TEST_POSTGRES_DSN"]
 
 
@@ -98,3 +100,21 @@ def test_real_postgres_rejects_expired_ticket_across_new_connection():
     claim = later_worker.claim_for_execution(ticket, now=1006.0)
     assert claim["ok"] is False
     assert claim["reason"] == "ticket expired"
+
+
+def test_policy_records_single_host_live_evidence_without_distributed_upgrade():
+    policy = json.loads(POLICY.read_text(encoding="utf-8"))
+    assert policy["postgres_live_validation"] is True
+    assert policy["postgres_live_validation_environment"] == "ephemeral_postgresql_18_6_github_actions"
+    assert policy["postgres_client_validation"] == "psycopg_3_3_5"
+    assert policy["multi_connection_live_validation"] is True
+    assert policy["multi_process_live_validation"] is True
+    assert policy["multi_worker_live_validation"] is True
+    assert policy["multi_worker_validation_scope"] == "single_host_separate_python_processes"
+    assert policy["reconnect_replay_validation"] is True
+    assert policy["fresh_connection_expiry_validation"] is True
+    assert policy["failure_injection_validation"] is False
+    assert policy["clock_skew_live_validation"] is False
+    assert policy["multi_host_live_validation"] is False
+    assert policy["distributed_replay_protection"] is False
+    assert policy["multi_host_consensus"] is False
