@@ -16,6 +16,7 @@ from worldshepherd_sara.sovereign_boundary_authorization_ledger import (
 from worldshepherd_sara.sovereign_boundary_authority_store import (
     PrimeEffectAuthorizationStore,
 )
+from worldshepherd_sara.sovereign_boundary_custody import ExecutionCustody
 from worldshepherd_sara.sovereign_boundary_kernel import (
     BoundaryAction,
     BoundaryContext,
@@ -30,6 +31,17 @@ from worldshepherd_sara.sovereign_boundary_kernel import (
     record_execution,
 )
 from worldshepherd_sara.storage import DurableStore
+
+
+def _custody() -> ExecutionCustody:
+    return ExecutionCustody(
+        release_index_digest="sha256:" + "1" * 64,
+        release_index_file_sha256="sha256:" + "2" * 64,
+        release_commit_sha="3" * 40,
+        release_merge_state="PR_CANDIDATE_UNMERGED",
+        release_evidence_ref="test:durable-release-index",
+        configuration_digest="sha256:" + "4" * 64,
+    )
 
 
 def _authorized_lab_envelope(envelope_id: str):
@@ -48,7 +60,10 @@ def _authorized_lab_envelope(envelope_id: str):
             environment=BoundaryEnvironment.LAB_TEST,
             human_present=True,
         ),
-        provenance=BoundaryProvenance(agent_version="authority-store-test"),
+        provenance=BoundaryProvenance(
+            agent_version="authority-store-test",
+            execution_custody=_custody(),
+        ),
         policy=BoundaryPolicyDecision(
             disposition=BoundaryDisposition.ESCALATE,
             policy_revision="WS-SBK-DURABLE-AUTH-TEST-1",
@@ -75,6 +90,7 @@ def _verified(envelope, authorization_id: str, nonce: str):
         capability_status=envelope.action.capability_status,
         policy_revision=envelope.policy.policy_revision,
         human_approval_ref=envelope.human_approval_ref,
+        execution_custody=envelope.provenance.execution_custody,
         key_id="prime-test-key",
         key_fingerprint_sha256="a" * 64,
         nonce=nonce,
@@ -94,6 +110,7 @@ def test_claim_and_invocation_fence_are_durable_and_survive_store_reload(tmp_pat
     authority = PrimeEffectAuthorizationStore(DurableStore(store_path))
     registered = authority.register_verified(verified)
     assert registered["status"] == "VERIFIED"
+    assert registered["execution_custody"]["configuration_digest"] == _custody().configuration_digest
 
     execution_id = "WS-SBK-EXEC-DURABLE-001"
     claimed = authority.claim_and_bind(
@@ -102,6 +119,7 @@ def test_claim_and_invocation_fence_are_durable_and_survive_store_reload(tmp_pat
         execution_id=execution_id,
     )
     assert claimed.prime_execution_claim_ref == execution_id
+    assert claimed.prime_execution_identity_digest is not None
 
     reloaded = PrimeEffectAuthorizationStore(DurableStore(store_path))
     entry = reloaded.assert_claimed(
@@ -110,6 +128,7 @@ def test_claim_and_invocation_fence_are_durable_and_survive_store_reload(tmp_pat
         execution_id=execution_id,
     )
     assert entry["status"] == "CLAIMED"
+    assert entry["execution_identity_digest"] == claimed.prime_execution_identity_digest
 
     with pytest.raises(PrimeEffectAuthorizationLedgerError, match="not claimable"):
         reloaded.claim_and_bind(
@@ -124,7 +143,7 @@ def test_claim_and_invocation_fence_are_durable_and_survive_store_reload(tmp_pat
         execution_id=execution_id,
     )
     assert invoking["status"] == "INVOKING"
-    assert "invocation_started_at" in invoking
+    assert invoking["execution_identity_digest"] == claimed.prime_execution_identity_digest
 
     reloaded_again = PrimeEffectAuthorizationStore(DurableStore(store_path))
     with pytest.raises(PrimeEffectAuthorizationLedgerError, match="CLAIMED state"):
@@ -153,6 +172,7 @@ def test_claim_and_invocation_fence_are_durable_and_survive_store_reload(tmp_pat
     ]
     assert final_entry["status"] == "CONSUMED"
     assert final_entry["terminal_envelope_digest"] == completed.envelope_digest
+    assert final_entry["execution_identity_digest"] == claimed.prime_execution_identity_digest
 
 
 def test_indeterminate_claim_is_fail_closed_and_not_reusable(tmp_path):
