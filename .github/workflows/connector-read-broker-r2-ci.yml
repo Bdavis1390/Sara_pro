@@ -8,6 +8,7 @@ on:
       - "worldshepherd/connectors-durable-ledger-v1-*"
       - "worldshepherd/connectors-distributed-claim-contract-v1-*"
       - "worldshepherd/connectors-dbtime-clock-skew-v1-*"
+      - "worldshepherd/connectors-failure-injection-v1-*"
   pull_request:
     paths:
       - "data/worldshepherd_connectors.v2.json"
