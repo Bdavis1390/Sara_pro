@@ -1,0 +1,58 @@
+name: connector-read-broker-r2-ci
+
+on:
+  push:
+    branches:
+      - "worldshepherd/connectors-read-broker-v1-r2-*"
+  pull_request:
+    paths:
+      - "worldshepherd_sara/connector_execution.py"
+      - ".github/workflows/connector-read-broker-r2-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  broker-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install runtime imports
+        run: python -m pip install --disable-pip-version-check fastapi
+      - name: Compile broker
+        run: python -m py_compile worldshepherd_sara/connector_execution.py
+      - name: Verify read broker contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from worldshepherd_sara.connector_control import ConnectorControlPlane
+          from worldshepherd_sara.connector_execution import ReadExecutionBroker
+
+          control = ConnectorControlPlane(Path('data/worldshepherd_connectors.v2.json'))
+          broker = ReadExecutionBroker(control)
+          ok = broker.plan_read(
+              connector_id='web_research',
+              action='research.search',
+              actor='operator',
+              data_class='PUBLIC',
+              context={'query': 'ci-contract'},
+          )
+          assert ok.ok
+          assert ok.ticket is not None
+          assert ok.ticket['write_enabled'] is False
+          assert len(ok.ticket['sha256']) == 64
+
+          denied = broker.plan_read(
+              connector_id='unknown_service',
+              action='read',
+              actor='operator',
+              data_class='PUBLIC',
+          )
+          assert not denied.ok
+          assert 'unknown connector' in denied.reason
+          PY
