@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+from datetime import datetime, timezone
 from typing import Any, Callable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -49,6 +50,16 @@ def _canonical_bytes(value: Any) -> bytes:
 
 def _digest(value: Any) -> str:
     return hashlib.sha256(_canonical_bytes(value)).hexdigest()
+
+
+def _parse_utc(value: str) -> datetime:
+    text = value.strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    parsed = datetime.fromisoformat(text)
+    if parsed.tzinfo is None:
+        raise ValueError("timestamp must include timezone information")
+    return parsed.astimezone(timezone.utc)
 
 
 def _receipt_message_payload(
@@ -129,6 +140,7 @@ def create_witness_receipt(
     observed_utc: str,
     signer: Signer,
 ) -> WitnessReceipt:
+    _parse_utc(observed_utc)
     message_payload = _receipt_message_payload(
         witness_id=witness_id,
         key_id=key_id,
@@ -156,6 +168,10 @@ def verify_witness_receipt(
     verifier: Verifier,
 ) -> bool:
     if not verify_witness_quorum_policy(policy):
+        return False
+    try:
+        _parse_utc(receipt.observed_utc)
+    except (TypeError, ValueError):
         return False
     if _digest(_receipt_payload_without_digest(receipt)) != receipt.receipt_digest:
         return False
