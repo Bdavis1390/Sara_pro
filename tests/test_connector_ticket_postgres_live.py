@@ -1,5 +1,5 @@
 import os
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
 
 import psycopg
@@ -30,22 +30,32 @@ def make_broker(*, now=1000.0):
     return ReadExecutionBroker(ConnectorControlPlane(MANIFEST), ledger=ledger)
 
 
+def process_claim(ticket):
+    store = PostgresClaimStore(connection_factory)
+    ledger = SharedReadTicketLedger(store)
+    claim = ledger.claim(ticket, now=1001.0)
+    return claim.ok, claim.reason
+
+
+def issue_ticket(*, action="research.search", ttl_seconds=30):
+    issuer = make_broker()
+    planned = issuer.plan_read(
+        connector_id="web_research",
+        action=action,
+        actor="operator",
+        data_class="PUBLIC",
+        context={"query": "live-postgres-contention"},
+        ttl_seconds=ttl_seconds,
+    )
+    assert planned.ok and planned.ticket is not None
+    return planned.ticket
+
+
 def test_real_postgres_allows_exactly_one_of_64_independent_claimants():
     store = PostgresClaimStore(connection_factory)
     store.initialize()
     reset_table()
-
-    issuer = make_broker()
-    planned = issuer.plan_read(
-        connector_id="web_research",
-        action="research.search",
-        actor="operator",
-        data_class="PUBLIC",
-        context={"query": "live-postgres-contention"},
-        ttl_seconds=30,
-    )
-    assert planned.ok and planned.ticket is not None
-    ticket = planned.ticket
+    ticket = issue_ticket()
 
     def contend(_):
         worker = make_broker(now=1001.0)
@@ -66,19 +76,25 @@ def test_real_postgres_allows_exactly_one_of_64_independent_claimants():
     assert replay["reason"] == "ticket already consumed"
 
 
+def test_real_postgres_allows_exactly_one_across_separate_worker_processes():
+    reset_table()
+    ticket = issue_ticket()
+
+    with ProcessPoolExecutor(max_workers=8) as pool:
+        results = list(pool.map(process_claim, [ticket] * 24))
+
+    winners = [result for result in results if result[0]]
+    losers = [result for result in results if not result[0]]
+    assert len(winners) == 1
+    assert len(losers) == 23
+    assert all(reason == "ticket already consumed" for _, reason in losers)
+
+
 def test_real_postgres_rejects_expired_ticket_across_new_connection():
     reset_table()
-    issuer = make_broker()
-    planned = issuer.plan_read(
-        connector_id="web_research",
-        action="source.verify",
-        actor="operator",
-        data_class="PUBLIC",
-        ttl_seconds=5,
-    )
-    assert planned.ok and planned.ticket is not None
+    ticket = issue_ticket(action="source.verify", ttl_seconds=5)
 
     later_worker = make_broker(now=1006.0)
-    claim = later_worker.claim_for_execution(planned.ticket, now=1006.0)
+    claim = later_worker.claim_for_execution(ticket, now=1006.0)
     assert claim["ok"] is False
     assert claim["reason"] == "ticket expired"
