@@ -223,10 +223,16 @@ class SandboxClientCredentialsTokenProvider:
                 "Sandbox OAuth response did not contain a usable access_token"
             )
 
+        # Anduril's OAuth reference includes token_type="Bearer", while the
+        # Lattice Sandboxes setup guide documents a successful response that
+        # omits token_type. Accept the documented omission, but fail closed if
+        # a non-Bearer token type is explicitly supplied.
         token_type = payload.get("token_type")
-        if not isinstance(token_type, str) or token_type.lower() != "bearer":
+        if token_type is not None and (
+            not isinstance(token_type, str) or token_type.lower() != "bearer"
+        ):
             raise LatticeOAuthError(
-                "Sandbox OAuth response token_type must be Bearer"
+                "Sandbox OAuth response token_type must be Bearer when present"
             )
 
         expires_in = payload.get("expires_in")
