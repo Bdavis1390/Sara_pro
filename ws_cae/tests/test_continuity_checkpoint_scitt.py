@@ -30,6 +30,31 @@ class ContinuityCheckpointScittTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_checkpoint_statement(cp, " ")
 
+    def test_malformed_checkpoint_root_is_rejected(self):
+        cp = LinkedCheckpoint(1, "sha256:1234")
+        with self.assertRaises(ValueError):
+            build_checkpoint_statement(cp, "did:web:example.invalid")
+
+    def test_uppercase_checkpoint_root_is_rejected(self):
+        cp = LinkedCheckpoint(1, "sha256:" + "AB" * 32)
+        with self.assertRaises(ValueError):
+            build_checkpoint_statement(cp, "did:web:example.invalid")
+
+    def test_invalid_previous_root_is_rejected(self):
+        cp = LinkedCheckpoint(2, cid("root"), previous_tree_size=1, previous_root_hash="sha256:1234")
+        with self.assertRaises(ValueError):
+            build_checkpoint_statement(cp, "did:web:example.invalid")
+
+    def test_timezone_less_timestamp_is_rejected(self):
+        cp = make_checkpoint((cid("a"),))
+        with self.assertRaises(ValueError):
+            build_checkpoint_statement(cp, "did:web:example.invalid", "2026-09-13T22:30:00")
+
+    def test_impossible_timestamp_is_rejected(self):
+        cp = make_checkpoint((cid("a"),))
+        with self.assertRaises(ValueError):
+            build_checkpoint_statement(cp, "did:web:example.invalid", "2026-02-30T22:30:00Z")
+
 
 if __name__ == "__main__":
     unittest.main()
