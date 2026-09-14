@@ -83,9 +83,11 @@ def _verified(envelope, authorization_id: str, nonce: str):
     )
 
 
-def test_claim_is_durable_one_time_and_survives_store_reload(tmp_path):
+def test_claim_and_invocation_fence_are_durable_and_survive_store_reload(tmp_path):
     action, envelope = _authorized_lab_envelope("WS-SBK-DURABLE-001")
-    verified = _verified(envelope, "PRIME-EFFECT-DURABLE-001", "durable-nonce-0000001")
+    verified = _verified(
+        envelope, "PRIME-EFFECT-DURABLE-001", "durable-nonce-0000001"
+    )
     envelope = bind_verified_prime_authorization(envelope, verified)
 
     store_path = tmp_path / "sara"
@@ -93,18 +95,19 @@ def test_claim_is_durable_one_time_and_survives_store_reload(tmp_path):
     registered = authority.register_verified(verified)
     assert registered["status"] == "VERIFIED"
 
+    execution_id = "WS-SBK-EXEC-DURABLE-001"
     claimed = authority.claim_and_bind(
         envelope,
         authorization_id=verified.authorization_id,
-        execution_id="WS-SBK-EXEC-DURABLE-001",
+        execution_id=execution_id,
     )
-    assert claimed.prime_execution_claim_ref == "WS-SBK-EXEC-DURABLE-001"
+    assert claimed.prime_execution_claim_ref == execution_id
 
     reloaded = PrimeEffectAuthorizationStore(DurableStore(store_path))
     entry = reloaded.assert_claimed(
         claimed,
         authorization_id=verified.authorization_id,
-        execution_id="WS-SBK-EXEC-DURABLE-001",
+        execution_id=execution_id,
     )
     assert entry["status"] == "CLAIMED"
 
@@ -115,31 +118,53 @@ def test_claim_is_durable_one_time_and_survives_store_reload(tmp_path):
             execution_id="WS-SBK-EXEC-DUPLICATE",
         )
 
+    invoking = reloaded.begin_invocation(
+        claimed,
+        authorization_id=verified.authorization_id,
+        execution_id=execution_id,
+    )
+    assert invoking["status"] == "INVOKING"
+    assert "invocation_started_at" in invoking
+
+    reloaded_again = PrimeEffectAuthorizationStore(DurableStore(store_path))
+    with pytest.raises(PrimeEffectAuthorizationLedgerError, match="CLAIMED state"):
+        reloaded_again.begin_invocation(
+            claimed,
+            authorization_id=verified.authorization_id,
+            execution_id=execution_id,
+        )
+
     completed = record_execution(
         claimed,
         runtime_action=action,
         status=ExecutionResultStatus.SUCCEEDED,
         outcome_ref="lab-record:durable-authority-store",
     )
-    consumed = reloaded.consume(
+    consumed = reloaded_again.consume(
         completed,
         authorization_id=verified.authorization_id,
-        execution_id="WS-SBK-EXEC-DURABLE-001",
+        execution_id=execution_id,
     )
     assert consumed["status"] == "CONSUMED"
 
     final_registry = DurableStore(store_path).get_registry()
-    final_entry = final_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][verified.authorization_id]
+    final_entry = final_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][
+        verified.authorization_id
+    ]
     assert final_entry["status"] == "CONSUMED"
     assert final_entry["terminal_envelope_digest"] == completed.envelope_digest
 
 
 def test_indeterminate_claim_is_fail_closed_and_not_reusable(tmp_path):
     _action, envelope = _authorized_lab_envelope("WS-SBK-DURABLE-002")
-    verified = _verified(envelope, "PRIME-EFFECT-DURABLE-002", "durable-nonce-0000002")
+    verified = _verified(
+        envelope, "PRIME-EFFECT-DURABLE-002", "durable-nonce-0000002"
+    )
     envelope = bind_verified_prime_authorization(envelope, verified)
 
-    authority = PrimeEffectAuthorizationStore(DurableStore(tmp_path / "sara-indeterminate"))
+    authority = PrimeEffectAuthorizationStore(
+        DurableStore(tmp_path / "sara-indeterminate")
+    )
     authority.register_verified(verified)
     authority.claim_and_bind(
         envelope,
@@ -158,4 +183,41 @@ def test_indeterminate_claim_is_fail_closed_and_not_reusable(tmp_path):
             envelope,
             authorization_id=verified.authorization_id,
             execution_id="WS-SBK-EXEC-RETRY-DENIED",
+        )
+
+
+def test_invoking_state_can_only_resolve_to_consumed_or_indeterminate(tmp_path):
+    _action, envelope = _authorized_lab_envelope("WS-SBK-DURABLE-003")
+    verified = _verified(
+        envelope, "PRIME-EFFECT-DURABLE-003", "durable-nonce-0000003"
+    )
+    envelope = bind_verified_prime_authorization(envelope, verified)
+
+    authority = PrimeEffectAuthorizationStore(
+        DurableStore(tmp_path / "sara-invoking-indeterminate")
+    )
+    authority.register_verified(verified)
+    claimed = authority.claim_and_bind(
+        envelope,
+        authorization_id=verified.authorization_id,
+        execution_id="WS-SBK-EXEC-DURABLE-003",
+    )
+    authority.begin_invocation(
+        claimed,
+        authorization_id=verified.authorization_id,
+        execution_id="WS-SBK-EXEC-DURABLE-003",
+    )
+
+    indeterminate = authority.mark_indeterminate(
+        authorization_id=verified.authorization_id,
+        execution_id="WS-SBK-EXEC-DURABLE-003",
+        reason="worker disappeared after durable INVOKING fence",
+    )
+    assert indeterminate["status"] == "INDETERMINATE"
+
+    with pytest.raises(PrimeEffectAuthorizationLedgerError, match="CLAIMED state"):
+        authority.begin_invocation(
+            claimed,
+            authorization_id=verified.authorization_id,
+            execution_id="WS-SBK-EXEC-DURABLE-003",
         )
