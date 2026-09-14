@@ -1,0 +1,48 @@
+name: Worldshepherd Scale Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'tools/selection_demo/benchmark_synthetic_fusion.py'
+      - '.github/workflows/worldshepherd-scale-benchmark.yml'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
+
+permissions:
+  contents: read
+
+jobs:
+  bounded-scale-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Worldshepherd SARA
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e deployments/sara_verified_local_v1
+
+      - name: Run bounded synthetic fusion benchmark
+        run: |
+          mkdir -p scale_evidence
+          python tools/selection_demo/benchmark_synthetic_fusion.py \
+            --out scale_evidence/synthetic-fusion-scale-benchmark.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-scale-benchmark-${{ github.sha }}
+          path: scale_evidence/
+          if-no-files-found: error
+          retention-days: 30
