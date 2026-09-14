@@ -44,9 +44,9 @@ The evidence artifact also preserves the HDTN, sender, and receiver logs. This p
 
 ## Upstream regression gate
 
-The broader `WS CISNET HDTN v0.2` workflow also compiles the upstream unit and integrated test executables. An earlier CI attempt invoked those executables outside the HDTN source root. Several upstream tests resolve fixture files by relative path, so that invocation produced fixture-not-found failures that were not evidence of a BPv7 runtime defect.
+The broader `WS CISNET HDTN v0.2` workflow also compiles the upstream unit and integrated test executables. An earlier CI attempt invoked those executables outside HDTN's documented build working directory. Several upstream tests resolve fixture files by relative path, so that invocation produced fixture-not-found failures that were not evidence of a BPv7 runtime defect.
 
-The workflow now changes into the pinned HDTN source root before executing the upstream test binaries. The corrected upstream regression run remains a separate gate: its result must be reported as observed rather than inferred from the successful Worldshepherd BPv7 proof.
+The workflow now changes into the pinned HDTN `build` directory before executing the upstream test binaries, matching NASA HDTN's documented invocation. The corrected upstream regression run remains a separate gate: its result must be reported as observed rather than inferred from the successful Worldshepherd BPv7 proof.
 
 ## Evidence gates
 
@@ -61,7 +61,7 @@ The v0.2 evidence set separates Worldshepherd's runtime proof from the upstream 
 7. payload is delivered after contact availability — PASS;
 8. destination SHA-256 exactly matches source SHA-256 — PASS;
 9. ECHO evidence chain verifies — PASS;
-10. broad upstream HDTN unit/integrated regression suite from correct source-root working directory — CI RE-RUN GATE.
+10. broad upstream HDTN unit/integrated regression suite from the documented build working directory — CI RE-RUN GATE.
 
 ## Claims control
 
