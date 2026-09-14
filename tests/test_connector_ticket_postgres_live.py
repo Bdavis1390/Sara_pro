@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
 
@@ -39,8 +40,8 @@ def process_claim(ticket):
     return claim.ok, claim.reason
 
 
-def issue_ticket(*, action="research.search", ttl_seconds=30):
-    issuer = make_broker()
+def issue_ticket(*, action="research.search", ttl_seconds=30, issuer_now=1000.0):
+    issuer = make_broker(now=issuer_now)
     planned = issuer.plan_read(
         connector_id="web_research",
         action=action,
@@ -92,12 +93,37 @@ def test_real_postgres_allows_exactly_one_across_separate_worker_processes():
     assert all(reason == "ticket already consumed" for _, reason in losers)
 
 
-def test_real_postgres_rejects_expired_ticket_across_new_connection():
+def test_database_time_ignores_large_issuer_and_claimant_clock_offsets():
     reset_table()
-    ticket = issue_ticket(action="source.verify", ttl_seconds=5)
+    issuer_now = 10_000_000.0
+    claimant_now = -10_000_000.0
+    ticket = issue_ticket(ttl_seconds=30, issuer_now=issuer_now)
 
-    later_worker = make_broker(now=1006.0)
-    claim = later_worker.claim_for_execution(ticket, now=1006.0)
+    store = PostgresClaimStore(connection_factory)
+    registered = store.status(ticket["ticket_id"])
+    assert registered["known"] is True
+    # Database expiry must be derived from server time + signed TTL rather than
+    # the issuer's absolute expires_at value.
+    assert abs(float(registered["expires_at"]) - float(ticket["expires_at"])) > 1_000_000
+
+    claimant = make_broker(now=claimant_now)
+    claim = claimant.claim_for_execution(ticket, now=claimant_now)
+    assert claim["ok"] is True
+    assert claim["consumed_at"] != claimant_now
+    assert claim["consumed_at"] != issuer_now
+
+
+def test_real_postgres_rejects_expired_ticket_by_database_time_despite_client_skew():
+    reset_table()
+    ticket = issue_ticket(
+        action="source.verify",
+        ttl_seconds=5,
+        issuer_now=10_000_000.0,
+    )
+
+    time.sleep(5.25)
+    later_worker = make_broker(now=-10_000_000.0)
+    claim = later_worker.claim_for_execution(ticket, now=-10_000_000.0)
     assert claim["ok"] is False
     assert claim["reason"] == "ticket expired"
 
