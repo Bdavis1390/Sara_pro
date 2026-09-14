@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import asdict
 from typing import Annotated, Any
@@ -35,7 +36,14 @@ class SyntheticFusionRequest(BaseModel):
     max_time_delta_seconds: float = Field(gt=0.0, le=86_400.0)
 
     @model_validator(mode="after")
-    def bounded_identifiers_and_unique_observations(self) -> "SyntheticFusionRequest":
+    def bounded_identifiers_unique_observations_and_finite_values(
+        self,
+    ) -> "SyntheticFusionRequest":
+        if not math.isfinite(self.max_spatial_distance):
+            raise ValueError("max_spatial_distance must be finite")
+        if not math.isfinite(self.max_time_delta_seconds):
+            raise ValueError("max_time_delta_seconds must be finite")
+
         observation_ids = [item.observation_id for item in self.observations]
         if len(set(observation_ids)) != len(observation_ids):
             raise ValueError("observation_id values must be unique within one request")
@@ -46,6 +54,11 @@ class SyntheticFusionRequest(BaseModel):
                 )
             if len(item.sensor_id) > MAX_SYNTHETIC_ID_LENGTH:
                 raise ValueError(f"sensor_id maximum length is {MAX_SYNTHETIC_ID_LENGTH}")
+            for field_name in ("t_seconds", "x", "y", "confidence"):
+                if not math.isfinite(float(getattr(item, field_name))):
+                    raise ValueError(
+                        f"observation {field_name} values must be finite"
+                    )
         return self
 
 
