@@ -29,8 +29,12 @@ RELAY_TOKEN = "network-relay-token-0123456789abcdef012345"
 OBSERVATIONS_PER_REQUEST = 64
 WORKER_LEVELS = (1, 2, 4, 8)
 REQUESTS_PER_WORKER = 8
+WARMUP_PER_WORKER = 1
 SERVICE_START_TIMEOUT_SECONDS = 20.0
 REQUEST_TIMEOUT_SECONDS = 20.0
+REQUIRED_SERVER_TIMING = frozenset(
+    {"request_digest", "fusion_graph", "audit_fsync", "server_total"}
+)
 
 
 def _nearest_rank(values: list[float], percentile: float) -> float:
@@ -63,9 +67,10 @@ def _observations() -> list[dict[str, Any]]:
     return values
 
 
-def _body(transport: str, workers: int, index: int) -> dict[str, Any]:
+def _body(transport: str, workers: int, index: int, *, warmup: bool = False) -> dict[str, Any]:
+    phase = "WARM" if warmup else "MEASURE"
     return {
-        "scenario_id": f"REALNET-{transport.upper()}-W{workers:02d}-{index:05d}",
+        "scenario_id": f"REALNET-{transport.upper()}-{phase}-W{workers:02d}-{index:05d}",
         "observations": _observations(),
         "max_spatial_distance": 2.0,
         "max_time_delta_seconds": 1.0,
@@ -76,7 +81,30 @@ def _auth() -> dict[str, str]:
     return {"Authorization": f"Bearer {ADMIN_TOKEN}"}
 
 
+def _parse_server_timing(value: str) -> dict[str, float]:
+    metrics: dict[str, float] = {}
+    for raw_metric in value.split(","):
+        parts = [part.strip() for part in raw_metric.strip().split(";") if part.strip()]
+        if not parts:
+            continue
+        name = parts[0]
+        duration: float | None = None
+        for parameter in parts[1:]:
+            if parameter.startswith("dur="):
+                duration = float(parameter[4:])
+                break
+        if duration is not None:
+            metrics[name] = duration
+    missing = REQUIRED_SERVER_TIMING - set(metrics)
+    if missing:
+        raise RuntimeError(
+            f"missing required Server-Timing metrics {sorted(missing)} in {value!r}"
+        )
+    return metrics
+
+
 def _write_echo_key(root: Path) -> Path:
+    root.mkdir(parents=True, exist_ok=True)
     key = Ed25519PrivateKey.generate()
     path = root / "echo-checkpoint-ed25519-private.pem"
     path.write_bytes(
@@ -140,6 +168,7 @@ def _service_environment(data_dir: Path, echo_key: Path) -> dict[str, str]:
             "SARA_DATA_DIR": str(data_dir),
             "ECHO_CHECKPOINT_PRIVATE_KEY_FILE": str(echo_key),
             "ECHO_CHECKPOINT_KEY_ID": "ECHO-CHECKPOINT-REALNET-V1",
+            "SARA_BENCHMARK_TIMING_HEADERS": "1",
         }
     )
     return env
@@ -247,6 +276,24 @@ def _profile_transport(base_url: str, transport: str) -> list[dict[str, Any]]:
                 trust_env=False,
                 limits=limits,
             ) as client:
+                for warmup_index in range(WARMUP_PER_WORKER):
+                    warmup_body = _body(
+                        transport,
+                        workers,
+                        (worker_index * WARMUP_PER_WORKER) + warmup_index,
+                        warmup=True,
+                    )
+                    warmup_response = client.post("/v1/synthetic-fusion", json=warmup_body)
+                    if warmup_response.status_code != 200:
+                        raise RuntimeError(
+                            f"warmup failed transport={transport} workers={workers} "
+                            f"worker={worker_index}: {warmup_response.status_code} "
+                            f"{warmup_response.text}"
+                        )
+                    if warmup_response.headers.get("X-Worldshepherd-Benchmark-Timing") != "1":
+                        raise RuntimeError("benchmark timing marker missing from warmup response")
+                    _parse_server_timing(warmup_response.headers.get("Server-Timing", ""))
+
                 for local_index in range(REQUESTS_PER_WORKER):
                     index = worker_index * REQUESTS_PER_WORKER + local_index
                     body = _body(transport, workers, index)
@@ -258,11 +305,25 @@ def _profile_transport(base_url: str, transport: str) -> list[dict[str, Any]]:
                             f"network request failed transport={transport} workers={workers} "
                             f"index={index}: {response.status_code} {response.text}"
                         )
+                    if response.headers.get("X-Worldshepherd-Benchmark-Timing") != "1":
+                        raise RuntimeError("benchmark timing marker missing from measured response")
+                    timing = _parse_server_timing(response.headers.get("Server-Timing", ""))
                     payload = response.json()
+                    server_total_ms = timing["server_total"]
+                    server_accounted_ms = (
+                        timing["request_digest"]
+                        + timing["fusion_graph"]
+                        + timing["audit_fsync"]
+                    )
                     results.append(
                         {
                             "elapsed_ms": elapsed_ms,
-                            "server_fusion_graph_ms": float(payload["elapsed_ms"]),
+                            "server_total_ms": server_total_ms,
+                            "server_request_digest_ms": timing["request_digest"],
+                            "server_fusion_graph_ms": timing["fusion_graph"],
+                            "server_audit_fsync_ms": timing["audit_fsync"],
+                            "server_unattributed_ms": max(0.0, server_total_ms - server_accounted_ms),
+                            "client_transport_residual_ms": max(0.0, elapsed_ms - server_total_ms),
                             "request_digest": str(payload["request_digest"]),
                             "result_digest": str(payload["result_digest"]),
                             "track_count": int(payload["track_count"]),
@@ -276,8 +337,16 @@ def _profile_transport(base_url: str, transport: str) -> list[dict[str, Any]]:
         batch_elapsed_s = (time.perf_counter_ns() - batch_started) / 1_000_000_000.0
         outcomes = [item for worker_items in nested for item in worker_items]
 
-        latencies = [float(item["elapsed_ms"]) for item in outcomes]
-        fusion_values = [float(item["server_fusion_graph_ms"]) for item in outcomes]
+        def values(name: str) -> list[float]:
+            return [float(item[name]) for item in outcomes]
+
+        latencies = values("elapsed_ms")
+        server_total = values("server_total_ms")
+        request_digest_values = values("server_request_digest_ms")
+        fusion_values = values("server_fusion_graph_ms")
+        audit_values = values("server_audit_fsync_ms")
+        server_unattributed = values("server_unattributed_ms")
+        transport_residual = values("client_transport_residual_ms")
         request_digests = {str(item["request_digest"]) for item in outcomes}
         result_digests = {str(item["result_digest"]) for item in outcomes}
         if len(outcomes) != total_requests or len(request_digests) != total_requests:
@@ -293,17 +362,28 @@ def _profile_transport(base_url: str, transport: str) -> list[dict[str, Any]]:
         profiles.append(
             {
                 "workers": workers,
+                "warmup_per_worker": WARMUP_PER_WORKER,
                 "requests_per_worker": REQUESTS_PER_WORKER,
-                "total_requests": total_requests,
+                "total_measured_requests": total_requests,
                 "observations_per_request": OBSERVATIONS_PER_REQUEST,
                 "batch_elapsed_ms": batch_elapsed_s * 1000.0,
-                "requests_per_second": total_requests / batch_elapsed_s,
+                "measured_requests_per_second": total_requests / batch_elapsed_s,
                 "request_latency_p50_ms": statistics.median(latencies),
                 "request_latency_p95_ms": _nearest_rank(latencies, 0.95),
                 "request_latency_p99_ms": _nearest_rank(latencies, 0.99),
                 "request_latency_max_ms": max(latencies),
+                "server_total_p50_ms": statistics.median(server_total),
+                "server_total_p95_ms": _nearest_rank(server_total, 0.95),
+                "server_request_digest_p50_ms": statistics.median(request_digest_values),
+                "server_request_digest_p95_ms": _nearest_rank(request_digest_values, 0.95),
                 "server_fusion_graph_p50_ms": statistics.median(fusion_values),
                 "server_fusion_graph_p95_ms": _nearest_rank(fusion_values, 0.95),
+                "server_audit_fsync_p50_ms": statistics.median(audit_values),
+                "server_audit_fsync_p95_ms": _nearest_rank(audit_values, 0.95),
+                "server_unattributed_p50_ms": statistics.median(server_unattributed),
+                "server_unattributed_p95_ms": _nearest_rank(server_unattributed, 0.95),
+                "client_transport_residual_p50_ms": statistics.median(transport_residual),
+                "client_transport_residual_p95_ms": _nearest_rank(transport_residual, 0.95),
                 "all_request_digests_unique": True,
                 "unique_result_digest_count": len(result_digests),
             }
@@ -359,7 +439,10 @@ def _run_transport(
         profiles = _profile_transport(base_url, transport)
     finally:
         service_output = _stop_service(process)
-    expected = sum(workers * REQUESTS_PER_WORKER for workers in WORKER_LEVELS)
+    expected = sum(
+        workers * (REQUESTS_PER_WORKER + WARMUP_PER_WORKER)
+        for workers in WORKER_LEVELS
+    )
     audit = _verify_audit(data_dir, expected)
     return {
         "transport": transport,
@@ -378,8 +461,6 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="ws-real-network-") as temp:
         root = Path(temp)
-        (root / "echo-http").mkdir(parents=True, exist_ok=True)
-        (root / "echo-https").mkdir(parents=True, exist_ok=True)
         cert_path, key_path = _write_tls_material(root)
         http_result = _run_transport(
             root=root,
@@ -395,7 +476,7 @@ def main() -> int:
         )
 
     result = {
-        "schema": "WS-GOVERNED-FUSION-REAL-NETWORK-BENCHMARK-V1",
+        "schema": "WS-GOVERNED-FUSION-REAL-NETWORK-BENCHMARK-V2",
         "result": "PASS",
         "software_commit": args.software_commit,
         "executed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -408,20 +489,33 @@ def main() -> int:
         "request_model": {
             "observations_per_request": OBSERVATIONS_PER_REQUEST,
             "worker_levels": list(WORKER_LEVELS),
-            "requests_per_worker": REQUESTS_PER_WORKER,
-            "clients": "one persistent HTTPX connection per worker",
+            "warmup_per_worker": WARMUP_PER_WORKER,
+            "measured_requests_per_worker": REQUESTS_PER_WORKER,
+            "clients": "one persistent HTTPX connection per worker, warmed before measured requests",
+        },
+        "timing_definition": {
+            "server_total": "benchmark-only outer HTTP middleware duration through endpoint/response construction on the service process",
+            "server_request_digest": "canonical request digest inside the synthetic-fusion endpoint",
+            "server_fusion_graph": "synthetic fusion, evidence graph/payload construction, and result digest interval",
+            "server_audit_fsync": "real DurableStore.append_audit call including lock wait, write, flush, fsync, and security-mode verification",
+            "server_unattributed": "server_total minus the three explicitly timed endpoint stages; includes auth/dependency solving, Pydantic validation, thread scheduling, response-model validation/serialization, middleware, and instrumentation overhead",
+            "client_transport_residual": "client wall time minus server_total on the same host; includes HTTPX handling, loopback TCP framing/transfer, and TLS framing/encryption when applicable",
         },
         "transports": [http_result, https_result],
         "acceptance_checks": {
             "http_completed": True,
             "https_completed": True,
+            "persistent_connections_warmed_before_measurement": True,
+            "benchmark_server_timing_present": True,
             "all_requests_authenticated_and_successful": True,
             "all_request_digests_unique": True,
-            "audit_complete_for_each_transport": True,
+            "audit_complete_for_each_transport_including_warmups": True,
         },
         "claims_boundary": [
             "This benchmark uses real localhost TCP sockets and a real single-worker Uvicorn service process.",
-            "HTTPS uses direct Uvicorn TLS with an ephemeral self-signed localhost certificate and client certificate verification disabled; it does not represent a production PKI or reverse proxy.",
+            "Measured request samples exclude each persistent client's connection-establishment warmup request.",
+            "HTTPS uses direct Uvicorn TLS with an ephemeral self-signed localhost certificate and client certificate verification disabled; it does not represent production PKI or a reverse proxy.",
+            "Benchmark-only Server-Timing headers are enabled only by SARA_BENCHMARK_TIMING_HEADERS=1 and are not required in normal operation.",
             "The benchmark includes bearer authorization, request validation, fusion/evidence construction, durable audit flush/fsync, response validation/serialization, HTTP framing, TCP loopback, and optional TLS overhead.",
             "It does not include a reverse proxy/service mesh, external database/object store, multi-host load balancer, multimodal decode/inference, CUI/classified controls, production PKI, or WAN conditions.",
             "No production SLA, distributed-scale, mission-scale, or controlled-environment compliance claim follows from these results.",
