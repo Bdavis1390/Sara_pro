@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-import hashlib
-import json
-import time
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional
 
 from .connector_control import ConnectorControlPlane, Decision
+from .connector_ticket_lifecycle import (
+    DEFAULT_TTL_SECONDS,
+    READ_TICKET_SCHEMA_V2,
+    ReadTicketLedger,
+    canonical_sha256,
+    context_sha256,
+)
 
 
 @dataclass(frozen=True)
@@ -24,15 +28,20 @@ class ExecutionTicket:
 class ReadExecutionBroker:
     """Credential-blind broker for explicitly classified external read handoffs.
 
-    This broker never performs an external network call. It consumes the same
-    ConnectorControlPlane used by policy evaluation and emits a sealed handoff
-    ticket that a host integration may execute separately. An action must be
-    explicitly listed in the connector's external_read_actions policy; absence
-    from the write list is never treated as permission to read.
+    The broker never performs an external network call. It emits short-lived,
+    single-use tickets for host-side execution and keeps raw operation context
+    out of the ticket and PRIME/ECHO policy envelope by substituting a canonical
+    context digest.
     """
 
-    def __init__(self, control: ConnectorControlPlane):
+    def __init__(
+        self,
+        control: ConnectorControlPlane,
+        *,
+        ledger: Optional[ReadTicketLedger] = None,
+    ) -> None:
         self.control = control
+        self.ledger = ledger or ReadTicketLedger()
 
     def plan_read(
         self,
@@ -42,6 +51,7 @@ class ReadExecutionBroker:
         actor: str,
         data_class: str = "PUBLIC",
         context: Optional[Mapping[str, Any]] = None,
+        ttl_seconds: int = DEFAULT_TTL_SECONDS,
     ) -> ExecutionTicket:
         try:
             connector = self.control.connector(connector_id)
@@ -82,6 +92,7 @@ class ReadExecutionBroker:
                 reason="action not explicitly classified as an external read",
             )
 
+        digest = context_sha256(context)
         decision: Decision = self.control.authorize(
             connector_id=connector_id,
             action=action,
@@ -89,7 +100,7 @@ class ReadExecutionBroker:
             data_class=data_class,
             human_approved=False,
             approval_id=None,
-            context=dict(context or {}),
+            context={"context_sha256": digest},
         )
         if not decision.allowed:
             return ExecutionTicket(
@@ -102,28 +113,39 @@ class ReadExecutionBroker:
                 reason=decision.reason,
             )
 
+        try:
+            lifecycle = self.ledger.issue_metadata(ttl_seconds=ttl_seconds)
+        except ValueError as exc:
+            return ExecutionTicket(
+                ok=False,
+                mode="blocked",
+                connector_id=connector_id,
+                action=action,
+                actor=actor,
+                data_class=data_class,
+                reason=str(exc),
+            )
+
         payload: Dict[str, Any] = {
-            "schema": "worldshepherd.connector.read-ticket.v1",
+            "schema": READ_TICKET_SCHEMA_V2,
+            "ticket_id": lifecycle["ticket_id"],
             "connector_id": connector_id,
             "action": action,
             "actor": actor,
             "data_class": data_class,
-            "context": dict(context or {}),
+            "context_sha256": digest,
             "policy_envelope_sha256": (
                 decision.envelope.get("sha256") if decision.envelope else None
             ),
             "execution_mode": "host_connector_handoff",
             "credential_handling": "outside_sara_broker",
             "write_enabled": False,
-            "issued_at": time.time(),
+            "max_uses": lifecycle["max_uses"],
+            "issued_at": lifecycle["issued_at"],
+            "expires_at": lifecycle["expires_at"],
         }
-        canonical = json.dumps(
-            payload,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=False,
-        )
-        payload["sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        payload["sha256"] = canonical_sha256(payload)
+        self.ledger.register(payload)
 
         return ExecutionTicket(
             ok=True,
@@ -132,9 +154,23 @@ class ReadExecutionBroker:
             action=action,
             actor=actor,
             data_class=data_class,
-            reason="authorized external read handoff ticket issued",
+            reason="authorized short-lived single-use external read ticket issued",
             ticket=payload,
         )
+
+    def claim_for_execution(
+        self,
+        ticket: Mapping[str, Any],
+        *,
+        now: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        claim = self.ledger.claim(ticket, now=now)
+        return {
+            "ok": claim.ok,
+            "ticket_id": claim.ticket_id,
+            "reason": claim.reason,
+            "consumed_at": claim.consumed_at,
+        }
 
 
 def ticket_to_dict(ticket: ExecutionTicket) -> Dict[str, Any]:
