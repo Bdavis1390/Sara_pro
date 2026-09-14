@@ -1,7 +1,7 @@
 # WS-QPHONON L2 Architecture Integration
 
-**Status:** L2 architecture integration only  
-**Physical capability claim:** none  
+**Status:** L2 architecture integration only
+**Physical capability claim:** none
 **Promotion rule:** develop aggressively, validate independently, integrate as a claimed capability only when substantial evidence crosses the L3 gate.
 
 ## Purpose
