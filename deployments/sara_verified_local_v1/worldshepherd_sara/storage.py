@@ -5,7 +5,6 @@ import os
 import secrets
 import stat
 import threading
-from collections import deque
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
@@ -213,26 +212,74 @@ class DurableStore:
         return records
 
     def _bounded_tail(self, limit: int) -> list[tuple[bytes, bool]]:
-        records: deque[tuple[bytes, bool]] = deque(maxlen=limit)
-        current = bytearray()
+        """Return the newest ``limit`` audit lines without scanning older history.
+
+        Audit records are append-only JSONL. Reading from EOF lets bounded API
+        requests scale with the requested tail (plus the size of those lines)
+        rather than with the total lifetime audit file. The scan preserves the
+        previous corruption semantics: overlong selected lines are marked as
+        truncated, empty/invalid selected lines are returned for the caller to
+        label, and output remains chronological (oldest-to-newest within the
+        selected tail).
+        """
+
+        if limit <= 0:
+            return []
+
+        records_newest_first: list[tuple[bytes, bool]] = []
+        current_reversed = bytearray()
         truncated = False
-        descriptor = self._open_read_descriptor(
-            self.audit_path, "audit file"
-        )
+        descriptor = self._open_read_descriptor(self.audit_path, "audit file")
+
         with os.fdopen(descriptor, "rb") as handle:
-            while chunk := handle.read(8192):
-                for byte in chunk:
+            handle.seek(0, os.SEEK_END)
+            file_size = handle.tell()
+            position = file_size
+            at_eof = True
+
+            while position > 0 and len(records_newest_first) < limit:
+                read_size = min(8192, position)
+                position -= read_size
+                handle.seek(position)
+                chunk = handle.read(read_size)
+
+                for byte in reversed(chunk):
                     if byte == 0x0A:
-                        records.append((bytes(current), truncated))
-                        current.clear()
+                        if at_eof:
+                            # A terminal JSONL newline closes the final record;
+                            # it does not create a synthetic empty record after it.
+                            at_eof = False
+                            continue
+
+                        records_newest_first.append(
+                            (bytes(reversed(current_reversed)), truncated)
+                        )
+                        current_reversed.clear()
                         truncated = False
-                    elif len(current) < MAX_AUDIT_LINE_BYTES:
-                        current.append(byte)
+                        if len(records_newest_first) >= limit:
+                            break
                     else:
-                        truncated = True
-            if current or truncated:
-                records.append((bytes(current), truncated))
-        return list(records)
+                        at_eof = False
+                        if len(current_reversed) < MAX_AUDIT_LINE_BYTES:
+                            current_reversed.append(byte)
+                        else:
+                            truncated = True
+
+            if len(records_newest_first) < limit:
+                if current_reversed or truncated:
+                    records_newest_first.append(
+                        (bytes(reversed(current_reversed)), truncated)
+                    )
+                elif file_size > 0:
+                    # If the file begins with a newline, the oldest record is
+                    # an empty line. Preserve the forward-reader semantics for
+                    # files such as b"\n" and b"\n\n".
+                    handle.seek(0)
+                    if handle.read(1) == b"\n":
+                        records_newest_first.append((b"", False))
+
+        records_newest_first.reverse()
+        return records_newest_first
 
     def get_registry(self) -> dict[str, Any]:
         with self._lock:
