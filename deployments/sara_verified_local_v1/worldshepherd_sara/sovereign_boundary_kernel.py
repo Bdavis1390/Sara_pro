@@ -135,13 +135,18 @@ class SovereignBoundaryEnvelope(BaseModel):
     state: BoundaryState
     human_approval_ref: str | None = Field(default=None, min_length=1, max_length=512)
     human_approver: str | None = Field(default=None, min_length=1, max_length=128)
+    prime_authorization_ref: str | None = Field(default=None, min_length=1, max_length=128)
+    prime_authorization_key_fingerprint_sha256: str | None = Field(
+        default=None, min_length=64, max_length=64
+    )
     action_digest: str = Field(min_length=1, max_length=128)
     execution_result: BoundaryExecutionResult | None = None
     created_at: datetime = Field(default_factory=_utc_now)
     claims_boundary: tuple[str, ...] = (
         "Authorization does not promote capability or qualification status.",
         "SIMULATED_ONLY evidence cannot authorize non-simulation effects.",
-        "Operational physical effects require PROVEN_INTERNALLY status, a physical validation reference, and explicit human approval in v0.1.",
+        "Physical execution requires explicit human approval and a purpose-bound PRIME authorization reference in v0.1.",
+        "Operational physical effects require PROVEN_INTERNALLY status and a physical validation reference.",
     )
     envelope_digest: str | None = None
 
@@ -177,8 +182,14 @@ class SovereignBoundaryEnvelope(BaseModel):
             if self.policy.human_approval_required and not self.human_approval_ref:
                 raise ValueError("AUTHORIZED state is missing required human approval")
 
-        if self.state in {BoundaryState.EXECUTED, BoundaryState.FAILED} and self.execution_result is None:
-            raise ValueError("terminal execution state requires an execution result")
+        if self.state in {BoundaryState.EXECUTED, BoundaryState.FAILED}:
+            if self.execution_result is None:
+                raise ValueError("terminal execution state requires an execution result")
+            if self.action.effect_scope == EvidenceScope.PHYSICAL:
+                if not self.prime_authorization_ref:
+                    raise ValueError("physical execution requires a PRIME authorization reference")
+                if not self.prime_authorization_key_fingerprint_sha256:
+                    raise ValueError("physical execution requires a PRIME signing-key fingerprint")
         if self.state not in {BoundaryState.EXECUTED, BoundaryState.FAILED} and self.execution_result is not None:
             raise ValueError("execution result is only valid in EXECUTED or FAILED state")
 
@@ -264,6 +275,29 @@ def authorize_after_human_approval(
     return _seal(validated)
 
 
+def bind_prime_authorization_reference(
+    envelope: SovereignBoundaryEnvelope,
+    *,
+    authorization_id: str,
+    key_fingerprint_sha256: str,
+) -> SovereignBoundaryEnvelope:
+    if not verify_boundary_envelope(envelope):
+        raise BoundaryKernelError("cannot bind PRIME authorization to an unverified envelope")
+    if envelope.state != BoundaryState.AUTHORIZED:
+        raise BoundaryKernelError("PRIME authorization may bind only to an AUTHORIZED envelope")
+    if len(key_fingerprint_sha256) != 64:
+        raise BoundaryKernelError("PRIME key fingerprint must be a SHA-256 hex digest")
+    updated = envelope.model_copy(
+        update={
+            "prime_authorization_ref": authorization_id,
+            "prime_authorization_key_fingerprint_sha256": key_fingerprint_sha256,
+            "envelope_digest": None,
+        }
+    )
+    validated = SovereignBoundaryEnvelope.model_validate(updated.model_dump(mode="json"))
+    return _seal(validated)
+
+
 def record_execution(
     envelope: SovereignBoundaryEnvelope,
     *,
@@ -279,6 +313,11 @@ def record_execution(
     runtime_digest = boundary_action_digest(runtime_action)
     if runtime_digest != envelope.action_digest:
         raise BoundaryKernelError("runtime action differs from the policy-bound action; re-evaluation required")
+    if envelope.action.effect_scope == EvidenceScope.PHYSICAL:
+        if not envelope.prime_authorization_ref:
+            raise BoundaryKernelError("physical execution requires purpose-bound PRIME authorization")
+        if not envelope.prime_authorization_key_fingerprint_sha256:
+            raise BoundaryKernelError("physical execution requires PRIME key custody evidence")
 
     result = BoundaryExecutionResult(
         status=status,
@@ -316,6 +355,8 @@ def boundary_event_payload(envelope: SovereignBoundaryEnvelope) -> dict[str, Any
         "policy_revision": envelope.policy.policy_revision,
         "state": envelope.state.value,
         "human_approval_ref": envelope.human_approval_ref,
+        "prime_authorization_ref": envelope.prime_authorization_ref,
+        "prime_authorization_key_fingerprint_sha256": envelope.prime_authorization_key_fingerprint_sha256,
         "source_evidence_refs": list(envelope.provenance.source_evidence_refs),
         "execution_evidence_refs": (
             [] if envelope.execution_result is None else list(envelope.execution_result.evidence_refs)
