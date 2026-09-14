@@ -22,11 +22,13 @@ class ExecutionTicket:
 
 
 class ReadExecutionBroker:
-    """Credential-blind broker for authorized read-only connector handoffs.
+    """Credential-blind broker for explicitly classified external read handoffs.
 
     This broker never performs an external network call. It consumes the same
     ConnectorControlPlane used by policy evaluation and emits a sealed handoff
-    ticket that a host integration may execute separately.
+    ticket that a host integration may execute separately. An action must be
+    explicitly listed in the connector's external_read_actions policy; absence
+    from the write list is never treated as permission to read.
     """
 
     def __init__(self, control: ConnectorControlPlane):
@@ -46,7 +48,7 @@ class ReadExecutionBroker:
         except KeyError:
             connector = None
 
-        if connector is not None and action in set(connector.get("external_write_actions", [])):
+        if connector is None:
             return ExecutionTicket(
                 ok=False,
                 mode="blocked",
@@ -54,7 +56,30 @@ class ReadExecutionBroker:
                 action=action,
                 actor=actor,
                 data_class=data_class,
-                reason="write actions cannot be planned by the read broker",
+                reason="unknown connector",
+            )
+
+        if not str(connector.get("kind", "")).startswith("external_"):
+            return ExecutionTicket(
+                ok=False,
+                mode="blocked",
+                connector_id=connector_id,
+                action=action,
+                actor=actor,
+                data_class=data_class,
+                reason="connector is not an external handoff target",
+            )
+
+        read_actions = set(connector.get("external_read_actions", []))
+        if action not in read_actions:
+            return ExecutionTicket(
+                ok=False,
+                mode="blocked",
+                connector_id=connector_id,
+                action=action,
+                actor=actor,
+                data_class=data_class,
+                reason="action not explicitly classified as an external read",
             )
 
         decision: Decision = self.control.authorize(
@@ -107,7 +132,7 @@ class ReadExecutionBroker:
             action=action,
             actor=actor,
             data_class=data_class,
-            reason="authorized read handoff ticket issued",
+            reason="authorized external read handoff ticket issued",
             ticket=payload,
         )
 
