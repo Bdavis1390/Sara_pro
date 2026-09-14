@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import time
 from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
@@ -40,6 +41,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         EVENT_OUTBOX_REGISTRY_KEY,
     }
 )
+BENCHMARK_TIMING_HEADERS_ENV = "SARA_BENCHMARK_TIMING_HEADERS"
 
 
 class RequestTooLarge(Exception):
@@ -102,6 +104,10 @@ class RequestSizeLimitMiddleware:
         )(scope, receive, send)
 
 
+def benchmark_timing_headers_enabled() -> bool:
+    return os.getenv(BENCHMARK_TIMING_HEADERS_ENV, "0") == "1"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     os.umask(0o077)
@@ -153,7 +159,17 @@ app.include_router(synthetic_fusion_router)
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
+    timing_enabled = benchmark_timing_headers_enabled()
+    started = time.perf_counter_ns() if timing_enabled else 0
     response = await call_next(request)
+    if timing_enabled:
+        server_total_ms = (time.perf_counter_ns() - started) / 1_000_000.0
+        existing = response.headers.get("Server-Timing")
+        total_metric = f"server_total;dur={server_total_ms:.6f}"
+        response.headers["Server-Timing"] = (
+            f"{existing}, {total_metric}" if existing else total_metric
+        )
+        response.headers["X-Worldshepherd-Benchmark-Timing"] = "1"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
