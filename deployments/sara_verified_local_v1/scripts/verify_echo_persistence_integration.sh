@@ -283,7 +283,7 @@ out=Path(sys.argv[7])
 assert stored['delivery_count']==3
 assert status['ok'] is True and status['rejected_conflicts'] >= 1
 assert status['checkpoints']['ok'] is True and status['checkpoints']['checkpoint_count']==2
-expected_counts={'MATCHED':1,'ECHO_ONLY':1}
+expected_counts={'MATCHED':1,'SARA_ONLY':0,'ECHO_ONLY':1,'PAYLOAD_MISMATCH':0}
 assert reconcile['scope']=='PROVIDED_SARA_AUDIT_WINDOW' and reconcile['counts']==expected_counts, reconcile
 assert verification['status']=='PASS' and verification['checkpoint_count']==2
 summary={
@@ -308,9 +308,10 @@ summary={
   },
   'claims_boundary':(
     'Internal reference software evidence only. Signed ECHO checkpoint creation, restart persistence, '
-    'pinned-key independent verification, predecessor chaining, and tested tamper rejection are demonstrated. '
-    'Immutable/WORM retention, external anchoring, privileged rollback resistance, third-party attestation, '
-    'exactly-once transport, certification, and physical PRIME qualification are not established.'
+    'pinned-key independent verification, predecessor chaining, retained-event reconciliation semantics, '
+    'and tested tamper rejection are demonstrated. Immutable/WORM retention, external anchoring, privileged '
+    'rollback resistance, third-party attestation, exactly-once transport, certification, and physical PRIME '
+    'qualification are not established.'
   ),
 }
 out.parent.mkdir(parents=True,exist_ok=True)
