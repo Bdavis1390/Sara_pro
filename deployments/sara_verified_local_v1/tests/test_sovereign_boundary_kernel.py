@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from worldshepherd_sara.event_outbox import EVENT_OUTBOX_REGISTRY_KEY
 from worldshepherd_sara.programmable_boundary_benchmark import run_programmable_boundary_benchmark
 from worldshepherd_sara.qualification import CapabilityStatus, EvidenceScope
+from worldshepherd_sara.sovereign_boundary_custody import ExecutionCustody
 from worldshepherd_sara.sovereign_boundary_kernel import (
     BoundaryAction,
     BoundaryContext,
@@ -25,6 +26,18 @@ from worldshepherd_sara.sovereign_boundary_kernel import (
     record_execution,
     verify_boundary_envelope,
 )
+
+
+def _custody(suffix: str = "1") -> ExecutionCustody:
+    marker = (suffix * 64)[:64]
+    return ExecutionCustody(
+        release_index_digest="sha256:" + marker,
+        release_index_file_sha256="sha256:" + "a" * 64,
+        release_commit_sha="b" * 40,
+        release_merge_state="PR_CANDIDATE_UNMERGED",
+        release_evidence_ref=f"test:release-index:{suffix}",
+        configuration_digest="sha256:" + "c" * 64,
+    )
 
 
 def _software_action(**updates):
@@ -128,6 +141,23 @@ def test_simulated_only_maturity_cannot_be_laundered_into_physical_effect():
             actor="SSPADAWANZZ",
             action=action,
             context=BoundaryContext(environment=BoundaryEnvironment.LAB_TEST),
+            provenance=_provenance(execution_custody=_custody()),
+            policy=_policy(human_approval_required=True),
+        )
+
+
+def test_physical_effect_without_release_configuration_custody_fails_closed():
+    action = _software_action(
+        domain=BoundaryDomain.GENERIC,
+        action_type="LAB_AUTHORITY_TEST",
+        effect_scope=EvidenceScope.PHYSICAL,
+        capability_status=CapabilityStatus.REQUIRES_LAB_VALIDATION,
+    )
+    with pytest.raises(ValidationError, match="execution custody"):
+        create_boundary_envelope(
+            actor="SSPADAWANZZ",
+            action=action,
+            context=BoundaryContext(environment=BoundaryEnvironment.LAB_TEST),
             provenance=_provenance(),
             policy=_policy(human_approval_required=True),
         )
@@ -147,7 +177,7 @@ def test_operational_physical_effect_requires_proven_validation_and_human_approv
             actor="SSPADAWANZZ",
             action=action,
             context=BoundaryContext(environment=BoundaryEnvironment.OPERATIONAL),
-            provenance=_provenance(),
+            provenance=_provenance(execution_custody=_custody()),
             policy=_policy(human_approval_required=False),
         )
 
@@ -158,7 +188,7 @@ def test_operational_physical_effect_requires_proven_validation_and_human_approv
             environment=BoundaryEnvironment.OPERATIONAL,
             human_present=True,
         ),
-        provenance=_provenance(),
+        provenance=_provenance(execution_custody=_custody()),
         policy=_policy(human_approval_required=True),
     )
     assert envelope.state == BoundaryState.AWAITING_HUMAN_APPROVAL
@@ -184,7 +214,7 @@ def test_lab_validation_action_stays_human_gated_without_claim_promotion():
         actor="SSPADAWANZZ",
         action=action,
         context=BoundaryContext(environment=BoundaryEnvironment.LAB_TEST),
-        provenance=_provenance(),
+        provenance=_provenance(execution_custody=_custody()),
         policy=_policy(human_approval_required=True),
     )
     assert envelope.state == BoundaryState.AWAITING_HUMAN_APPROVAL
@@ -257,7 +287,7 @@ def test_programmable_boundary_benchmark_enters_kernel_as_simulation_only():
             actor="SSPADAWANZZ",
             action=promoted,
             context=BoundaryContext(environment=BoundaryEnvironment.LAB_TEST),
-            provenance=_provenance(),
+            provenance=_provenance(execution_custody=_custody()),
             policy=_policy(human_approval_required=True),
         )
 
