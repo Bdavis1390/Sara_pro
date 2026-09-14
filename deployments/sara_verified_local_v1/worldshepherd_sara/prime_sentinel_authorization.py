@@ -19,6 +19,7 @@ PRIME_SENTINEL_AUTHZ_SCHEMA = "WS-PRIME-SENTINEL-AUTHZ-V1"
 PRIME_SENTINEL_AUTHZ_REGISTRY_KEY = "PRIME_SENTINEL_AUTHORIZATIONS"
 MAX_ASSERTION_LIFETIME = timedelta(minutes=15)
 MAX_FUTURE_SKEW = timedelta(seconds=60)
+MAX_AUTHORIZATION_RECORDS = 64
 
 
 class PrimeSentinelAuthorizationError(ValueError):
@@ -122,6 +123,12 @@ class PrimeSentinelVerifier:
     def key_is_revoked(self, key_id: str) -> bool:
         return key_id in self.revoked_key_ids
 
+    def key_fingerprint_sha256(self, key_id: str) -> str | None:
+        key_bytes = self._public_keys.get(key_id)
+        if key_bytes is None:
+            return None
+        return hashlib.sha256(key_bytes).hexdigest()
+
     @classmethod
     def from_environment(cls) -> "PrimeSentinelVerifier":
         raw_keys = os.getenv("PRIME_SENTINEL_PUBLIC_KEYS_JSON", "{}").strip() or "{}"
@@ -199,16 +206,86 @@ def _authorization_map(registry: dict[str, Any]) -> dict[str, Any]:
     return dict(raw)
 
 
+def _assert_passport_release_binding(
+    registry: dict[str, Any],
+    *,
+    authorization_id: str,
+    prime_id: str,
+    entry: dict[str, Any],
+) -> None:
+    """Fail closed when a stored passport release record diverges from its ledger entry."""
+    passports = registry.get("PRIME_DIGITAL_PASSPORTS")
+    if passports is None:
+        return
+    if not isinstance(passports, dict):
+        raise PrimeSentinelAuthorizationError("PRIME passport registry is invalid")
+    passport = passports.get(prime_id)
+    if passport is None:
+        return
+    if not isinstance(passport, dict):
+        raise PrimeSentinelAuthorizationError("PRIME passport entry is invalid")
+    custody = passport.get("custody")
+    if not isinstance(custody, dict):
+        raise PrimeSentinelAuthorizationError("PRIME passport custody record is invalid")
+
+    stored_authorization_id = custody.get("requalification_release_authorization_id")
+    if stored_authorization_id is None:
+        return
+    if stored_authorization_id != authorization_id:
+        raise PrimeSentinelAuthorizationError("passport release authorization ID mismatch")
+    if custody.get("requalification_release_key_id") != entry.get("key_id"):
+        raise PrimeSentinelAuthorizationError("passport release signing key mismatch")
+    if custody.get("requalification_release_target_environment") != entry.get("target_environment"):
+        raise PrimeSentinelAuthorizationError("passport release target environment mismatch")
+
+
+def _prune_expired_terminal_authorizations(
+    records: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Prune only expired unconsumed VERIFIED records.
+
+    CONSUMED and SUPERSEDED records are custody outcomes used by issuance
+    reconciliation. They remain as terminal tombstones even after expires_at.
+    If retained history fills the bounded registry, issuance fails closed rather
+    than silently erasing an outcome and misclassifying it as never presented.
+    """
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    retained: dict[str, Any] = {}
+    for authorization_id, entry in records.items():
+        if not isinstance(entry, dict):
+            retained[authorization_id] = entry
+            continue
+        status = entry.get("status")
+        if status in {"CONSUMED", "SUPERSEDED"}:
+            retained[authorization_id] = entry
+            continue
+        if status != "VERIFIED":
+            retained[authorization_id] = entry
+            continue
+        try:
+            expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
+        except (KeyError, ValueError):
+            retained[authorization_id] = entry
+            continue
+        if expires.tzinfo is None or current < expires.astimezone(timezone.utc):
+            retained[authorization_id] = entry
+    return retained
+
+
 def verified_authorization_registry_patch(
     registry: dict[str, Any],
     verified: VerifiedPrimeSentinelAuthorization,
 ) -> dict[str, Any]:
-    records = _authorization_map(registry)
+    records = _prune_expired_terminal_authorizations(_authorization_map(registry))
     if verified.authorization_id in records:
         raise PrimeSentinelAuthorizationError("authorization_id has already been recorded")
     for entry in records.values():
         if isinstance(entry, dict) and entry.get("nonce") == verified.nonce:
             raise PrimeSentinelAuthorizationError("authorization nonce has already been recorded")
+    if len(records) >= MAX_AUTHORIZATION_RECORDS:
+        raise PrimeSentinelAuthorizationError("authorization registry capacity exhausted")
     records[verified.authorization_id] = {
         "status": "VERIFIED",
         "prime_id": verified.prime_id,
@@ -246,13 +323,35 @@ def assert_recorded_authorization_usable(
         raise PrimeSentinelAuthorizationError("authorization signing key is no longer configured")
     if verifier.key_is_revoked(key_id):
         raise PrimeSentinelAuthorizationError("authorization signing key is revoked")
+    expected_fingerprint = verifier.key_fingerprint_sha256(key_id)
+    if (
+        not isinstance(entry.get("key_fingerprint_sha256"), str)
+        or entry.get("key_fingerprint_sha256") != expected_fingerprint
+    ):
+        raise PrimeSentinelAuthorizationError("authorization signing key fingerprint mismatch")
     try:
+        issued = datetime.fromisoformat(str(entry["issued_at"]).replace("Z", "+00:00"))
         expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
     except (KeyError, ValueError) as exc:
-        raise PrimeSentinelAuthorizationError("authorization expiry is invalid") from exc
+        raise PrimeSentinelAuthorizationError("authorization signed window is invalid") from exc
+    if issued.tzinfo is None or expires.tzinfo is None:
+        raise PrimeSentinelAuthorizationError("authorization signed window is not timezone-aware")
+    issued_utc = issued.astimezone(timezone.utc)
+    expires_utc = expires.astimezone(timezone.utc)
+    if issued_utc >= expires_utc or expires_utc - issued_utc > MAX_ASSERTION_LIFETIME:
+        raise PrimeSentinelAuthorizationError("authorization signed window exceeds policy")
     current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
-    if current >= expires.astimezone(timezone.utc):
+    if issued_utc > current + MAX_FUTURE_SKEW:
+        raise PrimeSentinelAuthorizationError("authorization issued_at is too far in the future")
+    if current >= expires_utc:
         raise PrimeSentinelAuthorizationError("authorization is expired")
+
+    _assert_passport_release_binding(
+        registry,
+        authorization_id=authorization_id,
+        prime_id=prime_id,
+        entry=entry,
+    )
     return entry
 
 
