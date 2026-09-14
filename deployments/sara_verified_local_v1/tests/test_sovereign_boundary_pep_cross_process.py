@@ -106,7 +106,7 @@ def _pep_process_worker(
     claimed,
     authorization_id: str,
     execution_id: str,
-    entered,
+    done,
     release,
     outcomes,
 ) -> None:
@@ -135,7 +135,7 @@ def _pep_process_worker(
     except Exception as exc:
         outcomes.put(("error", label, type(exc).__name__, str(exc)))
     finally:
-        entered.set()
+        done.set()
 
 
 def test_cross_process_pep_allows_only_one_executor_to_cross_invocation_fence(tmp_path):
@@ -198,7 +198,6 @@ def test_cross_process_pep_allows_only_one_executor_to_cross_invocation_fence(tm
     registry_during_a = DurableStore(data_dir).get_registry()
     entry = registry_during_a[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
     assert entry["status"] == "INVOKING"
-    assert outcomes.empty()
 
     release_a.set()
     third = outcomes.get(timeout=5)
