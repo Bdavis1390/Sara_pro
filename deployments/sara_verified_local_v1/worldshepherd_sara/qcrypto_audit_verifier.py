@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any
 
-from .qcrypto_audit_adapter import QCRYPTO_AUDIT_SCHEMA, QCRYPTO_EVENT_SCHEMA
+from .qcrypto_audit_adapter import (
+    QCRYPTO_AUDIT_SCHEMA,
+    QCRYPTO_EVENT_SCHEMA,
+    QCryptoAuditAdapterError,
+    validate_qcrypto_audit_instance_id,
+)
 
 
 _EXPECTED_EVENTS = {
@@ -23,6 +28,7 @@ _COMMON_FIELDS = (
     "schema",
     "source_schema",
     "decision_digest",
+    "audit_instance_id",
     "asset_id",
     "priority",
     "human_approval_required",
@@ -47,6 +53,7 @@ class QCryptoAuditVerification:
     matching_record_count: int
     logical_event_count: int
     reasons: tuple[str, ...]
+    audit_instance_id: str | None = None
     execution_authority: bool = False
     live_value_authorized: bool = False
     federal_compliance_established: bool = False
@@ -77,16 +84,22 @@ def verify_qcrypto_audit_chain(
     records: list[dict[str, Any]],
     *,
     decision_digest: str,
+    audit_instance_id: str | None = None,
 ) -> QCryptoAuditVerification:
     """Reconstruct one QCRYPTO decision from SARA audit records.
 
-    Verification is intentionally local and claims-controlled. It checks that
-    ECHO, PRIME, SARA, and OVERWATCH records for the same deterministic decision
-    digest agree on common governance fields and preserve all non-authority
-    boundaries. At-least-once replay duplicates are tolerated when identical.
+    A decision digest identifies semantic decision content. An audit instance ID,
+    when supplied, selects one concrete four-event SARA submission. This avoids
+    conflating repeated identical decisions while preserving at-least-once replay
+    tolerance for one submission.
     """
     if not isinstance(decision_digest, str) or not decision_digest.startswith("sha256:"):
         raise ValueError("decision_digest must be a sha256-prefixed string")
+    if audit_instance_id is not None:
+        try:
+            validate_qcrypto_audit_instance_id(audit_instance_id)
+        except QCryptoAuditAdapterError as exc:
+            raise ValueError(str(exc)) from exc
 
     matching: list[dict[str, Any]] = []
     reasons: list[str] = []
@@ -94,12 +107,16 @@ def verify_qcrypto_audit_chain(
         if not isinstance(record, dict):
             continue
         payload = record.get("payload")
-        if isinstance(payload, dict) and payload.get("decision_digest") == decision_digest:
-            matching.append(record)
+        if not isinstance(payload, dict) or payload.get("decision_digest") != decision_digest:
+            continue
+        if audit_instance_id is not None and payload.get("audit_instance_id") != audit_instance_id:
+            continue
+        matching.append(record)
 
     if not matching:
         return QCryptoAuditVerification(
             decision_digest=decision_digest,
+            audit_instance_id=audit_instance_id,
             verdict="NO_MATCHING_AUDIT_EVIDENCE",
             complete=False,
             consistent=False,
@@ -107,8 +124,28 @@ def verify_qcrypto_audit_chain(
             missing_stages=tuple(_EXPECTED_EVENTS.values()),
             matching_record_count=0,
             logical_event_count=0,
-            reasons=("No SARA audit records matched the supplied decision digest.",),
+            reasons=("No SARA audit records matched the supplied decision identity.",),
         )
+
+    observed_instances = {
+        payload.get("audit_instance_id")
+        for record in matching
+        if isinstance((payload := record.get("payload")), dict)
+        and isinstance(payload.get("audit_instance_id"), str)
+    }
+    if audit_instance_id is None:
+        if len(observed_instances) == 1:
+            selected_instance = next(iter(observed_instances))
+        elif len(observed_instances) > 1:
+            selected_instance = None
+            reasons.append(
+                "Decision digest matches multiple audit instances; supply audit_instance_id for deterministic verification."
+            )
+        else:
+            selected_instance = None
+            reasons.append("Matching records do not contain a valid audit instance identity.")
+    else:
+        selected_instance = audit_instance_id
 
     # Deduplicate exact at-least-once replays by stable outbox event ID. If a
     # stable ID reappears with divergent content, preserve both and flag it.
@@ -119,6 +156,11 @@ def verify_qcrypto_audit_chain(
         if not isinstance(payload, dict):
             logical_records.append(record)
             continue
+        instance = payload.get("audit_instance_id")
+        try:
+            validate_qcrypto_audit_instance_id(instance)
+        except QCryptoAuditAdapterError:
+            reasons.append("Matching record is missing or has an invalid audit instance ID.")
         outbox_id = payload.get("_outbox_event_id")
         if not isinstance(outbox_id, str) or not outbox_id:
             reasons.append("Matching record is missing a stable SARA outbox event ID.")
@@ -177,13 +219,11 @@ def verify_qcrypto_audit_chain(
             if record.get("actor") != actor_reference:
                 reasons.append("Cross-stage actor identity is inconsistent.")
 
-    # Multiple submissions of the exact same decision digest are acceptable only
-    # when the stage-specific records agree with each other.
     for stage, items in stage_records.items():
         if len(items) > 1:
             signatures = {_record_signature(item) for item in items}
             if len(signatures) > 1:
-                reasons.append(f"Stage {stage} has divergent records for the same decision digest.")
+                reasons.append(f"Stage {stage} has divergent records for the selected decision identity.")
 
     present = tuple(stage for stage, items in stage_records.items() if items)
     missing = tuple(stage for stage, items in stage_records.items() if not items)
@@ -202,6 +242,7 @@ def verify_qcrypto_audit_chain(
 
     return QCryptoAuditVerification(
         decision_digest=decision_digest,
+        audit_instance_id=selected_instance,
         verdict=verdict,
         complete=complete,
         consistent=consistent,
