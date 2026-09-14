@@ -60,6 +60,38 @@
       },
       "audit_persistence": "27/27 expected synthetic-fusion audit events observed",
       "scope": "in-process authenticated/authorized FastAPI path including validation, fusion/evidence construction, request/result digests, durable audit append/fsync, response validation and JSON serialization; excludes real network/TLS, multimodal decode/inference, external stores and distributed load"
+    },
+    "bounded_audit_history": {
+      "run_id": 34802767769,
+      "job_id": 103848601250,
+      "commit": "84157a63a86ff127acbcfac9af68365afaceb867",
+      "result": "SUCCESS",
+      "semantic_result": "BOUNDED_LOCAL_AUDIT_HISTORY_MEASURED_PARTIAL",
+      "artifact_id": 10331774233,
+      "artifact_digest": "sha256:a70009a1f261a61cadbe050dc728ccd36133e405e4f9a72042e564b44b4e908b",
+      "retrieval_p95_ms": {
+        "1000_records_limit50": 0.7162,
+        "10000_records_limit50": 0.72709,
+        "50000_records_limit50": 0.790979,
+        "50000_records_limit500": 6.853868
+      },
+      "before_after_at_50000_records": {
+        "limit50_previous_p95_ms": 310.630425,
+        "limit50_current_p95_ms": 0.790979,
+        "limit50_speedup": 392.71639955043054,
+        "limit500_previous_p95_ms": 316.5343,
+        "limit500_current_p95_ms": 6.853868,
+        "limit500_speedup": 46.18330846173284
+      },
+      "concurrency": {
+        "one_worker_p95_ms": 5.317885,
+        "eight_workers_p95_ms": 72.622008,
+        "one_worker_requests_per_second": 180.1567679155209,
+        "eight_workers_requests_per_second": 157.59859534341953,
+        "all_profiles_deterministic": true
+      },
+      "audit_persistence": "87/87 expected synthetic-fusion audit events observed",
+      "scope": "local JSONL history and same-process contention only; external stores, distributed capacity and production SLA remain unproven"
     }
   },
   "selection_dimensions": {
@@ -72,6 +104,8 @@
     "bounded_synthetic_performance": "INTERNALLY_MEASURED_PARTIAL",
     "governed_application_path_performance": "INTERNALLY_MEASURED_PARTIAL",
     "application_path_audit_persistence": "INTERNALLY_PROVEN_BOUNDED",
+    "bounded_local_audit_history_retrieval": "INTERNALLY_MEASURED_PARTIAL",
+    "single_process_contention_behavior": "INTERNALLY_MEASURED_LIMIT_IDENTIFIED",
     "end_to_end_operational_scale": "NOT_YET_PROVEN",
     "controlled_environment_compliance": "BLOCKED_EXTERNAL_ENVIRONMENT_EVIDENCE",
     "open_source_licensing_where_required": "BLOCKED_IP_BUSINESS_LEGAL_DECISION",
@@ -96,9 +130,9 @@
     "flight weapon sensor materials propulsion or other physical-system qualification is the decisive requirement"
   ],
   "market_position": {
-    "claim": "Worldshepherd does not claim to exceed major incumbents in deployment history or accredited classified footprint. Its internally evidenced differentiator is a composable evidence-and-authorization fabric with explicit claims boundaries, fail-closed governance, and a now-measured bounded governed application path.",
-    "recommended_procurement_posture": "Select directly for unclassified evaluator/pilot work inside the evidenced wedge; partner for controlled/classified, multimodal production, or operational-scale programs until external and scale gates close."
+    "claim": "Worldshepherd does not claim to exceed major incumbents in deployment history or accredited classified footprint. Its internally evidenced differentiator is a composable evidence-and-authorization fabric with explicit claims boundaries, fail-closed governance, bounded governed application-path measurement, and bounded local audit-history retrieval whose tested fixed-tail latency no longer grows materially with total local history size.",
+    "recommended_procurement_posture": "Select directly for unclassified evaluator/pilot work inside the evidenced wedge; partner for controlled/classified, multimodal production, distributed-scale, or operational-scale programs until external and remaining scale gates close."
   },
-  "next_internal_gate": "Persistence/historical-retrieval plus concurrent-load benchmarking, followed by a real network/TLS/proxy path benchmark and representative multimodal pipeline measurement.",
+  "next_internal_gate": "Reduce or characterize per-request durable-audit fsync contention without weakening durable-before-response/fail-closed semantics, then measure real network/TLS/proxy behavior and a representative multimodal pipeline.",
   "next_external_gate": "Independent reproduction or partner/customer evaluation of the exact-commit evaluator package without Worldshepherd operator assistance."
 }
