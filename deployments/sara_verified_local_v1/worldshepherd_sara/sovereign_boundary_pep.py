@@ -12,6 +12,7 @@ from .sovereign_boundary_authorization_ledger import (
     consumed_effect_authorization_registry_patch,
     indeterminate_effect_authorization_registry_patch,
 )
+from .sovereign_boundary_custody import ExecutionCustody, execution_custody_matches
 from .sovereign_boundary_kernel import (
     SOVEREIGN_BOUNDARY_EVENT,
     BoundaryAction,
@@ -49,6 +50,7 @@ class PhysicalEffectReceipt:
     terminal_envelope: SovereignBoundaryEnvelope
     outbox_event_id: str
     authorization_status: str
+    execution_identity_digest: str
 
 
 PhysicalEffectExecutor = Callable[[BoundaryAction], PhysicalEffectResult]
@@ -58,6 +60,7 @@ def _assert_local_preconditions(
     *,
     envelope: SovereignBoundaryEnvelope,
     runtime_action: BoundaryAction,
+    runtime_custody: ExecutionCustody,
     authorization_id: str,
     execution_id: str,
 ) -> None:
@@ -71,9 +74,20 @@ def _assert_local_preconditions(
         raise SovereignBoundaryPepError("PRIME authorization reference mismatch")
     if envelope.prime_execution_claim_ref != execution_id:
         raise SovereignBoundaryPepError("PRIME execution claim reference mismatch")
+    if not envelope.prime_execution_identity_digest:
+        raise SovereignBoundaryPepError("custody-bound execution identity is missing")
     if boundary_action_digest(runtime_action) != envelope.action_digest:
         raise SovereignBoundaryPepError(
             "runtime action differs from the policy-bound action; re-evaluation required"
+        )
+    expected_custody = envelope.provenance.execution_custody
+    if expected_custody is None:
+        raise SovereignBoundaryPepError(
+            "physical-effect envelope is missing release/configuration custody"
+        )
+    if not execution_custody_matches(expected_custody, runtime_custody):
+        raise SovereignBoundaryPepError(
+            "runtime release/configuration custody differs from authorized custody; re-authorization required"
         )
 
 
@@ -84,12 +98,7 @@ def _begin_invocation_fence(
     authorization_id: str,
     execution_id: str,
 ) -> None:
-    """Atomically move CLAIMED -> INVOKING before the executor can run.
-
-    This is the concurrency fence. A second process or thread attempting the
-    same authorization observes INVOKING and fails before it can call the
-    external executor.
-    """
+    """Atomically move CLAIMED -> INVOKING before the executor can run."""
 
     def operation(registry: dict[str, Any]):
         patch = begin_effect_invocation_registry_patch(
@@ -127,9 +136,6 @@ def _mark_indeterminate_best_effort(
 
         store.transact_registry(operation)
     except Exception:
-        # The original failure is more important. If durable state cannot be
-        # updated, operators must treat the authorization as unresolved and
-        # unsafe to retry.
         pass
 
 
@@ -170,40 +176,30 @@ def execute_claimed_physical_effect(
     *,
     envelope: SovereignBoundaryEnvelope,
     runtime_action: BoundaryAction,
+    runtime_custody: ExecutionCustody,
     authorization_id: str,
     execution_id: str,
     executor: PhysicalEffectExecutor,
 ) -> PhysicalEffectReceipt:
     """Run one claimed physical effect through the Worldshepherd PEP.
 
-    Safety/authority sequence:
+    The PEP now rechecks two independently mutable identities immediately before
+    the one-way invocation fence:
 
-    1. Verify the sealed SBK envelope and exact runtime action locally.
-    2. Atomically persist CLAIMED -> INVOKING in the durable PRIME ledger.
-       This is a one-way execution fence acquired before external actuation.
-    3. Invoke exactly one executor callback.
-    4. Convert the explicit executor result into a terminal SBK envelope.
-    5. Atomically persist PRIME INVOKING -> CONSUMED plus the pending SARA/ECHO
-       outbox event in one DurableStore registry transaction.
+    * exact action identity; and
+    * exact release/configuration execution custody.
 
-    Two concurrent callers cannot both invoke the same claimed authorization:
-    only one can acquire the CLAIMED -> INVOKING transition. A process failure
-    after INVOKING is persisted is deliberately treated as potentially having
-    crossed the external-effect boundary and therefore requires reconciliation.
-
-    If the executor raises, the authorization is moved to INDETERMINATE
-    best-effort and is never automatically retried. If durable finalization
-    fails after the executor returns, the authorization is likewise marked
-    INDETERMINATE best-effort.
-
-    This does not make an external physical side effect transactionally atomic
-    with local storage. It converts uncertainty into a fail-closed human-review
-    state instead of pretending exactly-once physical actuation is possible.
+    A policy-approved action therefore cannot be executed by a different
+    declared software release or configuration without fresh authorization.
+    The check binds evidence identity supplied by the compliant runtime; it does
+    not independently attest process memory or prevent a malicious program from
+    bypassing the PEP.
     """
 
     _assert_local_preconditions(
         envelope=envelope,
         runtime_action=runtime_action,
+        runtime_custody=runtime_custody,
         authorization_id=authorization_id,
         execution_id=execution_id,
     )
@@ -273,8 +269,10 @@ def execute_claimed_physical_effect(
             "physical-effect result could not be durably finalized; human reconciliation required"
         ) from exc
 
+    assert terminal.prime_execution_identity_digest is not None
     return PhysicalEffectReceipt(
         terminal_envelope=terminal,
         outbox_event_id=event_id,
         authorization_status=authorization_status,
+        execution_identity_digest=terminal.prime_execution_identity_digest,
     )
