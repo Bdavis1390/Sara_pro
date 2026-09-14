@@ -7,9 +7,11 @@ on:
       - worldshepherd-capture-engine-v1-1
     paths:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/storage.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/synthetic_fusion_api.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
       - 'deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py'
+      - 'deployments/sara_verified_local_v1/tests/test_storage_tail.py'
       - 'tools/selection_demo/benchmark_fusion_api_path.py'
       - '.github/workflows/worldshepherd-api-path-benchmark.yml'
 
@@ -34,9 +36,11 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e 'deployments/sara_verified_local_v1[test]'
 
-      - name: Run governed fusion API tests
+      - name: Run governed fusion and audit-tail tests
         run: |
-          python -m pytest deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py
+          python -m pytest \
+            deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py \
+            deployments/sara_verified_local_v1/tests/test_storage_tail.py
 
       - name: Run full application-path benchmark
         run: |
