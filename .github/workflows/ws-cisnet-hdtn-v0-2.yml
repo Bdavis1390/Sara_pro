@@ -42,9 +42,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
-          cd "$RUNNER_TEMP/HDTN/build"
+          cd "$RUNNER_TEMP/HDTN"
           set +e
-          ./tests/unit_tests/unit-tests 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/hdtn-unit-tests.log"
+          ./build/tests/unit_tests/unit-tests 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/hdtn-unit-tests.log"
           rc=${PIPESTATUS[0]}
           set -e
           exit "$rc"
@@ -53,9 +53,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/artifacts"
-          cd "$RUNNER_TEMP/HDTN/build"
+          cd "$RUNNER_TEMP/HDTN"
           set +e
-          ./tests/integrated_tests/integrated-tests 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/hdtn-integrated-tests.log"
+          ./build/tests/integrated_tests/integrated-tests 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/hdtn-integrated-tests.log"
           rc=${PIPESTATUS[0]}
           set -e
           exit "$rc"
