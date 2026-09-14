@@ -1,0 +1,35 @@
+{
+  "subject_id": "urn:ws-cae:chain:ethereum",
+  "consensus_family": "POS_BFT",
+  "mechanism_name": "Gasper: Casper-FFG plus LMD-GHOST",
+  "resource_proof": "STAKE",
+  "finality_model": "CASPER_FFG_FINALITY_WITH_LMD_GHOST_FORK_CHOICE",
+  "participant_auth_primitive": "BLS_VALIDATOR_SIGNATURES",
+  "participant_key_agility": "FIXED_CLASSICAL",
+  "local_validation_mode": "FULL_NODE_REEXECUTION",
+  "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+  "resource_proof_agility": "STAKE_MECHANISM_SEPARATE_FROM_VALIDATOR_SIGNATURE_MIGRATION",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "Ethereum proof of stake",
+      "url": "https://ethereum.org/developers/docs/consensus-mechanisms/pos/",
+      "claim": "Ethereum uses proof of stake; validators re-execute transactions, validate blocks, and attest to their view of the chain."
+    },
+    {
+      "label": "Ethereum proof-of-stake keys",
+      "url": "https://ethereum.org/developers/docs/consensus-mechanisms/pos/keys",
+      "claim": "Ethereum validator signing keys use the BLS signature scheme and are distinct from execution-account keys."
+    },
+    {
+      "label": "Ethereum Gasper",
+      "url": "https://ethereum.org/developers/docs/consensus-mechanisms/pos/gasper/",
+      "claim": "Gasper combines Casper-FFG finality with the LMD-GHOST fork-choice algorithm."
+    },
+    {
+      "label": "Ethereum quantum resistance roadmap",
+      "url": "https://ethereum.org/roadmap/security/quantum-resistance/",
+      "claim": "Consensus-signature migration is a distinct post-quantum workstream and is not represented here as deployed."
+    }
+  ]
+}
