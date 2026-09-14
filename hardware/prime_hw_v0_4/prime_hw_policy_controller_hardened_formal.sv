@@ -20,6 +20,11 @@ module prime_hw_policy_controller_hardened_formal;
     wire state_integrity_fault;
     wire [2:0] state_code;
 
+    wire ref_allow;
+    wire ref_deny;
+    wire ref_safe_state;
+    wire [2:0] ref_state_code;
+
     wire probe_valid;
     wire [2:0] probe_semantic_state;
 
@@ -67,6 +72,24 @@ module prime_hw_policy_controller_hardened_formal;
         .state_code(state_code)
     );
 
+    // Nominal-behavior oracle: the inherited PRIME-HW v0.1 controller.
+    prime_hw_policy_controller reference_dut (
+        .clk(clk),
+        .reset_n(reset_n),
+        .boot_verified(boot_verified),
+        .policy_valid(policy_valid),
+        .health_degraded(health_degraded),
+        .fatal_fault(fatal_fault),
+        .recovery_authorized(recovery_authorized),
+        .request_valid(request_valid),
+        .request_authorized(request_authorized),
+        .degraded_request_authorized(degraded_request_authorized),
+        .allow(ref_allow),
+        .deny(ref_deny),
+        .safe_state(ref_safe_state),
+        .state_code(ref_state_code)
+    );
+
     prime_hw_state_code_guard probe_guard (
         .encoded_state(probe_encoded_state),
         .state_valid(probe_valid),
@@ -95,6 +118,13 @@ module prime_hw_policy_controller_hardened_formal;
             assert(state_code <= ST_RECOVERY);
             assert(!(allow && deny));
             assert(safe_state == (state_code == ST_SAFE));
+
+            // The hardened controller must preserve the v0.1 externally observable
+            // policy/state behavior for the same symbolic input history.
+            assert(state_code == ref_state_code);
+            assert(allow == ref_allow);
+            assert(deny == ref_deny);
+            assert(safe_state == ref_safe_state);
 
             if (state_code != ST_OPERATIONAL && state_code != ST_DEGRADED)
                 assert(!allow);
