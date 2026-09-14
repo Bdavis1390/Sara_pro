@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   analyze:
@@ -19,7 +18,6 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      security-events: write
       packages: read
     steps:
       - name: Check out source
@@ -30,7 +28,8 @@ jobs:
         with:
           languages: python
 
-      - name: Analyze Python
+      - name: Analyze Python locally
         uses: github/codeql-action/analyze@v3
         with:
           category: /language:python
+          upload: never
