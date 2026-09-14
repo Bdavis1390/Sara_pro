@@ -142,13 +142,16 @@ class SovereignBoundaryEnvelope(BaseModel):
         default=None, min_length=64, max_length=64
     )
     prime_execution_claim_ref: str | None = Field(default=None, min_length=1, max_length=128)
+    prime_execution_identity_digest: str | None = Field(
+        default=None, pattern=r"^sha256:[0-9a-f]{64}$"
+    )
     action_digest: str = Field(min_length=1, max_length=128)
     execution_result: BoundaryExecutionResult | None = None
     created_at: datetime = Field(default_factory=_utc_now)
     claims_boundary: tuple[str, ...] = (
         "Authorization does not promote capability or qualification status.",
         "SIMULATED_ONLY evidence cannot authorize non-simulation effects.",
-        "Physical execution requires explicit human approval, purpose-bound PRIME authorization, a one-time execution claim, and release/configuration custody in v0.1.",
+        "Physical execution requires explicit human approval, purpose-bound PRIME authorization, a one-time execution identity, and release/configuration custody in v0.1.",
         "Operational physical effects require PROVEN_INTERNALLY status and a physical validation reference.",
         "Execution custody binds evidence identity; it does not by itself prove runtime binary integrity or verify external Sigstore signatures.",
     )
@@ -200,6 +203,8 @@ class SovereignBoundaryEnvelope(BaseModel):
                     raise ValueError("physical execution requires a PRIME signing-key fingerprint")
                 if not self.prime_execution_claim_ref:
                     raise ValueError("physical execution requires a one-time PRIME execution claim")
+                if not self.prime_execution_identity_digest:
+                    raise ValueError("physical execution requires a custody-bound execution identity")
         if self.state not in {BoundaryState.EXECUTED, BoundaryState.FAILED} and self.execution_result is not None:
             raise ValueError("execution result is only valid in EXECUTED or FAILED state")
 
@@ -312,6 +317,7 @@ def bind_prime_execution_claim(
     envelope: SovereignBoundaryEnvelope,
     *,
     execution_id: str,
+    execution_identity_digest: str,
 ) -> SovereignBoundaryEnvelope:
     if not verify_boundary_envelope(envelope):
         raise BoundaryKernelError("cannot bind PRIME execution claim to an unverified envelope")
@@ -321,8 +327,14 @@ def bind_prime_execution_claim(
         raise BoundaryKernelError("PRIME authorization must be bound before an execution claim")
     if not execution_id:
         raise BoundaryKernelError("PRIME execution claim requires an execution_id")
+    if not execution_identity_digest.startswith("sha256:") or len(execution_identity_digest) != 71:
+        raise BoundaryKernelError("PRIME execution identity must be a SHA-256 digest")
     updated = envelope.model_copy(
-        update={"prime_execution_claim_ref": execution_id, "envelope_digest": None}
+        update={
+            "prime_execution_claim_ref": execution_id,
+            "prime_execution_identity_digest": execution_identity_digest,
+            "envelope_digest": None,
+        }
     )
     validated = SovereignBoundaryEnvelope.model_validate(updated.model_dump(mode="json"))
     return _seal(validated)
@@ -352,6 +364,8 @@ def record_execution(
             raise BoundaryKernelError("physical execution requires PRIME key custody evidence")
         if not envelope.prime_execution_claim_ref:
             raise BoundaryKernelError("physical execution requires a one-time PRIME execution claim")
+        if not envelope.prime_execution_identity_digest:
+            raise BoundaryKernelError("physical execution requires a custody-bound execution identity")
 
     result = BoundaryExecutionResult(
         status=status,
@@ -393,6 +407,7 @@ def boundary_event_payload(envelope: SovereignBoundaryEnvelope) -> dict[str, Any
         "prime_authorization_ref": envelope.prime_authorization_ref,
         "prime_authorization_key_fingerprint_sha256": envelope.prime_authorization_key_fingerprint_sha256,
         "prime_execution_claim_ref": envelope.prime_execution_claim_ref,
+        "prime_execution_identity_digest": envelope.prime_execution_identity_digest,
         "release_index_digest": None if custody is None else custody.release_index_digest,
         "release_commit_sha": None if custody is None else custody.release_commit_sha,
         "release_merge_state": None if custody is None else custody.release_merge_state,
@@ -405,7 +420,7 @@ def boundary_event_payload(envelope: SovereignBoundaryEnvelope) -> dict[str, Any
         "claims_boundary": list(envelope.claims_boundary),
         "privacy_boundary": (
             "Raw action parameters and runtime configuration are intentionally excluded; "
-            "action_digest and configuration_digest bind the exact evaluated identities."
+            "action_digest, configuration_digest, and execution identity bind the evaluated identities."
         ),
     }
 
