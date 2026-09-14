@@ -102,8 +102,6 @@ def test_database_time_ignores_large_issuer_and_claimant_clock_offsets():
     store = PostgresClaimStore(connection_factory)
     registered = store.status(ticket["ticket_id"])
     assert registered["known"] is True
-    # Database expiry must be derived from server time + signed TTL rather than
-    # the issuer's absolute expires_at value.
     assert abs(float(registered["expires_at"]) - float(ticket["expires_at"])) > 1_000_000
 
     claimant = make_broker(now=claimant_now)
@@ -128,7 +126,7 @@ def test_real_postgres_rejects_expired_ticket_by_database_time_despite_client_sk
     assert claim["reason"] == "ticket expired"
 
 
-def test_policy_records_single_host_live_evidence_without_distributed_upgrade():
+def test_policy_records_database_time_and_clock_skew_evidence_without_distributed_upgrade():
     policy = json.loads(POLICY.read_text(encoding="utf-8"))
     assert policy["postgres_live_validation"] is True
     assert policy["postgres_live_validation_environment"] == "ephemeral_postgresql_18_6_github_actions"
@@ -139,8 +137,13 @@ def test_policy_records_single_host_live_evidence_without_distributed_upgrade():
     assert policy["multi_worker_validation_scope"] == "single_host_separate_python_processes"
     assert policy["reconnect_replay_validation"] is True
     assert policy["fresh_connection_expiry_validation"] is True
+    assert policy["clock_authority"] == "postgres_clock_timestamp"
+    assert policy["database_time_expiry_validation"] is True
+    assert policy["database_time_consumption_validation"] is True
+    assert policy["clock_skew_live_validation"] is True
+    assert policy["clock_skew_validation_scope"] == "single_host_injected_issuer_and_claimant_absolute_offsets"
+    assert policy["clock_skew_offset_test_seconds"] == 10_000_000
     assert policy["failure_injection_validation"] is False
-    assert policy["clock_skew_live_validation"] is False
     assert policy["multi_host_live_validation"] is False
     assert policy["distributed_replay_protection"] is False
     assert policy["multi_host_consensus"] is False
