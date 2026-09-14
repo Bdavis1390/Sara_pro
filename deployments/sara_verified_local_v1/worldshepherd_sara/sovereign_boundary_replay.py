@@ -4,7 +4,11 @@ from collections.abc import Iterable
 
 from .mission_replay import MissionEvent
 from .qualification import EvidenceGraph, EvidenceGraphEdge, EvidenceGraphNode
-from .sovereign_boundary_kernel import SovereignBoundaryEnvelope, boundary_event_payload, verify_boundary_envelope
+from .sovereign_boundary_kernel import (
+    SovereignBoundaryEnvelope,
+    boundary_event_payload,
+    verify_boundary_envelope,
+)
 
 
 class SovereignBoundaryReplayError(ValueError):
@@ -55,7 +59,7 @@ def sovereign_boundary_evidence_graph(
     graph_id: str,
     envelopes: Iterable[SovereignBoundaryEnvelope],
 ) -> EvidenceGraph:
-    """Build a compact authority/provenance graph without copying raw action parameters."""
+    """Build a compact authority/provenance graph without raw action/config values."""
 
     nodes: list[EvidenceGraphNode] = []
     edges: list[EvidenceGraphEdge] = []
@@ -142,6 +146,40 @@ def sovereign_boundary_evidence_graph(
             ]
         )
 
+        custody = envelope.provenance.execution_custody
+        if custody is not None:
+            custody_node = f"{prefix}:execution-custody"
+            nodes.append(
+                EvidenceGraphNode(
+                    node_id=custody_node,
+                    node_type="sbk_execution_custody",
+                    label="release and configuration custody",
+                    source_ref=custody.release_index_digest,
+                    confidence=1.0,
+                    attributes={
+                        "release_index_digest": custody.release_index_digest,
+                        "release_index_file_sha256": custody.release_index_file_sha256,
+                        "release_commit_sha": custody.release_commit_sha,
+                        "release_merge_state": custody.release_merge_state,
+                        "configuration_digest": custody.configuration_digest,
+                        "release_evidence_ref": custody.release_evidence_ref,
+                        "attestation_receipt_file_sha256": custody.attestation_receipt_file_sha256,
+                        "attestation_id": custody.attestation_id,
+                        "raw_configuration_included": False,
+                    },
+                )
+            )
+            edges.append(
+                EvidenceGraphEdge(
+                    edge_id=f"{prefix}:edge:custody-constrains-envelope",
+                    source_node_id=custody_node,
+                    target_node_id=envelope_node,
+                    relation="execution_custody",
+                    source_ref=custody.release_index_digest,
+                    confidence=1.0,
+                )
+            )
+
         if envelope.human_approval_ref:
             approval_node = f"{prefix}:human-approval"
             nodes.append(
@@ -196,10 +234,17 @@ def sovereign_boundary_evidence_graph(
                     EvidenceGraphNode(
                         node_id=claim_node,
                         node_type="prime_execution_claim",
-                        label="one-time PRIME execution claim",
-                        source_ref=envelope.prime_execution_claim_ref,
+                        label="one-time custody-bound PRIME execution identity",
+                        source_ref=(
+                            envelope.prime_execution_identity_digest
+                            or envelope.prime_execution_claim_ref
+                        ),
                         confidence=1.0,
-                        attributes={"authorization_ref": envelope.prime_authorization_ref},
+                        attributes={
+                            "authorization_ref": envelope.prime_authorization_ref,
+                            "execution_id": envelope.prime_execution_claim_ref,
+                            "execution_identity_digest": envelope.prime_execution_identity_digest,
+                        },
                     )
                 )
                 edges.extend(
@@ -216,12 +261,23 @@ def sovereign_boundary_evidence_graph(
                             edge_id=f"{prefix}:edge:claim-binds-envelope",
                             source_node_id=claim_node,
                             target_node_id=envelope_node,
-                            relation="execution_claim",
-                            source_ref=envelope.prime_execution_claim_ref,
+                            relation="execution_identity",
+                            source_ref=envelope.prime_execution_identity_digest,
                             confidence=1.0,
                         ),
                     ]
                 )
+                if custody is not None:
+                    edges.append(
+                        EvidenceGraphEdge(
+                            edge_id=f"{prefix}:edge:custody-binds-claim",
+                            source_node_id=f"{prefix}:execution-custody",
+                            target_node_id=claim_node,
+                            relation="custody_bound_execution",
+                            source_ref=custody.configuration_digest,
+                            confidence=1.0,
+                        )
+                    )
 
         if envelope.execution_result is not None:
             result_node = f"{prefix}:execution-result"
