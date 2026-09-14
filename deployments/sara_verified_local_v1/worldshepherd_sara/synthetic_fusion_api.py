@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import math
+import os
 import time
 from dataclasses import asdict
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field, model_validator
 
 from .auth import Role, require_admin, resolve_role
@@ -22,6 +23,7 @@ SYNTHETIC_FUSION_CLAIMS_BOUNDARY = [
     "This endpoint is not an operational tracker, JPDA/MHT implementation, or validated ISR/sensor-fusion capability.",
     "Measured latency is application-host specific and does not establish network, multimodal, CUI/classified, edge-device, or mission performance.",
 ]
+BENCHMARK_TIMING_HEADERS_ENV = "SARA_BENCHMARK_TIMING_HEADERS"
 
 router = APIRouter(prefix="/v1/synthetic-fusion", tags=["synthetic-fusion"])
 
@@ -79,10 +81,15 @@ def _durable_store(request: Request):
     return request.app.state.store
 
 
+def _benchmark_timing_enabled() -> bool:
+    return os.getenv(BENCHMARK_TIMING_HEADERS_ENV, "0") == "1"
+
+
 @router.post("", response_model=SyntheticFusionResponse)
 def synthetic_fusion(
     body: SyntheticFusionRequest,
     request: Request,
+    response: Response,
     role: Annotated[Role, Depends(resolve_role)],
 ) -> SyntheticFusionResponse:
     """Run a bounded, authenticated, auditable synthetic fusion demonstration.
@@ -93,7 +100,10 @@ def synthetic_fusion(
     """
 
     require_admin(role)
+    request_digest_started = time.perf_counter_ns()
     request_digest = canonical_digest(body)
+    request_digest_ms = (time.perf_counter_ns() - request_digest_started) / 1_000_000.0
+
     started = time.perf_counter_ns()
     tracks = fuse_observations(
         body.observations,
@@ -125,6 +135,7 @@ def synthetic_fusion(
         "result_digest": result_digest,
         "elapsed_ms": round(elapsed_ms, 6),
     }
+    audit_started = time.perf_counter_ns()
     try:
         _durable_store(request).append_audit(
             AuditRecord.create(
@@ -138,6 +149,14 @@ def synthetic_fusion(
             status_code=503,
             detail="Synthetic fusion result withheld because audit persistence failed",
         ) from exc
+    audit_elapsed_ms = (time.perf_counter_ns() - audit_started) / 1_000_000.0
+
+    if _benchmark_timing_enabled():
+        response.headers["Server-Timing"] = (
+            f"request_digest;dur={request_digest_ms:.6f}, "
+            f"fusion_graph;dur={elapsed_ms:.6f}, "
+            f"audit_fsync;dur={audit_elapsed_ms:.6f}"
+        )
 
     return SyntheticFusionResponse(
         scenario_id=body.scenario_id,
