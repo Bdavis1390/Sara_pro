@@ -17,6 +17,7 @@ from worldshepherd_sara.sovereign_boundary_authorization_ledger import (
 from worldshepherd_sara.sovereign_boundary_authority_store import (
     PrimeEffectAuthorizationStore,
 )
+from worldshepherd_sara.sovereign_boundary_custody import ExecutionCustody
 from worldshepherd_sara.sovereign_boundary_kernel import (
     BoundaryAction,
     BoundaryContext,
@@ -36,7 +37,19 @@ from worldshepherd_sara.sovereign_boundary_pep import (
 from worldshepherd_sara.storage import DurableStore
 
 
+def _custody() -> ExecutionCustody:
+    return ExecutionCustody(
+        release_index_digest="sha256:" + "1" * 64,
+        release_index_file_sha256="sha256:" + "2" * 64,
+        release_commit_sha="3" * 40,
+        release_merge_state="PR_CANDIDATE_UNMERGED",
+        release_evidence_ref="test:cross-process-release-index",
+        configuration_digest="sha256:" + "4" * 64,
+    )
+
+
 def _prepare_cross_process_claim(data_dir):
+    custody = _custody()
     action = BoundaryAction(
         domain=BoundaryDomain.GENERIC,
         action_type="BENIGN_CROSS_PROCESS_INTERLOCK_TEST",
@@ -56,6 +69,7 @@ def _prepare_cross_process_claim(data_dir):
         provenance=BoundaryProvenance(
             agent_version="sbk-cross-process-pep-test",
             source_evidence_refs=("test:cross-process-serialization",),
+            execution_custody=custody,
         ),
         policy=BoundaryPolicyDecision(
             disposition=BoundaryDisposition.ESCALATE,
@@ -80,6 +94,7 @@ def _prepare_cross_process_claim(data_dir):
         capability_status=envelope.action.capability_status,
         policy_revision=envelope.policy.policy_revision,
         human_approval_ref=envelope.human_approval_ref,
+        execution_custody=custody,
         key_id="prime-cross-process-test-key",
         key_fingerprint_sha256="c" * 64,
         nonce="cross-process-pep-nonce-000001",
@@ -96,13 +111,14 @@ def _prepare_cross_process_claim(data_dir):
         authorization_id=verified.authorization_id,
         execution_id=execution_id,
     )
-    return action, claimed, verified.authorization_id, execution_id
+    return action, custody, claimed, verified.authorization_id, execution_id
 
 
 def _pep_process_worker(
     label: str,
     data_dir: str,
     action,
+    custody,
     claimed,
     authorization_id: str,
     execution_id: str,
@@ -127,11 +143,19 @@ def _pep_process_worker(
             store,
             envelope=claimed,
             runtime_action=action,
+            runtime_custody=custody,
             authorization_id=authorization_id,
             execution_id=execution_id,
             executor=benign_executor,
         )
-        outcomes.put(("success", label, receipt.authorization_status))
+        outcomes.put(
+            (
+                "success",
+                label,
+                receipt.authorization_status,
+                receipt.execution_identity_digest,
+            )
+        )
     except Exception as exc:
         outcomes.put(("error", label, type(exc).__name__, str(exc)))
     finally:
@@ -143,7 +167,7 @@ def test_cross_process_pep_allows_only_one_executor_to_cross_invocation_fence(tm
         pytest.skip("cross-process PEP proof requires POSIX fork/flock")
 
     data_dir = tmp_path / "shared-pep-store"
-    action, claimed, authorization_id, execution_id = _prepare_cross_process_claim(
+    action, custody, claimed, authorization_id, execution_id = _prepare_cross_process_claim(
         data_dir
     )
 
@@ -159,6 +183,7 @@ def test_cross_process_pep_allows_only_one_executor_to_cross_invocation_fence(tm
             "A",
             str(data_dir),
             action,
+            custody,
             claimed,
             authorization_id,
             execution_id,
@@ -178,6 +203,7 @@ def test_cross_process_pep_allows_only_one_executor_to_cross_invocation_fence(tm
             "B",
             str(data_dir),
             action,
+            custody,
             claimed,
             authorization_id,
             execution_id,
@@ -193,15 +219,16 @@ def test_cross_process_pep_allows_only_one_executor_to_cross_invocation_fence(tm
     assert "invocation fence" in second[3]
     assert worker_b_done.wait(timeout=5)
 
-    # Caller A still owns the one-way INVOKING state while B has already been
-    # refused before B's executor callback can emit an "entered" event.
     registry_during_a = DurableStore(data_dir).get_registry()
     entry = registry_during_a[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
     assert entry["status"] == "INVOKING"
+    assert entry["execution_identity_digest"] == claimed.prime_execution_identity_digest
+    assert entry["execution_custody"]["configuration_digest"] == custody.configuration_digest
 
     release_a.set()
     third = outcomes.get(timeout=5)
-    assert third == ("success", "A", "CONSUMED")
+    assert third[0:3] == ("success", "A", "CONSUMED")
+    assert third[3] == claimed.prime_execution_identity_digest
 
     worker_a.join(timeout=10)
     worker_b.join(timeout=10)
@@ -211,3 +238,4 @@ def test_cross_process_pep_allows_only_one_executor_to_cross_invocation_fence(tm
     final_registry = DurableStore(data_dir).get_registry()
     final_entry = final_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
     assert final_entry["status"] == "CONSUMED"
+    assert final_entry["execution_identity_digest"] == claimed.prime_execution_identity_digest
