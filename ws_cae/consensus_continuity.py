@@ -9,6 +9,8 @@ readiness.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import hashlib
+import json
 
 CONSENSUS_FAMILIES = {
     "POW_NAKAMOTO",
@@ -88,6 +90,9 @@ class ConsensusContinuityProfile:
     poc_subtype: str = ""
     evidence: tuple[ConsensusEvidenceRef, ...] = tuple()
 
+    def to_dict(self) -> dict:
+        return asdict(self)
+
 
 @dataclass(frozen=True)
 class ConsensusContinuityAssessment:
@@ -99,6 +104,19 @@ class ConsensusContinuityAssessment:
 
     def to_dict(self) -> dict:
         return asdict(self)
+
+
+def canonical_bytes(profile: ConsensusContinuityProfile) -> bytes:
+    return json.dumps(
+        profile.to_dict(),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+
+def content_id(profile: ConsensusContinuityProfile) -> str:
+    return "sha256:" + hashlib.sha256(canonical_bytes(profile)).hexdigest()
 
 
 def assess_consensus(profile: ConsensusContinuityProfile) -> ConsensusContinuityAssessment:
@@ -194,3 +212,14 @@ def assess_consensus(profile: ConsensusContinuityProfile) -> ConsensusContinuity
         pq_consensus_state=profile.consensus_pq_state,
         issues=tuple(issues),
     )
+
+
+def envelope(profile: ConsensusContinuityProfile) -> dict:
+    assessment = assess_consensus(profile)
+    return {
+        "spec": "WS-CAE-CONSENSUS-CONTINUITY-1",
+        "content_id": content_id(profile),
+        "valid": assessment.valid,
+        "assessment": assessment.to_dict(),
+        "profile": profile.to_dict(),
+    }
