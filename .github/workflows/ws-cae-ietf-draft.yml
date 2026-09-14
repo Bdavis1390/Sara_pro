@@ -1,0 +1,46 @@
+name: WS-CAE IETF Draft Validation
+
+on:
+  pull_request:
+    paths:
+      - 'standards/draft-davis-scitt-digital-asset-continuity-00.xml'
+      - '.github/workflows/ws-cae-ietf-draft.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  render-internet-draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Render RFCXML with pinned xml2rfc
+        shell: bash
+        run: |
+          docker run --rm \
+            -v "$PWD:/data" \
+            -w /data \
+            ghcr.io/ietf-tools/xml2rfc-slim:v3.32.0 \
+            standards/draft-davis-scitt-digital-asset-continuity-00.xml \
+            --text --html
+
+      - name: Verify rendered Internet-Draft artifacts
+        shell: bash
+        run: |
+          test -s standards/draft-davis-scitt-digital-asset-continuity-00.txt
+          test -s standards/draft-davis-scitt-digital-asset-continuity-00.html
+          grep -q 'A SCITT Profile for Digital-Asset Cryptographic Continuity' \
+            standards/draft-davis-scitt-digital-asset-continuity-00.txt
+
+      - name: Preserve rendered draft
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cae-ietf-draft-${{ github.sha }}
+          path: |
+            standards/draft-davis-scitt-digital-asset-continuity-00.xml
+            standards/draft-davis-scitt-digital-asset-continuity-00.txt
+            standards/draft-davis-scitt-digital-asset-continuity-00.html
+          if-no-files-found: error
+          retention-days: 30
