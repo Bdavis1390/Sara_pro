@@ -286,3 +286,38 @@ def test_concurrent_pep_callers_cannot_both_cross_invocation_fence(tmp_path):
     assert len(first_receipts) == 1
     assert first_receipts[0].authorization_status == "CONSUMED"
     assert calls == ["called"]
+
+
+def test_authorization_expiry_is_rechecked_at_invocation_boundary(tmp_path):
+    store, action, claimed, authorization_id, execution_id = _prepare_claimed(
+        tmp_path, suffix="005"
+    )
+    calls = []
+
+    registry = store.get_registry()
+    ledger = dict(registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY])
+    expired = dict(ledger[authorization_id])
+    expired["expires_at"] = "2000-01-01T00:00:00Z"
+    ledger[authorization_id] = expired
+    store.patch_registry({PRIME_EFFECT_AUTHZ_LEDGER_KEY: ledger})
+
+    def should_not_run(_runtime_action):
+        calls.append("called")
+        return PhysicalEffectResult(
+            status=ExecutionResultStatus.SUCCEEDED,
+            outcome_ref="should-not-exist",
+        )
+
+    with pytest.raises(SovereignBoundaryPepError, match="fence"):
+        execute_claimed_physical_effect(
+            store,
+            envelope=claimed,
+            runtime_action=action,
+            authorization_id=authorization_id,
+            execution_id=execution_id,
+            executor=should_not_run,
+        )
+
+    assert calls == []
+    final = store.get_registry()[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
+    assert final["status"] == "CLAIMED"
