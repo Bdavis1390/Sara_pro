@@ -31,6 +31,7 @@ from worldshepherd_sara.sovereign_boundary_authorization_ledger import (
     consumed_effect_authorization_registry_patch,
     verified_effect_authorization_registry_patch,
 )
+from worldshepherd_sara.sovereign_boundary_custody import ExecutionCustody
 from worldshepherd_sara.sovereign_boundary_kernel import (
     BoundaryAction,
     BoundaryContext,
@@ -56,6 +57,17 @@ from worldshepherd_sara.sovereign_boundary_replay import (
 
 def _b64url(value: bytes) -> str:
     return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
+
+
+def _custody(*, config_hex: str = "c") -> ExecutionCustody:
+    return ExecutionCustody(
+        release_index_digest="sha256:" + "1" * 64,
+        release_index_file_sha256="sha256:" + "2" * 64,
+        release_commit_sha="3" * 40,
+        release_merge_state="PR_CANDIDATE_UNMERGED",
+        release_evidence_ref="ci:sara-release-evidence-index:e2e",
+        configuration_digest="sha256:" + config_hex * 64,
+    )
 
 
 def _lab_action() -> BoundaryAction:
@@ -85,6 +97,7 @@ def _signed_prime_assertion(envelope, *, private_key: Ed25519PrivateKey, key_id:
         capability_status=envelope.action.capability_status,
         policy_revision=envelope.policy.policy_revision,
         human_approval_ref=envelope.human_approval_ref,
+        execution_custody=envelope.provenance.execution_custody,
         issued_at=now,
         expires_at=now + timedelta(minutes=5),
         nonce="nonce-effect-auth-0001",
@@ -94,7 +107,15 @@ def _signed_prime_assertion(envelope, *, private_key: Ed25519PrivateKey, key_id:
     return unsigned.model_copy(update={"signature_b64url": _b64url(signature)})
 
 
-def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
+def _physical_provenance(*, custody: ExecutionCustody | None = None) -> BoundaryProvenance:
+    return BoundaryProvenance(
+        agent_version="sbk-e2e-test",
+        source_evidence_refs=("WS-QE-LAB-PENDING-001",),
+        execution_custody=custody or _custody(),
+    )
+
+
+def test_full_governed_effect_chain_opa_prime_custody_echo_and_replay(tmp_path):
     action = _lab_action()
     opa = OpaBoundDecision(
         decision="escalate",
@@ -118,10 +139,7 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
             human_present=True,
             network_state="LOCAL",
         ),
-        provenance=BoundaryProvenance(
-            agent_version="sbk-e2e-test",
-            source_evidence_refs=("WS-QE-LAB-PENDING-001",),
-        ),
+        provenance=_physical_provenance(),
         policy=policy,
         envelope_id="WS-SBK-E2E-ENVELOPE-001",
     )
@@ -148,6 +166,7 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
         public_keys_b64url={"prime-test-key-001": _b64url(public_raw)}
     )
     verified = verifier.verify_for_envelope(assertion, human_authorized)
+    assert verified.execution_custody == human_authorized.provenance.execution_custody
     prime_bound = bind_verified_prime_authorization(human_authorized, verified)
     assert prime_bound.prime_authorization_ref == "PRIME-EFFECT-AUTH-001"
     assert verify_boundary_envelope(prime_bound) is True
@@ -165,7 +184,16 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
             execution_id=execution_id,
         )
     )
-    claimed = bind_prime_execution_claim(prime_bound, execution_id=execution_id)
+    claimed_entry = authorization_registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][
+        verified.authorization_id
+    ]
+    execution_identity_digest = claimed_entry["execution_identity_digest"]
+    claimed = bind_prime_execution_claim(
+        prime_bound,
+        execution_id=execution_id,
+        execution_identity_digest=execution_identity_digest,
+    )
+    assert claimed.prime_execution_identity_digest == execution_identity_digest
     assert_claimed_effect_authorization_usable(
         authorization_registry,
         authorization_id=verified.authorization_id,
@@ -185,7 +213,7 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
         verified.authorization_id
     ]
     assert invoking_entry["status"] == "INVOKING"
-    assert "invocation_started_at" in invoking_entry
+    assert invoking_entry["execution_custody"]["configuration_digest"] == _custody().configuration_digest
 
     completed = record_execution(
         claimed,
@@ -226,6 +254,8 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
     assert "parameters" not in audit.payload
     assert audit.payload["prime_authorization_ref"] == "PRIME-EFFECT-AUTH-001"
     assert audit.payload["prime_execution_claim_ref"] == execution_id
+    assert audit.payload["prime_execution_identity_digest"] == execution_identity_digest
+    assert audit.payload["configuration_digest"] == _custody().configuration_digest
 
     store = EchoEventStore(tmp_path / "echo")
     first = store.ingest(audit)
@@ -254,6 +284,7 @@ def test_full_governed_effect_chain_opa_prime_echo_and_replay(tmp_path):
         "sbk_envelope",
         "human_approval",
         "prime_sentinel_authorization",
+        "prime_execution_claim",
         "sbk_execution_result",
     }.issubset(node_types)
     assert any(edge.relation == "purpose_bound_authorization" for edge in graph.edges)
@@ -272,7 +303,7 @@ def test_opa_action_digest_mismatch_fails_closed():
         boundary_policy_from_opa(decision, action)
 
 
-def test_prime_signature_is_purpose_bound_to_exact_envelope_and_action():
+def test_prime_signature_is_purpose_bound_to_exact_envelope_action_and_custody():
     action = _lab_action()
     decision = OpaBoundDecision(
         decision="escalate",
@@ -286,7 +317,7 @@ def test_prime_signature_is_purpose_bound_to_exact_envelope_and_action():
         actor="SSPADAWANZZ",
         action=action,
         context=BoundaryContext(environment=BoundaryEnvironment.LAB_TEST),
-        provenance=BoundaryProvenance(agent_version="test"),
+        provenance=_physical_provenance(),
         policy=boundary_policy_from_opa(decision, action),
         envelope_id="WS-SBK-E2E-ENVELOPE-002",
     )
@@ -325,6 +356,22 @@ def test_prime_signature_is_purpose_bound_to_exact_envelope_and_action():
     with pytest.raises(PrimeEffectAuthorizationError, match="binding mismatch"):
         verifier.verify_for_envelope(assertion, changed)
 
+    changed_provenance = envelope.provenance.model_copy(
+        update={"execution_custody": _custody(config_hex="d")}
+    )
+    changed_custody = envelope.model_copy(
+        update={"provenance": changed_provenance, "envelope_digest": None}
+    )
+    changed_custody = changed_custody.model_copy(
+        update={
+            "envelope_digest": canonical_digest(
+                changed_custody.model_dump(mode="json", exclude={"envelope_digest"})
+            )
+        }
+    )
+    with pytest.raises(PrimeEffectAuthorizationError, match="execution_custody"):
+        verifier.verify_for_envelope(assertion, changed_custody)
+
 
 def test_physical_execution_without_prime_binding_fails_even_after_human_approval():
     action = _lab_action()
@@ -340,7 +387,7 @@ def test_physical_execution_without_prime_binding_fails_even_after_human_approva
         actor="SSPADAWANZZ",
         action=action,
         context=BoundaryContext(environment=BoundaryEnvironment.LAB_TEST),
-        provenance=BoundaryProvenance(agent_version="test"),
+        provenance=_physical_provenance(),
         policy=boundary_policy_from_opa(opa, action),
     )
     envelope = authorize_after_human_approval(
