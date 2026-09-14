@@ -28,6 +28,7 @@ from .prime_sentinel_authorization import (
     PrimeSentinelVerifier,
 )
 from .storage import DurableStore
+from .synthetic_fusion_api import router as synthetic_fusion_router
 
 
 PROTECTED_REGISTRY_NAMESPACES = frozenset(
@@ -141,6 +142,7 @@ app = FastAPI(
 )
 app.add_middleware(RequestSizeLimitMiddleware)
 app.include_router(prime_passport_router)
+app.include_router(synthetic_fusion_router)
 
 
 @app.middleware("http")
@@ -179,6 +181,7 @@ def health(request: Request) -> dict[str, object]:
             "audit": "/v1/audit?limit=50",
             "hmaa_status": "/v1/hmaa/status",
             "hmaa_evidence": "/v1/hmaa/evidence?limit=50",
+            "synthetic_fusion": "/v1/synthetic-fusion",
             "registry": "/admin/registry",
             "prime_passport": "/admin/prime/{prime_id}/passport",
             "prime_requalification_authorize": "/admin/prime/{prime_id}/requalification/authorize",
@@ -221,7 +224,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/v1/synthetic-fusion</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. PRIME SENTINEL private signing keys are not stored by SARA.</p></div>
 </body></html>"""
 
@@ -249,7 +252,8 @@ def hmaa_evidence(
     mission_id: Annotated[str | None, Query(min_length=1, max_length=128)] = None,
 ) -> dict[str, object]:
     require_admin(role)
-    records = hmaa_store(request).read_recent(
+    evidence_store = hmaa_store(request)
+    records = evidence_store.read_recent(
         limit=limit,
         mission_id=mission_id,
     )
