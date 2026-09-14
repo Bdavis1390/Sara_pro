@@ -86,24 +86,46 @@ def test_worldshepherd_native_fields_are_kept_out_of_top_level_ocsf_namespace():
         assert len(grains) == 5
 
 
-def test_class_specific_required_material_is_present():
+def test_remote_tool_cases_use_api_activity_with_required_material():
     for case in _cases():
+        if case.action_kind != "remote_tool":
+            continue
         event = build_full_ocsf_event(case)
-        if case.action_kind == "remote_tool":
-            assert event["class_uid"] == 6003
-            assert event["category_uid"] == 6
-            assert event["api"]["operation"]
-            assert event["api"]["request"]["uid"]
-            assert event["src_endpoint"]["ip"] == "192.0.2.10"
-        elif case.action_kind == "local_process":
-            assert event["class_uid"] == 1007
-            assert event["category_uid"] == 1
-            assert event["process"]["uid"]
-        elif case.action_kind == "file_operation" and not case.hostless:
-            assert event["class_uid"] == 1001
-            assert event["category_uid"] == 1
-            assert event["file"]["name"] == "fixture.txt"
-            assert event["file"]["type_id"] == 1
+        assert event["class_uid"] == 6003
+        assert event["category_uid"] == 6
+        assert event["api"]["operation"]
+        assert event["api"]["request"]["uid"]
+        assert event["src_endpoint"]["ip"] == "192.0.2.10"
+        assert "actor" in event
+
+
+def test_local_process_cases_use_base_event_when_source_has_no_device_identity():
+    for case in _cases():
+        if case.action_kind != "local_process":
+            continue
+        event = build_full_ocsf_event(case)
+        native = event["unmapped"]["worldshepherd"]
+        assert event["class_uid"] == 0
+        assert event["category_uid"] == 0
+        assert event["activity_id"] == 99
+        assert event["type_uid"] == 99
+        assert "device" not in event
+        assert "actor" not in event
+        assert "process" not in event
+        assert native["source_process"]["uid"] == native["ws_invocation_uid"]
+        assert native["source_process"]["name"] == "fixture-command"
+        assert "no device identity" in event["message"].lower()
+
+
+def test_non_hostless_file_cases_keep_file_activity_shape_if_added_later():
+    for case in _cases():
+        if case.action_kind != "file_operation" or case.hostless:
+            continue
+        event = build_full_ocsf_event(case)
+        assert event["class_uid"] == 1001
+        assert event["category_uid"] == 1
+        assert event["file"]["name"] == "fixture.txt"
+        assert event["file"]["type_id"] == 1
 
 
 def test_hostless_source_uses_generic_base_event_instead_of_fabricating_device():
