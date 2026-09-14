@@ -13,6 +13,7 @@ const repo = resolve(here, '..');
 const examples = resolve(repo, 'ws_cae', 'examples');
 const vectors = JSON.parse(readFileSync(resolve(examples, 'continuity_interop_vectors.json'), 'utf8'));
 const manifest = JSON.parse(readFileSync(resolve(examples, 'continuity_manifest_reference.json'), 'utf8'));
+const snapshotPath = process.argv[2] || null;
 
 function hash(name, buf) {
   return createHash(name).update(buf).digest();
@@ -75,6 +76,38 @@ function proofPath(leaves, index) {
   return [...proofPath(leaves.slice(k), index - k), treeHash(leaves.slice(0, k))];
 }
 
+function snapshotId(contentIds) {
+  const normalized = [...contentIds].sort();
+  return 'sha256:' + sha256(Buffer.from(JSON.stringify(normalized), 'utf8')).toString('hex');
+}
+
+function verifySnapshot(path, failures) {
+  const snapshot = JSON.parse(readFileSync(path, 'utf8'));
+  if (snapshot.spec !== 'WS-CAE-CONTINUITY-SNAPSHOT-1') {
+    failures.push(`snapshot spec mismatch: ${snapshot.spec}`);
+    return null;
+  }
+  if (!Array.isArray(snapshot.manifests) || snapshot.manifests.length === 0) {
+    failures.push('snapshot manifests must be a non-empty array');
+    return null;
+  }
+  if (snapshot.manifest_count !== snapshot.manifests.length) {
+    failures.push(`snapshot manifest_count mismatch: ${snapshot.manifest_count}`);
+  }
+  const subjects = snapshot.manifests.map(item => String(item.subject).trim().toLowerCase());
+  if (new Set(subjects).size !== subjects.length) failures.push('snapshot contains duplicate subjects');
+  const contentIds = snapshot.manifests.map(item => String(item.content_id));
+  for (const value of contentIds) {
+    if (!/^sha256:[0-9a-f]{64}$/.test(value)) failures.push(`non-canonical snapshot content id: ${value}`);
+  }
+  if (!snapshot.manifests.every(item => item.valid === true) || snapshot.all_valid !== true) {
+    failures.push('snapshot contains a non-valid manifest state');
+  }
+  const got = snapshotId(contentIds);
+  if (got !== snapshot.snapshot_id) failures.push(`snapshot id mismatch: ${got}`);
+  return got;
+}
+
 const failures = [];
 const gotManifestId = contentId(manifest);
 if (gotManifestId !== vectors.canonical_manifest.expected_content_id) {
@@ -104,6 +137,8 @@ if (JSON.stringify(gotPath) !== JSON.stringify(iv.audit_path)) {
   failures.push(`inclusion path mismatch: ${JSON.stringify(gotPath)}`);
 }
 
+const gotSnapshotId = snapshotPath ? verifySnapshot(snapshotPath, failures) : null;
+
 if (failures.length) {
   console.error(JSON.stringify({ spec: vectors.spec, passed: false, failures }, null, 2));
   process.exit(1);
@@ -117,5 +152,6 @@ console.log(JSON.stringify({
   canonical_manifest_digests: gotDigests,
   verified_root_sizes: Object.keys(vectors.transparency.roots).map(Number),
   verified_inclusion_tree_size: iv.tree_size,
-  verified_inclusion_leaf_index: iv.leaf_index
+  verified_inclusion_leaf_index: iv.leaf_index,
+  verified_snapshot_id: gotSnapshotId
 }, null, 2));
