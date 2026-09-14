@@ -6,12 +6,17 @@ ROOT = "sha256:" + "11" * 32
 OTHER = "sha256:" + "22" * 32
 
 
-def receipt(issuer: str, root: str = ROOT, size: int = 4) -> WitnessReceipt:
+def receipt(
+    issuer: str,
+    root: str = ROOT,
+    size: int = 4,
+    observed_at: str = "2026-09-13T22:45:00Z",
+) -> WitnessReceipt:
     return WitnessReceipt(
         issuer=issuer,
         tree_size=size,
         root_hash=root,
-        observed_at="2026-09-13T22:45:00Z",
+        observed_at=observed_at,
         verification_method="SCITT_OR_SIGSTORE",
         receipt_ref=f"urn:receipt:{issuer}:{root[-8:]}",
     )
@@ -40,6 +45,31 @@ class ContinuityWitnessTests(unittest.TestCase):
 
     def test_wrong_root_and_size_are_rejected(self):
         receipts = (receipt("w1", OTHER), receipt("w2", ROOT, 5))
+        result = assess_witnesses(receipts, expected_tree_size=4, expected_root_hash=ROOT, threshold=1)
+        self.assertFalse(result.passed)
+        self.assertEqual(result.agreeing_issuers, tuple())
+
+    def test_malformed_root_is_rejected(self):
+        receipts = (receipt("w1", "sha256:1234"),)
+        result = assess_witnesses(receipts, expected_tree_size=4, expected_root_hash=ROOT, threshold=1)
+        self.assertFalse(result.passed)
+        self.assertEqual(result.agreeing_issuers, tuple())
+
+    def test_uppercase_digest_alias_is_rejected(self):
+        uppercase = "sha256:" + ("AB" * 32)
+        receipts = (receipt("w1", uppercase),)
+        result = assess_witnesses(receipts, expected_tree_size=4, expected_root_hash=ROOT, threshold=1)
+        self.assertFalse(result.passed)
+        self.assertEqual(result.agreeing_issuers, tuple())
+
+    def test_impossible_timestamp_is_rejected(self):
+        receipts = (receipt("w1", observed_at="2026-02-30T22:45:00Z"),)
+        result = assess_witnesses(receipts, expected_tree_size=4, expected_root_hash=ROOT, threshold=1)
+        self.assertFalse(result.passed)
+        self.assertEqual(result.agreeing_issuers, tuple())
+
+    def test_timezone_less_observation_is_rejected(self):
+        receipts = (receipt("w1", observed_at="2026-09-13T22:45:00"),)
         result = assess_witnesses(receipts, expected_tree_size=4, expected_root_hash=ROOT, threshold=1)
         self.assertFalse(result.passed)
         self.assertEqual(result.agreeing_issuers, tuple())
