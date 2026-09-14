@@ -181,6 +181,7 @@
     {"id": "overwatch.snapshot", "lane": "OVERWATCH", "risk": "READ", "description": "Produce connector, workflow, and readiness health snapshots."},
     {"id": "partner.track", "lane": "Capture", "risk": "WRITE", "description": "Track partner candidates, contact state, gaps, probability, and conflicts."},
     {"id": "artifact.publish", "lane": "Delivery", "risk": "EXTERNAL_EFFECT", "description": "Publish an approved artifact through a configured external connector."},
-    {"id": "connector.read.plan", "lane": "Connector Execution", "risk": "READ", "description": "Issue a sealed policy-authorized handoff ticket for an explicitly classified external read; does not execute the connector call."}
+    {"id": "connector.read.plan", "lane": "Connector Execution", "risk": "READ", "description": "Issue a sealed policy-authorized handoff ticket for an explicitly classified external read; does not execute the connector call."},
+    {"id": "connector.read.receipt", "lane": "ECHO SENTINEL LINK", "risk": "WRITE", "description": "Seal a host-reported connector read result digest back to its authorization ticket without embedding raw result or credential material."}
   ]
 }
