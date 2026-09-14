@@ -6,7 +6,9 @@ import json
 import time
 from typing import Any, Dict, Iterable, Mapping, Optional
 
-READ_TICKET_SCHEMA = "worldshepherd.connector.read-ticket.v1"
+from .connector_ticket_lifecycle import READ_TICKET_SCHEMA_V2, verify_v2_ticket_shape
+
+READ_TICKET_SCHEMA_V1 = "worldshepherd.connector.read-ticket.v1"
 READ_RECEIPT_SCHEMA = "worldshepherd.connector.read-receipt.v1"
 VALID_RECEIPT_STATUS = {"success", "empty", "error"}
 
@@ -35,8 +37,8 @@ def _valid_sha256(value: Any) -> bool:
     return True
 
 
-def verify_read_ticket(ticket: Mapping[str, Any]) -> bool:
-    if ticket.get("schema") != READ_TICKET_SCHEMA:
+def _verify_v1_ticket(ticket: Mapping[str, Any]) -> bool:
+    if ticket.get("schema") != READ_TICKET_SCHEMA_V1:
         return False
     if ticket.get("write_enabled") is not False:
         return False
@@ -59,6 +61,15 @@ def verify_read_ticket(ticket: Mapping[str, Any]) -> bool:
     unsigned.pop("sha256", None)
     expected = _canonical_sha256(unsigned)
     return hmac.compare_digest(str(supplied), expected)
+
+
+def verify_read_ticket(ticket: Mapping[str, Any]) -> bool:
+    schema = ticket.get("schema")
+    if schema == READ_TICKET_SCHEMA_V2:
+        return verify_v2_ticket_shape(ticket)
+    if schema == READ_TICKET_SCHEMA_V1:
+        return _verify_v1_ticket(ticket)
+    return False
 
 
 def seal_read_receipt(
@@ -96,6 +107,11 @@ def seal_read_receipt(
         "schema": READ_RECEIPT_SCHEMA,
         "ticket_sha256": ticket["sha256"],
         "policy_envelope_sha256": ticket["policy_envelope_sha256"],
+        "ticket_id_sha256": (
+            _value_sha256(str(ticket["ticket_id"]))
+            if ticket.get("schema") == READ_TICKET_SCHEMA_V2
+            else None
+        ),
         "connector_id": ticket["connector_id"],
         "action": ticket["action"],
         "actor": ticket["actor"],
@@ -142,6 +158,14 @@ def verify_read_receipt(
     for field in ("connector_id", "action", "actor", "data_class"):
         if receipt.get(field) != ticket.get(field):
             return False
+
+    expected_ticket_id_hash = (
+        _value_sha256(str(ticket["ticket_id"]))
+        if ticket.get("schema") == READ_TICKET_SCHEMA_V2
+        else None
+    )
+    if receipt.get("ticket_id_sha256") != expected_ticket_id_hash:
+        return False
 
     completed_at = receipt.get("completed_at")
     if not isinstance(completed_at, (int, float)):
