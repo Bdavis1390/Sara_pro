@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Callable, Dict
 
+from .connector_claim_recovery import (
+    ClaimReconciliation,
+    UnknownClaimOutcome,
+    reconcile_claim_status,
+)
 from .connector_ticket_lifecycle import (
     MAX_TTL_SECONDS,
     MIN_TTL_SECONDS,
@@ -68,19 +73,14 @@ def _best_effort_close(connection: Any) -> None:
 class PostgresClaimStore:
     """Credential-blind Postgres compare-and-set adapter for shared ticket claims.
 
-    The caller supplies a DB-API compatible connection factory. This module never
-    accepts or stores connection strings, passwords, API keys, service-role keys,
-    or other credential material.
-
     PostgreSQL is authoritative for registration expiry and consumption time. The
-    signed ticket contributes only its bounded lifetime (expires_at - issued_at),
-    which removes issuer/claimant absolute clock offsets from the database claim
-    decision. The atomic UPDATE ... WHERE consumed_at IS NULL statement remains the
-    anti-replay compare-and-set primitive.
+    signed ticket contributes only its bounded lifetime. Transaction/connection
+    errors fail closed.
 
-    Transaction and connection errors fail closed. Cleanup is best-effort so a
-    severed connection cannot mask the original database exception by failing a
-    secondary rollback or close operation.
+    If the UPDATE returned a successful claim but COMMIT acknowledgement fails,
+    the outcome is explicitly UNKNOWN. UNKNOWN never authorizes connector
+    execution and is never automatically retried. A fresh connection may reconcile
+    durable ticket state through `reconcile_unknown_claim`.
     """
 
     def __init__(self, connection_factory: Callable[[], Any]) -> None:
@@ -150,15 +150,24 @@ class PostgresClaimStore:
             )
             row = cursor.fetchone()
             if row is not None:
-                connection.commit()
+                consumed_at = float(row[1])
+                try:
+                    connection.commit()
+                except Exception as exc:
+                    # COMMIT may have reached PostgreSQL even when its acknowledgement
+                    # did not reach the client. Do not roll back/retry or authorize
+                    # execution from this uncertain state.
+                    raise UnknownClaimOutcome(ticket_id) from exc
                 return TicketClaim(
                     True,
                     ticket_id,
                     "ticket claimed for one-time host execution",
-                    float(row[1]),
+                    consumed_at,
                 )
 
             _best_effort_rollback(connection)
+        except UnknownClaimOutcome:
+            raise
         except Exception:
             _best_effort_rollback(connection)
             raise
@@ -175,6 +184,32 @@ class PostgresClaimStore:
         if bool(status.get("consumed")):
             return TicketClaim(False, ticket_id, "ticket already consumed")
         return TicketClaim(False, ticket_id, "ticket claim lost compare-and-set race")
+
+    def reconcile_unknown_claim(
+        self,
+        *,
+        ticket_id: str,
+        ticket_sha256: str,
+    ) -> ClaimReconciliation:
+        """Reconcile an UNKNOWN claim through a fresh store connection.
+
+        A consumed record remains non-executable because the current schema does
+        not prove which claimant owns it. An unconsumed, unexpired record is only
+        marked retryable; the caller must still make an explicit new claim.
+        """
+        try:
+            status = self.status(ticket_id)
+        except Exception as exc:
+            return ClaimReconciliation(
+                state="unknown",
+                ticket_id=str(ticket_id),
+                reason=f"reconciliation status read failed: {type(exc).__name__}",
+            )
+        return reconcile_claim_status(
+            ticket_id=str(ticket_id),
+            ticket_sha256=str(ticket_sha256),
+            status=status,
+        )
 
     def status(self, ticket_id: str) -> Dict[str, Any]:
         connection = self._connection_factory()
