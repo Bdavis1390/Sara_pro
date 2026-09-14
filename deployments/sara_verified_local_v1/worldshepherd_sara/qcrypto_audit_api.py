@@ -12,6 +12,7 @@ from .event_outbox import (
     drain_event_outbox,
     outbox_status,
 )
+from .models import AuditRecord
 from .qcrypto_audit_adapter import (
     QCRYPTO_AUDIT_SCHEMA,
     QCryptoAuditAdapterError,
@@ -19,6 +20,8 @@ from .qcrypto_audit_adapter import (
     queue_qcrypto_projection_patch,
 )
 from .qcrypto_audit_verifier import verify_qcrypto_audit_chain
+from .qcrypto_echo_config import forwarder_from_environment
+from .qcrypto_echo_forwarder import QCryptoEchoConflict, QCryptoEchoForwarderError
 from .storage import DurableStore
 
 
@@ -78,6 +81,44 @@ def _delivery_status(durable_store: DurableStore, event_ids: list[str]) -> str:
         if not isinstance(entry, dict) or entry.get("status") != "DELIVERED":
             return "PENDING_REPLAY"
     return "DELIVERED"
+
+
+def _verified_sync_records(
+    records: list[dict[str, Any]],
+    decision_digest: str,
+) -> tuple[list[AuditRecord], dict[str, Any]]:
+    verification = verify_qcrypto_audit_chain(records, decision_digest=decision_digest)
+    if not verification.complete or not verification.consistent:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "QCRYPTO audit evidence is not complete and consistent",
+                "verification": verification.to_dict(),
+            },
+        )
+
+    canonical_events = {
+        "qcrypto_echo_state",
+        "qcrypto_prime_state",
+        "qcrypto_sara_state",
+        "qcrypto_overwatch_state",
+    }
+    by_id: dict[str, AuditRecord] = {}
+    for raw in records:
+        payload = raw.get("payload") if isinstance(raw, dict) else None
+        if (
+            isinstance(payload, dict)
+            and payload.get("decision_digest") == decision_digest
+            and raw.get("event") in canonical_events
+        ):
+            event_id = payload.get("_outbox_event_id")
+            if isinstance(event_id, str) and event_id not in by_id:
+                by_id[event_id] = AuditRecord.model_validate(raw)
+
+    selected = list(by_id.values())
+    if len(selected) != 4 or {record.event for record in selected} != canonical_events:
+        raise HTTPException(status_code=409, detail="Verified QCRYPTO evidence could not be reduced to four canonical events")
+    return selected, verification.to_dict()
 
 
 @router.post("/audit", status_code=status.HTTP_202_ACCEPTED)
@@ -172,4 +213,71 @@ def verify_qcrypto_governance_audit(
             "Verification applies only to the bounded audit window returned by SARA; "
             "it is not a whole-history or external-attestation claim."
         ),
+    }
+
+
+@router.post("/audit/echo-sync")
+def sync_qcrypto_governance_audit_to_echo(
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+    decision_digest: Annotated[
+        str,
+        Query(min_length=71, max_length=71, pattern=r"^sha256:[0-9a-f]{64}$"),
+    ],
+    limit: Annotated[int, Query(ge=4, le=500)] = 500,
+) -> dict[str, Any]:
+    """Forward one already-verified QCRYPTO evidence chain to ECHO.
+
+    This endpoint is evidence synchronization only. It cannot execute migration,
+    move value, or grant cryptographic/compliance authority.
+    """
+
+    require_admin(role)
+    durable_store = _store(request)
+    raw_records = durable_store.read_audit(limit)
+    selected, verification = _verified_sync_records(raw_records, decision_digest)
+
+    try:
+        forwarder = forwarder_from_environment()
+        if forwarder is None:
+            raise QCryptoEchoForwarderError("ECHO forwarding is not configured")
+        result = forwarder.sync(selected)
+    except QCryptoEchoConflict as exc:
+        durable_store.append_audit(
+            AuditRecord.create(
+                event="qcrypto_echo_sync_conflict",
+                actor=role.value,
+                payload={"source_decision_digest": decision_digest},
+            )
+        )
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except QCryptoEchoForwarderError as exc:
+        durable_store.append_audit(
+            AuditRecord.create(
+                event="qcrypto_echo_sync_pending",
+                actor=role.value,
+                payload={"source_decision_digest": decision_digest},
+            )
+        )
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    durable_store.append_audit(
+        AuditRecord.create(
+            event="qcrypto_echo_sync_completed",
+            actor=role.value,
+            payload={
+                "source_decision_digest": decision_digest,
+                "event_ids": list(result.event_ids),
+                "stored_count": result.stored,
+                "deduplicated_count": result.deduplicated,
+                "execution_authority": False,
+                "live_value_authorized": False,
+            },
+        )
+    )
+    return {
+        "verification": verification,
+        "sync": result.to_dict(),
+        "audit_window_limit": limit,
+        "window_complete_for_history": False,
     }
