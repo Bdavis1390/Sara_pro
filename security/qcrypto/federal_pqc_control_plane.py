@@ -14,6 +14,7 @@ from cbom_inventory import CryptoAsset, priority_band, validate_asset
 
 
 CLAIM_BOUNDARY = "INTERNAL_PQC_CONTROL_PLANE_NOT_FEDERAL_COMPLIANCE"
+AUDIT_PROJECTION_SCHEMA = "WS-QCRYPTO-CONTROL-DECISION-V1"
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,41 @@ def evaluate_asset(
         human_approval_required=True,
         migration_executed=False,
     )
+
+
+def audit_projection(
+    decision: ControlPlaneDecision,
+    *,
+    correlation_id: str | None = None,
+) -> dict[str, object]:
+    """Project a decision into the data-only SARA audit bridge contract.
+
+    This mapping carries governance state only. It intentionally contains
+    explicit negative authority/compliance flags so downstream persistence
+    cannot be mistaken for migration execution, live-value authorization,
+    Federal compliance, or WS-CAE conformance.
+    """
+    projection: dict[str, object] = {
+        "schema": AUDIT_PROJECTION_SCHEMA,
+        "asset_id": decision.asset_id,
+        "echo_state": decision.echo_state,
+        "prime_state": decision.prime_state,
+        "sara_state": decision.sara_state,
+        "overwatch_state": decision.overwatch_state,
+        "priority": decision.priority,
+        "human_approval_required": decision.human_approval_required,
+        "migration_executed": decision.migration_executed,
+        "execution_authority": False,
+        "live_value_authorized": False,
+        "federal_compliance_established": False,
+        "ws_cae_conformance_established": False,
+        "claim_boundary": decision.claim_boundary,
+    }
+    if correlation_id is not None:
+        if not isinstance(correlation_id, str) or not correlation_id:
+            raise ValueError("correlation_id must be a non-empty string when supplied")
+        projection["correlation_id"] = correlation_id
+    return projection
 
 
 def portfolio_status(
