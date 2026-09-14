@@ -39,8 +39,10 @@ No arbitrary host, arbitrary path, redirect target, entity publish endpoint, tas
 6. **Assurance evaluation** — run the existing state/evidence assessment. Any non-`ALLOW` disposition prevents qualification.
 7. **Evidence sealing** — chain captured events, record fixture/capture hashes, and generate a secret-free session receipt.
 8. **Repeatability check** — repeat the bounded capture. Three attempts do not automatically qualify; at least three **distinct** qualifying capture hashes are required.
-9. **Partner request generation** — only if the repeatability threshold is satisfied, generate the existing hash-bound partner-validation request.
-10. **Independent review** — reviewer confirms environment provenance/authorization, read-only origin, absence of write/control requests, and evidence hashes.
+9. **Evidence request generation** — if the repeatability threshold is satisfied, generate the existing v0.8 evidence-reference request.
+10. **Session binding** — wrap that evidence request in the preferred v1.2 external exchange package, binding the exact Sandbox endpoint, zero-network preflight digest, executed session-receipt digest, inner request digest, aggregate attestation, and qualifying capture references.
+11. **Independent review** — reviewer confirms environment provenance/authorization, read-only origin, absence of write/control requests, and the bound evidence hashes.
+12. **Authenticated response and human acceptance** — any external response must bind to the v1.2 package hash and pass configured signature verification. A `CONFIRMED` result still requires a separate governed human acceptance decision.
 
 ## Acceptance criteria for the bounded interoperability exercise
 
@@ -53,8 +55,42 @@ The exercise is successful for the requested scope only when all of the followin
 - captured event counts and evidence-chain heads are internally consistent;
 - the session receipt verifies against its SHA-256 digest;
 - the local artifact manifest verifies all retained evidence-file hashes;
-- no credential value appears in the serialized evidence package; and
-- any partner-validation request remains explicitly marked `REQUIRES PARTNER VALIDATION`.
+- no credential value appears in the serialized evidence package;
+- the preferred v1.2 partner exchange package cryptographically binds the exact endpoint, preflight, session receipt, inner evidence request, and qualifying capture evidence; and
+- every package remains explicitly marked `REQUIRES PARTNER VALIDATION` until an independently authenticated response is reviewed and accepted for the requested scope.
+
+## Preferred partner exchange artifact
+
+The preferred external exchange artifact is:
+
+`partner-session-validation-request-v1.2.json`
+
+Its canonical `package_sha256` covers:
+
+- mission identifier;
+- exact Sandbox endpoint;
+- preflight report SHA-256;
+- session receipt SHA-256;
+- inner `partner-validation-request-v0.8.json` package SHA-256;
+- aggregate attestation SHA-256;
+- qualifying capture references;
+- fixture and evidence-chain references inherited from the inner request;
+- the exact requested validation checks; and
+- the claim/prohibition boundary.
+
+The accompanying `partner-validation-request-v0.8.json` is retained as the inner evidence-reference request. It is **not** the final session-binding artifact because it predates the executable v1.2 session protocol and does not itself bind the precise endpoint and session receipt.
+
+For a v1.2 review, the reviewer's response must set `request_package_sha256` to the SHA-256 of `partner-session-validation-request-v1.2.json`, not to the inner v0.8 request hash. A response bound only to the v0.8 package is rejected by the v1.2 assessor.
+
+## External response semantics
+
+The partner response must identify the same mission and requested scope and must confirm the exact requested-check digests. The configured verifier must authenticate the response signature before it can advance beyond `UNVERIFIED_EXTERNAL_RESPONSE`.
+
+Even an authenticated `CONFIRMED` response advances only to:
+
+`VERIFIED_RESPONSE_REQUIRES_HUMAN_ACCEPTANCE`
+
+It does not automatically set generalized `partner_validated`, `live_environment_validated`, `flight_validated`, or `operationally_validated` flags. The existing governed human-acceptance record is the next mandatory step and remains limited to the exact requested attestation scope.
 
 ## What a successful run does **not** establish
 
@@ -73,23 +109,25 @@ Those claims remain outside the test boundary.
 
 ## Evidence supplied to the reviewer
 
-The partner-facing package can provide, without credentials or raw stream payloads:
+The partner-facing v1.2 package can provide, without credentials or raw stream payloads:
 
 - mission identifier;
-- preflight/session receipt hashes;
-- distinct capture count;
+- exact Sandbox endpoint;
+- preflight and session-receipt hashes;
+- inner v0.8 evidence-request hash;
+- distinct qualifying capture count;
 - capture SHA-256 references;
 - fixture SHA-256 references;
 - final evidence-chain hashes;
 - event counts;
 - aggregate attestation SHA-256;
-- requested validation checks; and
-- the canonical partner-request package SHA-256.
+- exact requested validation checks; and
+- the canonical v1.2 session-partner package SHA-256.
 
-Raw simulated capture payloads can remain local unless the authorized reviewer specifically requests them through an approved exchange path.
+Raw simulated capture payloads remain local unless an authorized reviewer specifically requests them through an approved exchange path.
 
 ## Requested partner action
 
-Provide an authorized Sandbox review path or technical contact who can independently witness/review this narrow exercise and return an attributable attestation bound to the generated partner-request package SHA-256.
+Provide an authorized Sandbox review path or technical contact who can independently witness/review this narrow exercise and return an attributable attestation whose `request_package_sha256` is bound to the generated **v1.2 session-partner package SHA-256**.
 
-The desired outcome is deliberately modest: **verify or falsify read-only Sandbox interoperability under a reproducible, auditable boundary.**
+The desired outcome is deliberately narrow and falsifiable: **verify or falsify read-only Sandbox interoperability for one identified, authorized session under a reproducible, auditable boundary.**
