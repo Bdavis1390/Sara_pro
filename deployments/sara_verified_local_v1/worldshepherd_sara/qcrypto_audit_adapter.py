@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+import uuid
 from typing import Any
 
 from .event_outbox import queue_events_outbox_patch
@@ -9,6 +11,8 @@ from .event_outbox import queue_events_outbox_patch
 
 QCRYPTO_AUDIT_SCHEMA = "WS-QCRYPTO-CONTROL-DECISION-V1"
 QCRYPTO_EVENT_SCHEMA = "WS-QCRYPTO-SARA-AUDIT-EVENT-V1"
+AUDIT_INSTANCE_PREFIX = "QCRYPTO-AUDIT-"
+_AUDIT_INSTANCE_PATTERN = re.compile(r"^QCRYPTO-AUDIT-[0-9a-f]{32}$")
 _FORBIDDEN_TRUE_FIELDS = (
     "migration_executed",
     "execution_authority",
@@ -44,6 +48,19 @@ _REQUIRED_FIELDS = frozenset(
 
 class QCryptoAuditAdapterError(ValueError):
     pass
+
+
+def new_qcrypto_audit_instance_id() -> str:
+    """Create a server-side identity for one concrete four-event audit submission."""
+    return AUDIT_INSTANCE_PREFIX + uuid.uuid4().hex
+
+
+def validate_qcrypto_audit_instance_id(value: str) -> str:
+    if not isinstance(value, str) or not _AUDIT_INSTANCE_PATTERN.fullmatch(value):
+        raise QCryptoAuditAdapterError(
+            "audit_instance_id must be a server-format QCRYPTO audit instance ID"
+        )
+    return value
 
 
 def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
@@ -84,9 +101,9 @@ def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
 def qcrypto_decision_digest(projection: dict[str, Any]) -> str:
     """Return a deterministic content digest for one validated decision projection.
 
-    The digest binds the four stage-specific SARA audit events to the same input
-    decision. It is an integrity/correlation value only, not a digital signature
-    or external attestation.
+    The digest describes semantic decision content. It intentionally excludes the
+    server-generated audit-instance identity so identical decisions retain the
+    same digest while separate submissions remain distinguishable in SARA.
     """
     record = _validated_projection(projection)
     canonical = json.dumps(
@@ -102,21 +119,21 @@ def qcrypto_outbox_events(
     projection: dict[str, Any],
     *,
     actor: str,
+    audit_instance_id: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Convert one governed QCRYPTO decision into native SARA outbox events.
-
-    The resulting events persist governance evidence only. They do not carry an
-    execution capability and cannot establish live-value authorization,
-    Federal compliance, or WS-CAE conformance.
-    """
+    """Convert one governed decision into one four-event SARA audit instance."""
     if not isinstance(actor, str) or not actor:
         raise QCryptoAuditAdapterError("actor must be a non-empty string")
     record = _validated_projection(projection)
+    instance_id = validate_qcrypto_audit_instance_id(
+        audit_instance_id or new_qcrypto_audit_instance_id()
+    )
     decision_digest = qcrypto_decision_digest(record)
     common = {
         "schema": QCRYPTO_EVENT_SCHEMA,
         "source_schema": record["schema"],
         "decision_digest": decision_digest,
+        "audit_instance_id": instance_id,
         "asset_id": record["asset_id"],
         "priority": record["priority"],
         "human_approval_required": True,
@@ -133,12 +150,7 @@ def qcrypto_outbox_events(
     events: list[dict[str, Any]] = []
     for stage, state_field, event_name in _STAGE_FIELDS:
         payload = dict(common)
-        payload.update(
-            {
-                "stage": stage,
-                "state": record[state_field],
-            }
-        )
+        payload.update({"stage": stage, "state": record[state_field]})
         events.append({"event": event_name, "actor": actor, "payload": payload})
     return events
 
@@ -148,7 +160,12 @@ def queue_qcrypto_projection_patch(
     projection: dict[str, Any],
     *,
     actor: str,
+    audit_instance_id: str | None = None,
 ) -> tuple[dict[str, Any], list[str]]:
     """Queue QCRYPTO governance evidence into SARA's native durable outbox."""
-    events = qcrypto_outbox_events(projection, actor=actor)
+    events = qcrypto_outbox_events(
+        projection,
+        actor=actor,
+        audit_instance_id=audit_instance_id,
+    )
     return queue_events_outbox_patch(registry, events)
