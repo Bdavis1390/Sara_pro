@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .qualification import CapabilityStatus, EvidenceScope
+from .sovereign_boundary_custody import ExecutionCustody, execution_custody_matches
 from .sovereign_boundary_kernel import (
     BoundaryAction,
     BoundaryDisposition,
@@ -82,13 +83,7 @@ def boundary_policy_from_opa(
     satisfied_requirements: set[str] | None = None,
     constraints_satisfied: bool = False,
 ) -> BoundaryPolicyDecision:
-    """Convert a bound OPA result into the SBK policy contract.
-
-    Human approval is intentionally *not* considered satisfied here; SBK moves
-    the envelope into AWAITING_HUMAN_APPROVAL and records the later approval.
-    Other external requirements must be explicitly declared satisfied by the
-    PEP, and returned constraints must be enforced before the decision is used.
-    """
+    """Convert a bound OPA result into the SBK policy contract."""
 
     if decision.action_digest != boundary_action_digest(action):
         raise OpaPolicyAdapterError(
@@ -150,19 +145,22 @@ class PrimeEffectAuthorizationAssertion(BaseModel):
     capability_status: CapabilityStatus
     policy_revision: str = Field(min_length=1, max_length=256)
     human_approval_ref: str | None = Field(default=None, min_length=1, max_length=512)
+    execution_custody: ExecutionCustody | None = None
     issued_at: datetime
     expires_at: datetime
     nonce: str = Field(min_length=16, max_length=128)
     signature_b64url: str = Field(min_length=1, max_length=256)
 
     @model_validator(mode="after")
-    def validate_window(self) -> "PrimeEffectAuthorizationAssertion":
+    def validate_window_and_custody(self) -> "PrimeEffectAuthorizationAssertion":
         if self.issued_at.tzinfo is None or self.expires_at.tzinfo is None:
             raise ValueError("issued_at and expires_at must be timezone-aware")
         if self.expires_at <= self.issued_at:
             raise ValueError("expires_at must be after issued_at")
         if self.expires_at - self.issued_at > MAX_EFFECT_AUTHORIZATION_LIFETIME:
             raise ValueError("effect authorization lifetime exceeds 15 minutes")
+        if self.effect_scope == EvidenceScope.PHYSICAL and self.execution_custody is None:
+            raise ValueError("physical effect authorization requires execution custody")
         return self
 
 
@@ -175,11 +173,18 @@ class VerifiedPrimeEffectAuthorization(BaseModel):
     capability_status: CapabilityStatus
     policy_revision: str
     human_approval_ref: str | None
+    execution_custody: ExecutionCustody | None = None
     key_id: str
     key_fingerprint_sha256: str
     nonce: str
     issued_at: datetime
     expires_at: datetime
+
+    @model_validator(mode="after")
+    def physical_requires_custody(self) -> "VerifiedPrimeEffectAuthorization":
+        if self.effect_scope == EvidenceScope.PHYSICAL and self.execution_custody is None:
+            raise ValueError("verified physical effect authority requires execution custody")
+        return self
 
 
 def _utc_iso(value: datetime) -> str:
@@ -201,6 +206,11 @@ def canonical_prime_effect_authorization_message(
         "capability_status": assertion.capability_status.value,
         "policy_revision": assertion.policy_revision,
         "human_approval_ref": assertion.human_approval_ref,
+        "execution_custody": (
+            None
+            if assertion.execution_custody is None
+            else assertion.execution_custody.model_dump(mode="json")
+        ),
         "issued_at": _utc_iso(assertion.issued_at),
         "expires_at": _utc_iso(assertion.expires_at),
         "nonce": assertion.nonce,
@@ -269,6 +279,7 @@ class PrimeEffectAuthorizationVerifier:
             "capability_status": envelope.action.capability_status,
             "policy_revision": envelope.policy.policy_revision,
             "human_approval_ref": envelope.human_approval_ref,
+            "execution_custody": envelope.provenance.execution_custody,
         }
         observed = {
             "envelope_id": assertion.envelope_id,
@@ -278,6 +289,7 @@ class PrimeEffectAuthorizationVerifier:
             "capability_status": assertion.capability_status,
             "policy_revision": assertion.policy_revision,
             "human_approval_ref": assertion.human_approval_ref,
+            "execution_custody": assertion.execution_custody,
         }
         mismatches = [name for name in expected if expected[name] != observed[name]]
         if mismatches:
@@ -309,6 +321,7 @@ class PrimeEffectAuthorizationVerifier:
             capability_status=assertion.capability_status,
             policy_revision=assertion.policy_revision,
             human_approval_ref=assertion.human_approval_ref,
+            execution_custody=assertion.execution_custody,
             key_id=assertion.key_id,
             key_fingerprint_sha256=hashlib.sha256(key_bytes).hexdigest(),
             nonce=assertion.nonce,
@@ -321,10 +334,18 @@ def bind_verified_prime_authorization(
     envelope: SovereignBoundaryEnvelope,
     verified: VerifiedPrimeEffectAuthorization,
 ) -> SovereignBoundaryEnvelope:
-    """Attach verified PRIME custody evidence to the exact authorized envelope."""
+    """Attach verified PRIME authority to the exact authorized envelope."""
 
     if verified.envelope_id != envelope.envelope_id or verified.action_digest != envelope.action_digest:
         raise BoundaryKernelError("verified PRIME authorization does not bind this envelope")
+    envelope_custody = envelope.provenance.execution_custody
+    if verified.effect_scope == EvidenceScope.PHYSICAL:
+        if envelope_custody is None or verified.execution_custody is None:
+            raise BoundaryKernelError("physical PRIME authorization requires execution custody")
+        if not execution_custody_matches(envelope_custody, verified.execution_custody):
+            raise BoundaryKernelError(
+                "verified PRIME execution custody does not bind this envelope"
+            )
     return bind_prime_authorization_reference(
         envelope,
         authorization_id=verified.authorization_id,
