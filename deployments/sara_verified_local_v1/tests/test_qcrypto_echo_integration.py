@@ -117,7 +117,7 @@ def test_qcrypto_sara_audit_flows_into_echo_and_signed_checkpoint(
     } == {
         record.payload["_outbox_event_id"] for record in records
     }
-    assert "Ed25519" in checkpoint["manifest"]["signing_algorithm"]
+    assert checkpoint["manifest"]["algorithm"] == "Ed25519"
     assert "not post-quantum" in CLASSICAL_INTEGRITY_BOUNDARY
 
 
