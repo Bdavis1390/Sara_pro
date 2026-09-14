@@ -41,14 +41,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cd "$RUNNER_TEMP/HDTN"
-          ./build/tests/unit_tests/unit-tests
+          cd "$RUNNER_TEMP/HDTN/build"
+          ./tests/unit_tests/unit-tests
       - name: Run HDTN integrated tests
         shell: bash
         run: |
           set -euo pipefail
-          cd "$RUNNER_TEMP/HDTN"
-          ./build/tests/integrated_tests/integrated-tests
+          cd "$RUNNER_TEMP/HDTN/build"
+          ./tests/integrated_tests/integrated-tests
       - name: Verify BPv7 and contact-plan interfaces are present
         shell: bash
         run: |
