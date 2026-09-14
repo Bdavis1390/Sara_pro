@@ -9,6 +9,7 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/storage.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/models.py'
       - 'tools/selection_demo/benchmark_audit_write_contention.py'
+      - 'tools/selection_demo/profile_fusion_api_concurrency.py'
       - '.github/workflows/worldshepherd-audit-write-contention.yml'
 
 permissions:
@@ -41,6 +42,12 @@ jobs:
           mkdir -p audit_write_evidence
           python tools/selection_demo/benchmark_audit_write_contention.py \
             --out audit_write_evidence/durable-audit-write-contention.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Decompose governed API concurrency
+        run: |
+          python tools/selection_demo/profile_fusion_api_concurrency.py \
+            --out audit_write_evidence/governed-api-concurrency-decomposition.json \
             --software-commit "$GITHUB_SHA"
 
       - name: Upload audit-write evidence
