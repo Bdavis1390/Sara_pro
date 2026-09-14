@@ -27,6 +27,7 @@ from .prime_sentinel_authorization import (
     PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
     PrimeSentinelVerifier,
 )
+from .qcrypto_audit_api import router as qcrypto_audit_router
 from .storage import DurableStore
 
 
@@ -141,6 +142,7 @@ app = FastAPI(
 )
 app.add_middleware(RequestSizeLimitMiddleware)
 app.include_router(prime_passport_router)
+app.include_router(qcrypto_audit_router)
 
 
 @app.middleware("http")
@@ -182,6 +184,7 @@ def health(request: Request) -> dict[str, object]:
             "registry": "/admin/registry",
             "prime_passport": "/admin/prime/{prime_id}/passport",
             "prime_requalification_authorize": "/admin/prime/{prime_id}/requalification/authorize",
+            "qcrypto_audit": "/admin/qcrypto/audit",
             "relay": "/v1/relay",
             "selftest": "/admin/selftest",
         },
@@ -221,7 +224,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/qcrypto/audit</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. PRIME SENTINEL private signing keys are not stored by SARA.</p></div>
 </body></html>"""
 
