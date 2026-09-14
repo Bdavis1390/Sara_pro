@@ -190,6 +190,39 @@ def sovereign_boundary_evidence_graph(
                 )
             )
 
+            if envelope.prime_execution_claim_ref:
+                claim_node = f"{prefix}:prime-execution-claim"
+                nodes.append(
+                    EvidenceGraphNode(
+                        node_id=claim_node,
+                        node_type="prime_execution_claim",
+                        label="one-time PRIME execution claim",
+                        source_ref=envelope.prime_execution_claim_ref,
+                        confidence=1.0,
+                        attributes={"authorization_ref": envelope.prime_authorization_ref},
+                    )
+                )
+                edges.extend(
+                    [
+                        EvidenceGraphEdge(
+                            edge_id=f"{prefix}:edge:prime-authorization-claimed",
+                            source_node_id=prime_node,
+                            target_node_id=claim_node,
+                            relation="claimed_once",
+                            source_ref=envelope.prime_execution_claim_ref,
+                            confidence=1.0,
+                        ),
+                        EvidenceGraphEdge(
+                            edge_id=f"{prefix}:edge:claim-binds-envelope",
+                            source_node_id=claim_node,
+                            target_node_id=envelope_node,
+                            relation="execution_claim",
+                            source_ref=envelope.prime_execution_claim_ref,
+                            confidence=1.0,
+                        ),
+                    ]
+                )
+
         if envelope.execution_result is not None:
             result_node = f"{prefix}:execution-result"
             nodes.append(
