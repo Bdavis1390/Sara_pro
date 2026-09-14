@@ -1,0 +1,14 @@
+{
+  "spec": "WS-CAE-CHAIN-COVERAGE-INDEX-1",
+  "as_of": "2026-09-13",
+  "entries": [
+    {"name":"Monero","kind":"PRIVACY_L1","status":"PRIMARY_EVIDENCE_COLLECTED","sources":["https://docs.getmonero.org/cryptography/asymmetric/public-key/","https://docs.getmonero.org/public-address/standard-address/","https://docs.getmonero.org/cryptography/asymmetric/key-image/"]},
+    {"name":"Litecoin","kind":"UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Dogecoin","kind":"UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Bitcoin Cash","kind":"UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Zcash","kind":"PRIVACY_UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Kaspa","kind":"DAG_UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Chia","kind":"UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Ergo","kind":"EUTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"}
+  ]
+}
