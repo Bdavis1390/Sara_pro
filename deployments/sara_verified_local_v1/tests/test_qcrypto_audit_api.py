@@ -47,7 +47,7 @@ def qcrypto_records(client, admin: str):
     ]
 
 
-def test_admin_can_record_qcrypto_governance_evidence(client, tokens):
+def test_admin_can_record_and_verify_qcrypto_governance_evidence(client, tokens):
     _, admin = tokens
     response = client.post(
         "/admin/qcrypto/audit",
@@ -59,6 +59,8 @@ def test_admin_can_record_qcrypto_governance_evidence(client, tokens):
     body = response.json()
     assert body["accepted"] is True
     assert body["asset_id"] == "asset-api-001"
+    assert body["decision_digest"].startswith("sha256:")
+    assert len(body["decision_digest"]) == 71
     assert len(body["event_ids"]) == 4
     assert len(set(body["event_ids"])) == 4
     assert body["provenance_delivery"] == "DELIVERED"
@@ -77,10 +79,24 @@ def test_admin_can_record_qcrypto_governance_evidence(client, tokens):
     ]
     assert all(record["actor"] == "admin" for record in records)
     assert all(record["payload"]["asset_id"] == "asset-api-001" for record in records)
+    assert all(record["payload"]["decision_digest"] == body["decision_digest"] for record in records)
     assert all(record["payload"]["_delivery_semantics"] == "AT_LEAST_ONCE" for record in records)
 
+    verification = client.get(
+        "/admin/qcrypto/audit/verify",
+        headers=auth(admin),
+        params={"decision_digest": body["decision_digest"], "limit": 100},
+    )
+    assert verification.status_code == 200
+    result = verification.json()
+    assert result["verification"]["verdict"] == "INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN"
+    assert result["verification"]["complete"] is True
+    assert result["verification"]["consistent"] is True
+    assert result["verification"]["execution_authority"] is False
+    assert result["window_complete_for_history"] is False
 
-def test_relay_role_cannot_write_qcrypto_governance_audit(client, tokens):
+
+def test_relay_role_cannot_write_or_verify_qcrypto_governance_audit(client, tokens):
     relay, _ = tokens
     response = client.post(
         "/admin/qcrypto/audit",
@@ -88,6 +104,13 @@ def test_relay_role_cannot_write_qcrypto_governance_audit(client, tokens):
         json=projection(),
     )
     assert response.status_code == 403
+
+    verify = client.get(
+        "/admin/qcrypto/audit/verify",
+        headers=auth(relay),
+        params={"decision_digest": "sha256:" + "0" * 64},
+    )
+    assert verify.status_code == 403
 
 
 @pytest.mark.parametrize(
@@ -128,6 +151,16 @@ def test_api_rejects_extra_fields(client, tokens):
         "/admin/qcrypto/audit",
         headers=auth(admin),
         json={**projection(), "execute_now": True},
+    )
+    assert response.status_code == 422
+
+
+def test_verify_rejects_malformed_digest(client, tokens):
+    _, admin = tokens
+    response = client.get(
+        "/admin/qcrypto/audit/verify",
+        headers=auth(admin),
+        params={"decision_digest": "not-a-digest"},
     )
     assert response.status_code == 422
 
@@ -178,7 +211,9 @@ def test_audit_delivery_failure_preserves_events_for_replay(client, tokens, monk
         json=projection(asset_id="asset-replay-001"),
     )
     assert response.status_code == 202
-    assert response.json()["provenance_delivery"] == "PENDING_REPLAY"
+    body = response.json()
+    assert body["provenance_delivery"] == "PENDING_REPLAY"
+    assert body["decision_digest"].startswith("sha256:")
     assert outbox_status(store.get_registry())["pending"] == 4
 
     monkeypatch.setattr(store, "append_audit", original_append)
@@ -188,6 +223,14 @@ def test_audit_delivery_failure_preserves_events_for_replay(client, tokens, monk
     records = qcrypto_records(client, admin)
     assert len(records) == 4
     assert all(record["payload"]["asset_id"] == "asset-replay-001" for record in records)
+
+    verification = client.get(
+        "/admin/qcrypto/audit/verify",
+        headers=auth(admin),
+        params={"decision_digest": body["decision_digest"]},
+    )
+    assert verification.status_code == 200
+    assert verification.json()["verification"]["verdict"] == "INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN"
 
 
 def test_health_advertises_qcrypto_governance_endpoint(client):
