@@ -10,6 +10,7 @@ from .snapshot_lineage import (
     build_snapshot_checkpoint,
     build_snapshot_revision,
     verify_snapshot_chain,
+    verify_snapshot_revision,
 )
 from .trust_registry import TrustKeyRecord, TrustRegistry, verify_trust_registry
 
@@ -68,6 +69,8 @@ def _transition_allowed(previous: TrustKeyRecord, current: TrustKeyRecord) -> bo
 def verify_registry_transition(previous: TrustRegistry, current: TrustRegistry) -> bool:
     if not verify_trust_registry(previous) or not verify_trust_registry(current):
         return False
+    if current.registry_id != previous.registry_id:
+        return False
 
     try:
         if _parse_utc(current.generated_utc) <= _parse_utc(previous.generated_utc):
@@ -102,6 +105,8 @@ def build_registry_revision(
 
     predecessor = previous_revision.revision_digest if previous_revision is not None else None
     if previous_revision is not None:
+        if not verify_snapshot_revision(previous_revision):
+            raise ValueError("previous revision must pass digest validation")
         if previous_revision.stream_id != stream_id:
             raise ValueError("previous revision belongs to a different stream")
         if sequence != previous_revision.sequence + 1:
@@ -143,8 +148,11 @@ def verify_registry_lineage(
     if not registries or len(registries) != len(revisions):
         return False
 
+    expected_registry_id = registries[0].registry_id
     for index, (registry, revision) in enumerate(zip(registries, revisions, strict=True)):
         if not verify_trust_registry(registry):
+            return False
+        if registry.registry_id != expected_registry_id:
             return False
         if revision.snapshot_digest != registry.registry_digest:
             return False
