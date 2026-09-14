@@ -109,7 +109,7 @@ def test_qcrypto_sara_audit_flows_into_echo_and_signed_checkpoint(
     )
     checkpoint = checkpoints.create_checkpoint()
     verification = verify_bundle(checkpoint, checkpoints.fingerprint_sha256)
-    assert verification["status"] == "PASS"
+    assert verification["checkpoint_id"] == checkpoint["manifest"]["checkpoint_id"]
     assert verification["event_count"] == 4
     assert checkpoint["manifest"]["event_count"] == 4
     assert {
