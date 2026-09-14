@@ -44,18 +44,23 @@ jobs:
       - name: Compile benchmark
         run: python -m compileall -q worldshepherd_sara/apnt_benchmark.py
 
-      - name: Run benchmark
+      - name: Run benchmark on exact checked-out head
         run: |
-          python -m worldshepherd_sara.apnt_benchmark --duration 30 --output ws_np004_synthetic_throughput_benchmark_v0_1.json
+          TESTED_SHA="$(git rev-parse HEAD)"
+          echo "tested_sha=${TESTED_SHA}"
+          GITHUB_SHA="${TESTED_SHA}" python -m worldshepherd_sara.apnt_benchmark --duration 30 --output ws_np004_synthetic_throughput_benchmark_v0_1.json
 
       - name: Validate artifact custody
         run: |
+          export TESTED_SHA="$(git rev-parse HEAD)"
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
           path = Path('ws_np004_synthetic_throughput_benchmark_v0_1.json')
           data = json.loads(path.read_text())
+          assert data['environment']['github_sha'] == os.environ['TESTED_SHA']
           assert data['profile']['source_counts'] == [3, 5, 8]
           assert data['profile']['update_rates_hz'] == [1, 5, 10]
           assert data['profile']['duration_s'] == 30
@@ -65,7 +70,7 @@ jobs:
           assert data['summary']['any_execution_attempted'] is False
           assert 'NOT END-TO-END LATENCY COMPLIANCE' in data['claims_boundary']
           assert data['result_digest'].startswith('sha256:')
-          print(json.dumps(data['summary'], indent=2, sort_keys=True))
+          print(json.dumps({'tested_sha': data['environment']['github_sha'], **data['summary']}, indent=2, sort_keys=True))
           PY
 
       - name: Upload benchmark evidence
