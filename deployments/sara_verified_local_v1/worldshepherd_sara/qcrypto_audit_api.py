@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import Role, require_admin, resolve_role
-from .event_outbox import EventOutboxError, drain_event_outbox, outbox_status
+from .event_outbox import (
+    EVENT_OUTBOX_REGISTRY_KEY,
+    EventOutboxError,
+    drain_event_outbox,
+    outbox_status,
+)
 from .qcrypto_audit_adapter import (
     QCRYPTO_AUDIT_SCHEMA,
     QCryptoAuditAdapterError,
@@ -51,19 +56,28 @@ def _store(request: Request) -> DurableStore:
     return request.app.state.store
 
 
-def _delivery_status(durable_store: DurableStore, expected_event_count: int) -> str:
+def _delivery_status(durable_store: DurableStore, event_ids: list[str]) -> str:
+    """Try delivery and verify the specific QCRYPTO events, not a drain count."""
     try:
-        delivered = drain_event_outbox(
+        drain_event_outbox(
             durable_store,
-            limit=max(expected_event_count, 1),
+            limit=max(len(event_ids), 1),
         )
-        status_snapshot = outbox_status(durable_store.get_registry())
+        registry = durable_store.get_registry()
+        status_snapshot = outbox_status(registry)
     except (OSError, RuntimeError, ValueError, EventOutboxError):
         return "PENDING_REPLAY"
 
-    if delivered >= expected_event_count and status_snapshot["malformed"] == 0:
-        return "DELIVERED"
-    return "PENDING_REPLAY"
+    if status_snapshot["malformed"]:
+        return "PENDING_REPLAY"
+    raw_records = registry.get(EVENT_OUTBOX_REGISTRY_KEY, {})
+    if not isinstance(raw_records, dict):
+        return "PENDING_REPLAY"
+    for event_id in event_ids:
+        entry = raw_records.get(event_id)
+        if not isinstance(entry, dict) or entry.get("status") != "DELIVERED":
+            return "PENDING_REPLAY"
+    return "DELIVERED"
 
 
 @router.post("/audit", status_code=status.HTTP_202_ACCEPTED)
@@ -111,7 +125,7 @@ def record_qcrypto_governance_audit(
             detail="QCRYPTO governance audit persistence failed",
         ) from exc
 
-    delivery = _delivery_status(durable_store, len(event_ids))
+    delivery = _delivery_status(durable_store, event_ids)
     return {
         "accepted": True,
         "asset_id": body.asset_id,
