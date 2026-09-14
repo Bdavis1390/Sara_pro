@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import Any
 
 from .event_outbox import queue_events_outbox_patch
@@ -65,6 +67,9 @@ def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
         state = projection.get(state_field)
         if not isinstance(state, str) or not state:
             raise QCryptoAuditAdapterError(f"{state_field} must be a non-empty string")
+    priority = projection.get("priority")
+    if not isinstance(priority, str) or not priority:
+        raise QCryptoAuditAdapterError("priority must be a non-empty string")
     claim_boundary = projection.get("claim_boundary")
     if not isinstance(claim_boundary, str) or not claim_boundary:
         raise QCryptoAuditAdapterError("claim_boundary must be a non-empty string")
@@ -74,6 +79,23 @@ def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
     ):
         raise QCryptoAuditAdapterError("correlation_id must be a non-empty string when supplied")
     return dict(projection)
+
+
+def qcrypto_decision_digest(projection: dict[str, Any]) -> str:
+    """Return a deterministic content digest for one validated decision projection.
+
+    The digest binds the four stage-specific SARA audit events to the same input
+    decision. It is an integrity/correlation value only, not a digital signature
+    or external attestation.
+    """
+    record = _validated_projection(projection)
+    canonical = json.dumps(
+        record,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(canonical).hexdigest()
 
 
 def qcrypto_outbox_events(
@@ -90,9 +112,11 @@ def qcrypto_outbox_events(
     if not isinstance(actor, str) or not actor:
         raise QCryptoAuditAdapterError("actor must be a non-empty string")
     record = _validated_projection(projection)
+    decision_digest = qcrypto_decision_digest(record)
     common = {
         "schema": QCRYPTO_EVENT_SCHEMA,
         "source_schema": record["schema"],
+        "decision_digest": decision_digest,
         "asset_id": record["asset_id"],
         "priority": record["priority"],
         "human_approval_required": True,
