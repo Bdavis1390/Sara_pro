@@ -11,33 +11,33 @@ module prime_hw_policy_controller_authorization_hardened (
     input  logic       request_valid,
     input  logic       request_authorized,
     input  logic       degraded_request_authorized,
-    output logic       allow,
-    output logic       deny,
-    output logic       safe_state,
-    output logic       state_integrity_fault,
-    output logic       authorization_integrity_fault,
-    output logic       authorization_fault_latched,
-    output logic       fail_closed_active,
-    output logic [2:0] state_code
+    output wire        allow,
+    output wire        deny,
+    output wire        safe_state,
+    output wire        state_integrity_fault,
+    output wire        authorization_integrity_fault,
+    output wire        authorization_fault_latched,
+    output wire        fail_closed_active,
+    output wire [2:0]  state_code
 );
-    logic core_allow_raw;
-    logic core_deny_raw;
-    logic core_safe_state;
-    logic core_state_integrity_fault;
-    logic [2:0] core_state_code;
+    wire core_allow_raw;
+    wire core_deny_raw;
+    wire core_safe_state;
+    wire core_state_integrity_fault;
+    wire [2:0] core_state_code;
 
-    logic witness_allow_raw;
-    logic witness_deny_raw;
-    logic effective_fatal_fault;
+    wire witness_allow_raw;
+    wire witness_deny_raw;
+    wire effective_fatal_fault;
 
     // These vote rails are preserved for post-elaboration structural evidence.
     // Preservation in the Yosys evidence netlist is not a physical-routing or
     // placement-separation claim.
-    (* keep *) logic core_allow_vote;
-    (* keep *) logic core_deny_vote;
-    (* keep *) logic witness_allow_vote;
-    (* keep *) logic witness_deny_vote;
-    (* keep *) logic authorization_fault_latched_q;
+    (* keep *) wire core_allow_vote;
+    (* keep *) wire core_deny_vote;
+    (* keep *) wire witness_allow_vote;
+    (* keep *) wire witness_deny_vote;
+    (* keep *) wire authorization_fault_latched_q;
 
     assign effective_fatal_fault = fatal_fault || authorization_fault_latched_q;
 
