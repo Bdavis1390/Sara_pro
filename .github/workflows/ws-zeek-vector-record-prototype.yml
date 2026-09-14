@@ -46,8 +46,8 @@ jobs:
           set -euo pipefail
           PATCH="$GITHUB_WORKSPACE/deployments/sara_verified_local_v1/docs/oss/patches/zeek-vector-record-json-v0_1.patch"
           cd external/zeek
-          git apply --check "$PATCH"
-          git apply "$PATCH"
+          git apply --check --recount "$PATCH"
+          git apply --recount "$PATCH"
           git diff --check
           git diff --stat
 
