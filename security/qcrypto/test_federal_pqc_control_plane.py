@@ -1,7 +1,13 @@
 import unittest
 
 from cbom_inventory import CryptoAsset
-from federal_pqc_control_plane import CLAIM_BOUNDARY, evaluate_asset, portfolio_status
+from federal_pqc_control_plane import (
+    AUDIT_PROJECTION_SCHEMA,
+    CLAIM_BOUNDARY,
+    audit_projection,
+    evaluate_asset,
+    portfolio_status,
+)
 
 
 class FederalPQCControlPlaneTests(unittest.TestCase):
@@ -50,6 +56,25 @@ class FederalPQCControlPlaneTests(unittest.TestCase):
         self.assertEqual(result.prime_state, "PRIME_RECOMMENDS_MONITOR")
         self.assertEqual(result.sara_state, "SARA_AWAITING_HUMAN_APPROVAL")
         self.assertFalse(result.migration_executed)
+
+    def test_audit_projection_is_data_only_and_claims_controlled(self):
+        decision = evaluate_asset(self._asset(high_value_asset=True), human_approved=True)
+        projection = audit_projection(decision, correlation_id="QCRYPTO-TEST-001")
+        self.assertEqual(projection["schema"], AUDIT_PROJECTION_SCHEMA)
+        self.assertEqual(projection["asset_id"], "asset-001")
+        self.assertEqual(projection["sara_state"], "SARA_PLAN_AUTHORIZED")
+        self.assertEqual(projection["correlation_id"], "QCRYPTO-TEST-001")
+        self.assertFalse(projection["migration_executed"])
+        self.assertFalse(projection["execution_authority"])
+        self.assertFalse(projection["live_value_authorized"])
+        self.assertFalse(projection["federal_compliance_established"])
+        self.assertFalse(projection["ws_cae_conformance_established"])
+        self.assertEqual(projection["claim_boundary"], CLAIM_BOUNDARY)
+
+    def test_audit_projection_rejects_empty_correlation_id(self):
+        decision = evaluate_asset(self._asset())
+        with self.assertRaises(ValueError):
+            audit_projection(decision, correlation_id="")
 
     def test_portfolio_status_counts_governed_states(self):
         assets = (
