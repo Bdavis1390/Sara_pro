@@ -1,7 +1,7 @@
 # NIST AITE model-provider inquiry — transmission record
 
-**Prepared:** 2026-09-12  
-**Current state:** SENT / REQUIREMENTS RESPONSE PENDING  
+**Prepared:** 2026-09-12
+**Current state:** SENT / REQUIREMENTS RESPONSE PENDING
 
 ## Inquiry text
 
