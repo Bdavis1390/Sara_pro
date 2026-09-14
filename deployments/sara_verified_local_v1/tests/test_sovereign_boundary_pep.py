@@ -17,6 +17,7 @@ from worldshepherd_sara.sovereign_boundary_authorization_ledger import (
 from worldshepherd_sara.sovereign_boundary_authority_store import (
     PrimeEffectAuthorizationStore,
 )
+from worldshepherd_sara.sovereign_boundary_custody import ExecutionCustody
 from worldshepherd_sara.sovereign_boundary_kernel import (
     BoundaryAction,
     BoundaryContext,
@@ -38,7 +39,19 @@ from worldshepherd_sara.sovereign_boundary_pep import (
 from worldshepherd_sara.storage import DurableStore
 
 
+def _custody(*, release_hex: str = "1", config_hex: str = "4") -> ExecutionCustody:
+    return ExecutionCustody(
+        release_index_digest="sha256:" + release_hex * 64,
+        release_index_file_sha256="sha256:" + "2" * 64,
+        release_commit_sha="3" * 40,
+        release_merge_state="PR_CANDIDATE_UNMERGED",
+        release_evidence_ref="test:pep-release-index",
+        configuration_digest="sha256:" + config_hex * 64,
+    )
+
+
 def _prepare_claimed(tmp_path, *, suffix: str = "001"):
+    custody = _custody()
     action = BoundaryAction(
         domain=BoundaryDomain.GENERIC,
         action_type="BENIGN_INTERLOCK_TEST",
@@ -58,6 +71,7 @@ def _prepare_claimed(tmp_path, *, suffix: str = "001"):
         provenance=BoundaryProvenance(
             agent_version="sbk-pep-test",
             source_evidence_refs=(f"test-evidence:{suffix}",),
+            execution_custody=custody,
         ),
         policy=BoundaryPolicyDecision(
             disposition=BoundaryDisposition.ESCALATE,
@@ -82,6 +96,7 @@ def _prepare_claimed(tmp_path, *, suffix: str = "001"):
         capability_status=envelope.action.capability_status,
         policy_revision=envelope.policy.policy_revision,
         human_approval_ref=envelope.human_approval_ref,
+        execution_custody=custody,
         key_id="prime-pep-test-key",
         key_fingerprint_sha256="b" * 64,
         nonce=f"pep-test-nonce-{suffix}-000000",
@@ -99,11 +114,11 @@ def _prepare_claimed(tmp_path, *, suffix: str = "001"):
         authorization_id=verified.authorization_id,
         execution_id=execution_id,
     )
-    return store, action, claimed, verified.authorization_id, execution_id
+    return store, action, custody, claimed, verified.authorization_id, execution_id
 
 
 def test_pep_success_consumes_authority_and_queues_evidence_atomically(tmp_path):
-    store, action, claimed, authorization_id, execution_id = _prepare_claimed(tmp_path)
+    store, action, custody, claimed, authorization_id, execution_id = _prepare_claimed(tmp_path)
     calls = []
 
     def benign_executor(runtime_action):
@@ -119,6 +134,7 @@ def test_pep_success_consumes_authority_and_queues_evidence_atomically(tmp_path)
         store,
         envelope=claimed,
         runtime_action=action,
+        runtime_custody=custody,
         authorization_id=authorization_id,
         execution_id=execution_id,
         executor=benign_executor,
@@ -128,15 +144,19 @@ def test_pep_success_consumes_authority_and_queues_evidence_atomically(tmp_path)
     assert receipt.terminal_envelope.state == BoundaryState.EXECUTED
     assert receipt.authorization_status == "CONSUMED"
     assert receipt.outbox_event_id.startswith("SARA-EVENT-")
+    assert receipt.execution_identity_digest == claimed.prime_execution_identity_digest
 
     registry = store.get_registry()
     ledger = registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
     assert ledger["status"] == "CONSUMED"
     assert "invocation_started_at" in ledger
+    assert ledger["execution_identity_digest"] == receipt.execution_identity_digest
     assert ledger["terminal_envelope_digest"] == receipt.terminal_envelope.envelope_digest
     event = registry[EVENT_OUTBOX_REGISTRY_KEY][receipt.outbox_event_id]
     assert event["status"] == "PENDING"
     assert event["payload"]["prime_execution_claim_ref"] == execution_id
+    assert event["payload"]["prime_execution_identity_digest"] == receipt.execution_identity_digest
+    assert event["payload"]["configuration_digest"] == custody.configuration_digest
     assert "parameters" not in event["payload"]
 
     with pytest.raises(SovereignBoundaryPepError, match="fence"):
@@ -144,6 +164,7 @@ def test_pep_success_consumes_authority_and_queues_evidence_atomically(tmp_path)
             store,
             envelope=claimed,
             runtime_action=action,
+            runtime_custody=custody,
             authorization_id=authorization_id,
             execution_id=execution_id,
             executor=benign_executor,
@@ -152,7 +173,7 @@ def test_pep_success_consumes_authority_and_queues_evidence_atomically(tmp_path)
 
 
 def test_pep_action_mutation_fails_before_executor_invocation(tmp_path):
-    store, action, claimed, authorization_id, execution_id = _prepare_claimed(
+    store, action, custody, claimed, authorization_id, execution_id = _prepare_claimed(
         tmp_path, suffix="002"
     )
     calls = []
@@ -172,20 +193,73 @@ def test_pep_action_mutation_fails_before_executor_invocation(tmp_path):
             store,
             envelope=claimed,
             runtime_action=mutated,
+            runtime_custody=custody,
             authorization_id=authorization_id,
             execution_id=execution_id,
             executor=should_not_run,
         )
     assert calls == []
-    registry = store.get_registry()
-    assert (
-        registry[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]["status"]
-        == "CLAIMED"
+    assert store.get_registry()[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]["status"] == "CLAIMED"
+
+
+def test_pep_configuration_drift_fails_before_invocation_fence(tmp_path):
+    store, action, _custody_bound, claimed, authorization_id, execution_id = _prepare_claimed(
+        tmp_path, suffix="006"
     )
+    calls = []
+    drifted = _custody(config_hex="5")
+
+    def should_not_run(_runtime_action):
+        calls.append("called")
+        return PhysicalEffectResult(
+            status=ExecutionResultStatus.SUCCEEDED,
+            outcome_ref="should-not-exist",
+        )
+
+    with pytest.raises(SovereignBoundaryPepError, match="custody differs"):
+        execute_claimed_physical_effect(
+            store,
+            envelope=claimed,
+            runtime_action=action,
+            runtime_custody=drifted,
+            authorization_id=authorization_id,
+            execution_id=execution_id,
+            executor=should_not_run,
+        )
+    assert calls == []
+    assert store.get_registry()[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]["status"] == "CLAIMED"
+
+
+def test_pep_release_drift_fails_before_invocation_fence(tmp_path):
+    store, action, _custody_bound, claimed, authorization_id, execution_id = _prepare_claimed(
+        tmp_path, suffix="007"
+    )
+    calls = []
+    drifted = _custody(release_hex="6")
+
+    def should_not_run(_runtime_action):
+        calls.append("called")
+        return PhysicalEffectResult(
+            status=ExecutionResultStatus.SUCCEEDED,
+            outcome_ref="should-not-exist",
+        )
+
+    with pytest.raises(SovereignBoundaryPepError, match="custody differs"):
+        execute_claimed_physical_effect(
+            store,
+            envelope=claimed,
+            runtime_action=action,
+            runtime_custody=drifted,
+            authorization_id=authorization_id,
+            execution_id=execution_id,
+            executor=should_not_run,
+        )
+    assert calls == []
+    assert store.get_registry()[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]["status"] == "CLAIMED"
 
 
 def test_executor_exception_moves_invoking_to_indeterminate_and_blocks_retry(tmp_path):
-    store, action, claimed, authorization_id, execution_id = _prepare_claimed(
+    store, action, custody, claimed, authorization_id, execution_id = _prepare_claimed(
         tmp_path, suffix="003"
     )
     calls = []
@@ -199,6 +273,7 @@ def test_executor_exception_moves_invoking_to_indeterminate_and_blocks_retry(tmp
             store,
             envelope=claimed,
             runtime_action=action,
+            runtime_custody=custody,
             authorization_id=authorization_id,
             execution_id=execution_id,
             executor=ambiguous_executor,
@@ -215,6 +290,7 @@ def test_executor_exception_moves_invoking_to_indeterminate_and_blocks_retry(tmp
             store,
             envelope=claimed,
             runtime_action=action,
+            runtime_custody=custody,
             authorization_id=authorization_id,
             execution_id=execution_id,
             executor=ambiguous_executor,
@@ -223,7 +299,7 @@ def test_executor_exception_moves_invoking_to_indeterminate_and_blocks_retry(tmp
 
 
 def test_concurrent_pep_callers_cannot_both_cross_invocation_fence(tmp_path):
-    store, action, claimed, authorization_id, execution_id = _prepare_claimed(
+    store, action, custody, claimed, authorization_id, execution_id = _prepare_claimed(
         tmp_path, suffix="004"
     )
     entered_executor = Event()
@@ -248,6 +324,7 @@ def test_concurrent_pep_callers_cannot_both_cross_invocation_fence(tmp_path):
                     store,
                     envelope=claimed,
                     runtime_action=action,
+                    runtime_custody=custody,
                     authorization_id=authorization_id,
                     execution_id=execution_id,
                     executor=slow_executor,
@@ -261,18 +338,14 @@ def test_concurrent_pep_callers_cannot_both_cross_invocation_fence(tmp_path):
     assert entered_executor.wait(timeout=5), "first caller never reached executor"
 
     registry_while_first_is_running = store.get_registry()
-    assert (
-        registry_while_first_is_running[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id][
-            "status"
-        ]
-        == "INVOKING"
-    )
+    assert registry_while_first_is_running[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]["status"] == "INVOKING"
 
     with pytest.raises(SovereignBoundaryPepError, match="fence"):
         execute_claimed_physical_effect(
             store,
             envelope=claimed,
             runtime_action=action,
+            runtime_custody=custody,
             authorization_id=authorization_id,
             execution_id=execution_id,
             executor=slow_executor,
@@ -289,7 +362,7 @@ def test_concurrent_pep_callers_cannot_both_cross_invocation_fence(tmp_path):
 
 
 def test_authorization_expiry_is_rechecked_at_invocation_boundary(tmp_path):
-    store, action, claimed, authorization_id, execution_id = _prepare_claimed(
+    store, action, custody, claimed, authorization_id, execution_id = _prepare_claimed(
         tmp_path, suffix="005"
     )
     calls = []
@@ -313,6 +386,7 @@ def test_authorization_expiry_is_rechecked_at_invocation_boundary(tmp_path):
             store,
             envelope=claimed,
             runtime_action=action,
+            runtime_custody=custody,
             authorization_id=authorization_id,
             execution_id=execution_id,
             executor=should_not_run,
