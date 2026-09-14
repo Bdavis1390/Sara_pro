@@ -1,0 +1,55 @@
+name: Worldshepherd API Path Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/synthetic_fusion_api.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
+      - 'deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py'
+      - 'tools/selection_demo/benchmark_fusion_api_path.py'
+      - '.github/workflows/worldshepherd-api-path-benchmark.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  governed-api-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Worldshepherd SARA test environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'deployments/sara_verified_local_v1[test]'
+
+      - name: Run governed fusion API tests
+        run: |
+          python -m pytest deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py
+
+      - name: Run full application-path benchmark
+        run: |
+          mkdir -p api_path_evidence
+          python tools/selection_demo/benchmark_fusion_api_path.py \
+            --out api_path_evidence/governed-fusion-api-path-benchmark.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Upload API-path evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-api-path-benchmark-${{ github.sha }}
+          path: api_path_evidence/
+          if-no-files-found: error
+          retention-days: 30
