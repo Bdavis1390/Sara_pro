@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import secrets
 import stat
 import threading
+import time
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
@@ -17,10 +19,25 @@ RegistryTransaction = Callable[
     [dict[str, Any]],
     tuple[dict[str, Any] | None, T],
 ]
+MAX_AUDIT_GROUP_COMMIT_BATCH = 64
+MAX_AUDIT_GROUP_COMMIT_WINDOW_MS = 10.0
+
+
+class _AuditAppendWaiter:
+    def __init__(self, line: str) -> None:
+        self.line = line
+        self.done = threading.Event()
+        self.error: Exception | None = None
 
 
 class DurableStore:
-    def __init__(self, data_dir: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        data_dir: str | Path | None = None,
+        *,
+        audit_group_commit: bool | None = None,
+        audit_group_commit_window_ms: float | None = None,
+    ) -> None:
         root = Path(data_dir or os.getenv("SARA_DATA_DIR", "./data")).resolve()
         root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self._secure_mode(root, 0o700, "data directory")
@@ -28,6 +45,32 @@ class DurableStore:
         self.audit_path = root / "audit.jsonl"
         self.registry_path = root / "registry.json"
         self._lock = threading.RLock()
+
+        if audit_group_commit is None:
+            audit_group_commit = os.getenv("SARA_AUDIT_GROUP_COMMIT", "0") == "1"
+        if audit_group_commit_window_ms is None:
+            raw_window = os.getenv("SARA_AUDIT_GROUP_COMMIT_WINDOW_MS", "0.5")
+            try:
+                audit_group_commit_window_ms = float(raw_window)
+            except ValueError as exc:
+                raise ValueError(
+                    "SARA_AUDIT_GROUP_COMMIT_WINDOW_MS must be numeric"
+                ) from exc
+        if (
+            not math.isfinite(audit_group_commit_window_ms)
+            or audit_group_commit_window_ms < 0.0
+            or audit_group_commit_window_ms > MAX_AUDIT_GROUP_COMMIT_WINDOW_MS
+        ):
+            raise ValueError(
+                "audit_group_commit_window_ms must be finite and between "
+                f"0 and {MAX_AUDIT_GROUP_COMMIT_WINDOW_MS} ms"
+            )
+        self.audit_group_commit_enabled = bool(audit_group_commit)
+        self.audit_group_commit_window_ms = float(audit_group_commit_window_ms)
+        self._audit_group_condition = threading.Condition(threading.Lock())
+        self._audit_group_pending: list[_AuditAppendWaiter] = []
+        self._audit_group_leader_active = False
+
         if not self.registry_path.exists():
             self._atomic_write_json(self.registry_path, {})
         else:
@@ -170,6 +213,14 @@ class DurableStore:
 
     def append_audit(self, record: AuditRecord) -> None:
         line = record.model_dump_json(exclude_none=True)
+        if not self.audit_group_commit_enabled:
+            self._write_audit_lines([line])
+            return
+        self._append_audit_group_commit(line)
+
+    def _write_audit_lines(self, lines: list[str]) -> None:
+        if not lines:
+            return
         with self._lock:
             descriptor = os.open(
                 self.audit_path,
@@ -185,10 +236,49 @@ class DurableStore:
                 os.close(descriptor)
                 raise
             with os.fdopen(descriptor, "a", encoding="utf-8") as handle:
-                handle.write(line + "\n")
+                for line in lines:
+                    handle.write(line + "\n")
                 handle.flush()
                 os.fsync(handle.fileno())
             self._secure_mode(self.audit_path, 0o600, "audit file")
+
+    def _append_audit_group_commit(self, line: str) -> None:
+        waiter = _AuditAppendWaiter(line)
+        leader = False
+        with self._audit_group_condition:
+            self._audit_group_pending.append(waiter)
+            if not self._audit_group_leader_active:
+                self._audit_group_leader_active = True
+                leader = True
+
+        if leader:
+            self._drain_audit_group_commit()
+
+        waiter.done.wait()
+        if waiter.error is not None:
+            raise RuntimeError("Grouped audit append failed before durability") from waiter.error
+
+    def _drain_audit_group_commit(self) -> None:
+        if self.audit_group_commit_window_ms > 0.0:
+            time.sleep(self.audit_group_commit_window_ms / 1000.0)
+
+        while True:
+            with self._audit_group_condition:
+                if not self._audit_group_pending:
+                    self._audit_group_leader_active = False
+                    return
+                batch = self._audit_group_pending[:MAX_AUDIT_GROUP_COMMIT_BATCH]
+                del self._audit_group_pending[: len(batch)]
+
+            error: Exception | None = None
+            try:
+                self._write_audit_lines([waiter.line for waiter in batch])
+            except Exception as exc:
+                error = exc
+
+            for waiter in batch:
+                waiter.error = error
+                waiter.done.set()
 
     def read_audit(self, limit: int) -> list[dict[str, Any]]:
         with self._lock:
@@ -246,8 +336,6 @@ class DurableStore:
                 for byte in reversed(chunk):
                     if byte == 0x0A:
                         if at_eof:
-                            # A terminal JSONL newline closes the final record;
-                            # it does not create a synthetic empty record after it.
                             at_eof = False
                             continue
 
@@ -271,9 +359,6 @@ class DurableStore:
                         (bytes(reversed(current_reversed)), truncated)
                     )
                 elif file_size > 0:
-                    # If the file begins with a newline, the oldest record is
-                    # an empty line. Preserve the forward-reader semantics for
-                    # files such as b"\n" and b"\n\n".
                     handle.seek(0)
                     if handle.read(1) == b"\n":
                         records_newest_first.append((b"", False))
