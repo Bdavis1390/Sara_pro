@@ -98,8 +98,9 @@ def test_qcrypto_sara_audit_flows_into_echo_and_signed_checkpoint(
     reconciliation = echo.reconcile(records)
     assert reconciliation["scope"] == "PROVIDED_SARA_AUDIT_WINDOW"
     assert reconciliation["counts"]["MATCHED"] == 4
-    assert reconciliation["counts"].get("SARA_ONLY", 0) == 0
-    assert reconciliation["counts"].get("DIGEST_MISMATCH", 0) == 0
+    assert reconciliation["counts"]["SARA_ONLY"] == 0
+    assert reconciliation["counts"]["ECHO_ONLY"] == 0
+    assert reconciliation["counts"]["PAYLOAD_MISMATCH"] == 0
 
     key, _key_path = echo_checkpoint_key
     checkpoints = EchoCheckpointManager(
