@@ -121,10 +121,13 @@ class DurableStore:
             raise RuntimeError(f"Unable to open registry lock file: {exc}") from exc
         try:
             self._secure_descriptor(descriptor, 0o600, "registry lock file")
-            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX)
+            except OSError as exc:
+                raise RuntimeError(
+                    f"Unable to serialize registry transaction: {exc}"
+                ) from exc
             yield
-        except OSError as exc:
-            raise RuntimeError(f"Unable to serialize registry transaction: {exc}") from exc
         finally:
             try:
                 fcntl.flock(descriptor, fcntl.LOCK_UN)
