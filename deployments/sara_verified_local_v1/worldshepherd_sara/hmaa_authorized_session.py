@@ -27,6 +27,11 @@ from .hmaa_preflight import (
     evaluate_preflight,
     verify_preflight_report,
 )
+from .hmaa_session_partner import (
+    HMAASessionPartnerValidationRequest,
+    build_session_partner_validation_request,
+    canonical_session_partner_request_bytes,
+)
 
 
 HMAA_AUTHORIZED_SESSION_VERSION = "worldshepherd.hmaa.authorized-read-session.v1.2"
@@ -75,6 +80,7 @@ class HMAAAuthorizedReadSessionRun(BaseModel):
     captures: list[SandboxReadCaptureResult]
     attestation: HMAAAttestationReport
     partner_validation_request: HMAAPartnerValidationRequest | None = None
+    partner_validation_envelope: HMAASessionPartnerValidationRequest | None = None
     receipt: HMAAAuthorizedReadSessionReceipt
 
 
@@ -82,6 +88,7 @@ class HMAASessionArtifactManifest(BaseModel):
     manifest_version: str = HMAA_SESSION_ARTIFACT_MANIFEST_VERSION
     mission_id: str
     session_receipt_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    partner_exchange_package_sha256: str | None = None
     files: dict[str, str]
     local_capture_payloads_included: bool = True
     partner_package_excludes_raw_capture_payloads: bool = True
@@ -283,11 +290,17 @@ def run_authorized_read_session(
         attestation=attestation,
         partner_request=partner_request,
     )
+    partner_envelope = (
+        build_session_partner_validation_request(receipt, partner_request)
+        if partner_request is not None
+        else None
+    )
     return HMAAAuthorizedReadSessionRun(
         preflight=preflight,
         captures=captures,
         attestation=attestation,
         partner_validation_request=partner_request,
+        partner_validation_envelope=partner_envelope,
         receipt=receipt,
     )
 
@@ -299,14 +312,17 @@ def export_authorized_read_session(
     """Write local evidence artifacts and a hash-bound manifest.
 
     Capture JSON is local review evidence and may contain simulated environment
-    payloads. The partner validation request remains the separate, secret-free,
-    raw-payload-excluding exchange artifact.
+    payloads. The session partner request is the secret-free, raw-payload-
+    excluding external exchange artifact and cryptographically binds the named
+    endpoint, preflight, session receipt, and inner v0.8 evidence request.
     """
 
     if not verify_preflight_report(run.preflight):
         raise ValueError("cannot export session with invalid preflight digest")
     if not verify_authorized_read_session_receipt(run.receipt):
         raise ValueError("cannot export session with invalid receipt digest")
+    if run.partner_validation_envelope is not None:
+        canonical_session_partner_request_bytes(run.partner_validation_envelope)
 
     output_dir.mkdir(parents=True, exist_ok=False)
     serializable: dict[str, Any] = {
@@ -317,8 +333,12 @@ def export_authorized_read_session(
     for index, capture in enumerate(run.captures, start=1):
         serializable[f"local-capture-{index:02d}.json"] = capture.model_dump(mode="json")
     if run.partner_validation_request is not None:
-        serializable["partner-validation-request.json"] = (
+        serializable["partner-validation-request-v0.8.json"] = (
             run.partner_validation_request.model_dump(mode="json")
+        )
+    if run.partner_validation_envelope is not None:
+        serializable["partner-session-validation-request-v1.2.json"] = (
+            run.partner_validation_envelope.model_dump(mode="json")
         )
 
     file_hashes: dict[str, str] = {}
@@ -333,6 +353,11 @@ def export_authorized_read_session(
         "manifest_version": HMAA_SESSION_ARTIFACT_MANIFEST_VERSION,
         "mission_id": run.receipt.mission_id,
         "session_receipt_sha256": run.receipt.receipt_sha256,
+        "partner_exchange_package_sha256": (
+            run.partner_validation_envelope.package_sha256
+            if run.partner_validation_envelope is not None
+            else None
+        ),
         "files": dict(sorted(file_hashes.items())),
         "local_capture_payloads_included": True,
         "partner_package_excludes_raw_capture_payloads": True,
