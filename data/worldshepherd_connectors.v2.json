@@ -73,6 +73,7 @@
       "status": "external_connection",
       "capabilities": ["repo_read", "branch", "file_write", "pull_request", "issues", "ci_status"],
       "allowed_actions": ["repo.read", "branch.create", "file.create", "file.update", "pr.create", "issue.create"],
+      "external_read_actions": ["repo.read"],
       "roles": ["admin"],
       "max_data_class": "INTERNAL",
       "external_write_actions": ["branch.create", "file.create", "file.update", "pr.create", "issue.create"],
@@ -85,6 +86,7 @@
       "status": "external_connection",
       "capabilities": ["drive_search", "docs", "sheets", "slides", "sharing"],
       "allowed_actions": ["file.read", "file.create", "file.update", "comment.read", "share.update"],
+      "external_read_actions": ["file.read", "comment.read"],
       "roles": ["admin"],
       "max_data_class": "INTERNAL",
       "external_write_actions": ["file.create", "file.update", "share.update"],
@@ -97,6 +99,7 @@
       "status": "external_connection",
       "capabilities": ["search", "thread_read", "draft", "send", "labels"],
       "allowed_actions": ["mail.read", "mail.draft", "mail.send", "mail.label"],
+      "external_read_actions": ["mail.read"],
       "roles": ["admin"],
       "max_data_class": "INTERNAL",
       "external_write_actions": ["mail.draft", "mail.send", "mail.label"],
@@ -110,6 +113,7 @@
       "status": "external_connection",
       "capabilities": ["event_read", "availability", "event_write"],
       "allowed_actions": ["calendar.read", "calendar.availability", "calendar.create", "calendar.update", "calendar.delete"],
+      "external_read_actions": ["calendar.read", "calendar.availability"],
       "roles": ["admin"],
       "max_data_class": "INTERNAL",
       "external_write_actions": ["calendar.create", "calendar.update", "calendar.delete"],
@@ -122,6 +126,7 @@
       "status": "enabled",
       "capabilities": ["official_source_search", "market_scan", "partner_discovery", "literature_discovery"],
       "allowed_actions": ["research.search", "source.verify", "opportunity.scan", "partner.scan"],
+      "external_read_actions": ["research.search", "source.verify", "opportunity.scan", "partner.scan"],
       "roles": ["admin", "operator"],
       "max_data_class": "PUBLIC",
       "provenance": "ECHO_SENTINEL_LINK"
@@ -133,6 +138,7 @@
       "status": "connection_optional",
       "capabilities": ["lead_tracking", "evidence_rows", "milestones", "relationship_views"],
       "allowed_actions": ["record.read", "record.create", "record.update"],
+      "external_read_actions": ["record.read"],
       "roles": ["admin"],
       "max_data_class": "INTERNAL",
       "external_write_actions": ["record.create", "record.update"],
@@ -145,6 +151,7 @@
       "status": "connection_optional",
       "capabilities": ["structured_state", "query", "prototype_backend"],
       "allowed_actions": ["db.read", "db.insert", "db.update"],
+      "external_read_actions": ["db.read"],
       "roles": ["admin"],
       "max_data_class": "INTERNAL",
       "external_write_actions": ["db.insert", "db.update"],
@@ -157,6 +164,7 @@
       "status": "connection_optional",
       "capabilities": ["preview_deploy", "production_deploy", "web_app"],
       "allowed_actions": ["deployment.read", "deployment.preview", "deployment.production"],
+      "external_read_actions": ["deployment.read"],
       "roles": ["admin"],
       "max_data_class": "PUBLIC",
       "external_write_actions": ["deployment.preview", "deployment.production"],
@@ -172,6 +180,7 @@
     {"id": "echo.seal", "lane": "ECHO SENTINEL LINK", "risk": "WRITE", "description": "Create a deterministic hash envelope for action/evidence provenance."},
     {"id": "overwatch.snapshot", "lane": "OVERWATCH", "risk": "READ", "description": "Produce connector, workflow, and readiness health snapshots."},
     {"id": "partner.track", "lane": "Capture", "risk": "WRITE", "description": "Track partner candidates, contact state, gaps, probability, and conflicts."},
-    {"id": "artifact.publish", "lane": "Delivery", "risk": "EXTERNAL_EFFECT", "description": "Publish an approved artifact through a configured external connector."}
+    {"id": "artifact.publish", "lane": "Delivery", "risk": "EXTERNAL_EFFECT", "description": "Publish an approved artifact through a configured external connector."},
+    {"id": "connector.read.plan", "lane": "Connector Execution", "risk": "READ", "description": "Issue a sealed policy-authorized handoff ticket for an explicitly classified external read; does not execute the connector call."}
   ]
 }

@@ -80,10 +80,22 @@ class ConnectorControlPlane:
 
         for connector in connectors:
             cid = connector.get("id", "<missing>")
-            if not connector.get("allowed_actions"):
+            allowed = set(connector.get("allowed_actions", []))
+            reads = set(connector.get("external_read_actions", []))
+            writes = set(connector.get("external_write_actions", []))
+
+            if not allowed:
                 warnings.append(f"{cid}: no allowed actions")
             if connector.get("max_data_class") not in DATA_CLASS_ORDER:
                 errors.append(f"{cid}: invalid max_data_class")
+            if reads - allowed:
+                errors.append(f"{cid}: external_read_actions must be allow-listed")
+            if writes - allowed:
+                errors.append(f"{cid}: external_write_actions must be allow-listed")
+            if reads & writes:
+                errors.append(f"{cid}: read and write action classes must be disjoint")
+            if str(connector.get("kind", "")).startswith("external_") and not (reads or writes):
+                warnings.append(f"{cid}: external connector has no classified read/write actions")
 
         if errors:
             raise ValueError("connector manifest invalid: " + "; ".join(errors))
