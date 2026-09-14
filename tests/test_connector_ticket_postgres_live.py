@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
 
@@ -39,8 +40,8 @@ def process_claim(ticket):
     return claim.ok, claim.reason
 
 
-def issue_ticket(*, action="research.search", ttl_seconds=30):
-    issuer = make_broker()
+def issue_ticket(*, action="research.search", ttl_seconds=30, issuer_now=1000.0):
+    issuer = make_broker(now=issuer_now)
     planned = issuer.plan_read(
         connector_id="web_research",
         action=action,
@@ -92,17 +93,40 @@ def test_real_postgres_allows_exactly_one_across_separate_worker_processes():
     assert all(reason == "ticket already consumed" for _, reason in losers)
 
 
-def test_real_postgres_rejects_expired_ticket_across_new_connection():
+def test_database_time_ignores_large_issuer_and_claimant_clock_offsets():
     reset_table()
-    ticket = issue_ticket(action="source.verify", ttl_seconds=5)
+    issuer_now = 10_000_000.0
+    claimant_now = -10_000_000.0
+    ticket = issue_ticket(ttl_seconds=30, issuer_now=issuer_now)
 
-    later_worker = make_broker(now=1006.0)
-    claim = later_worker.claim_for_execution(ticket, now=1006.0)
+    store = PostgresClaimStore(connection_factory)
+    registered = store.status(ticket["ticket_id"])
+    assert registered["known"] is True
+    assert abs(float(registered["expires_at"]) - float(ticket["expires_at"])) > 1_000_000
+
+    claimant = make_broker(now=claimant_now)
+    claim = claimant.claim_for_execution(ticket, now=claimant_now)
+    assert claim["ok"] is True
+    assert claim["consumed_at"] != claimant_now
+    assert claim["consumed_at"] != issuer_now
+
+
+def test_real_postgres_rejects_expired_ticket_by_database_time_despite_client_skew():
+    reset_table()
+    ticket = issue_ticket(
+        action="source.verify",
+        ttl_seconds=5,
+        issuer_now=10_000_000.0,
+    )
+
+    time.sleep(5.25)
+    later_worker = make_broker(now=-10_000_000.0)
+    claim = later_worker.claim_for_execution(ticket, now=-10_000_000.0)
     assert claim["ok"] is False
     assert claim["reason"] == "ticket expired"
 
 
-def test_policy_records_single_host_live_evidence_without_distributed_upgrade():
+def test_policy_records_database_time_and_clock_skew_evidence_without_distributed_upgrade():
     policy = json.loads(POLICY.read_text(encoding="utf-8"))
     assert policy["postgres_live_validation"] is True
     assert policy["postgres_live_validation_environment"] == "ephemeral_postgresql_18_6_github_actions"
@@ -113,8 +137,13 @@ def test_policy_records_single_host_live_evidence_without_distributed_upgrade():
     assert policy["multi_worker_validation_scope"] == "single_host_separate_python_processes"
     assert policy["reconnect_replay_validation"] is True
     assert policy["fresh_connection_expiry_validation"] is True
+    assert policy["clock_authority"] == "postgres_clock_timestamp"
+    assert policy["database_time_expiry_validation"] is True
+    assert policy["database_time_consumption_validation"] is True
+    assert policy["clock_skew_live_validation"] is True
+    assert policy["clock_skew_validation_scope"] == "single_host_injected_issuer_and_claimant_absolute_offsets"
+    assert policy["clock_skew_offset_test_seconds"] == 10_000_000
     assert policy["failure_injection_validation"] is False
-    assert policy["clock_skew_live_validation"] is False
     assert policy["multi_host_live_validation"] is False
     assert policy["distributed_replay_protection"] is False
     assert policy["multi_host_consensus"] is False

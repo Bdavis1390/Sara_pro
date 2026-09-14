@@ -26,11 +26,20 @@ class SharedClaimStore(Protocol):
 
     Implementations may be local, database-backed, or remote. The contract stores
     only the ticket identifier, ticket digest, expiry, and consumption timestamp.
-    Connector context, connector results, policy-envelope contents, and credentials
-    are deliberately outside this interface.
+    Ticket issuance and expiry are both supplied so a remote store may derive the
+    signed bounded TTL while using its own authoritative clock. Connector context,
+    connector results, policy-envelope contents, and credentials remain outside
+    this interface.
     """
 
-    def register(self, *, ticket_id: str, ticket_sha256: str, expires_at: float) -> None: ...
+    def register(
+        self,
+        *,
+        ticket_id: str,
+        ticket_sha256: str,
+        issued_at: float,
+        expires_at: float,
+    ) -> None: ...
 
     def claim(
         self,
@@ -59,6 +68,7 @@ class SharedReadTicketLedger(ReadTicketLedger):
         self.store.register(
             ticket_id=str(ticket["ticket_id"]),
             ticket_sha256=str(ticket["sha256"]),
+            issued_at=float(ticket["issued_at"]),
             expires_at=float(ticket["expires_at"]),
         )
 
@@ -88,15 +98,24 @@ class ThreadSafeSharedClaimStore:
     """Reference compare-and-set store used to verify shared-ledger semantics.
 
     This class is intentionally process-local and exists as a deterministic test
-    implementation of the SharedClaimStore contract. It is NOT a distributed
-    backend and must not be used to claim multi-host anti-replay.
+    implementation of the SharedClaimStore contract. It retains caller-clock
+    behavior for deterministic unit tests. It is NOT a distributed backend and
+    must not be used to claim multi-host anti-replay or clock-skew tolerance.
     """
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._records: Dict[str, SharedClaimRecord] = {}
 
-    def register(self, *, ticket_id: str, ticket_sha256: str, expires_at: float) -> None:
+    def register(
+        self,
+        *,
+        ticket_id: str,
+        ticket_sha256: str,
+        issued_at: float,
+        expires_at: float,
+    ) -> None:
+        _ = issued_at
         with self._lock:
             if ticket_id in self._records:
                 raise ValueError("duplicate ticket_id")

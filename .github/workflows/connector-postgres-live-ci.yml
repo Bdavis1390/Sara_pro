@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "worldshepherd/connectors-postgres-live-ci-v1-*"
+      - "worldshepherd/connectors-dbtime-clock-skew-v1-*"
   pull_request:
     paths:
       - "worldshepherd_sara/connector_ticket_postgres.py"
@@ -45,5 +46,5 @@ jobs:
         run: python -m pip install --disable-pip-version-check fastapi pytest "psycopg[binary]==3.3.5"
       - name: Compile live Postgres claim path
         run: python -m py_compile worldshepherd_sara/connector_ticket_postgres.py worldshepherd_sara/connector_ticket_shared.py tests/test_connector_ticket_postgres_live.py
-      - name: Verify real Postgres contention and reconnect behavior
+      - name: Verify real Postgres contention database-time and skew behavior
         run: python -m pytest -q tests/test_connector_ticket_postgres_live.py
