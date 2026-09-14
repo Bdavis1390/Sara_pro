@@ -35,16 +35,18 @@ jobs:
           test "$(git -C "$RUNNER_TEMP/HDTN" rev-parse HEAD)" = "$pin"
       - name: Configure HDTN
         run: cmake -S "$RUNNER_TEMP/HDTN" -B "$RUNNER_TEMP/HDTN/build" -DCMAKE_BUILD_TYPE=Release -DENABLE_BPSEC=OFF -DUSE_X86_HARDWARE_ACCELERATION=OFF -DLTP_RNG_USE_RDSEED=OFF
-      - name: Build HDTN
-        run: cmake --build "$RUNNER_TEMP/HDTN/build" --parallel 2
+      - name: Build required HDTN targets
+        run: cmake --build "$RUNNER_TEMP/HDTN/build" --target hdtn-one-process bpsendfile bpreceivefile bpgen-async unit-tests integrated-tests --parallel 4
       - name: Run HDTN unit tests
         run: "$RUNNER_TEMP/HDTN/build/tests/unit_tests/unit-tests"
       - name: Run HDTN integrated tests
         run: "$RUNNER_TEMP/HDTN/build/tests/integrated_tests/integrated-tests"
       - name: Verify BPv7 and contact-plan interfaces are present
+        shell: bash
         run: |
-          "$RUNNER_TEMP/HDTN/build/common/bpcodec/apps/bpgen-async" --help 2>&1 | grep -q -- "--use-bp-version-7"
-          "$RUNNER_TEMP/HDTN/build/module/hdtn_one_process/hdtn-one-process" --help 2>&1 | grep -q -- "--contact-plan-file"
+          set -euo pipefail
+          { "$RUNNER_TEMP/HDTN/build/common/bpcodec/apps/bpgen-async" --help 2>&1 || true; } | grep -q -- "--use-bp-version-7"
+          { "$RUNNER_TEMP/HDTN/build/module/hdtn_one_process/hdtn-one-process" --help 2>&1 || true; } | grep -q -- "--contact-plan-file"
       - name: Prove byte-identical BPv7 delivery across a scheduled contact gap
         shell: bash
         run: |
