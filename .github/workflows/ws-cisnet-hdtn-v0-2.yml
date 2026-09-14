@@ -51,11 +51,12 @@ jobs:
           set -euo pipefail
           HDTN="$RUNNER_TEMP/HDTN"
           LAB="$RUNNER_TEMP/ws-cisnet-bpv7"
+          export LAB
           mkdir -p "$LAB/input" "$LAB/received" "$LAB/logs" artifacts
           python - <<'PY'
           from pathlib import Path
-          import hashlib
-          target = Path("$RUNNER_TEMP/ws-cisnet-bpv7/input/payload.bin")
+          import hashlib, os
+          target = Path(os.environ["LAB"]) / "input" / "payload.bin"
           seed = hashlib.sha256(b"WS-CISNET-BPV7-DELAY-GATE-v0.2").digest()
           target.write_bytes((seed * ((8 * 1024 * 1024 + len(seed) - 1) // len(seed)))[:8 * 1024 * 1024])
           PY
@@ -83,14 +84,14 @@ jobs:
             --contact-plan-file="$PLAN") >"$LAB/logs/hdtn.log" 2>&1 &
           HDTN_PID=$!
           sleep 3
-          "$HDTN/build/common/bpcodec/apps/bpsendfile" \
+          (cd "$LAB" && "$HDTN/build/common/bpcodec/apps/bpsendfile" \
             --use-bp-version-7 \
             --force-disable-custody \
             --max-bundle-size-bytes=500000 \
-            --file-or-folder-path="$SOURCE" \
+            --file-or-folder-path="input/payload.bin" \
             --my-uri-eid=ipn:1.1 \
             --dest-uri-eid=ipn:2.1 \
-            --outducts-config-file="$HDTN/config_files/outducts/bpgen_one_tcpclv4_port4556.json" \
+            --outducts-config-file="$HDTN/config_files/outducts/bpgen_one_tcpclv4_port4556.json") \
             >"$LAB/logs/sender.log" 2>&1 &
           SEND_PID=$!
           sleep 8
