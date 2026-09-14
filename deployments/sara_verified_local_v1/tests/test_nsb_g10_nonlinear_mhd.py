@@ -17,6 +17,7 @@ def report() -> NSBG10Report:
 
 
 def test_g10_acceptance_passes(report: NSBG10Report) -> None:
+    assert report.benchmark_version == "1.5.1"
     assert report.acceptance.acceptance_pass
     assert report.nonlinear_2d_mhd_implemented
     assert report.induction_equation_evolved
@@ -49,11 +50,40 @@ def test_divergence_and_means_are_controlled(report: NSBG10Report) -> None:
     assert report.nonlinear_case.mean_magnetic_potential_drift <= 1e-12
 
 
+def _max_ideal_drift(case) -> float:
+    return max(
+        case.total_energy_relative_drift,
+        case.cross_helicity_relative_drift,
+        case.magnetic_potential_variance_relative_drift,
+    )
+
+
 def test_ideal_invariants_remain_bounded(report: NSBG10Report) -> None:
     ideal = report.ideal_invariant_case
+    assert ideal.dt == pytest.approx(0.000125)
+    assert ideal.steps == 80
     assert ideal.total_energy_relative_drift <= report.acceptance.ideal_invariant_drift_limit
     assert ideal.cross_helicity_relative_drift <= report.acceptance.ideal_invariant_drift_limit
     assert ideal.magnetic_potential_variance_relative_drift <= report.acceptance.ideal_invariant_drift_limit
+
+
+def test_ideal_invariant_temporal_refinement_records_and_reduces_drift(report: NSBG10Report) -> None:
+    coarse, refined, fine = report.ideal_temporal_refinement
+    assert (coarse.dt, refined.dt, fine.dt) == pytest.approx((0.00025, 0.000125, 0.0000625))
+    assert (coarse.steps, refined.steps, fine.steps) == (40, 80, 160)
+    assert coarse.final_time == refined.final_time == fine.final_time == pytest.approx(0.01)
+
+    coarse_drift = _max_ideal_drift(coarse)
+    refined_drift = _max_ideal_drift(refined)
+    fine_drift = _max_ideal_drift(fine)
+
+    # Regression for #245: the original coarse configuration violated the
+    # unchanged 2e-5 limit. Halving dt must reduce the observed drift rather
+    # than hiding the defect by weakening acceptance.
+    assert coarse_drift > report.acceptance.ideal_invariant_drift_limit
+    assert refined_drift < coarse_drift
+    assert fine_drift < refined_drift
+    assert refined_drift <= report.acceptance.ideal_invariant_drift_limit
 
 
 def test_zero_magnetic_potential_remains_zero() -> None:
