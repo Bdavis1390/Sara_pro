@@ -1,0 +1,144 @@
+name: Worldshepherd Zeek vector-record prototype
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/docs/oss/patches/zeek-vector-record-json-v0_1.patch'
+      - 'deployments/sara_verified_local_v1/fixtures/zeek/vector_record_json.zeek'
+      - 'deployments/sara_verified_local_v1/docs/oss/ZEEK_VECTOR_RECORD_ACCEPTANCE_V0_1.md'
+      - '.github/workflows/ws-zeek-vector-record-prototype.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zeek-vector-record-prototype:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out Worldshepherd source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Install Zeek build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bison ccache cmake cppzmq-dev flex g++ gcc git jq \
+            libfl2 libfl-dev libmaxminddb-dev libnode-dev libpcap-dev \
+            libssl-dev libuv1-dev libz-dev make ninja-build python3-dev \
+            python3-pip swig
+
+      - name: Check out exact Zeek revision with submodules
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: zeek/zeek
+          ref: a33fd2717220be036b6495db22ad26b5617d6e5e
+          path: external/zeek
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Verify and apply prototype patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          PATCH="$GITHUB_WORKSPACE/deployments/sara_verified_local_v1/docs/oss/patches/zeek-vector-record-json-v0_1.patch"
+          cd external/zeek
+          git apply --check "$PATCH"
+          git apply "$PATCH"
+          git diff --check
+          git diff --stat
+
+      - name: Configure Zeek prototype build
+        working-directory: external/zeek
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache-zeek
+        run: >-
+          ./configure
+          --generator=Ninja
+          --build-type=Release
+          --ccache
+          --disable-btest-pcaps
+          --disable-broker-tests
+          --disable-cpp-tests
+
+      - name: Build patched Zeek
+        working-directory: external/zeek
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache-zeek
+        run: ninja -C build -j2
+
+      - name: Prove native JSON array-of-object behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          source external/zeek/build/zeek-path-dev.sh
+          WORK="$RUNNER_TEMP/ws-zeek-vector-record"
+          mkdir -p "$WORK"
+          cp deployments/sara_verified_local_v1/fixtures/zeek/vector_record_json.zeek "$WORK/fixture.zeek"
+          cd "$WORK"
+          zeek -b fixture.zeek
+          test -s ws-vector-record.log
+
+          jq -s -e '
+            length == 3 and
+            ([.[] | select(.case_id == "multiple")] | length) == 1 and
+            ([.[] | select(.case_id == "empty")] | length) == 1 and
+            ([.[] | select(.case_id == "absent")] | length) == 1 and
+            (([.[] | select(.case_id == "multiple")][0].answers | type) == "array") and
+            (([.[] | select(.case_id == "multiple")][0].answers[0] | type) == "object") and
+            ([.[] | select(.case_id == "multiple")][0].answers[0].rdata == "192.0.2.10") and
+            ([.[] | select(.case_id == "multiple")][0].answers[0].ttl == 300) and
+            ([.[] | select(.case_id == "multiple")][0].answers[0].note == "first \"quoted\" answer") and
+            ([.[] | select(.case_id == "multiple")][0].answers[1].rdata == "192.0.2.11") and
+            ([.[] | select(.case_id == "multiple")][0].answers[1].ttl == 301) and
+            (([.[] | select(.case_id == "multiple")][0].answers[1] | has("note")) == false) and
+            ([.[] | select(.case_id == "empty")][0].answers == []) and
+            (([.[] | select(.case_id == "absent")][0] | has("answers")) == false)
+          ' ws-vector-record.log
+
+          if jq -e -r '.answers? // empty' ws-vector-record.log | grep -q '^\['; then
+            echo 'Unexpected stringified JSON detected in answers' >&2
+            exit 1
+          fi
+
+      - name: Prove TSV path rejects unsupported vector-record shape clearly
+        shell: bash
+        run: |
+          set -euo pipefail
+          source external/zeek/build/zeek-path-dev.sh
+          WORK="$RUNNER_TEMP/ws-zeek-vector-record-tsv"
+          mkdir -p "$WORK"
+          sed 's/redef LogAscii::use_json = T;/redef LogAscii::use_json = F;/' \
+            deployments/sara_verified_local_v1/fixtures/zeek/vector_record_json.zeek \
+            > "$WORK/fixture-tsv.zeek"
+          cd "$WORK"
+          set +e
+          zeek -b fixture-tsv.zeek >stdout.txt 2>stderr.txt
+          rc=$?
+          set -e
+          test "$rc" -ne 0
+          grep -F 'ASCII/TSV output does not support vector[record]' stderr.txt
+
+      - name: Run focused existing JSON logging regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          source external/zeek/build/zeek-path-dev.sh
+          cd external/zeek/testing/btest
+          btest -d scripts/base/frameworks/logging/ascii-json.zeek
+
+      - name: Publish prototype summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Worldshepherd Zeek vector[record] prototype'
+            echo '- Zeek revision: `a33fd2717220be036b6495db22ad26b5617d6e5e`'
+            echo '- Scope: local ASCII writer with JSON enabled'
+            echo '- Target: native JSON `vector[record]` arrays, not escaped strings'
+            echo '- Non-JSON policy: explicit rejection for `vector[record]` in this prototype'
+            echo '- Claim boundary: prototype evidence only; no Zeek maintainer acceptance, upstream merge, OCSF certification, or production readiness implied.'
+          } >> "$GITHUB_STEP_SUMMARY"
