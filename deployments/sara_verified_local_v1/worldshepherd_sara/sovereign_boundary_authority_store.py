@@ -20,22 +20,7 @@ from .storage import DurableStore
 
 
 class PrimeEffectAuthorizationStore:
-    """Durable one-time-use authority ledger backed by SARA's registry transaction.
-
-    Claim transitions are persisted under ``DurableStore.transact_registry()``,
-    so concurrent callers cannot both derive a VERIFIED -> CLAIMED transition
-    from the same registry snapshot. The claim is persisted before the caller is
-    handed a claim-bound envelope.
-
-    Before any external physical executor is invoked, callers must persist the
-    second one-way fence, CLAIMED -> INVOKING. This prevents two concurrent PEP
-    callers from both passing a read-only CLAIMED check and invoking the same
-    side effect. A stranded INVOKING record is deliberately unsafe to replay.
-
-    The external physical side effect is intentionally not part of the file
-    transaction. If execution outcome becomes uncertain after INVOKING, callers
-    must move the authorization to INDETERMINATE rather than retry it.
-    """
+    """Durable one-time-use authority ledger backed by SARA's registry transaction."""
 
     def __init__(self, store: DurableStore) -> None:
         self.store = store
@@ -64,12 +49,19 @@ class PrimeEffectAuthorizationStore:
                 envelope=envelope,
                 execution_id=execution_id,
             )
-            return patch, execution_id
+            entry = patch[PRIME_EFFECT_AUTHZ_LEDGER_KEY][authorization_id]
+            return patch, (
+                execution_id,
+                str(entry["execution_identity_digest"]),
+            )
 
-        claimed_execution_id = self.store.transact_registry(operation)
+        claimed_execution_id, execution_identity_digest = self.store.transact_registry(
+            operation
+        )
         return bind_prime_execution_claim(
             envelope,
             execution_id=claimed_execution_id,
+            execution_identity_digest=execution_identity_digest,
         )
 
     def assert_claimed(
