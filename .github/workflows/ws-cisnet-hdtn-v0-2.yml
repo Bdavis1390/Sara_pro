@@ -38,9 +38,17 @@ jobs:
       - name: Build required HDTN targets
         run: cmake --build "$RUNNER_TEMP/HDTN/build" --target hdtn-one-process bpsendfile bpreceivefile bpgen-async unit-tests integrated-tests --parallel 4
       - name: Run HDTN unit tests
-        run: "$RUNNER_TEMP/HDTN/build/tests/unit_tests/unit-tests"
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/HDTN"
+          ./build/tests/unit_tests/unit-tests
       - name: Run HDTN integrated tests
-        run: "$RUNNER_TEMP/HDTN/build/tests/integrated_tests/integrated-tests"
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/HDTN"
+          ./build/tests/integrated_tests/integrated-tests
       - name: Verify BPv7 and contact-plan interfaces are present
         shell: bash
         run: |
