@@ -4,11 +4,16 @@ on:
   push:
     branches:
       - "worldshepherd/connectors-read-broker-v1-r2-*"
+      - "worldshepherd/connectors-ticket-lifecycle-v1-*"
   pull_request:
     paths:
       - "data/worldshepherd_connectors.v2.json"
+      - "data/worldshepherd_read_ticket_policy.v1.json"
       - "worldshepherd_sara/connector_control.py"
       - "worldshepherd_sara/connector_execution.py"
+      - "worldshepherd_sara/connector_receipt.py"
+      - "worldshepherd_sara/connector_ticket_lifecycle.py"
+      - "tests/test_connector_ticket_lifecycle.py"
       - ".github/workflows/connector-read-broker-r2-ci.yml"
 
 permissions:
@@ -19,70 +24,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - name: Install runtime imports
-        run: python -m pip install --disable-pip-version-check fastapi
-      - name: Compile broker and policy
-        run: python -m py_compile worldshepherd_sara/connector_control.py worldshepherd_sara/connector_execution.py
-      - name: Verify read broker contract
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          from worldshepherd_sara.connector_control import ConnectorControlPlane
-          from worldshepherd_sara.connector_execution import ReadExecutionBroker
-
-          control = ConnectorControlPlane(Path('data/worldshepherd_connectors.v2.json'))
-          assert control.validate_manifest()['ok'] is True
-          broker = ReadExecutionBroker(control)
-
-          ok = broker.plan_read(
-              connector_id='web_research',
-              action='research.search',
-              actor='operator',
-              data_class='PUBLIC',
-              context={'query': 'ci-contract'},
-          )
-          assert ok.ok
-          assert ok.ticket is not None
-          assert ok.ticket['write_enabled'] is False
-          assert len(ok.ticket['sha256']) == 64
-
-          github_read = broker.plan_read(
-              connector_id='github',
-              action='repo.read',
-              actor='admin',
-              data_class='PUBLIC',
-          )
-          assert github_read.ok
-
-          write_attempt = broker.plan_read(
-              connector_id='github',
-              action='file.update',
-              actor='admin',
-              data_class='INTERNAL',
-          )
-          assert not write_attempt.ok
-          assert 'explicitly classified' in write_attempt.reason
-
-          local_attempt = broker.plan_read(
-              connector_id='sara_core',
-              action='health.read',
-              actor='operator',
-              data_class='PUBLIC',
-          )
-          assert not local_attempt.ok
-          assert 'not an external handoff target' in local_attempt.reason
-
-          unknown = broker.plan_read(
-              connector_id='unknown_service',
-              action='read',
-              actor='operator',
-              data_class='PUBLIC',
-          )
-          assert not unknown.ok
-          assert 'unknown connector' in unknown.reason
-          PY
+        run: python -m pip install --disable-pip-version-check fastapi pytest
+      - name: Compile broker policy and lifecycle
+        run: python -m py_compile worldshepherd_sara/connector_control.py worldshepherd_sara/connector_execution.py worldshepherd_sara/connector_receipt.py worldshepherd_sara/connector_ticket_lifecycle.py
+      - name: Verify broker and lifecycle contracts
+        run: python -m pytest -q tests/test_connector_ticket_lifecycle.py
