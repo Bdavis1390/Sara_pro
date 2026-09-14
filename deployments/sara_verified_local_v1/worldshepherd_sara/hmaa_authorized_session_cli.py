@@ -114,6 +114,10 @@ def main() -> None:
         raise SystemExit(
             "network execution requires --out so the evidence session is retained locally"
         )
+    if args.out.exists():
+        raise SystemExit(
+            "network execution requires a new --out directory; no network call was made"
+        )
 
     run = run_authorized_read_session(
         HMAAAuthorizedReadSessionRequest(
