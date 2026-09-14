@@ -3,6 +3,7 @@ from pathlib import Path
 
 from worldshepherd_sara.connector_control import ConnectorControlPlane
 from worldshepherd_sara.connector_execution import ReadExecutionBroker
+from worldshepherd_sara.connector_ticket_lifecycle import TicketClaim
 from worldshepherd_sara.connector_ticket_shared import (
     SharedReadTicketLedger,
     ThreadSafeSharedClaimStore,
@@ -65,3 +66,27 @@ def test_shared_store_persists_minimal_claim_state_only():
     assert set(record.__dict__) == {"ticket_sha256", "expires_at", "consumed_at"}
     assert "context_sha256" not in record.__dict__
     assert "policy_envelope_sha256" not in record.__dict__
+
+
+def test_shared_ledger_status_redacts_internal_ticket_digest():
+    class DigestReportingStore:
+        def register(self, **kwargs):
+            return None
+
+        def claim(self, *, ticket_id, ticket_sha256, now):
+            return TicketClaim(False, ticket_id, "not used")
+
+        def status(self, ticket_id):
+            return {
+                "known": True,
+                "ticket_id": ticket_id,
+                "ticket_sha256": "a" * 64,
+                "expires_at": 1030.0,
+                "consumed": False,
+                "consumed_at": None,
+            }
+
+    ledger = SharedReadTicketLedger(DigestReportingStore())
+    status = ledger.status("ticket-1")
+    assert status["known"] is True
+    assert "ticket_sha256" not in status
