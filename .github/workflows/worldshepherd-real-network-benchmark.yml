@@ -1,0 +1,57 @@
+name: Worldshepherd Real Network Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/storage.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/synthetic_fusion_api.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
+      - 'tools/selection_demo/benchmark_fusion_real_network.py'
+      - '.github/workflows/worldshepherd-real-network-benchmark.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  real-network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SARA benchmark environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'deployments/sara_verified_local_v1[test]'
+
+      - name: Run governed API and storage regression tests
+        run: |
+          python -m pytest \
+            deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py \
+            deployments/sara_verified_local_v1/tests/test_storage_tail.py
+
+      - name: Measure real localhost HTTP and TLS paths
+        run: |
+          mkdir -p real_network_evidence
+          python tools/selection_demo/benchmark_fusion_real_network.py \
+            --out real_network_evidence/governed-fusion-real-network-benchmark.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Upload real-network evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-real-network-benchmark-${{ github.sha }}
+          path: real_network_evidence/
+          if-no-files-found: error
+          retention-days: 30
