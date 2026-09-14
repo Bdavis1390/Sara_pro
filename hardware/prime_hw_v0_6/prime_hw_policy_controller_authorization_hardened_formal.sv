@@ -187,10 +187,10 @@ module prime_hw_policy_controller_authorization_hardened_formal;
         end
 
         if (past_valid) begin
-            // Standalone authorization-fault latch is sticky until reset.
-            if ($past(probe_fault_latched))
+            // Standalone authorization-fault latch is sticky while reset remains released.
+            if ($past(reset_n) && $past(probe_fault_latched))
                 assert(probe_fault_latched);
-            if ($past(probe_fault_event))
+            if ($past(reset_n) && $past(probe_fault_event))
                 assert(probe_fault_latched);
 
             // On the nominal unmutated controller path, the independent witness
