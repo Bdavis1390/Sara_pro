@@ -48,15 +48,10 @@ jobs:
           python -m pip install -c constraints-ci.txt -e '.[test]'
           python -m pip check
 
-      - name: Validate bridge shell and focused QCRYPTO tests
+      - name: Validate bridge shell and all QCRYPTO tests
         run: |
           bash -n scripts/verify_qcrypto_echo_bridge.sh
-          pytest -q \
-            tests/test_qcrypto_audit_api.py \
-            tests/test_qcrypto_audit_verifier.py \
-            tests/test_qcrypto_echo_forwarder.py \
-            tests/test_qcrypto_echo_integration.py \
-            tests/test_qcrypto_echo_sync_api.py
+          pytest -q tests/test_qcrypto_*.py
 
       - name: Create isolated bridge environment
         run: |
