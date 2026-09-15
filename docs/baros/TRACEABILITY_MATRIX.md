@@ -1,6 +1,6 @@
 # BAROS G1 Requirements Traceability Matrix
 
-Status: research-only verification artifact  
+Status: research-only verification artifact
 Clinical use: prohibited
 
 | Requirement ID | Manuscript-derived function | Repository implementation | Verification | Current evidence state | Next external gate |
