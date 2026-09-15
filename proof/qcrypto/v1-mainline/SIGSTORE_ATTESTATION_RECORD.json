@@ -1,0 +1,51 @@
+{
+  "schema": "WS-QCRYPTO-SIGSTORE-CUSTODY-ATTESTATION-V1",
+  "signed_payload": {
+    "path": "proof/qcrypto/v1-mainline/CUSTODY_RECORD.json",
+    "sha256": "844a88add18a081eea8722ac69de13575fbb7db1d26d52e47b6d8cf13590f201",
+    "git_blob_sha1": "ba5ac4fb19ca24c6aa8d95534c9a988f6d81db2e"
+  },
+  "signing_event": {
+    "workflow": "QCRYPTO Custody Sigstore Attestation",
+    "workflow_path": ".github/workflows/qcrypto-custody-sigstore.yml",
+    "workflow_run": 35001901863,
+    "workflow_attempt": 1,
+    "event": "push",
+    "commit_sha": "76c3f8d9236b6becbec3a29ed31dfa1385d90f63",
+    "branch": "refs/heads/proof/qcrypto-v1-mainline-custody",
+    "repository": "Bdavis1390/Sara_pro",
+    "runner_environment": "github-hosted"
+  },
+  "sigstore": {
+    "bundle_media_type": "application/vnd.dev.sigstore.bundle.v0.3+json",
+    "certificate_identity": "https://github.com/Bdavis1390/Sara_pro/.github/workflows/qcrypto-custody-sigstore.yml@refs/heads/proof/qcrypto-v1-mainline-custody",
+    "oidc_issuer": "https://token.actions.githubusercontent.com",
+    "certificate_issuer": "CN=sigstore-intermediate,O=sigstore.dev",
+    "certificate_not_before_utc": "2026-09-15T17:32:33Z",
+    "certificate_not_after_utc": "2026-09-15T17:42:33Z",
+    "transparency_entry_kind": "hashedrekord",
+    "transparency_entry_present": true,
+    "transparency_inclusion_material_present": true,
+    "cosign_identity_verification": "PASS"
+  },
+  "artifact": {
+    "name": "qcrypto-custody-sigstore-attestation",
+    "github_artifact_id": 10409614326,
+    "artifact_zip_sha256": "a6addc6b513f09a41b627d48c2476317ab4a94c5269931056a93dad5350e9a8a",
+    "sigstore_bundle_sha256": "a8669a592f84bb3e67cc063b67be1bba811606291bf64febbf748d24669fd862",
+    "expires_at_utc": "2026-12-14T17:32:22Z",
+    "portable_due_diligence_extension_sha256": "3b7a0309f587642bf8a5fd46ebf16c116c9cf5bfb127e2a9e6bdb641741ea99d"
+  },
+  "claims_boundary": {
+    "workflow_identity_signature": true,
+    "personal_signature_by_brandon_ray_davis": false,
+    "retroactive_signature_of_historical_commits": false,
+    "rfc3161_tsa_response": false,
+    "independent_technical_validation": false,
+    "federal_compliance": false,
+    "ws_cae_conformance": false,
+    "production_deployment": false,
+    "live_value_authorization": false,
+    "post_quantum_security_of_ed25519_checkpoint": false
+  }
+}
