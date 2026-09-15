@@ -7,6 +7,7 @@ on:
       - 'tests/test_baros_reference.py'
       - 'tests/test_baros_pipeline.py'
       - 'tests/test_baros_dicom_rt.py'
+      - 'tests/test_baros_dvh.py'
       - 'docs/baros/**'
       - '.github/workflows/baros-g1.yml'
   push:
@@ -15,6 +16,7 @@ on:
       - 'tests/test_baros_reference.py'
       - 'tests/test_baros_pipeline.py'
       - 'tests/test_baros_dicom_rt.py'
+      - 'tests/test_baros_dvh.py'
       - 'docs/baros/**'
       - '.github/workflows/baros-g1.yml'
 
@@ -37,6 +39,7 @@ jobs:
           tests/test_baros_reference.py
           tests/test_baros_pipeline.py
           tests/test_baros_dicom_rt.py
+          tests/test_baros_dvh.py
       - name: Generate exact-run synthetic evidence bundle
         run: PYTHONPATH=. python -m baros.cli --commit-sha "$GITHUB_SHA" --output baros-evidence.json > baros-evidence.stdout.json
       - name: Assert evidence remains non-clinical and passing
@@ -59,6 +62,7 @@ jobs:
           if-no-files-found: error
 
 # Passing this workflow proves only the bounded research-software behaviors
-# actually exercised here. Synthetic DICOM round trips are not DICOM
-# conformance certification, TPS interoperability, physical-dose validation,
-# clinical validation, regulatory authorization, or permission for patient use.
+# actually exercised here. Synthetic DICOM round trips and numerical DVH
+# metrics are not DICOM conformance certification, TPS interoperability,
+# physical-dose validation, clinical validation, regulatory authorization,
+# or permission for patient use.
