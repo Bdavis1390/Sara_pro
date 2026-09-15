@@ -122,6 +122,12 @@ class PrimeSentinelVerifier:
     def key_is_revoked(self, key_id: str) -> bool:
         return key_id in self.revoked_key_ids
 
+    def key_fingerprint_sha256(self, key_id: str) -> str | None:
+        key_bytes = self._public_keys.get(key_id)
+        if key_bytes is None:
+            return None
+        return hashlib.sha256(key_bytes).hexdigest()
+
     @classmethod
     def from_environment(cls) -> "PrimeSentinelVerifier":
         raw_keys = os.getenv("PRIME_SENTINEL_PUBLIC_KEYS_JSON", "{}").strip() or "{}"
@@ -246,6 +252,17 @@ def assert_recorded_authorization_usable(
         raise PrimeSentinelAuthorizationError("authorization signing key is no longer configured")
     if verifier.key_is_revoked(key_id):
         raise PrimeSentinelAuthorizationError("authorization signing key is revoked")
+    recorded_fingerprint = entry.get("key_fingerprint_sha256")
+    current_fingerprint = verifier.key_fingerprint_sha256(key_id)
+    if (
+        not isinstance(recorded_fingerprint, str)
+        or len(recorded_fingerprint) != 64
+        or current_fingerprint is None
+        or not secrets.compare_digest(recorded_fingerprint, current_fingerprint)
+    ):
+        raise PrimeSentinelAuthorizationError(
+            "authorization signing key fingerprint no longer matches configured key"
+        )
     try:
         expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
     except (KeyError, ValueError) as exc:
