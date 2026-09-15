@@ -1,0 +1,38 @@
+name: BAROS G1 research verification
+
+on:
+  pull_request:
+    paths:
+      - 'baros/**'
+      - 'tests/test_baros_reference.py'
+      - 'docs/baros/**'
+      - '.github/workflows/baros-g1.yml'
+  push:
+    paths:
+      - 'baros/**'
+      - 'tests/test_baros_reference.py'
+      - 'docs/baros/**'
+      - '.github/workflows/baros-g1.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  baros-g1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Run bounded BAROS G1 tests
+        run: PYTHONPATH=. python -m pytest -q tests/test_baros_reference.py
+      - name: Enforce non-clinical boundary
+        run: |
+          grep -R "NON-CLINICAL\|not for patient care\|must not be used for patient care" baros
+
+# This workflow establishes only deterministic research-software behavior for
+# the bounded G1 reference implementation. It does not establish clinical,
+# physical/dosimetric, partner, or regulatory validation.
