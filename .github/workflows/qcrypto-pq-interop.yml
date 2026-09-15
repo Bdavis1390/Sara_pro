@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "security/qcrypto/pq_signature_interop.py"
+      - "security/qcrypto/pos_family_preservation.py"
       - "scripts/qcrypto_pq_interop_evidence.py"
       - "tests/test_qcrypto_pq_signature_interop.py"
       - ".github/workflows/qcrypto-pq-interop.yml"
@@ -12,6 +13,7 @@ on:
       - worldshepherd-qcrypto-width-time-risk-v1
     paths:
       - "security/qcrypto/pq_signature_interop.py"
+      - "security/qcrypto/pos_family_preservation.py"
       - "scripts/qcrypto_pq_interop_evidence.py"
       - "tests/test_qcrypto_pq_signature_interop.py"
       - ".github/workflows/qcrypto-pq-interop.yml"
@@ -36,7 +38,7 @@ jobs:
           python -m pip install --disable-pip-version-check --only-binary=:all: "pqcrypto==1.0.0" pytest
 
       - name: Compile WS-QPOS-2 interop lane
-        run: python -m compileall security/qcrypto/pq_signature_interop.py scripts/qcrypto_pq_interop_evidence.py
+        run: python -m compileall security/qcrypto/pq_signature_interop.py security/qcrypto/pos_family_preservation.py scripts/qcrypto_pq_interop_evidence.py
 
       - name: Run concrete PQ interop regressions
         env:
@@ -55,21 +57,28 @@ jobs:
           from pathlib import Path
 
           evidence = json.loads(Path("qpos-pq-interop.json").read_text())
-          assert evidence["schema"] == "WS-QPOS-2-CONCRETE-PQ-INTEROP-V1"
+          assert evidence["schema"] == "WS-QPOS-2-CONCRETE-PQ-INTEROP-V2"
           assert evidence["status"] == "PASS"
           assert evidence["claim_state"] == "STANDARDS_BACKED_PQ_SIGNATURE_INTEROPERABILITY_PROVEN_IN_CI"
+          assert evidence["family_binding_state"] == "19_POS_PROFILE_MIGRATION_ENVELOPES_PROVEN_INTEROPERABLE_IN_CI"
           assert evidence["proof_scope"] == "EPHEMERAL_ZERO_VALUE_INTEROPERABILITY_ONLY"
           assert evidence["backend"]["pinned_version"] == "1.0.0"
+          assert evidence["profile_count"] == 19
+          assert evidence["scheme_count"] == 2
+          assert evidence["family_probe_count"] == 38
+          assert len(evidence["baseline_results"]) == 2
+          assert len(evidence["family_results"]) == 38
           assert evidence["secret_material_in_evidence"] is False
           assert evidence["production_consensus_security"] == "NOT_PROVEN_HERE"
-          assert len(evidence["results"]) == 2
-          for result in evidence["results"]:
+          for result in evidence["baseline_results"] + evidence["family_results"]:
               assert result["valid_signature_verified"] is True
               assert result["tampered_message_rejected"] is True
               assert result["wrong_key_rejected"] is True
               assert result["secret_material_retained"] is False
+          assert len({r["chain_family"] for r in evidence["family_results"]}) == 19
           assert len(evidence["evidence_sha256"]) == 64
           print("pq_interop_status: PASS")
+          print("family_probe_count:", evidence["family_probe_count"])
           print("claim_state:", evidence["claim_state"])
           print("evidence_sha256:", evidence["evidence_sha256"])
           PY
