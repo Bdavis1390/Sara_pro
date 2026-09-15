@@ -26,10 +26,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
       - name: Compile ownership package
         run: python -m compileall -q security/ownership
       - name: Run PoO regression tests
-        run: pytest -q tests/test_poo.py
+        run: python -m pytest -q tests/test_poo.py
       - name: Enforce claims boundaries
         run: |
           python - <<'PY'
