@@ -1,0 +1,69 @@
+name: QCRYPTO Custody Sigstore Attestation
+
+on:
+  push:
+    branches:
+      - proof/qcrypto-v1-mainline-custody
+    paths:
+      - 'proof/qcrypto/v1-mainline/CUSTODY_RECORD.json'
+      - '.github/workflows/qcrypto-custody-sigstore.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  sign-and-verify-custody-record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install pinned Cosign
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22
+        with:
+          cosign-release: 'v3.1.3'
+
+      - name: Record custody payload digest
+        run: |
+          sha256sum proof/qcrypto/v1-mainline/CUSTODY_RECORD.json \
+            | tee qcrypto-custody-record.sha256
+
+      - name: Keyless-sign custody record with GitHub OIDC
+        run: |
+          cosign sign-blob \
+            proof/qcrypto/v1-mainline/CUSTODY_RECORD.json \
+            --bundle qcrypto-custody-record.sigstore.json \
+            --yes
+
+      - name: Verify keyless signature and workflow identity
+        run: |
+          cosign verify-blob \
+            proof/qcrypto/v1-mainline/CUSTODY_RECORD.json \
+            --bundle qcrypto-custody-record.sigstore.json \
+            --certificate-identity 'https://github.com/Bdavis1390/Sara_pro/.github/workflows/qcrypto-custody-sigstore.yml@refs/heads/proof/qcrypto-v1-mainline-custody' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+
+      - name: Record attestation boundary
+        run: |
+          cat > qcrypto-custody-attestation-boundary.txt <<'EOF'
+          This Sigstore bundle attests the bytes of CUSTODY_RECORD.json using the
+          GitHub Actions OIDC identity of the QCRYPTO custody workflow. It is not
+          a personal signature by Brandon Ray Davis, does not retroactively sign
+          historical QCRYPTO commits, is not an RFC 3161 TSA response, and does
+          not establish independent technical validation, Federal compliance,
+          WS-CAE conformance, production deployment, or live-value authority.
+          EOF
+
+      - name: Upload Sigstore custody evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qcrypto-custody-sigstore-attestation
+          path: |
+            qcrypto-custody-record.sigstore.json
+            qcrypto-custody-record.sha256
+            qcrypto-custody-attestation-boundary.txt
+          if-no-files-found: error

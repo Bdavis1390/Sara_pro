@@ -1,0 +1,66 @@
+{
+  "schema": "WS-APPLIED-WORK-EVIDENCE-STATUS-V1",
+  "subject": "QCRYPTO proof-of-work custody chain",
+  "custody_scope": "repository_provenance_and_artifact_integrity",
+  "resource_accounting_scope": "historical_applied_work_measurements",
+  "resource_quantities": {
+    "compute_operations": {
+      "status": "NOT_RECORDED",
+      "unit": null,
+      "basis": null,
+      "note": "Do not infer compute quantity from hashes, commit count, CI wall time, or artifact size."
+    },
+    "electrical_energy": {
+      "status": "NOT_RECORDED",
+      "unit": null,
+      "basis": null,
+      "note": "No contemporaneous meter-backed kWh record is present in the frozen custody bundle."
+    },
+    "resource_time": {
+      "status": "NOT_RECORDED",
+      "unit": null,
+      "basis": null,
+      "note": "No authoritative accelerator-hour/CPU-core-hour ledger is present in the frozen custody bundle."
+    },
+    "labor_time": {
+      "status": "NOT_RECORDED",
+      "unit": null,
+      "basis": null,
+      "note": "Conversation/commit timestamps are not treated as measured labor-hours."
+    },
+    "data_processed": {
+      "status": "NOT_RECORDED",
+      "unit": null,
+      "basis": null,
+      "note": "Repository/artifact byte size is not automatically treated as total data processed."
+    },
+    "monetary_cost": {
+      "status": "NOT_RECORDED",
+      "unit": null,
+      "basis": null,
+      "note": "No cost model is back-filled from compute, energy, or time without an explicit provenance-bearing transformation."
+    },
+    "output_count": {
+      "status": "PARTIALLY_RECORDED",
+      "unit": "count",
+      "basis": "repository_artifacts_and_validation_outputs",
+      "note": "Commits, files, workflow artifacts, and test outputs are countable provenance objects but are not a universal measure of work."
+    }
+  },
+  "inference_prohibitions": [
+    "SHA-256 digest -> compute quantity",
+    "CI duration -> labor time",
+    "CI duration -> resource time without runner telemetry",
+    "artifact size -> total data processed",
+    "commit count -> engineering effort",
+    "compute quantity -> kWh without an explicit measured/benchmarked model",
+    "kWh -> monetary cost without an explicit tariff/model",
+    "kWh -> emissions without an explicit emissions-factor model"
+  ],
+  "future_measurement_model": {
+    "implementation_review": "draft PR #307",
+    "branch": "worldshepherd-variable-work-accounting-v1",
+    "rule": "Keep native quantities native; relate non-equivalent quantities only through explicit evidence-bearing transformations."
+  },
+  "claims_boundary": "The custody hashes and Sigstore evidence support artifact integrity/provenance, not the magnitude or physical/economic form of historical applied work. Missing historical resource telemetry remains NOT_RECORDED rather than estimated retroactively."
+}
