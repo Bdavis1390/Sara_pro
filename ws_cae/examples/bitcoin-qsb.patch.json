@@ -1,0 +1,25 @@
+{
+  "spec": "WS-CAE-CHAIN-PATCH-1",
+  "chain": "Bitcoin",
+  "profile": {
+    "ecosystem": "Bitcoin",
+    "adapter_class": "UTXO_HASH_PREPOSITIONING",
+    "implementation_maturity": "MAINNET",
+    "stable_authority_id": false,
+    "authenticator_replaceable": false,
+    "pq_authorization_state": "PQ_MAINNET_LIMITED",
+    "policy_state_documented": false,
+    "recovery_state_documented": false,
+    "domain_binding_documented": true,
+    "evidence_state_documented": true,
+    "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+    "protocol_commitment_state": "UNSPECIFIED"
+  },
+  "evidence": [
+    {
+      "label": "Quantum-Safe Bitcoin mainnet proof",
+      "url": "https://starkware.co/blog/the-first-quantum-safe-bitcoin-transaction-has-been-mined/",
+      "claim": "A hash-based protection path was demonstrated on Bitcoin mainnet without changing consensus rules; the path remains limited and is not network-wide PQ migration."
+    }
+  ]
+}

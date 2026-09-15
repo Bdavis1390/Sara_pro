@@ -1,0 +1,9 @@
+{
+  "spec": "WS-CAE-CRYPTO-SYSTEM-PATCH-1",
+  "asset": "SYNTHETIC-STABLECOIN",
+  "components": [
+    {"role": "CHAIN_AUTHORITY", "name": "settlement-layer", "readiness_state": "PQ_DEPLOYED", "critical": true, "evidence_documented": true},
+    {"role": "ASSET_ISSUER_ADMIN", "name": "issuer-authority", "readiness_state": "CLASSICAL_DEPENDENCY", "critical": true, "evidence_documented": true},
+    {"role": "CUSTODY_SIGNING", "name": "custody-layer", "readiness_state": "CRYPTO_AGILE", "critical": true, "evidence_documented": true}
+  ]
+}

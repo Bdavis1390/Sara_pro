@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Bdavis1390/Sara_pro/ws_cae/continuity_snapshot.schema.json",
+  "title": "WS-CAE Continuity Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "as_of", "manifest_count", "snapshot_id", "all_valid", "manifests"],
+  "properties": {
+    "spec": {"const": "WS-CAE-CONTINUITY-SNAPSHOT-1"},
+    "as_of": {"type": "string", "format": "date"},
+    "manifest_count": {"type": "integer", "minimum": 1},
+    "snapshot_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "all_valid": {"const": true},
+    "manifests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subject",
+          "content_id",
+          "valid",
+          "implementation_maturity",
+          "protocol_commitment_state",
+          "pq_authorization_state",
+          "consensus_pq_state"
+        ],
+        "properties": {
+          "subject": {"type": "string", "minLength": 1},
+          "content_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "valid": {"const": true},
+          "implementation_maturity": {
+            "enum": ["ROADMAP", "DRAFT", "DEVNET", "TESTNET", "MAINNET"]
+          },
+          "protocol_commitment_state": {
+            "enum": ["UNSPECIFIED", "RESEARCH", "GOVERNANCE_SELECTED", "FORK_SCHEDULED", "MAINNET"]
+          },
+          "pq_authorization_state": {
+            "enum": ["NONE", "PLUGGABLE_AUTH_ONLY", "PQ_NON_MAINNET", "PQ_MAINNET_LIMITED", "PQ_MAINNET"]
+          },
+          "consensus_pq_state": {
+            "enum": ["CLASSICAL_OR_UNPROVEN", "PQ_RESEARCH_OR_PARTIAL", "PQ_DEPLOYED"]
+          }
+        }
+      }
+    }
+  }
+}

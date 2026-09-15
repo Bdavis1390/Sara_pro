@@ -1,0 +1,37 @@
+name: WS-CAE Continuity Cross-Language Vectors
+
+on:
+  pull_request:
+    paths:
+      - 'ws_cae/continuity_*.py'
+      - 'ws_cae/examples/continuity_*.json'
+      - 'ws_cae/examples/*.patch.json'
+      - 'ws_cae/tests/test_continuity_*.py'
+      - 'interop/continuity_verify.mjs'
+      - '.github/workflows/ws-cae-continuity-crosslang.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Python continuity tests
+        run: python -m unittest discover -s ws_cae/tests -p 'test_continuity_*.py' -v
+      - name: Build four-chain continuity snapshot
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.continuity_catalog \
+            ws_cae/examples/algorand.patch.json \
+            ws_cae/examples/bitcoin-qsb.patch.json \
+            ws_cae/examples/ethereum.patch.json \
+            ws_cae/examples/sui.patch.json \
+            --version 1 \
+            --as-of 2026-09-13 \
+            --pretty > /tmp/ws-cae-four-chain-snapshot.json
+          python -m json.tool /tmp/ws-cae-four-chain-snapshot.json >/dev/null
+      - name: Independent Node.js vector and snapshot reproduction
+        run: node interop/continuity_verify.mjs /tmp/ws-cae-four-chain-snapshot.json
