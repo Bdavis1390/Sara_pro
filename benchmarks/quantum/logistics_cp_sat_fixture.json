@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "WS-LOG-CP-SAT-CONTROLLED-001",
+  "instance_kind": "controlled_software_fixture_not_mission_evidence",
+  "units": {"cost": "integer_test_cost_units", "demand": "integer_test_capacity_units"},
+  "instances": [
+    {"instance_id": "nominal-a", "vehicles": [{"vehicle_id": "v1", "capacity": 5}, {"vehicle_id": "v2", "capacity": 5}], "tasks": [{"task_id": "t1", "demand": 2, "cost_by_vehicle": {"v1": 3, "v2": 6}}, {"task_id": "t2", "demand": 2, "cost_by_vehicle": {"v1": 5, "v2": 2}}, {"task_id": "t3", "demand": 1, "cost_by_vehicle": {"v1": 4, "v2": 3}}]},
+    {"instance_id": "nominal-b", "vehicles": [{"vehicle_id": "v1", "capacity": 4}, {"vehicle_id": "v2", "capacity": 4}, {"vehicle_id": "v3", "capacity": 3}], "tasks": [{"task_id": "t1", "demand": 2, "cost_by_vehicle": {"v1": 2, "v2": 7, "v3": 5}}, {"task_id": "t2", "demand": 2, "cost_by_vehicle": {"v1": 6, "v2": 2, "v3": 4}}, {"task_id": "t3", "demand": 2, "cost_by_vehicle": {"v1": 4, "v2": 5, "v3": 2}}, {"task_id": "t4", "demand": 1, "cost_by_vehicle": {"v1": 3, "v2": 4, "v3": 6}}]},
+    {"instance_id": "degraded-v2-unavailable", "vehicles": [{"vehicle_id": "v1", "capacity": 5}, {"vehicle_id": "v2", "capacity": 5, "available": false}, {"vehicle_id": "v3", "capacity": 5}], "tasks": [{"task_id": "t1", "demand": 2, "cost_by_vehicle": {"v1": 3, "v2": 1, "v3": 5}}, {"task_id": "t2", "demand": 2, "cost_by_vehicle": {"v1": 5, "v2": 1, "v3": 2}}, {"task_id": "t3", "demand": 2, "cost_by_vehicle": {"v1": 2, "v2": 1, "v3": 4}}]}
+  ],
+  "claim_control": "This fixture proves only the OR-Tools CP-SAT comparator pipeline. It is not a mission-relevant logistics family and cannot satisfy WS-AUTONOMOUS-LOGISTICS-EXT-01."
+}

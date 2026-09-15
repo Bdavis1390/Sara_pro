@@ -1,0 +1,3 @@
+# Optional strong classical comparator for WS-AUTONOMOUS-LOGISTICS.
+# Separate from the core QRF environment so quantum controls do not require OR-Tools.
+ortools==9.15.6755

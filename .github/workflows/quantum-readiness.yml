@@ -1,0 +1,146 @@
+name: Quantum Readiness CI
+
+on:
+  pull_request:
+    paths:
+      - "worldshepherd_sara/quantum_*.py"
+      - "worldshepherd_sara/pqc_inventory.py"
+      - "scripts/generate_quantum_*.py"
+      - "scripts/ingest_quantum_external_evidence.py"
+      - "scripts/scan_pqc_inventory.py"
+      - "scripts/run_ibm_qpu_bell.py"
+      - "scripts/run_ionq_qpu_bell.py"
+      - "scripts/run_braket_qpu_bell.py"
+      - "scripts/run_dwave_qubo.py"
+      - "scripts/run_cudaq_bell.py"
+      - "tests/test_quantum_*.py"
+      - "tests/test_pqc_inventory.py"
+      - "requirements-quantum*.txt"
+      - "benchmarks/quantum/**"
+      - "data/quantum_*.json"
+      - "data/pqc_migration_inventory.json"
+      - "docs/QUANTUM_*.md"
+      - ".github/workflows/quantum-readiness.yml"
+  push:
+    branches:
+      - "agent/quantum-readiness-fabric"
+    paths:
+      - "worldshepherd_sara/quantum_*.py"
+      - "worldshepherd_sara/pqc_inventory.py"
+      - "scripts/generate_quantum_*.py"
+      - "scripts/ingest_quantum_external_evidence.py"
+      - "scripts/scan_pqc_inventory.py"
+      - "scripts/run_ibm_qpu_bell.py"
+      - "scripts/run_ionq_qpu_bell.py"
+      - "scripts/run_braket_qpu_bell.py"
+      - "scripts/run_dwave_qubo.py"
+      - "scripts/run_cudaq_bell.py"
+      - "tests/test_quantum_*.py"
+      - "tests/test_pqc_inventory.py"
+      - "requirements-quantum*.txt"
+      - "benchmarks/quantum/**"
+      - "data/quantum_*.json"
+      - "data/pqc_migration_inventory.json"
+      - "docs/QUANTUM_*.md"
+      - ".github/workflows/quantum-readiness.yml"
+
+jobs:
+  quantum-readiness:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    env:
+      QDK_PYTHON_TELEMETRY: none
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-quantum.txt
+
+      - name: Install quantum test dependencies
+        run: |
+          python -m pip install pytest
+          python -m pip install -r requirements-quantum.txt
+
+      - name: Compile QRF modules and CLIs
+        run: |
+          python -m compileall worldshepherd_sara/quantum_*.py worldshepherd_sara/pqc_inventory.py
+          python -m py_compile scripts/ingest_quantum_external_evidence.py scripts/run_ibm_qpu_bell.py scripts/run_ionq_qpu_bell.py scripts/run_braket_qpu_bell.py scripts/run_dwave_qubo.py scripts/run_cudaq_bell.py scripts/generate_quantum_external_review_template.py scripts/generate_quantum_resource_sensitivity.py scripts/generate_quantum_evidence_profile_conformance.py scripts/generate_quantum_glob_operator_mappings.py
+
+      - name: Run complete QRF test suite
+        env:
+          PYTHONPATH: .
+        run: pytest -q tests/test_quantum_*.py tests/test_pqc_inventory.py
+
+      - name: Generate governed CI evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/generate_quantum_internal_readiness.py --output .qrf-artifacts/quantum_internal_readiness.json
+          python scripts/generate_quantum_external_campaign.py --output .qrf-artifacts/quantum_external_campaign.json
+          python scripts/generate_quantum_acquisition_requests.py --output .qrf-artifacts/quantum_acquisition_requests.json
+          python scripts/generate_quantum_external_review_template.py --output .qrf-artifacts/quantum_external_review_template.json
+          python scripts/generate_quantum_evidence_profile_conformance.py --root . --output .qrf-artifacts/quantum_evidence_profile_conformance.json
+          python scripts/generate_quantum_glob_operator_mappings.py --output .qrf-artifacts/quantum_glob_operator_mappings.json
+          python scripts/generate_quantum_apnt_benchmark.py --output .qrf-artifacts/quantum_apnt_synthetic_benchmark.json
+          python scripts/generate_quantum_alti_structure_template.py --output .qrf-artifacts/quantum_alti_structure_template.json
+          python scripts/generate_quantum_metasurface_calibration_template.py --output .qrf-artifacts/quantum_metasurface_calibration_template.json
+          python scripts/generate_quantum_logistics_instance_template.py --output .qrf-artifacts/quantum_logistics_instance_template.json
+          python scripts/generate_quantum_em_metrology_template.py --output .qrf-artifacts/quantum_em_metrology_template.json
+          python scripts/generate_quantum_evidence.py --output .qrf-artifacts/qrf_bell_001_simulation_evidence.json
+          python scripts/generate_quantum_application_benchmarks.py --output .qrf-artifacts/quantum_application_benchmarks.json
+          python scripts/generate_quantum_robustness.py --output .qrf-artifacts/quantum_robustness_sweeps.json
+          python scripts/generate_quantum_resource_estimate.py --output .qrf-artifacts/quantum_resource_estimate.json
+          python scripts/generate_quantum_resource_sensitivity.py --output .qrf-artifacts/quantum_resource_sensitivity.json
+          python scripts/generate_quantum_mission_readiness.py --output .qrf-artifacts/quantum_mission_readiness.json
+          python scripts/generate_quantum_97_closure.py --output .qrf-artifacts/quantum_97_closure.json
+          python scripts/scan_pqc_inventory.py --root . --output .qrf-artifacts/pqc_inventory_scan.json --fail-on-private-key
+          for artifact in .qrf-artifacts/*.json; do python -m json.tool "$artifact" >/dev/null; done
+
+      - name: Verify governed source artifacts
+        run: |
+          test -s scripts/ingest_quantum_external_evidence.py
+          test -s scripts/generate_quantum_external_review_template.py
+          test -s scripts/generate_quantum_resource_sensitivity.py
+          test -s scripts/generate_quantum_evidence_profile_conformance.py
+          test -s scripts/generate_quantum_glob_operator_mappings.py
+          test -s scripts/run_ionq_qpu_bell.py
+          test -s scripts/run_braket_qpu_bell.py
+          test -s scripts/run_dwave_qubo.py
+          test -s scripts/run_cudaq_bell.py
+          test -s requirements-quantum-braket.txt
+          test -s requirements-quantum-dwave.txt
+          test -s requirements-quantum-cudaq.txt
+          test -s requirements-quantum-logistics.txt
+          test -s benchmarks/quantum/bell_qasm3.qasm
+          test -s benchmarks/quantum/qrf_resource_smoke.qasm
+          test -s benchmarks/quantum/qrf_bell_001.json
+          test -s benchmarks/quantum/logistics_cp_sat_fixture.json
+          test -s data/quantum_project_matrix.json
+          test -s data/pqc_migration_inventory.json
+          test -s data/quantum_application_benchmarks.json
+          test -s data/quantum_external_partner_targets_2026-08-17.json
+          test -s docs/QUANTUM_ALTI_STRUCTURE_FREEZE_2026-08-17.md
+          test -s docs/QUANTUM_MARKET_BENCHMARK_AND_PARITY_PLAN_2026-08-17.md
+          test -s docs/QUANTUM_DEFENSE_INTEGRATOR_BENCHMARK_2026-08-17.md
+          test -s docs/QUANTUM_MISSION_EVIDENCE_PROFILE_DRAFT_2026-08-17.md
+          python -m json.tool data/quantum_project_matrix.json >/dev/null
+          python -m json.tool data/pqc_migration_inventory.json >/dev/null
+          python -m json.tool data/quantum_application_benchmarks.json >/dev/null
+          python -m json.tool data/quantum_external_partner_targets_2026-08-17.json >/dev/null
+
+      - name: Upload QRF evidence artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: qrf-evidence-py${{ matrix.python-version }}
+          path: .qrf-artifacts/*.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 30

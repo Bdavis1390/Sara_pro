@@ -1,0 +1,31 @@
+{
+  "benchmark_id": "QRF-BELL-001",
+  "program": "benchmarks/quantum/bell_qasm3.qasm",
+  "purpose": "execution-and-provenance smoke test",
+  "scientific_claim": "none",
+  "required_stages": [
+    "ideal_simulation",
+    "noisy_simulation",
+    "qpu_execution_when_available"
+  ],
+  "classical_reference": {
+    "distribution": {"00": 0.5, "11": 0.5},
+    "note": "Reference is the ideal measurement distribution; hardware acceptance must use a predeclared statistical tolerance."
+  },
+  "required_metadata": [
+    "provider",
+    "backend",
+    "backend_class",
+    "circuit_digest",
+    "compiler_or_transpiler",
+    "shots",
+    "calibration_id_if_exposed",
+    "result_digest",
+    "postprocessing_version"
+  ],
+  "claim_gate": {
+    "simulator": "quantum_simulated",
+    "single_qpu_run": "quantum_executed",
+    "repeat_or_cross_backend": "quantum_validated_only_after_statistical_reproduction"
+  }
+}

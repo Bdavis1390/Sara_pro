@@ -1,0 +1,5 @@
+# Optional Worldshepherd QRF D-Wave/Leap runtime.
+# Kept separate from requirements-quantum.txt so provider-specific tooling does not
+# become a dependency of the provider-neutral governance core.
+# Ocean 9.4.0 is the current upstream SDK release verified on 2026-08-17.
+dwave-ocean-sdk==9.4.0

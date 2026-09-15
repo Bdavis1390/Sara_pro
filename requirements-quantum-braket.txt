@@ -1,0 +1,5 @@
+# Optional Worldshepherd QRF Amazon Braket runtime.
+# Kept separate from requirements-quantum.txt so AWS/provider-specific tooling does not
+# become a dependency of the provider-neutral governance core.
+# Current upstream SDK requires Python >=3.11. Version >=1.115 includes Rigetti Cepheus support.
+amazon-braket-sdk>=1.115.0,<2
