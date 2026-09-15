@@ -1,0 +1,87 @@
+{
+  "fixture_id": "WS-XOS-MA-001-D1-SYNTHETIC",
+  "claims_state": "SIMULATED_ONLY",
+  "description": "Worldshepherd-owned vendor-neutral non-kinetic ISR mission events. This fixture is not derived from XTEND/XOS API schemas, ICDs, connector specifications, or partner-controlled data.",
+  "contract": {
+    "contract_id": "WS-XOS-MA-001-SYNTHETIC-CONTRACT-V1",
+    "interface_name": "Worldshepherd Neutral Physical-AI Mission Event Envelope",
+    "version": "1",
+    "required_message_types": [
+      "MISSION_STATE",
+      "ENTITY_OBSERVATION",
+      "LINK_STATE",
+      "HEARTBEAT"
+    ],
+    "required_fields": {
+      "MISSION_STATE": ["state"],
+      "ENTITY_OBSERVATION": ["entity_id", "classification", "confidence"],
+      "LINK_STATE": ["state", "latency_ms"],
+      "HEARTBEAT": ["stream"]
+    }
+  },
+  "events": [
+    {
+      "schema_version": "ws-neutral-mission-event/1",
+      "event_id": "evt-001",
+      "mission_id": "mission-isr-synthetic-001",
+      "source_system": "synthetic-physical-ai-platform",
+      "event_type": "MISSION_STATE",
+      "observed_utc": "2026-09-09T18:00:00Z",
+      "sequence": 1,
+      "payload": {
+        "state": "ACTIVE",
+        "mode": "NON_KINETIC_ISR"
+      }
+    },
+    {
+      "schema_version": "ws-neutral-mission-event/1",
+      "event_id": "evt-002",
+      "mission_id": "mission-isr-synthetic-001",
+      "source_system": "synthetic-physical-ai-platform",
+      "event_type": "ENTITY_OBSERVATION",
+      "observed_utc": "2026-09-09T18:00:01Z",
+      "sequence": 2,
+      "payload": {
+        "entity_id": "entity-001",
+        "classification": "UNKNOWN_OBJECT",
+        "confidence": 0.76,
+        "note": "Synthetic observation only"
+      }
+    },
+    {
+      "schema_version": "ws-neutral-mission-event/1",
+      "event_id": "evt-003",
+      "mission_id": "mission-isr-synthetic-001",
+      "source_system": "synthetic-physical-ai-platform",
+      "event_type": "LINK_STATE",
+      "observed_utc": "2026-09-09T18:00:02Z",
+      "sequence": 3,
+      "payload": {
+        "state": "DEGRADED",
+        "latency_ms": 850,
+        "packet_loss_fraction": 0.12
+      }
+    },
+    {
+      "schema_version": "ws-neutral-mission-event/1",
+      "event_id": "evt-004",
+      "mission_id": "mission-isr-synthetic-001",
+      "source_system": "synthetic-physical-ai-platform",
+      "event_type": "HEARTBEAT",
+      "observed_utc": "2026-09-09T18:00:03Z",
+      "sequence": 4,
+      "payload": {
+        "stream": "mission-events"
+      }
+    }
+  ],
+  "duplicate_event_index": 1,
+  "supervisory_policy": {
+    "policy_id": "WS-XOS-MA-001-SYNTHETIC-POLICY",
+    "allowed_auto_action_types": ["ANNOTATE_MISSION"],
+    "denied_action_types": ["PLATFORM_ROUTE_OVERRIDE"],
+    "minimum_auto_confidence": 0.95,
+    "maximum_auto_authority": 0,
+    "require_reversible_for_auto": true
+  }
+}
