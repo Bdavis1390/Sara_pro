@@ -14,7 +14,10 @@ from .audit_checkpoint import (
     audit_chain_step,
     audit_record_digest,
 )
-from .audit_checkpoint_anchor import load_external_anchor
+from .audit_checkpoint_anchor import (
+    SaraAuditExternalAnchorError,
+    load_external_anchor,
+)
 from .audit_checkpoint_verify import (
     SaraAuditCheckpointVerificationError,
     verify_checkpoint_chain,
@@ -211,7 +214,10 @@ def verify_offline_export(
     a running SARA service or SARA signing-key configuration.
     """
 
-    anchor = load_external_anchor(external_anchor_path)
+    try:
+        anchor = load_external_anchor(external_anchor_path)
+    except SaraAuditExternalAnchorError as exc:
+        raise SaraAuditOfflineVerificationError(str(exc)) from exc
     _validate_anchor_public_key(anchor)
     bundles = _load_checkpoint_ledger(checkpoint_ledger_path)
     try:
