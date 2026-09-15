@@ -9,7 +9,13 @@ from pydicom.uid import (
     RTStructureSetStorage,
 )
 
-from baros.dicom_rt import decode_rtdose, read_validated_rt, validate_linkage, validate_rt_dataset
+from baros.dicom_rt import (
+    decode_rtdose,
+    extract_rtdose_geometry,
+    read_validated_rt,
+    validate_linkage,
+    validate_rt_dataset,
+)
 
 
 STUDY_UID = "1.2.826.0.1.3680043.10.543.100"
@@ -90,6 +96,7 @@ def synthetic_rtplan():
 
 def synthetic_rtdose():
     ds = _file_dataset(RTDoseStorage, DOSE_UID, "RTDOSE", 203)
+    ds.FrameOfReferenceUID = FRAME_UID
     ds.DoseUnits = "GY"
     ds.DoseType = "PHYSICAL"
     ds.DoseSummationType = "PLAN"
@@ -135,12 +142,52 @@ def test_rtdose_decoding_applies_scaling():
     assert decoded[-1, -1, -1] == pytest.approx(8.0)
 
 
+def test_relative_grid_frame_geometry_is_extracted_in_numpy_axis_order():
+    geometry = extract_rtdose_geometry(synthetic_rtdose())
+    assert geometry.frame_of_reference_uid == FRAME_UID
+    assert geometry.shape == (2, 2, 2)
+    assert geometry.origin_mm == pytest.approx((0.0, 0.0, 0.0))
+    assert geometry.spacing_mm == pytest.approx((2.5, 2.5, 2.5))
+    assert geometry.direction == pytest.approx(
+        (
+            0.0, 0.0, 1.0,  # frame axis = row x column normal
+            0.0, 1.0, 0.0,  # NumPy row-index direction
+            1.0, 0.0, 0.0,  # NumPy column-index direction
+        )
+    )
+
+
+def test_nonuniform_grid_frame_spacing_fails_closed():
+    ds = synthetic_rtdose()
+    ds.NumberOfFrames = 3
+    ds.GridFrameOffsetVector = [0.0, 2.5, 5.5]
+    ds.PixelData = np.zeros((3, 2, 2), dtype="<u2").tobytes()
+    with pytest.raises(ValueError, match="non-uniform"):
+        extract_rtdose_geometry(ds)
+
+
+def test_invalid_orientation_cosines_fail_closed():
+    ds = synthetic_rtdose()
+    ds.ImageOrientationPatient = [2.0, 0.0, 0.0, 0.0, 1.0, 0.0]
+    with pytest.raises(ValueError, match="unit length"):
+        extract_rtdose_geometry(ds)
+
+
+def test_ambiguous_grid_frame_offset_interpretation_fails_closed():
+    ds = synthetic_rtdose()
+    ds.ImagePositionPatient = [0.0, 0.0, 5.0]
+    ds.GridFrameOffsetVector = [1.0, 3.5]
+    with pytest.raises(ValueError, match="ambiguous"):
+        extract_rtdose_geometry(ds)
+
+
 def test_round_trip_file_read_is_validated(tmp_path):
     path = tmp_path / "synthetic_rtdose.dcm"
     synthetic_rtdose().save_as(path, enforce_file_format=True)
     loaded = read_validated_rt(path, expected_kind="RTDOSE")
     assert str(loaded.SOPInstanceUID) == DOSE_UID
     assert decode_rtdose(loaded)[1, 0, 0] == pytest.approx(5.0)
+    assert extract_rtdose_geometry(loaded).frame_of_reference_uid == FRAME_UID
 
 
 def test_wrong_modality_fails_closed():
