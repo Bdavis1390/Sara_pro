@@ -1,0 +1,64 @@
+{
+  "schema": "worldshepherd_audit_integrity_evidence_v1",
+  "status": "INTERNAL_CRYPTOGRAPHIC_INTEGRITY_EVIDENCE",
+  "generated_date": "2026-09-14",
+  "claim_state": "INTERNALLY_PROVEN_BOUNDED_TAMPER_EVIDENCE",
+  "workflow": "Worldshepherd Audit Checkpoint Integrity",
+  "run_id": 34917831427,
+  "commit": "3bf9a27e5d3e329436701c5e052b6e13a37fc9fe",
+  "artifact_id": 10376833800,
+  "artifact_digest": "sha256:5831d0acee5b223487e89123953db5aab299c0ed31194839613be72a6973884e",
+  "artifact_schema": "WS-SARA-AUDIT-CHECKPOINT-ADVERSARIAL-EVIDENCE-V1",
+  "result": "PASS",
+  "mechanism": {
+    "audit_record_commitment": "domain-separated canonical SHA-256 digest",
+    "prefix_commitment": "order-sensitive ordinal-linked SHA-256 chain",
+    "checkpoint_signature": "Ed25519",
+    "checkpoint_chain": "each signed checkpoint commits to the previous checkpoint SHA-256",
+    "external_rollback_pin": "optional expected latest checkpoint SHA-256",
+    "existing_audit_format_changed": false,
+    "existing_audit_api_changed": false
+  },
+  "baseline": {
+    "checkpoint_1_records": 4,
+    "checkpoint_2_records": 5,
+    "exact_checkpoint_status": "PASS",
+    "uncheckpointed_tail_status": "PASS_WITH_UNCHECKPOINTED_TAIL",
+    "pinned_latest_status": "PASS"
+  },
+  "adversarial_acceptance": {
+    "historical_content_mutation_detected": true,
+    "historical_record_reordering_detected": true,
+    "checkpointed_prefix_truncation_detected": true,
+    "signed_bundle_tampering_rejected": true,
+    "untrusted_key_fingerprint_rejected": true,
+    "checkpoint_chain_reordering_or_discontinuity_rejected": true,
+    "local_checkpoint_ledger_rollback_detected_when_external_latest_digest_is_pinned": true,
+    "newer_uncheckpointed_tail_is_explicitly_visible": true
+  },
+  "supports": [
+    "internally demonstrated signed integrity checkpoints for the SARA application audit prefix",
+    "detection of tested historical audit-content modification within the signed prefix",
+    "detection of tested historical record reordering within the signed prefix",
+    "detection of tested truncation below the signed record count",
+    "cryptographic rejection of altered signed checkpoint bundles and untrusted signing keys",
+    "explicit visibility of records newer than the latest checkpoint",
+    "rollback detection for the local checkpoint ledger when the expected latest checkpoint digest is retained separately"
+  ],
+  "does_not_support": [
+    "tamper-proof or immutable storage",
+    "WORM retention",
+    "automatic external anchoring",
+    "proof against compromise of the signing key or signer",
+    "proof of deletion of uncheckpointed tail records",
+    "proof against coordinated privileged rollback of both local audit and checkpoint ledger without an external latest-digest pin",
+    "third-party attestation",
+    "CMMC/NIST/SPRS certification or assessment",
+    "CUI/classified authorization",
+    "government acceptance or operational deployment"
+  ],
+  "next_gate": {
+    "name": "EXTERNAL_CHECKPOINT_ANCHOR_AND_OPERATOR_WORKFLOW",
+    "goal": "make the latest signed checkpoint digest independently retainable and verifiable outside the local SARA storage boundary, then expose create/verify/status as an operator-controlled workflow without weakening existing audit durability semantics"
+  }
+}

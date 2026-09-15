@@ -1,0 +1,108 @@
+{
+  "schema": "worldshepherd_tier0_capture_v1",
+  "generated_utc": "2026-09-14T01:45:00Z",
+  "opportunity_id": "GSA-OASISPLUS-CONTINUOUS",
+  "title": "GSA OASIS+ Continuously Open Multi-Agency Contracts",
+  "issuer": "U.S. General Services Administration",
+  "source_url": "https://www.gsa.gov/buy-through-us/products-and-services/professional-services/buy-services/oasis-plus/sellers-guide/solicitations-continuously-open",
+  "source_status": "OFFICIAL_SOURCE_VERIFIED",
+  "status": "CONTINUOUSLY_OPEN",
+  "deadline": null,
+  "capture_tier": "TIER_0_EPIC",
+  "strategic_reason": [
+    "governmentwide multi-agency acquisition gateway",
+    "no program ceiling or cap on awards",
+    "10-year cumulative ordering period",
+    "continuous open solicitation and rolling admissions",
+    "six contract families including Total Small Business and Unrestricted",
+    "13 professional-service domains including R&D, Technical & Engineering, Intelligence Services, Logistics, Management & Advisory, and Enterprise Solutions",
+    "Enterprise Solutions task orders have a minimum estimated value of $250M and no maximum order limitation except FAR constraints"
+  ],
+  "worldshepherd_fit": {
+    "direct_candidate_domains": [
+      "Research & Development",
+      "Technical & Engineering",
+      "Management & Advisory",
+      "Intelligence Services",
+      "Logistics"
+    ],
+    "future_or_partner_domain": "Enterprise Solutions",
+    "modules": [
+      "SARA governed orchestration",
+      "PRIME policy and human authorization",
+      "ECHO provenance and evidence",
+      "OVERWATCH operational assurance",
+      "PRE predictive requirements",
+      "Digital Twin Assurance",
+      "Supply Chain Illumination",
+      "DDIL Mission Mesh",
+      "APNT and sensor-fusion mission packs"
+    ],
+    "scope_boundary": "OASIS+ is principally for non-IT professional services; IT/software may be ancillary to an in-scope professional-services requirement. Worldshepherd must be offered as an integrated professional/engineering/R&D solution, not as a standalone IT commodity vehicle."
+  },
+  "qualification": {
+    "direct_route_status": "PREPARE_PENDING_SELF_SCORE_AND_ENTITY_EVIDENCE",
+    "small_business_threshold_points": 36,
+    "unrestricted_threshold_points": "42/45 depending domain/scorecard",
+    "qualifying_project_limit_per_domain": 5,
+    "qualifying_project_types": [
+      "prime contracts",
+      "subcontracts",
+      "commercial contracts",
+      "task orders",
+      "OT awards",
+      "allowed collections of task orders"
+    ],
+    "mentor_protege_advantage": "Protégé qualifying projects may use 50% of applicable minimum average annual value threshold under the published qualification rules.",
+    "required_next_evidence": [
+      "perform Attachment J.P-1 domain self-scoring",
+      "inventory qualifying commercial/federal/subcontract/OTA projects",
+      "verify average annual value and period-of-performance thresholds",
+      "verify past-performance quality",
+      "verify business-size and SBA status for intended contract family",
+      "verify SAM/UEI/CAGE and reps/certs",
+      "verify accounting/system/certification credits without overclaiming"
+    ]
+  },
+  "routes": {
+    "route_A_direct": {
+      "state": "PREPARE",
+      "objective": "Qualify for one or more Small Business OASIS+ domains once objective project evidence produces at least the required score."
+    },
+    "route_B_team": {
+      "state": "PARTNER",
+      "objective": "Team or subcontract under existing OASIS+ contract holders for R&D, engineering, logistics, intelligence, mission assurance, and enterprise work while accumulating qualifying project evidence."
+    },
+    "route_C_enterprise": {
+      "state": "PARTNER_PREPARE",
+      "objective": "Position Worldshepherd modules within existing Unrestricted Enterprise Solutions teams for $250M+ highly complex multi-disciplinary task orders; pursue direct Enterprise qualification only after scale, project, systems, and capital evidence justify it."
+    }
+  },
+  "compliance_gate_status": "BLOCKED_FOR_DIRECT_PRIME_PENDING_ENTITY_AND_QUALIFYING_PROJECT_EVIDENCE",
+  "compliance_gates": [
+    "SAM/UEI/CAGE/reps and certs",
+    "small-business or socioeconomic certification where applicable",
+    "FAR responsibility requirements",
+    "task-order-specific FAR/DFARS/CMMC/NIST/FCI/CUI/clearance requirements",
+    "Section 889 reasonable inquiry",
+    "export-control and JCP review when task order requires controlled technical data",
+    "OASIS+ Cybersecurity Supply Chain Risk Management deliverables where applicable",
+    "task-order-specific organizational-conflict and teaming rules"
+  ],
+  "claims_boundary": [
+    "Worldshepherd is not currently claimed as an OASIS+ contract holder.",
+    "No qualifying-project score has yet been established in this record.",
+    "No $250M Enterprise Solutions task order or other OASIS+ award is claimed.",
+    "Public Sara_pro remains PUBLIC-ONLY and is not an authorized FCI/CUI/classified environment."
+  ],
+  "capture_probability": {
+    "direct_small_business_after_evidence_audit": "UNASSESSED",
+    "partner_under_existing_holder": "MODERATE_TO_HIGH_SUBJECT_TO_TEAMING",
+    "direct_enterprise_solutions": "LOW_TODAY_HIGHER_AFTER_SCALE_EVIDENCE"
+  },
+  "next_actions": [
+    "Run J.P-1 self-score for R&D, Technical & Engineering, Management & Advisory, Intelligence Services, and Logistics.",
+    "Identify five existing OASIS+ primes whose gaps match Worldshepherd modules and screen conflicts/teaming fit.",
+    "Build an OASIS+ evidence ledger so every commercial/subcontract/federal project increases future direct-qualification score."
+  ]
+}

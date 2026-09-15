@@ -1,0 +1,272 @@
+{
+  "schema": "worldshepherd_selection_evidence_index_v1",
+  "status": "INTERNAL_EVIDENCE_INDEX",
+  "generated_date": "2026-09-14",
+  "selection_claim_state": "PREFERRED_WITHIN_EVIDENCED_GOVERNANCE_WEDGE_INTERNAL_ONLY",
+  "claims_boundary": "This index establishes an internally reproducible evidence chain for a narrow software/governance selection wedge. It does not establish government preference, award, CMMC/NIST/SPRS status, classified authorization, operational deployment, open-source licensing, or competitor inferiority.",
+  "evidence_chain": [
+    {
+      "id": "E1_SELECTION_BASELINE",
+      "workflow": "Worldshepherd Selection Baseline",
+      "run_id": 34798178408,
+      "commit": "4eb7acac35349ab7071de1a566c1d94ce6878d78",
+      "result": "SUCCESS",
+      "semantic_result": "BASELINE_PASS_WITH_UNRESOLVED_GATES",
+      "artifact_id": 10330785427,
+      "artifact_digest": "sha256:41886789c23d8315b37b041654896f6a054e1631e90d037aec933ba8e2636560",
+      "supports": [
+        "scoped selection-core software tests",
+        "PRE qualification bundle generation",
+        "operational-resilience drill",
+        "PUBLIC-ONLY security-boundary presence",
+        "known-gap disclosure"
+      ],
+      "does_not_support": [
+        "open-source licensing",
+        "operational-scale performance",
+        "CMMC/NIST/SPRS certification or assessment",
+        "external validation"
+      ]
+    },
+    {
+      "id": "E2_SYNTHETIC_SCALE",
+      "workflow": "Worldshepherd Scale Benchmark",
+      "run_id": 34798335924,
+      "commit": "f8d51e88af6cd82e9c649ad4095e89cb5ded4340",
+      "result": "SUCCESS",
+      "artifact_id": 10329949132,
+      "artifact_digest": "sha256:cb6382c066634e2dc5baf4adc7658a7ff5d0c509b20b9caf141fb7064c608638",
+      "supports": [
+        "deterministic bounded synthetic fusion performance",
+        "host-specific latency measurement",
+        "bounded synthetic throughput measurement"
+      ],
+      "measurements": {
+        "500_observations_p95_ms": 1.650585,
+        "2500_observations_p95_ms": 8.56158,
+        "10000_observations_p95_ms": 36.969768,
+        "10000_observations_serialized_input_mb": 1.10168,
+        "10000_observations_function_throughput_mb_per_min_at_p95": 1787.9722659472208
+      },
+      "does_not_support": [
+        "end-to-end DIU PROJ00716 performance",
+        "network/API/storage/UI latency",
+        "multimodal ISR decoding or inference",
+        "5 GB/min burst validation",
+        "operational sensor-fusion validation"
+      ]
+    },
+    {
+      "id": "E3_INTEGRATED_EVALUATOR_DEMO",
+      "workflow": "Worldshepherd Evaluator Demonstration",
+      "run_id": 34798627001,
+      "commit": "afb8b7b32ed890b54aa5dcf547e048fb57beb38d",
+      "result": "SUCCESS",
+      "artifact_id": 10330945268,
+      "artifact_digest": "sha256:ed600d15d888f7eb23b1de9ed59f3234546bf0d194712e045b079383242124d4",
+      "semantic_digest": "sha256:153a4e71793aaeebb6ded664c34c7aa378e59fc83783ee2067ba6756e0c745c0",
+      "deterministic_rerun": true,
+      "acceptance_checks": {
+        "all_claims_have_evidence_refs": true,
+        "all_proposals_require_human_review": true,
+        "approval_denial_and_revocation_present": true,
+        "ddil_conflict_not_silently_resolved": true,
+        "explicit_denial_fails_closed": true,
+        "fusion_preserves_all_observation_ids": true,
+        "higher_authority_resolution_selected": true,
+        "human_decisions_are_identified": true
+      },
+      "supports": [
+        "source-lineage-preserving synthetic fusion",
+        "event-to-finding-to-proposal traceability",
+        "identified-human approval denial and revocation",
+        "fail-closed explicitly denied action",
+        "visible DDIL conflict instead of silent overwrite",
+        "deterministic higher-authority human resolution",
+        "evidence references for every top-level demo claim",
+        "deterministic semantic rerun"
+      ],
+      "does_not_support": [
+        "operational sensor performance",
+        "real command authority",
+        "CUI or classified authorization",
+        "government acceptance",
+        "external partner validation"
+      ]
+    },
+    {
+      "id": "E4_GOVERNED_APPLICATION_PATH",
+      "workflow": "Worldshepherd API Path Benchmark",
+      "run_id": 34800898317,
+      "job_id": 103843194373,
+      "commit": "db792dbc0350c288872def4b426e3cd135f2f85e",
+      "result": "SUCCESS",
+      "semantic_result": "GOVERNED_APPLICATION_PATH_MEASURED_PARTIAL",
+      "artifact_id": 10330923078,
+      "artifact_digest": "sha256:f7845737260202a6f4a501bc792d9a19506bf34afeae5fcefa3c7ea45985d2ec",
+      "service_limits": {
+        "max_request_bytes": 65536,
+        "max_synthetic_observations": 128
+      },
+      "measurements": {
+        "16_observations_full_path_p95_ms": 3.622677,
+        "64_observations_full_path_p95_ms": 5.009813,
+        "128_observations_full_path_p95_ms": 9.423019,
+        "128_observations_server_fusion_graph_p95_ms": 5.138693,
+        "audit_events_expected": 27,
+        "audit_events_observed": 27,
+        "deterministic_result_digest_all_profiles": true
+      },
+      "supports": [
+        "authenticated and authorized bounded application-path execution",
+        "Pydantic request validation and JSON-safe rejected-input handling",
+        "synthetic fusion and evidence-graph construction through the FastAPI surface",
+        "request and result digest generation",
+        "durable audit append/fsync in the measured path",
+        "response-model validation and JSON serialization",
+        "non-finite numerical input rejection without audit mutation",
+        "fail-closed behavior when audit persistence is unavailable"
+      ],
+      "does_not_support": [
+        "real network/TLS/proxy latency",
+        "multimodal imagery/video/radar decoding",
+        "AI/ML inference performance",
+        "external database/object-store performance",
+        "CUI/classified cross-domain controls",
+        "distributed concurrency/load-balancer behavior",
+        "operational or mission-scale ISR performance"
+      ]
+    },
+    {
+      "id": "E5_BOUNDED_AUDIT_HISTORY_AND_CONTENTION",
+      "workflow": "Worldshepherd API Path Benchmark",
+      "run_id": 34802767769,
+      "job_id": 103848601250,
+      "commit": "84157a63a86ff127acbcfac9af68365afaceb867",
+      "result": "SUCCESS",
+      "semantic_result": "BOUNDED_LOCAL_AUDIT_HISTORY_MEASURED_PARTIAL",
+      "artifact_id": 10331774233,
+      "artifact_digest": "sha256:a70009a1f261a61cadbe050dc728ccd36133e405e4f9a72042e564b44b4e908b",
+      "audit_events_expected": 87,
+      "audit_events_observed": 87,
+      "historical_retrieval": {
+        "1000_records_limit50_p95_ms": 0.7162,
+        "10000_records_limit50_p95_ms": 0.72709,
+        "50000_records_limit50_p95_ms": 0.790979,
+        "1000_records_limit500_p95_ms": 6.544023,
+        "10000_records_limit500_p95_ms": 7.00048,
+        "50000_records_limit500_p95_ms": 6.853868,
+        "50000_records_limit50_speedup_vs_forward_scan": 392.71639955043054,
+        "50000_records_limit500_speedup_vs_forward_scan": 46.18330846173284
+      },
+      "concurrency_profile": {
+        "one_worker_p95_ms": 5.317885,
+        "two_workers_p95_ms": 14.437987,
+        "four_workers_p95_ms": 29.926717,
+        "eight_workers_p95_ms": 72.622008,
+        "one_worker_requests_per_second": 180.1567679155209,
+        "eight_workers_requests_per_second": 157.59859534341953,
+        "deterministic_result_digest_all_profiles": true
+      },
+      "supports": [
+        "reverse bounded audit-tail reads preserve tested JSONL/corruption semantics",
+        "tested local audit-tail retrieval no longer scales materially with total history size for fixed requested tail",
+        "correct chronological tail retrieval through 50000 generated audit records",
+        "same-process governed requests remain successful and deterministic through 8 benchmark workers",
+        "durable synthetic-fusion audit completeness under the combined serial/concurrent benchmark"
+      ],
+      "does_not_support": [
+        "external database or object-store history performance",
+        "distributed or multi-host concurrency capacity",
+        "production request-rate SLA",
+        "real network/TLS/proxy behavior",
+        "mission-scale or classified operational performance"
+      ]
+    }
+  ],
+  "negative_evidence": [
+    {
+      "id": "N1_NSB_G10_CROSS_HELICITY",
+      "issue": 245,
+      "status": "OPEN_RETAINED_NEGATIVE_EVIDENCE",
+      "capability_status": "SIMULATED_ONLY",
+      "observed_cross_helicity_relative_drift": 0.000036710178210651096,
+      "frozen_acceptance_limit": 0.00002,
+      "rule": "Do not relax the acceptance limit merely to obtain a passing result. Validate temporal refinement/convergence and version any justified benchmark change."
+    },
+    {
+      "id": "N2_DURABLE_AUDIT_WRITE_CONTENTION",
+      "status": "OPEN_RETAINED_ENGINEERING_LIMIT",
+      "scope": "single-process governed synthetic-fusion benchmark with per-request durable audit fsync",
+      "one_worker_p95_ms": 5.317885,
+      "eight_workers_p95_ms": 72.622008,
+      "one_worker_requests_per_second": 180.1567679155209,
+      "eight_workers_requests_per_second": 157.59859534341953,
+      "interpretation": "Correctness and deterministic digests were preserved, but request latency increased materially as durable audit writes serialized. Optimize only if durable-before-response and fail-closed semantics remain intact."
+    }
+  ],
+  "unresolved_external_or_business_gates": [
+    {
+      "id": "G1_CONTROLLED_ENVIRONMENT",
+      "status": "BLOCKED",
+      "needed": [
+        "contract-specific authorized system boundary",
+        "required NIST/CMMC evidence",
+        "SPRS evidence where required",
+        "clearance pathway where required"
+      ]
+    },
+    {
+      "id": "G2_OPEN_SOURCE_LICENSING",
+      "status": "BLOCKED_IP_BUSINESS_LEGAL_DECISION",
+      "needed": [
+        "IP ownership review",
+        "dependency license audit",
+        "deliberate licensing/business model",
+        "license artifact if authorized"
+      ]
+    },
+    {
+      "id": "G3_EXTERNAL_VALIDATION",
+      "status": "BLOCKED_EXTERNAL",
+      "needed": [
+        "independent evaluator reproduction, pilot, or partner validation",
+        "operator/user feedback",
+        "external performance or integration evidence"
+      ]
+    },
+    {
+      "id": "G4_END_TO_END_SCALE",
+      "status": "PARTIAL_INTERNAL",
+      "completed": [
+        "bounded function-level synthetic fusion benchmark",
+        "governed in-process application/API path benchmark with durable audit persistence",
+        "bounded local audit-history retrieval benchmark through 50000 generated records",
+        "single-process governed contention profile through 8 benchmark workers"
+      ],
+      "needed": [
+        "durable-write contention optimization or higher-concurrency characterization without weakening fail-closed durability",
+        "representative multimodal pipeline benchmark",
+        "real network/TLS/proxy benchmark",
+        "external database/object-store integration benchmark"
+      ]
+    }
+  ],
+  "selection_rule": {
+    "choose_worldshepherd_when": [
+      "the principal risk is opaque or unauditable AI-assisted decision-making",
+      "source-to-decision provenance and explicit evidence lineage are mandatory",
+      "human authorization/denial/revocation must be first-class and auditable",
+      "contradictory/degraded state must remain visible rather than be silently overwritten",
+      "open modular integration and low lock-in are valued",
+      "the customer wants a composable governance/evidence layer that can complement incumbent data/C2 platforms"
+    ],
+    "do_not_choose_as_direct_prime_yet_when": [
+      "a currently authorized CUI/classified environment is a prerequisite at submission/award and is not otherwise provided by an eligible partner",
+      "existing large-scale operational references are the decisive source-selection factor",
+      "classified facility/personnel clearances are mandatory now",
+      "a completed open-source licensing posture is mandatory now",
+      "physical-system qualification or flight/weapon/sensor validation is the decisive requirement"
+    ]
+  }
+}

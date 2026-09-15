@@ -1,0 +1,70 @@
+{
+  "opportunity_id": "HR001126S0011",
+  "title": "Information Processing Techniques Office Office-Wide BAA",
+  "issuer": "DARPA IPTO",
+  "source_status": "OFFICIAL_PRIMARY_AND_GOVERNMENT_SECONDARY_VERIFIED",
+  "status": "OPEN",
+  "abstract_deadline": "2027-06-22T14:00:00-04:00",
+  "proposal_deadline": "BY_INVITATION_ONLY",
+  "capture_tier": "TIER_0",
+  "routing_state": "PREPARE_CONDITIONAL_PRIME",
+  "why_tier_0": [
+    "persistent office-wide entry route through June 2027",
+    "multiple awards anticipated",
+    "award instruments may include procurement contracts, grants, cooperative agreements, research OTs, and prototype OTs",
+    "direct fit to assured AI, inherent security/privacy, resilient software, and resilient megasystems"
+  ],
+  "technical_fit": [
+    "SARA governed orchestration",
+    "PRIME human authorization and policy governance",
+    "ECHO provenance and evidence lineage",
+    "OVERWATCH monitoring and operational decision support",
+    "PRE requirement-delta management",
+    "supply-chain and critical-infrastructure resilience",
+    "formal and evidence-gated resilient-software methods"
+  ],
+  "target_thrusts": [
+    "AI Innovation and Execution",
+    "Inherent Security and Privacy",
+    "Resilient Megasystems"
+  ],
+  "evaluation_alignment": [
+    "scientific and technical merit",
+    "DARPA mission contribution",
+    "plans to implement resilient software",
+    "cost realism"
+  ],
+  "compliance_gate_status": "BLOCKED_PENDING_ENTITY_AND_CMMC_EVIDENCE",
+  "compliance_gates": [
+    "verify active SAM registration and UEI for proposing entity",
+    "verify current Amendment 02 CMMC requirements before submission",
+    "keep all public-repository work PUBLIC-ONLY",
+    "use authorized environment for CUI or classified material if later required",
+    "verify fundamental-research risk and disclosure requirements",
+    "verify any OT cost-share/nontraditional conditions applicable to selected instrument"
+  ],
+  "claims_boundary": [
+    "Worldshepherd is not currently claimed CMMC certified or assessed",
+    "Worldshepherd is not currently claimed to have DARPA acceptance, encouragement, or award",
+    "public Sara_pro repository is not an authorized FCI/CUI/classified environment",
+    "office-wide fit does not establish scientific novelty or DARPA selection"
+  ],
+  "recommended_concept": {
+    "working_title": "Worldshepherd Resilient Megasystem Assurance Fabric",
+    "core_hypothesis": "Complex mission-critical systems can be made more resilient when machine-derived system models, provenance, policy-bounded AI, human authorization, degraded-state behavior, and intervention traceability are unified in one evidence-custodied control fabric.",
+    "candidate_domains": [
+      "supply chains",
+      "power-grid and infrastructure resilience",
+      "distributed mission systems",
+      "multi-agent AI governance",
+      "DDIL/degraded network operations"
+    ]
+  },
+  "next_actions": [
+    "verify proposing-entity SAM/UEI and current CMMC evidence before PRIME routing",
+    "develop a genuinely revolutionary abstract that is not duplicative of current IPTO programs",
+    "build a measurable resilient-software demonstration with formal failure modes, provenance, human authorization, and recovery metrics"
+  ],
+  "follow_on_path": "abstract -> invitation -> proposal -> contract/grant/cooperative agreement/research OT/prototype OT as selected by DARPA",
+  "last_verified_utc": "2026-09-13T14:42:00Z"
+}

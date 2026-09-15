@@ -1,0 +1,125 @@
+{
+  "schema": "worldshepherd_requirements_to_evidence_crosswalk_v0_1",
+  "status": "INTERNAL_EVALUATOR_CROSSWALK",
+  "generated_date": "2026-09-13",
+  "claims_boundary": "This crosswalk maps public requirement signals to current Worldshepherd evidence and gaps. It does not claim government acceptance, award, superiority, CUI authorization, CMMC status, classified capability, or operational-scale performance.",
+  "opportunities": [
+    {
+      "id": "ARM26BX06-NV012_ARM26TX06-NV003",
+      "source": "https://armysbir.army.mil/topics/agentic-ai-schema-driven-decision-management/",
+      "public_requirement_signals": [
+        "decision-as-a-program",
+        "structured auditable signer-ready Decision Packages",
+        "governed agentic AI",
+        "traceability robustness and human control",
+        "proof by demonstration rather than a full product build"
+      ],
+      "worldshepherd_evidence": [
+        "SARA governed workflow and audit primitives",
+        "PRIME authorization and bounded-action primitives",
+        "ECHO evidence/provenance bundles",
+        "PRE schema and qualification evidence compiler",
+        "selection-core CI baseline"
+      ],
+      "current_fit": "STRONG_ARCHITECTURE_FIT_INTERNAL_EVIDENCE_ONLY",
+      "gaps": [
+        "topic-specific end-to-end Decision Package demonstration",
+        "open-source licensing/business decision for the Phase-II commercial open-source requirement",
+        "entity/SBIR-STTR eligibility verification",
+        "external evaluator evidence"
+      ]
+    },
+    {
+      "id": "DON26BX05-NP004",
+      "source": "https://www.navysbir.com/n26_5/DON26BX05-NP004.htm",
+      "public_requirement_signals": [
+        "unified APNT status confidence threat degradation impact and recovery decision support",
+        "modern containerized software architecture",
+        "auditable history linking condition source data recommendation operator decision action and outcome is highly desirable",
+        "commercially derived data-integration and decision-support platforms are responsive",
+        "synthetic Phase-I data may conform to ASPN or pntOS"
+      ],
+      "worldshepherd_evidence": [
+        "APNT qualification bundle",
+        "SARA/ECHO decision trace architecture",
+        "containerized verified-local reference deployment",
+        "PRIME human authorization controls",
+        "selection-core CI baseline"
+      ],
+      "current_fit": "STRONG_TECHNICAL_FIT_COMPLIANCE_BLOCKED_FOR_DIRECT_PRIME",
+      "gaps": [
+        "current Navy Q&A states all Phase-I data and activity is CUI",
+        "public Sara_pro is not an authorized CUI environment",
+        "projected CMMC Level 2 Self evidence not established",
+        "operator UX and ASPN/pntOS integration demonstration",
+        "entity eligibility verification"
+      ],
+      "routing_effect": "PARTNER_OR_PREPARE_UNTIL_CUI_AND_CMMC_GATES_CLOSE"
+    },
+    {
+      "id": "PROJ00716",
+      "source": "https://www.diu.mil/work-with-us/submit-solution/PROJ00716",
+      "public_requirement_signals": [
+        "multi-source threat-data fusion",
+        "transparent reasoning confidence scoring and data provenance",
+        "non-proprietary workflow/training outputs",
+        "containerized cloud-native modular architecture",
+        "5-second latency threshold and 2-second objective",
+        "20-30 MB/min nominal ingest and about 5 GB/min burst handling",
+        "multi-year storage and retrieval",
+        "NIST SP 800-171 and classified/CUI handling",
+        "Top Secret/SCI personnel and facility clearance path",
+        "mission-critical sustainment and degraded-condition resilience"
+      ],
+      "worldshepherd_evidence": [
+        "deterministic synthetic fusion with observation lineage",
+        "ECHO provenance",
+        "SARA/PRIME governed workflows",
+        "DDIL qualification and resilience evidence",
+        "selection-core CI baseline"
+      ],
+      "current_fit": "PARTNER_ONLY_UNTIL_SCALE_AND_SECURITY_GATES_CLOSE",
+      "gaps": [
+        "end-to-end operational-scale benchmark",
+        "real Multi-INT data and production fusion performance",
+        "multi-year storage/retrieval evidence",
+        "NIST/CUI production environment",
+        "FCL and TS/SCI personnel path",
+        "24x7 mission sustainment evidence",
+        "external operational reference"
+      ]
+    },
+    {
+      "id": "DARPA_IPTO_RESEARCH_WEDGE",
+      "source": "https://www.darpa.mil/about/offices/ipto",
+      "public_requirement_signals": [
+        "revolutionary information-processing research rather than incremental product improvement",
+        "AI and resilient complex-system research themes",
+        "supply-demand network resilience includes granular mapping fragility analysis and stress testing"
+      ],
+      "worldshepherd_evidence": [
+        "PRE requirement-delta architecture",
+        "Supply Chain Illumination concept",
+        "ECHO evidence lineage",
+        "SARA/PRIME governed intervention architecture"
+      ],
+      "current_fit": "RESEARCH_HYPOTHESIS_REQUIRES_NOVELTY_PROOF",
+      "gaps": [
+        "formal novelty/non-duplication analysis",
+        "measurable research hypothesis",
+        "representative megasystem stress-test demonstration",
+        "entity/compliance requirements for the governing BAA"
+      ]
+    }
+  ],
+  "selection_conclusion": {
+    "current": "WORLDSHEPHERD_HAS_A_DEFENSIBLE_DIFFERENTIATED_WEDGE_BUT_IS_NOT_YET_UNIVERSALLY_PREFERRED_CHOICE_READY",
+    "wedge": "Evidence-first, human-authorized, modular decision support with provenance, explicit uncertainty, replayable decisions, and degraded-state resilience.",
+    "why_not_yet": [
+      "controlled-environment/CMMC/clearance evidence remains external and incomplete",
+      "operational-scale performance remains bounded/synthetic",
+      "open-source licensing decision remains unresolved where required",
+      "external customer/partner reference remains unproven"
+    ]
+  }
+}

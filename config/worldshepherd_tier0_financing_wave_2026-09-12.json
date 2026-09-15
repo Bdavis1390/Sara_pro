@@ -1,0 +1,121 @@
+{
+  "ledger_id": "WS-CAPTURE-TIER0-FINANCING-2026-09-12",
+  "status": "ACTIVE_INTERNAL_CAPTURE_LEDGER",
+  "claims_note": "These are financing and commercialization pathways, not awards or commitments. Eligibility and fit must be verified against the actual legal entity, project, financing instrument, and governing terms before any external representation.",
+  "opportunities": [
+    {
+      "opportunity_id": "DOE-COMMON-INVESTMENT-SCREENER-2026",
+      "title": "Common Investment Initial Screening Application",
+      "issuer": "U.S. Department of Energy / participating federal entities",
+      "source_url": "https://www.energy.gov/EICMM",
+      "source_status": "OFFICIAL_SOURCE_VERIFIED",
+      "status": "ONGOING_SCREENING_GATEWAY",
+      "deadline": null,
+      "capture_tier": "TIER_0",
+      "capture_score": 95,
+      "routing_state": "PARTNER",
+      "technical_fit": [
+        "critical minerals supply-chain resilience",
+        "advanced energy infrastructure",
+        "domestic manufacturing",
+        "materials scale-up",
+        "supply-chain provenance"
+      ],
+      "evidence_fit": [
+        "Worldshepherd supply-chain/provenance architecture",
+        "materials qualification workflow concepts",
+        "Al-Ti program as pre-validation candidate technology only"
+      ],
+      "missing_evidence": [
+        "eligible physical project definition",
+        "project developer or qualified industrial partner",
+        "capital plan",
+        "site and permitting basis where applicable",
+        "validated technology and scale-up evidence",
+        "project economics and offtake/customer evidence"
+      ],
+      "eligibility_gates": [
+        "project must fit participating federal financing priorities",
+        "legal entity and project eligibility must be verified",
+        "instrument-specific loan, loan-guarantee, or equity requirements apply"
+      ],
+      "security_gates": [
+        "do not submit CUI, classified, export-controlled, or otherwise restricted information through the public repository",
+        "perform export-control and proprietary-data review before external submission"
+      ],
+      "partner_need": [
+        "critical-minerals/mining/refining/manufacturing project developer for materials lane",
+        "energy-infrastructure owner or developer for infrastructure lane",
+        "project-finance expertise"
+      ],
+      "claims_boundary": [
+        "the screener creates no obligation or commitment by DOE or any other federal entity",
+        "Worldshepherd does not currently claim an eligible financed project",
+        "Al-Ti materials remain validation-gated"
+      ],
+      "next_actions": [
+        "define the strongest eligible physical project or partner-backed project",
+        "assemble non-confidential project economics/technology/provenance package",
+        "verify entity, export-control, financing and disclosure gates before any submission"
+      ],
+      "follow_on_path": "single screening intake -> selected federal entities -> possible loans, loan guarantees, equity investments, or other financing discussions",
+      "compliance_gate_status": "BLOCKED_PENDING_PROJECT_AND_ENTITY_EVIDENCE"
+    },
+    {
+      "opportunity_id": "DOE-SBA-SBIC-E-2026",
+      "title": "Small Business Investment Company-Energy Initiative",
+      "issuer": "U.S. Department of Energy Office of Technology Commercialization / U.S. Small Business Administration",
+      "source_url": "https://www.energy.gov/technologycommercialization/small-business-investment-company-energy-sbic-e-initiative",
+      "source_status": "OFFICIAL_SOURCE_VERIFIED",
+      "status": "INITIATIVE_ACTIVE_MARKET-DEVELOPMENT",
+      "deadline": null,
+      "capture_tier": "TIER_0",
+      "capture_score": 94,
+      "routing_state": "PREPARE",
+      "technical_fit": [
+        "advanced manufacturing",
+        "advanced materials",
+        "critical minerals",
+        "artificial intelligence",
+        "quantum",
+        "semiconductors",
+        "advanced communications",
+        "national defense-adjacent technologies"
+      ],
+      "evidence_fit": [
+        "Worldshepherd software platform",
+        "advanced materials pipeline",
+        "AI/governance commercialization concepts"
+      ],
+      "missing_evidence": [
+        "investor-ready legal/entity structure",
+        "auditable capitalization and financial model",
+        "commercial traction or validated pilot evidence",
+        "specific SBIC-E participating fund access path"
+      ],
+      "eligibility_gates": [
+        "investment occurs through licensed private SBIC funds",
+        "qualifying U.S. small-business status and fund-specific investment criteria must be verified"
+      ],
+      "security_gates": [
+        "separate investment diligence from controlled government information",
+        "export-control and data-rights review for defense-sensitive technologies"
+      ],
+      "partner_need": [
+        "licensed SBIC or future SBIC-E fund",
+        "commercialization and project-finance partners"
+      ],
+      "claims_boundary": [
+        "SBIC-E is not a direct DOE award to Worldshepherd",
+        "no participating fund investment is currently claimed"
+      ],
+      "next_actions": [
+        "build investor-ready product and evidence package",
+        "map Worldshepherd products to DOE priority technology areas",
+        "track participating funds and engagement opportunities as DOE/SBA publish them"
+      ],
+      "follow_on_path": "SBIC-E aligned private investment -> scale-up/commercialization -> DOE ecosystem and customer opportunities",
+      "compliance_gate_status": "PREPARE_PENDING_ENTITY_AND_INVESTMENT_READINESS"
+    }
+  ]
+}

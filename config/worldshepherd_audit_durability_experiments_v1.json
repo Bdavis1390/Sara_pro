@@ -1,0 +1,111 @@
+{
+  "schema": "worldshepherd_audit_durability_experiments_v1",
+  "status": "INTERNAL_ENGINEERING_EVIDENCE",
+  "generated_date": "2026-09-14",
+  "claims_boundary": "These results are single-host CI measurements for the bounded synthetic-fusion application path. They do not establish production, distributed, CUI/classified, mission-scale, or external durability/performance claims.",
+  "baseline_real_network": {
+    "workflow": "Worldshepherd Real Network Benchmark",
+    "run_id": 34803530735,
+    "commit": "4551db7ded9616cb43b34a916bc12ca3e804a21c",
+    "artifact_id": 10332965368,
+    "artifact_digest": "sha256:fab67c9913cd54a37c0e7c54172dd0d74863508bfab05e5c2ee98dbb535c326a",
+    "result": "PASS",
+    "scope": "warmed persistent HTTPX clients against a real single-worker Uvicorn process over localhost HTTP and direct TLS",
+    "eight_client_http": {
+      "request_p95_ms": 41.779465,
+      "server_total_p95_ms": 38.058473,
+      "audit_fsync_p95_ms": 32.556116,
+      "fusion_graph_p95_ms": 3.908716,
+      "client_transport_residual_p95_ms": 4.618292
+    },
+    "eight_client_https": {
+      "request_p95_ms": 41.395983,
+      "server_total_p95_ms": 37.959206,
+      "audit_fsync_p95_ms": 30.648146,
+      "fusion_graph_p95_ms": 4.793715,
+      "client_transport_residual_p95_ms": 6.08927
+    },
+    "audit_persistence": {
+      "http_expected": 135,
+      "http_observed": 135,
+      "https_expected": 135,
+      "https_observed": 135,
+      "corrupt_lines": 0
+    },
+    "interpretation": "At eight clients, serialized durable audit/fsync queueing is the largest measured server-side component; localhost transport/TLS residual is secondary."
+  },
+  "group_commit_experiment": {
+    "workflow": "Worldshepherd Real Network Benchmark",
+    "run_id": 34803715796,
+    "commit": "28592e58257ee6894510f1fa5efe30f9f2fb9526",
+    "artifact_id": 10332366766,
+    "artifact_digest": "sha256:9712b57861c1fad5d0104556cfdacef9c68cd01bc3b4ad43c6fbe29000cb0b86",
+    "result": "REJECTED_FOR_PROMOTION",
+    "experimental_mode": "SYNCHRONOUS_GROUP_COMMIT_0_5MS",
+    "correctness": {
+      "regression_suite_passed": true,
+      "audit_complete_all_transports_all_modes": true,
+      "durable_before_return_preserved": true,
+      "failure_propagation_preserved": true,
+      "default_service_behavior_unchanged": true
+    },
+    "eight_client_http": {
+      "baseline_request_p95_ms": 40.261448,
+      "group_commit_request_p95_ms": 54.583525,
+      "request_p95_change_pct": 35.57268233373027,
+      "baseline_audit_fsync_p95_ms": 31.218442,
+      "group_commit_audit_fsync_p95_ms": 24.542192,
+      "audit_fsync_p95_change_pct": -21.38559637281066,
+      "throughput_change_pct": -1.545545951580429
+    },
+    "eight_client_https": {
+      "baseline_request_p95_ms": 42.09301,
+      "group_commit_request_p95_ms": 59.699007,
+      "request_p95_change_pct": 41.82641488456159,
+      "baseline_audit_fsync_p95_ms": 29.495282,
+      "group_commit_audit_fsync_p95_ms": 30.299823,
+      "audit_fsync_p95_change_pct": 2.7276938732099607,
+      "throughput_change_pct": 1.821184516979502
+    },
+    "decision": "Do not enable synchronous group commit. It preserved correctness but worsened end-to-end p95 request latency at every measured concurrency level.",
+    "next_engineering_hypothesis": "Preserve one-record-per-fsync semantics and reduce avoidable work inside the serialized append critical section, beginning with repeated open/fchmod/close overhead."
+  },
+  "persistent_audit_descriptor_experiment": {
+    "workflow": "Worldshepherd Persistent Audit FD A-B",
+    "run_id": 34917358332,
+    "commit": "0d8608d906af12bef011a352b1841ccf88869ab9",
+    "artifact_id": 10376867867,
+    "artifact_digest": "sha256:6471c8c3d8fa1fea579e8863aceca611c981be7c49e6af31a0bcdc865bc69346",
+    "result": "REJECTED_FOR_PROMOTION",
+    "experimental_mode": "PER_RECORD_PERSISTENT_VERIFIED_FD_FSYNC",
+    "correctness": {
+      "regression_suite_passed": true,
+      "audit_complete_all_transports_all_modes": true,
+      "one_record_per_fsync_contract_preserved": true,
+      "permission_drift_detected": true,
+      "path_replacement_detected": true,
+      "fsync_failure_propagated": true,
+      "default_service_behavior_unchanged": true
+    },
+    "eight_client_http": {
+      "baseline_request_p95_ms": 40.910831,
+      "persistent_fd_request_p95_ms": 45.92221,
+      "request_p95_change_pct": 12.2495,
+      "baseline_audit_fsync_p95_ms": 31.355523,
+      "persistent_fd_audit_fsync_p95_ms": 30.622808,
+      "audit_fsync_p95_change_pct": -2.337,
+      "throughput_change_pct": 2.317
+    },
+    "eight_client_https": {
+      "baseline_request_p95_ms": 46.746947,
+      "persistent_fd_request_p95_ms": 42.754551,
+      "request_p95_change_pct": -8.5404,
+      "baseline_audit_fsync_p95_ms": 34.240588,
+      "persistent_fd_audit_fsync_p95_ms": 26.49862,
+      "audit_fsync_p95_change_pct": -22.6164,
+      "throughput_change_pct": 5.228
+    },
+    "decision": "Do not promote the persistent audit descriptor. It produced mixed transport/concurrency behavior: useful improvements in some profiles, including eight-client HTTPS, but regressions in others, including eight-client HTTP. The system-level benefit is not robust enough to justify descriptor lifecycle complexity.",
+    "engineering_consequence": "Treat the current single-host JSONL one-record-per-fsync writer as a bounded local durability implementation rather than continuing micro-optimizations without a stronger workload or storage architecture requirement. Shift assurance work toward cryptographic post-write integrity and externally anchorable evidence."
+  }
+}

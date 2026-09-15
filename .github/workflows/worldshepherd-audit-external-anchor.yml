@@ -1,0 +1,67 @@
+name: Worldshepherd Audit External Anchor
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_verify.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_guarded.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_key.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_anchor.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_operator.py'
+      - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_guarded.py'
+      - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_key.py'
+      - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_anchor.py'
+      - 'tools/selection_demo/audit_external_anchor_demo.py'
+      - '.github/workflows/worldshepherd-audit-external-anchor.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  external-anchor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SARA test environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'deployments/sara_verified_local_v1[test]'
+
+      - name: Run audit checkpoint and external-anchor regression tests
+        run: |
+          python -m pytest \
+            deployments/sara_verified_local_v1/tests/test_audit_checkpoint.py \
+            deployments/sara_verified_local_v1/tests/test_audit_checkpoint_guarded.py \
+            deployments/sara_verified_local_v1/tests/test_audit_checkpoint_key.py \
+            deployments/sara_verified_local_v1/tests/test_audit_checkpoint_anchor.py \
+            deployments/sara_verified_local_v1/tests/test_storage_tail.py
+
+      - name: Demonstrate independently retained rollback pin
+        run: |
+          mkdir -p audit_anchor_evidence
+          python tools/selection_demo/audit_external_anchor_demo.py \
+            --out audit_anchor_evidence/external-anchor-evidence.json \
+            --anchor-out audit_anchor_evidence/latest-audit-anchor.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Upload external-anchor evidence and retained pin
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-audit-external-anchor-${{ github.sha }}
+          path: audit_anchor_evidence/
+          if-no-files-found: error
+          retention-days: 30

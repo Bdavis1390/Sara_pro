@@ -1,0 +1,49 @@
+name: Worldshepherd Selection Baseline
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'deployments/sara_verified_local_v1/**'
+      - 'config/worldshepherd_preferred_choice_matrix_v0_1.json'
+      - 'tools/selection_demo/**'
+      - '.github/workflows/worldshepherd-selection-baseline.yml'
+      - 'SECURITY.md'
+
+permissions:
+  contents: read
+
+jobs:
+  selection-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SARA test environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'deployments/sara_verified_local_v1[test]'
+
+      - name: Run preferred-choice selection baseline
+        run: |
+          chmod +x tools/selection_demo/run_selection_baseline.sh
+          WS_SELECTION_EVIDENCE_DIR="$GITHUB_WORKSPACE/selection_evidence" \
+            tools/selection_demo/run_selection_baseline.sh
+
+      - name: Upload evidence bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-selection-baseline-${{ github.sha }}
+          path: selection_evidence/
+          if-no-files-found: error
+          retention-days: 30

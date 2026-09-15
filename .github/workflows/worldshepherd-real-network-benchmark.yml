@@ -1,0 +1,172 @@
+name: Worldshepherd Real Network Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/storage.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/synthetic_fusion_api.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/sensor_fusion.py'
+      - 'deployments/sara_verified_local_v1/tests/test_audit_group_commit.py'
+      - 'tools/selection_demo/benchmark_fusion_real_network.py'
+      - '.github/workflows/worldshepherd-real-network-benchmark.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  real-network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SARA benchmark environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'deployments/sara_verified_local_v1[test]'
+
+      - name: Run governed API, storage, and group-commit regression tests
+        run: |
+          python -m pytest \
+            deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py \
+            deployments/sara_verified_local_v1/tests/test_storage_tail.py \
+            deployments/sara_verified_local_v1/tests/test_audit_group_commit.py
+
+      - name: Measure baseline per-record fsync over real HTTP and TLS
+        run: |
+          mkdir -p real_network_evidence
+          env -u SARA_AUDIT_GROUP_COMMIT -u SARA_AUDIT_GROUP_COMMIT_WINDOW_MS \
+            python tools/selection_demo/benchmark_fusion_real_network.py \
+              --out real_network_evidence/baseline-per-record-fsync.json \
+              --software-commit "$GITHUB_SHA"
+
+      - name: Measure opt-in synchronous group commit over real HTTP and TLS
+        env:
+          SARA_AUDIT_GROUP_COMMIT: '1'
+          SARA_AUDIT_GROUP_COMMIT_WINDOW_MS: '0.5'
+        run: |
+          python tools/selection_demo/benchmark_fusion_real_network.py \
+            --out real_network_evidence/experimental-group-commit.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Build A/B comparison evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('real_network_evidence')
+          baseline_path = root / 'baseline-per-record-fsync.json'
+          grouped_path = root / 'experimental-group-commit.json'
+          baseline = json.loads(baseline_path.read_text())
+          grouped = json.loads(grouped_path.read_text())
+          baseline['audit_write_mode'] = {
+              'mode': 'PER_RECORD_FSYNC',
+              'default_service_behavior': True,
+              'group_commit_enabled': False,
+          }
+          grouped['audit_write_mode'] = {
+              'mode': 'SYNCHRONOUS_GROUP_COMMIT_EXPERIMENT',
+              'default_service_behavior': False,
+              'group_commit_enabled': True,
+              'coalescing_window_ms': 0.5,
+              'durable_before_response': True,
+              'fail_closed_on_batch_failure': True,
+          }
+          baseline_path.write_text(json.dumps(baseline, indent=2, sort_keys=True) + '\n')
+          grouped_path.write_text(json.dumps(grouped, indent=2, sort_keys=True) + '\n')
+
+          def transport_map(document):
+              return {item['transport']: item for item in document['transports']}
+
+          def profile_map(transport):
+              return {int(item['workers']): item for item in transport['profiles']}
+
+          rows = []
+          base_transports = transport_map(baseline)
+          group_transports = transport_map(grouped)
+          for transport in ('http', 'https'):
+              base_profiles = profile_map(base_transports[transport])
+              group_profiles = profile_map(group_transports[transport])
+              for workers in (1, 2, 4, 8):
+                  base = base_profiles[workers]
+                  group = group_profiles[workers]
+                  base_request = float(base['request_latency_p95_ms'])
+                  group_request = float(group['request_latency_p95_ms'])
+                  base_audit = float(base['server_audit_fsync_p95_ms'])
+                  group_audit = float(group['server_audit_fsync_p95_ms'])
+                  base_rps = float(base['measured_requests_per_second'])
+                  group_rps = float(group['measured_requests_per_second'])
+                  rows.append({
+                      'transport': transport,
+                      'workers': workers,
+                      'baseline_request_p95_ms': base_request,
+                      'group_commit_request_p95_ms': group_request,
+                      'request_p95_change_pct': ((group_request - base_request) / base_request) * 100.0,
+                      'baseline_audit_fsync_p95_ms': base_audit,
+                      'group_commit_audit_fsync_p95_ms': group_audit,
+                      'audit_fsync_p95_change_pct': ((group_audit - base_audit) / base_audit) * 100.0,
+                      'baseline_requests_per_second': base_rps,
+                      'group_commit_requests_per_second': group_rps,
+                      'throughput_change_pct': ((group_rps - base_rps) / base_rps) * 100.0,
+                  })
+
+          all_audits_complete = all(
+              item['audit_persistence']['complete']
+              for document in (baseline, grouped)
+              for item in document['transports']
+          )
+          comparison = {
+              'schema': 'WS-SYNCHRONOUS-AUDIT-GROUP-COMMIT-AB-V1',
+              'result': 'PASS_EXPERIMENT' if (
+                  baseline.get('result') == 'PASS'
+                  and grouped.get('result') == 'PASS'
+                  and all_audits_complete
+              ) else 'FAIL',
+              'software_commit': baseline['software_commit'],
+              'baseline_mode': 'PER_RECORD_FSYNC',
+              'experimental_mode': 'SYNCHRONOUS_GROUP_COMMIT_0_5MS',
+              'rows': rows,
+              'acceptance_checks': {
+                  'baseline_passed': baseline.get('result') == 'PASS',
+                  'group_commit_passed': grouped.get('result') == 'PASS',
+                  'audit_complete_all_transports_all_modes': all_audits_complete,
+                  'default_service_behavior_unchanged': True,
+              },
+              'decision_rule': (
+                  'Performance determines whether the experiment merits promotion; '
+                  'correctness alone does not enable group commit by default.'
+              ),
+              'claims_boundary': [
+                  'The group-commit mode remains opt-in and experimental.',
+                  'Every grouped caller blocks until the batch write is flushed and fsynced.',
+                  'Batch write/fsync failure is propagated to affected callers; results remain fail-closed.',
+                  'This is a single-host localhost benchmark and does not establish production or distributed durability.'
+              ],
+          }
+          (root / 'group-commit-ab-comparison.json').write_text(
+              json.dumps(comparison, indent=2, sort_keys=True) + '\n'
+          )
+          print(json.dumps(comparison, indent=2, sort_keys=True))
+          if comparison['result'] != 'PASS_EXPERIMENT':
+              raise SystemExit(1)
+          PY
+
+      - name: Upload real-network evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-real-network-benchmark-${{ github.sha }}
+          path: real_network_evidence/
+          if-no-files-found: error
+          retention-days: 30

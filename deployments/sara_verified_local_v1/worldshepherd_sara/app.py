@@ -3,10 +3,12 @@ from __future__ import annotations
 import json
 import os
 import secrets
+import time
 from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -28,6 +30,8 @@ from .prime_sentinel_authorization import (
     PrimeSentinelVerifier,
 )
 from .storage import DurableStore
+from .synthetic_fusion_api import router as synthetic_fusion_router
+from .validation_errors import sanitized_request_validation_handler
 
 
 PROTECTED_REGISTRY_NAMESPACES = frozenset(
@@ -37,6 +41,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         EVENT_OUTBOX_REGISTRY_KEY,
     }
 )
+BENCHMARK_TIMING_HEADERS_ENV = "SARA_BENCHMARK_TIMING_HEADERS"
 
 
 class RequestTooLarge(Exception):
@@ -99,6 +104,10 @@ class RequestSizeLimitMiddleware:
         )(scope, receive, send)
 
 
+def benchmark_timing_headers_enabled() -> bool:
+    return os.getenv(BENCHMARK_TIMING_HEADERS_ENV, "0") == "1"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     os.umask(0o077)
@@ -139,13 +148,28 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.add_exception_handler(
+    RequestValidationError,
+    sanitized_request_validation_handler,
+)
 app.add_middleware(RequestSizeLimitMiddleware)
 app.include_router(prime_passport_router)
+app.include_router(synthetic_fusion_router)
 
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
+    timing_enabled = benchmark_timing_headers_enabled()
+    started = time.perf_counter_ns() if timing_enabled else 0
     response = await call_next(request)
+    if timing_enabled:
+        server_total_ms = (time.perf_counter_ns() - started) / 1_000_000.0
+        existing = response.headers.get("Server-Timing")
+        total_metric = f"server_total;dur={server_total_ms:.6f}"
+        response.headers["Server-Timing"] = (
+            f"{existing}, {total_metric}" if existing else total_metric
+        )
+        response.headers["X-Worldshepherd-Benchmark-Timing"] = "1"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -179,6 +203,7 @@ def health(request: Request) -> dict[str, object]:
             "audit": "/v1/audit?limit=50",
             "hmaa_status": "/v1/hmaa/status",
             "hmaa_evidence": "/v1/hmaa/evidence?limit=50",
+            "synthetic_fusion": "/v1/synthetic-fusion",
             "registry": "/admin/registry",
             "prime_passport": "/admin/prime/{prime_id}/passport",
             "prime_requalification_authorize": "/admin/prime/{prime_id}/requalification/authorize",
@@ -221,7 +246,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/v1/synthetic-fusion</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. PRIME SENTINEL private signing keys are not stored by SARA.</p></div>
 </body></html>"""
 
@@ -249,7 +274,8 @@ def hmaa_evidence(
     mission_id: Annotated[str | None, Query(min_length=1, max_length=128)] = None,
 ) -> dict[str, object]:
     require_admin(role)
-    records = hmaa_store(request).read_recent(
+    evidence_store = hmaa_store(request)
+    records = evidence_store.read_recent(
         limit=limit,
         mission_id=mission_id,
     )

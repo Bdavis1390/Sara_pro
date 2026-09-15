@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import secrets
 import stat
 import threading
-from collections import deque
+import time
 from pathlib import Path
 from typing import Any, Callable, TypeVar
 
@@ -18,10 +19,25 @@ RegistryTransaction = Callable[
     [dict[str, Any]],
     tuple[dict[str, Any] | None, T],
 ]
+MAX_AUDIT_GROUP_COMMIT_BATCH = 64
+MAX_AUDIT_GROUP_COMMIT_WINDOW_MS = 10.0
+
+
+class _AuditAppendWaiter:
+    def __init__(self, line: str) -> None:
+        self.line = line
+        self.done = threading.Event()
+        self.error: Exception | None = None
 
 
 class DurableStore:
-    def __init__(self, data_dir: str | Path | None = None) -> None:
+    def __init__(
+        self,
+        data_dir: str | Path | None = None,
+        *,
+        audit_group_commit: bool | None = None,
+        audit_group_commit_window_ms: float | None = None,
+    ) -> None:
         root = Path(data_dir or os.getenv("SARA_DATA_DIR", "./data")).resolve()
         root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self._secure_mode(root, 0o700, "data directory")
@@ -29,6 +45,32 @@ class DurableStore:
         self.audit_path = root / "audit.jsonl"
         self.registry_path = root / "registry.json"
         self._lock = threading.RLock()
+
+        if audit_group_commit is None:
+            audit_group_commit = os.getenv("SARA_AUDIT_GROUP_COMMIT", "0") == "1"
+        if audit_group_commit_window_ms is None:
+            raw_window = os.getenv("SARA_AUDIT_GROUP_COMMIT_WINDOW_MS", "0.5")
+            try:
+                audit_group_commit_window_ms = float(raw_window)
+            except ValueError as exc:
+                raise ValueError(
+                    "SARA_AUDIT_GROUP_COMMIT_WINDOW_MS must be numeric"
+                ) from exc
+        if (
+            not math.isfinite(audit_group_commit_window_ms)
+            or audit_group_commit_window_ms < 0.0
+            or audit_group_commit_window_ms > MAX_AUDIT_GROUP_COMMIT_WINDOW_MS
+        ):
+            raise ValueError(
+                "audit_group_commit_window_ms must be finite and between "
+                f"0 and {MAX_AUDIT_GROUP_COMMIT_WINDOW_MS} ms"
+            )
+        self.audit_group_commit_enabled = bool(audit_group_commit)
+        self.audit_group_commit_window_ms = float(audit_group_commit_window_ms)
+        self._audit_group_condition = threading.Condition(threading.Lock())
+        self._audit_group_pending: list[_AuditAppendWaiter] = []
+        self._audit_group_leader_active = False
+
         if not self.registry_path.exists():
             self._atomic_write_json(self.registry_path, {})
         else:
@@ -171,6 +213,14 @@ class DurableStore:
 
     def append_audit(self, record: AuditRecord) -> None:
         line = record.model_dump_json(exclude_none=True)
+        if not self.audit_group_commit_enabled:
+            self._write_audit_lines([line])
+            return
+        self._append_audit_group_commit(line)
+
+    def _write_audit_lines(self, lines: list[str]) -> None:
+        if not lines:
+            return
         with self._lock:
             descriptor = os.open(
                 self.audit_path,
@@ -186,10 +236,49 @@ class DurableStore:
                 os.close(descriptor)
                 raise
             with os.fdopen(descriptor, "a", encoding="utf-8") as handle:
-                handle.write(line + "\n")
+                for line in lines:
+                    handle.write(line + "\n")
                 handle.flush()
                 os.fsync(handle.fileno())
             self._secure_mode(self.audit_path, 0o600, "audit file")
+
+    def _append_audit_group_commit(self, line: str) -> None:
+        waiter = _AuditAppendWaiter(line)
+        leader = False
+        with self._audit_group_condition:
+            self._audit_group_pending.append(waiter)
+            if not self._audit_group_leader_active:
+                self._audit_group_leader_active = True
+                leader = True
+
+        if leader:
+            self._drain_audit_group_commit()
+
+        waiter.done.wait()
+        if waiter.error is not None:
+            raise RuntimeError("Grouped audit append failed before durability") from waiter.error
+
+    def _drain_audit_group_commit(self) -> None:
+        if self.audit_group_commit_window_ms > 0.0:
+            time.sleep(self.audit_group_commit_window_ms / 1000.0)
+
+        while True:
+            with self._audit_group_condition:
+                if not self._audit_group_pending:
+                    self._audit_group_leader_active = False
+                    return
+                batch = self._audit_group_pending[:MAX_AUDIT_GROUP_COMMIT_BATCH]
+                del self._audit_group_pending[: len(batch)]
+
+            error: Exception | None = None
+            try:
+                self._write_audit_lines([waiter.line for waiter in batch])
+            except Exception as exc:
+                error = exc
+
+            for waiter in batch:
+                waiter.error = error
+                waiter.done.set()
 
     def read_audit(self, limit: int) -> list[dict[str, Any]]:
         with self._lock:
@@ -213,26 +302,69 @@ class DurableStore:
         return records
 
     def _bounded_tail(self, limit: int) -> list[tuple[bytes, bool]]:
-        records: deque[tuple[bytes, bool]] = deque(maxlen=limit)
-        current = bytearray()
+        """Return the newest ``limit`` audit lines without scanning older history.
+
+        Audit records are append-only JSONL. Reading from EOF lets bounded API
+        requests scale with the requested tail (plus the size of those lines)
+        rather than with the total lifetime audit file. The scan preserves the
+        previous corruption semantics: overlong selected lines are marked as
+        truncated, empty/invalid selected lines are returned for the caller to
+        label, and output remains chronological (oldest-to-newest within the
+        selected tail).
+        """
+
+        if limit <= 0:
+            return []
+
+        records_newest_first: list[tuple[bytes, bool]] = []
+        current_reversed = bytearray()
         truncated = False
-        descriptor = self._open_read_descriptor(
-            self.audit_path, "audit file"
-        )
+        descriptor = self._open_read_descriptor(self.audit_path, "audit file")
+
         with os.fdopen(descriptor, "rb") as handle:
-            while chunk := handle.read(8192):
-                for byte in chunk:
+            handle.seek(0, os.SEEK_END)
+            file_size = handle.tell()
+            position = file_size
+            at_eof = True
+
+            while position > 0 and len(records_newest_first) < limit:
+                read_size = min(8192, position)
+                position -= read_size
+                handle.seek(position)
+                chunk = handle.read(read_size)
+
+                for byte in reversed(chunk):
                     if byte == 0x0A:
-                        records.append((bytes(current), truncated))
-                        current.clear()
+                        if at_eof:
+                            at_eof = False
+                            continue
+
+                        records_newest_first.append(
+                            (bytes(reversed(current_reversed)), truncated)
+                        )
+                        current_reversed.clear()
                         truncated = False
-                    elif len(current) < MAX_AUDIT_LINE_BYTES:
-                        current.append(byte)
+                        if len(records_newest_first) >= limit:
+                            break
                     else:
-                        truncated = True
-            if current or truncated:
-                records.append((bytes(current), truncated))
-        return list(records)
+                        at_eof = False
+                        if len(current_reversed) < MAX_AUDIT_LINE_BYTES:
+                            current_reversed.append(byte)
+                        else:
+                            truncated = True
+
+            if len(records_newest_first) < limit:
+                if current_reversed or truncated:
+                    records_newest_first.append(
+                        (bytes(reversed(current_reversed)), truncated)
+                    )
+                elif file_size > 0:
+                    handle.seek(0)
+                    if handle.read(1) == b"\n":
+                        records_newest_first.append((b"", False))
+
+        records_newest_first.reverse()
+        return records_newest_first
 
     def get_registry(self) -> dict[str, Any]:
         with self._lock:

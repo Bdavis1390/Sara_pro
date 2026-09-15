@@ -1,0 +1,131 @@
+{
+  "schema": "WS-FEDERAL-COMPLIANCE-BASELINE-V1",
+  "effective_date": "2026-09-12",
+  "status": "COMPLIANCE_MANAGED_NOT_CERTIFIED",
+  "repository_boundary": {
+    "classification": "PUBLIC_ONLY",
+    "fci_processing_authorized": false,
+    "cui_processing_authorized": false,
+    "classified_processing_authorized": false,
+    "export_controlled_technical_data_authorized": false,
+    "rule": "Only public, sanitized, synthetic, or explicitly releasable information may be committed to this repository."
+  },
+  "standards_context": {
+    "forward_engineering_baseline": "NIST SP 800-171 Rev. 3 may be used for engineering readiness and future-proofing.",
+    "cmmc_level_2_assessment_basis": "CMMC Level 2 uses the 110 NIST SP 800-171 Rev. 2 requirements under 32 CFR part 170 unless governing rules change.",
+    "contract_rule": "The solicitation and incorporated FAR/DFARS clauses control."
+  },
+  "gates": [
+    {
+      "id": "FAR-52.204-21",
+      "name": "Basic Safeguarding of Covered Contractor Information Systems",
+      "applies_when": "A contractor information system processes, stores, or transmits Federal Contract Information.",
+      "current_status": "NOT_ASSESSED_FOR_PRODUCTION",
+      "submission_rule": "Do not represent compliance without an identified system boundary and evidence for all applicable safeguards.",
+      "source": "https://www.acquisition.gov/far/52.204-21"
+    },
+    {
+      "id": "DFARS-252.204-7012",
+      "name": "Safeguarding Covered Defense Information and Cyber Incident Reporting",
+      "applies_when": "A covered contractor information system processes covered defense information or the clause is incorporated.",
+      "current_status": "CUI_CDI_PROCESSING_NOT_AUTHORIZED",
+      "submission_rule": "Route to PARTNER or PREPARE unless an authorized enclave, incident-reporting process, contractual cloud requirements, and required security controls are evidenced.",
+      "source": "https://www.acquisition.gov/dfars/252.204-7012-safeguarding-covered-defense-information-and-cyber-incident-reporting."
+    },
+    {
+      "id": "DFARS-252.204-7019-7020",
+      "name": "NIST SP 800-171 DoD Assessment / SPRS",
+      "applies_when": "The offeror is required to implement NIST SP 800-171 for a covered contractor information system.",
+      "current_status": "SPRS_STATUS_NOT_CLAIMED",
+      "submission_rule": "Award-dependent opportunities requiring a current assessment must fail closed until the relevant assessment and SPRS evidence are verified.",
+      "source": "https://www.acquisition.gov/dfars/252.204-7019-notice-nistsp-800-171-dod-assessment-requirements."
+    },
+    {
+      "id": "DFARS-252.204-7021-CMMC",
+      "name": "Cybersecurity Maturity Model Certification",
+      "applies_when": "The solicitation or contract specifies a CMMC level for systems processing FCI or CUI.",
+      "current_status": "CMMC_STATUS_NOT_CLAIMED",
+      "submission_rule": "Do not claim Level 1, Level 2 Self, Level 2 C3PAO, or Level 3 status without current evidence in accordance with 32 CFR part 170 and the solicitation.",
+      "source": "https://www.acquisition.gov/dfars/252.204-7021-contractor-compliance-cybersecurity-maturity-model-certification-level-requirements."
+    },
+    {
+      "id": "SAM-FAR-52.204-7",
+      "name": "System for Award Management / UEI / CAGE",
+      "applies_when": "A Federal solicitation requires active SAM registration.",
+      "current_status": "ENTITY_STATUS_UNVERIFIED_IN_REPOSITORY",
+      "submission_rule": "Verify active SAM registration, exact legal name, UEI, CAGE, representations/certifications, and required points of contact before any offer that requires them.",
+      "source": "https://www.acquisition.gov/far/52.204-7"
+    },
+    {
+      "id": "FAR-52.204-25-26",
+      "name": "Covered Telecommunications Equipment or Services / Section 889 representations",
+      "applies_when": "The solicitation includes the applicable representation or prohibition.",
+      "current_status": "REASONABLE_INQUIRY_NOT_EVIDENCED",
+      "submission_rule": "Perform and retain a supplier/equipment reasonable inquiry before making a representation.",
+      "source": "https://www.acquisition.gov/far/52.204-26"
+    },
+    {
+      "id": "EXPORT-CONTROL",
+      "name": "ITAR / EAR / Controlled Technical Data",
+      "applies_when": "Technical data, software, hardware, services, persons, destinations, or releases may be export controlled.",
+      "current_status": "LEGAL_CLASSIFICATION_REQUIRED_PER_ITEM",
+      "submission_rule": "No export-controlled technical data enters the public repository. Route affected work to legal/export-control review and an authorized environment.",
+      "source": "REQUIRES_LEGAL_REVIEW"
+    },
+    {
+      "id": "JCP-DD2345",
+      "name": "Joint Certification Program / DD Form 2345",
+      "applies_when": "Access to DoD/DoD-controlled unclassified militarily critical technical data requires JCP certification.",
+      "current_status": "NOT_CLAIMED",
+      "submission_rule": "Verify active certification before representing eligibility for controlled technical-data access.",
+      "source": "REQUIRES_OFFICIAL_JCP_VERIFICATION"
+    },
+    {
+      "id": "CLASSIFIED-FCL-PCL",
+      "name": "Facility and Personnel Security Clearances",
+      "applies_when": "Performance requires access to classified information.",
+      "current_status": "NOT_CLAIMED",
+      "submission_rule": "Route to a properly cleared partner or verified sponsorship/clearance path; never imply a clearance from software security controls.",
+      "source": "REQUIRES_DCSA_AND_SOLICITATION_VERIFICATION"
+    },
+    {
+      "id": "SBIR-STTR-ENTITY-ELIGIBILITY",
+      "name": "SBIR/STTR entity and ownership eligibility",
+      "applies_when": "Pursuing SBIR or STTR awards.",
+      "current_status": "UNVERIFIED_PER_ENTITY_AND_TOPIC",
+      "submission_rule": "Verify company size, ownership/control, principal place of business, workshare, research-institution requirements, and topic-specific eligibility before PRIME routing.",
+      "source": "REQUIRES_CURRENT_PROGRAM_RULES"
+    }
+  ],
+  "mandatory_capture_fields": [
+    "data_classification",
+    "fci_expected",
+    "cui_expected",
+    "classified_expected",
+    "export_control_expected",
+    "required_cmmc_level",
+    "required_sprs_assessment",
+    "sam_required",
+    "jcp_required",
+    "facility_clearance_required",
+    "personnel_clearance_required",
+    "section_889_representation_required",
+    "compliance_evidence_refs",
+    "compliance_gate_status"
+  ],
+  "compliance_gate_states": [
+    "PASS_EVIDENCED",
+    "PASS_NOT_APPLICABLE",
+    "CONDITIONAL_PARTNER_PATH",
+    "BLOCKED_MISSING_EVIDENCE",
+    "REQUIRES_LEGAL_REVIEW",
+    "UNKNOWN"
+  ],
+  "hard_fail_rules": [
+    "No proposal may state or imply CMMC, SPRS, ATO, RMF, FCL, PCL, JCP, ITAR/EAR authorization, or SAM status without objective evidence.",
+    "No CUI, FCI not intended for public release, classified information, export-controlled technical data, credentials, or sensitive operational data may be stored in the public repository.",
+    "A technical control implemented in software does not establish organizational, physical, personnel, contractual, or certification compliance.",
+    "Where a mandatory compliance gate is not met, PRIME routing must downgrade to PARTNER, PREPARE, or NO_BID as appropriate.",
+    "Compliance evidence must be current for the solicitation and system boundary; stale evidence cannot be reused without verification."
+  ]
+}

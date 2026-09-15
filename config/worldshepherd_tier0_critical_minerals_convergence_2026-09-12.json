@@ -1,0 +1,55 @@
+{
+  "schema": "worldshepherd_tier0_convergence_v1",
+  "generated_utc": "2026-09-13T02:33:00Z",
+  "title": "Critical Minerals Discovery-to-Finance Convergence",
+  "status": "ACTIVE_INTERNAL_CAPTURE_LANE",
+  "claims_boundary": "This record describes an opportunity/partner strategy only. Worldshepherd does not currently claim DP2 airborne subsurface radar feasibility, flight heritage, kW-class RF hardware, mineral-discovery performance, federal financing approval, or project-developer readiness.",
+  "primary_routes": [
+    {
+      "id": "DPA26BZ06-DV023",
+      "issuer": "DARPA",
+      "title": "Novel Radio Frequency Sensing Technologies",
+      "status": "PRE_RELEASE_OPENS_2026-09-23",
+      "deadline": "2026-10-21",
+      "capture_tier": "TIER_0",
+      "routing_state": "PARTNER",
+      "technical_objective": "High-altitude high-speed airborne 3D subsurface tomography for metals and critical minerals.",
+      "hard_gate": "Direct-to-Phase-II only; modeling/simulation alone is insufficient. Proposer must already have physical airborne subsurface-radar or similar validation with empirical flight data, receiver characterization, and scaling models.",
+      "compliance_gates": ["ITAR/EAR review", "foreign-national disclosure/restrictions", "SBIR eligibility", "flight-test and airworthiness path", "RF/EMC safety evidence"],
+      "worldshepherd_role": ["partner-side provenance", "edge-data/evidence workflow", "mission assurance", "qualification traceability", "supply-chain linkage"],
+      "worldshepherd_exclusions": ["do not claim radar hardware maturity", "do not claim flight heritage", "do not claim mineral-detection performance"]
+    },
+    {
+      "id": "DOE-EICMM-COMMON-INVESTMENT",
+      "issuer": "U.S. Department of Energy with 14 federal partners",
+      "title": "Common Investment Initial Screening Application",
+      "status": "ONGOING_SCREENING_GATEWAY",
+      "capture_tier": "TIER_0",
+      "routing_state": "PARTNER",
+      "technical_objective": "Route eligible energy infrastructure and critical-mineral/material projects to federal funding, loan, loan-guarantee, or investment channels.",
+      "partner_ecosystem": ["DOE", "Department of War", "USDA", "Commerce/EDA", "Interior", "State", "DOT/Build America Bureau", "Treasury", "SBA", "EPA", "HHS", "DFC", "USTDA", "EXIM"],
+      "worldshepherd_role": ["project-data provenance", "qualification/evidence chain", "supply-chain illumination", "decision-package generation", "risk/mitigation traceability"],
+      "hard_gate": "Requires a credible eligible physical project/project developer and financing-ready evidence. Submission does not create any government commitment."
+    }
+  ],
+  "convergence_concept": {
+    "name": "Worldshepherd Critical Minerals Discovery-to-Qualification Fabric",
+    "sequence": [
+      "qualified airborne/geophysical sensing partner generates validated survey data",
+      "ECHO records data provenance, configuration, uncertainty, and evidence lineage",
+      "SARA orchestrates analysis and decision workflows",
+      "PRIME enforces human authorization and claims boundaries",
+      "PRE maps identified resource/project needs to recurring federal requirements",
+      "SUPPLY_CHAIN_ILLUMINATION links prospective resource to processing/manufacturing dependencies",
+      "QUALIFICATION_ACCELERATOR tracks sample/test/specification evidence",
+      "partner project developer pursues applicable federal financing/industrialization channel"
+    ]
+  },
+  "mandatory_next_actions": [
+    "identify at least five DP2-qualified airborne subsurface-radar/geophysical sensing partner candidates with empirical flight data evidence",
+    "identify at least five mining/mineral-processing/project-development partners able to use the DOE multi-agency intake",
+    "prepare partner-facing software/evidence architecture that contains no controlled or proprietary partner data",
+    "perform ITAR/EAR and data-handling review before any DARPA technical exchange",
+    "keep all non-public controlled technical data outside the public Sara_pro repository"
+  ]
+}

@@ -1,0 +1,60 @@
+name: Worldshepherd Audit Write Contention
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/storage.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/models.py'
+      - 'tools/selection_demo/benchmark_audit_write_contention.py'
+      - 'tools/selection_demo/profile_fusion_api_concurrency.py'
+      - '.github/workflows/worldshepherd-audit-write-contention.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  durable-audit-write-contention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SARA package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'deployments/sara_verified_local_v1[test]'
+
+      - name: Run storage semantic regression tests
+        run: |
+          python -m pytest deployments/sara_verified_local_v1/tests/test_storage_tail.py
+
+      - name: Measure durable audit write contention
+        run: |
+          mkdir -p audit_write_evidence
+          python tools/selection_demo/benchmark_audit_write_contention.py \
+            --out audit_write_evidence/durable-audit-write-contention.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Decompose governed API concurrency
+        run: |
+          python tools/selection_demo/profile_fusion_api_concurrency.py \
+            --out audit_write_evidence/governed-api-concurrency-decomposition.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Upload audit-write evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-audit-write-contention-${{ github.sha }}
+          path: audit_write_evidence/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,32 @@
+{
+  "schema": "WS-CMMC-NIST-BASIS-CROSSWALK-V1",
+  "effective_date": "2026-09-12",
+  "purpose": "Prevent forward-engineering controls from being mistaken for contractual assessment evidence.",
+  "engineering_baseline": {
+    "standard": "NIST SP 800-171 Rev. 3",
+    "use": "Forward engineering, architecture, and readiness-gap management.",
+    "assessment_claim": "NONE"
+  },
+  "cmmc_level_1": {
+    "basis": "FAR 52.204-21 basic safeguarding requirements",
+    "current_status": "NOT_ASSESSED_NOT_CLAIMED"
+  },
+  "cmmc_level_2": {
+    "basis": "110 security requirements aligned to NIST SP 800-171 Rev. 2 under 32 CFR part 170",
+    "current_status": "NOT_ASSESSED_NOT_CLAIMED",
+    "required_assessment_type": "SOLICITATION_SPECIFIC_SELF_OR_C3PAO",
+    "sprs_evidence_required_when_applicable": true
+  },
+  "cmmc_level_3": {
+    "basis": "CMMC Level 2 plus selected NIST SP 800-172 requirements under 32 CFR part 170",
+    "current_status": "NOT_ASSESSED_NOT_CLAIMED"
+  },
+  "contractual_precedence": [
+    "solicitation terms",
+    "incorporated FAR and DFARS clauses",
+    "32 CFR part 170",
+    "current DoD assessment methodology",
+    "contracting officer direction"
+  ],
+  "hard_rule": "Do not use Rev. 3 engineering evidence to claim a CMMC Level 2 assessment result unless the governing CMMC framework is formally updated to that basis and the required assessment is completed."
+}

@@ -1,0 +1,24 @@
+name: Worldshepherd Compliance Baseline
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compliance JSON
+        run: python -m json.tool security/compliance/worldshepherd-federal-compliance-baseline-v1.json >/dev/null
+      - name: Validate capture engine JSON
+        run: python -m json.tool config/worldshepherd_capture_engine_v1_1.json >/dev/null
+      - name: Confirm public-boundary policy exists
+        run: test -s SECURITY.md
+      - name: Confirm repository exclusions exist
+        run: test -s .gitignore
+      - name: Compliance claim boundary
+        run: echo 'Validation confirms artifact integrity only; it does not certify CMMC, SPRS, NIST, RMF, ATO, SAM, clearance, or export-control status.'
