@@ -19,7 +19,6 @@ from worldshepherd_sara.audit_anchor_receipt import (
     RECEIPT_AUTH_ED25519,
     RETENTION_NOT_ESTABLISHED,
     AuditAnchorReceiptError,
-    build_anchor_publication,
     publish_anchor_and_verify_receipt,
     receipt_signing_payload,
     verify_anchor_receipt,
@@ -116,6 +115,13 @@ def main() -> int:
         )
         publication = verified["publication"]
         receipt = verified["receipt"]
+        verification = verified["verification"]
+        if verification["verification_state"] != "AUTHENTICATED_TRUSTED_PROVIDER_RECEIPT":
+            raise RuntimeError(f"unexpected trusted-provider verification state: {verification}")
+        if verification["provider_identity_pinned"] is not True:
+            raise RuntimeError("trusted provider identity was not explicitly pinned")
+        if verification["retention_status"] != RETENTION_NOT_ESTABLISHED:
+            raise RuntimeError("receipt contract unexpectedly promoted retention assurance")
 
         signature_tamper = dict(receipt)
         signature_tamper["receipt_id"] = "TAMPERED-RECEIPT"
@@ -159,6 +165,15 @@ def main() -> int:
             "provider is not the trusted provider",
         )
 
+        unpinned = verify_anchor_receipt(
+            publication=publication,
+            receipt=receipt,
+        )
+        if unpinned["verification_state"] != "SIGNED_RECEIPT_UNPINNED_PROVIDER":
+            raise RuntimeError("unpinned provider receipt was over-promoted")
+        if unpinned["provider_identity_pinned"] is not False:
+            raise RuntimeError("unpinned provider receipt reported a pinned identity")
+
     result = {
         "schema": "WS-SARA-AUDIT-ANCHOR-RECEIPT-EVIDENCE-V1",
         "result": "PASS",
@@ -175,21 +190,24 @@ def main() -> int:
             "checkpoint_sequence": anchor["checkpoint_sequence"],
         },
         "receipt_contract": {
-            "verification_state": verified["verification"]["verification_state"],
-            "provider_key_pinned": True,
+            "verification_state": verification["verification_state"],
+            "provider_key_pinned": verification["provider_identity_pinned"],
             "provider_signature_verified": True,
             "publication_anchor_exact_match": True,
-            "retention_status": verified["verification"]["retention_status"],
+            "unpinned_signed_receipt_state": unpinned["verification_state"],
+            "retention_status": verification["retention_status"],
         },
         "adversarial_acceptance": {
             "signed_receipt_tampering_rejected": bool(signature_error),
             "receipt_replay_against_different_anchor_rejected": bool(replay_error),
             "unverified_worm_self_assertion_rejected": bool(retention_error),
             "wrong_provider_key_pin_rejected": bool(wrong_provider_error),
+            "unpinned_signed_receipt_not_treated_as_trusted_provider": True,
         },
         "claims_boundary": [
             "The sink in this evidence run is internal test software, not an external provider.",
             "PASS proves the provider-neutral publication/receipt interface, exact-anchor binding, provider-key pinning, and Ed25519 receipt verification in software.",
+            "A signed receipt from an unpinned key is explicitly not treated as trusted-provider authentication.",
             "Retention status remains NOT_ESTABLISHED by construction.",
             "This does not establish external provider deployment, provider independence, WORM or immutable retention, public transparency, third-party attestation, regulatory certification, or operational authorization.",
         ],
