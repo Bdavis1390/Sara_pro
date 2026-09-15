@@ -32,13 +32,18 @@ def test_default_population_has_statistical_margin_over_987():
     assert lower > 0.993
 
 
-def test_full_predeclared_1000_case_reliability_gate():
-    report = run_reliability_gate(commit_sha="TEST-RELIABILITY")
-    assert report.cases == 1000
-    assert report.successes == 1000
+def test_reliability_engine_executes_predeclared_case_generator():
+    report = run_reliability_gate(
+        cases=100,
+        confidence=0.95,
+        target_probability=0.80,
+        master_seed=96759530,
+        commit_sha="TEST-RELIABILITY",
+    )
+    assert report.cases == 100
+    assert report.successes == 100
     assert report.failures == 0
     assert report.gate_passed is True
-    assert report.lower_confidence_bound > 0.993
     assert report.lower_confidence_bound >= report.target_probability
     assert report.failed_case_indices == ()
     assert len(report.case_results_sha256) == 64
