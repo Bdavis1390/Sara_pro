@@ -66,6 +66,26 @@ jobs:
           test -s "$runtime/tests/test_api.py"
           test -s '.github/workflows/sara-verified-local-v1.yml'
 
+      - name: Validate machine-readable runtime manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool runtime/manifest.json >/dev/null
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('runtime/manifest.json').read_text(encoding='utf-8'))
+          assert manifest['schema'] == 'WS-SARA-CANONICAL-RUNTIME-V1'
+          assert manifest['status'] == 'CANONICAL'
+          assert manifest['canonical_path'] == 'deployments/sara_verified_local_v1'
+          assert manifest['operator_entrypoint'] == 'scripts/sara.sh'
+          assert manifest['relay_semantics'] == 'recorded_local_only'
+          assert manifest['verification']['implementation_workflow'] == '.github/workflows/sara-verified-local-v1.yml'
+          assert Path(manifest['canonical_path']).is_dir()
+          assert Path(manifest['operator_entrypoint']).is_file()
+          PY
+
       - name: Verify public navigation and boundary text
         shell: bash
         run: |
