@@ -1,0 +1,19 @@
+Subject: Request for technical criticism: bounded automation control plane
+
+Linus —
+
+I'm Brandon Davis. I'm building Worldshepherd SARA, a local-first reference implementation for a narrow systems question: can automated work be separated into proposal, authorization, bounded behavior, evidence, and operator visibility without turning the control plane into security theater?
+
+I'm not asking for an endorsement or for you to join anything.
+
+I'd value a hostile technical read: tell me which boundary is fake, which abstraction should be deleted, or whether the whole problem is better solved with existing infrastructure.
+
+I narrowed the repository to a short external-review surface with a reproducible test path and explicit claims/security limits:
+
+https://github.com/Bdavis1390/Sara_pro/tree/review/linus-readiness-2026-09-14
+
+The current relay path is intentionally local-only: it records authenticated requests and does not execute arbitrary commands or discover/activate external systems. The review packet also calls out where the evidence is mutable, where independent validation is absent, and what CI does not prove.
+
+If you have time for even one concrete objection, that would be useful. If not, no follow-up is expected.
+
+— Brandon Davis
