@@ -1,0 +1,37 @@
+{
+  "schema": "WS-QCRYPTO-ECOSYSTEM-HORIZON-v1",
+  "as_of": "2026-09-13",
+  "planning_horizon_year": 2028,
+  "claims_boundary": "Planning comparison only. Vendor and protocol roadmap dates are not Q-day predictions or guaranteed delivery dates.",
+  "ecosystems": [
+    {
+      "name": "Bitcoin",
+      "source": "BIP-361",
+      "target_year_best_case": 2031,
+      "scope": "full legacy-signature sunset if the nominal five-year schedule began in 2026",
+      "margin_years_vs_2028": -3,
+      "state": "TARGET_AFTER_RISK_HORIZON",
+      "status": "Draft / not consensus active"
+    },
+    {
+      "name": "Ethereum",
+      "source": "ethereum.org post-quantum roadmap",
+      "target_year": 2029,
+      "scope": "core post-quantum infrastructure; execution-layer and ecosystem migration extends beyond",
+      "margin_years_vs_2028": -1,
+      "state": "TARGET_AFTER_RISK_HORIZON",
+      "status": "planning milestones"
+    },
+    {
+      "name": "Algorand",
+      "source": "Algorand post-quantum roadmap",
+      "target_year": 2027,
+      "scope": "broad quantum resilience target",
+      "margin_years_vs_2028": 1,
+      "state": "TARGET_BEFORE_RISK_HORIZON",
+      "status": "native Falcon-1024 accounts live; consensus-level PQ work remains incomplete"
+    }
+  ],
+  "portfolio_assessment": "MULTI_ECOSYSTEM_MIGRATION_DEFICIT",
+  "operational_implication": "Prioritize parallel protocol, wallet, custody, validator, relay, recovery, and governance migration work rather than sequential transition planning."
+}

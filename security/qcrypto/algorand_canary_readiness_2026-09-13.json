@@ -1,0 +1,31 @@
+{
+  "schema": "WS-QCRYPTO-ALGORAND-CANARY-READINESS-v1",
+  "as_of": "2026-09-13",
+  "candidate_chain": "Algorand MainNet",
+  "readiness_state": "CANDIDATE_SELECTED_ZERO_VALUE",
+  "why_selected": [
+    "Native Falcon-1024 account authorization is live on MainNet.",
+    "Official SDK, AlgoKit, and Pera support is reported.",
+    "A dedicated account can isolate the pilot from existing holdings and bridge dependencies."
+  ],
+  "remaining_gates": [
+    "dedicated canary account establishment",
+    "wallet and tooling interoperability validation",
+    "non-production chain-adapter validation",
+    "recovery-path definition and drill",
+    "independent review",
+    "monitoring and pause controls",
+    "bounded-value policy and deployment expiry",
+    "explicit human approval"
+  ],
+  "claims_boundary": [
+    "No asset movement is authorized or recorded by this readiness profile.",
+    "Native PQ account authorization does not imply post-quantum consensus.",
+    "Native PQ multisig is not yet available according to official developer documentation.",
+    "Ecosystem tooling support remains uneven and must be tested before any canary promotion."
+  ],
+  "sources": [
+    "https://algorand.co/technology/post-quantum",
+    "https://dev.algorand.co/concepts/accounts/post-quantum/"
+  ]
+}
