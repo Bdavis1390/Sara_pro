@@ -85,9 +85,14 @@ jobs:
 
           private_key, _ = crypto.generate_ec_keypair('P-256')
           cert = crypto.generate_cert(private_key, cn='ws-cae-continuity-ci')
+          fingerprint = crypto.get_cert_fingerprint_b64url(cert)
+          issuer = f'did:x509:0:sha256:{fingerprint}::subject:CN:ws-cae-continuity-ci'
+          Path('/tmp/ws-cae-scitt-receipt/issuer.txt').write_text(issuer + '\n')
+          Path('/tmp/ws-cae-scitt-receipt/signer-cert.pem').write_text(cert)
+
           signer = crypto.Signer(
               private_key,
-              issuer='did:web:example.invalid',
+              issuer=issuer,
               algorithm='ES256',
               x5c=[cert],
           )
@@ -105,7 +110,7 @@ jobs:
           snapshot = json.loads(Path('/tmp/ws-cae-scitt-receipt/four-chain-snapshot.json').read_text())
           statement = build_snapshot_statement(
               snapshot,
-              'did:web:example.invalid',
+              issuer,
               '2026-09-14T00:30:00Z',
           )
           Path('/tmp/ws-cae-scitt-receipt/four-chain-snapshot.statement.json').write_text(
@@ -155,6 +160,7 @@ jobs:
           test -s /tmp/ws-cae-scitt-receipt/four-chain-snapshot.receipt.txt
 
       - name: Preserve local receipt proof
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ws-cae-scitt-local-receipt-${{ github.sha }}
