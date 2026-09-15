@@ -8,9 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from deployments.sara_verified_local_v1.worldshepherd_sara.echo_checkpoint_mldsa_lab import (
-    OpenSslMlDsa65LabSigner,
-)
+from worldshepherd_sara.echo_checkpoint_mldsa_lab import OpenSslMlDsa65LabSigner
 
 
 def canonical_payload() -> bytes:
