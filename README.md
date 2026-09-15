@@ -10,6 +10,7 @@ The repository intentionally distinguishes **implemented capability** from **res
 
 ## Start here
 
+- [Run the canonical SARA runtime](runtime/README.md)
 - [Worldshepherd capability map](docs/WORLDSHEPHERD_CAPABILITY_MAP.md)
 - [Claims and evidence policy](docs/CLAIMS_AND_EVIDENCE_POLICY.md)
 - [Repository/documentation index](docs/README.md)
@@ -34,22 +35,57 @@ flowchart LR
 
 | Component | Intended role | Public-repo treatment |
 |---|---|---|
-| **SARA** | Governed workflows, orchestration, relay/integration patterns | Software, CI, configuration, validation and integration artifacts are present; runtime packaging is being consolidated |
+| **SARA** | Governed workflows, orchestration, local relay-recording and administration | Canonical runnable package is `deployments/sara_verified_local_v1/`, exposed through `runtime/` and `scripts/sara.sh`; protected CI exercises its software/runtime boundary |
 | **ECHO SENTINEL LINK** | Telemetry and evidence provenance | Provenance/anchor workflows and related artifacts are present |
-| **PRIME SENTINEL** | Policy, authorization and bounded actions | Architecture/governance role; implementation claims must be tied to specific code/tests |
+| **PRIME SENTINEL** | Policy, authorization and bounded actions | Architecture/governance role plus asymmetric authorization integration; implementation claims must remain tied to specific code/tests |
 | **OVERWATCH** | Observability/common operating picture | Architecture/integration lane; maturity varies by artifact |
-| **PRE** | Predictive Requirements Engine / requirement-delta workflow | Requirement-delta and ingest documentation is present; prediction does not upgrade technical maturity |
+| **PRE** | Predictive Requirements Engine / requirement-delta workflow | Requirement-delta, qualification and ingest tooling is present; prediction does not upgrade technical maturity |
+
+## Canonical runnable SARA
+
+The repository-level entry point is [`runtime/README.md`](runtime/README.md). The implementation remains in one configuration-controlled package at [`deployments/sara_verified_local_v1/`](deployments/sara_verified_local_v1/); it is **not duplicated** into a second source tree.
+
+From a fresh clone with Python 3 available:
+
+```bash
+bash scripts/sara.sh setup
+bash scripts/sara.sh run
+```
+
+Then open:
+
+```text
+http://127.0.0.1:9530/ui
+```
+
+Useful operator commands:
+
+```bash
+bash scripts/sara.sh check
+bash scripts/sara.sh test
+bash scripts/sara.sh smoke   # requires the local service to already be running
+bash scripts/sara.sh path
+```
+
+Default service endpoints include `/health`, `/livez`, `/readyz`, `/ui`, authenticated `/v1/relay`, administrator `/v1/audit`, `/admin/registry`, and `/admin/selftest`.
+
+**Boundary:** current `/v1/relay` success means governed **local recording/audit** (`recorded_local_only`). It does not establish external message delivery, arbitrary command execution, third-party activation, broadcasting, scanning, or autonomous network expansion.
+
+The canonical runtime's protected workflow is [`.github/workflows/sara-verified-local-v1.yml`](.github/workflows/sara-verified-local-v1.yml). Historical SSPADAWANZZ requirements were reconciled against the hardened current implementation in [`WS_QE_2026_ADM_001.md`](deployments/sara_verified_local_v1/docs/WS_QE_2026_ADM_001.md).
 
 ## What the repository currently contains
 
 The public tree includes:
 
-- `.github/workflows/` — test/build, CodeQL, release-attestation, resilience/rollback, NIST 800-171 precursor, provenance/anchor and other evidence-oriented CI workflows;
+- `runtime/` — stable repository-level locator and operator guidance for the canonical SARA runtime;
+- `scripts/sara.sh` — repository-root setup/run/test/smoke/check wrapper for canonical SARA;
+- `deployments/sara_verified_local_v1/` — installable SARA package, API/UI, tests, fixtures, constraints, Docker/Compose artifacts, operational scripts, PRE/evidence tooling and runtime documentation;
+- `.github/workflows/` — test/build, CodeQL, SARA Verified Local, release-attestation, resilience/rollback, NIST 800-171 precursor, provenance/anchor and other evidence-oriented CI workflows;
 - `docs/` — architecture, PRE, claims-boundary, standards/conformance, partner-screening, physics/research, provenance and integration documentation;
 - `security/` — security-related artifacts;
-- `tests/` — test material;
+- `tests/` — repository-level test material outside the canonical runtime package;
 - `tools/` — engineering/analysis utilities including OSS semantic-health work;
-- `config/` and `deployments/` — configuration/deployment material;
+- `config/` and other `deployments/` content — configuration/deployment material;
 - `brd953_xyz_node/`, `flamehold_ai_node/`, `cisnet/`, and `external_anchor_pilots/` — experimental/integration nodes and related work.
 
 ## Evidence and maturity policy
@@ -96,18 +132,20 @@ A professional Worldshepherd artifact should answer five questions:
 4. **What is still missing?**
 5. **What test would falsify the claim?**
 
-CI already provides several evidence-oriented checks, but not every research artifact is executable. Treat each file according to its declared maturity and supporting evidence.
+CI provides several evidence-oriented checks, but not every research artifact is executable. Treat each file according to its declared maturity and supporting evidence.
 
 ## Development
 
-The repository contains multiple subprojects rather than one fully normalized package. Before running a component:
+This repository contains multiple subprojects. SARA is the exception to the previous ambiguity: its **canonical runnable local package is explicitly declared** at `deployments/sara_verified_local_v1/` and exposed through `runtime/README.md` plus `scripts/sara.sh`.
+
+For other components:
 
 1. identify the component in [docs/README.md](docs/README.md);
 2. read that component's own documentation/configuration;
 3. inspect the relevant GitHub Actions workflow for its verification path;
 4. do not assume one subproject's commands apply repository-wide.
 
-For the currently enforced OSS semantic-health CI path, GitHub Actions uses Python 3.12, compiles `tools/oss_health`, runs its unit tests, validates stored patch artifacts, rejects unresolved merge-conflict markers, and performs whitespace checks.
+For SARA runtime changes, the dedicated Verified Local gate installs constrained dependencies, compiles the package, runs the test suite, generates evidence artifacts, exercises deployment/recovery paths, and verifies the bounded local deployment profile.
 
 ## Public-repository boundary
 
@@ -117,11 +155,12 @@ No open-source license should be inferred solely from public visibility. Reposit
 
 ## Near-term repository priorities
 
-- normalize SARA's runnable package and operator/admin interface into a single reproducible entry point;
+- preserve the canonical SARA entry point and keep root commands synchronized with protected runtime CI;
 - attach evidence manifests to major capability claims;
 - consolidate overlapping research notes into canonical documents plus archives;
-- add issue/PR templates tied to claim state and validation evidence;
 - publish architecture decision records (ADRs) for major interfaces;
+- add local READMEs and explicit maturity gates to remaining active subprojects;
+- evaluate a future dedicated `worldshepherd-sara` repository only when history, evidence links, release identity and migration continuity can be preserved;
 - keep research lanes broad while making validation gates narrow, explicit, and measurable.
 
 ---
