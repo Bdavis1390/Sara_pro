@@ -1,7 +1,9 @@
 # Canonical SARA Runtime
 
-**Status:** `CANONICAL`  
-**Claim state:** `IMPLEMENTED IN SOFTWARE` with evidence-gated internal verification  
+**Status:** `CANONICAL`
+
+**Claim state:** `IMPLEMENTED IN SOFTWARE` with evidence-gated internal verification
+
 **Runtime package:** [`deployments/sara_verified_local_v1/`](../deployments/sara_verified_local_v1/)
 
 This directory is the stable repository-level entry point for the runnable Worldshepherd SARA / SSPADAWANZZ local service. The implementation is intentionally **not duplicated** here: the canonical package remains under `deployments/sara_verified_local_v1/` so source, tests, deployment artifacts, evidence generation, and CI stay in one configuration-controlled location.
