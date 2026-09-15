@@ -39,13 +39,21 @@ Security property under review: no alternate generic path should permit the same
 
 The optional PRIME SENTINEL signer is treated as a separate service boundary. SARA should receive public verification material, not the signer private key. Authorization assertions are expected to be identity-bound, environment-bound, time-bounded, replay-resistant, and one-time consumable where the relevant flow requires it.
 
-Security property under review: compromise of SARA alone should not automatically grant authority to mint valid PRIME assertions.
+A signing `key_id` identifies particular public-key material. The signer durably binds key IDs to fingerprints in its issuance ledger; SARA records the verifying key fingerprint with each accepted authorization and rechecks that exact fingerprint before later use. Replacing key material behind an existing ID therefore fails closed.
+
+Security properties under review: compromise of SARA alone should not automatically grant authority to mint valid PRIME assertions, and key rotation must not silently preserve authority verified under different key material.
 
 ### Boundary D — application evidence versus external assurance
 
 Local audit and ECHO-style content-addressed evidence are operational evidence, not immutable legal records and not an external attestation system.
 
 Security property under review: the UI, documentation, schemas, and generated artifacts must not imply stronger assurance than the implementation provides.
+
+### Boundary E — local transaction boundary versus distributed storage
+
+The local `DurableStore` uses an in-process re-entrant lock plus atomic file replacement. This is a real transaction boundary for the supported single SARA writer process, but it is not a distributed lock and it does not coordinate independent processes sharing one data directory.
+
+Security property under review: deployment must preserve **one SARA writer process per writable SARA data volume**. Multi-process or clustered writers require a different persistence/locking design and requalification.
 
 ## Assets
 
@@ -54,7 +62,7 @@ The review should treat the following as security-relevant assets:
 - administrator credential;
 - relay credential;
 - PRIME signer private key and service credential;
-- public-key identity and revocation configuration;
+- public-key identity, fingerprint, and revocation configuration;
 - protected registry state;
 - replay/consumption state for authorization assertions;
 - audit and evidence records;
@@ -70,6 +78,8 @@ The reference threat model includes:
 - a mistaken or malicious administrator;
 - a compromised SARA service process;
 - a caller presenting stale, malformed, replayed, or context-mismatched authorization material;
+- an operator who incorrectly reuses a key ID for different key material;
+- a misconfigured deployment that attempts multiple writers against one SARA data directory;
 - a host-level actor able to modify writable local storage;
 - a maintainer or CI process that unintentionally overstates an internal test result as external certification.
 
@@ -86,9 +96,11 @@ A skeptical review should verify that:
 5. protected namespace mutation is rejected through the generic patch route;
 6. missing/invalid authorization assertions fail closed on governed operations;
 7. replayed authorization material is rejected where one-time semantics apply;
-8. audit/evidence failure is visible rather than silently converted into success;
-9. no endpoint unexpectedly shells out or turns user-controlled input into arbitrary command execution;
-10. documentation never upgrades internal evidence into certification.
+8. replacement public-key material under a previously recorded key ID invalidates the old recorded authorization;
+9. audit/evidence failure is visible rather than silently converted into success;
+10. no endpoint unexpectedly shells out or turns user-controlled input into arbitrary command execution;
+11. the deployment does not scale multiple SARA writers against one local data volume;
+12. documentation never upgrades internal evidence into certification.
 
 ## Deliberate non-goals
 
@@ -96,6 +108,7 @@ This review target does not claim:
 
 - Internet-facing production hardening;
 - zero-trust network deployment by itself;
+- multi-writer/distributed local JSON storage;
 - immutable/WORM audit storage;
 - HSM/KMS-backed production signing custody;
 - organization-wide CMMC or NIST SP 800-171 conformity;
