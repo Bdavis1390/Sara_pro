@@ -153,3 +153,36 @@ def test_offline_verifier_rejects_symlinked_evidence_inputs(tmp_path):
             checkpoint_ledger_path=fixture["manager"].ledger_path.resolve(),
             external_anchor_path=fixture["anchor"],
         )
+
+
+def test_offline_verifier_normalizes_tampered_anchor_failure(tmp_path):
+    fixture = _cross_restart_fixture(tmp_path)
+    anchor = json.loads(fixture["anchor"].read_text(encoding="utf-8"))
+    anchor["checkpoint_sequence"] = int(anchor["checkpoint_sequence"]) + 1
+    fixture["anchor"].write_text(
+        json.dumps(anchor, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    fixture["anchor"].chmod(0o600)
+
+    with pytest.raises(
+        SaraAuditOfflineVerificationError,
+        match="content digest mismatch",
+    ):
+        _verify(fixture)
+
+
+def test_offline_verifier_normalizes_symlinked_anchor_failure(tmp_path):
+    fixture = _cross_restart_fixture(tmp_path)
+    anchor_link = (tmp_path / "anchor-link.json").absolute()
+    anchor_link.symlink_to(fixture["anchor"])
+
+    with pytest.raises(
+        SaraAuditOfflineVerificationError,
+        match="regular file",
+    ):
+        verify_offline_export(
+            audit_path=fixture["store"].audit_path.resolve(),
+            checkpoint_ledger_path=fixture["manager"].ledger_path.resolve(),
+            external_anchor_path=anchor_link,
+        )
