@@ -1,0 +1,62 @@
+{
+  "schema": "WS-QCRYPTO-MAINLINE-CUSTODY-V1",
+  "claims_state": "PROVEN_INTERNALLY_BOUNDED_SOFTWARE_BEHAVIOR",
+  "implementation_commit": "b65302d2e849dcad67b553378d3fce11b404f3c5",
+  "implementation_tree": "81af4f67c9ad781c392dca277b9f433ea3827107",
+  "publication_commit": "c34ab9017c75ead5fde2f4e4c6ed8a883e1e9233",
+  "publication_tree": "9e897cb9642b9a761ed6098a1f8ad8356bee7af8",
+  "historical_white_page_blob": "b02398f0ff0b210ca089bb340e91f8002c61e2d5",
+  "preservation_commit": "22ca8074daeb8e08f55a9094c68aebf31b72269d",
+  "preservation_tree": "ffc31d2d802051c3f96baa134e73e8b744fb4969",
+  "frozen_refs": [
+    "proof/qcrypto-v1-20260915",
+    "proof/qcrypto-v1-20260915-mirror"
+  ],
+  "artifact_sha256": {
+    "bridge_zip": "15dc39ef59a8bbe10e48f858f1bb42d34c9c35adb33045b9f7635201c5df698e",
+    "publication_readiness_zip": "6abd5f27414ff036547a1d8832fc14d4b53c22dcdd5258c9059e3270aabeb663",
+    "proof_preservation_zip": "50ce0c06e297cfaf907d88c94aa4d150ca504e58185d2d69165f9f0bb4df0eaf",
+    "portable_bundle_zip": "3ac4b9d6a94c50dad951ed5c33446ccaaffc876b9d9ad398aefe2a6b7e472522",
+    "rfc3161_request": "7e39671254effc6f5e2c1d475b8aa37ef776487d14faf5c551705def45fca00e"
+  },
+  "validation": {
+    "proof_preservation_gate": "PASS",
+    "white_page_publication_gate": "PASS_GO",
+    "required_test_and_build": "PASS",
+    "portable_bundle_hash_reverified": true,
+    "portable_bundle_internal_sha256sums_reverified": true,
+    "original_artifact_hashes_reverified": true
+  },
+  "repository_state": {
+    "main_at_due_diligence": "48ea5c8466946d7d1ac426f9658a7fed5b8a8a55",
+    "main_protected": true,
+    "proof_refs_protected": false,
+    "repository_rulesets_present": false,
+    "historical_preservation_commit_signed": false,
+    "technical_branch_ahead_of_current_main": 176,
+    "technical_branch_behind_current_main": 10,
+    "technical_pr_number": 208,
+    "technical_pr_draft": true,
+    "technical_pr_merged": false,
+    "technical_pr_changed_files": 102
+  },
+  "external_custody": {
+    "rfc3161_request_prepared": true,
+    "external_timestamp_token_obtained": false,
+    "signed_tag_or_release_obtained": false,
+    "independent_storage_copy_confirmed": false,
+    "independent_third_party_validation": false
+  },
+  "excluded_claims": [
+    "production deployment",
+    "migration execution",
+    "live-value authorization",
+    "post-quantum security of the Ed25519 checkpoint",
+    "Federal compliance",
+    "WS-CAE conformance",
+    "external certification",
+    "independent validation",
+    "signed authorship of historical unsigned commits",
+    "physical-system qualification"
+  ]
+}
