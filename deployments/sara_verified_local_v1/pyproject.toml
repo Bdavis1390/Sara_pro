@@ -53,6 +53,12 @@ ws-nsb-g13 = "worldshepherd_sara.nsb_g13_cli:main"
 ws-nsb-g14 = "worldshepherd_sara.nsb_g14_cli:main"
 ws-nsb-g15 = "worldshepherd_sara.nsb_g15_cli:main"
 ws-omega-recursion = "worldshepherd_sara.recursive_discovery_cli:main"
+ws-sentinel-authority-service = "worldshepherd_sara.isolated_custody_service_v2:main"
+ws-sentinel-infrastructure = "worldshepherd_sara.sentinel_authority_cli:main"
+ws-sentinel-readiness = "worldshepherd_sara.sentinel_authority_cli:main"
+ws-sentinel-synthetic-infrastructure = "worldshepherd_sara.sentinel_infrastructure_cli:main"
+ws-sentinel-synthetic-readiness = "worldshepherd_sara.sentinel_readiness_cli:main"
+ws-sentinel-supplier-preflight = "worldshepherd_sara.sentinel_supplier_preflight_cli:main"
 
 [tool.setuptools]
 packages = ["worldshepherd_sara"]
