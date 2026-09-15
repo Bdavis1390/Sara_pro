@@ -6,15 +6,18 @@ on:
     branches:
       - worldshepherd-capture-engine-v1-1
     paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_anchor_receipt.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_anchor.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_guarded.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_offline_verify.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_verify.py'
+      - 'deployments/sara_verified_local_v1/tests/test_audit_anchor_receipt.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_anchor.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_guarded.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_offline_verify.py'
+      - 'tools/selection_demo/audit_anchor_receipt_demo.py'
       - 'tools/selection_demo/audit_offline_verify_cli.py'
       - 'tools/selection_demo/audit_offline_verifier_demo.py'
       - '.github/workflows/worldshepherd-audit-offline-verifier.yml'
@@ -40,19 +43,26 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e 'deployments/sara_verified_local_v1[test]'
 
-      - name: Run checkpoint and offline-verifier regression tests
+      - name: Run checkpoint, offline-verifier, and receipt-contract regression tests
         run: |
           python -m pytest \
             deployments/sara_verified_local_v1/tests/test_audit_checkpoint.py \
             deployments/sara_verified_local_v1/tests/test_audit_checkpoint_anchor.py \
             deployments/sara_verified_local_v1/tests/test_audit_checkpoint_guarded.py \
-            deployments/sara_verified_local_v1/tests/test_audit_checkpoint_offline_verify.py
+            deployments/sara_verified_local_v1/tests/test_audit_checkpoint_offline_verify.py \
+            deployments/sara_verified_local_v1/tests/test_audit_anchor_receipt.py
 
       - name: Run cross-restart offline adversarial evidence gate
         run: |
           mkdir -p offline_audit_evidence
           python tools/selection_demo/audit_offline_verifier_demo.py \
             --out offline_audit_evidence/audit-offline-adversarial-evidence.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Run authenticated anchor-receipt contract evidence gate
+        run: |
+          python tools/selection_demo/audit_anchor_receipt_demo.py \
+            --out offline_audit_evidence/audit-anchor-receipt-evidence.json \
             --software-commit "$GITHUB_SHA"
 
       - name: Upload offline-verifier evidence
