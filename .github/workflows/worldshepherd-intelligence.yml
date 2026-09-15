@@ -1,0 +1,54 @@
+name: Worldshepherd Research Intelligence Gate
+
+on:
+  pull_request:
+    paths:
+      - 'intelligence/**'
+      - '.github/workflows/worldshepherd-intelligence.yml'
+  push:
+    paths:
+      - 'intelligence/**'
+      - '.github/workflows/worldshepherd-intelligence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-intelligence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate source registry JSON
+        run: python -m json.tool intelligence/research_source_registry_v1.json >/dev/null
+
+      - name: Compile intelligence Python
+        run: python -m compileall -q intelligence
+
+      - name: Run intelligence unit tests
+        run: python -m unittest discover -s intelligence/tests -p 'test_*.py' -v
+
+      - name: Initialize ephemeral research database
+        run: |
+          tmpdb="$(mktemp)"
+          rm -f "$tmpdb"
+          python intelligence/research_db.py --db "$tmpdb" init >/tmp/ws-intel-init.json
+          python intelligence/research_db.py --db "$tmpdb" stats >/tmp/ws-intel-stats.json
+          python - <<'PY'
+          import json
+          init = json.load(open('/tmp/ws-intel-init.json', encoding='utf-8'))
+          stats = json.load(open('/tmp/ws-intel-stats.json', encoding='utf-8'))
+          assert init['sources_loaded'] >= 16
+          assert stats['sources'] >= 16
+          assert stats['records'] == 0
+          PY
+          rm -f "$tmpdb" "$tmpdb-wal" "$tmpdb-shm"
