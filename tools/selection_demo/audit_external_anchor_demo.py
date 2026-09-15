@@ -8,11 +8,13 @@ from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from worldshepherd_sara.audit_checkpoint import SaraAuditCheckpointManager
 from worldshepherd_sara.audit_checkpoint_anchor import (
     SaraAuditExternalAnchorError,
     export_external_anchor,
     verify_with_external_anchor,
+)
+from worldshepherd_sara.audit_checkpoint_guarded import (
+    GuardedSaraAuditCheckpointManager,
 )
 from worldshepherd_sara.audit_checkpoint_verify import (
     SaraAuditCheckpointVerificationError,
@@ -48,7 +50,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="ws-sara-local-boundary-") as temp:
         local_root = Path(temp) / "sara-local-data"
         store = DurableStore(local_root)
-        manager = SaraAuditCheckpointManager(
+        manager = GuardedSaraAuditCheckpointManager(
             store,
             private_key=key,
             key_id="SARA-AUDIT-EXTERNAL-ANCHOR-EVIDENCE-V1",
@@ -101,6 +103,7 @@ def main() -> int:
             "result": "PASS",
             "software_commit": args.software_commit,
             "executed_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "checkpoint_manager": "GuardedSaraAuditCheckpointManager",
             "external_anchor": {
                 "anchor_sha256": anchor["anchor_sha256"],
                 "checkpoint_sha256": anchor["checkpoint_sha256"],
@@ -118,6 +121,7 @@ def main() -> int:
                 "error": rollback_error,
             },
             "acceptance_checks": {
+                "guarded_checkpoint_extension_used": True,
                 "latest_checkpoint_exported_outside_local_sara_boundary": True,
                 "external_anchor_verified_before_attack": True,
                 "export_inside_sara_data_boundary_rejected": inside_boundary_rejected,
