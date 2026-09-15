@@ -1,0 +1,64 @@
+{
+  "schema": "worldshepherd_audit_integrity_evidence_v2",
+  "status": "INTERNAL_CRYPTOGRAPHIC_INTEGRITY_AND_ROLLBACK_EVIDENCE",
+  "generated_date": "2026-09-14",
+  "claim_state": "INTERNALLY_PROVEN_BOUNDED_TAMPER_EVIDENCE_WITH_EXTERNAL_ROLLBACK_PIN",
+  "supersedes": "config/worldshepherd_audit_integrity_evidence_v1.json",
+  "workflow": "Worldshepherd Audit External Anchor",
+  "run_id": 34918358179,
+  "job_id": 104220771069,
+  "commit": "77569f91c6865b9eb877254c7600e3ae45669bb9",
+  "artifact_id": 10377386057,
+  "artifact_digest": "sha256:e3c2ddaa30e2f183c38893ba142e2c0a74648553f1ef37b84fb8c300cb49bc36",
+  "artifact_schema": "WS-SARA-AUDIT-EXTERNAL-ANCHOR-EVIDENCE-V1",
+  "result": "PASS",
+  "mechanism": {
+    "application_audit_commitment": "domain-separated canonical SHA-256 record digests in an order-sensitive ordinal-linked audit-prefix chain",
+    "checkpoint_signature": "Ed25519",
+    "checkpoint_chain": "each checkpoint commits to the previous signed checkpoint digest",
+    "checkpoint_extension_guard": "previously signed audit prefix must verify before a later checkpoint can extend the chain",
+    "signing_key_custody": "dedicated SARA_AUDIT_CHECKPOINT_PRIVATE_KEY_FILE and SARA_AUDIT_CHECKPOINT_KEY_ID, separate from ECHO signing configuration",
+    "external_rollback_pin": "versioned non-overwriting latest-checkpoint anchor export outside SARA_DATA_DIR",
+    "external_anchor_self_digest": "SHA-256 over canonical anchor content",
+    "existing_audit_jsonl_format_changed": false,
+    "existing_audit_api_changed": false
+  },
+  "strict_acceptance": {
+    "guarded_checkpoint_extension_used": true,
+    "dedicated_sara_signing_key_regression_tests_passed": true,
+    "latest_checkpoint_exported_outside_local_sara_boundary": true,
+    "external_anchor_verified_before_attack": true,
+    "export_inside_sara_data_boundary_rejected": true,
+    "local_checkpoint_rollback_detected_against_external_anchor": true,
+    "checkpoint_sequence": 2,
+    "checkpoint_record_count": 4,
+    "rollback_attack_type": "ROLL_BACK_LOCAL_CHECKPOINT_LEDGER_TO_PRIOR_VALID_SIGNED_CHECKPOINT"
+  },
+  "supports": [
+    "internally demonstrated signed integrity checkpoints for the SARA application-audit prefix",
+    "verification of previously signed history before checkpoint-chain extension",
+    "independent SARA audit-checkpoint key configuration and custody from ECHO provenance signing",
+    "detection of tested historical content mutation, record reordering, and checkpointed-prefix truncation",
+    "cryptographic rejection of altered checkpoint bundles, untrusted signing keys, and checkpoint-chain discontinuity",
+    "explicit visibility of a newer uncheckpointed audit tail",
+    "versioned export of the latest checkpoint pin outside the local SARA data boundary",
+    "detection of rollback of the local checkpoint ledger to an earlier valid signed state when compared against the independently retained latest pin"
+  ],
+  "does_not_support": [
+    "tamper-proof or immutable storage",
+    "WORM retention",
+    "public transparency-log inclusion",
+    "automatic third-party anchoring or third-party attestation",
+    "protection if the SARA audit-checkpoint signing key or signer is compromised",
+    "proof of deletion of records that were never checkpointed",
+    "rollback resistance when every independently retained latest-checkpoint pin is also deleted or replaced",
+    "protection from a repository or CI administrator who can delete or replace both local evidence and retained CI artifacts",
+    "CMMC/NIST/SPRS certification or assessment",
+    "CUI/classified authorization",
+    "government acceptance or operational deployment"
+  ],
+  "next_gate": {
+    "name": "MONOTONIC_EXTERNAL_ANCHOR_REGISTRY_WITH_EXPLICIT_KEY_ROTATION",
+    "goal": "chain multiple independently retainable anchors monotonically, reject replay/rollback/reordering/substitution, and permit signer changes only through an explicit dual-signed old-key-to-new-key handoff"
+  }
+}
