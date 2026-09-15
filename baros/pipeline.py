@@ -13,10 +13,11 @@ from typing import Any
 
 from .dose import dose_from_influence, hard_max_constraints
 from .models import logistic_ntcp, lq_survival, poisson_tcp
+from .provenance import runtime_provenance
 from .reference_optimizer import optimize_synthetic, tumor_survival_objective
 
 
-SCHEMA_VERSION = "baros.synthetic-evidence.v1"
+SCHEMA_VERSION = "baros.synthetic-evidence.v2"
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,7 @@ def run_synthetic_pipeline(case: SyntheticCase | None = None, *, commit_sha: str
         "claim_state": "SIMULATED_ONLY",
         "patient_care_allowed": False,
         "commit_sha": commit_sha,
+        "runtime_provenance": runtime_provenance(),
         "case_sha256": _canonical_hash(case_payload),
         "case": case_payload,
         "baseline": {
@@ -128,10 +130,10 @@ def run_synthetic_pipeline(case: SyntheticCase | None = None, *, commit_sha: str
         "passed": passed,
         "limitations": [
             "synthetic influence matrix only",
-            "no DICOM-RT interoperability",
-            "no TPS or independent dose-engine integration",
-            "no DVH or gamma validation",
-            "no phantom or measurement QA",
+            "no validated clinical TPS or independent clinical dose-engine integration",
+            "no formal DICOM conformance certification or multi-vendor interoperability evidence",
+            "no measurement-based DVH/gamma/phantom QA evidence",
+            "no validated deformable dose accumulation",
             "no retrospective or prospective clinical evidence",
             "not for patient care",
         ],
