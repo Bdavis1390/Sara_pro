@@ -1,0 +1,62 @@
+name: WS Identity Security G1
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/identity_security_g1.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/identity_security_g1_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_identity_security_g1.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_IDENTITY_SECURITY_G1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-identity-security-g1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/identity_security_g1.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/identity_security_g1_cli.py'
+      - 'deployments/sara_verified_local_v1/tests/test_identity_security_g1.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_IDENTITY_SECURITY_G1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-identity-security-g1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  identity-security-g1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Run identity-security G1 tests
+        run: python -m pytest tests/test_identity_security_g1.py -q
+
+      - name: Execute and verify deterministic G1 report
+        run: |
+          rm -f ws_identity_security_g1_report.json
+          ws-identity-security-g1 --output ws_identity_security_g1_report.json
+          ws-identity-security-g1 --verify ws_identity_security_g1_report.json
+
+      - name: Upload identity-security G1 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-identity-security-g1-report
+          path: deployments/sara_verified_local_v1/ws_identity_security_g1_report.json
+          if-no-files-found: error
