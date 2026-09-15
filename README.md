@@ -74,12 +74,16 @@ python -m pip install -e '.[test]'
 pytest
 ```
 
-Then inspect:
+Then inspect the package and render the Compose configuration from the supplied **test-only** environment template:
 
 ```bash
 python -m compileall -q worldshepherd_sara
+cp .env.example .env
 docker compose config --quiet
+rm -f .env
 ```
+
+The `.env.example` values are placeholders suitable for configuration rendering only. Generate fresh, distinct credentials before starting the service; do not deploy or reuse the template values.
 
 For the full local acceptance and recovery path, follow [`deployments/sara_verified_local_v1/docs/VERIFIED_DEPLOYMENT.md`](deployments/sara_verified_local_v1/docs/VERIFIED_DEPLOYMENT.md).
 
