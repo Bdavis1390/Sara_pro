@@ -33,15 +33,35 @@ jobs:
         run: PYTHONPATH=. python -m pytest -q tests/test_baros_*.py
       - name: Generate exact-run synthetic evidence bundle
         run: PYTHONPATH=. python -m baros.cli --commit-sha "$GITHUB_SHA" --output baros-evidence.json > baros-evidence.stdout.json
-      - name: Assert evidence remains non-clinical and passing
+      - name: Run 1000-case 98.7 percent bounded reliability gate
+        run: >-
+          PYTHONPATH=. python -m baros.reliability_cli
+          --commit-sha "$GITHUB_SHA"
+          --cases 1000
+          --confidence 0.999
+          --target-probability 0.987
+          --output baros-reliability-evidence.json
+          > baros-reliability.stdout.json
+      - name: Assert evidence remains bounded, non-clinical, and passing
         run: |
           python - <<'PY'
           import json
-          data=json.load(open('baros-evidence.json', encoding='utf-8'))
-          assert data['passed'] is True
-          assert data['patient_care_allowed'] is False
-          assert data['claim_state'] == 'SIMULATED_ONLY'
-          assert data['commit_sha'] == '${{ github.sha }}'
+          evidence=json.load(open('baros-evidence.json', encoding='utf-8'))
+          reliability=json.load(open('baros-reliability-evidence.json', encoding='utf-8'))
+          assert evidence['passed'] is True
+          assert evidence['patient_care_allowed'] is False
+          assert evidence['claim_state'] == 'SIMULATED_ONLY'
+          assert evidence['commit_sha'] == '${{ github.sha }}'
+          assert reliability['commit_sha'] == '${{ github.sha }}'
+          assert reliability['cases'] == 1000
+          assert reliability['successes'] == 1000
+          assert reliability['failures'] == 0
+          assert reliability['gate_passed'] is True
+          assert reliability['confidence'] == 0.999
+          assert reliability['target_probability'] == 0.987
+          assert reliability['lower_confidence_bound'] >= 0.987
+          assert reliability['lower_confidence_bound'] > 0.993
+          assert reliability['clinical_probability_claimed'] is False
           PY
       - name: Enforce non-clinical boundary
         run: |
@@ -51,13 +71,14 @@ jobs:
           name: baros-bounded-evidence-${{ github.sha }}
           path: |
             baros-evidence.json
+            baros-reliability-evidence.json
             baros-dependencies.txt
           if-no-files-found: error
 
-# Passing this workflow proves only the bounded research-software behaviors
-# actually exercised here. Synthetic DICOM round trips, numerical DVH metrics,
-# independent-library gamma comparisons, explicit robustness scenarios, and
-# exact-grid adaptive dose accumulation are not DICOM conformance certification,
-# TPS interoperability, deformable-registration validation, physical-dose
-# validation, clinical validation, regulatory authorization, or permission for
-# patient use.
+# A passing 1000-case reliability gate supports only this statement:
+# within the predeclared bounded synthetic case distribution, zero observed
+# failures yield an exact one-sided 99.9% lower confidence bound above 98.7%
+# for the probability that the research-software acceptance criteria pass.
+# It does NOT establish clinical safety/effectiveness, treatment success,
+# physical-dose accuracy, DICOM conformance certification, TPS interoperability,
+# regulatory authorization, or permission for patient use.
