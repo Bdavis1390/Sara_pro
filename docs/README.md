@@ -10,8 +10,11 @@ Read these first:
 2. [ADR-0001 — Canonical SARA Runtime Location](adr/0001-canonical-sara-runtime.md) — authoritative decision for where the runnable implementation lives and how it is exposed.
 3. [Worldshepherd Capability Map](WORLDSHEPHERD_CAPABILITY_MAP.md) — portfolio lanes, maturity boundaries, promotion gates.
 4. [Claims and Evidence Policy](CLAIMS_AND_EVIDENCE_POLICY.md) — canonical public claim-state rules.
-5. [PRE Requirement Delta Schema v1](PRE_REQUIREMENT_DELTA_SCHEMA_V1.md) — demand/evidence schema and fail-closed rules.
-6. [Claims Boundary Normalization — 2026-09-01](WS_CLAIMS_BOUNDARY_NORMALIZATION_2026-09-01.md) — exporter claim-boundary behavior and prohibited false-readiness assertions.
+5. [Active Tasks](operations/ACTIVE_TASKS.md) — the three top-level operating umbrellas and anti-inflation rules.
+6. [Repository Freshness Policy](operations/FRESHNESS_POLICY.md) — lifecycle, staleness, reconciliation, supersession and safe-deletion rules.
+7. [Latest Repository Freshness Audit — 2026-09-15](operations/FRESHNESS_AUDIT_2026-09-15.md) — dated branch/PR/source-of-truth audit evidence.
+8. [PRE Requirement Delta Schema v1](PRE_REQUIREMENT_DELTA_SCHEMA_V1.md) — demand/evidence schema and fail-closed rules.
+9. [Claims Boundary Normalization — 2026-09-01](WS_CLAIMS_BOUNDARY_NORMALIZATION_2026-09-01.md) — exporter claim-boundary behavior and prohibited false-readiness assertions.
 
 ## Canonical SARA runtime / operator path
 
@@ -48,6 +51,18 @@ Current historical-to-main reconciliation is retained in:
 
 That evidence explicitly distinguishes current local relay-recording behavior from historical external-integration wording. Do not generalize `recorded_local_only` into a third-party delivery or execution claim.
 
+## Repository operations and freshness
+
+The operating source of truth is:
+
+- [Active Tasks](operations/ACTIVE_TASKS.md) — #281 Platform & Assurance, #282 Science & Validation, #283 Growth & Externalization;
+- [Freshness Policy](operations/FRESHNESS_POLICY.md) — `CURRENT_CANONICAL`, `ACTIVE`, `DATED_EVIDENCE`, `RECONCILE_REQUIRED`, `SUPERSEDED`, `ARCHIVE`, and `SAFE_DELETE_AFTER_VERIFY`;
+- [Freshness Audit — 2026-09-15](operations/FRESHNESS_AUDIT_2026-09-15.md) — dated evidence about branch/PR accumulation and current reconciliation priorities;
+- `../tools/repository_freshness.py` — fail-closed static source-of-truth checker;
+- `../.github/workflows/repository-freshness.yml` — scheduled/on-change freshness CI gate.
+
+**Age alone is never a deletion criterion.** Preserve unique code, evidence, negative results, source corrections and decision history. Reconcile useful stale-base work forward; archive or delete only after supersession/containment is proven.
+
 ## Requirements intelligence / PRE
 
 - [PRE Requirement Delta Schema v1](PRE_REQUIREMENT_DELTA_SCHEMA_V1.md)
@@ -62,6 +77,8 @@ PRE documents should preserve a strict separation between:
 - required experiment/demonstration;
 - partner need;
 - evidence target.
+
+Time-sensitive opportunity facts require authoritative re-verification before external use; a dated opportunity artifact remains historical evidence even after its facts change.
 
 ## Claims / conformance / readiness
 
@@ -102,9 +119,11 @@ Each remaining active subproject should gain its own local README with purpose, 
 
 Research files must be read through [CLAIMS_AND_EVIDENCE_POLICY.md](CLAIMS_AND_EVIDENCE_POLICY.md). Mathematical consistency, a proposed control law, or a simulation is not equivalent to physical validation.
 
+A dated scientific artifact is not automatically stale. Preserve its original assumptions/results and issue a new superseding artifact when later evidence changes interpretation.
+
 ## OSS contribution work
 
-The repository also contains OSS health/contribution artifacts under `../tools/` and related documentation/patch directories. The required test/build workflow currently checks Python compilation/unit tests for the semantic-health reference work, patch structure, merge-conflict markers, and whitespace integrity.
+The repository also contains OSS health/contribution artifacts under `../tools/` and related documentation/patch directories. The required test/build workflow checks Python compilation/unit tests for the semantic-health reference work, patch structure, merge-conflict markers, and whitespace integrity.
 
 ## Architecture Decision Records
 
@@ -126,6 +145,8 @@ Use these categories in future filenames/front matter:
 | `RESEARCH` | hypothesis, literature synthesis, model or simulation | include maturity label |
 | `ARCHIVE` | superseded but retained for traceability | move under `docs/archive/` when safe |
 
+Operational lifecycle state is separately governed by [FRESHNESS_POLICY.md](operations/FRESHNESS_POLICY.md).
+
 ## Minimum front matter for new technical documents
 
 ```yaml
@@ -142,13 +163,15 @@ limitations: []
 
 ## Cleanup roadmap
 
-The repository still reflects an accumulation history, but the canonical SARA runtime is now explicitly located. Continue in this order:
+The repository still reflects an accumulation history, but the canonical SARA runtime and freshness doctrine are now explicit. Continue in this order:
 
-1. index remaining documents;
-2. identify canonical vs superseded versions;
-3. add claim-state metadata;
-4. move superseded material to an archive without deleting provenance;
-5. add local READMEs to remaining active subprojects;
-6. preserve and continuously verify the canonical SARA entry point;
-7. attach evidence manifests to major capability claims;
-8. record major repository/interface decisions as ADRs.
+1. reconcile active useful branches against current `main`;
+2. classify old PRs/branches rather than bulk-close by age;
+3. identify canonical vs superseded document versions;
+4. add claim-state/lifecycle metadata where ambiguity remains;
+5. move genuinely superseded material to archive without deleting provenance;
+6. remove duplicate branches only after comparison proves no unique work is lost;
+7. add local READMEs to remaining active subprojects;
+8. attach evidence manifests to major capability claims;
+9. keep CI/action/dependency runtimes on maintained upstream versions through reviewable, gated migrations;
+10. record major repository/interface decisions as ADRs.
