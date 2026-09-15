@@ -69,5 +69,43 @@
     },
     "decision": "Do not enable synchronous group commit. It preserved correctness but worsened end-to-end p95 request latency at every measured concurrency level.",
     "next_engineering_hypothesis": "Preserve one-record-per-fsync semantics and reduce avoidable work inside the serialized append critical section, beginning with repeated open/fchmod/close overhead."
+  },
+  "persistent_audit_descriptor_experiment": {
+    "workflow": "Worldshepherd Persistent Audit FD A-B",
+    "run_id": 34917358332,
+    "commit": "0d8608d906af12bef011a352b1841ccf88869ab9",
+    "artifact_id": 10376867867,
+    "artifact_digest": "sha256:6471c8c3d8fa1fea579e8863aceca611c981be7c49e6af31a0bcdc865bc69346",
+    "result": "REJECTED_FOR_PROMOTION",
+    "experimental_mode": "PER_RECORD_PERSISTENT_VERIFIED_FD_FSYNC",
+    "correctness": {
+      "regression_suite_passed": true,
+      "audit_complete_all_transports_all_modes": true,
+      "one_record_per_fsync_contract_preserved": true,
+      "permission_drift_detected": true,
+      "path_replacement_detected": true,
+      "fsync_failure_propagated": true,
+      "default_service_behavior_unchanged": true
+    },
+    "eight_client_http": {
+      "baseline_request_p95_ms": 40.910831,
+      "persistent_fd_request_p95_ms": 45.92221,
+      "request_p95_change_pct": 12.2495,
+      "baseline_audit_fsync_p95_ms": 31.355523,
+      "persistent_fd_audit_fsync_p95_ms": 30.622808,
+      "audit_fsync_p95_change_pct": -2.337,
+      "throughput_change_pct": 2.317
+    },
+    "eight_client_https": {
+      "baseline_request_p95_ms": 46.746947,
+      "persistent_fd_request_p95_ms": 42.754551,
+      "request_p95_change_pct": -8.5404,
+      "baseline_audit_fsync_p95_ms": 34.240588,
+      "persistent_fd_audit_fsync_p95_ms": 26.49862,
+      "audit_fsync_p95_change_pct": -22.6164,
+      "throughput_change_pct": 5.228
+    },
+    "decision": "Do not promote the persistent audit descriptor. It produced mixed transport/concurrency behavior: useful improvements in some profiles, including eight-client HTTPS, but regressions in others, including eight-client HTTP. The system-level benefit is not robust enough to justify descriptor lifecycle complexity.",
+    "engineering_consequence": "Treat the current single-host JSONL one-record-per-fsync writer as a bounded local durability implementation rather than continuing micro-optimizations without a stronger workload or storage architecture requirement. Shift assurance work toward cryptographic post-write integrity and externally anchorable evidence."
   }
 }
