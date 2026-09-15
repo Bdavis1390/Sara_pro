@@ -1,0 +1,490 @@
+{
+  "schema": "ws-omega-proposals-1",
+  "cycle_label": "2026-09-07-cycle-2-combined",
+  "claims_boundary": [
+    "These are source-grounded discovery proposals, not capability promotions.",
+    "Official program statements are preserved separately from Worldshepherd-specific capability claims.",
+    "No proposal authorizes submission, outreach, purchasing, external execution, or physical-validation claims.",
+    "Peer-reviewed single studies are preserved as SINGLE_SOURCE until independently corroborated for the specific claimed effect.",
+    "NASA mission observations are bounded to the reported demonstration and do not imply docking, servicing success, or broader operational qualification.",
+    "Official opportunity descriptions are demand signals, not Worldshepherd maturity evidence.",
+    "Medical topics remain research/capture observations only and do not authorize patient-specific use or clinical claims.",
+    "No entry authorizes proposal submission, external engagement, purchasing, or physical actuation."
+  ],
+  "policy": {
+    "parent_budget_per_cycle": 64,
+    "max_children_per_parent": 8,
+    "max_new_nodes_per_cycle": 256,
+    "max_active_frontier": 4096,
+    "unbounded_global_depth": true,
+    "global_depth_limit": null,
+    "preserve_negative_evidence": true,
+    "human_review_required_for_promotion": true,
+    "allow_claim_promotion": false,
+    "allow_external_execution": false
+  },
+  "source_fixture_names": [
+    "omega_cycle_20260907_v1.json",
+    "omega_cycle_20260907_science_extension_v1.json",
+    "omega_cycle_20260907_release6_extension_v1.json"
+  ],
+  "proposals": [
+    {
+      "parent_node_id": "WS-OMEGA-5837f67e5220aaf2",
+      "kind": "OPPORTUNITY",
+      "domain": "DOE Genesis SBIR/STTR",
+      "statement": "DOE announced a $10M Phase I SBIR/STTR opportunity supporting approximately 40 awards across biotechnology, AI for quantum systems, predictable materials, and AI-driven autonomous laboratories, with small-business pitches due September 10, 2026.",
+      "source_refs": [
+        "https://www.energy.gov/technologycommercialization/doe-small-business-innovation-research-sbir-and-small-business",
+        "https://www.energy.gov/undersecretaryforscience/genesis-mission/genesis-mission-national-science-and-technology-challenges"
+      ],
+      "confidence": 0.98,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "PRE",
+        "autonomous labs",
+        "quantum",
+        "materials",
+        "biotechnology"
+      ],
+      "falsification_tests": [
+        "Verify applicant eligibility and map one bounded Worldshepherd software capability to a single topic without relying on unvalidated physical claims."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "PRIOR_ART",
+      "domain": "heavy-lift UAS",
+      "statement": "DARPA Lift Challenge results show DefendTex attempted a 9.63:1 payload-to-aircraft-weight ratio using string-based motor support, but the aircraft did not complete a scored run; the official best completed score was AVIDrone at 3.84:1.",
+      "source_refs": [
+        "https://www.darpa.mil/research/challenges/lift/scoreboard",
+        "https://www.darpa.mil/news/2026/lift-challenge-awards"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "UAS",
+        "structures",
+        "propulsion",
+        "prior art",
+        "falsification"
+      ],
+      "falsification_tests": [
+        "Any Worldshepherd 10:1 claim must complete a defined flight course with calibrated pre-flight aircraft and payload weighing; static or incomplete-run ratios do not qualify."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA ultra-high payload-to-weight UAS",
+      "statement": "DARPA topic DPA26BZ05-DV022 seeks commercialization of UAS subsystems capable of breaking the 4:1 payload-to-weight ratio and closes September 23, 2026; transition use cases include contested logistics and casualty evacuation.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz05-dv022",
+        "https://www.darpa.mil/research/programs/commercialization-ultra-high-payload-to-weight-uas-subsystems"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "PRE",
+        "UAS",
+        "propulsion",
+        "materials",
+        "commercialization"
+      ],
+      "falsification_tests": [
+        "Compare each existing Worldshepherd lift concept against the topic's 24-month hardware and commercialization path and reject prime positioning where current evidence cannot support it."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OBSERVATION",
+      "domain": "DARPA Lift Challenge 2028",
+      "statement": "DARPA has announced a second Lift Challenge for summer 2028 with aircraft still limited to 55 lb, a 220 lb minimum payload, and a 10-nautical-mile course; the future target ratio has not yet been announced.",
+      "source_refs": [
+        "https://www.darpa.mil/research/challenges/lift"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "UAS",
+        "future requirement",
+        "PRE",
+        "flight validation"
+      ],
+      "falsification_tests": [
+        "Do not infer the 2028 ratio target until DARPA publishes it; model Worldshepherd designs against only the announced mass, payload, and course constraints."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-5837f67e5220aaf2",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA open-architecture AUV",
+      "statement": "DARPA topic DPA26BZ05-DV021 seeks a two-person-portable open-architecture AUV supporting up to 24-hour operations, rapid payload adaptation, collaborative fleet sensing, resilient navigation, dynamic retasking, deconfliction, mesh data offload, and at-sea testing; proposals close September 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz05-dv021",
+        "https://www.darpa.mil/research/programs/open-architecture-platform-underwater-vehicles"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "PRE",
+        "AUV",
+        "APNT",
+        "autonomy",
+        "mission replay",
+        "open architecture"
+      ],
+      "falsification_tests": [
+        "Map current SARA/APNT/HMAA functions to the explicit AUV milestones and identify the minimum missing physical platform, acoustic communications, endurance, and at-sea evidence."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-cbc5eefbc5136fa3",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA PINPOINT",
+      "statement": "DARPA PINPOINT seeks orders-of-magnitude improvements in tactical inertial navigation using nonlinear electromechanics, including levitated proof masses and high-velocity tethered microsystems co-designed with adaptive real-time control; proposals close September 25, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/pinpoint"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "APNT",
+        "MEMS",
+        "nonlinear dynamics",
+        "adaptive control",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Benchmark any Worldshepherd inertial-navigation concept against conventional MEMS and nonlinear-sensor baselines and preserve drift/error growth over multi-hour GPS-denied simulations."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-133e0581fd109c02",
+      "kind": "STANDARD",
+      "domain": "NIST TEVV-Athlon",
+      "statement": "NIST AI 200-2 initial public draft defines an extensible TEVV-Athlon framework for conventional ML, LLMs, multimodal models, and agentic systems, with public input due October 6, 2026.",
+      "source_refs": [
+        "https://www.nist.gov/artificial-intelligence/ai-research/tevv-athlon-framework-evaluating-ai-systems"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "NIST",
+        "PRIME-TEVV",
+        "AI assurance",
+        "agents",
+        "standards"
+      ],
+      "falsification_tests": [
+        "Crosswalk existing SARA/PRIME/ECHO assurance records against TEVV-Athlon and identify unsupported or missing TEVV stages before claiming alignment."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-cd76d5c39a03bf59",
+      "kind": "STANDARD",
+      "domain": "NIST secure hardware lifecycle",
+      "statement": "NIST IR 8615 identifies unified trust models, cryptographic identities, SBOMs, attestation, verification, lifecycle traceability, scalable validation, and resilience evaluation as priorities for next-generation hardware security standards.",
+      "source_refs": [
+        "https://www.nist.gov/news-events/news/2026/09/workshop-report-rolling-next-generation-secure-hardware-standards-nist-ir",
+        "https://csrc.nist.gov/pubs/ir/8615/final"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "ECHO-HW",
+        "SBOM",
+        "attestation",
+        "hardware provenance",
+        "supply chain"
+      ],
+      "falsification_tests": [
+        "Create a lifecycle provenance test for one Worldshepherd hardware article and attempt tamper, rollback, component substitution, and firmware-lineage failures."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA Firefox",
+      "statement": "DARPA Firefox is planning a 36-month program around non-invasive coherent optical neural recording at cortical depth, dynamic optical scanning across multiple brain regions, and analog computing for high-volume neural data; Proposers Day registration closes September 11, 2026 and the event is September 21.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/firefox",
+        "https://www.darpa.mil/events/2026/proposer-day-firefox"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "biomedical optics",
+        "analog computing",
+        "sensing",
+        "BCI",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Separate Worldshepherd optical-compute or sensing components that have measured performance from purely conceptual overlap before any partner or prime positioning."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "PRIOR_ART",
+      "domain": "distributed RNA medicine manufacturing",
+      "statement": "ARPA-H GIVE has selected teams developing distributed automated RNA manufacturing and integrated quality-control platforms, including continuous-flow and optofluidic approaches, establishing a strong prior-art and partner landscape for Worldshepherd autonomous biomanufacturing concepts.",
+      "source_refs": [
+        "https://arpa-h.gov/explore-funding/programs/give",
+        "https://arpa-h.gov/explore-funding/awards"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "RNA",
+        "automation",
+        "quality control",
+        "digital process",
+        "prior art",
+        "partners"
+      ],
+      "falsification_tests": [
+        "Benchmark any Worldshepherd biomanufacturing novelty claim against GIVE awardee architectures and retain only differentiated provenance, governance, sensing, or control functions."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-e7772c13bc4aed80",
+      "kind": "OPPORTUNITY",
+      "domain": "ELI 9th User Call",
+      "statement": "The ELI User Portal confirms that the 9th User Call launches September 15, 2026, providing an upcoming facility-access checkpoint for strong-field and quantum-vacuum-adjacent experiments; specific instrument fit must be evaluated after the final offer is published.",
+      "source_refs": [
+        "https://up.eli-laser.eu/"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "QVOS",
+        "strong-field QED",
+        "facility access",
+        "PRE",
+        "PVK"
+      ],
+      "falsification_tests": [
+        "On September 15, score every offered instrument against QVOS technical requirements and reject forced fit below the predeclared facility-fit threshold."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OPPORTUNITY",
+      "domain": "fuel-flexible spacecraft electric propulsion",
+      "statement": "DARPA STTR topic DPA26TZ06-DV005 seeks a fuel-flexible spacecraft electric propulsion system operating on air, water, water/carbon-dioxide mixtures, or nitrogen/hydrogen mixtures at greater than 30% electrical efficiency, with transition paths including vLEO, multimode propulsion, servicing, and ISRU; the topic opens September 23 and closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/fuel-flexible-spacecraft-electric-propulsion-system"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "electric propulsion",
+        "vLEO",
+        "ISRU",
+        "PRE",
+        "partner"
+      ],
+      "falsification_tests": [
+        "Keep partner-only unless calibrated vacuum thrust, efficiency, propellant-flexibility, and endurance evidence exist at a maturity compatible with the Direct-to-Phase-II STTR requirements."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-512d548fb8c99b67",
+      "kind": "OBSERVATION",
+      "domain": "embodied robot long-term navigation memory",
+      "statement": "A peer-reviewed Communications Engineering paper published September 2, 2026 reports a human-like memory approach for embodied robots performing long-term object navigation, providing a candidate architecture for persistent world-state memory in Worldshepherd humanoids and mobile robots.",
+      "source_refs": [
+        "https://www.nature.com/articles/s44172-026-00767-5"
+      ],
+      "confidence": 0.82,
+      "evidence_state": "SINGLE_SOURCE",
+      "cross_domain_tags": [
+        "humanoids",
+        "embodied AI",
+        "navigation",
+        "memory",
+        "mission replay"
+      ],
+      "falsification_tests": [
+        "Reproduce the reported memory approach or an equivalent baseline on a held-out long-horizon navigation benchmark and compare success, memory growth, recovery after occlusion, and compute cost against map-only and recurrent baselines."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-512d548fb8c99b67",
+      "kind": "OBSERVATION",
+      "domain": "physics-filtered robot learning",
+      "statement": "A peer-reviewed npj Robotics paper published September 4, 2026 reports that physics filtering can improve robot-learning generalization, reinforcing a Worldshepherd design direction in which learned policies are constrained or filtered by explicit physical structure rather than treated as unconstrained end-to-end control.",
+      "source_refs": [
+        "https://www.nature.com/articles/s44182-026-00114-y"
+      ],
+      "confidence": 0.82,
+      "evidence_state": "SINGLE_SOURCE",
+      "cross_domain_tags": [
+        "robot learning",
+        "physics constraints",
+        "generalization",
+        "PRIME",
+        "safety"
+      ],
+      "falsification_tests": [
+        "Compare a physics-filtered policy against an unconstrained learned policy on unseen contact, payload, friction, and terrain conditions while tracking constraint violations and task performance."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OBSERVATION",
+      "domain": "in-space robotic servicing and electric propulsion",
+      "statement": "NASA reported on September 4, 2026 that Katalyst's LINK spacecraft deployed all three robotic arms and fired all three xenon electric-propulsion thrusters simultaneously during the Swift Boost technology demonstration; LINK approached to roughly 12-15 km but will not make a closer approach, so this is bounded subsystem/in-space operations evidence rather than a completed servicing or docking demonstration.",
+      "source_refs": [
+        "https://science.nasa.gov/blogs/swift/2026/09/04/commercial-spacecraft-for-nasas-swift-boost-continues-tech-demo/"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "space robotics",
+        "electric propulsion",
+        "servicing",
+        "autonomy",
+        "mission assurance"
+      ],
+      "falsification_tests": [
+        "Use this only as an external benchmark for simultaneous arm/propulsion operations; do not infer rendezvous, capture, docking, or servicing performance that NASA did not report."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-6536656dbaf4f6d0",
+      "kind": "OPPORTUNITY",
+      "domain": "DARPA SHIELDER nanofabrication",
+      "statement": "DARPA STTR topic DPA26TZ06-DV004 seeks novel nanofabrication hard-mask materials that can enable scalable high-resolution features across semiconductor, photonic, MEMS, and quantum-device platforms; the topic opens September 23 and closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26tz06-dv004",
+        "https://www.darpa.mil/research/programs/shielder"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "nanofabrication",
+        "photonics",
+        "MEMS",
+        "quantum devices",
+        "materials",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Identify whether any current Worldshepherd material has measured etch selectivity, resolution, defectivity, process compatibility, or scale-up evidence; if not, keep this as a partner/materials-learning route rather than a prime claim."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-37413fe1e9e0c64b",
+      "kind": "OPPORTUNITY",
+      "domain": "hypersonic wind-tunnel disturbance localization",
+      "statement": "DARPA STTR topic DPA26TZ06-DV006 seeks non-optical diagnostics and modeling to localize and characterize hard-to-access upstream flow and acoustic disturbances in hypersonic wind tunnels; the topic closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26tz06-dv006",
+        "https://www.darpa.mil/research/programs/localization-characterization-modeling-freestream-disturbances-hypersonic-wind-tunnels"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "hypersonics",
+        "sensing",
+        "digital twin",
+        "acoustics",
+        "fiber optics",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Test whether the Worldshepherd sensing/digital-twin stack can localize synthetic upstream disturbances from sparse sensor data before claiming relevance to a physical hypersonic tunnel."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "OPPORTUNITY",
+      "domain": "noninvasive occult hemorrhage detection",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV025 seeks a capability to noninvasively detect and localize occult non-compressible hemorrhage outside a hospital, providing actionable routing information in austere environments; the topic closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz06-dv025",
+        "https://www.darpa.mil/research/programs/noninvasive-detection-localization-occult-hemorrhage"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "medical sensing",
+        "austere medicine",
+        "decision support",
+        "BAROS",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Keep Worldshepherd involvement software/sensing-assurance only unless a clinically appropriate sensor modality and independently validated dataset exist; measure false-negative and localization error on held-out data before any medical-performance claim."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-751aa76485e28e13",
+      "kind": "OPPORTUNITY",
+      "domain": "autonomous chemical-toxidrome triage",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV028 seeks autonomous medical triage systems that recognize chemical toxidromes and physically deliver the corresponding antidote or life-saving intervention; the topic closes October 23, 2026.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz06-dv028"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "medical autonomy",
+        "robotics",
+        "decision support",
+        "PRIME",
+        "safety",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Model the recognition and authorization chain with synthetic cases and require explicit human/safety interlocks; do not implement or test antidote delivery without appropriate clinical, regulatory, and laboratory authority."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-512d548fb8c99b67",
+      "kind": "OPPORTUNITY",
+      "domain": "autonomous ICU life-support systems",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV029 (ICU-in-a-Box) targets autonomous systems for life support, resuscitation, trauma, shock, ARDS, and multiple-organ-failure scenarios, creating a direct demand signal for governed medical autonomy and fail-safe human-machine interfaces.",
+      "source_refs": [
+        "https://www.darpa.mil/research/programs/icu-in-a-box"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "medical robotics",
+        "autonomy",
+        "human-machine interface",
+        "PRIME",
+        "BAROS",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Restrict initial Worldshepherd work to simulation, alarm logic, provenance, and fault-injection; require medical-device and clinical validation before any real patient-control path exists."
+      ]
+    },
+    {
+      "parent_node_id": "WS-OMEGA-bcd6b42ed6096617",
+      "kind": "OPPORTUNITY",
+      "domain": "networked biological pest surveillance",
+      "statement": "DARPA SBIR topic DPA26BZ06-DV024 seeks real-time networked automated New World screwworm detection, identification, and surveillance, providing a cross-domain route for distributed sensing, edge classification, provenance, and environmental response systems.",
+      "source_refs": [
+        "https://www.darpa.mil/work-with-us/opportunities/dpa26bz06-dv024",
+        "https://www.darpa.mil/research/programs/new-world-screwworm-networked-detection-identification-surveillance-system"
+      ],
+      "confidence": 0.99,
+      "evidence_state": "SOURCE_VERIFIED",
+      "cross_domain_tags": [
+        "environmental sensing",
+        "edge AI",
+        "networked surveillance",
+        "ECHO",
+        "PRE"
+      ],
+      "falsification_tests": [
+        "Benchmark false-positive/false-negative rates and provenance completeness on a labeled non-sensitive image/sensor dataset before generalizing Worldshepherd distributed-sensing claims."
+      ]
+    }
+  ]
+}
