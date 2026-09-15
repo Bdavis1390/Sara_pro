@@ -10,12 +10,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 from pydicom import dcmread
 from pydicom.dataset import Dataset
 from pydicom.uid import RTDoseStorage, RTPlanStorage, RTStructureSetStorage
+
+from .adaptive import DoseGridGeometry
 
 
 SUPPORTED_RT_SOPS = {
@@ -215,6 +216,106 @@ def decode_rtdose(ds: Dataset, *, require_absolute_gy: bool = True) -> np.ndarra
     if not np.all(np.isfinite(scaled)):
         raise ValueError("decoded dose contains non-finite values")
     return scaled
+
+
+def extract_rtdose_geometry(
+    ds: Dataset,
+    *,
+    orientation_tolerance: float = 1e-6,
+    spacing_tolerance_mm: float = 1e-6,
+) -> DoseGridGeometry:
+    """Extract a strict, uniform multi-frame RTDOSE geometry descriptor.
+
+    BAROS intentionally accepts only geometry it can prove unambiguous from the
+    supplied DICOM attributes. Non-uniform frame spacing, non-normal/non-
+    orthogonal orientation cosines, missing frame identity, and unsupported
+    GridFrameOffsetVector interpretations fail closed. No interpolation or
+    registration is performed.
+
+    The returned `shape` follows NumPy RTDOSE order: (frame, row, column).
+    `direction` is flattened in the same axis order: frame direction, row-index
+    direction, column-index direction. DICOM's first ImageOrientationPatient
+    triplet is the direction traversed by increasing column index; the second
+    triplet is the direction traversed by increasing row index.
+    """
+    report = validate_rt_dataset(ds, expected_kind="RTDOSE")
+    report.require_valid()
+
+    frame_uid = _text(ds, "FrameOfReferenceUID")
+    if not frame_uid:
+        raise ValueError("RTDOSE geometry requires FrameOfReferenceUID")
+
+    try:
+        origin = np.asarray(ds.ImagePositionPatient, dtype=np.float64)
+        orientation = np.asarray(ds.ImageOrientationPatient, dtype=np.float64)
+        pixel_spacing = np.asarray(ds.PixelSpacing, dtype=np.float64)
+    except AttributeError as exc:
+        raise ValueError("RTDOSE geometry requires ImagePositionPatient, ImageOrientationPatient, and PixelSpacing") from exc
+
+    if origin.shape != (3,) or not np.all(np.isfinite(origin)):
+        raise ValueError("ImagePositionPatient must contain three finite values")
+    if orientation.shape != (6,) or not np.all(np.isfinite(orientation)):
+        raise ValueError("ImageOrientationPatient must contain six finite values")
+    if pixel_spacing.shape != (2,) or not np.all(np.isfinite(pixel_spacing)) or np.any(pixel_spacing <= 0.0):
+        raise ValueError("PixelSpacing must contain two finite positive values")
+
+    row_cosine = orientation[:3]
+    column_cosine = orientation[3:]
+    if not np.isclose(np.linalg.norm(row_cosine), 1.0, atol=orientation_tolerance, rtol=0.0):
+        raise ValueError("first ImageOrientationPatient direction cosine must be unit length")
+    if not np.isclose(np.linalg.norm(column_cosine), 1.0, atol=orientation_tolerance, rtol=0.0):
+        raise ValueError("second ImageOrientationPatient direction cosine must be unit length")
+    if not np.isclose(np.dot(row_cosine, column_cosine), 0.0, atol=orientation_tolerance, rtol=0.0):
+        raise ValueError("ImageOrientationPatient direction cosines must be orthogonal")
+
+    normal = np.cross(row_cosine, column_cosine)
+    if not np.isclose(np.linalg.norm(normal), 1.0, atol=orientation_tolerance, rtol=0.0):
+        raise ValueError("ImageOrientationPatient does not define a unit plane normal")
+
+    frames = int(getattr(ds, "NumberOfFrames", 1) or 1)
+    if frames < 2:
+        raise ValueError("bounded RTDOSE geometry extraction currently requires a multi-frame dose grid")
+    offsets = np.asarray(getattr(ds, "GridFrameOffsetVector", []), dtype=np.float64)
+    if offsets.shape != (frames,) or not np.all(np.isfinite(offsets)):
+        raise ValueError("GridFrameOffsetVector must contain one finite value per frame")
+    differences = np.diff(offsets)
+    if not (np.all(differences > spacing_tolerance_mm) or np.all(differences < -spacing_tolerance_mm)):
+        raise ValueError("GridFrameOffsetVector must be strictly monotonic")
+    if not np.allclose(differences, differences[0], atol=spacing_tolerance_mm, rtol=0.0):
+        raise ValueError("non-uniform RTDOSE frame spacing is not supported for direct accumulation")
+
+    frame_step = float(differences[0])
+    frame_spacing = abs(frame_step)
+    sign = 1.0 if frame_step > 0.0 else -1.0
+
+    if np.isclose(offsets[0], 0.0, atol=spacing_tolerance_mm, rtol=0.0):
+        # DICOM recommended relative GridFrameOffsetVector interpretation.
+        frame_direction = normal * sign
+    elif (
+        np.allclose(orientation, [1.0, 0.0, 0.0, 0.0, 1.0, 0.0], atol=orientation_tolerance, rtol=0.0)
+        and np.isclose(offsets[0], origin[2], atol=spacing_tolerance_mm, rtol=0.0)
+    ):
+        # Legacy absolute patient-z interpretation permitted only for the exact
+        # transverse orientation defined by DICOM.
+        frame_direction = np.array([0.0, 0.0, sign], dtype=np.float64)
+    else:
+        raise ValueError("unsupported or ambiguous GridFrameOffsetVector interpretation")
+
+    rows = int(ds.Rows)
+    columns = int(ds.Columns)
+    geometry = DoseGridGeometry(
+        frame_of_reference_uid=frame_uid,
+        shape=(frames, rows, columns),
+        origin_mm=tuple(float(value) for value in origin),
+        spacing_mm=(frame_spacing, float(pixel_spacing[0]), float(pixel_spacing[1])),
+        direction=tuple(
+            float(value)
+            for vector in (frame_direction, column_cosine, row_cosine)
+            for value in vector
+        ),
+    )
+    geometry.validate()
+    return geometry
 
 
 def validate_linkage(rtstruct: Dataset, rtplan: Dataset, rtdose: Dataset) -> tuple[bool, tuple[str, ...]]:
