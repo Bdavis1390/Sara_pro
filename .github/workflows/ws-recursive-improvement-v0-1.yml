@@ -1,0 +1,92 @@
+name: WS Recursive Improvement v0.1 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_cycle.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/pre_improvement.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/evidence_improvement.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/operational_improvement.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_ledger.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_feedback.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/recursive_discovery.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/config_custody.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_event_store.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_verify.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_cycle.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/tests/test_pre_improvement.py'
+      - 'deployments/sara_verified_local_v1/tests/test_evidence_improvement.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_ledger_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/tests/test_operational_feedback.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_V0_1.md'
+      - 'deployments/sara_verified_local_v1/docs/WS_RECURSIVE_IMPROVEMENT_PRODUCER_BRIDGES_V0_1.md'
+      - 'deployments/sara_verified_local_v1/docs/WS_RI_CHECKPOINT_FEEDBACK_V0_1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-recursive-improvement-v0-1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_cycle.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_routing.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/pre_improvement.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/evidence_improvement.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/operational_improvement.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_ledger.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/improvement_feedback.py'
+      - 'deployments/sara_verified_local_v1/tests/test_improvement_ledger_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/tests/test_operational_feedback.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_RI_CHECKPOINT_FEEDBACK_V0_1.md'
+      - '.github/workflows/ws-recursive-improvement-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  recursive-improvement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile recursive-improvement modules
+        run: |
+          python -m py_compile worldshepherd_sara/improvement_cycle.py
+          python -m py_compile worldshepherd_sara/improvement_routing.py
+          python -m py_compile worldshepherd_sara/pre_improvement.py
+          python -m py_compile worldshepherd_sara/evidence_improvement.py
+          python -m py_compile worldshepherd_sara/operational_improvement.py
+          python -m py_compile worldshepherd_sara/improvement_ledger.py
+          python -m py_compile worldshepherd_sara/improvement_checkpoint.py
+          python -m py_compile worldshepherd_sara/improvement_feedback.py
+
+      - name: Run recursive-improvement tests
+        run: |
+          python -m pytest \
+            tests/test_improvement_cycle.py \
+            tests/test_improvement_routing.py \
+            tests/test_pre_improvement.py \
+            tests/test_evidence_improvement.py \
+            tests/test_improvement_ledger_checkpoint.py \
+            tests/test_operational_feedback.py \
+            -q
