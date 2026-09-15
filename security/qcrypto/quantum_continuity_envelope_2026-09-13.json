@@ -1,0 +1,27 @@
+{
+  "schema": "WS-QCRYPTO-QUANTUM-CONTINUITY-ENVELOPE-v1",
+  "as_of": "2026-09-13",
+  "solution_state": "QCE_INTEGRATION_CANDIDATE_REVIEW_REQUIRED",
+  "design_goals": [
+    "stable account or vault identity",
+    "replaceable authenticators",
+    "signature-agnostic quorum authorization",
+    "independent PQ signature families",
+    "pre-positioned recovery",
+    "fail-closed state lifecycle controls",
+    "separate base-layer consensus migration"
+  ],
+  "sources": [
+    "https://arxiv.org/abs/2607.08226",
+    "https://www.sui.io/blog/suis-post-quantum-signature-schemes",
+    "https://www.nist.gov/publications/considerations-achieving-crypto-agility-strategies-and-practices-0",
+    "https://www.projecteleven.com/blog/key-recovery-from-state-reuse",
+    "https://www.projecteleven.com/blog/quantum-vault---an-audited-reference-implementation-for-account-abstraction"
+  ],
+  "claims_boundary": [
+    "This is an authorization-layer solution, not proof of base-layer PQ consensus.",
+    "Independent review is required before high-value deployment.",
+    "Algorithm diversity reduces correlated risk but does not eliminate implementation risk.",
+    "No production quantum break is established by this record."
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "all_valid": true,
+  "asset_count": 5,
+  "assets": [
+    {
+      "asset": "SYNTHETIC-NATIVE-COIN",
+      "blocking_components": [
+        "WALLET_DEVICE:self-custody-device",
+        "RECOVERY:recovery-path"
+      ],
+      "system_state": "SYSTEM_PARTIAL_PQ_READINESS",
+      "valid": true,
+      "weakest_readiness_state": "CRYPTO_AGILE"
+    },
+    {
+      "asset": "SYNTHETIC-STABLECOIN",
+      "blocking_components": [
+        "ASSET_ISSUER_ADMIN:issuer-authority"
+      ],
+      "system_state": "SYSTEM_MIGRATION_BLOCKED_BY_CRITICAL_DEPENDENCY",
+      "valid": true,
+      "weakest_readiness_state": "CLASSICAL_DEPENDENCY"
+    },
+    {
+      "asset": "SYNTHETIC-BRIDGED-ASSET",
+      "blocking_components": [
+        "BRIDGE_MESSAGING:cross-chain-verification"
+      ],
+      "system_state": "SYSTEM_MIGRATION_BLOCKED_BY_CRITICAL_DEPENDENCY",
+      "valid": true,
+      "weakest_readiness_state": "CLASSICAL_DEPENDENCY"
+    },
+    {
+      "asset": "SYNTHETIC-EXCHANGE-BALANCE",
+      "blocking_components": [
+        "EXCHANGE_WITHDRAWAL:exchange-control-plane"
+      ],
+      "system_state": "SYSTEM_MIGRATION_BLOCKED_BY_CRITICAL_DEPENDENCY",
+      "valid": true,
+      "weakest_readiness_state": "CLASSICAL_DEPENDENCY"
+    },
+    {
+      "asset": "SYNTHETIC-ROLLUP-ASSET",
+      "blocking_components": [
+        "PROTOCOL_ADMIN:protocol-governance"
+      ],
+      "system_state": "SYSTEM_MIGRATION_BLOCKED_BY_CRITICAL_DEPENDENCY",
+      "valid": true,
+      "weakest_readiness_state": "CLASSICAL_DEPENDENCY"
+    }
+  ],
+  "blocking_role_counts": {
+    "ASSET_ISSUER_ADMIN": 1,
+    "BRIDGE_MESSAGING": 1,
+    "EXCHANGE_WITHDRAWAL": 1,
+    "PROTOCOL_ADMIN": 1,
+    "RECOVERY": 1,
+    "WALLET_DEVICE": 1
+  },
+  "portfolio_state": "PORTFOLIO_HAS_CRITICAL_MIGRATION_BLOCKERS",
+  "spec": "WS-CAE-CRYPTO-PORTFOLIO-1",
+  "weakest_readiness_state": "CLASSICAL_DEPENDENCY"
+}

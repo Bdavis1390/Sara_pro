@@ -1,0 +1,25 @@
+{
+  "spec": "WS-CAE-CHAIN-PATCH-1",
+  "chain": "YOUR_CHAIN_NAME",
+  "profile": {
+    "ecosystem": "YOUR_CHAIN_NAME",
+    "adapter_class": "DESCRIBE_AUTHORITY_MODEL",
+    "implementation_maturity": "ROADMAP",
+    "stable_authority_id": false,
+    "authenticator_replaceable": false,
+    "pq_authorization_state": "NONE",
+    "policy_state_documented": false,
+    "recovery_state_documented": false,
+    "domain_binding_documented": false,
+    "evidence_state_documented": true,
+    "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+    "protocol_commitment_state": "UNSPECIFIED"
+  },
+  "evidence": [
+    {
+      "label": "Primary source",
+      "url": "https://example.com/replace-with-primary-source",
+      "claim": "Replace this text with the narrow claim supported by the linked source."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema": "WS-QCRYPTO-AUTHORITY-ABSTRACTION-CONVERGENCE-v1",
+  "as_of": "2026-09-13",
+  "portfolio_state": "CROSS_CHAIN_AUTHORITY_ABSTRACTION_CONVERGENCE",
+  "chains": [
+    {
+      "name": "Algorand",
+      "state": "LIVE_PQ_AUTHORITY_ABSTRACTION",
+      "evidence": "Existing accounts can rekey to a native Falcon-1024 authorized address while retaining the same public account address.",
+      "source": "https://dev.algorand.co/concepts/accounts/post-quantum/"
+    },
+    {
+      "name": "Sui",
+      "state": "LIVE_AGILITY_SUBSTRATE_PQ_PATH_PENDING",
+      "evidence": "Address aliases are live and are intended to let accounts replace authorization keys without moving assets; native ML-DSA account authentication remains on the roadmap.",
+      "source": "https://www.sui.io/blog/making-sui-quantum-ready"
+    },
+    {
+      "name": "Ethereum",
+      "state": "DRAFT_NATIVE_AUTHORITY_ABSTRACTION",
+      "evidence": "EIP-8141 is explicitly designed to unlink accounts from ECDSA keys, enable native key rotation, and provide a post-quantum migration path; it remains a draft/considered upgrade.",
+      "source": "https://eips.ethereum.org/EIPS/eip-8141"
+    }
+  ],
+  "worldshepherd_solution": {
+    "adapter": "CANONICAL_AUTHORITY_ENVELOPE",
+    "principle": "Keep authority identity stable while replacing authentication underneath it.",
+    "claim_boundary": "Account-level cryptographic agility does not imply post-quantum consensus, validator security, bridge safety, or full-chain quantum resistance."
+  }
+}

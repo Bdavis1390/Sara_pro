@@ -1,0 +1,99 @@
+name: WS-CAE Operational Ingestion Proof
+
+on:
+  push:
+    branches:
+      - ws-cae-standalone-v0-1
+    paths:
+      - 'ws_cae/**'
+      - '.github/workflows/ws-cae-operational-ingestion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  id-token: write
+
+jobs:
+  operational-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Build WS-CAE SARIF and portfolio evidence
+        shell: bash
+        run: |
+          mkdir -p /tmp/ws-cae-proof
+          PYTHONPATH=. python -m ws_cae.sarif_cdx_cli \
+            ws_cae/examples/system_bridged_asset.json --pretty \
+            > /tmp/ws-cae-proof/ws-cae.sarif.json
+          PYTHONPATH=. python -m ws_cae.crypto_portfolio \
+            ws_cae/examples/system_native_coin.json \
+            ws_cae/examples/system_stablecoin.json \
+            ws_cae/examples/system_bridged_asset.json \
+            ws_cae/examples/system_exchange_balance.json \
+            ws_cae/examples/system_rollup_asset.json \
+            --pretty > /tmp/ws-cae-proof/ws-cae-portfolio.json
+          python -m json.tool /tmp/ws-cae-proof/ws-cae.sarif.json >/dev/null
+          python -m json.tool /tmp/ws-cae-proof/ws-cae-portfolio.json >/dev/null
+          sha256sum /tmp/ws-cae-proof/ws-cae-portfolio.json \
+            > /tmp/ws-cae-proof/ws-cae-portfolio.sha256
+
+      - name: Submit WS-CAE findings to GitHub Code Scanning
+        id: code_scanning
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: /tmp/ws-cae-proof/ws-cae.sarif.json
+          category: ws-cae-crypto-dependency-readiness
+          wait-for-processing: true
+
+      - name: Read back WS-CAE analysis from GitHub Code Scanning
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          response="$(curl --fail-with-body --silent --show-error \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --get \
+            --data-urlencode "ref=${GITHUB_REF}" \
+            --data-urlencode "tool_name=WS-CAE" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/code-scanning/analyses")"
+          printf '%s\n' "$response" > /tmp/ws-cae-proof/github-code-scanning-readback.json
+          count="$(jq 'length' /tmp/ws-cae-proof/github-code-scanning-readback.json)"
+          test "$count" -ge 1
+          jq -e --arg sha "$GITHUB_SHA" \
+            'any(.[]; .commit_sha == $sha and .tool.name == "WS-CAE")' \
+            /tmp/ws-cae-proof/github-code-scanning-readback.json >/dev/null
+
+      - name: Install current Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: Keylessly sign WS-CAE portfolio evidence
+        shell: bash
+        run: |
+          cosign sign-blob --yes \
+            --bundle /tmp/ws-cae-proof/ws-cae-portfolio.sigstore.json \
+            /tmp/ws-cae-proof/ws-cae-portfolio.json
+
+      - name: Verify identity-bound Sigstore provenance
+        shell: bash
+        run: |
+          cosign verify-blob \
+            --bundle /tmp/ws-cae-proof/ws-cae-portfolio.sigstore.json \
+            --certificate-identity-regexp '^https://github.com/Bdavis1390/Sara_pro/.github/workflows/ws-cae-operational-ingestion.yml@refs/heads/ws-cae-standalone-v0-1$' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+            --certificate-github-workflow-repository 'Bdavis1390/Sara_pro' \
+            --certificate-github-workflow-ref 'refs/heads/ws-cae-standalone-v0-1' \
+            /tmp/ws-cae-proof/ws-cae-portfolio.json
+
+      - name: Preserve operational proof bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cae-operational-proof-${{ github.sha }}
+          path: /tmp/ws-cae-proof/
+          if-no-files-found: error
+          retention-days: 30
