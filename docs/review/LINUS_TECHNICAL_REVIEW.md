@@ -8,6 +8,8 @@ Worldshepherd SARA is being evaluated as a bounded automation/control-plane patt
 
 The useful review result is a concrete reason to simplify, delete, redesign, or reject part of the architecture.
 
+Before any senior-reviewer outreach, [`LINUS_READINESS_GATE.md`](LINUS_READINESS_GATE.md) must be `READY_FOR_ONE_REVIEW_REQUEST` for the exact outbound commit. Until then, contact status is **HOLD**.
+
 ## Review target
 
 Please review the narrow implementation first:
@@ -52,6 +54,19 @@ The repository deliberately labels internal CI evidence as internal and unsigned
 
 Please identify unnecessary dependencies, bespoke formats, naming overhead, hidden coupling, weak failure semantics, non-determinism, or test patterns that will become expensive at scale.
 
+## Kill criteria
+
+A reviewer should feel free to recommend stopping, replacing, or radically shrinking this architecture if any of the following is true:
+
+- the claimed trust boundaries are not materially stronger than ordinary process/service separation;
+- an existing maintained project already solves the same problem with less bespoke machinery;
+- the evidence model increases paperwork without improving incident analysis, reproducibility, or authorization confidence;
+- the local persistence/recovery design creates unacceptable correctness risk;
+- the component vocabulary obscures rather than clarifies the actual security boundary;
+- the implementation cost is disproportionate to the bounded assurance gained.
+
+Any of those conclusions is a valid and valuable review result.
+
 ## Expected reviewer behavior
 
 The project is not asking a reviewer to accept its terminology or roadmap. Rename things mentally if that makes the design easier to judge.
@@ -80,4 +95,6 @@ Until then, the correct relationship is reviewer versus artifact.
 
 ## Contact posture
 
-One concise outreach is appropriate. Repeated unsolicited follow-up is not. The repository should carry the technical argument so the message itself can stay short.
+One concise outreach is appropriate only after the binary readiness gate passes. Repeated unsolicited follow-up is not. The repository should carry the technical argument so the message itself can stay short.
+
+The initial message must not ask for endorsement, investment, partnership economics, or special treatment. It should ask for falsification/simplification and link the exact review commit.
