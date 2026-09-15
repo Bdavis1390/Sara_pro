@@ -1,0 +1,49 @@
+{
+  "schema": "WS-EXTERNAL-EVIDENCE-PACKAGE-V1.0",
+  "package_id": "example-package-id",
+  "evaluator_identity": "evaluator:independent-role",
+  "evaluator_organization": "Independent Evaluation Organization",
+  "system_id": "worldshepherd",
+  "system_version": "immutable-system-version",
+  "target_lane": "tool_workflow_reliability",
+  "target_level": "candidate",
+  "public_manifest_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "pre_run_commitment_hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "result_seal_hash": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "evidence_reference": {
+    "reference_id": "controlled://evaluator/run-id",
+    "controlled_access": true
+  },
+  "role_identities": {
+    "planner": "provider:planner-model@revision",
+    "verifier": "provider:verifier-model@revision",
+    "final_state_evaluator": "evaluator:independent-role",
+    "selector": "provider:selector-model@revision"
+  },
+  "controls": {
+    "complete_run": true,
+    "failed_trials_retained": true,
+    "independent_final_adjudication": true,
+    "protected_artifacts_external": true,
+    "contamination_review_completed": true,
+    "task_set_frozen_before_run": true,
+    "grader_frozen_before_run": true
+  },
+  "metrics": {
+    "example_metric": 0.0
+  },
+  "sample_counts": {
+    "example_trials": 1
+  },
+  "attestation": {
+    "signer": "named-or-pseudonymous-authorized-evaluator",
+    "role": "independent evaluator",
+    "statement": "This package represents the complete protected run and includes retained failures.",
+    "attested_complete_run": true
+  },
+  "replication": {
+    "classification": "UNRESOLVED",
+    "dependency_disclosure": "Disclose shared infrastructure, model-provider dependencies, graders, orchestration code, and personnel.",
+    "unresolved_material_contradiction": false
+  }
+}

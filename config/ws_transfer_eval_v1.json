@@ -1,0 +1,16 @@
+{
+  "schema": "WS-TRANSFER-EVAL-V1.0",
+  "candidate": {
+    "min_transfer_pairs": 10
+  },
+  "verified": {
+    "min_transfer_pairs": 20
+  },
+  "ratio_cap_pct": 120.0,
+  "required_controls": {
+    "heldout_task_families": true,
+    "task_set_fixed_before_run": true,
+    "no_task_specific_update": true,
+    "contamination_check_passed": true
+  }
+}

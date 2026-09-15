@@ -1,0 +1,17 @@
+{
+  "schema": "WS-REPLICATION-EVAL-V1.0",
+  "candidate": {
+    "min_independent_replications": 2,
+    "accepted_states": ["AGI_CANDIDATE", "AGI_VERIFIED"]
+  },
+  "verified": {
+    "min_independent_replications": 3,
+    "accepted_states": ["AGI_VERIFIED"]
+  },
+  "required_controls": {
+    "independently_controlled": true,
+    "protected_material": true,
+    "result_reproducible": true
+  },
+  "distinctness_fields": ["evaluator_org", "infrastructure_id"]
+}
