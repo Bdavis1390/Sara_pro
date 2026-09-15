@@ -11,10 +11,23 @@ Worldshepherd PoO combines four independent evidence gates:
 
 - **CONTROL** — fresh challenge evidence that the claimant controls the asserted credential/key.
 - **PROVENANCE** — evidence linking the claimant/key to the asset record.
-- **WORK (PoW)** — bounded computational work attached to the claim as anti-spam/replay cost.
-- **BONDED STAKE (PoS)** — externally attested locked collateral/accountability associated with the claim.
+- **WORK** — bounded computational work attached to the claim as anti-spam/replay cost.
+- **BONDED_STAKE** — externally attested locked collateral/accountability associated with the claim.
 
-PoW and PoS strengthen the claim but do not create ownership by themselves.
+These gates strengthen the claim but do not create ownership by themselves.
+
+## Terminology boundary
+
+`BONDED_STAKE` in this ownership protocol is a collateral/accountability mechanism. It is **not** the Worldshepherd validation doctrine denoted elsewhere as WS-PoS.
+
+For Worldshepherd applied-work validation:
+
+`measured PoW -> validated applied-work evidence -> WS-PoS application`
+
+- **WS-PoW** means measured evidence that work was actually executed and validated.
+- **WS-PoS** means the bounded application of that already measured and validated work.
+- WS-PoS may consume or apply validated work, but it may not create, amplify, or rewrite the upstream PoW measurement record.
+- Conventional blockchain PoW/PoS terminology remains protocol-specific and must not be silently treated as equivalent to this Worldshepherd validation doctrine.
 
 ## Claims boundary
 
@@ -29,13 +42,13 @@ PoO can support a cryptographic/provenance ownership claim. It does **not** by i
 
 The strongest v1 software label is `REGISTRY_LINKED_OWNERSHIP_CLAIM`, and even that label keeps `legal_title_established = false`.
 
-## Why combine PoW and PoS?
+## Why combine work and bonded stake?
 
-### PoW contribution
+### Work contribution
 
-A bounded claim-specific PoW challenge makes mass fraudulent claims and replay campaigns more expensive. Work is domain-separated to the canonical ownership claim digest and is policy-limited rather than intended to reproduce cryptocurrency mining.
+A bounded claim-specific work challenge makes mass fraudulent claims and replay campaigns more expensive. Work is domain-separated to the canonical ownership claim digest and is policy-limited rather than intended to reproduce cryptocurrency mining.
 
-### PoS contribution
+### Bonded-stake contribution
 
 A bonded-stake attestation puts accountable collateral behind a claim. The stake is useful only when its lock/escrow/ledger attestation is independently verified. A numeric amount supplied by a claimant is never sufficient evidence.
 
@@ -46,7 +59,7 @@ The primary evidence remains claimant control plus provenance. A trusted externa
 ## Worldshepherd mapping
 
 - **ECHO** — custody/provenance references, evidence digests, registry/stake-attestation references, history.
-- **PRIME SENTINEL** — required PoW difficulty, stake policy, allowed stake units, challenge freshness, dispute/slash policy.
+- **PRIME SENTINEL** — required work difficulty, stake policy, allowed stake units, challenge freshness, dispute/slash policy.
 - **SARA** — bounded workflow orchestration and explicit human approval. SARA does not transfer the underlying asset merely because PoO passes.
 - **OVERWATCH** — dashboards for pending, verified, registry-linked, disputed, expired, transferred, and revoked claims.
 
@@ -69,7 +82,7 @@ Future transfer support should require an append-only successor claim linked to 
 
 ## Double-claim / dispute rule
 
-Conflicting active claims for the same asset should produce `DISPUTED`, not an automatic winner. PoW amount and stake size must not override contradictory authoritative evidence.
+Conflicting active claims for the same asset should produce `DISPUTED`, not an automatic winner. Work amount and stake size must not override contradictory authoritative evidence.
 
 ## Slashing rule
 
