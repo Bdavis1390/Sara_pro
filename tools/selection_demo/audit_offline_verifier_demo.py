@@ -281,6 +281,24 @@ def main() -> int:
             ledger_tamper_paths, "manifest digest mismatch"
         )
 
+        tampered_anchor_value = json.loads(anchor_bytes.decode("utf-8"))
+        tampered_anchor_value["checkpoint_sequence"] = (
+            int(tampered_anchor_value["checkpoint_sequence"]) + 1
+        )
+        tampered_anchor = (
+            json.dumps(tampered_anchor_value, indent=2, sort_keys=True) + "\n"
+        ).encode("utf-8")
+        anchor_tamper_paths = _write_case(
+            evaluator_root,
+            "external-anchor-tamper",
+            audit_bytes=latest_audit,
+            ledger_bytes=latest_ledger,
+            anchor_bytes=tampered_anchor,
+        )
+        external_anchor_tamper = _expect_rejected(
+            anchor_tamper_paths, "content digest mismatch"
+        )
+
     result = {
         "schema": "WS-SARA-AUDIT-OFFLINE-ADVERSARIAL-EVIDENCE-V2",
         "result": "PASS",
@@ -314,6 +332,7 @@ def main() -> int:
             "coordinated_local_audit_and_ledger_rollback_detected_against_external_pin": coordinated_rollback["detected"],
             "checkpointed_content_mutation_detected": content_mutation["detected"],
             "signed_checkpoint_ledger_tampering_detected": signed_ledger_tamper["detected"],
+            "external_anchor_content_tampering_detected": external_anchor_tamper["detected"],
             "newer_uncheckpointed_tail_explicitly_visible": tail["status"] == "PASS_WITH_UNCHECKPOINTED_TAIL",
         },
         "claims_boundary": [
@@ -321,6 +340,7 @@ def main() -> int:
             "The evaluator executes in a separate subprocess with signing/private-key environment variables removed and receives only audit, checkpoint-ledger, and anchor paths.",
             "The isolated evaluator requires no private signing key and no running SARA service.",
             "Rollback resistance depends on retaining the external anchor in a trust boundary independent of local SARA audit/checkpoint storage.",
+            "The anchor content digest detects accidental or adversarial modification of the supplied anchor but is not a third-party signature or proof that the anchor was independently retained.",
             "This does not establish WORM retention, a public transparency log, third-party attestation, signing-key non-compromise, CMMC/NIST/SPRS assessment, classified authorization, or operational deployment.",
         ],
     }
