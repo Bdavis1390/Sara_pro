@@ -103,6 +103,19 @@ def test_pq_required_accepts_final_fips_pq_without_classical_dependency():
     assert result.end_to_end_pq_security_established is False
 
 
+def test_stronger_declared_requirement_becomes_effective_floor():
+    result = assess_authority_envelope(
+        envelope(
+            declared_requirement=MigrationRequirement.PQ_REQUIRED,
+            classical_required_for_acceptance=True,
+            pq_required_for_acceptance=True,
+        ),
+        policy(minimum_requirement=MigrationRequirement.HYBRID_REQUIRED),
+    )
+    assert result.accepted is False
+    assert any("continued classical acceptance dependency" in blocker for blocker in result.blockers)
+
+
 def test_pq_required_rejects_continued_classical_acceptance_dependency():
     result = assess_authority_envelope(
         envelope(
