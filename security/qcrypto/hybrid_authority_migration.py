@@ -218,7 +218,9 @@ def assess_authority_envelope(
     blockers.extend(slot_blockers)
     warnings.extend(slot_warnings)
 
-    requirement = policy.minimum_requirement
+    requirement = MigrationRequirement(
+        max(int(policy.minimum_requirement), int(envelope.declared_requirement))
+    )
     if requirement is MigrationRequirement.CLASSICAL_ALLOWED:
         if not (envelope.classical_signature_present or envelope.pq_signature_present):
             blockers.append("At least one governed signature slot must be present.")
