@@ -1,0 +1,118 @@
+From: Worldshepherd OSS contribution workbench
+Subject: [PATCH DRAFT] health: shorten recheck cadence while unhealthy
+Upstream target: spiffe/spire#7236
+Claims state: PATCH DRAFT / REQUIRES UPSTREAM TEST + MAINTAINER REVIEW
+
+Problem
+-------
+SPIRE currently checks health once per second during initial startup, then once
+per minute after every subsystem has first become ready and live. If a steady-
+state check lands during a brief database or dependency blip, the cached state
+can remain unhealthy for the full steady-state minute even after the dependency
+has recovered.
+
+This draft preserves the low-cost one-minute cadence while all cached health is
+healthy. Once any steady-state check reports not-ready or not-live, subsequent
+checks run at a shorter recovery cadence until all subsystems are healthy again.
+This addresses stale-unhealthy recovery without making healthy clusters poll
+continuously at high frequency.
+
+The proposed 5-second recovery interval is intentionally reviewable/tunable; it
+follows the range suggested in the issue discussion and is not claimed as a
+final upstream default.
+
+--- a/pkg/common/health/health.go
++++ b/pkg/common/health/health.go
+@@
+ const (
+ 	readyCheckInitialInterval = time.Second
++	readyCheckRecoveryInterval = 5 * time.Second
+ 	readyCheckInterval        = time.Minute
+ )
+
+--- a/pkg/common/health/cache.go
++++ b/pkg/common/health/cache.go
+@@
+ 	go func() {
+ 		defer func() {
+ 			c.log.Debug("Finishing health checker")
+ 		}()
+ 
+ 		// Wait until initial ready + live state is achieved, then periodically check health at a longer interval
+ 		<-startSteadyStateHealthCheckCh
++		checkInterval := readyCheckInterval
+ 		for {
+ 			select {
+-			case <-c.clk.After(readyCheckInterval):
++			case <-c.clk.After(checkInterval):
+ 			case <-ctx.Done():
+ 				return
+ 			}
+ 
+ 			checkFunc()
++
++			// Healthy steady state stays on the low-cost interval. Once any
++			// subsystem is unhealthy, recheck more quickly so a transient
++			// failure does not remain cached for a full minute after recovery.
++			checkInterval = readyCheckInterval
++			for _, status := range c.getStatuses() {
++				if !status.details.Ready || !status.details.Live {
++					checkInterval = readyCheckRecoveryInterval
++					break
++				}
++			}
+ 		}
+ 	}()
+ }
+
+--- a/pkg/common/health/cache_test.go
++++ b/pkg/common/health/cache_test.go
+@@
+ 	t.Run("health still failing", func(t *testing.T) {
+ 		hook.Reset()
+ 		previousFailureDate := clockMock.Now()
+ 		clockMock.WaitForAfter(testTimeout, "timed out waiting for worker to call After")
+-		// Move to next interval
+-		clockMock.Add(readyCheckInterval)
++		// Once unhealthy, recovery checks run on the shorter interval.
++		clockMock.Add(readyCheckRecoveryInterval)
+@@
+ 	t.Run("health recovered", func(t *testing.T) {
+ 		hook.Reset()
+ 		clockMock.WaitForAfter(testTimeout, "timed out waiting for worker to call After")
+-		// Move to next interval
+-		clockMock.Add(readyCheckInterval)
++		// Keep using the shorter cadence until recovery is observed.
++		clockMock.Add(readyCheckRecoveryInterval)
+@@
+-					telemetry.Duration: "120",
++					telemetry.Duration: "10",
+ 					telemetry.Error:    "subsystem is not live or ready",
+ 					telemetry.Failures: "2",
+ 				},
+ 			},
+ 		}
+
+Validation required before upstream submission
+---------------------------------------------
+1. Run `go test ./pkg/common/health/...` with the mock-clock tests.
+2. Add/confirm a test that, after recovery, the next scheduled check returns to
+   `readyCheckInterval` rather than remaining on the recovery cadence.
+3. Add/confirm a sustained-failure test proving repeated unhealthy checks use
+   `readyCheckRecoveryInterval` and do not spin.
+4. Benchmark or instrument representative server health checks to confirm that
+   the shorter cadence during failure does not create unacceptable dependency
+   load.
+5. Decide with maintainers whether 5 seconds is the right constant or should be
+   configurable.
+6. Preserve the existing one-minute healthy steady-state cadence unless the
+   maintainers intentionally broaden the scope of #7236.
+
+Non-goals
+---------
+- This draft does not make `/ready` or `/live` execute checks synchronously.
+- It does not eliminate the up-to-one-minute delay before a new failure is first
+  detected in healthy steady state.
+- It specifically reduces stale-unhealthy recovery time after a failure has been
+  observed.
+- It does not claim that a 5-second interval is an accepted SPIRE API/default.

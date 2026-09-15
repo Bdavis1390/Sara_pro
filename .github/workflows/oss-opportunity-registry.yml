@@ -1,0 +1,42 @@
+name: OSS Opportunity Registry
+
+on:
+  pull_request:
+    paths:
+      - "docs/oss_wave2/opportunity_registry.json"
+      - "tools/oss_opportunities/**"
+      - ".github/workflows/oss-opportunity-registry.yml"
+  push:
+    branches:
+      - main
+      - oss-opportunity-wave-2-2026-09-12
+    paths:
+      - "docs/oss_wave2/opportunity_registry.json"
+      - "tools/oss_opportunities/**"
+      - ".github/workflows/oss-opportunity-registry.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile validator
+        run: python -m compileall -q tools/oss_opportunities
+
+      - name: Run validator unit tests
+        working-directory: tools/oss_opportunities
+        run: python -m unittest -v test_validate_registry.py
+
+      - name: Validate current opportunity registry
+        run: python tools/oss_opportunities/validate_registry.py docs/oss_wave2/opportunity_registry.json
