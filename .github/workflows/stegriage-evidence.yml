@@ -1,0 +1,63 @@
+name: Stegriage Evidence Benchmark
+
+on:
+  push:
+    paths:
+      - 'stegriage/**'
+      - '.github/workflows/stegriage-evidence.yml'
+  pull_request:
+    paths:
+      - 'stegriage/**'
+      - '.github/workflows/stegriage-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stegriage-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate deterministic fixtures
+        run: python stegriage/generate_fixtures.py
+
+      - name: Run scanner benchmark
+        run: python stegriage/benchmark.py
+
+      - name: Validate benchmark contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('stegriage/benchmark-report.json')
+          r=json.loads(p.read_text())
+          assert r['schema']=='WS-STEG-BENCHMARK-V1'
+          assert r['result']=='PASS'
+          assert r['confusion']=={'tp':1,'tn':1,'fp':0,'fn':0}
+          assert r['false_positive_rate']==0.0
+          assert r['false_negative_rate']==0.0
+          assert 'included synthetic fixtures' in r['boundary']
+          PY
+
+      - name: Capture hashes
+        run: |
+          sha256sum stegriage/scanner.py stegriage/generate_fixtures.py stegriage/benchmark.py stegriage/fixtures/*.png stegriage/benchmark-report.json | sort > stegriage/SHA256SUMS.txt
+          cat stegriage/SHA256SUMS.txt
+
+      - name: Upload Stegriage evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: stegriage-evidence-benchmark
+          path: |
+            stegriage/benchmark-report.json
+            stegriage/SHA256SUMS.txt
+            stegriage/fixtures/
+          retention-days: 90

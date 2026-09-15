@@ -1,0 +1,121 @@
+{
+  "schema": "WS-MARKETPLACE-SCAN-ROUND5-V1",
+  "as_of": "2026-09-03",
+  "score_kind": "market_prioritization_not_probability_of_remediation_or_award",
+  "task_routing": "Fold into the same five existing active Worldshepherd task lanes; do not create a sixth ChatGPT automation.",
+  "default_contact_threshold_pct": 98.7,
+  "default_precontact_cap_pct": 55.0,
+  "new_targets": [
+    {
+      "id": "WS-MKT-030",
+      "organization": "Gogo / Satcom Direct",
+      "sector": "business_aviation_satcom_connectivity",
+      "signal_class": "AEROSPACE_ACQUISITION_PLUS_UNREMEDIATED_ITGC_INTEGRATION_STRESS",
+      "market_priority_score": 97,
+      "observed_signal": "Gogo acquired Satcom Direct in December 2024 and continues integrating the business. Its June 30, 2026 Form 10-Q states that a material weakness remains unremediated at Satcom Direct involving user access, segregation of duties and program change management over relevant IT systems, with additional work planned to migrate or enhance legacy systems and improve reliable information and segregation of duties. Gogo also reports acquisition/integration costs and business-aviation network/hardware/software integration risks. These are financial-reporting and integration signals, not proof of aviation-product or network-safety defects.",
+      "solution_wedge": [
+        "SARA acquired-system requirement/access/change evidence graph",
+        "PRIME role/privileged-access/segregation-of-duties governance",
+        "ECHO avionics/network/software configuration provenance",
+        "OVERWATCH legacy-system migration and integration exception observability",
+        "AEROSHEPHERD bounded aircraft-connectivity configuration/installation evidence lineage"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1537054/000119312526337921/gogo-20260630.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Very strong Boeing-like acquisition/integration control signal in aviation. No accounting, airworthiness, network-performance, installation-approval or remediation-effect claim is inherited."
+    },
+    {
+      "id": "WS-MKT-031",
+      "organization": "CECO Environmental / Verantis / Thermon",
+      "sector": "industrial_environmental_energy_process_equipment",
+      "signal_class": "MULTI_ACQUISITION_PLUS_UNREMEDIATED_INTEGRATION_CONTROL_STRESS",
+      "market_priority_score": 97,
+      "observed_signal": "CECO completed its merger with Thermon on June 1, 2026 while continuing remediation of material weaknesses at Verantis, acquired in December 2024. CECO states Verantis was not appropriately integrated into its governance/control framework and lacked effective segregation-of-duties, certain IT controls and ongoing control evaluations. Management says it will focus on assessing and integrating IT controls at newly acquired entities. This supports a bounded acquisition-governance and industrial evidence-integration hypothesis, not a claim of product-quality or environmental-compliance failure.",
+      "solution_wedge": [
+        "SARA acquisition governance and control-dependency evidence graph",
+        "PRIME access/change/segregation-of-duties and approval governance",
+        "ECHO industrial process/equipment/supplier provenance",
+        "OVERWATCH multi-entity integration/control observability",
+        "PRE requirement/quality/compliance applicability mapping without certification claims"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/3197/000119312526342536/ceco-20260630.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Direct public statement that an acquired entity was not appropriately integrated makes this one of the clearest marketplace analogs. Financial-reporting weakness is not evidence of industrial product or environmental compliance failure."
+    },
+    {
+      "id": "WS-MKT-032",
+      "organization": "Mobix Labs / Vision Aerial / Special Project Delivery",
+      "sector": "defense_aerospace_rf_drones_critical_materials",
+      "signal_class": "NATIONAL_SECURITY_MULTI_ACQUISITION_PLUS_CONTROL_STRESS",
+      "market_priority_score": 96,
+      "observed_signal": "Mobix Labs is expanding a defense/aerospace electronics business through a National Security Matters initiative, including definitive agreements to acquire U.S. drone manufacturer Vision Aerial and Special Project Delivery, a critical-minerals/supply-chain platform. Mobix has also consolidated West Coast production in a larger military-approved facility. Its 2026 filings retain material weaknesses including IT program-change, user-access, computer-operations and program-development controls. The acquisition and control signals support a bounded integration/governance hypothesis, not a claim that Mobix defense products, drones or supply chains are unsafe or noncompliant.",
+      "solution_wedge": [
+        "SARA cross-domain acquisition/configuration/requirement evidence federation",
+        "PRIME access/change/program-development authority governance",
+        "ECHO RF/component/UAS/material provenance",
+        "OVERWATCH defense-production and multi-acquisition integration observability",
+        "PRE controlled-information/export/supply-chain applicability mapping"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1855467/000149315226038848/form10-q.htm",
+        "https://investors.mobixlabs.com/news-releases/news-release-details/mobix-labs-signs-definitive-agreement-acquire-vision-aerial",
+        "https://investors.mobixlabs.com/news-releases/news-release-details/mobix-labs-signs-definitive-rare-earth-elements-deal-expanding"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strong national-security integration fit spanning electronics, drones and critical materials. Defense/export/CUI, product-performance and resource/reserve claims remain strictly external."
+    },
+    {
+      "id": "WS-MKT-033",
+      "organization": "Data I/O Corporation",
+      "sector": "electronics_semiconductor_programming_security_provisioning",
+      "signal_class": "ELECTRONICS_MANUFACTURING_TRANSFORMATION_PLUS_IT_CONTROL_STRESS",
+      "market_priority_score": 90,
+      "observed_signal": "Data I/O designs and manufactures programming and security-deployment systems for electronics manufacturers and is executing a strategic transformation including IT-infrastructure and operational-process modernization. Its June 30, 2026 Form 10-Q states that a material weakness remains related to user access and segregation of duties in IT systems supporting financial reporting. This supports a bounded access/provenance/operational-transformation hypothesis, not a claim that its programming equipment or security-deployment products are defective.",
+      "solution_wedge": [
+        "SARA electronics-programming process/configuration evidence lineage",
+        "PRIME user-access/segregation-of-duties governance",
+        "ECHO device/programming/security-provisioning provenance",
+        "OVERWATCH transformation/control exception observability",
+        "bounded supplier/manufacturing data-integrity testing"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/351998/000165495426007670/daio_10q.htm",
+        "https://www.sec.gov/Archives/edgar/data/351998/000165495426003625/daio_10k.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Good electronics/manufacturing and secure-provisioning adjacency. Control weakness remains financial-reporting scoped until target-authorized operational evidence exists."
+    },
+    {
+      "id": "WS-MKT-034",
+      "organization": "Richtech Robotics",
+      "sector": "embodied_ai_robotics_manufacturing",
+      "signal_class": "ROBOTICS_SCALE_UP_PLUS_CONTROL_RESTATEMENT_STRESS",
+      "market_priority_score": 89,
+      "observed_signal": "Richtech develops embodied-AI robotics for manufacturing, retail, hospitality and other sectors and acquired a Las Vegas facility for warehousing, assembly, light manufacturing, R&D, testing, robotics data collection and model training. In June 2026 the audit committee determined multiple previously issued financial statements should no longer be relied upon, and the company continues remediation of a material weakness. The signal supports a bounded governance/evidence-scale-up hypothesis, not a claim that Richtech robots or AI systems are unsafe or ineffective.",
+      "solution_wedge": [
+        "SARA robot/software/model/configuration evidence lineage",
+        "PRIME change/release/access governance",
+        "ECHO embodied-AI dataset/model/deployment provenance",
+        "OVERWATCH assembly/test/fleet exception observability",
+        "bounded simulation-to-real and manufacturing evidence custody"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1963685/000121390026091798/ea0302286-10q_richtech.htm",
+        "https://www.sec.gov/Archives/edgar/data/1963685/000121390026086762/ea0296191-10q_richtech.htm",
+        "https://www.sec.gov/Archives/edgar/data/1963685/000121390026086761/ea0298285-10qa1_richtech.htm"
+      ],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "Useful physical-AI analog but lower direct acquisition-integration fit. Retain as watch-only pending stronger operational integration evidence."
+    }
+  ],
+  "claims_boundary": "Round 5 is public-source market intelligence. Scores rank attention only and are not remediation, contracting, adoption or award probabilities. Financial-reporting/control weaknesses and restatements do not establish production, product-quality, safety or cybersecurity root causes. Acquisition/integration signals do not establish customer interest. No new target is contact-authorized by this artifact."
+}

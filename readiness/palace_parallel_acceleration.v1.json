@@ -1,0 +1,84 @@
+{
+  "schema": "WS-PALACE-PARALLEL-ACCELERATION-V1",
+  "as_of": "2026-09-04",
+  "purpose": "Run PALACE numerical evidence generation and independent Worldshepherd blocker-closure work concurrently wherever they do not contend for the live solver state or misclassify internal numerical evidence as external validation.",
+  "palace_live_lane": {
+    "location": "operator-managed Worldshepherd folder",
+    "campaign": "54-anchor Palace convergence campaign",
+    "operator_reported_checkpoint": "15/54",
+    "operator_reported_completion_pct": 27.7778,
+    "remaining_anchor_count": 39,
+    "machine_verified_checkpoint": false,
+    "protected": true,
+    "allowed_from_repo_lane": [
+      "validate frozen anchor identity",
+      "ingest copied or snapshotted terminal outputs read-only",
+      "hash evidence copies",
+      "calculate provisional convergence only from explicit completed medium/fine pairs",
+      "retain failed, timeout and nonconverged records",
+      "prepare VNA/cross-solver/correlation tooling without launching competing live solver work"
+    ],
+    "prohibited_without_explicit_operator_direction": [
+      "stop or restart live Palace",
+      "write into or clean the live output tree",
+      "renumber or infer completed anchors from checkpoint count",
+      "delete failed or partial outputs",
+      "launch a second local Palace workload that may contend with the active run",
+      "promote partial numerical results to physical, partner, independent or qualified evidence"
+    ]
+  },
+  "parallel_development_lanes": [
+    {
+      "lane": "PALACE_EVIDENCE_INGESTION",
+      "status": "IMPLEMENTED_PREPARATION",
+      "artifact": "palace/ingest_anchor_snapshot.py",
+      "effect": "Allows completed anchor copies to be hashed and evaluated while the remaining live anchors continue."
+    },
+    {
+      "lane": "RF_VNA_CORRELATION_PREP",
+      "status": "READY_FOR_EXTERNAL_MEASUREMENT_INPUT",
+      "effect": "Keep frozen reference-plane, repeatability, complex-S11 and uncertainty gates ready so measurement can begin without waiting for new analysis design after Palace convergence."
+    },
+    {
+      "lane": "INDEPENDENT_SOLVER_CROSSCHECK_PREP",
+      "status": "PREPARE_ONLY_UNTIL_PALACE_CONVERGENCE",
+      "effect": "Prepare MEEP/FDTD comparator inputs and provenance mapping, but do not treat cross-solver agreement as measurement or independent physical validation."
+    },
+    {
+      "lane": "SARA_OVERWATCH_EXTERNAL_TEST_PREP",
+      "status": "PARALLEL_EXTERNAL_BLOCKER_WORK",
+      "effect": "Continue bounded partner-test preparation and warm-route development independently of Palace compute."
+    },
+    {
+      "lane": "STEG_EXTERNAL_CORPUS",
+      "status": "PARALLEL_EXTERNAL_BLOCKER_WORK",
+      "effect": "Seek blinded lawful external corpus/evaluator while Palace runs; no dependency on RF compute."
+    },
+    {
+      "lane": "RESONANCE_INSTRUMENTATION",
+      "status": "PARALLEL_EXTERNAL_BLOCKER_WORK",
+      "effect": "Continue conventional instrumented partner-test preparation while preserving separation from Palace RF numerical evidence."
+    },
+    {
+      "lane": "PRE_REVENUE_CALIBRATION",
+      "status": "PARALLEL_EXTERNAL_BLOCKER_WORK",
+      "effect": "Freeze pre-outcome predictions and bounded commercial evidence contracts without consuming Palace runtime resources."
+    }
+  ],
+  "security_state": {
+    "pr62_changed_code_codeql": "CLEAR_AT_LATEST_VERIFIED_HEAD",
+    "prior_medium_findings": 8,
+    "prior_findings_disposition": "REMEDIATED_AND_RESCANNED",
+    "production_or_external_authority_created": false
+  },
+  "evidence_boundary": {
+    "palace_anchor_completion": "INTERNAL_NUMERICAL_EVIDENCE_ONLY",
+    "palace_convergence_gate": "INTERNAL_NUMERICAL_EVIDENCE_ONLY",
+    "cross_solver_agreement": "INTERNAL_NUMERICAL_CROSSCHECK_ONLY",
+    "vna_measurement": "PHYSICAL_MEASUREMENT_ONLY_AFTER_REAL_CALIBRATED_DATA",
+    "partner_test": "REQUIRES_EXTERNAL_ACTOR_AND_WRITTEN_SCOPE",
+    "marketplace_contact": "UNCHANGED_BY_THIS_REGISTRY"
+  },
+  "contact_authority_created": false,
+  "boeing_spirit_contact_effect": "NONE"
+}

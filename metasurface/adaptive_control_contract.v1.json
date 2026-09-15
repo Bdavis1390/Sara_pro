@@ -1,0 +1,126 @@
+{
+  "schema": "WS-ADAPTIVE-METASURFACE-CONTROL-V1",
+  "as_of": "2026-09-04",
+  "purpose": "Translate Worldshepherd signed-node field-control concepts into a bounded hardware/software interface that can consume PALACE numerical evidence and later calibrated measurements without promoting speculative effects to demonstrated capability.",
+  "source_basis": [
+    "reconfigurable EM tile with complex response E_i=A_i exp(j theta_i)",
+    "signed coupling as constructive/destructive phase-control objective",
+    "actuator mapping to phase, amplitude and material-state controls",
+    "closed-loop sensing -> estimation -> control -> actuation",
+    "multi-physics validity requires bounded energy, thermal stability and convergent state evolution"
+  ],
+  "node_contract": {
+    "required_state": [
+      "node_id",
+      "frequency_hz",
+      "complex_field_real",
+      "complex_field_imag",
+      "phase_rad",
+      "amplitude",
+      "temperature_k",
+      "control_state_id"
+    ],
+    "optional_material_state": [
+      "relative_permittivity_real",
+      "relative_permittivity_imag",
+      "conductivity_s_per_m",
+      "relative_permeability_real",
+      "relative_permeability_imag"
+    ],
+    "required_sensor_state": [
+      "sensor_timestamp_utc",
+      "field_measurement_source",
+      "temperature_source",
+      "data_digest"
+    ]
+  },
+  "coupling_contract": {
+    "K_ij_interpretation": "signed control/coupling weight only; positive favors phase alignment, negative favors anti-phase objective",
+    "K_ij_min": -1.0,
+    "K_ij_max": 1.0,
+    "physical_mutual_coupling_must_be_derived_or_measured_separately": true,
+    "prohibited_interpretation": "The sign alone does not prove energy creation, reactionless force, invisibility, broadband cancellation or passive cloaking."
+  },
+  "control_action": {
+    "fields": [
+      "delta_phase_rad",
+      "delta_amplitude_fraction",
+      "delta_permittivity_relative",
+      "delta_conductivity_s_per_m"
+    ],
+    "hard_bounds": {
+      "abs_delta_phase_rad_max": 3.141592653589793,
+      "abs_delta_amplitude_fraction_max": 1.0,
+      "abs_delta_permittivity_relative_max": 20.0,
+      "abs_delta_conductivity_s_per_m_max": 10000000.0
+    },
+    "saturation_required": true,
+    "command_without_valid_sensor_timestamp": "REJECT",
+    "command_without_configuration_digest": "REJECT"
+  },
+  "closed_loop_sequence": [
+    "MEASURE",
+    "ESTIMATE",
+    "COMPUTE_BOUNDED_CONTROL",
+    "AUTHORIZE",
+    "ACTUATE",
+    "VERIFY_RESPONSE",
+    "LOG_EVIDENCE"
+  ],
+  "physics_constraints": {
+    "maxwell_consistency_required": true,
+    "finite_total_energy_required": true,
+    "bounded_coupling_required": true,
+    "thermal_limit_required": true,
+    "actuator_saturation_required": true,
+    "stability_or_bounded_state_evolution_required": true,
+    "passivity_or_supplied_power_accounting_required": true,
+    "momentum_and_force_claims_require_explicit_control_volume_balance": true
+  },
+  "mode_indexing": {
+    "prime_indexing": "MATHEMATICAL_DECOMPOSITION_ONLY",
+    "prime_indexing_is_quantum_number_claim": false,
+    "one_is_prime": false,
+    "forty_nine_is_prime": false,
+    "composite_49_rule": "49 may be used only as a composite diagnostic/indexing mode; no independent physical quantum status is implied.",
+    "infinite_mode_condition": "Only admissible if total modeled energy is finite and the aggregate state converges."
+  },
+  "spectral_scope": {
+    "195_nm_to_9675_nm": "RESEARCH_TARGET_ONLY_NOT_DEMONSTRATED",
+    "rf_palace_campaign": "ACTIVE_NUMERICAL_EVIDENCE_LANE",
+    "cross_band_claims_require_band_specific_material_models_and_measurements": true
+  },
+  "palace_interface": {
+    "accepted_numerical_inputs": [
+      "complex_s11",
+      "frequency_hz",
+      "angle_deg",
+      "polarization",
+      "control_state",
+      "mesh_level",
+      "configuration_digest"
+    ],
+    "convergence_source": "palace/anchor_manifest.v1.json",
+    "snapshot_ingester": "palace/ingest_anchor_snapshot.py",
+    "numerical_crosscheck": "palace/compare_cross_solver.py",
+    "physical_correlation": "palace/compare_vna_correlation.py"
+  },
+  "evidence_classes": {
+    "contract_and_control_logic": "IMPLEMENTED_IN_SOFTWARE_OR_SPECIFIED",
+    "palace_output": "INTERNAL_NUMERICAL_EVIDENCE_ONLY",
+    "cross_solver_agreement": "INTERNAL_NUMERICAL_CROSSCHECK_ONLY",
+    "calibrated_vna_data": "PHYSICAL_MEASUREMENT",
+    "fabricated_tile_performance": "REQUIRES_LAB_VALIDATION",
+    "partner_replication": "REQUIRES_PARTNER_VALIDATION"
+  },
+  "prohibited_claims": [
+    "stealth achieved",
+    "cloaking achieved",
+    "broadband cancellation achieved",
+    "195-9675 nm programmability demonstrated",
+    "reactionless propulsion",
+    "net energy from a static ambient field",
+    "quantum behavior proven by prime indexing"
+  ],
+  "contact_authority_created": false
+}

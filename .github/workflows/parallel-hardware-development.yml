@@ -1,0 +1,64 @@
+name: Parallel Hardware Development Gate
+
+on:
+  push:
+    paths:
+      - 'metasurface/**'
+      - 'materials/**'
+      - 'security/palace_evidence_ingest_policy.v1.json'
+      - 'readiness/validate_parallel_hardware_development.py'
+      - 'palace/**'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/auth.py'
+      - '.github/workflows/parallel-hardware-development.yml'
+  pull_request:
+    paths:
+      - 'metasurface/**'
+      - 'materials/**'
+      - 'security/palace_evidence_ingest_policy.v1.json'
+      - 'readiness/validate_parallel_hardware_development.py'
+      - 'palace/**'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/auth.py'
+      - '.github/workflows/parallel-hardware-development.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-parallel-hardware-development:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile bounded development tools
+        run: |
+          python -m py_compile \
+            readiness/validate_parallel_hardware_development.py \
+            metasurface/control_safety_pilot.py \
+            palace/ingest_anchor_snapshot.py \
+            palace/compare_vna_correlation.py \
+            palace/compare_cross_solver.py
+      - name: Validate cross-domain contracts
+        run: python readiness/validate_parallel_hardware_development.py
+      - name: Run deterministic metasurface safety pilot
+        run: python metasurface/control_safety_pilot.py
+      - name: Re-run PALACE snapshot fail-closed self-test
+        run: python palace/ingest_anchor_snapshot.py --self-test
+      - name: Enforce claims/contact boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          meta=json.loads(Path('metasurface/adaptive_control_contract.v1.json').read_text())
+          alti=json.loads(Path('materials/ws_alti_m1_msz_prime_validation.v1.json').read_text())
+          access=json.loads(Path('security/palace_evidence_ingest_policy.v1.json').read_text())
+          assert meta['contact_authority_created'] is False
+          assert alti['contact_authority_created'] is False
+          assert access['contact_authority_created'] is False
+          assert access['boeing_spirit_contact_effect'] == 'NONE'
+          assert meta['spectral_scope']['195_nm_to_9675_nm'] == 'RESEARCH_TARGET_ONLY_NOT_DEMONSTRATED'
+          assert alti['current_claim_state']['commercial_value_class'] == 'IP_STAGE'
+          print('Parallel hardware claims/contact boundary: PASS')
+          PY

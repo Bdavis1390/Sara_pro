@@ -1,0 +1,61 @@
+name: Worldshepherd Synthetic Evidence Baselines
+
+on:
+  push:
+    paths:
+      - 'evidence/domain_baselines.py'
+      - '.github/workflows/evidence-synthetic-baselines.yml'
+  pull_request:
+    paths:
+      - 'evidence/domain_baselines.py'
+      - '.github/workflows/evidence-synthetic-baselines.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-baselines:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run bounded analytical baselines
+        run: |
+          python evidence/domain_baselines.py --out-dir evidence/synthetic-baselines
+
+      - name: Verify evidence labels and boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('evidence/synthetic-baselines')
+          manifest = json.loads((root / 'manifest.json').read_text())
+          assert manifest['evidence_class'] == 'SIMULATED ONLY'
+          assert len(manifest['records']) == 5
+          for record in manifest['records']:
+              data = json.loads(Path(record['path']).read_text())
+              assert data['status'] == 'SIMULATION ONLY'
+              assert all(data['acceptance_sanity'].values())
+              assert data.get('boundary')
+          print('Synthetic baseline evidence checks PASS')
+          PY
+
+      - name: Generate SHA-256 manifest
+        run: |
+          sha256sum evidence/synthetic-baselines/*.json | sort > evidence/synthetic-baselines/SHA256SUMS.txt
+          cat evidence/synthetic-baselines/SHA256SUMS.txt
+
+      - name: Upload evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-synthetic-evidence-baselines
+          path: evidence/synthetic-baselines/
+          retention-days: 90

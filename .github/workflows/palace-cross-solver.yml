@@ -1,0 +1,33 @@
+name: PALACE Cross Solver Comparator
+
+on:
+  push:
+    paths:
+      - 'palace/compare_cross_solver.py'
+      - '.github/workflows/palace-cross-solver.yml'
+  pull_request:
+    paths:
+      - 'palace/compare_cross_solver.py'
+      - '.github/workflows/palace-cross-solver.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-cross-solver-comparator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m py_compile palace/compare_cross_solver.py
+      - name: Run self-test
+        run: python palace/compare_cross_solver.py --self-test
+      - name: Enforce claims boundary
+        run: |
+          grep -q "INTERNAL_NUMERICAL_CROSSCHECK_ONLY" palace/compare_cross_solver.py
+          grep -q "physics_validation_gate':'NOT_DEFINED" palace/compare_cross_solver.py
+          echo 'PALACE cross-solver claims boundary: PASS'

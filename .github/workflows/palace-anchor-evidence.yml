@@ -1,0 +1,75 @@
+name: PALACE Anchor Evidence Guard
+
+on:
+  push:
+    paths:
+      - 'palace/anchor_manifest.v1.json'
+      - 'palace/ingest_anchor_snapshot.py'
+      - 'readiness/palace_parallel_acceleration.v1.json'
+      - '.github/workflows/palace-anchor-evidence.yml'
+  pull_request:
+    paths:
+      - 'palace/anchor_manifest.v1.json'
+      - 'palace/ingest_anchor_snapshot.py'
+      - 'readiness/palace_parallel_acceleration.v1.json'
+      - '.github/workflows/palace-anchor-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-palace-evidence-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile ingester
+        run: python -m py_compile palace/ingest_anchor_snapshot.py
+      - name: Run fail-closed self-test
+        run: python palace/ingest_anchor_snapshot.py --self-test
+      - name: Validate frozen 54-anchor manifest
+        run: |
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          m=json.loads(Path('palace/anchor_manifest.v1.json').read_text())
+          a=m['anchors']
+          assert m['schema'] == 'WS-PALACE-ANCHOR-MANIFEST-V1'
+          assert m['expected_anchor_count'] == 54
+          assert len(a) == 54
+          assert len({x['anchor_id'] for x in a}) == 54
+          assert {x['angle_deg'] for x in a} == {0,30,60}
+          assert {x['control_state'] for x in a} == {'LOW_C','HIGH_C','SAFE_OPEN'}
+          assert {x['polarization'] for x in a} == {'TE','TM'}
+          assert {x['mesh_level'] for x in a} == {'coarse','medium','fine'}
+          groups=Counter((x['angle_deg'],x['control_state'],x['polarization']) for x in a)
+          assert len(groups) == 18
+          assert set(groups.values()) == {3}
+          assert m['acceptance']['delta_complex_s11_max'] == 0.02
+          assert m['acceptance']['delta_fres_percent_max'] == 0.25
+          assert m['live_run_boundary']['machine_verified'] is False
+          print(json.dumps({
+            'anchor_count': len(a),
+            'convergence_groups': len(groups),
+            'operator_checkpoint': m['live_run_boundary']['operator_reported_checkpoint'],
+            'checkpoint_machine_verified': m['live_run_boundary']['machine_verified'],
+            'external_gate_effect': 'NONE'
+          }, indent=2))
+          PY
+      - name: Validate acceleration claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('readiness/palace_parallel_acceleration.v1.json').read_text())
+          assert p['palace_live_lane']['protected'] is True
+          assert p['contact_authority_created'] is False
+          assert p['boeing_spirit_contact_effect'] == 'NONE'
+          assert p['evidence_boundary']['palace_anchor_completion'] == 'INTERNAL_NUMERICAL_EVIDENCE_ONLY'
+          print('PALACE parallel acceleration claims boundary: PASS')
+          PY

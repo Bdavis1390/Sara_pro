@@ -1,0 +1,75 @@
+{
+  "schema": "WS-MARKETPLACE-SCAN-ROUND2-V1",
+  "as_of": "2026-09-03",
+  "score_kind": "market_prioritization_not_probability_of_remediation_or_award",
+  "task_routing": "Fold into the same five existing active Worldshepherd task lanes; do not create a sixth ChatGPT automation.",
+  "default_contact_threshold_pct": 98.7,
+  "default_precontact_cap_pct": 55.0,
+  "new_targets": [
+    {
+      "id": "WS-MKT-016",
+      "organization": "BOXABL Inc.",
+      "sector": "industrialized_modular_manufacturing",
+      "signal_class": "COMPLETED_BUSINESS_COMBINATION_PLUS_ITGC_CONTROL_STRESS",
+      "market_priority_score": 93,
+      "observed_signal": "BOXABL completed its public-company business combination in July 2026. Its June 30, 2026 Form 10-Q states that Legacy BOXABL's previously disclosed material weaknesses remain unremediated in the combined control environment, including IT general controls and business-process controls. This creates a direct integration, access/change-control, manufacturing-evidence and inventory/provenance target without establishing that Worldshepherd can remediate the company.",
+      "solution_wedge": [
+        "SARA access/change/control evidence graph",
+        "PRIME segregation-of-duties and approval governance",
+        "ECHO manufacturing and inventory provenance",
+        "OVERWATCH exception/control observability",
+        "post-combination data/control dependency mapping"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1906364/000149315226039614/form10-q.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "High direct control/integration fit, but liquidity, reporting and manufacturing risks make this a high-risk account. No accounting, audit, legal or financial-reporting opinion is in Worldshepherd scope."
+    },
+    {
+      "id": "WS-MKT-017",
+      "organization": "AAR CORP. / HAECO Americas / ADI / ART / Aerostrat",
+      "sector": "aviation_aftermarket_mro_parts_software",
+      "signal_class": "MULTI_ACQUISITION_AEROSPACE_INTEGRATION",
+      "market_priority_score": 91,
+      "observed_signal": "AAR completed four acquisitions in fiscal 2026 spanning aerospace/defense component distribution, heavy aircraft MRO, aircraft reconfiguration engineering and maintenance-planning software. Its 2026 10-K calls fiscal 2026 its most acquisitive year; HAECO Americas remains described as pre-integration/lower-margin in the filing even as integration is reported ahead of plan. The signal is integration complexity, not a control-failure claim.",
+      "solution_wedge": [
+        "cross-acquisition MRO/parts/software evidence federation",
+        "aircraft maintenance configuration and work-package provenance",
+        "supplier and parts traceability",
+        "engineering-change/approval lineage",
+        "multi-site integration metrics with bounded rollback and acceptance criteria"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1750/000110465926085459/air-20260531x10k.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Excellent aerospace integration analog with active MRO, parts and software convergence. AAR reported effective ICFR overall; do not portray this as a material-weakness account."
+    },
+    {
+      "id": "WS-MKT-018",
+      "organization": "Howmet Aerospace / Consolidated Aerospace Manufacturing / Brunner",
+      "sector": "aerospace_defense_precision_fasteners_components",
+      "signal_class": "COMPLETED_LARGE_AEROSPACE_MANUFACTURING_INTEGRATION",
+      "market_priority_score": 90,
+      "observed_signal": "Howmet completed the approximately $1.8 billion acquisition of Consolidated Aerospace Manufacturing on April 6, 2026 and acquired Brunner Manufacturing for approximately $120 million on February 6, 2026. CAM produces mission-critical aerospace/defense fasteners, fluid fittings, connectors and other engineered products. This is a high-value post-close manufacturing/configuration integration target, not evidence of distress or quality failure.",
+      "solution_wedge": [
+        "precision-fastener/product configuration lineage",
+        "supplier and material provenance",
+        "multi-site process/change dependency invalidation",
+        "inspection/FAI/acceptance evidence federation",
+        "post-acquisition operational integration evidence"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/4281/000110465926039791/tm2611168d1_8k.htm",
+        "https://www.howmet.com/press-release/2026-08-06/howmet-aerospace-reports-second-quarter-2026-results/"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Predictive integration target. No public evidence cited here of a Howmet control or quality failure."
+    }
+  ],
+  "claims_boundary": "These targets extend the public-source market scan only. Scores rank attention; they are not probabilities of remediation, contract award, customer interest or adoption. No new target is contact-authorized by this artifact."
+}

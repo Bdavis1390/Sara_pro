@@ -1,0 +1,45 @@
+name: Worldshepherd External Evidence Gates
+
+on:
+  push:
+    paths:
+      - 'readiness/portfolio.v1.json'
+      - 'evidence/closures.v1.json'
+      - 'evidence/validate_external_evidence.py'
+      - '.github/workflows/evidence-external-gates.yml'
+  pull_request:
+    paths:
+      - 'readiness/portfolio.v1.json'
+      - 'evidence/closures.v1.json'
+      - 'evidence/validate_external_evidence.py'
+      - '.github/workflows/evidence-external-gates.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-external-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate fail-closed external evidence registry
+        run: |
+          python evidence/validate_external_evidence.py \
+            --readiness readiness/portfolio.v1.json \
+            --closures evidence/closures.v1.json \
+            --output evidence/external-evidence-report.json
+
+      - name: Upload external evidence report
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-external-evidence-gates
+          path: evidence/external-evidence-report.json
+          retention-days: 90

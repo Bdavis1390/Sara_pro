@@ -1,0 +1,187 @@
+{
+  "schema": "WS-EXTERNAL-EVIDENCE-CLOSURES-V1",
+  "as_of": "2026-09-03",
+  "policy": "External gates fail closed. Documentation, simulation, internal/partner-readiness scoring, or visual presentation never closes a measured, partner, clinical, field, certification, commercial-outcome, or regulatory gate. Partial evidence is retained but never counted as closure.",
+  "closures": [
+    {
+      "workstream": "STEG",
+      "gate": "consolidated scanner",
+      "gate_class": "implemented_software",
+      "evidence_class": "implemented_software",
+      "evidence_refs": [
+        "git:b2749ee15fe29bb57a690909d02a1188ab56e47d:stegriage/scanner.py",
+        "github-actions:33797188582",
+        "github-artifact:9909633955"
+      ],
+      "evidence_digest": "sha256:5336222f53573352edce7d3d298fe023633b4c3d6204eebf20f127d6cf24db37",
+      "approved": true,
+      "scope_boundary": "Closes implementation of the bounded PNG/JPEG digital-file triage scanner only. It does not establish universal steganography detection, attribution, decryption, or evidentiary sufficiency."
+    },
+    {
+      "workstream": "STEG",
+      "gate": "known-clean/known-embedded fixture corpus",
+      "gate_class": "measured_internal_test",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797188582",
+        "github-artifact:9909633955",
+        "sha256:c47dd9465c00e9a0c8b85e9ea58d3034a0d23b9cf926113602f3460752a4eb96:clean.png",
+        "sha256:8dc7145946326b07a133ae4f7080302cd4371a324692f40b4bbe2e8f438c6cd2:embedded.png"
+      ],
+      "evidence_digest": "sha256:5336222f53573352edce7d3d298fe023633b4c3d6204eebf20f127d6cf24db37",
+      "approved": true,
+      "scope_boundary": "Closes the deterministic two-fixture corpus gate only: one valid clean PNG and one otherwise identical PNG with an appended WS_FIXTURE_PAYLOAD. It does not represent a broad real-world corpus."
+    },
+    {
+      "workstream": "STEG",
+      "gate": "false-positive benchmark",
+      "gate_class": "measured_internal_test",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797188582",
+        "github-artifact:9909633955",
+        "sha256:df4e773d6e5ff6aaae4b7cc91f1d2b0df1ee6b92d1139d7939b13e5da4feeaae:benchmark-report.json"
+      ],
+      "evidence_digest": "sha256:5336222f53573352edce7d3d298fe023633b4c3d6204eebf20f127d6cf24db37",
+      "approved": true,
+      "scope_boundary": "Closes the controlled fixture-scoped false-positive benchmark: TP=1, TN=1, FP=0, FN=0, FPR=0.0 and FNR=0.0 for the included two deterministic fixtures only. No general detection-rate claim is authorized."
+    },
+    {
+      "workstream": "RESONANCE",
+      "gate": "blind conventional diagnostic benchmarks",
+      "gate_class": "measured_internal_test",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797819672",
+        "github-artifact:9909862829",
+        "sha256:fa36a7433d88b63de00cb9dbfd7ec9d0e010aebeebfce8aa1b41eb7144deccbc:blind-benchmark-report.json"
+      ],
+      "evidence_digest": "sha256:f8c7b5375d3f4f32ac1d3f6f3e4df86788945782d0f8859e810df5403ae124b7",
+      "approved": true,
+      "scope_boundary": "Closes only the fixture-scoped blind conventional frequency-diagnostic software benchmark: five synthetic hidden-frequency cases, five passes, maximum absolute frequency error 0.0 Hz at 0.25 Hz tolerance. It is not a five-repeat instrumented physical test, structural qualification, anomalous-effect result, or independent review."
+    },
+    {
+      "workstream": "ION-EP",
+      "gate": "component/plasma model",
+      "gate_class": "simulated_component_model",
+      "evidence_class": "simulated",
+      "evidence_refs": [
+        "github-actions:33797867935",
+        "github-artifact:9909877445",
+        "sha256:5de7dab3d15a1a4ba67cbd24c9b7504edc4c0fae5d85510f0b5f884f2a241961:component-plasma-report.json"
+      ],
+      "evidence_digest": "sha256:81def6847505ef4e541812471edfa5f873be1882210000f5d81360d47ddd6e87",
+      "approved": true,
+      "scope_boundary": "Closes only a bounded simulated 0-D component/plasma extraction-model gate. The retained model passes mass conservation, beam-energy consistency, positive-current, bounded ionization/transmission and Child-Langmuir extraction-limit checks. It does not establish calibrated thrust, detailed discharge fidelity, grid erosion, neutralization, endurance, plume/charging behavior, thermal qualification, validated efficiency or spacecraft integration."
+    }
+  ],
+  "partial_evidence": [
+    {
+      "workstream": "SARA",
+      "gate": "off-host/replacement-host recovery evidence",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797188638",
+        "github-artifact:9909645286",
+        "schema:WS-SARA-REPLACEMENT-ENVIRONMENT-RESTORE-EVIDENCE-V1"
+      ],
+      "evidence_digest": "sha256:870b787b0bda09769ff76611fbe131c271a847511f8f3c38678a7989b571c443",
+      "approved": true,
+      "supported_scope": "PASS for restore into a clean independently named replacement Docker runtime and volume after complete deletion of the original source container and volume on one GitHub-hosted runner, with source/restored inventory equality, persistent marker preservation, readiness and self-test checks.",
+      "excluded_scope": "Does not establish physically separate-host recovery, independent failure-domain recovery, off-host/external evidence custody, site disaster recovery, hardware-failure recovery, production RTO/RPO, certification, or field readiness."
+    }
+  ],
+  "synthetic_baselines": [
+    {
+      "workstream": "WS-ENERGY",
+      "path": "evidence/synthetic-baselines/energy.json",
+      "status": "VERIFIED_CI",
+      "run_id": 33797188629,
+      "artifact_id": 9909624764,
+      "artifact_name": "worldshepherd-synthetic-evidence-baselines",
+      "artifact_digest": "sha256:de00c97026bfa92a29346ea67f72e1aa6db81e213b489eee5897a97eecd75b0f",
+      "output_sha256": "sha256:d1d7e8274ef9c97e46febdf2f8c10c8b2529e9589837ee28ba31c136cf082975"
+    },
+    {
+      "workstream": "RESONANCE",
+      "path": "evidence/synthetic-baselines/resonance.json",
+      "status": "VERIFIED_CI",
+      "run_id": 33797188629,
+      "artifact_id": 9909624764,
+      "artifact_name": "worldshepherd-synthetic-evidence-baselines",
+      "artifact_digest": "sha256:de00c97026bfa92a29346ea67f72e1aa6db81e213b489eee5897a97eecd75b0f",
+      "output_sha256": "sha256:074bacd878054051c3c5e01bc9f90a6bc6df88b7c147ce8cb3378e91a5be981d"
+    },
+    {
+      "workstream": "HELIOS-LINK",
+      "path": "evidence/synthetic-baselines/helios.json",
+      "status": "VERIFIED_CI",
+      "run_id": 33797188629,
+      "artifact_id": 9909624764,
+      "artifact_name": "worldshepherd-synthetic-evidence-baselines",
+      "artifact_digest": "sha256:de00c97026bfa92a29346ea67f72e1aa6db81e213b489eee5897a97eecd75b0f",
+      "output_sha256": "sha256:d55777b711e19a8d8811e1967cf43dc44660ad215160db2e52666468e942f8b1"
+    },
+    {
+      "workstream": "ION-EP",
+      "path": "evidence/synthetic-baselines/ion.json",
+      "status": "VERIFIED_CI",
+      "run_id": 33797188629,
+      "artifact_id": 9909624764,
+      "artifact_name": "worldshepherd-synthetic-evidence-baselines",
+      "artifact_digest": "sha256:de00c97026bfa92a29346ea67f72e1aa6db81e213b489eee5897a97eecd75b0f",
+      "output_sha256": "sha256:e1bbc94ac5deb68af02d71e1a57c1bb9091f562f68d7fbc74e91cd556dcb6879"
+    },
+    {
+      "workstream": "WS-MS",
+      "path": "evidence/synthetic-baselines/metasurface.json",
+      "status": "VERIFIED_CI",
+      "run_id": 33797188629,
+      "artifact_id": 9909624764,
+      "artifact_name": "worldshepherd-synthetic-evidence-baselines",
+      "artifact_digest": "sha256:de00c97026bfa92a29346ea67f72e1aa6db81e213b489eee5897a97eecd75b0f",
+      "output_sha256": "sha256:e5cf6f05e954b45aa9f29bc3f079dc999d19a9b72194ef0cb561b9f09f92a436"
+    }
+  ],
+  "maturity_updates": [
+    {
+      "workstream": "ION-EP",
+      "to": "simulated",
+      "evidence_class": "simulated",
+      "evidence_refs": [
+        "github-actions:33797188629",
+        "github-artifact:9909624764",
+        "sha256:e1bbc94ac5deb68af02d71e1a57c1bb9091f562f68d7fbc74e91cd556dcb6879:ion.json"
+      ],
+      "evidence_digest": "sha256:e1bbc94ac5deb68af02d71e1a57c1bb9091f562f68d7fbc74e91cd556dcb6879",
+      "approved": true,
+      "scope_boundary": "Promotes ION-EP from architecture to simulated only on the basis of a reproducible ideal singly charged ion electrostatic acceleration budget with explicit mass flow and power conservation. Plasma behavior, calibrated thrust, endurance, plume, charging, erosion and spacecraft integration remain open."
+    },
+    {
+      "workstream": "STEG",
+      "to": "internal_test",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797188582",
+        "github-artifact:9909633955",
+        "sha256:df4e773d6e5ff6aaae4b7cc91f1d2b0df1ee6b92d1139d7939b13e5da4feeaae:benchmark-report.json"
+      ],
+      "evidence_digest": "sha256:5336222f53573352edce7d3d298fe023633b4c3d6204eebf20f127d6cf24db37",
+      "approved": true,
+      "scope_boundary": "Promotes Stegriage from implemented software to internal test only for the retained deterministic fixture benchmark. It does not establish generalized forensic sensitivity/specificity or admissibility."
+    },
+    {
+      "workstream": "RESONANCE",
+      "to": "internal_test",
+      "evidence_class": "internal_test",
+      "evidence_refs": [
+        "github-actions:33797819672",
+        "github-artifact:9909862829",
+        "sha256:fa36a7433d88b63de00cb9dbfd7ec9d0e010aebeebfce8aa1b41eb7144deccbc:blind-benchmark-report.json"
+      ],
+      "evidence_digest": "sha256:f8c7b5375d3f4f32ac1d3f6f3e4df86788945782d0f8859e810df5403ae124b7",
+      "approved": true,
+      "scope_boundary": "Promotes Applied Resonance from simulated to internal test only for the blind conventional frequency-diagnostic software benchmark on five synthetic signals. Five-repeat instrumented physical tests and independent review remain open."
+    }
+  ]
+}

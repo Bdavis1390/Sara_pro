@@ -1,0 +1,120 @@
+{
+  "schema": "WS-MARKETPLACE-SCAN-ROUND4-V1",
+  "as_of": "2026-09-03",
+  "score_kind": "market_prioritization_not_probability_of_remediation_or_award",
+  "task_routing": "Fold into the same five existing active Worldshepherd task lanes; do not create a sixth ChatGPT automation.",
+  "default_contact_threshold_pct": 98.7,
+  "default_precontact_cap_pct": 55.0,
+  "new_targets": [
+    {
+      "id": "WS-MKT-025",
+      "organization": "Redwire Corporation / Edge Autonomy",
+      "sector": "space_defense_uncrewed_aircraft_manufacturing",
+      "signal_class": "DEFENSE_ACQUISITION_PLUS_UNREMEDIATED_ITGC_PROCESS_CONTROL_STRESS",
+      "market_priority_score": 98,
+      "observed_signal": "Redwire acquired Edge Autonomy in June 2025 for approximately $1.025 billion and now reports Edge Autonomy in its Defense Tech segment. As of June 30, 2026, Redwire reported material weaknesses across U.S., European and Redwire Defense Tech operations, including incomplete deployment/operating-effectiveness of process-level controls and ineffective IT general controls over program changes and access for European and Redwire Defense Tech operations. Redwire also states that unsuccessful integration of Edge Autonomy could adversely affect operations. These are financial-reporting/control and integration signals, not proof of product-quality or flight-safety defects.",
+      "solution_wedge": [
+        "SARA cross-acquisition requirement/process/control evidence graph",
+        "PRIME program-change/access/segregation-of-duties governance",
+        "ECHO UAS configuration/manufacturing/supplier provenance",
+        "OVERWATCH multi-entity control and integration observability",
+        "AEROSHEPHERD bounded uncrewed-system configuration and acceptance lineage"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1819810/000181981026000124/rdw-20260630.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Highest new Round 4 fit because acquisition, defense/autonomy, ERP/ITGC/process-control and multi-geography integration signals overlap Worldshepherd governance architecture. No product-safety, flight-readiness, accounting, audit or compliance claims are inherited."
+    },
+    {
+      "id": "WS-MKT-026",
+      "organization": "Symbotic / Walmart Advanced Systems & Robotics / ARMS Innovations",
+      "sector": "warehouse_physical_ai_robotics_automation",
+      "signal_class": "PHYSICAL_AI_ACQUISITION_PLUS_UNREMEDIATED_CONTROL_STRESS",
+      "market_priority_score": 96,
+      "observed_signal": "Symbotic acquired Walmart's Advanced Systems & Robotics business in January 2025 and ARMS Innovations in July 2026 while expanding AI-enabled warehouse automation. As of June 27, 2026, Symbotic reported an unremediated material weakness involving controls over timing of cost-of-revenue recognition and described a planned long-term ERP vendor-management solution to automate goods/services receipt controls. The signal supports a bounded integration/vendor/process-evidence hypothesis, not a claim that Symbotic robots or warehouse systems are unsafe or ineffective.",
+      "solution_wedge": [
+        "SARA vendor/receipt/deployment evidence and dependency lineage",
+        "PRIME access/change/approval authority for automation software and ERP workflows",
+        "ECHO robot/system configuration and deployment provenance",
+        "OVERWATCH deployment/vendor exception and evidence observability",
+        "bounded physical-AI integration measurement using partner-defined ground truth"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1837240/000183724026000043/sym-20260627.htm",
+        "https://www.symbotic.com/news/symbotic-completes-acquisition-of-walmarts-advanced-systems-and-robotics-business-and-signs-related-commercial-agreement/",
+        "https://ir.symbotic.com/news-releases/news-release-details/symbotic-announces-acquisition-arms-innovations-advancing-new"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strong physical-AI and vendor/process-integration analog. Financial-reporting weaknesses cannot be translated into operational root-cause claims without partner evidence."
+    },
+    {
+      "id": "WS-MKT-027",
+      "organization": "VSE Corporation / Precision Aviation Group / NorthStar / Aero 3",
+      "sector": "aviation_aftermarket_mro_distribution_defense",
+      "signal_class": "LARGE_MULTI_ACQUISITION_MRO_INTEGRATION",
+      "market_priority_score": 93,
+      "observed_signal": "VSE completed its approximately $2.025 billion acquisition of Precision Aviation Group in May 2026, its largest acquisition, creating a platform with 61 locations in eight countries including 48 repair facilities and 11 distribution centers. VSE also acquired NorthStar in April 2026 and Aero 3 in December 2025. Integration work spans sales channels, systems, insourcing, MRO and distribution. This is a scale/integration signal, not evidence of a material weakness or quality failure.",
+      "solution_wedge": [
+        "SARA multi-acquisition MRO/distribution requirement and work-package evidence federation",
+        "ECHO part/repair/supplier/configuration provenance",
+        "OVERWATCH cross-site MRO quality/readiness exception observability",
+        "PRIME release/approval/data-access authority boundaries",
+        "AEROSHEPHERD maintenance/configuration/acceptance evidence lineage"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/102752/000119312526210245/d115996dex991.htm",
+        "https://www.sec.gov/Archives/edgar/data/102752/000010275226000064/R10.htm",
+        "https://www.sec.gov/Archives/edgar/data/102752/000010275226000049/R22.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Large, concrete aviation-integration surface with commercial/defense MRO adjacency. Keep as active solution development without portraying VSE as distressed or control-deficient."
+    },
+    {
+      "id": "WS-MKT-028",
+      "organization": "Woodward / Valve Research / Safran electromechanical actuation business",
+      "sector": "commercial_defense_aerospace_controls",
+      "signal_class": "AEROSPACE_CONTROLS_ACQUISITION_INTEGRATION_WATCH",
+      "market_priority_score": 90,
+      "observed_signal": "Woodward acquired Valve Research & Manufacturing Company in April 2026 for approximately $121 million, adding high-precision electromagnetic valve technology for commercial and defense aerospace applications. Its June 2026 filing also continues measurement-period integration of the earlier Safran acquisition and records a planned sale of its aerospace pilot-controls product line. This is a portfolio/configuration/work-transfer integration signal, not a control or quality-failure claim.",
+      "solution_wedge": [
+        "AEROSHEPHERD aerospace-control configuration and requirement lineage",
+        "SARA acquisition/divestiture work-transfer dependency mapping",
+        "ECHO process/part/inspection provenance",
+        "OVERWATCH integration/readiness exception evidence",
+        "PRIME design/release/approval authority boundaries"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/108312/000119312526325790/wwd-20260630.htm"
+      ],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "Predictive aerospace-controls integration watch. No public evidence cited here of material control weakness or product-quality failure."
+    },
+    {
+      "id": "WS-MKT-029",
+      "organization": "HEICO / Rockmart Fuel Containment / EthosEnergy Accessories & Components",
+      "sector": "aerospace_defense_components_aftermarket",
+      "signal_class": "MULTI_ACQUISITION_AEROSPACE_COMPONENTS_WATCH",
+      "market_priority_score": 89,
+      "observed_signal": "HEICO completed multiple 2026 acquisitions including Axillon Aerospace's Fuel Containment Business, renamed Rockmart Fuel Containment, serving military fixed- and rotary-wing aircraft, and EthosEnergy Accessories & Components. The signal is acquisition/configuration/supplier integration across aerospace components and aftermarket services, not evidence of control weakness or product-quality distress.",
+      "solution_wedge": [
+        "SARA acquired-entity requirement and quality-evidence federation",
+        "ECHO aerospace component/material/repair provenance",
+        "OVERWATCH multi-acquisition quality/readiness observability",
+        "AEROSHEPHERD component/configuration/repair acceptance lineage",
+        "PRIME controlled-data and release-authority boundaries"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/46619/000004661926000020/hei-20260731.htm"
+      ],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "High-value aerospace acquisition watch. Do not infer HEICO control weakness, supplier failure or product-quality problems from acquisition activity alone."
+    }
+  ],
+  "claims_boundary": "Round 4 is public-source market intelligence. Scores rank attention only and are not remediation, contracting, adoption or award probabilities. Financial-reporting/control weaknesses do not establish production/product-quality root causes. Acquisition/integration watches do not imply distress. No new target is contact-authorized by this artifact."
+}

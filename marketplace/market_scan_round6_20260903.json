@@ -1,0 +1,124 @@
+{
+  "schema": "WS-MARKETPLACE-SCAN-ROUND6-V1",
+  "as_of": "2026-09-03",
+  "score_kind": "market_prioritization_not_probability_of_remediation_or_award",
+  "task_routing": "Fold into the same five existing active Worldshepherd task lanes; do not create a sixth ChatGPT automation.",
+  "default_contact_threshold_pct": 98.7,
+  "default_precontact_cap_pct": 55.0,
+  "new_targets": [
+    {
+      "id": "WS-MKT-035",
+      "organization": "inTEST Corporation / Alfamation",
+      "sector": "electronic_test_semiconductor_aerospace_industrial_manufacturing",
+      "signal_class": "ACQUIRED_MANUFACTURING_PROCESS_CHANGE_PLUS_INVENTORY_CONTROL_STRESS",
+      "market_priority_score": 96,
+      "observed_signal": "inTEST acquired Alfamation in March 2024 and integrated it into the Electronic Test division. In its June 30, 2026 Form 10-Q, inTEST states that controls over changes to Alfamation's inventory reporting process were not appropriately designed and that the process did not operate with sufficient precision, causing an overstatement of ending inventory and understatement of cost of revenues in the first quarter. Management performed a full physical inventory and added recurring counts and additional review checks. This is a financial-reporting/process-control signal tied to an acquired manufacturing operation, not proof that Alfamation test systems are defective.",
+      "solution_wedge": [
+        "SARA acquired-manufacturing process/change evidence graph",
+        "PRIME inventory-process change approval and segregation-of-duties governance",
+        "ECHO part/WIP/test-system/process provenance",
+        "OVERWATCH inventory/process exception and reconciliation observability",
+        "bounded manufacturing/test evidence retrieval and release controls"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1036262/000103626226000045/intt-20260630.htm",
+        "https://www.intest.com/news-releases/news-release-details/intest-expands-electronic-test-capabilities-acquisition"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strong acquired-manufacturing/process-control analog across semiconductor, aerospace, industrial and life-science test markets. No product-quality, calibration, safety or accounting-remediation claim is inherited."
+    },
+    {
+      "id": "WS-MKT-036",
+      "organization": "Quantum Computing Inc. / NHanced Semiconductors / LSI / NuCrypt",
+      "sector": "quantum_photonics_semiconductor_advanced_packaging_defense_aerospace",
+      "signal_class": "MULTI_ACQUISITION_VERTICAL_INTEGRATION_PLUS_ITGC_STRESS",
+      "market_priority_score": 96,
+      "observed_signal": "Quantum Computing Inc. completed multiple acquisitions and in June 2026 acquired NHanced Semiconductors, launching Fab 2 and expanding U.S.-based advanced packaging, photonics and semiconductor manufacturing. Its June 30, 2026 Form 10-Q describes material weaknesses including user-access, privileged-access, program-change, computer-operations and third-party-service controls. The company also states that its operations and revenue are expanding following LSI, NuCrypt and NHanced acquisitions. This supports a bounded acquisition/manufacturing-governance hypothesis, not a claim that QCi quantum, photonic, cybersecurity or sensing products are ineffective or unsafe.",
+      "solution_wedge": [
+        "SARA multi-acquisition quantum/photonics manufacturing evidence federation",
+        "PRIME privileged-access/program-change/release authority governance",
+        "ECHO wafer/package/photonics/test/source provenance",
+        "OVERWATCH Fab 1/Fab 2/acquired-entity integration observability",
+        "PRE government/defense/export/security applicability mapping without certification claims"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1758009/000162828026055218/qubt-20260630.htm",
+        "https://quantumcomputinginc.com/news/press-releases/2026/quantum-computing-inc.-reports-second-quarter-2026-financial-results",
+        "https://www.sec.gov/Archives/edgar/data/1758009/000121390026070872/ea029546601ex99-1.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "High strategic fit with Worldshepherd quantum/photonics/manufacturing lanes. Keep all quantum-performance, foundry-yield, cybersecurity, defense-qualification and product-effectiveness claims external until independently validated."
+    },
+    {
+      "id": "WS-MKT-037",
+      "organization": "ADTRAN Holdings / Adtran Networks (former ADVA)",
+      "sector": "telecommunications_optical_networking_resilient_comms",
+      "signal_class": "GLOBAL_BUSINESS_COMBINATION_PLUS_UNREMEDIATED_CONTROL_STRESS",
+      "market_priority_score": 93,
+      "observed_signal": "ADTRAN closed its business combination with ADVA Optical Networking in 2022 and continues operating ADTRAN Inc. and majority-owned Adtran Networks SE as a combined global networking group. As of June 30, 2026, ADTRAN reports unremediated material weaknesses involving risk response and financial statement preparation/presentation controls while continuing group-level integration and financing. The signal supports bounded governance, requirements, configuration and evidence-federation work for a global communications platform, not a claim of network reliability or product-quality failure.",
+      "solution_wedge": [
+        "SARA cross-entity requirement/control/configuration evidence federation",
+        "PRIME approval/change/release authority across U.S./European entities",
+        "ECHO optical-network/software/source provenance",
+        "OVERWATCH multi-entity integration and evidence-health observability",
+        "HELIOS-LINK resilient-communications interface evidence without performance claims"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/926282/000119312526331632/adtn-20260630.htm",
+        "https://investors.adtran.com/news/news-details/2022/ADTRAN-Holdings-Announces-Closing-of-Business-Combination-with-ADVA/default.aspx"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strong resilient-comms and cross-border integration adjacency. Do not convert financial-reporting weaknesses into network, cybersecurity, interoperability or product-defect claims."
+    },
+    {
+      "id": "WS-MKT-038",
+      "organization": "Super Micro Computer / Supermicro",
+      "sector": "ai_infrastructure_servers_liquid_cooling_global_manufacturing",
+      "signal_class": "HYPERSCALE_MANUFACTURING_EXPANSION_PLUS_IT_ACCESS_CONTROL_STRESS",
+      "market_priority_score": 92,
+      "observed_signal": "Supermicro is rapidly expanding U.S. and global manufacturing for rack-scale AI infrastructure, liquid cooling and complete data-center building blocks. Its fiscal 2026 Form 10-K reports that prior weaknesses in segregation of duties, information completeness/accuracy and close procedures were remediated, while one ITGC material weakness remained concerning timely and consistent monitoring of user access to certain financial applications, infrastructure and programs. This supports a bounded manufacturing/evidence/access-governance hypothesis, not a claim that Supermicro hardware, cooling or AI systems are defective or insecure.",
+      "solution_wedge": [
+        "SARA rack/system/build configuration and supplier evidence graph",
+        "PRIME privileged-access/change/release authority governance",
+        "ECHO component/rack/liquid-cooling/test provenance",
+        "OVERWATCH multi-site manufacturing and deployment exception observability",
+        "bounded AI-infrastructure acceptance-evidence packaging"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1375365/000137536526000022/smci-20260630.htm",
+        "https://www.supermicro.com/en/about/us-manufacturing-expansion",
+        "https://ir.supermicro.com/news/news-details/2026/Supermicro-Adds-Largest-Silicon-Valley-Campus---New-DCBBS-Facility-to-Advance-the-Delivery-of-Next-Generation-AI-Data-Centers/default.aspx"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "High-value manufacturing-scale and AI-infrastructure evidence-governance target. No cybersecurity, product-quality, cooling-performance, certification or deployment-effectiveness claim is inherited."
+    },
+    {
+      "id": "WS-MKT-039",
+      "organization": "Cyngn Inc.",
+      "sector": "industrial_autonomous_vehicles_physical_ai",
+      "signal_class": "MULTI_OEM_AUTONOMY_DEPLOYMENT_AND_SUPPLIER_DEPENDENCY",
+      "market_priority_score": 91,
+      "observed_signal": "Cyngn develops DriveMod autonomous-driving software integrated onto industrial vehicles from third-party OEMs and depends on external hardware, sensors and adjacent software. Its 2026 filings and releases describe commercial industrial deployments and continued expansion of autonomous-vehicle integrations. The company explicitly identifies OEM and supplier cooperation, component quality and validation as dependencies. This creates a strong bounded configuration/provenance/acceptance-evidence opportunity, but it is not evidence of a current safety, reliability or product defect.",
+      "solution_wedge": [
+        "SARA OEM/vehicle/software/sensor requirement and configuration evidence graph",
+        "PRIME software/change/release/operational-authority governance",
+        "ECHO vehicle/sensor/software/calibration provenance",
+        "OVERWATCH fleet/deployment/source-health and exception observability",
+        "AEROSHEPHERD bounded industrial-autonomy acceptance and lost-link/fail-safe evidence lineage"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1874097/000121390026034900/ea0277796-10k_cyngn.htm",
+        "https://www.sec.gov/Archives/edgar/data/1874097/000143774926027718/cyn20260630_10q.htm",
+        "https://investors.cyngn.com/press-releases?l=100"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strong physical-AI/autonomy fit. Public supplier-dependency disclosures are generic risk factors and must not be presented as evidence of actual defects, incidents or safety failures."
+    }
+  ],
+  "claims_boundary": "Round 6 is public-source market intelligence. Scores rank attention only and are not remediation, contracting, adoption or award probabilities. Financial-reporting/control weaknesses do not establish production, product-quality, safety, cybersecurity or operational root causes. Public risk factors do not establish that a failure occurred. No new target is contact-authorized by this artifact."
+}

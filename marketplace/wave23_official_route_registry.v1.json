@@ -1,0 +1,101 @@
+{
+  "schema": "WS-MARKETPLACE-WAVE23-OFFICIAL-ROUTE-REGISTRY-V1",
+  "as_of": "2026-09-03",
+  "purpose": "Verify lawful official public intake routes for Wave 2 and Wave 3 high-priority marketplace targets without sending outreach or changing external evidence gates.",
+  "route_used_count": 0,
+  "contact_gate_effect": "NONE",
+  "precontact_evidence_class": "P5_ROUTE_VERIFICATION",
+  "targets": [
+    {
+      "id": "WS-MKT-003",
+      "organization": "Airbus / former Spirit AeroSystems sites",
+      "route_type": "official global supplier network intake",
+      "route_url": "https://www.airbus.com/en/becoming-an-airbus-supplier/join-airbus-global-supplier-network",
+      "public_contact": "globalsourcing@airbus.com",
+      "route_evidence": "Airbus' official supplier-network page directs prospective suppliers to send company information to globalsourcing@airbus.com, after which Airbus may assess fit and initiate deeper qualification.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Strong future supplier route. No company information, NDA request, assessment submission or tender participation occurs before contact authorization."
+    },
+    {
+      "id": "WS-MKT-020",
+      "organization": "Serve Robotics / Diligent / Vayu / Vebu",
+      "route_type": "official contact page with Partners routing",
+      "route_url": "https://www.serverobotics.com/contact/index.html",
+      "public_contact": "Official Partners contact path",
+      "route_evidence": "Serve Robotics' official Contact Us page includes a Partners inquiry category.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official partnership path verified; no form or message is submitted."
+    },
+    {
+      "id": "WS-MKT-021",
+      "organization": "Pioneer Power Solutions",
+      "route_type": "official corporate/business contact",
+      "route_url": "https://www.pioneerpowersolutions.com/contact/",
+      "public_contact": "Official corporate and business-unit contact paths",
+      "route_evidence": "Pioneer Power Solutions' official contact page lists its corporate office and business-specific contact paths for Pioneer Critical Power, Power Mobility and CEP.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official route verified; future use should select the business unit matching a bounded evidence pilot after authorization."
+    },
+    {
+      "id": "WS-MKT-027",
+      "organization": "VSE Corporation / PAG / NorthStar / Aero 3",
+      "route_type": "official supplier/vendor onboarding and supplier-quality contact",
+      "route_url": "https://www.vseaviation.com/new-vendor",
+      "secondary_route_url": "https://www.vseaviation.com/customer-resources/manufacturing-suppliers",
+      "public_contact": "SupplierQuality@vseviation.com",
+      "route_evidence": "VSE Aviation maintains an official New Vendor Setup process and a Manufacturing Suppliers page directing non-approved suppliers to SupplierQuality@vseviation.com.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Strong supplier route fit. No vendor form, banking data, W-9, certification file or supplier communication is submitted before authorization."
+    },
+    {
+      "id": "WS-MKT-016",
+      "organization": "BOXABL Inc.",
+      "route_type": "official general contact intake",
+      "route_url": "https://www.boxabl.com/contact",
+      "public_contact": "Official categorized Contact form / +1 702-500-9000",
+      "route_evidence": "BOXABL's official Contact page provides a categorized inquiry form and public company contact channels.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official but broad route; a partnership/vendor-specific option should be re-verified before any future use."
+    },
+    {
+      "id": "WS-MKT-037",
+      "organization": "ADTRAN Holdings / Adtran Networks",
+      "route_type": "official partner program / contact intake",
+      "route_url": "https://www.adtran.com/en/about-us/partners",
+      "secondary_route_url": "https://www.adtran.com/en/about-us/contact-us",
+      "public_contact": "Official partner-program and corporate contact paths",
+      "route_evidence": "Adtran's official site describes its global partner ecosystem, including technology partners, and provides a corporate contact form.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Strong future partnership route; no partner-program application or message is submitted."
+    },
+    {
+      "id": "WS-MKT-038",
+      "organization": "Super Micro Computer / Supermicro",
+      "route_type": "official sales / government sales intake",
+      "route_url": "https://www.supermicro.com/en/about/contact",
+      "public_contact": "sales-USA@supermicro.com; Government_Sales-USA@supermicro.com",
+      "route_evidence": "Supermicro's official contact page lists separate U.S. commercial and government sales inquiry channels.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Official route verified; supplier/partner specificity should be rechecked before any future use."
+    },
+    {
+      "id": "WS-MKT-039",
+      "organization": "Cyngn Inc.",
+      "route_type": "official partner/dealer network intake",
+      "route_url": "https://www.cyngn.com/company/dealer-network",
+      "public_contact": "Official 'Become a Cyngn Partner' enrollment path",
+      "route_evidence": "Cyngn's official Dealer Network page explicitly offers a Partner Program and a 'Become a Cyngn Partner' path.",
+      "verified_official_route": true,
+      "route_used": false,
+      "fit_note": "Strong partnership route fit, but no enrollment or contact is performed before authorization."
+    }
+  ],
+  "claims_boundary": "Route verification establishes only that an official public channel exists. It does not establish target interest, supplier or partner qualification, procurement eligibility, remediation probability, permission to submit sensitive material, or authorization under the Worldshepherd 98.7 contact policy to use the route."
+}
