@@ -5,9 +5,11 @@ on:
     paths:
       - "security/qcrypto/applied_work_postwork.py"
       - "security/qcrypto/applied_work_pos_application.py"
+      - "security/qcrypto/applied_work_validation_cycle.py"
       - "scripts/qcrypto_applied_work_postwork_evidence.py"
       - "tests/test_qcrypto_applied_work_postwork.py"
       - "tests/test_qcrypto_applied_work_pos_application.py"
+      - "tests/test_qcrypto_applied_work_validation_cycle.py"
       - ".github/workflows/qcrypto-applied-work-postwork.yml"
   push:
     branches:
@@ -15,9 +17,11 @@ on:
     paths:
       - "security/qcrypto/applied_work_postwork.py"
       - "security/qcrypto/applied_work_pos_application.py"
+      - "security/qcrypto/applied_work_validation_cycle.py"
       - "scripts/qcrypto_applied_work_postwork_evidence.py"
       - "tests/test_qcrypto_applied_work_postwork.py"
       - "tests/test_qcrypto_applied_work_pos_application.py"
+      - "tests/test_qcrypto_applied_work_validation_cycle.py"
       - ".github/workflows/qcrypto-applied-work-postwork.yml"
 
 permissions:
@@ -38,27 +42,29 @@ jobs:
       - name: Install test dependency
         run: python -m pip install --disable-pip-version-check pytest
 
-      - name: Compile post-work application model
+      - name: Compile measured-PoW to PoS application model
         run: |
           python -m compileall \
             security/qcrypto/applied_work_postwork.py \
             security/qcrypto/applied_work_pos_application.py \
+            security/qcrypto/applied_work_validation_cycle.py \
             scripts/qcrypto_applied_work_postwork_evidence.py
 
-      - name: Run post-work and PoS-application regressions
+      - name: Run measured-PoW, PoS-application, and recursive-cycle regressions
         env:
           PYTHONPATH: .
         run: |
           pytest -q \
             tests/test_qcrypto_applied_work_postwork.py \
-            tests/test_qcrypto_applied_work_pos_application.py
+            tests/test_qcrypto_applied_work_pos_application.py \
+            tests/test_qcrypto_applied_work_validation_cycle.py
 
       - name: Generate machine-readable proof evidence
         env:
           PYTHONPATH: .
         run: python scripts/qcrypto_applied_work_postwork_evidence.py --output applied-work-post-work-pos.json
 
-      - name: Assert applied-work precedes post-work stake
+      - name: Assert measured work precedes bounded PoS application
         run: |
           python - <<'PY'
           import hashlib
@@ -83,7 +89,7 @@ jobs:
           print("evidence_sha256:", expected)
           PY
 
-      - name: Assert all reviewed PoS families remain reference adapters only
+      - name: Assert PoS remains downstream of measured PoW across all reference families
         env:
           PYTHONPATH: .
         run: |
@@ -119,6 +125,11 @@ jobs:
           projections = project_to_all_families(application)
           assert set(projections) == set(PROFILES)
           assert len(projections) == 19
+          assert application.measured_work_units == receipt.validated_work_units
+          assert application.source_validation_state == receipt.validation_state.value
+          assert application.validator.stake <= application.measured_work_units
+          assert all(p.measured_work_units == receipt.validated_work_units for p in projections.values())
+          assert all(p.source_validation_state == receipt.validation_state.value for p in projections.values())
           assert all(p.application_mode == "WORLDSHEPHERD_REFERENCE_ADAPTER_ONLY" for p in projections.values())
           assert all(p.production_network_adoption_claimed is False for p in projections.values())
           print("reference_profile_count:", len(projections))
