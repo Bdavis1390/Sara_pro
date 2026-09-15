@@ -96,9 +96,53 @@ def test_signed_sink_publication_verifies_against_pinned_provider(tmp_path):
         trusted_provider_fingerprint_sha256=sink.fingerprint,
     )
     assert result["verification"]["status"] == "PASS"
-    assert result["verification"]["verification_state"] == "AUTHENTICATED_RECEIPT"
+    assert (
+        result["verification"]["verification_state"]
+        == "AUTHENTICATED_TRUSTED_PROVIDER_RECEIPT"
+    )
+    assert result["verification"]["provider_identity_pinned"] is True
     assert result["verification"]["retention_status"] == RETENTION_NOT_ESTABLISHED
     assert result["receipt"]["anchor_sha256"] == result["publication"]["anchor_sha256"]
+
+
+def test_signed_but_unpinned_receipt_does_not_claim_trusted_provider_identity(tmp_path):
+    publication = build_anchor_publication(_anchor(tmp_path))
+    sink = SignedTestSink()
+    verification = verify_anchor_receipt(
+        publication=publication,
+        receipt=sink.publish(publication),
+    )
+    assert verification["status"] == "PASS"
+    assert verification["verification_state"] == "SIGNED_RECEIPT_UNPINNED_PROVIDER"
+    assert verification["provider_identity_pinned"] is False
+
+
+def test_receipt_rejects_boolean_sequence_type_confusion(tmp_path):
+    publication = build_anchor_publication(_anchor(tmp_path))
+    sink = SignedTestSink()
+    receipt = sink.publish(publication)
+    assert publication["checkpoint_sequence"] == 1
+    receipt["checkpoint_sequence"] = True
+    with pytest.raises(AuditAnchorReceiptError, match="checkpoint sequence is invalid"):
+        verify_anchor_receipt(
+            publication=publication,
+            receipt=receipt,
+            trusted_provider_fingerprint_sha256=sink.fingerprint,
+        )
+
+
+def test_receipt_rejects_boolean_record_count_type_confusion(tmp_path):
+    publication = build_anchor_publication(_anchor(tmp_path))
+    sink = SignedTestSink()
+    receipt = sink.publish(publication)
+    assert publication["checkpoint_record_count"] == 1
+    receipt["checkpoint_record_count"] = True
+    with pytest.raises(AuditAnchorReceiptError, match="record count is invalid"):
+        verify_anchor_receipt(
+            publication=publication,
+            receipt=receipt,
+            trusted_provider_fingerprint_sha256=sink.fingerprint,
+        )
 
 
 def test_signed_receipt_rejects_signature_tampering(tmp_path):
