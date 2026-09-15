@@ -6,10 +6,47 @@ This directory contains a mixture of **canonical architecture/governance documen
 
 Read these first:
 
-1. [Worldshepherd Capability Map](WORLDSHEPHERD_CAPABILITY_MAP.md) — portfolio lanes, maturity boundaries, promotion gates.
-2. [Claims and Evidence Policy](CLAIMS_AND_EVIDENCE_POLICY.md) — canonical public claim-state rules.
-3. [PRE Requirement Delta Schema v1](PRE_REQUIREMENT_DELTA_SCHEMA_V1.md) — demand/evidence schema and fail-closed rules.
-4. [Claims Boundary Normalization — 2026-09-01](WS_CLAIMS_BOUNDARY_NORMALIZATION_2026-09-01.md) — exporter claim-boundary behavior and prohibited false-readiness assertions.
+1. [Canonical SARA Runtime entry point](../runtime/README.md) — supported repository-level path to the runnable SARA / SSPADAWANZZ local service.
+2. [ADR-0001 — Canonical SARA Runtime Location](adr/0001-canonical-sara-runtime.md) — authoritative decision for where the runnable implementation lives and how it is exposed.
+3. [Worldshepherd Capability Map](WORLDSHEPHERD_CAPABILITY_MAP.md) — portfolio lanes, maturity boundaries, promotion gates.
+4. [Claims and Evidence Policy](CLAIMS_AND_EVIDENCE_POLICY.md) — canonical public claim-state rules.
+5. [PRE Requirement Delta Schema v1](PRE_REQUIREMENT_DELTA_SCHEMA_V1.md) — demand/evidence schema and fail-closed rules.
+6. [Claims Boundary Normalization — 2026-09-01](WS_CLAIMS_BOUNDARY_NORMALIZATION_2026-09-01.md) — exporter claim-boundary behavior and prohibited false-readiness assertions.
+
+## Canonical SARA runtime / operator path
+
+The current runnable local implementation is:
+
+```text
+../deployments/sara_verified_local_v1/
+```
+
+Repository-root operator commands are exposed through:
+
+```text
+../scripts/sara.sh
+```
+
+Start from a fresh clone with:
+
+```bash
+bash scripts/sara.sh setup
+bash scripts/sara.sh run
+```
+
+The dedicated implementation gate is:
+
+```text
+../.github/workflows/sara-verified-local-v1.yml
+```
+
+Current historical-to-main reconciliation is retained in:
+
+```text
+../deployments/sara_verified_local_v1/docs/WS_QE_2026_ADM_001.md
+```
+
+That evidence explicitly distinguishes current local relay-recording behavior from historical external-integration wording. Do not generalize `recorded_local_only` into a third-party delivery or execution claim.
 
 ## Requirements intelligence / PRE
 
@@ -32,7 +69,7 @@ Known artifacts include:
 
 - [WS Claims Boundary Normalization — 2026-09-01](WS_CLAIMS_BOUNDARY_NORMALIZATION_2026-09-01.md)
 - `WS_INDUSTRY_STANDARDS_CONFORMANCE_BASELINE_2026-09-01.md`
-- CI workflows under `../.github/workflows/` covering test/build, CodeQL, release attestation, rollback/recovery, operational resilience, NIST 800-171 precursor work and other evidence checks.
+- CI workflows under `../.github/workflows/` covering test/build, CodeQL, SARA Verified Local, release attestation, rollback/recovery, operational resilience, NIST 800-171 precursor work and other evidence checks.
 
 **Important:** internal conformance work does not itself establish government certification, authorization, accreditation, CMMC status, NIST conformity, DFARS satisfaction, or field readiness.
 
@@ -56,7 +93,7 @@ Treat these as **dated evidence/screening artifacts**, not timeless architecture
 - `../flamehold_ai_node/`
 - `../external_anchor_pilots/`
 
-Each subproject should eventually gain its own local README with purpose, inputs/outputs, run instructions, maturity state, tests, and known limitations.
+Each remaining active subproject should gain its own local README with purpose, inputs/outputs, run instructions, maturity state, tests, and known limitations.
 
 ## Physics / research
 
@@ -68,6 +105,14 @@ Research files must be read through [CLAIMS_AND_EVIDENCE_POLICY.md](CLAIMS_AND_E
 ## OSS contribution work
 
 The repository also contains OSS health/contribution artifacts under `../tools/` and related documentation/patch directories. The required test/build workflow currently checks Python compilation/unit tests for the semantic-health reference work, patch structure, merge-conflict markers, and whitespace integrity.
+
+## Architecture Decision Records
+
+ADRs capture repository-level decisions whose reversal should be explicit and reviewable.
+
+- [ADR-0001 — Canonical SARA Runtime Location](adr/0001-canonical-sara-runtime.md)
+
+Future major interface, repository-split, security-boundary and evidence-custody decisions should receive their own ADR rather than living only in chat or README prose.
 
 ## Document lifecycle
 
@@ -97,12 +142,13 @@ limitations: []
 
 ## Cleanup roadmap
 
-The current repository contains valuable material but still reflects an accumulation history. The cleanup sequence should be:
+The repository still reflects an accumulation history, but the canonical SARA runtime is now explicitly located. Continue in this order:
 
-1. index existing documents;
+1. index remaining documents;
 2. identify canonical vs superseded versions;
 3. add claim-state metadata;
 4. move superseded material to an archive without deleting provenance;
-5. add local READMEs to active subprojects;
-6. consolidate runnable SARA packaging;
-7. add evidence manifests that connect claims to tests and CI results.
+5. add local READMEs to remaining active subprojects;
+6. preserve and continuously verify the canonical SARA entry point;
+7. attach evidence manifests to major capability claims;
+8. record major repository/interface decisions as ADRs.
