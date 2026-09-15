@@ -1,0 +1,109 @@
+name: QCRYPTO Chain PQ Readiness Profiles Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/chain_pq_readiness_profiles.py'
+      - 'tests/test_qcrypto_chain_pq_readiness_profiles.py'
+      - 'scripts/qcrypto_chain_pq_profile_evidence.py'
+      - '.github/workflows/qcrypto-chain-pq-readiness-profiles.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/chain_pq_readiness_profiles.py'
+      - 'tests/test_qcrypto_chain_pq_readiness_profiles.py'
+      - 'scripts/qcrypto_chain_pq_profile_evidence.py'
+      - '.github/workflows/qcrypto-chain-pq-readiness-profiles.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chain-pq-readiness-profiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile profile controls
+        run: |
+          python -m compileall \
+            security/qcrypto/chain_pq_readiness_profiles.py \
+            scripts/qcrypto_chain_pq_profile_evidence.py
+
+      - name: Run chain profile regressions
+        env:
+          PYTHONPATH: .
+        run: pytest -q tests/test_qcrypto_chain_pq_readiness_profiles.py
+
+      - name: Generate source-backed profile evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_chain_pq_profile_evidence.py \
+            --output chain-pq-readiness-profiles.json
+
+      - name: Assert conservative current-network posture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e = json.loads(Path('chain-pq-readiness-profiles.json').read_text())
+          assert e['schema'] == 'WS-QCRYPTO-CHAIN-PQ-READINESS-PROFILES-V1'
+          assert e['status'] == 'PASS'
+          p = e['profiles']
+          assert set(p) == {'BITCOIN', 'ETHEREUM', 'ALGORAND'}
+
+          btc = p['BITCOIN']['decision']
+          eth = p['ETHEREUM']['decision']
+          algo = p['ALGORAND']['decision']
+
+          assert btc['migration_target_reached'] is False
+          assert 'ACCOUNTS' in btc['known_blocking_layers']
+          assert 'CONSENSUS' in btc['unknown_layers']
+
+          assert eth['migration_target_reached'] is False
+          assert set(eth['known_blocking_layers']) >= {'ACCOUNTS', 'CONSENSUS', 'COMMITMENTS_ZK'}
+          assert 'TOOLING_INTEROP' in eth['hybrid_layers']
+
+          assert algo['migration_target_reached'] is False
+          assert 'ACCOUNTS' in algo['pq_capable_layers']
+          assert 'CONSENSUS' in algo['known_blocking_layers']
+
+          for decision in (btc, eth, algo):
+              assert decision['whole_chain_pq_security_established'] is False
+              assert decision['production_deployment_established'] is False
+              assert decision['live_value_authorized'] is False
+              assert decision['execution_authority'] is False
+
+          summary = e['summary']
+          assert summary['profile_count'] == 3
+          assert summary['migration_ready_chain_count'] == 0
+          assert summary['whole_chain_pq_security_established_count'] == 0
+          assert summary['production_deployment_established_count'] == 0
+          assert summary['live_value_authorized'] is False
+          assert summary['execution_authority'] is False
+          assert len(e['evidence_sha256']) == 64
+          print('chain_pq_readiness_profiles_gate: PASS')
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload chain PQ readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qcrypto-chain-pq-readiness-profiles
+          path: chain-pq-readiness-profiles.json
+          if-no-files-found: error
