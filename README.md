@@ -18,6 +18,18 @@ This repository contains the working SARA reference implementation plus broader 
 6. [`deployments/sara_verified_local_v1/`](deployments/sara_verified_local_v1/) — the reviewable implementation.
 7. [`deployments/sara_verified_local_v1/SECURITY.md`](deployments/sara_verified_local_v1/SECURITY.md) — the supported security boundary.
 
+## Operating model: exactly three active tasks
+
+Worldshepherd intentionally collapses all ongoing work into three top-level umbrellas so issue volume cannot masquerade as priority:
+
+1. **Platform & Assurance — #281:** SARA/PRIME/ECHO/OVERWATCH software, security, reproducibility, governance, release evidence and trust boundaries.
+2. **Science & Validation — #282:** physical/scientific measurement, metrology, experiments, test articles, uncertainty and independent domain validation.
+3. **Growth & Externalization — #283:** external technical review, partnerships, opportunities, proposals, customers, institutional routes, paid pilots and revenue.
+
+Every detailed issue remains a child evidence ledger under exactly one primary umbrella. See [`docs/operations/ACTIVE_TASKS.md`](docs/operations/ACTIVE_TASKS.md) for the routing and anti-inflation rules.
+
+For the Linus/Linux review path specifically: #281 must freeze the reproducible artifact first; #283 may then make one concise criticism-first approach. Any resulting technical finding returns to #281 for disposition and rerun. Partnership is not the opening ask.
+
 ## 60-second architecture
 
 The **architectural intent** is:
