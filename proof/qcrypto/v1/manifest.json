@@ -1,0 +1,56 @@
+{
+  "schema": "WS-QCRYPTO-PROOF-BUNDLE-V1",
+  "bundle_version": "1.0",
+  "repository": "Bdavis1390/Sara_pro",
+  "pull_request": 208,
+  "claims_state": "PROVEN_INTERNALLY_BOUNDED_SOFTWARE_BEHAVIOR",
+  "implementation": {
+    "commit_sha": "b65302d2e849dcad67b553378d3fce11b404f3c5",
+    "tree_sha": "81af4f67c9ad781c392dca277b9f433ea3827107",
+    "commit_time_utc": "2026-09-14T17:12:20Z",
+    "commit_signature_state": "UNSIGNED",
+    "bridge_workflow_run": 34873323676
+  },
+  "publication": {
+    "commit_sha": "c34ab9017c75ead5fde2f4e4c6ed8a883e1e9233",
+    "tree_sha": "9e897cb9642b9a761ed6098a1f8ad8356bee7af8",
+    "commit_time_utc": "2026-09-15T02:31:38Z",
+    "commit_signature_state": "UNSIGNED",
+    "white_page_path": "docs/WS_QCRYPTO_PUBLIC_WHITE_PAGE_2026-09-14.md",
+    "white_page_git_blob_sha1": "b02398f0ff0b210ca089bb340e91f8002c61e2d5",
+    "publication_workflow_run": 34921523881,
+    "posting_status": "GO"
+  },
+  "preserved_evidence": [
+    {
+      "name": "qcrypto-echo-deployed-bridge-evidence",
+      "original_archive_sha256": "15dc39ef59a8bbe10e48f858f1bb42d34c9c35adb33045b9f7635201c5df698e",
+      "payload_path": "proof/qcrypto/v1/bridge-evidence.json",
+      "payload_sha256": "d4bb8706ae6ef9f655a4c9b883a8a202b319feec20f7da65ae97fbd9db12fe58"
+    },
+    {
+      "name": "qcrypto-white-page-publication-readiness",
+      "original_archive_sha256": "6abd5f27414ff036547a1d8832fc14d4b53c22dcdd5258c9059e3270aabeb663",
+      "payload_path": "proof/qcrypto/v1/publication-readiness.json",
+      "payload_sha256": "ab7b87bf634b6c3ddb9ed8854e50cbf6f0ca9ac0121bb46b7672a47bf0496c97"
+    }
+  ],
+  "required_boundaries": {
+    "production_deployment": false,
+    "migration_execution": false,
+    "transaction_signing": false,
+    "live_value_authorization": false,
+    "post_quantum_security_of_ed25519_checkpoint": false,
+    "federal_compliance": false,
+    "ws_cae_conformance": false,
+    "third_party_validation": false,
+    "physical_system_qualification": false
+  },
+  "safety_boundary": "No real third-party wallet, private key, exchange, bridge, network, or fund is targeted by this work.",
+  "preservation_state": "REPOSITORY_PAYLOADS_PRESERVED_HASH_VERIFIABLE",
+  "remaining_external_custody_steps": [
+    "Create a signed immutable release/tag when a signing-capable release path is available.",
+    "Store the portable proof archive in an independent account or offline medium.",
+    "Anchor the final proof-bundle SHA-256 to an independent timestamp/notary service."
+  ]
+}
