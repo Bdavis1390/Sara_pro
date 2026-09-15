@@ -19,6 +19,8 @@ import importlib
 import json
 from typing import Any
 
+from security.qcrypto.pos_family_preservation import PROFILES
+
 
 SCHEMES: dict[str, str] = {
     "ML-DSA-65": "pqcrypto.sign.ml_dsa_65",
@@ -49,6 +51,7 @@ class ValidatorAuthorizationEnvelope:
 @dataclass(frozen=True)
 class InteropResult:
     scheme: str
+    chain_family: str
     backend_module: str
     public_key_bytes: int
     signature_bytes: int
@@ -102,6 +105,7 @@ def run_interop_probe(scheme: str, envelope: ValidatorAuthorizationEnvelope) -> 
 
     return InteropResult(
         scheme=scheme,
+        chain_family=envelope.chain_family,
         backend_module=module_name,
         public_key_bytes=len(public_key),
         signature_bytes=len(signature),
@@ -114,8 +118,20 @@ def run_interop_probe(scheme: str, envelope: ValidatorAuthorizationEnvelope) -> 
     )
 
 
-def run_all_interop_probes() -> tuple[InteropResult, ...]:
-    envelope = ValidatorAuthorizationEnvelope(
+def _assert_result(result: InteropResult) -> None:
+    if not (
+        result.valid_signature_verified
+        and result.tampered_message_rejected
+        and result.wrong_key_rejected
+        and not result.secret_material_retained
+    ):
+        raise AssertionError(
+            f"PQ interoperability probe failed for {result.chain_family}/{result.scheme}"
+        )
+
+
+def generic_envelope() -> ValidatorAuthorizationEnvelope:
+    return ValidatorAuthorizationEnvelope(
         validator_id="ws-qpos-zero-value-validator",
         chain_family="GENERIC_POS",
         migration_epoch=1,
@@ -123,13 +139,44 @@ def run_all_interop_probes() -> tuple[InteropResult, ...]:
         economic_state_digest=sha256(b"zero-value-economic-state").hexdigest(),
         previous_credential_fingerprint=sha256(b"classical-test-credential").hexdigest(),
     )
+
+
+def family_envelope(profile_id: str) -> ValidatorAuthorizationEnvelope:
+    try:
+        profile = PROFILES[profile_id]
+    except KeyError as exc:
+        raise ValueError(f"unknown PoS family profile: {profile_id}") from exc
+
+    protected_schema = "|".join(sorted(profile.protected_fields)).encode()
+    previous_credentials = "|".join(profile.classical_consensus_credentials).encode()
+    return ValidatorAuthorizationEnvelope(
+        validator_id=f"{profile_id.lower()}-zero-value-validator",
+        chain_family=profile_id,
+        migration_epoch=1,
+        purpose="POST_QUANTUM_CREDENTIAL_REGISTRATION_TEST_ONLY",
+        economic_state_digest=sha256(protected_schema).hexdigest(),
+        previous_credential_fingerprint=sha256(previous_credentials).hexdigest(),
+    )
+
+
+def run_all_interop_probes() -> tuple[InteropResult, ...]:
+    """Retain the two-scheme generic baseline used by the original WS-QPOS-2 gate."""
+
+    envelope = generic_envelope()
     results = tuple(run_interop_probe(scheme, envelope) for scheme in SCHEMES)
     for result in results:
-        if not (
-            result.valid_signature_verified
-            and result.tampered_message_rejected
-            and result.wrong_key_rejected
-            and not result.secret_material_retained
-        ):
-            raise AssertionError(f"PQ interoperability probe failed for {result.scheme}")
+        _assert_result(result)
     return results
+
+
+def run_family_interop_probes() -> tuple[InteropResult, ...]:
+    """Bind both standardized PQ profiles to every reviewed PoS migration envelope."""
+
+    results: list[InteropResult] = []
+    for profile_id in PROFILES:
+        envelope = family_envelope(profile_id)
+        for scheme in SCHEMES:
+            result = run_interop_probe(scheme, envelope)
+            _assert_result(result)
+            results.append(result)
+    return tuple(results)
