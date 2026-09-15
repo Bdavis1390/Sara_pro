@@ -26,13 +26,16 @@
       "name": "qcrypto-echo-deployed-bridge-evidence",
       "original_archive_sha256": "15dc39ef59a8bbe10e48f858f1bb42d34c9c35adb33045b9f7635201c5df698e",
       "payload_path": "proof/qcrypto/v1/bridge-evidence.json",
-      "payload_sha256": "d4bb8706ae6ef9f655a4c9b883a8a202b319feec20f7da65ae97fbd9db12fe58"
+      "payload_sha256": "d4bb8706ae6ef9f655a4c9b883a8a202b319feec20f7da65ae97fbd9db12fe58",
+      "payload_preservation": "BYTE_EXACT_EXTRACTED_PAYLOAD"
     },
     {
       "name": "qcrypto-white-page-publication-readiness",
       "original_archive_sha256": "6abd5f27414ff036547a1d8832fc14d4b53c22dcdd5258c9059e3270aabeb663",
       "payload_path": "proof/qcrypto/v1/publication-readiness.json",
-      "payload_sha256": "ab7b87bf634b6c3ddb9ed8854e50cbf6f0ca9ac0121bb46b7672a47bf0496c97"
+      "payload_sha256": "f54521c22943e2eb87aaa8a08695677bd88f6b6bd31d31c988ed17848cd66e99",
+      "payload_preservation": "NORMALIZED_JSON_SEMANTIC_COPY",
+      "byte_exact_source_preserved_by": "original_archive_sha256"
     }
   ],
   "required_boundaries": {
