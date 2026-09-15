@@ -147,6 +147,21 @@ def verify_anchor_receipt(
     if not isinstance(accepted_at, str) or not accepted_at:
         raise AuditAnchorReceiptError("anchor receipt acceptance timestamp is invalid")
 
+    receipt_sequence = receipt.get("checkpoint_sequence")
+    receipt_record_count = receipt.get("checkpoint_record_count")
+    if (
+        not isinstance(receipt_sequence, int)
+        or isinstance(receipt_sequence, bool)
+        or receipt_sequence < 1
+    ):
+        raise AuditAnchorReceiptError("anchor receipt checkpoint sequence is invalid")
+    if (
+        not isinstance(receipt_record_count, int)
+        or isinstance(receipt_record_count, bool)
+        or receipt_record_count < 1
+    ):
+        raise AuditAnchorReceiptError("anchor receipt checkpoint record count is invalid")
+
     for field in (
         "anchor_sha256",
         "checkpoint_sha256",
@@ -165,6 +180,7 @@ def verify_anchor_receipt(
 
     authentication = receipt.get("provider_authentication")
     provider_fingerprint: str | None = None
+    provider_identity_pinned = False
     if authentication == RECEIPT_AUTH_NONE:
         if trusted_provider_fingerprint_sha256 is not None:
             raise AuditAnchorReceiptError(
@@ -193,13 +209,19 @@ def verify_anchor_receipt(
             raise AuditAnchorReceiptError(
                 "authenticated receipt public key fingerprint mismatch"
             )
-        if (
-            trusted_provider_fingerprint_sha256 is not None
-            and provider_fingerprint != trusted_provider_fingerprint_sha256
-        ):
-            raise AuditAnchorReceiptError(
-                "authenticated receipt provider is not the trusted provider"
-            )
+        if trusted_provider_fingerprint_sha256 is not None:
+            if (
+                not isinstance(trusted_provider_fingerprint_sha256, str)
+                or not _SHA256.fullmatch(trusted_provider_fingerprint_sha256)
+            ):
+                raise AuditAnchorReceiptError(
+                    "trusted provider fingerprint is invalid"
+                )
+            if provider_fingerprint != trusted_provider_fingerprint_sha256:
+                raise AuditAnchorReceiptError(
+                    "authenticated receipt provider is not the trusted provider"
+                )
+            provider_identity_pinned = True
         try:
             padded = encoded_signature + "=" * (-len(encoded_signature) % 4)
             signature = base64.b64decode(
@@ -215,7 +237,11 @@ def verify_anchor_receipt(
             raise AuditAnchorReceiptError(
                 "authenticated anchor receipt signature verification failed"
             ) from exc
-        verification_state = "AUTHENTICATED_RECEIPT"
+        verification_state = (
+            "AUTHENTICATED_TRUSTED_PROVIDER_RECEIPT"
+            if provider_identity_pinned
+            else "SIGNED_RECEIPT_UNPINNED_PROVIDER"
+        )
     else:
         raise AuditAnchorReceiptError("anchor receipt authentication mode is invalid")
 
@@ -228,11 +254,13 @@ def verify_anchor_receipt(
         "anchor_sha256": publication["anchor_sha256"],
         "checkpoint_sha256": publication["checkpoint_sha256"],
         "provider_key_fingerprint_sha256": provider_fingerprint,
+        "provider_identity_pinned": provider_identity_pinned,
         "retention_status": RETENTION_NOT_ESTABLISHED,
         "claims_boundary": (
-            "PASS establishes receipt/publication consistency and, when configured, "
-            "receipt-signature authenticity for the supplied provider key. It does not "
-            "establish immutable or WORM retention, provider independence, public transparency, "
+            "PASS establishes receipt/publication consistency and verifies a receipt signature "
+            "when present. Trusted provider identity is established only when the receipt key "
+            "matches an independently supplied provider fingerprint. It does not establish "
+            "immutable or WORM retention, provider independence, public transparency, "
             "third-party attestation, or regulatory compliance."
         ),
     }
