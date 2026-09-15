@@ -116,6 +116,7 @@ class SystemReadinessDecision:
     verdict: str
     weakest_level: str
     weakest_rank: int
+    weakest_layers: tuple[str, ...]
     blocking_layers: tuple[str, ...]
     layer_levels: dict[str, str]
     migration_target_reached: bool
@@ -130,6 +131,7 @@ class SystemReadinessDecision:
 
     def to_dict(self) -> dict:
         data = asdict(self)
+        data["weakest_layers"] = list(self.weakest_layers)
         data["blocking_layers"] = list(self.blocking_layers)
         return data
 
@@ -294,6 +296,7 @@ def assess_system_readiness(
             verdict="BLOCKED_INCOMPLETE_LAYER_EVIDENCE",
             weakest_level="UNKNOWN",
             weakest_rank=-1,
+            weakest_layers=(),
             blocking_layers=names,
             layer_levels=normalized,
             migration_target_reached=False,
@@ -301,23 +304,29 @@ def assess_system_readiness(
 
     weakest_rank = min(int(level) for level in layers.values())
     weakest = ReadinessLevel(weakest_rank)
-    blocking = tuple(sorted(layer.value for layer, level in layers.items() if int(level) == weakest_rank))
+    weakest_layers = tuple(
+        sorted(layer.value for layer, level in layers.items() if int(level) == weakest_rank)
+    )
     normalized = {layer.value: level.name for layer, level in layers.items()}
 
     if weakest is ReadinessLevel.CLASSICAL:
         verdict = "BLOCKED_BY_CLASSICAL_LAYER"
         reached = False
+        blocking = weakest_layers
     elif weakest is ReadinessLevel.HYBRID:
         verdict = "HYBRID_MIGRATION_READY"
         reached = False
+        blocking = weakest_layers
     else:
         verdict = "PQ_MIGRATION_READY"
         reached = True
+        blocking = ()
 
     return SystemReadinessDecision(
         verdict=verdict,
         weakest_level=weakest.name,
         weakest_rank=weakest_rank,
+        weakest_layers=weakest_layers,
         blocking_layers=blocking,
         layer_levels=normalized,
         migration_target_reached=reached,
