@@ -8,6 +8,7 @@ on:
       - 'tests/test_baros_pipeline.py'
       - 'tests/test_baros_dicom_rt.py'
       - 'tests/test_baros_dvh.py'
+      - 'tests/test_baros_gamma_analysis.py'
       - 'docs/baros/**'
       - '.github/workflows/baros-g1.yml'
   push:
@@ -17,6 +18,7 @@ on:
       - 'tests/test_baros_pipeline.py'
       - 'tests/test_baros_dicom_rt.py'
       - 'tests/test_baros_dvh.py'
+      - 'tests/test_baros_gamma_analysis.py'
       - 'docs/baros/**'
       - '.github/workflows/baros-g1.yml'
 
@@ -32,7 +34,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install bounded BAROS verification dependencies
-        run: python -m pip install --disable-pip-version-check pytest pydicom==3.0.2 numpy
+        run: >-
+          python -m pip install --disable-pip-version-check
+          pytest pydicom==3.0.2 numpy pymedphys==0.41.0
       - name: Run bounded BAROS verification tests
         run: >-
           PYTHONPATH=. python -m pytest -q
@@ -40,6 +44,7 @@ jobs:
           tests/test_baros_pipeline.py
           tests/test_baros_dicom_rt.py
           tests/test_baros_dvh.py
+          tests/test_baros_gamma_analysis.py
       - name: Generate exact-run synthetic evidence bundle
         run: PYTHONPATH=. python -m baros.cli --commit-sha "$GITHUB_SHA" --output baros-evidence.json > baros-evidence.stdout.json
       - name: Assert evidence remains non-clinical and passing
@@ -62,7 +67,7 @@ jobs:
           if-no-files-found: error
 
 # Passing this workflow proves only the bounded research-software behaviors
-# actually exercised here. Synthetic DICOM round trips and numerical DVH
-# metrics are not DICOM conformance certification, TPS interoperability,
-# physical-dose validation, clinical validation, regulatory authorization,
-# or permission for patient use.
+# actually exercised here. Synthetic DICOM round trips, numerical DVH metrics,
+# and independent-library gamma comparisons are not DICOM conformance
+# certification, TPS interoperability, physical-dose validation, clinical
+# validation, regulatory authorization, or permission for patient use.
