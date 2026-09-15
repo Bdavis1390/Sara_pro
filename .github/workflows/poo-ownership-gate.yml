@@ -1,0 +1,38 @@
+name: Proof of Ownership Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/poo/**'
+      - 'tests/test_poo_*.py'
+      - '.github/workflows/poo-ownership-gate.yml'
+  push:
+    branches:
+      - main
+      - 'worldshepherd-proof-of-ownership-*'
+    paths:
+      - 'security/poo/**'
+      - 'tests/test_poo_*.py'
+      - '.github/workflows/poo-ownership-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  poo-ownership-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile PoO modules
+        run: python -m py_compile security/poo/ownership_guard.py
+      - name: Run PoO regression tests
+        run: pytest -q tests/test_poo_*.py
+      - name: Enforce core claims boundaries
+        run: |
+          grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
+          grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
+          grep -q 'PoC means \*\*Proof of Control\*\*' security/poo/README.md
+          grep -q 'fail-closed AND semantics' security/poo/README.md
