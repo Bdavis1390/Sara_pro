@@ -1,0 +1,13 @@
+# W-RMABM G4 evaluator-only Python dependency set.
+# Reduced from the broader SARA runtime/CI constraints for the narrow synthetic reproduction path.
+# Exact pins reflect the green CI environment; package-file hash locking remains a future hardening gate.
+annotated-types==0.8.0
+pydantic==2.13.4
+pydantic-core==2.46.4
+typing-extensions==4.16.0
+typing-inspection==0.4.4
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0
+Pygments==2.21.0
+pytest==8.4.2
