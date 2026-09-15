@@ -1,9 +1,9 @@
 # DON26BX05-NP004 — Worldshepherd Phase I Technical Volume Skeleton
 
-**Working document — not submission-ready**  
-**Date:** 2026-09-14  
-**Claims state:** DRAFT / SIMULATED_ONLY where performance evidence is synthetic  
-**Deadline:** 2026-09-23 12:00 PM ET  
+**Working document — not submission-ready**
+**Date:** 2026-09-14
+**Claims state:** DRAFT / SIMULATED_ONLY where performance evidence is synthetic
+**Deadline:** 2026-09-23 12:00 PM ET
 **Instruction gate:** Validate all formatting, mandatory sections, Base/Option structure, and cost assumptions against the current DON Release 5 CSO instructions and DSIP template before submission.
 
 ## Proposal thesis
