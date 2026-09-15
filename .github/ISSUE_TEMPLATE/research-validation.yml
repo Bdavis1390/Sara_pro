@@ -1,0 +1,82 @@
+name: Research validation
+description: Turn a Worldshepherd research claim into a bounded, testable validation task
+title: "[VALIDATION] "
+labels: []
+body:
+  - type: textarea
+    id: claim
+    attributes:
+      label: Bounded claim
+      description: State exactly what is being evaluated. Avoid marketing language.
+    validations:
+      required: true
+  - type: dropdown
+    id: state
+    attributes:
+      label: Current claim state
+      options:
+        - PROVEN INTERNALLY
+        - IMPLEMENTED IN SOFTWARE
+        - SUPPORTED BY LITERATURE
+        - SIMULATED ONLY
+        - HYPOTHESIS
+        - SPECULATIVE EXTENSION
+        - REQUIRES LAB VALIDATION
+        - REQUIRES PARTNER VALIDATION
+        - REQUIRES LEGAL REVIEW
+        - NOT CURRENTLY CLAIMED
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Existing evidence
+      description: Link repository files, tests, simulations, measurements, or literature.
+    validations:
+      required: true
+  - type: textarea
+    id: assumptions
+    attributes:
+      label: Assumptions and configuration
+      description: State model assumptions, geometry, materials, software commit, hardware revision, environment, or other controlling configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: test
+    attributes:
+      label: Proposed test / experiment
+      description: Describe instrumentation, procedure, controls, and relevant uncertainty.
+    validations:
+      required: true
+  - type: textarea
+    id: passfail
+    attributes:
+      label: Predeclared pass/fail criteria
+      description: Define objective criteria before results are observed.
+    validations:
+      required: true
+  - type: textarea
+    id: falsification
+    attributes:
+      label: Falsification / negative-evidence conditions
+      description: What result would reject or materially weaken the claim?
+    validations:
+      required: true
+  - type: textarea
+    id: nextstate
+    attributes:
+      label: Permitted maturity change if passed
+      description: State the maximum claim-state promotion this test could justify. A single test should not imply broader readiness than it measures.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Claims/public-release boundary
+      options:
+        - label: Physical performance is not being inferred solely from software or simulation.
+          required: true
+        - label: No partner validation, certification, government authorization, or field readiness is claimed without corresponding evidence.
+          required: true
+        - label: No sensitive, CUI/classified, proprietary, or uncleared export-controlled information is included.
+          required: true
