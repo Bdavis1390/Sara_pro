@@ -39,6 +39,27 @@ Paste commands/tests here.
 
 <!-- What did not pass? What is not established? What scope limits apply? -->
 
+## Freshness / supersession
+
+<!-- Does this change replace, reconcile, or depend on an older branch/PR/document? Name it explicitly. -->
+
+- [ ] Compared against current `main`
+- [ ] Current source-of-truth paths remain correct
+- [ ] Any superseded artifact/PR/branch is named and linked
+- [ ] Unique historical evidence is preserved rather than silently rewritten
+- [ ] Time-sensitive external facts were re-verified before external use
+- [ ] No known `RECONCILE_REQUIRED` work is being presented as current/canonical
+
+Lifecycle state for this change:
+
+- [ ] CURRENT_CANONICAL
+- [ ] ACTIVE
+- [ ] DATED_EVIDENCE
+- [ ] RECONCILE_REQUIRED
+- [ ] SUPERSEDED
+- [ ] ARCHIVE
+- [ ] SAFE_DELETE_AFTER_VERIFY
+
 ## Public-release check
 
 - [ ] No secrets or credentials

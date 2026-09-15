@@ -10,7 +10,7 @@ This map makes Worldshepherd's breadth legible without implying that every resea
 
 | Lane | What Worldshepherd covers | Current public evidence posture | Required next evidence |
 |---|---|---|---|
-| **SARA governance/orchestration** | governed workflows, relay/integration patterns, audit/evidence handling, bounded automation | `IMPLEMENTED IN SOFTWARE` for repository components that have code/tests; runtime packaging remains fragmented | one canonical install/start/test path plus versioned integration evidence |
+| **SARA governance/orchestration** | governed workflows, relay/integration patterns, audit/evidence handling, bounded automation | `IMPLEMENTED IN SOFTWARE` for the canonical Verified Local profile at `deployments/sara_verified_local_v1/`, exposed through `runtime/README.md` and `scripts/sara.sh`; exact-head CI covers install/test, deployment, recovery and bounded local-service behavior | independent clean-clone reproduction plus external-integration evidence wherever a claim depends on third-party delivery, execution, hardware, or operational use |
 | **ECHO SENTINEL LINK** | telemetry/evidence provenance, anchoring, configuration lineage | workflow and provenance artifacts are present; scope varies by artifact | end-to-end provenance demo with documented trust boundaries and failure cases |
 | **PRIME SENTINEL** | policy, authorization, human approval, fail-closed control | architecture/governance role; claim only controls tied to specific code/tests | explicit policy engine interface tests and authorization-boundary evidence |
 | **OVERWATCH** | observability, status aggregation, common operating picture | architecture/integration lane | runnable dashboard/telemetry integration with degraded-state tests |
