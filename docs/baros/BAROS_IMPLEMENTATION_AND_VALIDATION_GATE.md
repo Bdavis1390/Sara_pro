@@ -1,7 +1,7 @@
 # BAROS Implementation and Medical Validation Gate
 
-Status: ACTIVE VALIDATION SPECIFICATION  
-Scope: Biologically Adaptive Radiotherapy Optimization System (BAROS)  
+Status: ACTIVE VALIDATION SPECIFICATION
+Scope: Biologically Adaptive Radiotherapy Optimization System (BAROS)
 Patient-care use: **PROHIBITED until all applicable clinical/regulatory gates are satisfied**
 
 ## Purpose
