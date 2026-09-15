@@ -86,6 +86,12 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
     path.write_text(_json_text(value), encoding="utf-8")
 
 
+def _set_summary_digest(summary: dict[str, Any]) -> None:
+    digest_input = dict(summary)
+    digest_input.pop("summary_digest", None)
+    summary["summary_digest"] = canonical_digest(digest_input)
+
+
 def _sha256_file(path: Path) -> str:
     if not path.is_file():
         raise ValueError(f"required file missing for digest: {path}")
@@ -227,9 +233,29 @@ def build_human_triage_ledger(
     if not isinstance(source_records, list):
         raise ValueError("vulnerability advisory report records must be a list")
 
+    source_ids_list: list[str] = []
+    seen_source_ids: set[str] = set()
+    duplicate_source_ids: set[str] = set()
+    for source_record in source_records:
+        if not isinstance(source_record, dict):
+            raise ValueError("vulnerability advisory record entries must be objects")
+        advisory_id = str(source_record.get("advisory_id") or "").strip()
+        if not advisory_id:
+            raise ValueError("vulnerability advisory record missing advisory_id")
+        source_ids_list.append(advisory_id)
+        if advisory_id in seen_source_ids:
+            duplicate_source_ids.add(advisory_id)
+        else:
+            seen_source_ids.add(advisory_id)
+    duplicate_source_ids_sorted = sorted(duplicate_source_ids)
+    if duplicate_source_ids_sorted:
+        raise ValueError(
+            f"duplicate advisory_id values in vulnerability evidence: {duplicate_source_ids_sorted}"
+        )
+
     reviews = _load_review_input(review_input)
     review_by_advisory = {review["advisory_id"]: review for review in reviews}
-    source_ids = {str(record.get("advisory_id") or "") for record in source_records if isinstance(record, dict)}
+    source_ids = set(source_ids_list)
     unknown_review_ids = sorted(set(review_by_advisory) - source_ids)
     if unknown_review_ids:
         raise ValueError(f"review input references unknown advisory_id values: {unknown_review_ids}")
@@ -237,11 +263,7 @@ def build_human_triage_ledger(
     generated_at = executed_utc or datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     ledger_records: list[dict[str, Any]] = []
     for source_record in sorted(source_records, key=_severity_sort_key):
-        if not isinstance(source_record, dict):
-            raise ValueError("vulnerability advisory record entries must be objects")
         advisory_id = str(source_record.get("advisory_id") or "").strip()
-        if not advisory_id:
-            raise ValueError("vulnerability advisory record missing advisory_id")
         matched = bool(source_record.get("matched_component_in_sbom"))
         source_status = str(source_record.get("triage_status") or "")
         review = review_by_advisory.get(advisory_id)
@@ -358,7 +380,7 @@ def build_human_triage_ledger(
         "claims_boundary": CLAIMS_BOUNDARY,
         "not_claimed": NOT_CLAIMED,
     }
-    summary["summary_digest"] = canonical_digest(summary)
+    _set_summary_digest(summary)
     _assert_no_forbidden_claims(ledger=ledger, summary=summary)
     return ledger, summary
 
@@ -390,7 +412,7 @@ def write_human_triage_ledger(
 
     summary["human_triage_ledger_path"] = str(ledger_path)
     summary["human_triage_ledger_sha256"] = _sha256_file(ledger_path)
-    summary["summary_digest"] = canonical_digest(summary)
+    _set_summary_digest(summary)
     _assert_no_forbidden_claims(summary=summary)
     _write_json(summary_path, summary)
     return summary

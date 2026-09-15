@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
 import pytest
@@ -18,6 +19,10 @@ from worldshepherd_sara.release_index_cli import (
 def _write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+def _sha256_file(path):
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _make_evidence_dirs(tmp_path):
@@ -82,7 +87,9 @@ def _make_evidence_dirs(tmp_path):
             "advisory_record_count": 0,
             "matched_advisory_count": 0,
             "advisory_input_status": "NO_EXTERNAL_ADVISORY_FEED_EXECUTED",
-            "vulnerability_report_sha256": "sha256:" + "5" * 64,
+            "vulnerability_report_sha256": _sha256_file(
+                vulnerability_dir / "vulnerability-advisory-report.json"
+            ),
             "input_files": {
                 "dependency_freeze": {"sha256": "sha256:" + "6" * 64},
                 "software_sbom": {"sha256": "sha256:" + "7" * 64},
@@ -112,7 +119,7 @@ def _make_evidence_dirs(tmp_path):
             "accepted_risk_count": 0,
             "not_applicable_count": 0,
             "deferred_count": 0,
-            "human_triage_ledger_sha256": "sha256:" + "8" * 64,
+            "human_triage_ledger_sha256": _sha256_file(human_triage_dir / "human-triage-ledger.json"),
             "input_files": {
                 "vulnerability_report": {"sha256": "sha256:" + "9" * 64},
                 "vulnerability_summary": {"sha256": "sha256:" + "a" * 64},
@@ -256,6 +263,7 @@ def test_release_index_cli_writes_main_push_index_file(tmp_path) -> None:
 
 
 def test_release_index_derives_manual_or_non_main_state() -> None:
+    assert derive_merge_state(event_name="push", ref="refs/heads/main") == "MAIN_BRANCH_PUSH"
     assert derive_merge_state(event_name="workflow_dispatch", ref="refs/heads/main") == MERGE_STATE_MANUAL_OR_NON_MAIN
     assert derive_merge_state(event_name="push", ref="refs/heads/feature") == MERGE_STATE_MANUAL_OR_NON_MAIN
 
@@ -299,4 +307,26 @@ def test_release_index_rejects_bad_human_triage_summary_schema(tmp_path) -> None
     _write_json(kwargs["human_triage_dir"] / "human-triage-summary.json", {"schema": "WRONG"})
 
     with pytest.raises(ValueError, match="unexpected human triage summary schema"):
+        build_release_evidence_index(**kwargs)
+
+
+def test_release_index_rejects_vulnerability_report_digest_mismatch(tmp_path) -> None:
+    kwargs = _index_kwargs(tmp_path)
+    report_path = kwargs["vulnerability_dir"] / "vulnerability-advisory-report.json"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    report["tampered"] = True
+    _write_json(report_path, report)
+
+    with pytest.raises(ValueError, match="vulnerability report digest mismatch"):
+        build_release_evidence_index(**kwargs)
+
+
+def test_release_index_rejects_human_triage_ledger_digest_mismatch(tmp_path) -> None:
+    kwargs = _index_kwargs(tmp_path)
+    ledger_path = kwargs["human_triage_dir"] / "human-triage-ledger.json"
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    ledger["tampered"] = True
+    _write_json(ledger_path, ledger)
+
+    with pytest.raises(ValueError, match="human triage ledger digest mismatch"):
         build_release_evidence_index(**kwargs)

@@ -30,7 +30,7 @@ Before relying on an attested release index internally, verify all of the follow
 
 - the attested file digest matches the intended `release-index.json`;
 - the release index names the intended Git commit;
-- the index records `MERGED_MAIN_PUSH`, event `push`, and ref `refs/heads/main`;
+- the index records `MAIN_BRANCH_PUSH`, event `push`, and ref `refs/heads/main`;
 - the triggering SARA gate completed successfully;
 - the attestation identity and repository correspond to `Bdavis1390/Sara_pro`;
 - referenced evidence artifacts remain within their own claims boundaries.
