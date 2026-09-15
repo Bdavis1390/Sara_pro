@@ -11,6 +11,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .echo_checkpoint import EchoCheckpointConfigError, EchoCheckpointError, EchoCheckpointManager
 from .echo_checkpoint_integrity import check_checkpoint_integrity
+from .echo_checkpoint_signer import (
+    Ed25519CheckpointSigner,
+    EchoCheckpointSignerError,
+    runtime_capabilities,
+    signer_from_environment,
+)
 from .echo_event_store import (
     EchoEventConflict,
     EchoEventStore,
@@ -133,14 +139,29 @@ def create_echo_app() -> FastAPI:
     token = _read_owned_token_file(os.getenv(ECHO_TOKEN_FILE_ENV, ""))
     try:
         store = EchoEventStore.from_environment()
-        checkpoints = EchoCheckpointManager.from_environment(store)
+        signer = signer_from_environment()
+        if not isinstance(signer, Ed25519CheckpointSigner):
+            raise EchoServiceConfigError(
+                "checkpoint signer factory returned an unsupported runtime signer"
+            )
+        checkpoints = EchoCheckpointManager(
+            store,
+            private_key=signer.private_key,
+            key_id=signer.key_id,
+        )
         check_checkpoint_integrity(checkpoints)
-    except (EchoEventStoreError, EchoCheckpointError, EchoCheckpointConfigError) as exc:
+    except (
+        EchoEventStoreError,
+        EchoCheckpointError,
+        EchoCheckpointConfigError,
+        EchoCheckpointSignerError,
+    ) as exc:
         raise EchoServiceConfigError(str(exc)) from exc
 
+    signer_state = runtime_capabilities()
     app = FastAPI(
         title="Worldshepherd ECHO SENTINEL LINK Persistence Service",
-        version="1.7",
+        version="1.8",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
@@ -148,6 +169,7 @@ def create_echo_app() -> FastAPI:
     app.state.echo_token = token
     app.state.echo_store = store
     app.state.echo_checkpoints = checkpoints
+    app.state.echo_signer_capabilities = signer_state
 
     @app.middleware("http")
     async def security_headers(request: Request, call_next):
@@ -161,7 +183,7 @@ def create_echo_app() -> FastAPI:
 
     @app.get("/livez")
     def livez() -> dict[str, object]:
-        return {"ok": True, "service": "ECHO_SENTINEL_LINK", "version": "1.7"}
+        return {"ok": True, "service": "ECHO_SENTINEL_LINK", "version": "1.8"}
 
     @app.get("/readyz")
     def readyz() -> dict[str, object]:
@@ -179,6 +201,8 @@ def create_echo_app() -> FastAPI:
             "deduplication": "STABLE_EVENT_ID_PLUS_SEMANTIC_HASH",
             "checkpoint_integrity": "HEALTHY",
             "checkpoint_count": checkpoint_state["checkpoint_count"],
+            "checkpoint_signing_algorithm": signer_state["current_executable_algorithm"],
+            "checkpoint_pq_runtime_signer_installed": signer_state["pq_runtime_signer_installed"],
         }
 
     @app.get("/v1/status")
@@ -193,13 +217,20 @@ def create_echo_app() -> FastAPI:
             "schema": "WS-ECHO-PERSISTENCE-STATUS-V1",
             **value,
             "checkpoints": checkpoint_state,
+            "checkpoint_signer": signer_state,
             "delivery_semantics": "AT_LEAST_ONCE_INPUT_IDEMPOTENT_SEMANTIC_STORAGE",
             "claims_boundary": (
                 "Reference software persistence/deduplication and signed local checkpointing only; "
                 "exactly-once transport, immutable/WORM storage, external anchoring, privileged "
-                "rollback resistance, and independent third-party attestation are not claimed."
+                "rollback resistance, independent third-party attestation, and PQ checkpoint "
+                "signing are not claimed."
             ),
         }
+
+    @app.get("/v1/checkpoint/capabilities")
+    def checkpoint_capabilities(request: Request) -> dict[str, object]:
+        _require_bearer(request, token)
+        return signer_state
 
     @app.post("/v1/ingest", response_model=EchoIngestResponse)
     def ingest(body: EchoAuditRecord, request: Request) -> EchoIngestResponse:
