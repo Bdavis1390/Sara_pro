@@ -1,0 +1,81 @@
+name: QCRYPTO QPOS Preservation Proof
+
+on:
+  pull_request:
+    paths:
+      - "security/qcrypto/qpos_preservation.py"
+      - "scripts/qcrypto_qpos_proof.py"
+      - "tests/test_qcrypto_qpos_preservation.py"
+      - "docs/WS_QPOS_1_DUE_DILIGENCE.md"
+      - ".github/workflows/qcrypto-qpos-proof.yml"
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - "security/qcrypto/qpos_preservation.py"
+      - "scripts/qcrypto_qpos_proof.py"
+      - "tests/test_qcrypto_qpos_preservation.py"
+      - "docs/WS_QPOS_1_DUE_DILIGENCE.md"
+      - ".github/workflows/qcrypto-qpos-proof.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  qpos-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install proof-test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile WS-QPOS-1 proof model
+        run: python -m compileall security/qcrypto/qpos_preservation.py scripts/qcrypto_qpos_proof.py
+
+      - name: Run WS-QPOS-1 preservation regressions
+        env:
+          PYTHONPATH: .
+        run: pytest -q tests/test_qcrypto_qpos_preservation.py
+
+      - name: Generate machine-readable bounded proof
+        env:
+          PYTHONPATH: .
+        run: python scripts/qcrypto_qpos_proof.py --output qpos-proof.json
+
+      - name: Assert proof and claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          proof = json.loads(Path("qpos-proof.json").read_text())
+          report = proof["report"]
+          assert proof["schema"] == "WS-QPOS-1-PRESERVATION-PROOF-V1"
+          assert proof["proof_scope"] == "BOUNDED_MODEL_ONLY"
+          assert proof["post_quantum_primitive_security"] == "ASSUMED_NOT_PROVEN_HERE"
+          assert proof["production_consensus_security"] == "NOT_PROVEN_HERE"
+          assert report["proof_status"] == "PASS"
+          assert report["claim_state"] == "BOUNDED_MODEL_PROOF_OF_POS_MIGRATION_PRESERVATION"
+          assert report["validator_transition_cases"] > 0
+          assert report["validator_set_cases"] > 0
+          assert report["hybrid_double_count_cases"] == report["validator_set_cases"]
+          assert report["invalid_transition_cases"] > 0
+          assert len(proof["evidence_sha256"]) == 64
+          print("qpos_proof_status: PASS")
+          print("claim_state:", report["claim_state"])
+          print("evidence_sha256:", proof["evidence_sha256"])
+          PY
+
+      - name: Upload WS-QPOS-1 proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qpos-1-preservation-proof
+          path: qpos-proof.json
+          if-no-files-found: error
