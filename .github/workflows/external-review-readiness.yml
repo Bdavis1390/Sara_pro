@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Check out exact source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Verify review packet exists
         shell: bash
@@ -76,24 +78,27 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import secrets
+
           p=Path('.env')
           text=p.read_text()
           replacements={
-              'change-me-relay-token-at-least-24-chars': secrets.token_hex(32),
-              'change-me-admin-token-at-least-24-chars': secrets.token_hex(32),
+              'replace-with-an-independent-random-token-at-least-24-characters': secrets.token_hex(32),
+              'replace-with-a-different-random-token-at-least-24-characters': secrets.token_hex(32),
           }
           for old,new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'expected placeholder missing: {old}')
               text=text.replace(old,new)
           p.write_text(text)
           PY
           docker compose config --quiet
           rm -f .env
 
-      - name: Check whitespace and merge markers
+      - name: Check full review diff and merge markers
         shell: bash
         run: |
           set -euo pipefail
-          git diff --check HEAD^
+          git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.patch'
           if grep -R -n -E '^(<<<<<<< |>>>>>>> )' README.md docs/review deployments/sara_verified_local_v1; then
             echo 'Unresolved merge-conflict marker found.' >&2
             exit 1
