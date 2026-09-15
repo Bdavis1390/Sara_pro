@@ -83,18 +83,35 @@ jobs:
           from pyscitt import crypto
           from ws_cae.continuity_snapshot_scitt import build_snapshot_statement
 
+          # Mirror the pinned Microsoft SCITT x5chain test model: a CA root plus
+          # a leaf signing certificate. did:x509 is anchored to the root
+          # fingerprint and constrained to the leaf subject CN.
+          root_key, _ = crypto.generate_ec_keypair('P-256')
+          root_cert = crypto.generate_cert(
+              root_key,
+              ca=True,
+              cn='ws-cae-continuity-root',
+          )
           private_key, _ = crypto.generate_ec_keypair('P-256')
-          cert = crypto.generate_cert(private_key, cn='ws-cae-continuity-ci')
-          fingerprint = crypto.get_cert_fingerprint_b64url(cert)
-          issuer = f'did:x509:0:sha256:{fingerprint}::subject:CN:ws-cae-continuity-ci'
+          cert = crypto.generate_cert(
+              private_key,
+              issuer=(root_cert, root_key),
+              cn='ws-cae-continuity-ci',
+          )
+          root_fingerprint = crypto.get_cert_fingerprint_b64url(root_cert)
+          issuer = (
+              f'did:x509:0:sha256:{root_fingerprint}'
+              '::subject:CN:ws-cae-continuity-ci'
+          )
           Path('/tmp/ws-cae-scitt-receipt/issuer.txt').write_text(issuer + '\n')
           Path('/tmp/ws-cae-scitt-receipt/signer-cert.pem').write_text(cert)
+          Path('/tmp/ws-cae-scitt-receipt/root-cert.pem').write_text(root_cert)
 
           signer = crypto.Signer(
               private_key,
               issuer=issuer,
               algorithm='ES256',
-              x5c=[cert],
+              x5c=[cert, root_cert],
           )
 
           manifest = json.loads(Path('/tmp/ws-cae-scitt-receipt/continuity.json').read_text())
