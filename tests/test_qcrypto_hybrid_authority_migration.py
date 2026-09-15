@@ -210,7 +210,8 @@ def test_pq_accounts_do_not_mask_classical_consensus():
     assert result.verdict == "BLOCKED_BY_CLASSICAL_LAYER"
     assert result.weakest_level == "CLASSICAL"
     assert result.migration_target_reached is False
-    assert "CONSENSUS" in result.blocking_layers
+    assert result.weakest_layers == ("CONSENSUS",)
+    assert result.blocking_layers == ("CONSENSUS",)
     assert result.whole_chain_pq_security_established is False
 
 
@@ -220,7 +221,8 @@ def test_unresolved_bridge_layer_blocks_whole_system_pq_migration_readiness():
     result = assess_system_readiness(layers)
     assert result.verdict == "HYBRID_MIGRATION_READY"
     assert result.migration_target_reached is False
-    assert "BRIDGES_CUSTODY_ADMIN" in result.blocking_layers
+    assert result.weakest_layers == ("BRIDGES_CUSTODY_ADMIN",)
+    assert result.blocking_layers == ("BRIDGES_CUSTODY_ADMIN",)
 
 
 def test_all_critical_layers_at_pq_capable_floor_yield_bounded_migration_readiness_only():
@@ -228,6 +230,8 @@ def test_all_critical_layers_at_pq_capable_floor_yield_bounded_migration_readine
     assert result.verdict == "PQ_MIGRATION_READY"
     assert result.weakest_level == "PQ_CAPABLE"
     assert result.migration_target_reached is True
+    assert set(result.weakest_layers) == {layer.value for layer in CriticalLayer}
+    assert result.blocking_layers == ()
     assert result.execution_authority is False
     assert result.live_value_authorized is False
     assert result.whole_chain_pq_security_established is False
@@ -239,4 +243,5 @@ def test_missing_critical_layer_evidence_fails_closed():
     result = assess_system_readiness(layers)
     assert result.verdict == "BLOCKED_INCOMPLETE_LAYER_EVIDENCE"
     assert result.migration_target_reached is False
-    assert "RECOVERY" in result.blocking_layers
+    assert result.weakest_layers == ()
+    assert result.blocking_layers == ("RECOVERY",)
