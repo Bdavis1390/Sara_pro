@@ -1,8 +1,8 @@
 # Worldshepherd — NP004 Assertion-to-Evidence Register
 
-**Date:** 2026-09-14  
-**Topic:** DON26BX05-NP004  
-**Purpose:** Prevent proposal language from outrunning evidence.  
+**Date:** 2026-09-14
+**Topic:** DON26BX05-NP004
+**Purpose:** Prevent proposal language from outrunning evidence.
 **Rule:** Every technical assertion used in a proposal, briefing, screenshot caption, demo script, or partner discussion must resolve to a pinned artifact or to `NOT_YET_EVIDENCED`.
 
 ## Evidence classes
@@ -17,10 +17,10 @@
 
 ## Pinned POC-A evidence anchor
 
-**PR:** #187 — `Add NP004 synthetic APNT operator-awareness POC-A`  
-**Branch:** `worldshepherd/np004-apnt-poc-a-v0-1-20260912`  
-**Exact head:** `178f3da3a3ccd7ca84ac05825229c01a10cec778`  
-**PR state:** DRAFT / BLOCK MERGE / independent review pending  
+**PR:** #187 — `Add NP004 synthetic APNT operator-awareness POC-A`
+**Branch:** `worldshepherd/np004-apnt-poc-a-v0-1-20260912`
+**Exact head:** `178f3da3a3ccd7ca84ac05825229c01a10cec778`
+**PR state:** DRAFT / BLOCK MERGE / independent review pending
 **POC claims boundary:** `SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR / INFORMATIONAL DECISION AID ONLY`
 
 ### Exact-head successful workflow records
