@@ -1,0 +1,55 @@
+name: Applied Work Accounting Gate
+
+on:
+  pull_request:
+    paths:
+      - 'tools/applied_work/**'
+      - 'docs/APPLIED_WORK_ACCOUNTING_V1.md'
+      - '.github/workflows/applied-work-accounting.yml'
+  push:
+    paths:
+      - 'tools/applied_work/**'
+      - 'docs/APPLIED_WORK_ACCOUNTING_V1.md'
+      - '.github/workflows/applied-work-accounting.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  accounting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Compile accounting module
+        working-directory: tools/applied_work
+        run: python -m compileall -q .
+
+      - name: Run dimension/provenance regressions
+        working-directory: tools/applied_work
+        run: python -m unittest -v test_accounting.py
+
+      - name: Enforce claims boundary and dimensional rules in documentation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text=Path('docs/APPLIED_WORK_ACCOUNTING_V1.md').read_text(encoding='utf-8')
+          required=(
+              'Preserve work as a vector of dimensioned quantities.',
+              'There is no automatic `total_work`',
+              'explicit `CrossKindModel`',
+              'Keep native quantities native.',
+              '1 kWh = 3.6e6 J',
+          )
+          for phrase in required:
+              assert phrase in text, phrase
+          PY
