@@ -1,0 +1,33 @@
+{
+  "audit_instance_id": "QCRYPTO-AUDIT-638bcee422b345e7af4f4dcd44cbd712",
+  "checkpoint_algorithm": "Ed25519",
+  "checkpoint_event_count": 5,
+  "claims_boundary": "Internal containerized software evidence only. This exercise demonstrates bounded SARA-to-ECHO evidence synchronization against a non-empty retained ECHO history, explicit four-record matching, retry deduplication, instance-scoped identity, and classical Ed25519 checkpoint creation. It does not establish post-quantum checkpoint security, migration execution, live-value authorization, external attestation, Federal compliance, WS-CAE conformance, or production deployment.",
+  "decision_digest": "sha256:39928a816f598e1d316f5f01d3b13e2ab4b60a59838c832a690a1e85e7a889eb",
+  "echo_stored_events": 5,
+  "execution_authority": false,
+  "first_sync": {
+    "deduplicated_count": 0,
+    "reconciliation_counts": {
+      "ECHO_ONLY": 1,
+      "MATCHED": 4,
+      "PAYLOAD_MISMATCH": 0,
+      "SARA_ONLY": 0
+    },
+    "stored_count": 4
+  },
+  "live_value_authorized": false,
+  "replay_sync": {
+    "deduplicated_count": 4,
+    "reconciliation_counts": {
+      "ECHO_ONLY": 1,
+      "MATCHED": 4,
+      "PAYLOAD_MISMATCH": 0,
+      "SARA_ONLY": 0
+    },
+    "stored_count": 0
+  },
+  "retained_history_events": 1,
+  "schema": "WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V1",
+  "status": "PASS"
+}
