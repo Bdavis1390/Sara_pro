@@ -1,9 +1,9 @@
 # Worldshepherd — DON26BX05-NP004 Phase I Capture & Evidence Gate
 
-**Date:** 2026-09-14  
-**Status:** GO-CONTINGENT / DRAFT / CLAIMS-CONTROLLED  
-**Topic:** DON26BX05-NP004 — NAVWAR Open Topic for Unified Assured Positioning, Navigation, and Timing Operational Awareness and Decision Support  
-**Submission deadline:** 2026-09-23 12:00 PM ET  
+**Date:** 2026-09-14
+**Status:** GO-CONTINGENT / DRAFT / CLAIMS-CONTROLLED
+**Topic:** DON26BX05-NP004 — NAVWAR Open Topic for Unified Assured Positioning, Navigation, and Timing Operational Awareness and Decision Support
+**Submission deadline:** 2026-09-23 12:00 PM ET
 **Primary public source:** https://navysbir.com/n26_5/DON26BX05-NP004.htm
 
 ## 1. Executive decision
