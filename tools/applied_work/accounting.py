@@ -56,9 +56,6 @@ def _unit(symbol: str, kind: QuantityKind, factor: str, base: str) -> None:
     _UNIT_SPECS[symbol] = UnitSpec(symbol, kind, Decimal(factor), base)
 
 
-# Compute operations. The semantic operation type remains in WorkQuantity.basis,
-# so floating-point operations are not silently equated with integer ops, tokens,
-# inferences, or domain-specific work units.
 for symbol, factor in (
     ("op", "1"),
     ("kop", "1e3"),
@@ -69,7 +66,7 @@ for symbol, factor in (
 ):
     _unit(symbol, QuantityKind.COMPUTE, factor, "op")
 
-# Energy. NIST SP 811 gives 1 kWh = 3.6e6 J.
+# NIST SP 811: 1 kWh = 3.6e6 J.
 for symbol, factor in (
     ("J", "1"),
     ("kJ", "1e3"),
@@ -83,8 +80,6 @@ for symbol, factor in (
 for symbol, factor in (("s", "1"), ("min", "60"), ("h", "3600")):
     _unit(symbol, QuantityKind.DURATION, factor, "s")
 
-# Resource-time and labor-time are deliberately separate from wall-clock duration.
-# Basis identifies the resource type (e.g. H100 GPU, CPU core, technician).
 for symbol, factor in (("resource-s", "1"), ("resource-min", "60"), ("resource-h", "3600")):
     _unit(symbol, QuantityKind.RESOURCE_TIME, factor, "resource-s")
 for symbol, factor in (("person-s", "1"), ("person-min", "60"), ("person-h", "3600")):
@@ -165,7 +160,7 @@ class WorkQuantity:
             object.__setattr__(self, "uncertainty", uncertainty)
 
     def converted(self, target_unit: str) -> "WorkQuantity":
-        """Convert units only within the same quantity kind and semantic basis."""
+        """Convert units only inside one compatible quantity kind/basis."""
         source = _UNIT_SPECS[self.unit]
         target = _UNIT_SPECS.get(target_unit)
         if target is None:
@@ -191,10 +186,12 @@ class WorkQuantity:
 
 @dataclass(frozen=True)
 class CrossKindModel:
-    """Explicit relation between unlike work quantities.
+    """Explicit relation between non-equivalent work quantities.
 
-    `output_per_input` means `output_unit` per `input_unit` for the named semantic
-    bases under the recorded conditions. This is a model, not a unit conversion.
+    Despite the historical name, this model may relate different quantity kinds
+    (compute -> energy) or the same kind with different semantic bases
+    (H100 GPU resource-time -> CPU-core resource-time). It is never treated as a
+    physical unit identity.
     """
 
     model_id: str
@@ -215,7 +212,7 @@ class CrossKindModel:
     def __post_init__(self) -> None:
         rate = _decimal(self.output_per_input)
         if rate < 0:
-            raise WorkAccountingError("cross-kind rate cannot be negative")
+            raise WorkAccountingError("transformation rate cannot be negative")
         object.__setattr__(self, "output_per_input", rate)
         if not self.model_id.strip() or not self.provenance.strip():
             raise WorkAccountingError("model_id and provenance are required")
@@ -227,9 +224,9 @@ class CrossKindModel:
             raise WorkAccountingError("input unit does not match input quantity kind")
         if output_spec is None or output_spec.kind != self.output_kind:
             raise WorkAccountingError("output unit does not match output quantity kind")
-        if self.input_kind == self.output_kind:
+        if self.input_kind == self.output_kind and self.input_basis == self.output_basis:
             raise WorkAccountingError(
-                "CrossKindModel is for unlike quantity kinds; use unit conversion for same-kind quantities"
+                "same-kind/same-basis quantities use unit conversion, not a transformation model"
             )
         if self.uncertainty_fraction is not None:
             fraction = _decimal(self.uncertainty_fraction)
@@ -244,9 +241,17 @@ class CrossKindModel:
             )
         normalized = quantity.converted(self.input_unit)
         output_value = normalized.value * self.output_per_input
-        uncertainty = None
+
+        # Conservative uncertainty propagation without assuming independence:
+        # absolute output uncertainty is the sum of transformed input uncertainty
+        # and model-rate uncertainty. This intentionally avoids false precision.
+        uncertainty_terms: list[Decimal] = []
+        if normalized.uncertainty is not None:
+            uncertainty_terms.append(normalized.uncertainty * self.output_per_input)
         if self.uncertainty_fraction is not None:
-            uncertainty = output_value * self.uncertainty_fraction
+            uncertainty_terms.append(output_value * self.uncertainty_fraction)
+        uncertainty = sum(uncertainty_terms, Decimal("0")) if uncertainty_terms else None
+
         evidence = _weakest_evidence(quantity.evidence_class, self.evidence_class)
         return WorkQuantity(
             quantity_id=output_id,
@@ -274,6 +279,7 @@ class DerivedMetric:
     unit: str
     provenance: str
     evidence_class: EvidenceClass
+    uncertainty_fraction: Decimal | None = None
 
 
 @dataclass
@@ -305,6 +311,22 @@ class AppliedWorkLedger:
         self.derivations[output_id] = (input_quantity_id, model_id)
         return result
 
+    def lineage(self, quantity_id: str) -> tuple[str, ...]:
+        """Return an auditable source/model chain for a quantity."""
+        if quantity_id not in self.quantities:
+            raise WorkAccountingError(f"unknown quantity_id: {quantity_id}")
+        chain: list[str] = [quantity_id]
+        cursor = quantity_id
+        seen: set[str] = set()
+        while cursor in self.derivations:
+            if cursor in seen:
+                raise WorkAccountingError("derivation cycle detected")
+            seen.add(cursor)
+            source_id, model_id = self.derivations[cursor]
+            chain.extend((model_id, source_id))
+            cursor = source_id
+        return tuple(chain)
+
     def aggregate(
         self,
         quantity_ids: Iterable[str],
@@ -313,9 +335,12 @@ class AppliedWorkLedger:
         output_id: str,
         provenance: str,
     ) -> WorkQuantity:
-        items = [self.quantities[item] for item in quantity_ids]
-        if not items:
+        ids = list(quantity_ids)
+        if not ids:
             raise WorkAccountingError("at least one quantity is required for aggregation")
+        if len(set(ids)) != len(ids):
+            raise WorkAccountingError("aggregation cannot count the same quantity ID more than once")
+        items = [self.quantities[item] for item in ids]
         first = items[0]
         if any(item.kind != first.kind or item.basis != first.basis for item in items):
             raise WorkAccountingError(
@@ -323,6 +348,12 @@ class AppliedWorkLedger:
             )
         converted = [item.converted(target_unit) for item in items]
         evidence = _weakest_evidence(*(item.evidence_class for item in converted))
+        uncertainty_values = [item.uncertainty for item in converted]
+        aggregate_uncertainty = None
+        if any(value is not None for value in uncertainty_values):
+            aggregate_uncertainty = sum(
+                (value or Decimal("0") for value in uncertainty_values), Decimal("0")
+            )
         result = WorkQuantity(
             quantity_id=output_id,
             kind=first.kind,
@@ -331,6 +362,7 @@ class AppliedWorkLedger:
             basis=first.basis,
             provenance=provenance,
             evidence_class=evidence,
+            uncertainty=aggregate_uncertainty,
             scope=first.scope,
             time_window=first.time_window,
         )
@@ -351,6 +383,14 @@ class AppliedWorkLedger:
         denominator = self.quantities[denominator_id].converted(denominator_unit)
         if denominator.value == 0:
             raise WorkAccountingError("intensity denominator cannot be zero")
+        uncertainty_fraction = None
+        fractions: list[Decimal] = []
+        if numerator.uncertainty is not None and numerator.value != 0:
+            fractions.append(numerator.uncertainty / numerator.value)
+        if denominator.uncertainty is not None:
+            fractions.append(denominator.uncertainty / denominator.value)
+        if fractions:
+            uncertainty_fraction = sum(fractions, Decimal("0"))
         return DerivedMetric(
             metric_id=metric_id,
             numerator_quantity_id=numerator_id,
@@ -362,6 +402,7 @@ class AppliedWorkLedger:
                 numerator.evidence_class,
                 denominator.evidence_class,
             ),
+            uncertainty_fraction=uncertainty_fraction,
         )
 
     def vector(self) -> dict[str, dict[str, str]]:
@@ -374,6 +415,7 @@ class AppliedWorkLedger:
                 "basis": value.basis,
                 "evidence_class": value.evidence_class.value,
                 "provenance": value.provenance,
+                "uncertainty": "" if value.uncertainty is None else str(value.uncertainty),
             }
             for key, value in sorted(self.quantities.items())
         }
