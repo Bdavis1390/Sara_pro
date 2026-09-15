@@ -1,0 +1,74 @@
+name: Worldshepherd Persistent Audit FD A-B
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - worldshepherd-capture-engine-v1-1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/storage.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/persistent_audit_store.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/persistent_audit_benchmark_app.py'
+      - 'deployments/sara_verified_local_v1/tests/test_persistent_audit_store.py'
+      - 'tools/selection_demo/benchmark_fusion_real_network.py'
+      - 'tools/selection_demo/run_persistent_fd_real_network.py'
+      - 'tools/selection_demo/compare_persistent_fd_ab.py'
+      - '.github/workflows/worldshepherd-persistent-audit-fd-ab.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  persistent-audit-fd-ab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install SARA benchmark environment
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'deployments/sara_verified_local_v1[test]'
+
+      - name: Run governed API, storage, and persistent-fd regression tests
+        run: |
+          python -m pytest \
+            deployments/sara_verified_local_v1/tests/test_synthetic_fusion_api.py \
+            deployments/sara_verified_local_v1/tests/test_storage_tail.py \
+            deployments/sara_verified_local_v1/tests/test_persistent_audit_store.py
+
+      - name: Measure baseline per-record open/fsync/close over real HTTP and TLS
+        run: |
+          mkdir -p persistent_audit_evidence
+          python tools/selection_demo/benchmark_fusion_real_network.py \
+            --out persistent_audit_evidence/baseline-per-record-open-fsync-close.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Measure persistent secured descriptor over real HTTP and TLS
+        run: |
+          python tools/selection_demo/run_persistent_fd_real_network.py \
+            --out persistent_audit_evidence/experimental-persistent-audit-fd.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Build persistent-fd A-B comparison evidence
+        run: |
+          python tools/selection_demo/compare_persistent_fd_ab.py \
+            --baseline persistent_audit_evidence/baseline-per-record-open-fsync-close.json \
+            --experiment persistent_audit_evidence/experimental-persistent-audit-fd.json \
+            --out persistent_audit_evidence/persistent-audit-fd-ab-comparison.json \
+            --software-commit "$GITHUB_SHA"
+
+      - name: Upload persistent-fd A-B evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-persistent-audit-fd-ab-${{ github.sha }}
+          path: persistent_audit_evidence/
+          if-no-files-found: error
+          retention-days: 30
