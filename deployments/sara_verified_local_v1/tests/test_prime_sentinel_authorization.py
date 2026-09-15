@@ -193,6 +193,30 @@ def test_recorded_authorization_must_match_prime_target_not_be_revoked_and_be_un
         )
 
 
+def test_recorded_authorization_rejects_same_key_id_with_different_key_material():
+    private, verifier = _keys()
+    now = datetime.now(timezone.utc)
+    verified = verifier.verify(_signed_assertion(private, now=now), now=now)
+    registry = verified_authorization_registry_patch({}, verified)
+
+    replacement_private = Ed25519PrivateKey.generate()
+    replacement_verifier = PrimeSentinelVerifier(
+        public_keys_b64url={
+            "PS-K1": _b64url(replacement_private.public_key().public_bytes_raw())
+        }
+    )
+
+    with pytest.raises(PrimeSentinelAuthorizationError, match="fingerprint"):
+        assert_recorded_authorization_usable(
+            registry,
+            authorization_id="AUTH-001",
+            prime_id="PRIME-001",
+            target_environment=PrimeEnvironment.SPACE,
+            verifier=replacement_verifier,
+            now=now,
+        )
+
+
 def test_authorization_is_one_time_consumable():
     private, verifier = _keys()
     now = datetime.now(timezone.utc)
