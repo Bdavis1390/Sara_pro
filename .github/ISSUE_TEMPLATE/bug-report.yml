@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a reproducible defect in Worldshepherd/SARA repository software or tooling
+title: "[BUG] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include secrets, CUI/classified information, proprietary partner data, or private personal information.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What behavior is incorrect?
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Component/path
+      placeholder: tools/oss_health, cisnet, workflow name, etc.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit/version
+      placeholder: commit SHA or branch
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Provide the minimum deterministic sequence if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and evidence
+      description: Include sanitized logs, test output, or error messages.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact / risk
+      description: Explain operational, data-integrity, security, provenance, or workflow impact.
+  - type: checkboxes
+    id: release
+    attributes:
+      label: Public-release check
+      options:
+        - label: This issue contains no secrets or credentials.
+          required: true
+        - label: This issue contains no CUI/classified or uncleared export-controlled information.
+          required: true
+        - label: This issue contains no proprietary partner/customer data or private personal information.
+          required: true
