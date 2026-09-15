@@ -1,0 +1,6 @@
+# BAROS bounded research verification environment.
+# NON-CLINICAL. These pins support reproducibility; they do not imply clinical validation.
+numpy==2.5.3
+pydicom==3.0.2
+pymedphys==0.41.0
+pytest==9.1.1
