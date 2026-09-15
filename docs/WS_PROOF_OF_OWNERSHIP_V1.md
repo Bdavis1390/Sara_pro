@@ -1,6 +1,6 @@
 # Worldshepherd Proof of Ownership (PoO) v1
 
-**Status:** experimental internal ownership-attestation design  
+**Status:** experimental internal ownership-attestation design
 **Schema:** `WS-POO-V1`
 
 ## Thesis
