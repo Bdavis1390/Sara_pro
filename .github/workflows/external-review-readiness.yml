@@ -1,0 +1,100 @@
+name: External Review Readiness
+
+on:
+  push:
+    branches:
+      - review/linus-readiness-2026-09-14
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'docs/review/**'
+      - 'deployments/sara_verified_local_v1/**'
+      - '.github/workflows/external-review-readiness.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reviewer-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v4
+
+      - name: Verify review packet exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s README.md
+          test -s docs/review/LINUS_TECHNICAL_REVIEW.md
+          test -s docs/review/ARCHITECTURE_AND_THREAT_MODEL.md
+          test -s docs/review/REPRODUCIBILITY.md
+          test -s docs/review/CLAIMS_BOUNDARY.md
+          test -s docs/review/LICENSE_DECISION.md
+          test -s docs/review/OUTREACH_DRAFT.txt
+          grep -q 'technical criticism, not endorsement' docs/review/LINUS_TECHNICAL_REVIEW.md
+          grep -q 'not immutable or tamper-proof' README.md
+          grep -q 'REQUIRES LEGAL REVIEW / DECISION' docs/review/LICENSE_DECISION.md
+
+      - name: Reject obvious overclaim language in review packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE '\b(Linus (endorses|approved|validated|partners with)|CMMC[- ]?certified|FedRAMP[- ]?authorized|government[- ]?approved)\b' README.md docs/review; then
+            echo 'Review packet contains prohibited overclaim language.' >&2
+            exit 1
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install constrained package and tests
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile package
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m compileall -q worldshepherd_sara
+
+      - name: Run full local package test suite
+        working-directory: deployments/sara_verified_local_v1
+        run: pytest
+
+      - name: Validate Compose configuration
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          python - <<'PY'
+          from pathlib import Path
+          import secrets
+          p=Path('.env')
+          text=p.read_text()
+          replacements={
+              'change-me-relay-token-at-least-24-chars': secrets.token_hex(32),
+              'change-me-admin-token-at-least-24-chars': secrets.token_hex(32),
+          }
+          for old,new in replacements.items():
+              text=text.replace(old,new)
+          p.write_text(text)
+          PY
+          docker compose config --quiet
+          rm -f .env
+
+      - name: Check whitespace and merge markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check HEAD^
+          if grep -R -n -E '^(<<<<<<< |>>>>>>> )' README.md docs/review deployments/sara_verified_local_v1; then
+            echo 'Unresolved merge-conflict marker found.' >&2
+            exit 1
+          fi
