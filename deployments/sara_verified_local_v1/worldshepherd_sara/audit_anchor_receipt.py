@@ -4,6 +4,7 @@ import base64
 import hashlib
 import json
 import re
+from pathlib import Path
 from typing import Any, Protocol
 
 from cryptography.exceptions import InvalidSignature
@@ -70,7 +71,7 @@ def _decode_public_key(value: str) -> bytes:
     return raw
 
 
-def build_anchor_publication(anchor_path: str) -> dict[str, Any]:
+def build_anchor_publication(anchor_path: str | Path) -> dict[str, Any]:
     try:
         anchor = load_external_anchor(anchor_path)
     except SaraAuditExternalAnchorError as exc:
@@ -234,4 +235,34 @@ def verify_anchor_receipt(
             "establish immutable or WORM retention, provider independence, public transparency, "
             "third-party attestation, or regulatory compliance."
         ),
+    }
+
+
+def publish_anchor_and_verify_receipt(
+    *,
+    anchor_path: str | Path,
+    sink: AuditAnchorSink,
+    trusted_provider_fingerprint_sha256: str | None = None,
+) -> dict[str, Any]:
+    """Publish one validated anchor and immediately verify the returned receipt.
+
+    The caller may pin a provider public-key fingerprint. A successful return
+    proves only the software-level publication/receipt contract and any receipt
+    signature validated here; retention properties remain explicitly unproven.
+    """
+
+    publication = build_anchor_publication(anchor_path)
+    try:
+        receipt = sink.publish(dict(publication))
+    except Exception as exc:
+        raise AuditAnchorReceiptError("anchor sink publication failed") from exc
+    verification = verify_anchor_receipt(
+        publication=publication,
+        receipt=receipt,
+        trusted_provider_fingerprint_sha256=trusted_provider_fingerprint_sha256,
+    )
+    return {
+        "publication": publication,
+        "receipt": receipt,
+        "verification": verification,
     }
