@@ -61,10 +61,10 @@ jobs:
           assert proof["live_network_actions"] is False
           assert report["status"] == "PASS"
           assert report["claim_state"] == "BOUNDED_MULTI_POS_MIGRATION_PRESERVATION_PROVEN_IN_SOFTWARE"
-          assert report["profiles_checked"] == 11
-          assert report["transition_cases"] == 88
-          assert report["invalid_order_cases"] == 22
-          assert report["duplicate_weight_cases"] == 11
+          assert report["profiles_checked"] == 19
+          assert report["transition_cases"] == 152
+          assert report["invalid_order_cases"] == 38
+          assert report["duplicate_weight_cases"] == 19
           assert len(proof["evidence_sha256"]) == 64
           print("multi_pos_status: PASS")
           print("profiles_checked:", report["profiles_checked"])
