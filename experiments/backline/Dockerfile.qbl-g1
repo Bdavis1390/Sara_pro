@@ -1,0 +1,50 @@
+FROM python:3.12-bookworm
+
+ARG CATALYST_TAG=v0.16.0b1
+ARG BACKLINE_TAG=v0.1.0b1
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    CATALYST_ROOT=/opt/catalyst \
+    BACKLINE_ROOT=/opt/backline
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    clang \
+    lld \
+    g++ \
+    ccache \
+    make \
+    git \
+    ca-certificates \
+    curl \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build the pinned Catalyst beta from source so QBL-G1 has the transport runtime
+# and libsteane_coprocessor_cpu.so at a deterministic path. This is intentionally
+# isolated from the Worldshepherd host system Python.
+RUN git clone --depth 1 --branch "${CATALYST_TAG}" \
+      --recurse-submodules --shallow-submodules \
+      https://github.com/PennyLaneAI/catalyst.git "${CATALYST_ROOT}" \
+    && cd "${CATALYST_ROOT}" \
+    && python -m venv .venv \
+    && . .venv/bin/activate \
+    && python -m pip install --upgrade pip \
+    && pip install -r requirements.txt \
+    && ENABLE_TRANSPORT=ON make all
+
+# Backline source is pinned for provenance/reference. The QBL-G1 Python API is
+# provided through the pinned PennyLane/Catalyst build above.
+RUN git clone --depth 1 --branch "${BACKLINE_TAG}" \
+      https://github.com/PennyLaneAI/backline.git "${BACKLINE_ROOT}"
+
+ENV PATH="/opt/catalyst/.venv/bin:${PATH}"
+
+WORKDIR /workspace
+COPY experiments/backline_cpu_cpu.py /workspace/backline_cpu_cpu.py
+COPY experiments/backline_benchmark.py /workspace/backline_benchmark.py
+
+RUN python -m py_compile /workspace/backline_cpu_cpu.py /workspace/backline_benchmark.py \
+    && test -f "${CATALYST_ROOT}/runtime/build/lib/libsteane_coprocessor_cpu.so" \
+    && python -c "import pennylane as qp; print(qp.__version__, qp.Controller, qp.Coprocessor, qp.Backline)"
+
+CMD ["python", "/workspace/backline_cpu_cpu.py", "--repeat", "10", "--json"]
