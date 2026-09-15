@@ -83,11 +83,33 @@ jobs:
           SEC="$CFG/bpsec"
           PLAN="$CFG/multinode-contact-plan.json"
           LAB="$RUNNER_TEMP/ws-cisnet-bpsec"
-          mkdir -p "$LAB" artifacts
+          EVIDENCE_DIR="$GITHUB_WORKSPACE/artifacts/bpsec"
+          mkdir -p "$LAB" "$EVIDENCE_DIR"
 
           # Public CI test vectors only; never production key material.
-          printf '%s\n' '1a2b1a2b1a2b1a2b1a2b1a2b1a2b1a2b' > "$SEC/ci-good.key"
-          printf '%s\n' '5e6f5e6f5e6f5e6f5e6f5e6f5e6f5e6f' > "$SEC/ci-wrong.key"
+          # HDTN's pinned sample integrity key is exactly 32 bytes with no trailing newline.
+          printf '%s' '1a2b1a2b1a2b1a2b1a2b1a2b1a2b1a2b' > "$SEC/ci-good.key"
+          printf '%s' '5e6f5e6f5e6f5e6f5e6f5e6f5e6f5e6f' > "$SEC/ci-wrong.key"
+          test "$(wc -c < "$SEC/ci-good.key")" -eq 32
+          test "$(wc -c < "$SEC/ci-wrong.key")" -eq 32
+
+          collect_logs() {
+            for phase in positive negative; do
+              for log in "$LAB/$phase/logs/"*.log; do
+                [ -f "$log" ] || continue
+                cp "$log" "$EVIDENCE_DIR/${phase}-$(basename "$log")"
+              done
+            done
+          }
+          scrub_ci_keys() {
+            rm -f "$SEC/ci-good.key" "$SEC/ci-wrong.key"
+          }
+          finalize() {
+            collect_logs || true
+            scrub_ci_keys
+          }
+          trap finalize EXIT
+
           GOOD_KEY_SHA=$(sha256sum "$SEC/ci-good.key" | awk '{print $1}')
           WRONG_KEY_SHA=$(sha256sum "$SEC/ci-wrong.key" | awk '{print $1}')
           SOURCE_POLICY_SHA=$(sha256sum "$SEC/source-bib.json" | awk '{print $1}')
@@ -124,6 +146,7 @@ jobs:
                 if [ -n "$pid" ]; then kill -INT "$pid" 2>/dev/null || true; fi
               done
               sleep 1
+              collect_logs || true
             }
 
             (cd "$GITHUB_WORKSPACE" && "$BUILD/common/bpcodec/apps/bpreceivefile" \
@@ -190,7 +213,7 @@ jobs:
 
           export SRC_SHA SIZE GOOD_KEY_SHA WRONG_KEY_SHA SOURCE_POLICY_SHA GOOD_POLICY_SHA WRONG_POLICY_SHA PLAN_SHA HDTN_SHA
           python - <<'PY'
-          import json, os, subprocess
+          import json, os
           from pathlib import Path
           from cisnet.provenance import EchoLedger
 
@@ -231,9 +254,9 @@ jobs:
           assert evidence["wrong_key_destination_bytes"] < evidence["payload_bytes"]
           PY
 
-          cp "$LAB/positive/logs/"*.log artifacts/positive-
-          cp "$LAB/negative/logs/"*.log artifacts/negative-
-          rm -f "$SEC/ci-good.key" "$SEC/ci-wrong.key"
+          collect_logs
+          scrub_ci_keys
+          trap - EXIT
 
       - name: Upload BPSec BIB evidence
         if: always()
