@@ -13,6 +13,8 @@ The repository intentionally distinguishes **implemented capability** from **res
 - [Run the canonical SARA runtime](runtime/README.md)
 - [Worldshepherd capability map](docs/WORLDSHEPHERD_CAPABILITY_MAP.md)
 - [Claims and evidence policy](docs/CLAIMS_AND_EVIDENCE_POLICY.md)
+- [Active tasks](docs/operations/ACTIVE_TASKS.md)
+- [Repository freshness policy](docs/operations/FRESHNESS_POLICY.md)
 - [Repository/documentation index](docs/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
@@ -73,6 +75,31 @@ Default service endpoints include `/health`, `/livez`, `/readyz`, `/ui`, authent
 
 The canonical runtime's protected workflow is [`.github/workflows/sara-verified-local-v1.yml`](.github/workflows/sara-verified-local-v1.yml). Historical SSPADAWANZZ requirements were reconciled against the hardened current implementation in [`WS_QE_2026_ADM_001.md`](deployments/sara_verified_local_v1/docs/WS_QE_2026_ADM_001.md).
 
+## Current operating model
+
+Worldshepherd uses exactly three top-level operating umbrellas:
+
+- **#281 — Platform & Assurance** — runtime, security, governance, provenance, CI, reproducibility and repository freshness;
+- **#282 — Science & Validation** — falsifiable scientific, simulation, hardware and physical-validation work;
+- **#283 — Growth & Externalization** — opportunities, partners, outreach, capture, transition and commercialization.
+
+See [`docs/operations/ACTIVE_TASKS.md`](docs/operations/ACTIVE_TASKS.md). Detailed issues and PRs remain child work rather than becoming competing top-level programs.
+
+## Repository freshness and supersession
+
+Worldshepherd preserves historical evidence without allowing it to masquerade as current guidance. The canonical lifecycle rules are in [`docs/operations/FRESHNESS_POLICY.md`](docs/operations/FRESHNESS_POLICY.md), and the latest dated audit is [`docs/operations/FRESHNESS_AUDIT_2026-09-15.md`](docs/operations/FRESHNESS_AUDIT_2026-09-15.md).
+
+Important distinctions:
+
+- old does not automatically mean stale;
+- dated evidence remains evidence for its recorded configuration;
+- useful work on an obsolete base becomes `RECONCILE_REQUIRED` rather than disposable;
+- superseded artifacts should name their successor;
+- branch names such as `temp`, `duplicate`, or `old` are not proof that deletion is safe;
+- time-sensitive opportunity/contact facts must be re-verified before external use.
+
+The scheduled/on-change Repository Freshness Gate enforces stable source-of-truth invariants and catches known regression patterns.
+
 ## What the repository currently contains
 
 The public tree includes:
@@ -80,11 +107,11 @@ The public tree includes:
 - `runtime/` — stable repository-level locator and operator guidance for the canonical SARA runtime;
 - `scripts/sara.sh` — repository-root setup/run/test/smoke/check wrapper for canonical SARA;
 - `deployments/sara_verified_local_v1/` — installable SARA package, API/UI, tests, fixtures, constraints, Docker/Compose artifacts, operational scripts, PRE/evidence tooling and runtime documentation;
-- `.github/workflows/` — test/build, CodeQL, SARA Verified Local, release-attestation, resilience/rollback, NIST 800-171 precursor, provenance/anchor and other evidence-oriented CI workflows;
-- `docs/` — architecture, PRE, claims-boundary, standards/conformance, partner-screening, physics/research, provenance and integration documentation;
+- `.github/workflows/` — test/build, CodeQL, SARA Verified Local, release-attestation, resilience/rollback, freshness, NIST 800-171 precursor, provenance/anchor and other evidence-oriented CI workflows;
+- `docs/` — architecture, PRE, claims-boundary, standards/conformance, operations/freshness, partner-screening, physics/research, provenance and integration documentation;
 - `security/` — security-related artifacts;
 - `tests/` — repository-level test material outside the canonical runtime package;
-- `tools/` — engineering/analysis utilities including OSS semantic-health work;
+- `tools/` — engineering/analysis utilities including OSS semantic-health and repository-freshness checks;
 - `config/` and other `deployments/` content — configuration/deployment material;
 - `brd953_xyz_node/`, `flamehold_ai_node/`, `cisnet/`, and `external_anchor_pilots/` — experimental/integration nodes and related work.
 
@@ -156,10 +183,12 @@ No open-source license should be inferred solely from public visibility. Reposit
 ## Near-term repository priorities
 
 - preserve the canonical SARA entry point and keep root commands synchronized with protected runtime CI;
+- reconcile useful stale-base branches rather than merging old trees wholesale;
+- migrate deprecated CI action/runtime dependencies through reviewable, fully gated changes;
 - attach evidence manifests to major capability claims;
 - consolidate overlapping research notes into canonical documents plus archives;
 - publish architecture decision records (ADRs) for major interfaces;
-- add local READMEs and explicit maturity gates to remaining active subprojects;
+- add local READMEs and explicit maturity/freshness gates to remaining active subprojects;
 - evaluate a future dedicated `worldshepherd-sara` repository only when history, evidence links, release identity and migration continuity can be preserved;
 - keep research lanes broad while making validation gates narrow, explicit, and measurable.
 
