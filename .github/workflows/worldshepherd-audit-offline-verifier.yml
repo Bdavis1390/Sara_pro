@@ -15,6 +15,7 @@ on:
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_anchor.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_guarded.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_offline_verify.py'
+      - 'tools/selection_demo/audit_offline_verify_cli.py'
       - 'tools/selection_demo/audit_offline_verifier_demo.py'
       - '.github/workflows/worldshepherd-audit-offline-verifier.yml'
 
