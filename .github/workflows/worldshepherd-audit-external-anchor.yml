@@ -9,10 +9,12 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_verify.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_guarded.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_key.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_anchor.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/audit_checkpoint_operator.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_guarded.py'
+      - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_key.py'
       - 'deployments/sara_verified_local_v1/tests/test_audit_checkpoint_anchor.py'
       - 'tools/selection_demo/audit_external_anchor_demo.py'
       - '.github/workflows/worldshepherd-audit-external-anchor.yml'
@@ -43,6 +45,7 @@ jobs:
           python -m pytest \
             deployments/sara_verified_local_v1/tests/test_audit_checkpoint.py \
             deployments/sara_verified_local_v1/tests/test_audit_checkpoint_guarded.py \
+            deployments/sara_verified_local_v1/tests/test_audit_checkpoint_key.py \
             deployments/sara_verified_local_v1/tests/test_audit_checkpoint_anchor.py \
             deployments/sara_verified_local_v1/tests/test_storage_tail.py
 
