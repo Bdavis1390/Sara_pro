@@ -9,12 +9,13 @@ from .audit_checkpoint_anchor import (
     export_external_anchor,
     verify_with_external_anchor,
 )
+from .audit_checkpoint_guarded import GuardedSaraAuditCheckpointManager
 from .storage import DurableStore
 
 
 def _manager() -> SaraAuditCheckpointManager:
     store = DurableStore()
-    return SaraAuditCheckpointManager.from_environment(store)
+    return GuardedSaraAuditCheckpointManager.from_environment(store)
 
 
 def _emit(value: object) -> None:
