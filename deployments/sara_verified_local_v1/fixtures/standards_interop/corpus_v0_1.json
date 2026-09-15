@@ -1,0 +1,80 @@
+{
+  "schema": "WS-STANDARDS-INTEROP-CORPUS-V0.1",
+  "description": "Internal OCSF/Gemara interoperability cases for governance and evidence-chain regression testing.",
+  "ocsf_target": "OCSF-1.10.0-dev-PROPOSAL-COMPATIBLE",
+  "gemara_target": "GEMARA-1.1-COMPATIBLE",
+  "external_validation_status": "NOT_RUN",
+  "claims_boundary": "These are internal conformance fixtures. They do not establish OCSF or Gemara certification, partner validation, government acceptance, or operational interoperability.",
+  "cases": [
+    {
+      "case_id": "INT-REMOTE-POLICY-ALLOW",
+      "action_kind": "remote_tool",
+      "authorization_mode": "POLICY_APPROVED",
+      "hostless": false,
+      "declared_readonly": true,
+      "observed_operation": "READ",
+      "expected_outcome": "SUCCESS",
+      "interrupted": false
+    },
+    {
+      "case_id": "INT-REMOTE-HUMAN-ALLOW",
+      "action_kind": "remote_tool",
+      "authorization_mode": "HUMAN_APPROVED",
+      "hostless": false,
+      "declared_readonly": false,
+      "observed_operation": "WRITE",
+      "expected_outcome": "SUCCESS",
+      "interrupted": false
+    },
+    {
+      "case_id": "INT-REMOTE-DENY",
+      "action_kind": "remote_tool",
+      "authorization_mode": "DENIED",
+      "hostless": false,
+      "declared_readonly": false,
+      "observed_operation": "WRITE",
+      "expected_outcome": "DENIED",
+      "interrupted": false
+    },
+    {
+      "case_id": "INT-LOCAL-PROCESS",
+      "action_kind": "local_process",
+      "authorization_mode": "POLICY_APPROVED",
+      "hostless": false,
+      "declared_readonly": null,
+      "observed_operation": "EXECUTE",
+      "expected_outcome": "SUCCESS",
+      "interrupted": false
+    },
+    {
+      "case_id": "INT-FILE-READ-HOSTLESS",
+      "action_kind": "file_operation",
+      "authorization_mode": "POLICY_APPROVED",
+      "hostless": true,
+      "declared_readonly": null,
+      "observed_operation": "READ",
+      "expected_outcome": "SUCCESS",
+      "interrupted": false
+    },
+    {
+      "case_id": "INT-READONLY-MISMATCH",
+      "action_kind": "remote_tool",
+      "authorization_mode": "POLICY_APPROVED",
+      "hostless": false,
+      "declared_readonly": true,
+      "observed_operation": "WRITE",
+      "expected_outcome": "SUCCESS",
+      "interrupted": false
+    },
+    {
+      "case_id": "INT-INTERRUPTED",
+      "action_kind": "local_process",
+      "authorization_mode": "POLICY_APPROVED",
+      "hostless": false,
+      "declared_readonly": null,
+      "observed_operation": "EXECUTE",
+      "expected_outcome": "INTERRUPTED",
+      "interrupted": true
+    }
+  ]
+}

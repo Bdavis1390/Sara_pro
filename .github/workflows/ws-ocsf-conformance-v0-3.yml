@@ -1,0 +1,139 @@
+name: Worldshepherd OCSF Conformance v0.3
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/ocsf_full_projection.py'
+      - 'deployments/sara_verified_local_v1/tools/build_ocsf_projection.py'
+      - 'deployments/sara_verified_local_v1/tests/test_ocsf_full_projection.py'
+      - 'deployments/sara_verified_local_v1/fixtures/standards_interop/**'
+      - '.github/workflows/ws-ocsf-conformance-v0-3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ocsf-conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out Worldshepherd source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.12 for Worldshepherd tests
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Install Worldshepherd test package
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[test]'
+
+      - name: Run internal OCSF projection tests
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          pytest -q
+          tests/test_ocsf_full_projection.py
+          tests/test_standards_interop.py
+          tests/test_standards_interop_corpus_lock.py
+
+      - name: Build seven derived OCSF event projections
+        working-directory: deployments/sara_verified_local_v1
+        run: python tools/build_ocsf_projection.py
+
+      - name: Check out exact OCSF schema revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ocsf/ocsf-schema
+          ref: c1ab05a382ffc97250997ffe010f3f715a097c2a
+          path: external/ocsf-schema
+          persist-credentials: false
+
+      - name: Check out exact OCSF schema compiler revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ocsf/ocsf-schema-compiler
+          ref: 865887a9ee88580c471062f93da115e7599fa31d
+          path: external/ocsf-schema-compiler
+          persist-credentials: false
+
+      - name: Set up Python 3.14 for OCSF compiler
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.14'
+
+      - name: Compile pinned OCSF schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install ./external/ocsf-schema-compiler
+          ocsf-schema-compiler external/ocsf-schema \
+            > deployments/sara_verified_local_v1/build/ocsf_projection_v0_3/compiled_schema.json
+
+      - name: Check out exact OCSF Toolkit revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ocsf/ocsf-toolkit
+          ref: a99619fcd148791a6a9fe5f82c1e0d839f658591
+          path: external/ocsf-toolkit
+          persist-credentials: false
+
+      - name: Set up Go 1.25
+        uses: actions/setup-go@34829cb9acb0c3aab260216f67d0867cc080dca5
+        with:
+          go-version: '1.25.x'
+          cache: false
+
+      - name: Build pinned OCSF Toolkit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          cd external/ocsf-toolkit
+          go build -trimpath -o "$GITHUB_WORKSPACE/build/ocsf-toolkit" ./cmd/ocsf-toolkit
+
+      - name: Validate all seven derived events with official OCSF Toolkit
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE/deployments/sara_verified_local_v1/build/ocsf_projection_v0_3"
+          SCHEMA="$ROOT/compiled_schema.json"
+          count=0
+          for event in "$ROOT"/*.event.json; do
+            report="${event%.event.json}.report.json"
+            if ! "$GITHUB_WORKSPACE/build/ocsf-toolkit" \
+              --schema "$SCHEMA" \
+              --event "$event" \
+              --validate \
+              --fail-on-validation-errors \
+              --report-output "$report"; then
+              echo "OCSF validation failed for $event" >&2
+              if [[ -f "$report" ]]; then
+                cat "$report" >&2
+              fi
+              exit 1
+            fi
+            count=$((count + 1))
+          done
+          test "$count" -eq 7
+          echo "Validated $count derived OCSF events with the pinned official toolkit."
+
+      - name: Publish conformance summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Worldshepherd OCSF conformance v0.3'
+            echo '- Source corpus: frozen v0.1 interoperability corpus'
+            echo '- OCSF schema commit: `c1ab05a382ffc97250997ffe010f3f715a097c2a`'
+            echo '- OCSF schema target: `1.10.0-dev`'
+            echo '- Schema compiler commit: `865887a9ee88580c471062f93da115e7599fa31d`'
+            echo '- OCSF Toolkit commit: `a99619fcd148791a6a9fe5f82c1e0d839f658591`'
+            echo '- Validation scope: seven derived synthetic event instances'
+            echo '- Claim boundary: conformance evidence only; no OCSF certification, endorsement, partner validation, production interoperability, or government acceptance implied.'
+          } >> "$GITHUB_STEP_SUMMARY"

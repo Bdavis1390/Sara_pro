@@ -1,0 +1,210 @@
+--- a/src/threading/SerialTypes.h
++++ b/src/threading/SerialTypes.h
+@@ -132,6 +132,11 @@ struct Value {
+         Value** vals;
+     };
+     using vec_t = set_t;
++    struct record_t {
++        zeek_int_t size;
++        Field** fields;
++        Value** vals;
++    };
+     struct port_t {
+         zeek_uint_t port;
+         TransportProto proto;
+@@ -174,6 +179,7 @@ struct Value {
+         double double_val;
+         set_t set_val;
+         vec_t vector_val;
++        record_t record_val;
+         addr_t addr_val;
+         subnet_t subnet_val;
+         struct {
+--- a/src/threading/SerialTypes.cc
++++ b/src/threading/SerialTypes.cc
+@@ -105,6 +105,16 @@ Value::Value(const Value& other) {
+                 val.vector_val.vals[i] = new Value(*other.val.vector_val.vals[i]);
+             break;
+         }
++        case TYPE_RECORD: {
++            val.record_val.size = other.val.record_val.size;
++            val.record_val.fields = new Field*[other.val.record_val.size];
++            val.record_val.vals = new Value*[other.val.record_val.size];
++            for ( zeek_int_t i = 0; i < other.val.record_val.size; ++i ) {
++                val.record_val.fields[i] = new Field(*other.val.record_val.fields[i]);
++                val.record_val.vals[i] = new Value(*other.val.record_val.vals[i]);
++            }
++            break;
++        }
+         default: {
+             // Deal with simple/atomic types.
+             val = other.val;
+@@ -153,6 +163,16 @@ Value::~Value() {
+ 
+         delete[] val.vector_val.vals;
+     }
++
++    else if ( type == TYPE_RECORD ) {
++        for ( zeek_int_t i = 0; i < val.record_val.size; ++i ) {
++            delete val.record_val.fields[i];
++            delete val.record_val.vals[i];
++        }
++
++        delete[] val.record_val.fields;
++        delete[] val.record_val.vals;
++    }
+ }
+ 
+ bool Value::IsCompatibleType(Type* t, bool atomic_only) {
+@@ -186,7 +206,11 @@ bool Value::IsCompatibleType(Type* t, bool atomic_only) {
+             if ( atomic_only )
+                 return false;
+ 
+-            return IsCompatibleType(t->AsVectorType()->Yield().get(), true);
++            auto* yield = t->AsVectorType()->Yield().get();
++            if ( yield->Tag() == TYPE_RECORD )
++                return IsCompatibleType(yield, false);
++
++            return IsCompatibleType(yield, true);
+         }
+ 
+         default: return false;
+@@ -327,6 +351,32 @@ bool Value::Read(detail::SerializationFormat* fmt) {
+             return true;
+         }
+ 
++        case TYPE_RECORD: {
++            if ( ! fmt->Read(&val.record_val.size, "record_size") || val.record_val.size < 0 )
++                return false;
++
++            val.record_val.fields = new Field*[val.record_val.size]{};
++            val.record_val.vals = new Value*[val.record_val.size]{};
++
++            for ( zeek_int_t i = 0; i < val.record_val.size; ++i ) {
++                val.record_val.fields[i] = new Field;
++                val.record_val.vals[i] = new Value;
++
++                if ( ! val.record_val.fields[i]->Read(fmt) || ! val.record_val.vals[i]->Read(fmt) ) {
++                    for ( zeek_int_t j = 0; j <= i; ++j ) {
++                        delete val.record_val.fields[j];
++                        delete val.record_val.vals[j];
++                    }
++
++                    delete[] val.record_val.fields;
++                    delete[] val.record_val.vals;
++                    val.record_val = {};
++                    return false;
++                }
++            }
++
++            return true;
++        }
++
+         default: {
+             reporter->InternalWarning("unsupported type %s (%d) in Value::Read", type_name(type),
+                                       static_cast<int>(type));
+@@ -395,6 +445,18 @@ bool Value::Write(detail::SerializationFormat* fmt) const {
+             return true;
+         }
+ 
++        case TYPE_RECORD: {
++            if ( ! fmt->Write(val.record_val.size, "record_size") )
++                return false;
++
++            for ( zeek_int_t i = 0; i < val.record_val.size; ++i ) {
++                if ( ! val.record_val.fields[i]->Write(fmt) || ! val.record_val.vals[i]->Write(fmt) )
++                    return false;
++            }
++
++            return true;
++        }
++
+         default: {
+             reporter->InternalWarning("unsupported type %s in Value::Write", type_name(type));
+             return false;
+--- a/src/logging/Manager.cc
++++ b/src/logging/Manager.cc
+@@ -1512,6 +1512,42 @@ threading::Value Manager::ValToLogVal(WriterInfo* info, const Stream* stream, s
+             break;
+         }
+ 
++        case TYPE_RECORD: {
++            auto* rec = val->AsRecord();
++            auto* rt = ty->AsRecordType();
++            auto num_fields = rt->NumFields();
++
++            lval.val.record_val.size = num_fields;
++            lval.val.record_val.fields = new threading::Field*[num_fields];
++            lval.val.record_val.vals = new threading::Value*[num_fields];
++
++            for ( int i = 0; i < num_fields; ++i ) {
++                const auto& field_type = rt->GetFieldType(i);
++                TypeTag subtype = TYPE_VOID;
++
++                if ( field_type->Tag() == TYPE_TABLE )
++                    subtype = field_type->AsTableType()->GetIndices()->GetPureType()->Tag();
++                else if ( field_type->Tag() == TYPE_VECTOR )
++                    subtype = field_type->AsVectorType()->Yield()->Tag();
++
++                bool optional = static_cast<bool>(rt->FieldDecl(i)->GetAttr(zeek::detail::ATTR_OPTIONAL));
++                lval.val.record_val.fields[i] =
++                    new threading::Field(rt->FieldName(i), nullptr, field_type->Tag(), subtype, optional);
++
++                const auto& field = rec->RawOptField(i);
++                if ( ! field.IsSet() ) {
++                    lval.val.record_val.vals[i] = new threading::Value(field_type->Tag(), false);
++                    continue;
++                }
++
++                std::optional<ZVal> member = *field;
++                lval.val.record_val.vals[i] =
++                    new threading::Value(ValToLogVal(info, stream, member, field_type.get()));
++            }
++
++            break;
++        }
++
+         default: reporter->InternalError("unsupported type %s for log_write", type_name(lval.type));
+     }
+ 
+--- a/src/threading/formatters/JSON.cc
++++ b/src/threading/formatters/JSON.cc
+@@ -222,6 +222,19 @@ void JSON::BuildJSON(zeek::json::detail::NullDoubleWriter& writer, Value* val,
+             break;
+         }
+ 
++        case TYPE_RECORD: {
++            writer.StartObject();
++
++            for ( zeek_int_t idx = 0; idx < val->val.record_val.size; ++idx ) {
++                auto* member = val->val.record_val.vals[idx];
++                if ( member->present || include_unset_fields )
++                    BuildJSON(writer, member, val->val.record_val.fields[idx]->name);
++            }
++
++            writer.EndObject();
++            break;
++        }
++
+         default: reporter->Warning("Unhandled type in JSON::BuildJSON"); break;
+     }
+ }
+--- a/src/logging/writers/ascii/Ascii.cc
++++ b/src/logging/writers/ascii/Ascii.cc
+@@ -414,6 +414,16 @@ bool Ascii::DoInit(const WriterInfo& info, int num_fields, const threading::Fie
+     if ( ! init_options )
+         return false;
+ 
++    if ( ! use_json ) {
++        for ( int i = 0; i < num_fields; ++i ) {
++            if ( fields[i]->type == TYPE_VECTOR && fields[i]->subtype == TYPE_RECORD ) {
++                Error(Fmt("ASCII/TSV output does not support vector[record] field '%s'; enable JSON output",
++                          fields[i]->name));
++                return false;
++            }
++        }
++    }
++
+     string path = info.path;
+ 
+     if ( output_to_stdout )
