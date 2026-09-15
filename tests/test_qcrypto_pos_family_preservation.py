@@ -27,6 +27,14 @@ EXPECTED_PROFILES = {
     "TEZOS",
     "APTOS",
     "SUI",
+    "POLYGON_POS",
+    "BNB_CHAIN",
+    "TRON",
+    "CELESTIA",
+    "FLOW",
+    "HEDERA",
+    "TON",
+    "MULTIVERSX",
 }
 
 
@@ -34,6 +42,7 @@ def test_major_pos_family_coverage_is_explicit() -> None:
     assert set(PROFILES) == EXPECTED_PROFILES
     assert all(profile.source_urls for profile in PROFILES.values())
     assert all("consensus_weight" in profile.protected_fields for profile in PROFILES.values())
+    assert all(profile.reviewed_pq_status for profile in PROFILES.values())
 
 
 @pytest.mark.parametrize("profile_id", sorted(EXPECTED_PROFILES))
