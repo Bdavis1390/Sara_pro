@@ -1,0 +1,170 @@
+name: WS PRIME-HW v0.5 Diverse State Integrity Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - '.github/workflows/ws-prime-hw-v0-5-diverse-state.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - '.github/workflows/ws-prime-hw-v0-5-diverse-state.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diverse-state-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record source and claims boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=RTL + YOSYS STRUCTURAL + BOUNDED FORMAL DUAL-STATE INTEGRITY EVIDENCE ONLY / NO PHYSICAL INDEPENDENCE OR SILICON FAULT QUALIFICATION"
+
+      - name: Install verification tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys z3
+          python3 --version
+          iverilog -V | head -n 2
+          yosys -V
+          z3 --version
+
+      - name: Exhaust complete dual-state acceptance and isolated-mutation space
+        run: |
+          mkdir -p build/prime_hw_v0_5
+          python3 hardware/prime_hw_v0_5/check_dual_state_mutations.py \
+            | tee build/prime_hw_v0_5/dual-state-static-audit.log
+          grep -q 'faults 32761 of 32768 encoded pairs' build/prime_hw_v0_5/dual-state-static-audit.log
+          grep -q '1785 primary + 889 shadow = 2674 cases' build/prime_hw_v0_5/dual-state-static-audit.log
+
+      - name: Run exhaustive isolated state-domain mutation campaign
+        run: |
+          set -o pipefail
+          iverilog -g2012 \
+            -s tb_prime_hw_v0_5_dual_state_faults \
+            -o build/prime_hw_v0_5/dual-state-faults.vvp \
+            hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+            hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv \
+            hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv \
+            hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv \
+            hardware/prime_hw_v0_5/tb_prime_hw_v0_5_dual_state_faults.sv \
+            2>&1 | tee build/prime_hw_v0_5/iverilog.log
+          vvp build/prime_hw_v0_5/dual-state-faults.vvp \
+            | tee build/prime_hw_v0_5/dual-state-faults.log
+          grep -q 'PASS: PRIME-HW v0.5 failed closed for 1785 primary + 889 shadow = 2674 isolated arbitrary state-domain mutations' \
+            build/prime_hw_v0_5/dual-state-faults.log
+
+      - name: Synthesize and audit distinct dual-state storage
+        run: |
+          yosys -Q -l build/prime_hw_v0_5/yosys-synthesis.log -p '
+            read_verilog -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv;
+            hierarchy -check -top prime_hw_policy_controller_diverse;
+            prep -top prime_hw_policy_controller_diverse -flatten;
+            check;
+            opt_clean;
+            stat;
+            write_json build/prime_hw_v0_5/prime_hw_v0_5.json;
+          '
+          test -s build/prime_hw_v0_5/prime_hw_v0_5.json
+          python3 hardware/prime_hw_v0_5/check_synthesized_dual_storage.py \
+            build/prime_hw_v0_5/prime_hw_v0_5.json \
+            | tee build/prime_hw_v0_5/dual-storage-structural-audit.log
+          grep -q '15 unique stored state bits' build/prime_hw_v0_5/dual-storage-structural-audit.log
+          grep -q 'all 15 state bits are driven by sequential cells' build/prime_hw_v0_5/dual-storage-structural-audit.log
+
+      - name: Build differential formal model
+        run: |
+          yosys -Q -l build/prime_hw_v0_5/yosys-formal.log -p '
+            read_verilog -formal -sv hardware/prime_hw_v0_1/prime_hw_policy_controller.sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse_formal.sv;
+            hierarchy -check -top prime_hw_policy_controller_diverse_formal;
+            prep -top prime_hw_policy_controller_diverse_formal;
+            check;
+            async2sync;
+            dffunmap;
+            write_smt2 -wires build/prime_hw_v0_5/prime_hw_v0_5_formal.smt2;
+          '
+          test -s build/prime_hw_v0_5/prime_hw_v0_5_formal.smt2
+
+      - name: Prove bounded safety nominal equivalence and complete guard contract
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 40 --presat \
+            --dump-vcd build/prime_hw_v0_5/proof-failure.vcd \
+            build/prime_hw_v0_5/prime_hw_v0_5_formal.smt2 \
+            | tee build/prime_hw_v0_5/proof.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_5/proof.log
+
+      - name: Prove formal reachability and fault-class witnesses
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 40 -c \
+            --dump-vcd build/prime_hw_v0_5/cover.vcd \
+            build/prime_hw_v0_5/prime_hw_v0_5_formal.smt2 \
+            | tee build/prime_hw_v0_5/cover.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_5/cover.log
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_5/cover.log)
+          echo "reached_cover_statements=$reached"
+          test "$reached" -eq 10
+
+      - name: Preserve v0.5 evidence custody
+        run: |
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_5/cover.log)
+          {
+            echo "tested_sha=$(git rev-parse HEAD)"
+            echo "primary_state_width=8"
+            echo "shadow_state_width=7"
+            echo "combined_encoded_pair_space=32768"
+            echo "accepted_exact_matched_pairs=7"
+            echo "faulted_nonmatched_pairs=32761"
+            echo "isolated_primary_mutations=1785"
+            echo "isolated_shadow_mutations=889"
+            echo "isolated_total_mutations=2674"
+            echo "synthesized_distinct_state_bits=15"
+            echo "formal_horizon=40"
+            echo "solver=z3"
+            echo "declared_cover_statements=10"
+            echo "reached_cover_statements=$reached"
+            echo "formal_reset_lowering=async2sync+dffunmap"
+            echo "nominal_reference=hardware/prime_hw_v0_1/prime_hw_policy_controller.sv"
+            echo "physical_independence_claim=NONE"
+            echo "simultaneous_dual_domain_fault_claim=NONE"
+            echo "claims_boundary=RTL + YOSYS STRUCTURAL + BOUNDED FORMAL DUAL-STATE INTEGRITY EVIDENCE ONLY / NO PHYSICAL INDEPENDENCE OR SILICON FAULT QUALIFICATION"
+            sha256sum \
+              hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
+              hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv \
+              hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse_formal.sv \
+              hardware/prime_hw_v0_5/tb_prime_hw_v0_5_dual_state_faults.sv \
+              hardware/prime_hw_v0_5/check_dual_state_mutations.py \
+              hardware/prime_hw_v0_5/check_synthesized_dual_storage.py \
+              build/prime_hw_v0_5/prime_hw_v0_5.json \
+              build/prime_hw_v0_5/prime_hw_v0_5_formal.smt2 \
+              build/prime_hw_v0_5/dual-state-static-audit.log \
+              build/prime_hw_v0_5/dual-state-faults.log \
+              build/prime_hw_v0_5/dual-storage-structural-audit.log \
+              build/prime_hw_v0_5/proof.log \
+              build/prime_hw_v0_5/cover.log
+          } > build/prime_hw_v0_5/evidence.txt
+
+      - name: Upload v0.5 diverse-state evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-prime-hw-v0-5-diverse-state-evidence
+          path: build/prime_hw_v0_5/
+          if-no-files-found: error
