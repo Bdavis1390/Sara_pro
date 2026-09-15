@@ -1,9 +1,13 @@
 # Worldshepherd QCRYPTO — Governed Evidence for Post-Quantum Migration Readiness
 
-**Document class:** PUBLIC TECHNICAL WHITE PAGE / NON-CONFIDENTIAL  
-**Publication state:** POSTABLE CANDIDATE — final GO requires the QCRYPTO White Page Publication Gate to pass on the publication revision.  
-**Claims state:** PROVEN INTERNALLY for the bounded software behavior described below.  
-**Validated implementation anchor:** `b65302d2e849dcad67b553378d3fce11b404f3c5`  
+**Document class:** PUBLIC TECHNICAL WHITE PAGE / NON-CONFIDENTIAL
+
+**Publication state:** POSTABLE CANDIDATE — final GO requires the QCRYPTO White Page Publication Gate to pass on the publication revision.
+
+**Claims state:** PROVEN INTERNALLY for the bounded software behavior described below.
+
+**Validated implementation anchor:** `b65302d2e849dcad67b553378d3fce11b404f3c5`
+
 **Evidence artifact digest:** `sha256:15dc39ef59a8bbe10e48f858f1bb42d34c9c35adb33045b9f7635201c5df698e`
 
 ## Why this exists
