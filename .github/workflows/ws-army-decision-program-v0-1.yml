@@ -1,0 +1,114 @@
+name: WS Army Decision Program v0.1 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/decision_program.py'
+      - 'deployments/sara_verified_local_v1/tests/test_decision_program.py'
+      - 'deployments/sara_verified_local_v1/fixtures/army_decision_program_demo_v1.json'
+      - 'deployments/sara_verified_local_v1/docs/WS_ARMY_DECISION_PROGRAM_V0_1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-army-decision-program-v0-1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/decision_program.py'
+      - 'deployments/sara_verified_local_v1/tests/test_decision_program.py'
+      - 'deployments/sara_verified_local_v1/fixtures/army_decision_program_demo_v1.json'
+      - 'deployments/sara_verified_local_v1/docs/WS_ARMY_DECISION_PROGRAM_V0_1.md'
+      - 'deployments/sara_verified_local_v1/pyproject.toml'
+      - '.github/workflows/ws-army-decision-program-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  decision-program:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record tested source
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=SIMULATED_ONLY / INTERNAL SOFTWARE DEMONSTRATOR"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package and tests
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile decision-program module
+        run: python -m compileall -q worldshepherd_sara/decision_program.py
+
+      - name: Run bounded decision-program tests
+        run: python -m pytest tests/test_decision_program.py -q
+
+      - name: Execute two-epoch synthetic decision program
+        run: |
+          python - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          from worldshepherd_sara.decision_program import DecisionEpoch, DecisionSpec, refresh_decision_program
+
+          fixture = json.loads(Path('fixtures/army_decision_program_demo_v1.json').read_text())
+          spec = DecisionSpec.model_validate(fixture['spec'])
+          epochs = [DecisionEpoch.model_validate(item) for item in fixture['epochs']]
+          history = refresh_decision_program(spec, epochs)
+          expected = fixture['expected']
+
+          assert len(history.packages) == expected['history_length']
+          assert history.packages[0].recommended_option_id == expected['epoch_1_recommendation']
+          assert history.packages[1].recommended_option_id == expected['epoch_2_recommendation']
+          assert history.packages[1].parent_package_hash == history.packages[0].package_hash
+          assert all(package.human_signoff is False for package in history.packages)
+
+          evidence = {
+              'tested_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+              'claims_boundary': fixture['claims_boundary'],
+              'expected': expected,
+              'decision_history': history.model_dump(mode='json'),
+          }
+          Path('ws_army_decision_program_evidence.json').write_text(
+              json.dumps(evidence, indent=2, sort_keys=True) + '\n'
+          )
+          PY
+
+      - name: Verify emitted evidence custody
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = json.loads(Path('ws_army_decision_program_evidence.json').read_text())
+          packages = evidence['decision_history']['packages']
+          assert len(packages) == 2
+          assert packages[1]['parent_package_hash'] == packages[0]['package_hash']
+          assert packages[0]['spec_hash'] == packages[1]['spec_hash']
+          assert packages[0]['evidence_hash'] != packages[1]['evidence_hash']
+          assert all(package['claims_boundary'].startswith('SIMULATED_ONLY') for package in packages)
+          assert all(package['human_signoff'] is False for package in packages)
+          PY
+
+      - name: Upload decision-program evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-army-decision-program-v0-1-evidence
+          path: deployments/sara_verified_local_v1/ws_army_decision_program_evidence.json
+          if-no-files-found: error
