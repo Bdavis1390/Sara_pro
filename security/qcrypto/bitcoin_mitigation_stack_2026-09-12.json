@@ -1,0 +1,57 @@
+{
+  "schema": "WS-QCRYPTO-BITCOIN-MITIGATION-STACK-v2",
+  "as_of": "2026-09-13",
+  "claims_boundary": "Bitcoin post-quantum work now includes a consensus-compatible mainnet proof-of-concept (QSB) plus protocol-level research on SHRINCS, DropKick, and BIP-361. These are different maturity planes. QSB does not make Bitcoin quantum-safe, and draft protocol work is not consensus-active.",
+  "components": [
+    {
+      "name": "QSB",
+      "role": "consensus-compatible opt-in mainnet proof",
+      "status": "Mainnet proof-of-concept",
+      "mainnet_confirmed": true,
+      "consensus_change_required": false,
+      "standard_relay": false,
+      "production_wallet_support": false,
+      "network_wide_migration_path": false,
+      "classification": "CONSENSUS_COMPATIBLE_MAINNET_PROOF",
+      "source": "https://starkware.co/blog/the-first-quantum-safe-bitcoin-transaction-has-been-mined/"
+    },
+    {
+      "name": "SHRINCS",
+      "role": "pq_authorization",
+      "status": "Draft",
+      "reference_implementation": true,
+      "consensus_activated": false,
+      "source": "https://github.com/SHRINCS/shrincs-bip/blob/main/SHRINCS.md"
+    },
+    {
+      "name": "libshrincs WOTS+C",
+      "role": "verified_component_support",
+      "status": "Proof-of-concept verified component",
+      "machine_checked_component_proof": true,
+      "full_shrincs_proof": false,
+      "source": "https://github.com/remix7531/libshrincs"
+    },
+    {
+      "name": "DropKick",
+      "role": "legacy_rescue",
+      "status": "Proposal",
+      "requires_pq_authorization": true,
+      "consensus_activated": false,
+      "source": "https://conduition.io/bitcoin/dropkick/"
+    },
+    {
+      "name": "BIP-361",
+      "role": "legacy_signature_sunset",
+      "status": "Draft",
+      "requires_pq_authorization": true,
+      "consensus_activated": false,
+      "source": "https://github.com/bitcoin/bips/blob/master/bip-0361.mediawiki"
+    }
+  ],
+  "current_assessment": {
+    "qsb": "Demonstrates an opt-in prepositioning path on Bitcoin mainnet using existing consensus rules, but requires nonstandard handling and does not cover already-exposed keys or network-wide migration.",
+    "protocol_stack": "SHRINCS + DropKick + BIP-361 remain a dependency-complete research stack, not deployed protocol protection.",
+    "proof_maturity": "libshrincs materially improves implementation-assurance evidence for the WOTS+C component, but it is explicitly a proof-of-concept component toward full SHRINCS and must not be reported as a complete proof of the full signature scheme.",
+    "priority": "Integrate QSB into contingency planning while accelerating protocol-level PQ authorization, independent review, wallet interoperability, relay policy, rescue, and sunset engineering."
+  }
+}
