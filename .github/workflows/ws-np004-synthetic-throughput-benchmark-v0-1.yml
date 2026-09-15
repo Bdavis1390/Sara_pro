@@ -1,0 +1,81 @@
+name: WS NP004 Synthetic Throughput Benchmark v0.1
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/apnt_benchmark.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NP004_SYNTHETIC_THROUGHPUT_BENCHMARK_V0_1.md'
+      - '.github/workflows/ws-np004-synthetic-throughput-benchmark-v0-1.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/apnt_benchmark.py'
+      - 'deployments/sara_verified_local_v1/docs/WS_NP004_SYNTHETIC_THROUGHPUT_BENCHMARK_V0_1.md'
+      - '.github/workflows/ws-np004-synthetic-throughput-benchmark-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  synthetic-throughput-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile benchmark
+        run: python -m compileall -q worldshepherd_sara/apnt_benchmark.py
+
+      - name: Run benchmark on exact checked-out head
+        run: |
+          TESTED_SHA="$(git rev-parse HEAD)"
+          echo "tested_sha=${TESTED_SHA}"
+          GITHUB_SHA="${TESTED_SHA}" python -m worldshepherd_sara.apnt_benchmark --duration 30 --output ws_np004_synthetic_throughput_benchmark_v0_1.json
+
+      - name: Validate artifact custody
+        run: |
+          export TESTED_SHA="$(git rev-parse HEAD)"
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path('ws_np004_synthetic_throughput_benchmark_v0_1.json')
+          data = json.loads(path.read_text())
+          assert data['environment']['github_sha'] == os.environ['TESTED_SHA']
+          assert data['profile']['source_counts'] == [3, 5, 8]
+          assert data['profile']['update_rates_hz'] == [1, 5, 10]
+          assert data['profile']['duration_s'] == 30
+          assert data['profile']['case_count'] == 9
+          assert data['profile']['total_synthetic_events'] == 7680
+          assert data['summary']['all_traces_complete'] is True
+          assert data['summary']['any_execution_attempted'] is False
+          assert 'NOT END-TO-END LATENCY COMPLIANCE' in data['claims_boundary']
+          assert data['result_digest'].startswith('sha256:')
+          print(json.dumps({'tested_sha': data['environment']['github_sha'], **data['summary']}, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-np004-synthetic-throughput-benchmark-v0-1
+          path: deployments/sara_verified_local_v1/ws_np004_synthetic_throughput_benchmark_v0_1.json
+          if-no-files-found: error
