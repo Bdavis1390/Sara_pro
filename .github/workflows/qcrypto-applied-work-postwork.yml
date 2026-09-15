@@ -4,16 +4,20 @@ on:
   pull_request:
     paths:
       - "security/qcrypto/applied_work_postwork.py"
+      - "security/qcrypto/applied_work_pos_application.py"
       - "scripts/qcrypto_applied_work_postwork_evidence.py"
       - "tests/test_qcrypto_applied_work_postwork.py"
+      - "tests/test_qcrypto_applied_work_pos_application.py"
       - ".github/workflows/qcrypto-applied-work-postwork.yml"
   push:
     branches:
       - worldshepherd-qcrypto-width-time-risk-v1
     paths:
       - "security/qcrypto/applied_work_postwork.py"
+      - "security/qcrypto/applied_work_pos_application.py"
       - "scripts/qcrypto_applied_work_postwork_evidence.py"
       - "tests/test_qcrypto_applied_work_postwork.py"
+      - "tests/test_qcrypto_applied_work_pos_application.py"
       - ".github/workflows/qcrypto-applied-work-postwork.yml"
 
 permissions:
@@ -34,13 +38,20 @@ jobs:
       - name: Install test dependency
         run: python -m pip install --disable-pip-version-check pytest
 
-      - name: Compile post-work model
-        run: python -m compileall security/qcrypto/applied_work_postwork.py scripts/qcrypto_applied_work_postwork_evidence.py
+      - name: Compile post-work application model
+        run: |
+          python -m compileall \
+            security/qcrypto/applied_work_postwork.py \
+            security/qcrypto/applied_work_pos_application.py \
+            scripts/qcrypto_applied_work_postwork_evidence.py
 
-      - name: Run post-work regressions
+      - name: Run post-work and PoS-application regressions
         env:
           PYTHONPATH: .
-        run: pytest -q tests/test_qcrypto_applied_work_postwork.py
+        run: |
+          pytest -q \
+            tests/test_qcrypto_applied_work_postwork.py \
+            tests/test_qcrypto_applied_work_pos_application.py
 
       - name: Generate machine-readable proof evidence
         env:
@@ -70,6 +81,47 @@ jobs:
           assert actual == expected
           print("post_work_status: PASS")
           print("evidence_sha256:", expected)
+          PY
+
+      - name: Assert all reviewed PoS families remain reference adapters only
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          from security.qcrypto.applied_work_postwork import AppliedWorkReceipt, WorkValidationState, apply_post_work_stake
+          from security.qcrypto.applied_work_pos_application import instantiate_validator_application, project_to_all_families
+          from security.qcrypto.pos_family_preservation import PROFILES
+
+          receipt = AppliedWorkReceipt(
+              work_id="ci-work",
+              contributor_id="ci-contributor",
+              evidence_digest="ab" * 32,
+              validated_work_units=100,
+              validation_state=WorkValidationState.PROVEN_INTERNALLY,
+              evidence_retained=True,
+              reproducible=True,
+              safety_authorized=True,
+              measurement_accessible=True,
+          )
+          position = apply_post_work_stake(
+              receipt,
+              consensus_domain="WS-QPOS",
+              epoch=1,
+              requested_stake_units=75,
+          )
+          application = instantiate_validator_application(
+              receipt,
+              position,
+              validator_id="ci-validator",
+              withdrawal_owner="ci-owner",
+              classical_credential="ci-classical",
+          )
+          projections = project_to_all_families(application)
+          assert set(projections) == set(PROFILES)
+          assert len(projections) == 19
+          assert all(p.application_mode == "WORLDSHEPHERD_REFERENCE_ADAPTER_ONLY" for p in projections.values())
+          assert all(p.production_network_adoption_claimed is False for p in projections.values())
+          print("reference_profile_count:", len(projections))
           PY
 
       - name: Upload Applied Work post-work artifact
