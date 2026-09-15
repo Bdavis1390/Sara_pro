@@ -1,0 +1,222 @@
+# Worldshepherd Astra Integration
+
+Status: IMPLEMENTATION PROFILE — not production authorization
+Date: 2026-09-04
+Owner/authority: CRE1AWS
+Orchestrator: SARA
+
+## Verification correction
+
+`Astra` is the Worldshepherd solver profile/codename. It is **not** treated as an OpenAI model identifier.
+
+As verified against OpenAI's official model catalog on 2026-09-04, the documented flagship model for complex reasoning and coding is `gpt-5.6-sol`. No official `gpt-6-astra` model identifier was found. The earlier draft assumption that `gpt-6-astra` was a released model is therefore retracted and must not be used for runtime configuration or capability claims.
+
+Runtime model selection is intentionally separated from the Astra profile so the provider model can be changed only to a verified, available model identifier.
+
+Official model catalog: https://platform.openai.com/docs/models
+
+## Purpose
+
+Use Astra as a bounded high-capability solver profile for Worldshepherd while preserving SARA as the policy, authorization, provenance, and execution authority.
+
+Astra is not granted independent authority to perform network writes, external communications, procurement, deployment, security testing against third-party systems, or physical-control actions.
+
+## Current implementation
+
+The initial implementation lives in:
+
+- `deployments/sara_verified_local_v1/worldshepherd_sara/astra_solver.py`
+- `deployments/sara_verified_local_v1/tests/test_astra_solver.py`
+- `deployments/sara_verified_local_v1/policy/astra_solver_profile.json`
+
+Implemented controls:
+
+- default runtime model: `gpt-5.6-sol`
+- default mode: `SOLVER_READ_ONLY`
+- network inference disabled by default
+- no provider network client embedded in the adapter
+- explicit transport injection required for any model call
+- explicit SARA inference authorization required
+- model-id authorization enforced
+- tool allowlist enforced and empty by default
+- remote response storage disabled by default
+- canonical SHA-256 input/output provenance digests
+- Worldshepherd claims-control labels preserved in the result record
+
+## Role separation
+
+- **SARA**: authoritative workflow/orchestration layer; enforces authorization, claims-control, evidence capture, rollback, and operator approval.
+- **Astra profile**: solver/research/review role; produces analyses, candidate designs, code, test plans, simulations, counterexamples, and evidence requests.
+- **Runtime model**: provider model selected from an independently verified model catalog. Initial verified default: `gpt-5.6-sol`.
+- **ECHO SENTINEL LINK**: provenance/telemetry record for Astra requests, outputs, tool use, evidence references, configuration, and disposition.
+- **PRIME SENTINEL**: policy gate for requested actions and tool access.
+- **OVERWATCH**: monitors performance, anomalies, drift, task duration, resource use, and policy events.
+- **CRE1AWS**: final authority for consequential external action.
+
+## Priority Worldshepherd uses
+
+1. **Scientific and engineering solver**
+   - multiphysics model decomposition
+   - materials design and inverse design
+   - metasurface/RF control synthesis
+   - numerical verification and symbolic checks
+   - experiment and coupon-test design
+   - uncertainty quantification and disconfirming-evidence search
+
+2. **Software engineering and verification**
+   - repository-scale code review
+   - test generation
+   - architecture refactoring proposals
+   - CI failure diagnosis
+   - SBOM/provenance validation plans
+   - secure configuration review
+
+3. **Predictive Requirements Engine (PRE)**
+   - requirement extraction and recurrence analysis
+   - requirement-delta generation
+   - gap-to-demo planning
+   - partner-capability matching
+   - evidence-package planning
+   - bid-readiness red-team review
+
+4. **Opportunity intelligence**
+   - solicitation decomposition
+   - compliance matrices
+   - technical-volume review
+   - partner-vs-prime analysis
+   - contradiction and eligibility checks
+   - probability calibration support
+
+5. **Claims control / adversarial review**
+   - attempt to falsify technical claims
+   - distinguish literature support, simulation, implementation, and physical validation
+   - flag unsupported extrapolation
+   - identify missing measurements, standards, certifications, and legal review
+
+## Default execution policy
+
+Astra starts in `SOLVER_READ_ONLY` mode.
+
+Allowed by default:
+- read authorized local/project inputs
+- reason over evidence
+- generate candidate artifacts
+- generate code patches for review
+- propose simulations and test plans
+- produce structured provenance and confidence records
+
+Disallowed by default:
+- network inference unless separately enabled and authorized
+- model/tool calls outside the configured allowlist
+- network writes to external systems
+- sending email/messages
+- creating external accounts
+- publishing
+- purchases or financial transactions
+- third-party security probing/exploitation
+- changing production infrastructure
+- changing physical-control parameters on live hardware
+- bypassing SARA/PRIME authorization
+
+Any expansion beyond read-only requires an explicit SARA authorization record bounded to the named model/tool/resource/action.
+
+## Cybersecurity handling
+
+No special cybersecurity capability is inferred from the Astra profile name.
+
+Permitted baseline:
+- defensive review of Worldshepherd-owned code and configuration
+- static analysis
+- threat modeling
+- patch recommendations
+- lab-only tests against explicitly owned/authorized targets
+
+Never inferred from general project authority:
+- exploitation of third-party systems
+- credential acquisition
+- persistence/evasion
+- autonomous scanning outside the authorized lab boundary
+
+## Evidence contract
+
+Every Astra task/result record should include:
+
+- task_id
+- timestamp_utc
+- requester/authority
+- profile_id
+- provider
+- verified runtime model id
+- mode
+- input/evidence references
+- allowed/requested tools
+- authorization id
+- input/output digests
+- claims-control labels
+- uncertainty/confidence notes
+- disconfirming evidence
+- human disposition
+- follow-on action
+
+## Claims-control rules
+
+Astra output does **not** upgrade maturity by itself.
+
+Use existing Worldshepherd labels, including:
+- PROVEN INTERNALLY
+- IMPLEMENTED IN SOFTWARE
+- SUPPORTED BY LITERATURE
+- SIMULATED ONLY
+- HYPOTHESIS
+- SPECULATIVE EXTENSION
+- REQUIRES LAB VALIDATION
+- REQUIRES PARTNER VALIDATION
+- REQUIRES LEGAL REVIEW
+- NOT CURRENTLY CLAIMED
+
+Astra may recommend an upgrade; only evidence and the existing approval workflow may perform one.
+
+## Routing policy
+
+Route a task to the Astra profile when one or more of these conditions hold:
+- long-horizon/multistep reasoning is the bottleneck
+- repository-scale code understanding is required
+- deep scientific/mathematical reasoning is required
+- a result needs adversarial falsification before promotion
+- PRE/opportunity analysis spans many interdependent requirements
+- a complex tool workflow benefits from persistent context
+
+Do not route routine low-risk work to Astra merely because the profile exists.
+
+## First application lanes
+
+### A. Programmable metasurface control
+Use Astra to derive and test constrained control laws across RF/material/thermal states, generate null-steering and beamforming test cases, and search for instability/energy-accounting failures before hardware promotion.
+
+### B. WS-AlTi meta-alloy
+Use Astra for inverse-design studies, phase/precipitate hypothesis generation, DED process-window optimization, sensitivity studies, coupon-matrix reduction, and falsification of claimed advantages before valuation upgrades.
+
+### C. SARA/PRE
+Use Astra to produce requirement-delta records, evidence matrices, partner gaps, and readiness-horizon actions while preserving source provenance and distinction between confirmed demand, emerging demand, and Worldshepherd forecast.
+
+### D. Repository assurance
+Use Astra to review SARA changes, generate tests, and identify contradictions between implementation, docs, CI, and claimed readiness.
+
+## Promotion gates
+
+Astra integration is not operationally complete until:
+
+1. target runtime model access is verified for the selected account;
+2. credentials are stored outside the repository;
+3. provider transport is implemented and separately reviewed;
+4. request/response provenance is persisted through the designated evidence path;
+5. read-only tests pass;
+6. timeout/cancellation behavior is verified;
+7. tool allow-list enforcement is verified;
+8. claims-control tagging is verified;
+9. cyber-specific boundary tests pass;
+10. CRE1AWS approves any network-enabled or elevated mode.
+
+## Non-negotiable architectural principle
+
+**Astra proposes and solves; SARA authorizes and records; CRE1AWS controls consequential action.**
