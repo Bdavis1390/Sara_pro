@@ -1,0 +1,18 @@
+{
+  "claim_id": "WS-CLM-001",
+  "statement": "The test article produced a repeatable force within the declared EHD validity domain.",
+  "claim_class": "ENGINEERING_CONCLUSION",
+  "evidence_classes": ["MEASURED", "CALCULATED"],
+  "supporting_record_ids": ["WS-EXP-20260817-001"],
+  "contradicting_record_ids": [],
+  "validity_domain": {
+    "environment": "ambient-air",
+    "configuration": "ITX01-EAD-TILE-001"
+  },
+  "uncertainty_ref": "UF-001",
+  "replication_ids": [],
+  "confidence_status": "PRELIMINARY",
+  "promotion_gate": "ITX01-GATE-REPLICATION",
+  "review_state": "DRAFT",
+  "notes": "Example fixture only; not a real experimental result."
+}
