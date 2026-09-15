@@ -9,6 +9,7 @@ on:
       - 'tests/test_baros_dicom_rt.py'
       - 'tests/test_baros_dvh.py'
       - 'tests/test_baros_gamma_analysis.py'
+      - 'tests/test_baros_robustness.py'
       - 'docs/baros/**'
       - '.github/workflows/baros-g1.yml'
   push:
@@ -19,6 +20,7 @@ on:
       - 'tests/test_baros_dicom_rt.py'
       - 'tests/test_baros_dvh.py'
       - 'tests/test_baros_gamma_analysis.py'
+      - 'tests/test_baros_robustness.py'
       - 'docs/baros/**'
       - '.github/workflows/baros-g1.yml'
 
@@ -45,6 +47,7 @@ jobs:
           tests/test_baros_dicom_rt.py
           tests/test_baros_dvh.py
           tests/test_baros_gamma_analysis.py
+          tests/test_baros_robustness.py
       - name: Generate exact-run synthetic evidence bundle
         run: PYTHONPATH=. python -m baros.cli --commit-sha "$GITHUB_SHA" --output baros-evidence.json > baros-evidence.stdout.json
       - name: Assert evidence remains non-clinical and passing
@@ -68,6 +71,7 @@ jobs:
 
 # Passing this workflow proves only the bounded research-software behaviors
 # actually exercised here. Synthetic DICOM round trips, numerical DVH metrics,
-# and independent-library gamma comparisons are not DICOM conformance
-# certification, TPS interoperability, physical-dose validation, clinical
-# validation, regulatory authorization, or permission for patient use.
+# independent-library gamma comparisons, and explicit robustness scenarios are
+# not DICOM conformance certification, TPS interoperability, physical-dose
+# validation, clinical validation, regulatory authorization, or permission for
+# patient use.
