@@ -1,0 +1,48 @@
+name: Proof of Ownership Gate
+
+on:
+  pull_request:
+    paths:
+      - "security/ownership/**"
+      - "tests/test_poo.py"
+      - "docs/WS_PROOF_OF_OWNERSHIP_V1.md"
+      - ".github/workflows/poo-gate.yml"
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - "security/ownership/**"
+      - "tests/test_poo.py"
+      - "docs/WS_PROOF_OF_OWNERSHIP_V1.md"
+      - ".github/workflows/poo-gate.yml"
+
+jobs:
+  poo-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile ownership package
+        run: python -m compileall -q security/ownership
+      - name: Run PoO regression tests
+        run: pytest -q tests/test_poo.py
+      - name: Enforce claims boundaries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path("docs/WS_PROOF_OF_OWNERSHIP_V1.md").read_text(encoding="utf-8")
+          required = [
+              "PoW and PoS strengthen the claim but do not create ownership by themselves.",
+              "legal_title_established = false",
+              "Worldshepherd must not autonomously confiscate value",
+              "a claimant with more compute cannot mine ownership into existence",
+          ]
+          missing = [item for item in required if item not in text]
+          if missing:
+              raise SystemExit(f"missing claims-boundary text: {missing}")
+          print("PoO claims boundary: PASS")
+          PY
