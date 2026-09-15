@@ -13,9 +13,10 @@ This repository contains the working SARA reference implementation plus broader 
 1. [`docs/review/LINUS_TECHNICAL_REVIEW.md`](docs/review/LINUS_TECHNICAL_REVIEW.md) — the criticism we are asking for.
 2. [`docs/review/ARCHITECTURE_AND_THREAT_MODEL.md`](docs/review/ARCHITECTURE_AND_THREAT_MODEL.md) — trust boundaries, assets, failure modes, and non-goals.
 3. [`docs/review/REPRODUCIBILITY.md`](docs/review/REPRODUCIBILITY.md) — a clean-room review path.
-4. [`docs/review/CLAIMS_BOUNDARY.md`](docs/review/CLAIMS_BOUNDARY.md) — what the repository does and does not establish.
-5. [`deployments/sara_verified_local_v1/`](deployments/sara_verified_local_v1/) — the reviewable implementation.
-6. [`deployments/sara_verified_local_v1/SECURITY.md`](deployments/sara_verified_local_v1/SECURITY.md) — the supported security boundary.
+4. [`docs/review/SECURITY_REVIEW_LOG.md`](docs/review/SECURITY_REVIEW_LOG.md) — flaws found before outreach, fixes, and residual limits.
+5. [`docs/review/CLAIMS_BOUNDARY.md`](docs/review/CLAIMS_BOUNDARY.md) — what the repository does and does not establish.
+6. [`deployments/sara_verified_local_v1/`](deployments/sara_verified_local_v1/) — the reviewable implementation.
+7. [`deployments/sara_verified_local_v1/SECURITY.md`](deployments/sara_verified_local_v1/SECURITY.md) — the supported security boundary.
 
 ## 60-second architecture
 
@@ -52,6 +53,8 @@ The local reference service currently provides:
 - protected registry namespaces that cannot be mutated through the generic registry patch endpoint;
 - application-appended JSONL audit records with explicit acknowledgement that they are **not immutable or tamper-proof**;
 - an optional PRIME SENTINEL signing boundary in which SARA verifies signed Ed25519 authorization assertions and does not receive the signer private key;
+- exact signing-key fingerprint continuity checks for recorded PRIME authorizations;
+- a deliberately single-writer local persistence boundary: one SARA writer process per writable SARA data volume;
 - package tests, API tests, policy tests, qualification tests, adversarial/gap tests, and deployment verification under `deployments/sara_verified_local_v1/tests/`;
 - CI paths for dependency resolution evidence, SBOM generation, vulnerability-advisory evidence, human-review triage evidence, claims-controlled qualification output, Docker Compose validation, backup/restore exercise, and observable release identity.
 
@@ -88,9 +91,10 @@ Please try to break these assumptions:
 
 - role separation cannot be bypassed through the HTTP/API surface;
 - protected state cannot be mutated through an unintended generic path;
-- authorization assertions cannot be replayed or confused across identities/environments;
+- authorization assertions cannot be replayed or confused across identities/environments or across signing-key replacements;
 - evidence artifacts make their assurance limits obvious instead of implying certification;
 - the system fails closed when required authorization or durable state is unavailable;
+- the supported single-writer storage topology is represented accurately;
 - the number of abstractions is justified by real isolation or evidence value.
 
 If a simpler design provides the same security properties, that is a successful review result.
