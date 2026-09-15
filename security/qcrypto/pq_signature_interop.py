@@ -20,10 +20,12 @@ import json
 from typing import Any
 
 from security.qcrypto.pos_family_preservation import PROFILES
+from security.qcrypto.pos_pq_benchmarks import BENCHMARKS
 
 
 SCHEMES: dict[str, str] = {
     "ML-DSA-65": "pqcrypto.sign.ml_dsa_65",
+    "ML-DSA-87": "pqcrypto.sign.ml_dsa_87",
     "SLH-DSA-SHA2-128s": "pqcrypto.sign.slh_dsa_sha2_128s",
 }
 
@@ -159,8 +161,28 @@ def family_envelope(profile_id: str) -> ValidatorAuthorizationEnvelope:
     )
 
 
+def benchmark_envelope(benchmark_id: str) -> ValidatorAuthorizationEnvelope:
+    try:
+        benchmark = BENCHMARKS[benchmark_id]
+    except KeyError as exc:
+        raise ValueError(f"unknown PQ PoS benchmark: {benchmark_id}") from exc
+
+    return ValidatorAuthorizationEnvelope(
+        validator_id=f"{benchmark_id.lower()}-benchmark-validator",
+        chain_family=benchmark_id,
+        migration_epoch=1,
+        purpose="EXTERNAL_PQ_POS_BENCHMARK_INTEROP_TEST_ONLY",
+        economic_state_digest=sha256(
+            f"{benchmark.network}|{benchmark.consensus_family}|{benchmark.environment}".encode()
+        ).hexdigest(),
+        previous_credential_fingerprint=sha256(
+            benchmark.validator_signature_profile.encode()
+        ).hexdigest(),
+    )
+
+
 def run_all_interop_probes() -> tuple[InteropResult, ...]:
-    """Retain the two-scheme generic baseline used by the original WS-QPOS-2 gate."""
+    """Run the generic baseline for every standardized profile used by WS-QPOS-2."""
 
     envelope = generic_envelope()
     results = tuple(run_interop_probe(scheme, envelope) for scheme in SCHEMES)
@@ -170,7 +192,7 @@ def run_all_interop_probes() -> tuple[InteropResult, ...]:
 
 
 def run_family_interop_probes() -> tuple[InteropResult, ...]:
-    """Bind both standardized PQ profiles to every reviewed PoS migration envelope."""
+    """Bind every supported PQ signature profile to each reviewed PoS target envelope."""
 
     results: list[InteropResult] = []
     for profile_id in PROFILES:
@@ -179,4 +201,17 @@ def run_family_interop_probes() -> tuple[InteropResult, ...]:
             result = run_interop_probe(scheme, envelope)
             _assert_result(result)
             results.append(result)
+    return tuple(results)
+
+
+def run_benchmark_interop_probes() -> tuple[InteropResult, ...]:
+    """Reproduce the signature family documented by each external PQ-PoS benchmark."""
+
+    results: list[InteropResult] = []
+    for benchmark_id in BENCHMARKS:
+        envelope = benchmark_envelope(benchmark_id)
+        # QRL 2.0's current validator benchmark is ML-DSA-87 specifically.
+        result = run_interop_probe("ML-DSA-87", envelope)
+        _assert_result(result)
+        results.append(result)
     return tuple(results)
