@@ -18,13 +18,15 @@ def make_package(tmp_path: Path) -> Path:
     root = tmp_path / "package"
     root.mkdir()
     (root / "pyproject.toml").write_text(
-        """[project]\n"
-        "name = \"example-sara\"\n"
-        "version = \"1.2.3\"\n"
-        "requires-python = \">=3.11\"\n"
-        "dependencies = [\"pydantic>=2\"]\n"
-        "[project.optional-dependencies]\n"
-        "test = [\"pytest>=8\"]\n""",
+        (
+            "[project]\n"
+            "name = \"example-sara\"\n"
+            "version = \"1.2.3\"\n"
+            "requires-python = \">=3.11\"\n"
+            "dependencies = [\"pydantic>=2\"]\n"
+            "[project.optional-dependencies]\n"
+            "test = [\"pytest>=8\"]\n"
+        ),
         encoding="utf-8",
     )
     (root / "module.py").write_text("x = 1\nprint(x)\n", encoding="utf-8")
