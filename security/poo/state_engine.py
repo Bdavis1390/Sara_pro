@@ -14,7 +14,7 @@ import json
 from typing import Dict, Iterable, List, Optional
 
 from security.poo.coc_guard import COCEvidence, evaluate_coc
-from security.poo.lineage_guard import LineageDecision, LineageNode, evaluate_lineage
+from security.poo.lineage_guard import LineageNode, evaluate_lineage
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
 from security.poo.recovery_guard import (
     RecoveryEvidence,
@@ -28,6 +28,7 @@ from security.poo.transfer_guard import (
 )
 
 STATE_SCHEMA = "WS-POO-TECHNICAL-STATE-V1"
+STATE_LINEAGE_SCHEMA = "WS-POO-STATE-LINEAGE-V1"
 
 
 @dataclass(frozen=True)
@@ -65,8 +66,36 @@ class StateTransitionDecision:
     claims_boundary: Dict[str, bool]
 
 
+@dataclass(frozen=True)
+class StateLineageDecision:
+    schema: str
+    status: str
+    lineage_valid: bool
+    poo_lineage_valid: bool
+    coc_lineage_valid: bool
+    generation_valid: bool
+    fork_detected: bool
+    cycle_detected: bool
+    active_tip_digest: Optional[str]
+    issues: List[str]
+    digest: str
+    legal_title_established: bool
+    claims_boundary: Dict[str, bool]
+
+
 def state_digest(state: TechnicalOwnershipState) -> str:
     raw = json.dumps(asdict(state), sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return sha256(raw).hexdigest()
+
+
+def state_lineage_digest(states: Iterable[TechnicalOwnershipState]) -> str:
+    canonical = [asdict(state) for state in states]
+    canonical.sort(key=lambda item: (int(item["generation"]), str(item["active_poo_digest"])))
+    raw = json.dumps(
+        {"schema": STATE_LINEAGE_SCHEMA, "states": canonical},
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
     return sha256(raw).hexdigest()
 
 
@@ -244,10 +273,15 @@ def _transition_decision(
     candidate: Optional[TechnicalOwnershipState],
 ) -> StateTransitionDecision:
     ready = not reasons and candidate is not None
+    ready_status = (
+        "TECHNICAL_STATE_BOOTSTRAP_READY"
+        if operation == "BOOTSTRAP"
+        else "TECHNICAL_STATE_SUPERSESSION_READY"
+    )
     return StateTransitionDecision(
         schema=STATE_SCHEMA,
         operation=operation,
-        status="TECHNICAL_STATE_SUPERSESSION_READY" if ready else "TECHNICAL_STATE_TRANSITION_BLOCKED",
+        status=ready_status if ready else "TECHNICAL_STATE_TRANSITION_BLOCKED",
         ready=ready,
         reasons=list(reasons),
         current_state_digest=state_digest(current) if current is not None else None,
@@ -261,8 +295,10 @@ def _transition_decision(
     )
 
 
-def evaluate_state_lineage(states: Iterable[TechnicalOwnershipState]) -> LineageDecision:
+def evaluate_state_lineage(states: Iterable[TechnicalOwnershipState]) -> StateLineageDecision:
     records = list(states)
+    issues: list[str] = []
+
     poo_children = {state.previous_poo_digest for state in records if state.previous_poo_digest}
     nodes = [
         LineageNode(
@@ -277,25 +313,59 @@ def evaluate_state_lineage(states: Iterable[TechnicalOwnershipState]) -> Lineage
         )
         for state in records
     ]
-    decision = evaluate_lineage(nodes)
-    if not decision.lineage_valid:
-        return decision
+    poo_decision = evaluate_lineage(nodes)
+    if not poo_decision.lineage_valid:
+        issues.extend(f"PoO: {issue}" for issue in poo_decision.issues)
 
-    expected = list(range(len(records)))
-    actual = sorted(state.generation for state in records)
-    if actual != expected:
-        # Re-evaluate through a deliberately invalid synthetic node so the public
-        # decision remains fail-closed without inventing a second decision schema.
-        bad = list(nodes)
-        bad.append(
-            LineageNode(
-                poo_digest="__generation_gap__",
-                asset_id=records[0].asset_id if records else "",
-                claimant_id="__invalid__",
-                previous_poo_digest="__missing_generation_parent__",
-                event_type="RECOVERY",
-                technical_poo_valid=False,
+    by_poo = {state.active_poo_digest: state for state in records}
+    coc_digests = [state.active_coc_digest for state in records]
+    if len(set(coc_digests)) != len(coc_digests):
+        issues.append("COC: duplicate active COC digest")
+
+    coc_valid = True
+    for state in records:
+        if state.previous_poo_digest is None:
+            if state.previous_coc_digest is not None:
+                coc_valid = False
+                issues.append("COC: genesis technical state must have no previous COC")
+            continue
+        parent = by_poo.get(state.previous_poo_digest)
+        if parent is None:
+            coc_valid = False
+            issues.append(f"COC: predecessor PoO missing for generation {state.generation}")
+            continue
+        if state.previous_coc_digest != parent.active_coc_digest:
+            coc_valid = False
+            issues.append(
+                f"COC: predecessor mismatch at generation {state.generation}"
             )
-        )
-        return evaluate_lineage(bad)
-    return decision
+    if len(set(coc_digests)) != len(coc_digests):
+        coc_valid = False
+
+    actual_generations = sorted(state.generation for state in records)
+    expected_generations = list(range(len(records)))
+    generation_valid = actual_generations == expected_generations
+    if not generation_valid:
+        issues.append("state generations must be contiguous from zero")
+
+    schemas_valid = all(state.schema == STATE_SCHEMA for state in records)
+    if not schemas_valid:
+        issues.append("unsupported technical ownership state schema")
+
+    valid = poo_decision.lineage_valid and coc_valid and generation_valid and schemas_valid and not issues
+    active_tip = poo_decision.active_tip_digest if valid else None
+    return StateLineageDecision(
+        schema=STATE_LINEAGE_SCHEMA,
+        status="STATE_LINEAGE_INTERNALLY_CONSISTENT" if valid else "STATE_LINEAGE_REVIEW_REQUIRED",
+        lineage_valid=valid,
+        poo_lineage_valid=poo_decision.lineage_valid,
+        coc_lineage_valid=coc_valid,
+        generation_valid=generation_valid,
+        fork_detected=poo_decision.fork_detected,
+        cycle_detected=poo_decision.cycle_detected,
+        active_tip_digest=active_tip,
+        issues=issues,
+        digest=state_lineage_digest(records),
+        legal_title_established=False,
+        claims_boundary=_claims_boundary(),
+    )
