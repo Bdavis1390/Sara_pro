@@ -7,6 +7,9 @@ PoO composes independent predicates:
 - COC: Control/Custody verification over the asset-bound control surface
 - PoS: slashable/bonded economic commitment
 
+The semantic PoO claim commits the exact COC evidence digest. A boolean COC check is
+not sufficient by itself.
+
 This module produces a technical ownership attestation only. It never adjudicates
 legal title, regulatory status, or transfer validity by itself.
 """
@@ -19,7 +22,7 @@ import json
 from typing import Dict, List, Optional
 
 
-POO_SCHEMA = "WS-POO-V2"
+POO_SCHEMA = "WS-POO-V3"
 
 
 @dataclass(frozen=True)
@@ -30,6 +33,7 @@ class OwnershipEvidence:
     control_key_fingerprint: str
     work_reference: str
     concept_reference: str
+    coc_reference: str
     stake_reference: str
     issued_at: str
     expires_at: str
@@ -82,6 +86,7 @@ def canonical_claim_payload(evidence: OwnershipEvidence) -> Dict[str, object]:
         "control_key_fingerprint": evidence.control_key_fingerprint,
         "work_reference": evidence.work_reference,
         "concept_reference": evidence.concept_reference,
+        "coc_reference": evidence.coc_reference,
         "stake_reference": evidence.stake_reference,
         "issued_at": evidence.issued_at,
         "expires_at": evidence.expires_at,
@@ -99,12 +104,22 @@ def ownership_digest(evidence: OwnershipEvidence) -> str:
 
 
 def evaluate_ownership(evidence: OwnershipEvidence) -> OwnershipDecision:
-    """Evaluate a PoO claim with fail-closed AND semantics.
-
-    No weighted score is used. A wealthy or compute-rich claimant cannot compensate
-    for missing proof-of-concept, COC, provenance, freshness, or revocation checks.
-    """
+    """Evaluate a PoO claim with fail-closed AND semantics."""
     missing = [reason for field, reason in _REQUIRED.items() if not getattr(evidence, field)]
+    for field in (
+        "asset_id",
+        "claimant_id",
+        "title_reference",
+        "control_key_fingerprint",
+        "work_reference",
+        "concept_reference",
+        "coc_reference",
+        "stake_reference",
+        "issued_at",
+        "expires_at",
+    ):
+        if not getattr(evidence, field):
+            missing.append(f"{field} must be non-empty")
     valid = not missing
 
     status = "TECHNICAL_OWNERSHIP_ATTESTATION" if valid else "INSUFFICIENT_OWNERSHIP_EVIDENCE"
