@@ -4,9 +4,20 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 ARTIFACT_DIR="${1:-$HERE/artifacts}"
+mkdir -p "$ARTIFACT_DIR"
+ARTIFACT_DIR="$(cd "$ARTIFACT_DIR" && pwd)"
 BITCOIN_VERSION="${BITCOIN_VERSION:-31.1}"
 GETH_IMAGE="${GETH_IMAGE:-ethereum/client-go:v1.17.5}"
 LIGHTHOUSE_IMAGE="${LIGHTHOUSE_IMAGE:-sigp/lighthouse:v8.2.2}"
+
+# Official Hoodi execution-layer bootnodes from go-ethereum v1.17.5. Normal
+# discovery remains enabled; direct addPeer calls provide a TCP fallback for
+# hosted CI environments where UDP discovery may be constrained.
+GETH_HOODI_BOOTNODES=(
+  "enode://2112dd3839dd752813d4df7f40936f06829fc54c0e051a93967c26e5f5d27d99d886b57b4ffcc3c475e930ec9e79c56ef1dbb7d86ca5ee83a9d2ccf36e5c240c@134.209.138.84:30303"
+  "enode://60203fcb3524e07c5df60a14ae1c9c5b24023ea5d47463dfae051d2c9f3219f309657537576090ca0ae641f73d419f53d8e8000d7a464319d4784acd7d2abc41@209.38.124.160:30303"
+  "enode://8ae4a48101b2299597341263da0deb47cc38aa4d3ef4b7430b897d49bfa10eb1ccfe1655679b1ed46928ef177fbf21b86837bd724400196c508427a6f41602cd@134.199.184.23:30303"
+)
 
 fail() {
   printf 'PUBLIC_TESTNET_HANDSHAKE_FAILED: %s\n' "$*" >&2
@@ -30,7 +41,7 @@ JWT="$TMP/engine-jwt.hex"
 DOCKER_NETWORK="qcrypto-handshake-${GITHUB_RUN_ID:-$$}"
 GETH_CONTAINER="qcrypto-geth-hoodi-${GITHUB_RUN_ID:-$$}"
 LIGHTHOUSE_CONTAINER="qcrypto-lighthouse-hoodi-${GITHUB_RUN_ID:-$$}"
-mkdir -p "$ARTIFACT_DIR" "$BTC_DATA" "$GPG_HOME"
+mkdir -p "$BTC_DATA" "$GPG_HOME"
 chmod 700 "$GPG_HOME"
 
 cleanup() {
@@ -44,10 +55,11 @@ cleanup() {
   docker logs --tail 500 "$LIGHTHOUSE_CONTAINER" > "$ARTIFACT_DIR/lighthouse-hoodi.tail.log" 2>&1 || true
   if [[ -n "${BTC_CLI:-}" && -x "${BTC_CLI:-}" ]]; then
     "$BTC_CLI" -signet -datadir="$BTC_DATA" stop >/dev/null 2>&1 || true
+    sleep 2
   fi
   docker rm -fv "$LIGHTHOUSE_CONTAINER" "$GETH_CONTAINER" >/dev/null 2>&1 || true
   docker network rm "$DOCKER_NETWORK" >/dev/null 2>&1 || true
-  rm -rf "$TMP"
+  rm -rf "$TMP" >/dev/null 2>&1 || true
   exit "$rc"
 }
 trap cleanup EXIT
@@ -152,8 +164,16 @@ docker run -d \
 
 GETH_PEERS=0
 GETH_CHAIN_ID=""
+GETH_DIRECT_PEERS_ATTEMPTED=false
 for _ in $(seq 1 120); do
-  if GETH_PEERS_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'admin.peers.length' 2>/dev/null)"; then
+  if docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'admin.peers.length' >/dev/null 2>&1; then
+    if [[ "$GETH_DIRECT_PEERS_ATTEMPTED" == "false" ]]; then
+      for peer in "${GETH_HOODI_BOOTNODES[@]}"; do
+        docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec "admin.addPeer('$peer')" >/dev/null 2>&1 || true
+      done
+      GETH_DIRECT_PEERS_ATTEMPTED=true
+    fi
+    GETH_PEERS_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'admin.peers.length' 2>/dev/null || true)"
     GETH_PEERS="$(printf '%s' "$GETH_PEERS_RAW" | tr -dc '0-9')"
     GETH_PEERS="${GETH_PEERS:-0}"
     GETH_CHAIN_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'eth.chainId' 2>/dev/null || true)"
@@ -162,7 +182,7 @@ for _ in $(seq 1 120); do
   fi
   sleep 2
 done
-[[ "$GETH_PEERS" -ge 1 ]] || fail "Geth Hoodi node did not establish a peer within the bounded handshake window"
+[[ "$GETH_PEERS" -ge 1 ]] || fail "Geth Hoodi node did not establish a peer within the bounded handshake window (direct official bootnodes attempted: $GETH_DIRECT_PEERS_ATTEMPTED; observed chain id: ${GETH_CHAIN_ID:-unavailable})"
 python3 - "$GETH_CHAIN_ID" <<'PY'
 import sys
 value=sys.argv[1]
