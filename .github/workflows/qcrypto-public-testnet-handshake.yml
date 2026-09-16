@@ -1,0 +1,70 @@
+name: QCRYPTO Public Testnet Handshake Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh'
+      - 'deployments/qcrypto_chain_testnets/**'
+      - '.github/workflows/qcrypto-public-testnet-handshake.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-testnet-handshake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate bounded handshake script
+        run: |
+          bash -n deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh
+          grep -q -- '-disablewallet=1' deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh
+          grep -q -- '--network hoodi' deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh
+          if grep -Eiq '(sendrawtransaction|walletpassphrase|importprivkey|validator.*keystore|lighthouse[[:space:]]+vc)' deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh; then
+            echo 'forbidden signing/broadcast/validator-client surface found in handshake script' >&2
+            exit 1
+          fi
+
+      - name: Install handshake dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends curl jq gnupg ca-certificates
+
+      - name: Run live public-testnet observer handshake
+        run: |
+          mkdir -p artifacts/qcrypto-public-testnet-handshake
+          deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh \
+            artifacts/qcrypto-public-testnet-handshake
+
+      - name: Validate bounded live-network receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path=Path('artifacts/qcrypto-public-testnet-handshake/qcrypto_public_testnet_handshake.json')
+          data=json.loads(path.read_text())
+          assert data['status']=='LIVE_PUBLIC_TESTNET_HANDSHAKE_PASS'
+          assert data['bitcoin']['network']=='SIGNET'
+          assert data['bitcoin']['wallet_disabled'] is True
+          assert data['bitcoin']['connected_peers'] >= 1
+          assert data['bitcoin']['verified_release_signature_count'] >= 2
+          assert data['ethereum']['network']=='HOODI'
+          assert data['ethereum']['chain_id']==560048
+          assert data['ethereum']['geth_connected_peers'] >= 1
+          assert data['ethereum']['lighthouse_connected_peers'] >= 1
+          assert data['ethereum']['validator_client_started'] is False
+          for key,value in data['claims'].items():
+              assert value is False, (key,value)
+          print(json.dumps(data,sort_keys=True))
+          PY
+
+      - name: Upload live-network evidence and bounded diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-public-testnet-handshake
+          path: artifacts/qcrypto-public-testnet-handshake
+          if-no-files-found: warn
