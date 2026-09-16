@@ -1,8 +1,8 @@
 services:
   bitcoin-signet:
     image: ${BITCOIN_CORE_IMAGE:?set a digest-pinned Bitcoin Core image}
+    entrypoint: ["bitcoind"]
     command:
-      - bitcoind
       - -signet
       - -server=1
       - -disablewallet=1
@@ -22,8 +22,8 @@ services:
 
   ethereum-execution:
     image: ${ETHEREUM_EXECUTION_IMAGE:?set a digest-pinned Hoodi-capable execution image}
+    entrypoint: ["geth"]
     command:
-      - geth
       - --hoodi
       - --datadir=/data
       - --http=false
@@ -39,7 +39,7 @@ services:
     networks:
       - qcrypto-chain
     healthcheck:
-      test: ["CMD-SHELL", "geth attach --datadir /data --exec 'eth.blockNumber' >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "geth attach /data/geth.ipc --exec 'eth.blockNumber' >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 20
@@ -47,8 +47,8 @@ services:
 
   ethereum-consensus:
     image: ${ETHEREUM_CONSENSUS_IMAGE:?set a digest-pinned Hoodi-capable consensus image}
+    entrypoint: ["lighthouse"]
     command:
-      - lighthouse
       - bn
       - --network
       - hoodi
