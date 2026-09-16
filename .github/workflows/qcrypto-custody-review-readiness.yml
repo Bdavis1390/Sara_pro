@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - proof/qcrypto-v1-mainline-custody
+      - proof/qcrypto-v1-mainline-custody-v2
     paths:
       - 'proof/qcrypto/v1-mainline/VERIFY_CUSTODY.md'
       - 'proof/qcrypto/v1-mainline/INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json'
@@ -37,7 +38,7 @@ jobs:
             exit 1
           fi
 
-      - name: Complete attributable receipt must validate
+      - name: Completed receipt without RFC3161 reproduction must fail closed
         run: |
           python - <<'PY'
           import json
@@ -48,7 +49,7 @@ jobs:
           receipt['reviewer_identity']='SYNTHETIC-CI-REVIEWER'
           receipt['reviewer_organization']='WORLDSHEPHERD-CI-FIXTURE'
           receipt['reviewer_contact_or_public_profile']='https://example.invalid/synthetic-ci-reviewer'
-          receipt['review_date_utc']='2026-09-15T00:00:00Z'
+          receipt['review_date_utc']='2026-09-16T00:00:00Z'
           receipt['repository_revision_reviewed']='CI-FIXTURE'
           receipt['review_environment']={
               'operating_system':'ubuntu-latest',
@@ -62,6 +63,52 @@ jobs:
           sig['artifact_zip_observed_sha256']=sig['artifact_zip_expected_sha256']
           sig['bundle_observed_sha256']=sig['bundle_expected_sha256']
           sig['cosign_verification_passed']=True
+          receipt['anchor_checks']={key: True for key in receipt['anchor_checks']}
+          receipt['claims_review']={key: True for key in receipt['claims_review']}
+          receipt['discrepancies']=[]
+          receipt['reviewer_notes']='Synthetic negative fixture; RFC3161 observations intentionally omitted.'
+          receipt['result']='INDEPENDENT_CUSTODY_REPRODUCTION_PASSED'
+          Path('/tmp/qcrypto-review-receipt-missing-rfc.json').write_text(
+              json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8'
+          )
+          PY
+          if python proof/qcrypto/v1-mainline/validate_review_receipt.py \
+            /tmp/qcrypto-review-receipt-missing-rfc.json; then
+            echo 'ERROR: receipt without reproduced RFC3161 evidence was accepted' >&2
+            exit 1
+          fi
+
+      - name: Complete attributable V2 receipt must validate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          src=Path('proof/qcrypto/v1-mainline/INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json')
+          receipt=json.loads(src.read_text(encoding='utf-8'))
+          receipt['reviewer_identity']='SYNTHETIC-CI-REVIEWER'
+          receipt['reviewer_organization']='WORLDSHEPHERD-CI-FIXTURE'
+          receipt['reviewer_contact_or_public_profile']='https://example.invalid/synthetic-ci-reviewer'
+          receipt['review_date_utc']='2026-09-16T00:00:00Z'
+          receipt['repository_revision_reviewed']='CI-FIXTURE'
+          receipt['review_environment']={
+              'operating_system':'ubuntu-latest',
+              'git_version':'fixture',
+              'cosign_version':'3.1.3',
+              'openssl_version':'fixture',
+          }
+          receipt['custody_object']['observed_sha256']=receipt['custody_object']['expected_sha256']
+          receipt['custody_object']['hash_match']=True
+          sig=receipt['sigstore_attestation']
+          sig['artifact_zip_observed_sha256']=sig['artifact_zip_expected_sha256']
+          sig['bundle_observed_sha256']=sig['bundle_expected_sha256']
+          sig['cosign_verification_passed']=True
+          ts=receipt['rfc3161_timestamp']
+          ts['artifact_zip_observed_sha256']=ts['artifact_zip_expected_sha256']
+          ts['response_observed_sha256']=ts['response_expected_sha256']
+          ts['openssl_ts_verify_passed']=True
+          ts['certificate_chain_verified']=True
+          ts['root_fingerprint_verified']=True
           receipt['anchor_checks']={key: True for key in receipt['anchor_checks']}
           receipt['claims_review']={key: True for key in receipt['claims_review']}
           receipt['discrepancies']=[]
@@ -81,10 +128,12 @@ jobs:
           import json
           from pathlib import Path
           result=json.loads(Path('qcrypto-custody-review-readiness.json').read_text())
+          assert result['schema']=='WS-QCRYPTO-INDEPENDENT-REVIEW-RECEIPT-VALIDATION-V2'
           assert result['status']=='PASS'
           assert result['receipt_result']=='INDEPENDENT_CUSTODY_REPRODUCTION_PASSED'
           assert result['reviewer_identity']=='SYNTHETIC-CI-REVIEWER'
           assert result['scope']=='CUSTODY_REPRODUCTION_ONLY'
+          assert result['rfc3161_verified'] is True
           PY
 
       - name: Upload review-readiness evidence
