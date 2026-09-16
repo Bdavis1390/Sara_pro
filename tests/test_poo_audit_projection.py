@@ -27,7 +27,7 @@ def ownership_evidence():
         title_or_provenance_bound=True,
         pow_verified=True,
         poc_concept_verified=True,
-        control_or_custody_verified=True,
+        coc_verified=True,
         pos_bond_verified=True,
         freshness_verified=True,
         not_revoked=True,
@@ -52,7 +52,7 @@ def transfer_evidence():
         current_owner_authorized=True,
         recipient_identity_bound=True,
         recipient_poc_concept_verified=True,
-        recipient_control_or_custody_verified=True,
+        recipient_coc_verified=True,
         recipient_pow_verified=True,
         recipient_pos_bond_verified=True,
         title_or_provenance_transition_bound=True,
@@ -85,7 +85,7 @@ def recovery_evidence():
         compromise_or_loss_evidence_bound=True,
         recovery_pow_verified=True,
         recovery_poc_concept_verified=True,
-        alternate_control_or_custody_verified=True,
+        alternate_coc_verified=True,
         recovery_pos_bond_verified=True,
         multisource_or_quorum_verified=True,
         freshness_verified=True,
@@ -122,6 +122,13 @@ def test_incomplete_ownership_projection_records_blocked_state():
     assert_non_authoritative(p)
 
 
+def test_missing_coc_blocks_ownership_projection():
+    p = ownership_audit_projection(replace(ownership_evidence(), coc_verified=False))
+    assert p["technical_attestation_ready"] is False
+    assert p["prime_state"] == "PRIME_POO_BLOCKED"
+    assert_non_authoritative(p)
+
+
 def test_transfer_projection_preserves_lineage_and_nonexecution():
     p = transfer_audit_projection(transfer_evidence())
     assert p["operation"] == "TRANSFER_READINESS"
@@ -140,6 +147,13 @@ def test_disputed_transfer_projection_is_explicitly_blocked():
     assert_non_authoritative(p)
 
 
+def test_missing_recipient_coc_blocks_transfer_projection():
+    p = transfer_audit_projection(replace(transfer_evidence(), recipient_coc_verified=False))
+    assert p["transfer_ready"] is False
+    assert p["prime_state"] == "PRIME_POO_TRANSFER_BLOCKED"
+    assert_non_authoritative(p)
+
+
 def test_recovery_projection_is_same_owner_readiness_only():
     p = recovery_audit_projection(recovery_evidence())
     assert p["operation"] == "RECOVERY_READINESS"
@@ -155,4 +169,11 @@ def test_unresolved_recovery_dispute_records_blocked_state():
     assert p["recovery_ready"] is False
     assert p["prime_state"] == "PRIME_POO_RECOVERY_BLOCKED_DISPUTE"
     assert p["overwatch_state"] == "OVERWATCH_POO_DISPUTE_ACTIVE"
+    assert_non_authoritative(p)
+
+
+def test_missing_alternate_coc_blocks_recovery_projection():
+    p = recovery_audit_projection(replace(recovery_evidence(), alternate_coc_verified=False))
+    assert p["recovery_ready"] is False
+    assert p["prime_state"] == "PRIME_POO_RECOVERY_BLOCKED"
     assert_non_authoritative(p)
