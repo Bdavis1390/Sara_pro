@@ -19,9 +19,16 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_service.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_issuance_store.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_ledger_integrity.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_verifier.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_prime_review_adapter.py'
       - 'deployments/sara_verified_local_v1/tests/test_prime_sentinel_*.py'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_audit_verifier.py'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_prime_review_adapter.py'
       - 'deployments/sara_verified_local_v1/compose.yaml'
       - 'deployments/sara_verified_local_v1/scripts/verify_prime_sentinel_integration.sh'
+      - 'deployments/sara_verified_local_v1/scripts/verify_qcrypto_prime_review_audit_custody.py'
       - '.github/workflows/qcrypto-prime-governed-release-review.yml'
   push:
     branches:
@@ -222,11 +229,15 @@ jobs:
             --governed evidence/governed/governed-pq-signing-state-evidence.json \
             --output prime-governed-release-review-evidence.json
 
-      - name: Assert human-review-only release boundary
+      - name: Assert self-verifying human-review-only boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
+          from security.qcrypto.prime_governed_release_review import (
+              canonical_json_digest,
+              prime_governed_review_binding,
+          )
           e=json.loads(Path('prime-governed-release-review-evidence.json').read_text())
           assert e['schema']=='WS-QCRYPTO-PRIME-GOVERNED-RELEASE-REVIEW-V1'
           assert e['status']=='PASS'
@@ -238,7 +249,23 @@ jobs:
           assert d['ready_for_human_release_review'] is True
           assert len(d['prime_evidence_sha256'])==64
           assert len(d['governed_evidence_sha256'])==64
+          assert len(d['governed_negotiated_context_digest'])==64
+          assert len(d['governed_negotiation_transcript_digest'])==64
           assert len(d['review_package_sha256'])==64
+          binding=prime_governed_review_binding(
+              prime_evidence_sha256=d['prime_evidence_sha256'],
+              governed_evidence_sha256=d['governed_evidence_sha256'],
+              prime_signing_algorithm=d['prime_signing_algorithm'],
+              prime_signature_context=d['prime_signature_context'],
+              prime_activation_disposition=d['prime_activation_disposition'],
+              prime_authorization_registry_status=d['prime_authorization_registry_status'],
+              governed_terminal_state=d['governed_terminal_state'],
+              governed_selected_suite_id=d['governed_selected_suite_id'],
+              governed_pq_algorithm_id=d['governed_pq_algorithm_id'],
+              governed_negotiated_context_digest=d['governed_negotiated_context_digest'],
+              governed_negotiation_transcript_digest=d['governed_negotiation_transcript_digest'],
+          )
+          assert canonical_json_digest(binding)==d['review_package_sha256']
           assert s['human_release_required'] is True
           assert s['human_release_recorded'] is False
           assert s['prime_signing_algorithm']=='ML-DSA-65'
@@ -252,7 +279,9 @@ jobs:
           assert s['live_transaction_signed'] is False
           assert s['production_protocol_integration'] is False
           assert s['end_to_end_pq_security_established'] is False
-          assert len(e['evidence_sha256'])==64
+          digest_source=dict(e)
+          supplied=digest_source.pop('evidence_sha256')
+          assert canonical_json_digest(digest_source)==supplied
           print('prime_governed_release_review_gate: PASS')
           print('review_package_sha256:', s['review_package_sha256'])
           print('evidence_sha256:', e['evidence_sha256'])
@@ -263,4 +292,103 @@ jobs:
         with:
           name: qcrypto-prime-governed-release-review-evidence
           path: prime-governed-release-review-evidence.json
+          if-no-files-found: error
+
+  native-sara-audit-custody:
+    needs:
+      - cross-boundary-human-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: deployments/sara_verified_local_v1
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned SARA audit environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Download cross-boundary review warrant
+        uses: actions/download-artifact@v4
+        with:
+          name: qcrypto-prime-governed-release-review-evidence
+          path: ${{ github.workspace }}/evidence/review
+
+      - name: Compile native review custody controls
+        run: |
+          python -m compileall -q \
+            worldshepherd_sara/qcrypto_audit_adapter.py \
+            worldshepherd_sara/qcrypto_audit_verifier.py \
+            worldshepherd_sara/qcrypto_prime_review_adapter.py \
+            scripts/verify_qcrypto_prime_review_audit_custody.py
+
+      - name: Run native audit and review-warrant regressions
+        run: |
+          pytest -q \
+            tests/test_qcrypto_audit_adapter.py \
+            tests/test_qcrypto_audit_verifier.py \
+            tests/test_qcrypto_prime_review_adapter.py
+
+      - name: Persist and reconstruct warrant through native SARA audit
+        run: |
+          python scripts/verify_qcrypto_prime_review_audit_custody.py \
+            --review '${{ github.workspace }}/evidence/review/prime-governed-release-review-evidence.json' \
+            --output '${{ github.workspace }}/prime-review-sara-audit-custody.json'
+
+      - name: Assert durable four-stage custody boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('${{ github.workspace }}/prime-review-sara-audit-custody.json')
+          e=json.loads(p.read_text())
+          assert e['schema']=='WS-QCRYPTO-PRIME-REVIEW-SARA-AUDIT-CUSTODY-V1'
+          assert e['status']=='PASS'
+          assert e['claim_state']=='PRIME_GOVERNED_REVIEW_WARRANT_RECONSTRUCTED_IN_NATIVE_SARA_AUDIT'
+          assert e['proof_scope']=='DURABLE_INTERNAL_AUDIT_CUSTODY_NO_EXECUTION_AUTHORITY'
+          assert e['decision_digest'].startswith('sha256:')
+          assert len(e['outbox_event_ids'])==4
+          assert len(set(e['outbox_event_ids']))==4
+          assert e['delivered_event_count']==4
+          assert e['outbox_before_drain']=={'pending':4,'delivered_retained':0,'malformed':0}
+          assert e['outbox_after_drain']['pending']==0
+          v=e['verification']
+          assert v['verdict']=='INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN'
+          assert v['complete'] is True
+          assert v['consistent'] is True
+          assert v['stages_present']==['ECHO','PRIME','SARA','OVERWATCH']
+          s=e['summary']
+          assert s['four_stage_chain_reconstructed'] is True
+          assert s['stable_outbox_event_id_count']==4
+          assert s['at_least_once_delivery_preserved'] is True
+          assert s['review_correlation_preserved'] is True
+          assert s['human_approval_required'] is True
+          assert s['migration_executed'] is False
+          assert s['execution_authority'] is False
+          assert s['live_value_authorized'] is False
+          assert s['federal_compliance_established'] is False
+          assert s['ws_cae_conformance_established'] is False
+          assert s['production_protocol_integration'] is False
+          assert s['end_to_end_pq_security_established'] is False
+          assert len(e['evidence_sha256'])==64
+          print('prime_review_sara_audit_custody_gate: PASS')
+          print('decision_digest:', e['decision_digest'])
+          print('audit_instance_id:', e['audit_instance_id'])
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload native SARA audit custody receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-prime-review-sara-audit-custody
+          path: ${{ github.workspace }}/prime-review-sara-audit-custody.json
           if-no-files-found: error
