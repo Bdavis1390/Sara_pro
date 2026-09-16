@@ -127,12 +127,19 @@ def _receipt_patch(
     content_sha256: str,
     notified_at: str,
 ) -> tuple[dict[str, Any] | None, bool]:
+    safe_event_id = _safe_identifier(event_id, field="event_id")
+    safe_event = _safe_identifier(event, field="event")
+    if not _SHA256.fullmatch(content_sha256):
+        raise DiscordEventProjectionError("Discord delivery fingerprint is malformed")
+    if not _valid_timestamp(notified_at):
+        raise DiscordEventProjectionError("Discord delivery timestamp is malformed")
+
     receipts = _receipt_state(registry)
-    if event_id in receipts:
+    if safe_event_id in receipts:
         return None, False
-    receipts[event_id] = {
-        "event_id": event_id,
-        "event": event,
+    receipts[safe_event_id] = {
+        "event_id": safe_event_id,
+        "event": safe_event,
         "content_sha256": content_sha256,
         "notified_at": notified_at,
     }
@@ -215,14 +222,15 @@ def notification_for_delivered_event(
 ) -> DiscordNotification | None:
     if entry.get("status") != "DELIVERED":
         return None
-    safe_event_id = _safe_identifier(event_id, field="event_id")
     event = entry.get("event")
     payload = entry.get("payload")
     if not isinstance(event, str) or not isinstance(payload, dict):
         raise DiscordEventProjectionError("delivered outbox event is malformed")
     if event == "prime_custody_provenance":
+        safe_event_id = _safe_identifier(event_id, field="event_id")
         return _project_custody(safe_event_id, payload)
     if event == "prime_sentinel_authorization_rejected":
+        safe_event_id = _safe_identifier(event_id, field="event_id")
         return _project_authorization_rejection(safe_event_id, payload)
     return None
 
