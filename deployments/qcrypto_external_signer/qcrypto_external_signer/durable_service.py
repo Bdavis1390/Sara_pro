@@ -50,6 +50,27 @@ def _canonical_envelope_digest(request: dict[str, Any]) -> tuple[str, str]:
 class DurableExternalCustodyService(StrictExternalCustodyService):
     """Supported custody entry point with durable exact-retry receipt semantics."""
 
+    def _verify_durable_receipt(self, receipt: dict[str, Any]) -> bool:
+        """Dispatch to the receipt verifier for the concrete custody signer class.
+
+        Provider-augmented receipts have additional operation-binding fields that are
+        intentionally outside the signed release binding.  They must therefore use the
+        opaque-provider verifier, which authenticates the signed binding *and*
+        reconstructs the provider operation ID.  Falling back to the generic verifier
+        here would either reject a valid provider receipt after restart or tempt callers
+        to weaken the provider metadata binding.
+        """
+        if "provider_operation_id" in receipt:
+            # Local import avoids a module-import cycle: provider_custody subclasses
+            # this service, while this path executes only after all modules are loaded.
+            from .provider_custody import verify_opaque_provider_receipt
+
+            return verify_opaque_provider_receipt(
+                receipt,
+                public_key_bytes=self.signer.public_key_bytes,
+            )
+        return verify_release_receipt(receipt, self.signer.public_key_bytes)
+
     def _reserve_or_retrieve(
         self,
         request_id: str,
@@ -75,7 +96,7 @@ class DurableExternalCustodyService(StrictExternalCustodyService):
                 receipt = prior.get("receipt")
                 if not isinstance(receipt, dict):
                     raise CustodyError("signed custody entry is missing its receipt")
-                if not verify_release_receipt(receipt, self.signer.public_key_bytes):
+                if not self._verify_durable_receipt(receipt):
                     raise CustodyError("persisted custody receipt failed integrity verification")
                 return dict(receipt)
             if state == "INVOKING":
