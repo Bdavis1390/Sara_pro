@@ -15,6 +15,7 @@ def valid_evidence():
         control_key_fingerprint="key:abc123",
         work_reference="work:challenge:001",
         concept_reference="concept:demo:001",
+        coc_reference="coc:digest:001",
         stake_reference="stake:bond:001",
         issued_at="2026-09-15T22:00:00Z",
         expires_at="2026-09-16T22:00:00Z",
@@ -57,6 +58,12 @@ def test_each_independent_leg_is_fail_closed():
         assert d.poo_valid is False, field
         assert d.technical_ownership_attested is False, field
         assert d.missing_predicates, field
+
+
+def test_empty_coc_reference_blocks_ownership_even_when_boolean_is_true():
+    d = evaluate_ownership(replace(valid_evidence(), coc_reference=""))
+    assert d.poo_valid is False
+    assert "coc_reference must be non-empty" in d.missing_predicates
 
 
 def test_external_title_reference_does_not_create_legal_ownership_claim():
@@ -103,10 +110,12 @@ def test_digest_is_deterministic_and_transfer_chain_sensitive():
     assert ownership_digest(chained) != ownership_digest(e)
 
 
-def test_concept_reference_is_semantically_committed():
+def test_concept_and_coc_references_are_semantically_committed():
     e = valid_evidence()
-    changed = replace(e, concept_reference="concept:demo:002")
-    assert ownership_digest(changed) != ownership_digest(e)
+    changed_concept = replace(e, concept_reference="concept:demo:002")
+    changed_coc = replace(e, coc_reference="coc:digest:002")
+    assert ownership_digest(changed_concept) != ownership_digest(e)
+    assert ownership_digest(changed_coc) != ownership_digest(e)
 
 
 def test_evidence_flags_do_not_change_semantic_digest():
