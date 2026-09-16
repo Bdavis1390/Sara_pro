@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This lane turns public collaborator discovery into a claims-controlled evidence process instead of an informal contact list.
+This lane turns public collaborator discovery and subsequent responses into a claims-controlled evidence process instead of an informal contact list.
 
 A candidate may be discovered through Web3, WebP3, or another technical ecosystem, but Worldshepherd does not infer availability, consent, interest, employment status, partnership status, or permission to contact from public work alone.
 
@@ -36,9 +36,27 @@ Public identity, technical work, freshness, technical-domain mapping, Worldsheph
 
 The candidate is already review-ready, a public collaboration surface exists, and conflict screening has completed without a known conflict. Even this state does **not** authorize outreach.
 
+## Response evidence states
+
+`WS-COLLAB-RESPONSE-V1` classifies what happened after an authorized outreach action without copying private message bodies into the public repository. The semantic record keeps only an opaque source-system evidence reference, candidate binding, response class, observation time, and channel.
+
+Supported response classes are:
+
+- `NO_RESPONSE_YET`;
+- `ROUTED_TO_PUBLIC_FORUM`;
+- `PAID_REVIEW_AVAILABLE`;
+- `SCOPE_DISCUSSION_AVAILABLE`;
+- `COLLABORATION_INTEREST_EXPRESSED`;
+- `DECLINED`; and
+- `UNDELIVERABLE_OR_CHANNEL_CLOSED`.
+
+A valid response still cannot authorize spending, broaden outreach, establish teammate/employment/partnership status, or imply endorsement. Paid-review availability routes only to human budget/scope review. A standards/community referral routes only to the referred public forum. An expression of interest routes only to human relationship review.
+
+Private message content, quoted prices, addresses, telephone numbers, and personal notes are intentionally excluded from the response digest. The authoritative communication remains in its source system.
+
 ## Hard authority boundary
 
-Every decision hard-codes:
+Candidate decisions hard-code:
 
 ```text
 human_review_required = true
@@ -48,7 +66,17 @@ employment_offer_authorized = false
 partnership_authorized = false
 ```
 
-Public evidence never becomes consent or a relationship by inference.
+Response decisions additionally hard-code:
+
+```text
+budget_commitment_authorized = false
+outreach_expansion_authorized = false
+teammate_relationship_established = false
+employment_relationship_established = false
+partnership_established = false
+```
+
+Public evidence or a reply never becomes consent, spending authority, or a relationship by inference.
 
 ## Web3 seed
 
@@ -64,10 +92,10 @@ Therefore no `WEBP3` teammate candidate is promoted in the seed. The source rema
 
 ## Worldshepherd mapping
 
-- **ECHO:** preserve public source provenance and verification dates.
-- **PRIME:** enforce evidence, freshness, conflict-screen, and authority boundaries.
-- **SARA:** orchestrate human review and any separately authorized outreach workflow.
-- **OVERWATCH:** monitor stale evidence, unresolved conflicts, duplicate candidates, and source ambiguity.
+- **ECHO:** preserve public source provenance, response evidence references, and verification dates.
+- **PRIME:** enforce evidence, freshness, conflict-screen, response classification, and authority boundaries.
+- **SARA:** orchestrate human review, budget/scope review, and any separately authorized outreach workflow.
+- **OVERWATCH:** monitor stale evidence, unresolved conflicts, duplicate candidates, pending responses, and source ambiguity.
 - **QCRYPTO:** supplies technical fit context for cryptography/PQC candidates.
 
 ## Claims state
