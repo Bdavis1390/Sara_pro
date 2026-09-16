@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from hashlib import sha256
+import json
 import re
 from typing import Any
 
@@ -45,12 +47,49 @@ def _require_false(mapping: dict[str, Any], field: str, *, source: str) -> None:
         raise QCryptoPrimeReviewAdapterError(f"{source}.{field} must remain false")
 
 
-def prime_governed_review_projection(evidence: dict[str, Any]) -> dict[str, Any]:
-    """Map one bounded PRIME/QCRYPTO review warrant into the existing audit schema.
+def _canonical_json_digest(value: Any) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode()
+    return sha256(encoded).hexdigest()
 
-    The projection is data-only. It does not emit an event by itself, grant approval,
-    authorize execution, or alter the review warrant. qcrypto_audit_adapter remains
-    the authoritative SARA event-shape validator.
+
+def _review_binding(decision: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema": PRIME_GOVERNED_REVIEW_SCHEMA,
+        "prime_evidence_sha256": decision.get("prime_evidence_sha256"),
+        "governed_evidence_sha256": decision.get("governed_evidence_sha256"),
+        "prime_signing_algorithm": decision.get("prime_signing_algorithm"),
+        "prime_signature_context": decision.get("prime_signature_context"),
+        "prime_activation_disposition": decision.get("prime_activation_disposition"),
+        "prime_authorization_registry_status": decision.get(
+            "prime_authorization_registry_status"
+        ),
+        "governed_terminal_state": decision.get("governed_terminal_state"),
+        "governed_selected_suite_id": decision.get("governed_selected_suite_id"),
+        "governed_pq_algorithm_id": decision.get("governed_pq_algorithm_id"),
+        "governed_negotiated_context_digest": decision.get(
+            "governed_negotiated_context_digest"
+        ),
+        "governed_negotiation_transcript_digest": decision.get(
+            "governed_negotiation_transcript_digest"
+        ),
+        "human_release_required": True,
+        "execution_authority": False,
+        "live_value_authorized": False,
+    }
+
+
+def prime_governed_review_projection(evidence: dict[str, Any]) -> dict[str, Any]:
+    """Map one self-verifying PRIME/QCRYPTO warrant into the native audit schema.
+
+    The projection is data-only. It does not grant approval or authority. The source
+    evidence wrapper digest and the cross-boundary review-package digest are both
+    independently reconstructed before qcrypto_audit_adapter is allowed to emit the
+    four native SARA events.
     """
 
     record = _require_mapping(evidence, "review evidence")
@@ -62,6 +101,17 @@ def prime_governed_review_projection(evidence: dict[str, Any]) -> dict[str, Any]
         raise QCryptoPrimeReviewAdapterError("PRIME/QCRYPTO review claim state is not bounded")
     if record.get("proof_scope") != PRIME_GOVERNED_REVIEW_SCOPE:
         raise QCryptoPrimeReviewAdapterError("PRIME/QCRYPTO review proof scope is not bounded")
+
+    supplied_evidence_digest = _require_hex64(
+        record.get("evidence_sha256"), "evidence_sha256"
+    )
+    digest_source = dict(record)
+    digest_source.pop("evidence_sha256", None)
+    reconstructed_evidence_digest = _canonical_json_digest(digest_source)
+    if reconstructed_evidence_digest != supplied_evidence_digest:
+        raise QCryptoPrimeReviewAdapterError(
+            "review evidence wrapper digest does not reconstruct"
+        )
 
     decision = _require_mapping(record.get("decision"), "review decision")
     summary = _require_mapping(record.get("summary"), "review summary")
@@ -99,9 +149,27 @@ def prime_governed_review_projection(evidence: dict[str, Any]) -> dict[str, Any]
     if summary.get("governed_pq_algorithm_id") != "ML-DSA":
         raise QCryptoPrimeReviewAdapterError("governed PQ family must remain ML-DSA")
 
-    review_digest = _require_hex64(summary.get("review_package_sha256"), "review_package_sha256")
+    consistency_fields = (
+        "prime_signing_algorithm",
+        "prime_signature_context",
+        "prime_activation_disposition",
+        "prime_authorization_registry_status",
+        "governed_terminal_state",
+        "governed_selected_suite_id",
+        "governed_pq_algorithm_id",
+    )
+    for field in consistency_fields:
+        if decision.get(field) != summary.get(field):
+            raise QCryptoPrimeReviewAdapterError(
+                f"decision and summary disagree on {field}"
+            )
+
+    review_digest = _require_hex64(
+        summary.get("review_package_sha256"), "review_package_sha256"
+    )
     if decision.get("review_package_sha256") != review_digest:
         raise QCryptoPrimeReviewAdapterError("decision and summary review-package digests disagree")
+
     prime_digest = _require_hex64(source.get("prime_evidence_sha256"), "prime_evidence_sha256")
     governed_digest = _require_hex64(
         source.get("governed_evidence_sha256"), "governed_evidence_sha256"
@@ -110,6 +178,20 @@ def prime_governed_review_projection(evidence: dict[str, Any]) -> dict[str, Any]
         raise QCryptoPrimeReviewAdapterError("decision PRIME source-evidence digest mismatch")
     if decision.get("governed_evidence_sha256") != governed_digest:
         raise QCryptoPrimeReviewAdapterError("decision governed source-evidence digest mismatch")
+
+    _require_hex64(
+        decision.get("governed_negotiated_context_digest"),
+        "governed_negotiated_context_digest",
+    )
+    _require_hex64(
+        decision.get("governed_negotiation_transcript_digest"),
+        "governed_negotiation_transcript_digest",
+    )
+    reconstructed_review_digest = _canonical_json_digest(_review_binding(decision))
+    if reconstructed_review_digest != review_digest:
+        raise QCryptoPrimeReviewAdapterError(
+            "review-package digest does not reconstruct from the bounded decision"
+        )
 
     asset_id = f"PRIME-QCRYPTO-REVIEW:{review_digest}"
     correlation_id = f"sha256:{review_digest}"
