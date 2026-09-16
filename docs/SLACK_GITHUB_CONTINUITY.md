@@ -1,64 +1,30 @@
-# Slack ↔ GitHub Continuity
+# Slack ↔ GitHub Continuity — Legacy Migration Note
 
-## Operating principle
+## Status
 
-Slack is the fast coordination surface. GitHub is the durable technical and governance record.
+Slack is no longer the primary Worldshepherd live coordination surface. Discord is the designated live coordination layer; GitHub remains the durable technical and governance source of truth.
 
-A Slack connector failure must never suspend the project or erase execution state.
+This document is retained to preserve migration history, existing links, and outage lessons learned from the Slack integration.
 
-## Source-of-truth split
+## Legacy rule
 
-Use **Slack** for:
+Slack may be used only as a temporary fallback, archive, or migration surface. No new Worldshepherd architecture, evidence, opportunity, partner, outreach, or readiness workflow should depend on Slack availability.
 
-- rapid coordination
-- routing
-- discussion
-- partner/outreach state updates
-- meeting notes
-- short operational summaries
+If Slack is used during migration:
 
-Use **GitHub** for:
+1. consequential state changes must still resolve to GitHub;
+2. unsent Slack messages must never be represented as sent;
+3. Slack-only evidence cannot satisfy a GitHub acceptance gate;
+4. bot/list/connector instability must not block work;
+5. reconciliation should be compact and link to the durable GitHub artifact.
 
-- architecture and canonical technical documentation
-- issues and decision records
-- code/configuration changes
-- tests, validation artifacts and negative evidence
-- PR review and claims-state changes
-- opportunity/PRE records that affect reusable technical readiness
-- durable external-engagement facts when they affect engineering, commitments, or public claims
+## Superseding documents
 
-## Connector-outage fallback
+Primary continuity policy:
 
-If Slack disconnects or returns an unusable response:
+- `docs/DISCORD_GITHUB_CONTINUITY.md`
+- `docs/DISCORD_SERVER_BLUEPRINT.md`
+- `docs/WORLDSHEPHERD_WORKSPACE_MAP.md`
+- ADR-0002
 
-1. Stop retry loops after the first failed retry.
-2. Continue the active task in GitHub or the local project source of truth.
-3. Record the last successful Slack action or message link when known.
-4. Do not represent unsent Slack messages as sent.
-5. When Slack returns, post a compact reconciliation note linking to the GitHub artifact created during the outage.
-6. Never block code, documentation, evidence packaging, capture analysis, or validation solely because Slack is unavailable.
-
-## Cross-link rule
-
-A consequential Slack work item should link to its durable GitHub artifact when one exists.
-
-A consequential GitHub issue/PR may link back to Slack for discussion context, but acceptance must not depend on inaccessible Slack-only evidence.
-
-## State vocabulary
-
-Communication state:
-
-`DRAFTING` · `READY FOR APPROVAL` · `APPROVED` · `SENT` · `WAITING EXTERNAL` · `REPLIED` · `FOLLOW-UP DUE` · `CLOSED`
-
-Technical state uses the repository claim labels and lifecycle states defined in `docs/WORLDSHEPHERD_OPERATING_MODEL.md`.
-
-## Recovery checklist
-
-After any Slack outage:
-
-- [ ] confirm current GitHub branch/issue/PR state
-- [ ] identify actions completed while Slack was unavailable
-- [ ] identify any Slack messages that were drafted but not sent
-- [ ] post one reconciliation summary, not duplicate history
-- [ ] preserve original evidence links and timestamps
-- [ ] resume from the GitHub source of truth
+GitHub remains usable if Discord, Slack, or any messaging connector is unavailable.
