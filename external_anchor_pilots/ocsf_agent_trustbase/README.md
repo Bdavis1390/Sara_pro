@@ -9,6 +9,7 @@ This pilot turns the semantic requirements being discussed in OCSF issue #1724 i
 The pilot is grounded in concepts already present on OCSF `main`, including:
 
 - `metadata.uid`
+- `metadata.correlation_uid`
 - `ai_agent.uid` and `ai_agent.instance_uid`
 - the `record_integrity` profile
 - `attestation.chain_uid`
@@ -20,7 +21,7 @@ It also tracks adjacent upstream AI work so the trust-base contribution does not
 - `ocsf/ocsf-schema#1754` — draft `AI Agent Activity`
 - `ocsf/ocsf-schema#1704` — `ai_status` outcome container under `ai_operation`
 
-See `CROSS_PLANE_MAPPING.md` for the behavior-vs-configuration separation.
+See `CROSS_PLANE_MAPPING.md` for the behavior-vs-configuration separation and `ISSUE_1724_CONVERGENCE.md` for a current discussion-state matrix.
 
 ## What it checks
 
@@ -40,6 +41,10 @@ The main trust-base verifier enforces these provisional invariants:
 
 A second checker, `verify_plane_separation.py`, enforces the harness-level non-duplication boundary: behavior/outcome keys under discussion in adjacent OCSF work are rejected if copied into the provisional `trust_base` payload.
 
+A third checker, `verify_evidence_join.py`, exercises the evidence-grade join discussed in #1724: the trust-base closure and correlated activity event must carry the same `metadata.correlation_uid`, and both records must carry an integrity attestation fingerprint. This is intentionally stronger than ordinary schema validity. It models the thread's principle that the join key should live inside the integrity-protected event rather than exist only as advisory external metadata.
+
+OCSF's current `attestation` description states that the canonical serialization covers the entire event except the attestation's own `fingerprint` and `signatures`; therefore, a present `metadata.correlation_uid` is within the attested event content.
+
 ## Test vectors
 
 `fixtures.json` includes six trust-base scenarios:
@@ -57,7 +62,14 @@ A second checker, `verify_plane_separation.py`, enforces the harness-level non-d
 - stop reason duplicated inside trust base — expected fail
 - tool input duplicated inside trust base — expected fail
 
-All three plane-separation expectations were exercised successfully before commit.
+`evidence_join_fixtures.json` adds four correlation/integrity scenarios:
+
+- matching integrity-protected closure/activity correlation — expected pass
+- closure missing `correlation_uid` — expected fail
+- mismatched closure/activity correlation — expected fail
+- activity-side correlation not protected by an attestation fingerprint — expected fail
+
+All four evidence-join expectations were exercised successfully before this documentation update.
 
 ## Architectural boundary
 
@@ -69,7 +81,7 @@ The trust-base contribution instead answers the complementary question:
 
 > What discrete agent configuration and dependency state was in force when an activity occurred, and is the evidence chain complete?
 
-The exact correlation field between behavior events and trust-base emissions remains an upstream decision; this pilot does not invent a normative one.
+The exact final class mapping is still upstream design work, but the #1724 discussion now favors a join over an overlay, with closure correlated to the relevant activity event rather than importing activity semantics into the trust-base class.
 
 ## Run
 
@@ -85,6 +97,13 @@ Run the behavior/configuration plane-separation fixtures:
 ```bash
 python external_anchor_pilots/ocsf_agent_trustbase/verify_plane_separation.py \
   external_anchor_pilots/ocsf_agent_trustbase/plane_separation_fixtures.json
+```
+
+Run the evidence-grade closure/activity join fixtures:
+
+```bash
+python external_anchor_pilots/ocsf_agent_trustbase/verify_evidence_join.py \
+  external_anchor_pilots/ocsf_agent_trustbase/evidence_join_fixtures.json
 ```
 
 The commands exit non-zero only when an actual result disagrees with a fixture's declared expectation.
