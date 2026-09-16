@@ -46,7 +46,7 @@ The result must be exactly:
 
 If the value differs, stop. The object being reviewed is not the object that was attested.
 
-## Step 2 — Obtain the original attestation artifact
+## Step 2 — Obtain the original Sigstore attestation artifact
 
 Download artifact `qcrypto-custody-sigstore-attestation` from GitHub Actions workflow run `35001901863`.
 
@@ -84,7 +84,7 @@ cosign verify-blob \
 
 The verification must succeed without substituting a broader certificate identity or issuer.
 
-## Step 4 — Verify the underlying anchors
+## Step 4 — Verify the underlying Git anchors
 
 Confirm that the commits and trees named in `CUSTODY_RECORD.json` exist and resolve exactly:
 
@@ -112,10 +112,65 @@ The custody record expects:
 
 Do not treat a filename match as evidence. Verify the bytes by SHA-256.
 
-## Step 6 — Record the result
+## Step 6 — Reproduce the external RFC 3161 timestamp verification
 
-Use `INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json` in this directory. A review is not independently reproduced unless the reviewer is attributable and records the environment, exact repository revision, artifact hashes, Sigstore verification result, anchor checks, discrepancies, and claims boundary.
+Download artifact `qcrypto-rfc3161-timestamp-evidence` from GitHub Actions workflow run `35050299470`.
+
+Expected artifact ZIP SHA-256:
+
+`e907ffb24eb21f04d4071e119bfa796ba4a1478235b58be707219383307d61bd`
+
+The RFC 3161 response inside that evidence must hash to:
+
+`b6d2ecd32015932f7f472dd5f80f06123fc9f31aa005d509fa6c5c9e85be942a`
+
+The frozen bundle being timestamped is:
+
+`3ac4b9d6a94c50dad951ed5c33446ccaaffc876b9d9ad398aefe2a6b7e472522`
+
+Expected timestamp metadata:
+
+- TSA: DigiCert
+- timestamp: `Sep 16 03:02:58 2026 GMT`
+- policy OID: `2.16.840.1.114412.7.1`
+- serial: `0xF888263D1F416AB1BAFE7168F5A3B6B6`
+- DigiCert Trusted Root G4 SHA-256 fingerprint: `552F7BDCF1A7AF9E6CE672017F4F12ABF77240C78E761AC203D1D9D20AC89988`
+
+Using the response and certificate material from the artifact, independently verify:
+
+1. the canonical DigiCert root fingerprint;
+2. the root is self-consistent;
+3. the timestamp intermediate verifies to the root;
+4. the responder certificate verifies through the intermediate to the root; and
+5. `openssl ts -verify` succeeds over the exact frozen bundle bytes or exact frozen-bundle digest represented by the timestamp request.
+
+A successful RFC 3161 check establishes time-custody evidence for the frozen bundle. It is **not** a personal signature, does not retroactively sign historical commits, and does not establish technical correctness, patent priority, Federal compliance, or independent validation of the underlying research.
+
+The repository receipt for comparison is:
+
+`proof/qcrypto/v1-mainline/rfc3161/receipt.json`
+
+## Step 7 — Record the attributable result
+
+Use `INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json` in this directory. A review is not independently reproduced unless the reviewer is attributable and records:
+
+- review environment and exact repository revision;
+- custody-object hash;
+- Sigstore artifact and bundle hashes plus Cosign result;
+- RFC 3161 artifact and response hashes plus OpenSSL/certificate-chain/root-fingerprint results;
+- Git anchor checks;
+- portable-bundle hash;
+- discrepancies; and
+- claims-boundary review.
+
+Validate the completed receipt with:
+
+```bash
+python proof/qcrypto/v1-mainline/validate_review_receipt.py completed-receipt.json
+```
+
+A successful validator result has scope `CUSTODY_REPRODUCTION_ONLY`.
 
 ## Claims boundary
 
-Successful verification demonstrates reproducibility of the recorded custody/provenance chain. It does **not** by itself establish personal authorship, patent priority, production deployment, Federal compliance, WS-CAE conformance, post-quantum security of the Ed25519 checkpoint, or scientific/technical correctness beyond the evidence actually reproduced.
+Successful verification demonstrates reproducibility of the recorded custody/provenance chain, including the Sigstore workflow attestation and RFC 3161 time-custody evidence. It does **not** by itself establish personal authorship, patent priority, production deployment, Federal compliance, WS-CAE conformance, post-quantum security of the Ed25519 checkpoint, or scientific/technical correctness beyond the evidence actually reproduced.
