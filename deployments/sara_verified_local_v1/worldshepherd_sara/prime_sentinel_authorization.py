@@ -5,11 +5,13 @@ import binascii
 import hashlib
 import json
 import os
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PublicKey
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .prime_configuration_custody import PrimeEnvironment
@@ -17,6 +19,9 @@ from .prime_configuration_custody import PrimeEnvironment
 
 PRIME_SENTINEL_AUTHZ_SCHEMA = "WS-PRIME-SENTINEL-AUTHZ-V1"
 PRIME_SENTINEL_AUTHZ_REGISTRY_KEY = "PRIME_SENTINEL_AUTHORIZATIONS"
+PRIME_SENTINEL_MLDSA65_CONTEXT = b"WS-PRIME-SENTINEL-AUTHZ-V2"
+PRIME_SENTINEL_DEFAULT_ALGORITHM = "ML-DSA-65"
+PRIME_SENTINEL_LEGACY_ALGORITHM = "Ed25519"
 MAX_ASSERTION_LIFETIME = timedelta(minutes=15)
 MAX_FUTURE_SKEW = timedelta(seconds=60)
 
@@ -38,7 +43,7 @@ class PrimeSentinelAuthorizationAssertion(BaseModel):
     issued_at: datetime
     expires_at: datetime
     nonce: str = Field(min_length=16, max_length=128)
-    signature_b64url: str = Field(min_length=1, max_length=256)
+    signature_b64url: str = Field(min_length=1, max_length=8192)
 
     @model_validator(mode="after")
     def validate_window(self) -> "PrimeSentinelAuthorizationAssertion":
@@ -57,9 +62,18 @@ class VerifiedPrimeSentinelAuthorization(BaseModel):
     target_environment: PrimeEnvironment
     key_id: str
     key_fingerprint_sha256: str
+    signing_algorithm: str
+    signature_context: str | None = None
     nonce: str
     issued_at: datetime
     expires_at: datetime
+
+
+@dataclass(frozen=True)
+class _VerifierKey:
+    algorithm: str
+    public_key_bytes: bytes
+    signature_context: bytes | None
 
 
 def _utc_iso(value: datetime) -> str:
@@ -96,20 +110,85 @@ def _decode_b64url(value: str, *, expected_length: int, label: str) -> bytes:
     return decoded
 
 
+def _parse_key_entry(key_id: str, value: Any) -> _VerifierKey:
+    if not key_id:
+        raise ValueError("PRIME SENTINEL key id cannot be empty")
+    if isinstance(value, str):
+        return _VerifierKey(
+            algorithm=PRIME_SENTINEL_LEGACY_ALGORITHM,
+            public_key_bytes=_decode_b64url(
+                value,
+                expected_length=32,
+                label=f"legacy Ed25519 public key {key_id}",
+            ),
+            signature_context=None,
+        )
+    if not isinstance(value, dict):
+        raise PrimeSentinelAuthorizationError(
+            f"public key {key_id} must be a base64url string or algorithm record"
+        )
+    algorithm = value.get("algorithm")
+    encoded = value.get("public_key_b64url")
+    if not isinstance(algorithm, str) or not isinstance(encoded, str):
+        raise PrimeSentinelAuthorizationError(
+            f"public key {key_id} record requires algorithm and public_key_b64url"
+        )
+    if algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM:
+        context = value.get("signature_context")
+        expected_context = PRIME_SENTINEL_MLDSA65_CONTEXT.decode("ascii")
+        if context != expected_context:
+            raise PrimeSentinelAuthorizationError(
+                f"ML-DSA-65 public key {key_id} signature context mismatch"
+            )
+        return _VerifierKey(
+            algorithm=algorithm,
+            public_key_bytes=_decode_b64url(
+                encoded,
+                expected_length=1952,
+                label=f"ML-DSA-65 public key {key_id}",
+            ),
+            signature_context=PRIME_SENTINEL_MLDSA65_CONTEXT,
+        )
+    if algorithm == PRIME_SENTINEL_LEGACY_ALGORITHM:
+        if value.get("signature_context") not in (None, ""):
+            raise PrimeSentinelAuthorizationError(
+                f"legacy Ed25519 public key {key_id} must not declare ML-DSA context"
+            )
+        return _VerifierKey(
+            algorithm=algorithm,
+            public_key_bytes=_decode_b64url(
+                encoded,
+                expected_length=32,
+                label=f"Ed25519 public key {key_id}",
+            ),
+            signature_context=None,
+        )
+    raise PrimeSentinelAuthorizationError(
+        f"unsupported PRIME SENTINEL signing algorithm for {key_id}: {algorithm}"
+    )
+
+
 class PrimeSentinelVerifier:
     def __init__(
         self,
         *,
-        public_keys_b64url: dict[str, str],
+        public_keys_b64url: dict[str, str] | None = None,
+        public_keys: dict[str, Any] | None = None,
         revoked_key_ids: set[str] | None = None,
     ) -> None:
-        self._public_keys: dict[str, bytes] = {}
-        for key_id, encoded in public_keys_b64url.items():
-            if not key_id:
-                raise ValueError("PRIME SENTINEL key id cannot be empty")
-            self._public_keys[key_id] = _decode_b64url(
-                encoded, expected_length=32, label=f"public key {key_id}"
+        self._public_keys: dict[str, _VerifierKey] = {}
+        legacy = public_keys_b64url or {}
+        structured = public_keys or {}
+        overlap = set(legacy).intersection(structured)
+        if overlap:
+            raise ValueError(
+                "PRIME SENTINEL key IDs cannot be configured in both legacy and structured key maps: "
+                + ", ".join(sorted(overlap))
             )
+        for key_id, encoded in legacy.items():
+            self._public_keys[key_id] = _parse_key_entry(key_id, encoded)
+        for key_id, value in structured.items():
+            self._public_keys[key_id] = _parse_key_entry(key_id, value)
         self.revoked_key_ids = frozenset(revoked_key_ids or set())
 
     @property
@@ -122,6 +201,10 @@ class PrimeSentinelVerifier:
     def key_is_revoked(self, key_id: str) -> bool:
         return key_id in self.revoked_key_ids
 
+    def key_algorithm(self, key_id: str) -> str | None:
+        key = self._public_keys.get(key_id)
+        return None if key is None else key.algorithm
+
     @classmethod
     def from_environment(cls) -> "PrimeSentinelVerifier":
         raw_keys = os.getenv("PRIME_SENTINEL_PUBLIC_KEYS_JSON", "{}").strip() or "{}"
@@ -129,17 +212,15 @@ class PrimeSentinelVerifier:
             parsed = json.loads(raw_keys)
         except json.JSONDecodeError as exc:
             raise RuntimeError("PRIME_SENTINEL_PUBLIC_KEYS_JSON is invalid JSON") from exc
-        if not isinstance(parsed, dict) or not all(
-            isinstance(k, str) and isinstance(v, str) for k, v in parsed.items()
-        ):
-            raise RuntimeError("PRIME_SENTINEL_PUBLIC_KEYS_JSON must be a string-to-string object")
+        if not isinstance(parsed, dict) or not all(isinstance(k, str) for k in parsed):
+            raise RuntimeError("PRIME_SENTINEL_PUBLIC_KEYS_JSON must be an object keyed by key ID")
         revoked = {
             item.strip()
             for item in os.getenv("PRIME_SENTINEL_REVOKED_KEY_IDS", "").split(",")
             if item.strip()
         }
         try:
-            return cls(public_keys_b64url=parsed, revoked_key_ids=revoked)
+            return cls(public_keys=parsed, revoked_key_ids=revoked)
         except (ValueError, PrimeSentinelAuthorizationError) as exc:
             raise RuntimeError(f"invalid PRIME SENTINEL key configuration: {exc}") from exc
 
@@ -153,8 +234,8 @@ class PrimeSentinelVerifier:
             raise PrimeSentinelAuthorizationError("no PRIME SENTINEL public keys are configured")
         if assertion.key_id in self.revoked_key_ids:
             raise PrimeSentinelAuthorizationError("PRIME SENTINEL signing key is revoked")
-        key_bytes = self._public_keys.get(assertion.key_id)
-        if key_bytes is None:
+        key = self._public_keys.get(assertion.key_id)
+        if key is None:
             raise PrimeSentinelAuthorizationError("unknown PRIME SENTINEL signing key")
 
         current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
@@ -165,25 +246,49 @@ class PrimeSentinelVerifier:
         if current >= expires:
             raise PrimeSentinelAuthorizationError("authorization assertion is expired")
 
-        signature = _decode_b64url(
-            assertion.signature_b64url,
-            expected_length=64,
-            label="Ed25519 signature",
-        )
+        message = canonical_authorization_message(assertion)
         try:
-            Ed25519PublicKey.from_public_bytes(key_bytes).verify(
-                signature,
-                canonical_authorization_message(assertion),
-            )
+            if key.algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM:
+                signature = _decode_b64url(
+                    assertion.signature_b64url,
+                    expected_length=3309,
+                    label="ML-DSA-65 signature",
+                )
+                assert key.signature_context is not None
+                MLDSA65PublicKey.from_public_bytes(key.public_key_bytes).verify(
+                    signature,
+                    message,
+                    key.signature_context,
+                )
+            elif key.algorithm == PRIME_SENTINEL_LEGACY_ALGORITHM:
+                signature = _decode_b64url(
+                    assertion.signature_b64url,
+                    expected_length=64,
+                    label="Ed25519 signature",
+                )
+                Ed25519PublicKey.from_public_bytes(key.public_key_bytes).verify(
+                    signature,
+                    message,
+                )
+            else:
+                raise PrimeSentinelAuthorizationError(
+                    "configured PRIME SENTINEL signing algorithm is unsupported"
+                )
         except (InvalidSignature, ValueError) as exc:
-            raise PrimeSentinelAuthorizationError("invalid PRIME SENTINEL Ed25519 signature") from exc
+            raise PrimeSentinelAuthorizationError(
+                f"invalid PRIME SENTINEL {key.algorithm} signature"
+            ) from exc
 
         return VerifiedPrimeSentinelAuthorization(
             authorization_id=assertion.authorization_id,
             prime_id=assertion.prime_id,
             target_environment=assertion.target_environment,
             key_id=assertion.key_id,
-            key_fingerprint_sha256=hashlib.sha256(key_bytes).hexdigest(),
+            key_fingerprint_sha256=hashlib.sha256(key.public_key_bytes).hexdigest(),
+            signing_algorithm=key.algorithm,
+            signature_context=(
+                key.signature_context.decode("ascii") if key.signature_context is not None else None
+            ),
             nonce=assertion.nonce,
             issued_at=issued,
             expires_at=expires,
@@ -215,6 +320,8 @@ def verified_authorization_registry_patch(
         "target_environment": verified.target_environment.value,
         "key_id": verified.key_id,
         "key_fingerprint_sha256": verified.key_fingerprint_sha256,
+        "signing_algorithm": verified.signing_algorithm,
+        "signature_context": verified.signature_context,
         "nonce": verified.nonce,
         "issued_at": _utc_iso(verified.issued_at),
         "expires_at": _utc_iso(verified.expires_at),
@@ -246,6 +353,9 @@ def assert_recorded_authorization_usable(
         raise PrimeSentinelAuthorizationError("authorization signing key is no longer configured")
     if verifier.key_is_revoked(key_id):
         raise PrimeSentinelAuthorizationError("authorization signing key is revoked")
+    configured_algorithm = verifier.key_algorithm(key_id)
+    if entry.get("signing_algorithm") != configured_algorithm:
+        raise PrimeSentinelAuthorizationError("authorization signing algorithm no longer matches key configuration")
     try:
         expires = datetime.fromisoformat(str(entry["expires_at"]).replace("Z", "+00:00"))
     except (KeyError, ValueError) as exc:
