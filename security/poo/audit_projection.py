@@ -1,19 +1,20 @@
 """Claims-controlled audit projections for Worldshepherd Proof of Ownership.
 
-The projection layer turns ownership, transfer, and recovery decisions into a
-uniform governance record. It carries readiness/evidence state only and never
-conveys execution authority or legal-title adjudication.
+The projection layer turns ownership, transfer, recovery, and lineage decisions into
+one uniform governance record. It carries readiness/evidence state only and never
+conveys execution authority, automatic conflict resolution, or legal-title adjudication.
 """
 
 from __future__ import annotations
 
-from typing import Dict
+from typing import Dict, Iterable
 
+from security.poo.lineage_guard import LineageNode, evaluate_lineage
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
-from security.poo.transfer_guard import TransferEvidence, evaluate_transfer
 from security.poo.recovery_guard import RecoveryEvidence, evaluate_recovery
+from security.poo.transfer_guard import TransferEvidence, evaluate_transfer
 
-POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V1"
+POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"
 POO_CLAIM_BOUNDARY = "INTERNAL_POO_EVIDENCE_NOT_LEGAL_TITLE_OR_EXECUTION_AUTHORITY"
 
 
@@ -31,6 +32,13 @@ def _base_projection(
     technical_attestation_ready: bool,
     transfer_ready: bool,
     recovery_ready: bool,
+    lineage_checked: bool = False,
+    lineage_valid: bool = False,
+    fork_detected: bool = False,
+    cycle_detected: bool = False,
+    active_tip_digest: str | None = None,
+    lineage_issue_count: int = 0,
+    lineage_conflict_type: str = "NONE",
 ) -> Dict[str, object]:
     return {
         "schema": POO_AUDIT_SCHEMA,
@@ -46,6 +54,13 @@ def _base_projection(
         "technical_attestation_ready": technical_attestation_ready,
         "transfer_ready": transfer_ready,
         "recovery_ready": recovery_ready,
+        "lineage_checked": lineage_checked,
+        "lineage_valid": lineage_valid,
+        "fork_detected": fork_detected,
+        "cycle_detected": cycle_detected,
+        "active_tip_digest": active_tip_digest,
+        "lineage_issue_count": lineage_issue_count,
+        "lineage_conflict_type": lineage_conflict_type,
         "human_approval_required": True,
         "ownership_changed": False,
         "transfer_executed": False,
@@ -53,6 +68,8 @@ def _base_projection(
         "legal_title_established": False,
         "legal_title_transferred": False,
         "control_rotated": False,
+        "conflict_winner_selected": False,
+        "lineage_auto_resolved": False,
         "claim_boundary": POO_CLAIM_BOUNDARY,
     }
 
@@ -164,4 +181,64 @@ def recovery_audit_projection(evidence: RecoveryEvidence) -> Dict[str, object]:
         technical_attestation_ready=False,
         transfer_ready=False,
         recovery_ready=decision.recovery_ready,
+    )
+
+
+def _lineage_conflict_type(*, valid: bool, fork: bool, cycle: bool) -> str:
+    if valid:
+        return "NONE"
+    if fork and cycle:
+        return "MULTIPLE"
+    if fork:
+        return "FORK"
+    if cycle:
+        return "CYCLE"
+    return "STRUCTURAL"
+
+
+def lineage_audit_projection(nodes: Iterable[LineageNode]) -> Dict[str, object]:
+    records = list(nodes)
+    decision = evaluate_lineage(records)
+    asset_ids = sorted({node.asset_id for node in records if node.asset_id})
+    asset_id = asset_ids[0] if len(asset_ids) == 1 else "LINEAGE_ASSET_UNRESOLVED"
+
+    if decision.lineage_valid:
+        states = (
+            "ECHO_POO_LINEAGE_ACCEPTED",
+            "PRIME_POO_LINEAGE_ELIGIBLE",
+            "SARA_POO_LINEAGE_MONITORABLE",
+            "OVERWATCH_POO_LINEAGE_HEALTHY",
+        )
+    else:
+        states = (
+            "ECHO_POO_LINEAGE_CONFLICT_CUSTODIED",
+            "PRIME_POO_LINEAGE_BLOCKED",
+            "SARA_POO_LINEAGE_DISPUTE_BLOCK",
+            "OVERWATCH_POO_LINEAGE_CONFLICT_ACTIVE",
+        )
+
+    return _base_projection(
+        operation="LINEAGE_INTEGRITY",
+        asset_id=asset_id,
+        source_digest=decision.digest,
+        status=decision.status,
+        echo_state=states[0],
+        prime_state=states[1],
+        sara_state=states[2],
+        overwatch_state=states[3],
+        previous_poo_digest=None,
+        technical_attestation_ready=False,
+        transfer_ready=False,
+        recovery_ready=False,
+        lineage_checked=True,
+        lineage_valid=decision.lineage_valid,
+        fork_detected=decision.fork_detected,
+        cycle_detected=decision.cycle_detected,
+        active_tip_digest=decision.active_tip_digest,
+        lineage_issue_count=len(decision.issues),
+        lineage_conflict_type=_lineage_conflict_type(
+            valid=decision.lineage_valid,
+            fork=decision.fork_detected,
+            cycle=decision.cycle_detected,
+        ),
     )
