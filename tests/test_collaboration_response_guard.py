@@ -30,6 +30,9 @@ def assert_no_relationship_or_spend_authority(decision):
     assert decision.teammate_relationship_established is False
     assert decision.employment_relationship_established is False
     assert decision.partnership_established is False
+    assert decision.community_membership_established is False
+    assert decision.program_membership_established is False
+    assert decision.technical_validation_established is False
 
 
 def test_public_forum_routing_is_evidence_not_relationship():
@@ -39,6 +42,25 @@ def test_public_forum_routing_is_evidence_not_relationship():
     assert decision.human_followup_required is True
     assert_no_relationship_or_spend_authority(decision)
     assert decision.claims_boundary["routing_implies_endorsement"] is False
+
+
+def test_community_invite_requires_join_review_and_never_establishes_membership():
+    decision = evaluate_response(valid_response("COMMUNITY_CHANNEL_INVITE_AVAILABLE"))
+    assert decision.response_record_valid is True
+    assert decision.next_action == "HUMAN_CHANNEL_JOIN_REVIEW"
+    assert decision.human_followup_required is True
+    assert_no_relationship_or_spend_authority(decision)
+    assert decision.claims_boundary["invite_implies_membership"] is False
+
+
+def test_program_eligibility_criteria_require_gap_review_and_never_imply_acceptance():
+    decision = evaluate_response(valid_response("PROGRAM_ELIGIBILITY_CRITERIA_RECEIVED"))
+    assert decision.response_record_valid is True
+    assert decision.next_action == "HUMAN_ELIGIBILITY_GAP_REVIEW"
+    assert decision.human_followup_required is True
+    assert_no_relationship_or_spend_authority(decision)
+    assert decision.claims_boundary["eligibility_criteria_imply_acceptance"] is False
+    assert decision.claims_boundary["program_contact_implies_technical_validation"] is False
 
 
 def test_paid_review_offer_never_authorizes_budget():
