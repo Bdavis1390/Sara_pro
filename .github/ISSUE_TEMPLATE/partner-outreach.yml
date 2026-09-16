@@ -1,0 +1,119 @@
+name: Partner / Outreach Record
+description: Track partner diligence, external engagement, division of labor, send state, and commitment gates.
+title: "[TEAMING][P1][SCREENING] "
+labels: []
+body:
+  - type: input
+    id: counterparty
+    attributes:
+      label: Counterparty
+    validations:
+      required: true
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: Intended role
+      options:
+        - PRIME CANDIDATE
+        - SUB / PARTNER
+        - VALIDATION PARTNER
+        - COMMERCIAL CHANNEL
+        - RESEARCH PARTNER
+        - CUSTOMER / USER
+        - STANDARDS / GOVERNMENT / MEDIA CONTACT
+    validations:
+      required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: Capability or access gap being closed
+      description: State exactly what this counterparty contributes that Worldshepherd does not independently claim.
+    validations:
+      required: true
+
+  - type: textarea
+    id: wsvalue
+    attributes:
+      label: Worldshepherd value to the counterparty
+      description: Define the governed integration, evidence, software, engineering, commercialization, or research contribution.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and diligence
+      description: Capability evidence, federal/DoD history, facilities, registrations/eligibility, security/export constraints, IP/data-rights risk, competitive overlap, geography, contact route.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: relationship
+    attributes:
+      label: Relationship state
+      options:
+        - DISCOVERED
+        - SCREENING
+        - CONTACT READY
+        - OUTREACH SENT
+        - ENGAGED
+        - NDA / LEGAL
+        - TEAMING DISCUSSION
+        - COMMITTED
+        - DECLINED
+        - DORMANT
+    validations:
+      required: true
+
+  - type: dropdown
+    id: commstate
+    attributes:
+      label: Communication state
+      options:
+        - DRAFTING
+        - READY FOR APPROVAL
+        - APPROVED
+        - SENT
+        - WAITING EXTERNAL
+        - REPLIED
+        - FOLLOW-UP DUE
+        - CLOSED
+    validations:
+      required: true
+
+  - type: textarea
+    id: division
+    attributes:
+      label: Proposed division of labor
+      description: Prime/sub/validation/commercial/research responsibilities, interfaces, evidence ownership, data/IP boundaries, and decision authority.
+    validations:
+      required: false
+
+  - type: textarea
+    id: commlog
+    attributes:
+      label: Communication log / provenance
+      description: Date, route, message link or summary, attachments, requested action, and actual send state.
+    validations:
+      required: false
+
+  - type: textarea
+    id: next
+    attributes:
+      label: Next action, owner, and follow-up date
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: discipline
+    attributes:
+      label: Commitment and claims discipline
+      options:
+        - label: Partner capability has not been represented as Worldshepherd-owned capability.
+          required: true
+        - label: Drafted, forwarded, or prepared communications have not been represented as sent.
+          required: true
+        - label: No relationship is represented as committed without explicit counterpart confirmation and the applicable legal/contracting gate.
+          required: true
