@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldshepherd.local/schema/ws_qphonon_echo_event_v0_1.schema.json",
+  "title": "WS-QPHONON ECHO Evidence Event V0.1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "raw_data_hash",
+    "model_version",
+    "prior",
+    "posterior",
+    "experiment_proposed",
+    "expected_information_gain",
+    "prime_decision",
+    "control_waveform_or_parameters",
+    "environmental_state",
+    "measurement_result",
+    "model_discrepancy",
+    "claims_state"
+  ],
+  "properties": {
+    "raw_data_hash": {"type": "string", "minLength": 16},
+    "model_version": {"type": "string", "minLength": 1},
+    "prior": {"type": "object"},
+    "posterior": {"type": "object"},
+    "experiment_proposed": {"type": "object"},
+    "expected_information_gain": {"type": ["number", "null"]},
+    "prime_decision": {
+      "type": "object",
+      "required": ["authorized", "disposition", "reasons"],
+      "properties": {
+        "authorized": {"type": "boolean"},
+        "disposition": {"type": "string"},
+        "reasons": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "control_waveform_or_parameters": {"type": "object"},
+    "environmental_state": {"type": "object"},
+    "measurement_result": {"type": "object"},
+    "model_discrepancy": {"type": "object"},
+    "claims_state": {
+      "type": "string",
+      "enum": [
+        "PROVEN_INTERNALLY",
+        "IMPLEMENTED_IN_SOFTWARE",
+        "SUPPORTED_BY_LITERATURE",
+        "SIMULATED_ONLY",
+        "HYPOTHESIS",
+        "SPECULATIVE_EXTENSION",
+        "REQUIRES_LAB_VALIDATION",
+        "REQUIRES_PARTNER_VALIDATION",
+        "REQUIRES_LEGAL_REVIEW",
+        "NOT_CURRENTLY_CLAIMED"
+      ]
+    }
+  }
+}
