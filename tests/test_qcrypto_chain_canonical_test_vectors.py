@@ -15,6 +15,22 @@ def test_all_tracked_chain_vectors_build_unique_canonical_contexts():
     assert len(digests) == 3
 
 
+def test_replay_sequence_changes_each_chain_commitment_without_changing_profile_identity():
+    primary = {v.chain_id: v for v in build_all_chain_canonical_vectors(0)}
+    alternate = {v.chain_id: v for v in build_all_chain_canonical_vectors(1)}
+    assert set(primary) == set(alternate) == {"BITCOIN", "ETHEREUM", "ALGORAND"}
+    for chain_id in primary:
+        left = primary[chain_id]
+        right = alternate[chain_id]
+        assert left.vector_id == right.vector_id
+        assert left.profile_verdict == right.profile_verdict
+        assert left.replay_sequence == 0
+        assert right.replay_sequence == 1
+        assert left.canonical_fields["replay_sequence"] == "0"
+        assert right.canonical_fields["replay_sequence"] == "1"
+        assert left.canonical_context_digest != right.canonical_context_digest
+
+
 def test_bitcoin_vector_remains_design_only_and_does_not_claim_native_pq():
     vector = build_chain_canonical_vector("BITCOIN")
     assert vector.vector_class == VectorClass.DESIGN_ONLY.value
