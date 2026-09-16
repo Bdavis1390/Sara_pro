@@ -274,6 +274,10 @@ def _validate_internal_registry_structure(states: list[PoOTechnicalStateRecord])
                 raise PoODurableCommitError(f"{asset_id}: durable generation does not advance parent by one")
             if state.source_event_type == "CLAIM":
                 raise PoODurableCommitError(f"{asset_id}: CLAIM is only valid for genesis")
+            if state.source_event_type == "RECOVERY" and state.claimant_id != parent.claimant_id:
+                raise PoODurableCommitError(
+                    f"{asset_id}: durable RECOVERY must preserve parent claimant"
+                )
             children.setdefault(previous, []).append(state)
 
         if any(len(items) > 1 for items in children.values()):
