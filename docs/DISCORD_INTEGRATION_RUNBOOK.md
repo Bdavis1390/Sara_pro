@@ -2,9 +2,11 @@
 
 ## Status
 
-This runbook covers the first, deliberately narrow Discord integration: an **outbound incoming-webhook publisher** from Worldshepherd/SARA.
+This runbook covers the first, deliberately narrow Discord integration: an **outbound incoming-webhook publisher** from Worldshepherd/SARA plus a redacted application-level connector adapter.
 
 It is designed as a notification surface only. GitHub and the SARA evidence/audit path remain authoritative.
+
+The connector adapter is part of Worldshepherd/SARA. It is not a ChatGPT-native Discord plugin and does not imply that this ChatGPT workspace can directly read or manage a Discord server.
 
 ## Security boundary
 
@@ -35,9 +37,31 @@ Do not commit the URL, paste it into issues/PRs, place it in screenshots, or pas
 
 The implementation accepts only HTTPS webhook URLs on the official `discord.com` or legacy `discordapp.com` hosts with an incoming-webhook path. Query parameters and fragments are removed before delivery.
 
+## Connector status
+
+The installed connector-health entry point is:
+
+```bash
+ws-discord-connector-status
+```
+
+It performs no Discord network request. It reports only redacted application configuration state, including:
+
+- connector ID and mode;
+- `CONFIGURED`, `UNCONFIGURED`, or `INVALID_CONFIGURATION` state;
+- whether the configured value passes the Discord webhook allowlist;
+- the allowed endpoint host when valid;
+- the fixed `NOTIFICATION_ONLY` authority boundary;
+- explicit `false` values for inbound read and inbound commands;
+- `live_delivery_claimed=false` until controlled external validation is separately completed.
+
+The command never returns the webhook ID, token, path, or complete webhook URL. It exits successfully only when configuration is valid; unconfigured or invalid configuration returns a non-zero status for automation/health-check use.
+
+A healthy connector status proves only that the local configuration is syntactically and policy-valid. It does **not** prove Discord reachability, channel permissions, delivery, availability, or external validation.
+
 ## Human-reviewed dry run
 
-The installed CLI entry point is:
+The installed notification entry point is:
 
 ```bash
 ws-discord-notify \
@@ -59,14 +83,16 @@ Dry-run mode validates and renders the message but performs no network call and 
 After a dry run is reviewed:
 
 1. Configure the webhook URL only in the runtime secret environment.
-2. Send one non-sensitive `WORKFLOW_STATUS` test notification to a dedicated Worldshepherd Discord test/operations channel.
-3. Confirm that the Discord message content matches the dry-run content.
-4. Record the test time, source event/reference, CLI result fingerprint, and the human-observed Discord message link in a GitHub validation issue or evidence record.
-5. Rotate/revoke the webhook immediately if the URL is exposed.
+2. Run `ws-discord-connector-status` and verify `CONFIGURED`, `configuration_valid=true`, and `live_delivery_claimed=false`.
+3. Send one non-sensitive `WORKFLOW_STATUS` test notification to a dedicated Worldshepherd Discord test/operations channel.
+4. Confirm that the Discord message content matches the dry-run content.
+5. Record the test time, source event/reference, CLI result fingerprint, and the human-observed Discord message link in a GitHub validation issue or evidence record.
+6. Rotate/revoke the webhook immediately if the URL is exposed.
 
 Until that controlled external test is completed, the correct claim boundary is:
 
 - code/tests: `IMPLEMENTED IN SOFTWARE` after repository validation;
+- connector configuration status: local/redacted configuration evidence only;
 - live Discord delivery: **not yet claimed**;
 - Discord availability/reliability: **not yet claimed**;
 - external partner validation/adoption: **not claimed**.
@@ -97,6 +123,8 @@ Before delivery the publisher:
 - sends `allowed_mentions.parse=[]` as defense in depth;
 - rejects messages over Discord's 2,000-character content limit instead of silently truncating them;
 - never includes the configured webhook URL in its result object or error text.
+
+The connector-health adapter additionally reports only redacted host-level configuration metadata and never performs an external network check merely to answer a health query.
 
 These controls reduce accidental disclosure; they do not replace normal data-classification review. Do not send CUI, classified information, export-controlled technical data, private credentials, or proprietary partner material through this integration unless a separately approved handling architecture explicitly permits it.
 
