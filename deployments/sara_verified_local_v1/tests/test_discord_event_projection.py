@@ -4,13 +4,12 @@ from copy import deepcopy
 
 import pytest
 
-from worldshepherd_sara.discord_connector import DiscordConnectorError
 from worldshepherd_sara.discord_event_projection import (
     DISCORD_RECEIPTS_REGISTRY_KEY,
     DiscordEventProjectionError,
     project_delivered_events,
 )
-from worldshepherd_sara.discord_webhook import DiscordDeliveryResult
+from worldshepherd_sara.discord_webhook import DiscordDeliveryResult, DiscordWebhookError
 from worldshepherd_sara.event_outbox import (
     EVENT_OUTBOX_REGISTRY_KEY,
     drain_event_outbox,
@@ -28,7 +27,7 @@ class FakeConnector:
         del timeout_seconds, max_attempts
         self.notifications.append(notification)
         if self.fail:
-            raise DiscordConnectorError("simulated connector failure")
+            raise DiscordWebhookError("simulated connector failure")
         return DiscordDeliveryResult(
             delivered=not dry_run,
             dry_run=dry_run,
