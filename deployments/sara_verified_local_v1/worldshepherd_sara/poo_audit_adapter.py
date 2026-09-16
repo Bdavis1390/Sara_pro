@@ -9,13 +9,29 @@ from typing import Any
 from .event_outbox import queue_events_outbox_patch
 
 
-POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V1"
-POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V1"
+POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"
+POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V2"
 AUDIT_INSTANCE_PREFIX = "POO-AUDIT-"
 _AUDIT_INSTANCE_PATTERN = re.compile(r"^POO-AUDIT-[0-9a-f]{32}$")
 _VALID_OPERATIONS = frozenset(
-    {"OWNERSHIP_ATTESTATION", "TRANSFER_READINESS", "RECOVERY_READINESS"}
+    {
+        "OWNERSHIP_ATTESTATION",
+        "COC_ATTESTATION",
+        "TRANSFER_READINESS",
+        "RECOVERY_READINESS",
+        "TECHNICAL_STATE_TRANSITION",
+        "REGISTRY_HEALTH",
+    }
 )
+_OPERATION_READINESS_FIELD = {
+    "OWNERSHIP_ATTESTATION": "technical_attestation_ready",
+    "COC_ATTESTATION": "coc_valid",
+    "TRANSFER_READINESS": "transfer_ready",
+    "RECOVERY_READINESS": "recovery_ready",
+    "TECHNICAL_STATE_TRANSITION": "state_transition_ready",
+    "REGISTRY_HEALTH": "registry_consistent",
+}
+_READINESS_FIELDS = tuple(_OPERATION_READINESS_FIELD.values())
 _FORBIDDEN_TRUE_FIELDS = (
     "ownership_changed",
     "transfer_executed",
@@ -43,8 +59,11 @@ _REQUIRED_FIELDS = frozenset(
         "sara_state",
         "overwatch_state",
         "technical_attestation_ready",
+        "coc_valid",
         "transfer_ready",
         "recovery_ready",
+        "state_transition_ready",
+        "registry_consistent",
         "human_approval_required",
         "ownership_changed",
         "transfer_executed",
@@ -106,16 +125,14 @@ def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
         if projection.get(field) is not False:
             raise PoOAuditAdapterError(f"{field} must remain false at the SARA audit boundary")
 
-    for field in ("technical_attestation_ready", "transfer_ready", "recovery_ready"):
+    for field in _READINESS_FIELDS:
         if not isinstance(projection.get(field), bool):
             raise PoOAuditAdapterError(f"{field} must be boolean")
 
-    if operation != "OWNERSHIP_ATTESTATION" and projection["technical_attestation_ready"]:
-        raise PoOAuditAdapterError("technical_attestation_ready mismatches operation")
-    if operation != "TRANSFER_READINESS" and projection["transfer_ready"]:
-        raise PoOAuditAdapterError("transfer_ready mismatches operation")
-    if operation != "RECOVERY_READINESS" and projection["recovery_ready"]:
-        raise PoOAuditAdapterError("recovery_ready mismatches operation")
+    allowed_true_field = _OPERATION_READINESS_FIELD[operation]
+    for field in _READINESS_FIELDS:
+        if field != allowed_true_field and projection[field]:
+            raise PoOAuditAdapterError(f"{field} mismatches operation")
 
     for _stage, state_field, _event_name in _STAGE_FIELDS:
         state = projection.get(state_field)
@@ -161,8 +178,11 @@ def poo_outbox_events(
         "source_status": record["source_status"],
         "previous_poo_digest": record["previous_poo_digest"],
         "technical_attestation_ready": record["technical_attestation_ready"],
+        "coc_valid": record["coc_valid"],
         "transfer_ready": record["transfer_ready"],
         "recovery_ready": record["recovery_ready"],
+        "state_transition_ready": record["state_transition_ready"],
+        "registry_consistent": record["registry_consistent"],
         "human_approval_required": True,
         "ownership_changed": False,
         "transfer_executed": False,
