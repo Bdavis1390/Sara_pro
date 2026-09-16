@@ -5,6 +5,7 @@ on:
     paths:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py'
       - 'deployments/sara_verified_local_v1/tests/test_spdx_intake.py'
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
       - 'deployments/sara_verified_local_v1/docs/SPDX_INTAKE_REVIEW.md'
       - '.github/workflows/spdx-intake-gate.yml'
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py'
       - 'deployments/sara_verified_local_v1/tests/test_spdx_intake.py'
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
       - 'deployments/sara_verified_local_v1/docs/SPDX_INTAKE_REVIEW.md'
       - '.github/workflows/spdx-intake-gate.yml'
 
@@ -39,7 +41,31 @@ jobs:
         env:
           PYTHONPATH: deployments/sara_verified_local_v1
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_spdx_intake.py
-      - name: Enforce serialization, claims, and authority boundaries
+      - name: Validate frozen SPDX fixture with isolated third-party validator
+        run: |
+          python -m venv /tmp/ws-spdx-validator
+          /tmp/ws-spdx-validator/bin/python -m pip install --disable-pip-version-check 'spdx3-validate==0.0.7'
+          /tmp/ws-spdx-validator/bin/python -m pip check
+          /tmp/ws-spdx-validator/bin/spdx3-validate --json deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json
+      - name: Confirm validator-passing fixture remains bounded to human review
+        env:
+          PYTHONPATH: deployments/sara_verified_local_v1
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from worldshepherd_sara.spdx_intake import evaluate_spdx301_document
+
+          path = Path('deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json')
+          decision = evaluate_spdx301_document(json.loads(path.read_text(encoding='utf-8')))
+          assert decision.status == 'READY_FOR_HUMAN_ADMISSION_REVIEW'
+          assert decision.ready_for_human_admission_review is True
+          assert decision.spdx_conformance_established is False
+          assert decision.admission_authorized is False
+          assert decision.release_approved is False
+          assert decision.external_validation_established is False
+          PY
+      - name: Enforce serialization, validator, claims, and authority boundaries
         run: |
           grep -q 'SPDX_INTAKE_SCHEMA = "WS-SPDX-INTAKE-EVIDENCE-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'SPDX_CONTEXT_301 = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
@@ -48,6 +74,7 @@ jobs:
           grep -q 'SOFTWARE_PACKAGE_VERSION = "software_packageVersion"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'SOFTWARE_PACKAGE_URL = "software_packageUrl"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'test_published_example13_profile_names_are_recognized' deployments/sara_verified_local_v1/tests/test_spdx_intake.py
+          grep -q 'spdx3-validate==0.0.7' .github/workflows/spdx-intake-gate.yml
           grep -q 'spdx_conformance_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'json_schema_validation_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'semantic_ontology_validation_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
