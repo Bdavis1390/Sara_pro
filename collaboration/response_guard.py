@@ -2,7 +2,8 @@
 
 This module tracks the *state of evidence* after outreach without storing private
 message bodies and without converting a response into relationship, hiring,
-partnership, or spending authority.
+partnership, program membership, community membership, validation, or spending
+authority.
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ RESPONSE_SCHEMA = "WS-COLLAB-RESPONSE-V1"
 RESPONSE_CLASSES: Tuple[str, ...] = (
     "NO_RESPONSE_YET",
     "ROUTED_TO_PUBLIC_FORUM",
+    "COMMUNITY_CHANNEL_INVITE_AVAILABLE",
+    "PROGRAM_ELIGIBILITY_CRITERIA_RECEIVED",
     "PAID_REVIEW_AVAILABLE",
     "SCOPE_DISCUSSION_AVAILABLE",
     "COLLABORATION_INTEREST_EXPRESSED",
@@ -27,6 +30,8 @@ RESPONSE_CLASSES: Tuple[str, ...] = (
 _NEXT_ACTION = {
     "NO_RESPONSE_YET": "MONITOR_ONLY",
     "ROUTED_TO_PUBLIC_FORUM": "ENGAGE_REFERRED_PUBLIC_FORUM",
+    "COMMUNITY_CHANNEL_INVITE_AVAILABLE": "HUMAN_CHANNEL_JOIN_REVIEW",
+    "PROGRAM_ELIGIBILITY_CRITERIA_RECEIVED": "HUMAN_ELIGIBILITY_GAP_REVIEW",
     "PAID_REVIEW_AVAILABLE": "HUMAN_BUDGET_AND_SCOPE_REVIEW",
     "SCOPE_DISCUSSION_AVAILABLE": "HUMAN_SCOPE_REVIEW",
     "COLLABORATION_INTEREST_EXPRESSED": "HUMAN_RELATIONSHIP_REVIEW",
@@ -66,6 +71,9 @@ class ResponseDecision:
     teammate_relationship_established: bool
     employment_relationship_established: bool
     partnership_established: bool
+    community_membership_established: bool
+    program_membership_established: bool
+    technical_validation_established: bool
     claims_boundary: Dict[str, bool]
 
 
@@ -124,6 +132,8 @@ def evaluate_response(evidence: ResponseEvidence) -> ResponseDecision:
 
     human_followup = valid and response_class in {
         "ROUTED_TO_PUBLIC_FORUM",
+        "COMMUNITY_CHANNEL_INVITE_AVAILABLE",
+        "PROGRAM_ELIGIBILITY_CRITERIA_RECEIVED",
         "PAID_REVIEW_AVAILABLE",
         "SCOPE_DISCUSSION_AVAILABLE",
         "COLLABORATION_INTEREST_EXPRESSED",
@@ -143,11 +153,17 @@ def evaluate_response(evidence: ResponseEvidence) -> ResponseDecision:
         teammate_relationship_established=False,
         employment_relationship_established=False,
         partnership_established=False,
+        community_membership_established=False,
+        program_membership_established=False,
+        technical_validation_established=False,
         claims_boundary={
             "response_implies_consent_to_join": False,
             "quote_implies_purchase_authority": False,
             "routing_implies_endorsement": False,
             "interest_implies_relationship": False,
+            "invite_implies_membership": False,
+            "eligibility_criteria_imply_acceptance": False,
+            "program_contact_implies_technical_validation": False,
             "private_message_content_stored": False,
         },
     )
