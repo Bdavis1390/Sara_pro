@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install test dependencies
-        run: python -m pip install --disable-pip-version-check pytest 'pydantic>=2,<3'
+        run: python -m pip install --disable-pip-version-check pytest 'pydantic>=2,<3' cryptography
       - name: Compile all PoO modules and SARA adapter
         run: |
           python -m compileall -q security/poo
