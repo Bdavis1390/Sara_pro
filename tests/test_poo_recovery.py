@@ -21,6 +21,7 @@ def valid_recovery():
         new_control_key_fingerprint="key:new789",
         recovery_work_reference="work:recovery:001",
         recovery_concept_reference="concept:recovery:001",
+        recovery_coc_reference="coc:recovery:001",
         recovery_stake_reference="stake:recovery:001",
         recovery_request_reference="recovery:req:001",
         issued_at="2026-09-16T01:00:00Z",
@@ -79,6 +80,12 @@ def test_every_recovery_predicate_is_fail_closed():
         assert d.missing_predicates, field
 
 
+def test_empty_recovery_coc_reference_blocks_even_with_verified_boolean():
+    d = evaluate_recovery(replace(valid_recovery(), recovery_coc_reference=""))
+    assert d.recovery_ready is False
+    assert "recovery COC reference must be non-empty" in d.missing_predicates
+
+
 def test_poc_and_coc_are_distinct_recovery_requirements():
     base = valid_recovery()
     missing_concept = evaluate_recovery(replace(base, recovery_poc_concept_verified=False))
@@ -108,13 +115,14 @@ def test_invalid_recovery_reason_is_blocked():
     assert "recovery reason not allowed" in d.missing_predicates
 
 
-def test_ready_recovery_derives_same_claimant_poo_candidate():
+def test_ready_recovery_derives_same_claimant_poo_candidate_with_coc_reference():
     recovery = valid_recovery()
     candidate = derive_recovery_ownership_candidate(recovery)
     decision = evaluate_ownership(candidate)
     assert candidate.claimant_id == recovery.claimant_id
     assert candidate.previous_poo_digest == recovery.prior_poo_digest
     assert candidate.control_key_fingerprint == recovery.new_control_key_fingerprint
+    assert candidate.coc_reference == recovery.recovery_coc_reference
     assert candidate.poc_concept_verified is True
     assert candidate.coc_verified is True
     assert decision.poo_valid is True
@@ -128,11 +136,11 @@ def test_unready_recovery_cannot_derive_candidate():
         )
 
 
-def test_recovery_digest_is_deterministic_and_reason_sensitive():
+def test_recovery_digest_commits_reason_and_coc_reference():
     r = valid_recovery()
     assert recovery_digest(r) == recovery_digest(r)
-    altered = replace(r, recovery_reason="LOST_CONTROL")
-    assert recovery_digest(altered) != recovery_digest(r)
+    assert recovery_digest(replace(r, recovery_reason="LOST_CONTROL")) != recovery_digest(r)
+    assert recovery_digest(replace(r, recovery_coc_reference="coc:recovery:other")) != recovery_digest(r)
 
 
 def test_recovery_does_not_change_owner_even_with_external_title_reference():
