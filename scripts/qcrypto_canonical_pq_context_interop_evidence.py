@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate zero-value PQ signature evidence for a canonical QCRYPTO context."""
+"""Generate zero-value PQ signature evidence after canonical pre-sign intent."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from pathlib import Path
 from security.qcrypto.canonical_authority_envelope import CanonicalAuthorityEnvelope
 from security.qcrypto.canonical_pq_context_interop import run_all_canonical_context_probes
 from security.qcrypto.canonical_pq_signing_context import (
+    AuthoritySigningIntent,
     CanonicalSigningContextRequest,
     build_canonical_signing_context,
 )
 from security.qcrypto.hybrid_authority_migration import (
-    AuthorityEnvelope,
     AuthorityLayer,
     AuthorityPolicy,
     MigrationRequirement,
@@ -28,8 +28,8 @@ EVIDENCE = "2" * 64
 RECOVERY = "3" * 64
 
 
-def authority() -> AuthorityEnvelope:
-    return AuthorityEnvelope(
+def intent() -> AuthoritySigningIntent:
+    return AuthoritySigningIntent(
         network_id="canonical-interop-testnet",
         domain_separator="WS-QCRYPTO-AUTH-V1",
         payload_digest=PAYLOAD,
@@ -40,8 +40,6 @@ def authority() -> AuthorityEnvelope:
         key_epoch=40,
         classical_algorithm_id="ECDSA",
         pq_algorithm_id="ML-DSA",
-        classical_signature_present=True,
-        pq_signature_present=True,
         classical_required_for_acceptance=True,
         pq_required_for_acceptance=True,
         recovery_evidence_present=True,
@@ -81,7 +79,7 @@ def adapter() -> CanonicalAuthorityEnvelope:
 def signing_context(sequence: int):
     return build_canonical_signing_context(
         CanonicalSigningContextRequest(
-            authority=authority(),
+            intent=intent(),
             authority_policy=policy(),
             adapter=adapter(),
             policy_version=10,
@@ -101,9 +99,11 @@ def main() -> int:
     primary = signing_context(700)
     alternate = signing_context(701)
     if not primary.ready or not alternate.ready:
-        raise SystemExit("canonical signing contexts were not ready")
+        raise SystemExit("canonical pre-sign contexts were not ready")
+    if not primary.pre_sign_intent_only or primary.signature_presence_assumed:
+        raise SystemExit("pre-sign lifecycle boundary was not preserved")
     if primary.context_digest == alternate.context_digest:
-        raise SystemExit("replay-domain negative control did not produce a distinct commitment")
+        raise SystemExit("replay negative control did not produce a distinct commitment")
 
     results = run_all_canonical_context_probes(primary, alternate)
     for result in results:
@@ -125,16 +125,16 @@ def main() -> int:
         "status": "PASS",
         "claim_state": "CANONICAL_CONTEXT_PQ_SIGNATURE_INTEROPERABILITY_PROVEN_IN_CI",
         "proof_scope": "EPHEMERAL_ZERO_VALUE_CANONICAL_CONTEXT_ONLY",
-        "backend": {
-            "package": "pqcrypto",
-            "pinned_version": "1.0.0",
-        },
+        "backend": {"package": "pqcrypto", "pinned_version": "1.0.0"},
+        "pre_sign_intent_only": primary.pre_sign_intent_only,
+        "signature_presence_assumed": primary.signature_presence_assumed,
         "primary_context_digest": primary.context_digest,
         "alternate_context_digest": alternate.context_digest,
         "scheme_count": len(SCHEMES),
         "schemes": list(SCHEMES),
         "results": [result.to_dict() for result in results],
         "summary": {
+            "intent_before_signature_generation": True,
             "all_valid_signatures_verified": all(r.valid_signature_verified for r in results),
             "all_tampered_contexts_rejected": all(r.tampered_context_rejected for r in results),
             "all_cross_context_replays_rejected": all(r.cross_context_replay_rejected for r in results),
