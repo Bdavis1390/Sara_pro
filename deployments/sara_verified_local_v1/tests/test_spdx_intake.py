@@ -31,19 +31,64 @@ def sample_document():
                 "name": "Worldshepherd SPDX intake fixture",
             },
             {
-                "type": "Sbom",
+                "type": "software_Sbom",
                 "spdxId": "urn:worldshepherd:spdx:sbom:001",
                 "creationInfo": "_:creationinfo",
                 "rootElement": ["urn:worldshepherd:spdx:package:001"],
                 "element": ["urn:worldshepherd:spdx:package:001"],
             },
             {
-                "type": "Package",
+                "type": "software_Package",
                 "spdxId": "urn:worldshepherd:spdx:package:001",
                 "creationInfo": "_:creationinfo",
                 "name": "example-package",
-                "packageVersion": "1.2.3",
-                "packageUrl": "pkg:pypi/example-package@1.2.3",
+                "software_packageVersion": "1.2.3",
+                "software_packageUrl": "pkg:pypi/example-package@1.2.3",
+            },
+        ],
+    }
+
+
+def official_example13_shape():
+    """Minimal shape matching SPDX's published example13 compact JSON-LD vocabulary."""
+    return {
+        "@context": SPDX_CONTEXT_301,
+        "@graph": [
+            {
+                "type": "CreationInfo",
+                "@id": "_:creationinfo",
+                "specVersion": "3.0.1",
+                "createdBy": ["urn:example:person:1"],
+                "created": "2024-05-02T00:00:00Z",
+            },
+            {
+                "type": "Person",
+                "spdxId": "urn:example:person:1",
+                "creationInfo": "_:creationinfo",
+                "name": "Example Owner",
+            },
+            {
+                "type": "SpdxDocument",
+                "spdxId": "http://spdx.example.com/Document1",
+                "creationInfo": "_:creationinfo",
+                "profileConformance": ["core", "software"],
+                "rootElement": ["urn:example:sbom:1"],
+            },
+            {
+                "type": "software_Sbom",
+                "spdxId": "urn:example:sbom:1",
+                "creationInfo": "_:creationinfo",
+                "profileConformance": ["core", "software"],
+                "rootElement": ["urn:example:package:1"],
+            },
+            {
+                "type": "software_Package",
+                "spdxId": "urn:example:package:1",
+                "creationInfo": "_:creationinfo",
+                "name": "Acme Application",
+                "software_packageVersion": "1.3",
+                "suppliedBy": "urn:example:person:1",
+                "software_primaryPurpose": "application",
             },
         ],
     }
@@ -79,6 +124,32 @@ def test_review_ready_intake_preserves_source_and_never_confers_authority():
     assert decision.admission_authorized is False
     assert decision.release_approved is False
     assert decision.external_validation_established is False
+
+
+def test_published_example13_profile_names_are_recognized():
+    decision = evaluate_spdx301_document(official_example13_shape())
+    assert decision.status == "READY_FOR_HUMAN_ADMISSION_REVIEW"
+    assert decision.sbom_count == 1
+    assert decision.package_count == 1
+    assert decision.package_refs == [
+        {
+            "spdx_id": "urn:example:package:1",
+            "name": "Acme Application",
+            "version": "1.3",
+            "purl": None,
+        }
+    ]
+    assert decision.spdx_conformance_established is False
+
+
+def test_unprefixed_software_profile_types_do_not_masquerade_as_301_serialization():
+    document = sample_document()
+    document["@graph"][2]["type"] = "Sbom"
+    document["@graph"][3]["type"] = "Package"
+    decision = evaluate_spdx301_document(document)
+    assert decision.status == "BLOCKED_SPDX_INTAKE"
+    assert "no software_Sbom element found" in decision.reasons
+    assert "no software_Package element found" in decision.reasons
 
 
 def test_canonical_digest_is_order_independent_for_json_object_keys():
@@ -124,7 +195,7 @@ def test_package_without_name_fails_closed():
     document = sample_document()
     document["@graph"][3].pop("name")
     decision = evaluate_spdx301_document(document)
-    assert "Package missing name: urn:worldshepherd:spdx:package:001" in decision.reasons
+    assert "software_Package missing name: urn:worldshepherd:spdx:package:001" in decision.reasons
 
 
 def test_wrong_creation_info_spec_version_fails_closed():
@@ -141,7 +212,7 @@ def test_missing_package_fails_closed():
     document["@graph"][2]["element"] = []
     document["@graph"][2]["rootElement"] = []
     decision = evaluate_spdx301_document(document)
-    assert "no Package element found" in decision.reasons
+    assert "no software_Package element found" in decision.reasons
 
 
 def test_non_object_input_rejected():
