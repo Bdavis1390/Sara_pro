@@ -11,6 +11,7 @@ on:
       - 'tests/test_qcrypto_hybrid_authority_migration.py'
       - 'tests/test_qcrypto_pqc_algorithm_policy.py'
       - 'scripts/qcrypto_canonical_signing_context_evidence.py'
+      - 'scripts/verify_qcrypto_canonical_signing_context.mjs'
       - '.github/workflows/qcrypto-canonical-signing-context.yml'
   push:
     branches:
@@ -24,6 +25,7 @@ on:
       - 'tests/test_qcrypto_hybrid_authority_migration.py'
       - 'tests/test_qcrypto_pqc_algorithm_policy.py'
       - 'scripts/qcrypto_canonical_signing_context_evidence.py'
+      - 'scripts/verify_qcrypto_canonical_signing_context.mjs'
       - '.github/workflows/qcrypto-canonical-signing-context.yml'
   workflow_dispatch:
 
@@ -71,6 +73,12 @@ jobs:
         run: |
           python scripts/qcrypto_canonical_signing_context_evidence.py \
             --output canonical-signing-context-evidence.json
+
+      - name: Independently reconstruct framing in Node.js
+        run: |
+          node --version
+          node scripts/verify_qcrypto_canonical_signing_context.mjs \
+            canonical-signing-context-evidence.json
 
       - name: Assert deterministic fail-closed binding posture
         run: |
