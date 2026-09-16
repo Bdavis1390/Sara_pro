@@ -63,20 +63,41 @@ jobs:
           printf '%064d\n' 0 > deployments/qcrypto_chain_testnets/secrets/engine-jwt.hex
           docker compose \
             -f deployments/qcrypto_chain_testnets/compose.observer.yaml \
-            config > /tmp/qcrypto-chain-compose.rendered.yaml
-          grep -q -- '-signet' /tmp/qcrypto-chain-compose.rendered.yaml
-          grep -q -- '--hoodi' /tmp/qcrypto-chain-compose.rendered.yaml
-          grep -q -- '--checkpoint-sync-url' /tmp/qcrypto-chain-compose.rendered.yaml
-          grep -q -- 'https://hoodi.checkpoint.sigp.io' /tmp/qcrypto-chain-compose.rendered.yaml
-          grep -q -- '127.0.0.1:5052' /tmp/qcrypto-chain-compose.rendered.yaml
-          if grep -q -- '--mainnet' /tmp/qcrypto-chain-compose.rendered.yaml; then
-            echo 'mainnet flag found in public-testnet package' >&2
-            exit 1
-          fi
-          if grep -Eiq '(wallet.*(key|seed)|validator.*(key|keystore)|mnemonic)' /tmp/qcrypto-chain-compose.rendered.yaml; then
-            echo 'signing-key material surface found in observer package' >&2
-            exit 1
-          fi
+            config --format json > /tmp/qcrypto-chain-compose.rendered.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path('/tmp/qcrypto-chain-compose.rendered.json').read_text())
+          services = data['services']
+          btc = services['bitcoin-signet']
+          geth = services['ethereum-execution']
+          lighthouse = services['ethereum-consensus']
+
+          btc_cmd = [str(x) for x in btc.get('command', [])]
+          geth_cmd = [str(x) for x in geth.get('command', [])]
+          lh_cmd = [str(x) for x in lighthouse.get('command', [])]
+          assert '-signet' in btc_cmd
+          assert '-disablewallet=1' in btc_cmd
+          assert '--hoodi' in geth_cmd
+          assert '--mainnet' not in geth_cmd
+          assert '--network' in lh_cmd and 'hoodi' in lh_cmd
+          assert '--checkpoint-sync-url' in lh_cmd
+          assert 'https://hoodi.checkpoint.sigp.io' in lh_cmd
+          assert '--mainnet' not in lh_cmd
+
+          ports = lighthouse.get('ports') or []
+          assert any(
+              str(p.get('host_ip')) == '127.0.0.1'
+              and int(p.get('target')) == 5052
+              and int(p.get('published')) == 5052
+              for p in ports
+          ), ports
+
+          rendered = json.dumps(data, sort_keys=True).lower()
+          for forbidden in ('mnemonic', 'validator-key', 'walletpassphrase', 'importprivkey'):
+              assert forbidden not in rendered, forbidden
+          PY
 
       - name: Emit bounded readiness receipt
         run: |
