@@ -4,7 +4,7 @@
 
 This lane turns public collaborator discovery and subsequent responses into a claims-controlled evidence process instead of an informal contact list.
 
-A candidate may be discovered through Web3, WebP3, or another technical ecosystem, but Worldshepherd does not infer availability, consent, interest, employment status, partnership status, or permission to contact from public work alone.
+A candidate may be discovered through Web3, WebP3, or another technical ecosystem, but Worldshepherd does not infer availability, consent, interest, employment status, partnership status, community membership, program acceptance, or permission to contact from public work alone.
 
 ## Evidence model
 
@@ -44,13 +44,25 @@ Supported response classes are:
 
 - `NO_RESPONSE_YET`;
 - `ROUTED_TO_PUBLIC_FORUM`;
+- `COMMUNITY_CHANNEL_INVITE_AVAILABLE`;
+- `PROGRAM_ELIGIBILITY_CRITERIA_RECEIVED`;
 - `PAID_REVIEW_AVAILABLE`;
 - `SCOPE_DISCUSSION_AVAILABLE`;
 - `COLLABORATION_INTEREST_EXPRESSED`;
 - `DECLINED`; and
 - `UNDELIVERABLE_OR_CHANNEL_CLOSED`.
 
-A valid response still cannot authorize spending, broaden outreach, establish teammate/employment/partnership status, or imply endorsement. Paid-review availability routes only to human budget/scope review. A standards/community referral routes only to the referred public forum. An expression of interest routes only to human relationship review.
+A valid response still cannot authorize spending, broaden outreach, establish teammate/employment/partnership status, establish community/program membership, or imply endorsement or technical validation.
+
+Routing rules remain bounded:
+
+- a public-forum referral routes only to the referred public forum;
+- a community invite routes only to human channel-join review;
+- program eligibility criteria route only to human eligibility-gap review;
+- paid-review availability routes only to human budget/scope review; and
+- an expression of collaboration interest routes only to human relationship review.
+
+An invitation does not prove that a community account was created or joined. Program criteria do not prove eligibility, acceptance, or membership. A vendor/program response does not validate Worldshepherd software, hardware, interoperability, or deployment claims.
 
 Private message content, quoted prices, addresses, telephone numbers, and personal notes are intentionally excluded from the response digest. The authoritative communication remains in its source system.
 
@@ -74,13 +86,24 @@ outreach_expansion_authorized = false
 teammate_relationship_established = false
 employment_relationship_established = false
 partnership_established = false
+community_membership_established = false
+program_membership_established = false
+technical_validation_established = false
 ```
 
-Public evidence or a reply never becomes consent, spending authority, or a relationship by inference.
+The corresponding claims boundary also keeps these interpretations false:
+
+```text
+invite_implies_membership = false
+eligibility_criteria_imply_acceptance = false
+program_contact_implies_technical_validation = false
+```
+
+Public evidence or a reply never becomes consent, spending authority, membership, validation, or a relationship by inference.
 
 ## Web3 seed
 
-`web3_candidate_seed_2026-09-15.json` currently captures public evidence for technically relevant people/teams working in areas such as post-quantum cryptography, Bitcoin PQ migration, Ethereum PQ interoperability, auditable crypto libraries, and Lean Ethereum tooling.
+`web3_candidate_seed_2026-09-15.json` currently captures public evidence for technically relevant people/teams working in areas such as post-quantum cryptography, Bitcoin PQ migration, Ethereum PQ interoperability, auditable cryptographic libraries, and Lean Ethereum tooling.
 
 The seed is a research snapshot. It is not an endorsement or ranked recruiting list, and every record must be re-verified before any future outreach review.
 
@@ -93,11 +116,11 @@ Therefore no `WEBP3` teammate candidate is promoted in the seed. The source rema
 ## Worldshepherd mapping
 
 - **ECHO:** preserve public source provenance, response evidence references, and verification dates.
-- **PRIME:** enforce evidence, freshness, conflict-screen, response classification, and authority boundaries.
-- **SARA:** orchestrate human review, budget/scope review, and any separately authorized outreach workflow.
-- **OVERWATCH:** monitor stale evidence, unresolved conflicts, duplicate candidates, pending responses, and source ambiguity.
+- **PRIME:** enforce evidence, freshness, conflict-screen, response classification, membership/validation boundaries, and authority boundaries.
+- **SARA:** orchestrate human review, eligibility-gap review, channel-join review, budget/scope review, and any separately authorized outreach workflow.
+- **OVERWATCH:** monitor stale evidence, unresolved conflicts, duplicate candidates, pending responses, invitation/application state, and source ambiguity.
 - **QCRYPTO:** supplies technical fit context for cryptography/PQC candidates.
 
 ## Claims state
 
-`IMPLEMENTED IN SOFTWARE / EXTERNAL RELATIONSHIPS NOT ESTABLISHED`
+`IMPLEMENTED IN SOFTWARE / EXTERNAL RELATIONSHIPS AND MEMBERSHIPS NOT ESTABLISHED`
