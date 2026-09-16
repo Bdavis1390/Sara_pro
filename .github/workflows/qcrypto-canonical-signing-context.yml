@@ -80,7 +80,7 @@ jobs:
           node scripts/verify_qcrypto_canonical_signing_context.mjs \
             canonical-signing-context-evidence.json
 
-      - name: Assert deterministic fail-closed binding posture
+      - name: Assert deterministic pre-sign fail-closed binding posture
         run: |
           python - <<'PY'
           import json
@@ -91,7 +91,12 @@ jobs:
           assert e['status'] == 'PASS'
           assert e['baseline']['verdict'] == 'CANONICAL_SIGNING_CONTEXT_READY'
           assert e['baseline']['ready'] is True
+          assert e['baseline']['pre_sign_intent_only'] is True
+          assert e['baseline']['signature_presence_assumed'] is False
+          assert not any('signature_present' in key for key in e['baseline']['canonical_fields'])
           assert len(e['baseline']['context_digest']) == 64
+          assert e['summary']['pre_sign_intent_only'] is True
+          assert e['summary']['signature_presence_assumed'] is False
           assert e['summary']['distinct_context_digest_count'] == 8
           assert e['summary']['expected_distinct_context_digest_count'] == 8
           assert e['summary']['authority_domain_bound'] is True
