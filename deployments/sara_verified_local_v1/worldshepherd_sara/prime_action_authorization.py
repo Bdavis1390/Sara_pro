@@ -6,7 +6,7 @@ import hashlib
 import json
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -21,6 +21,12 @@ MAX_FUTURE_SKEW = timedelta(seconds=60)
 _SHA256_PATTERN = r"^sha256:[0-9a-f]{64}$"
 _SAFE_ID_PATTERN = r"^[A-Za-z0-9._:-]{1,128}$"
 
+ModelIdentifier = Annotated[str, Field(min_length=1, max_length=256)]
+ToolIdentifier = Annotated[
+    str, Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._:-]+$")
+]
+ResourceIdentifier = Annotated[str, Field(min_length=1, max_length=512)]
+
 
 class PrimeActionAuthorizationError(ValueError):
     pass
@@ -34,7 +40,7 @@ class PrimeActionAuthorizationAssertion(BaseModel):
     bounded provider/tool execution and is fail-closed by default.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema: Literal[PRIME_ACTION_AUTHZ_SCHEMA] = PRIME_ACTION_AUTHZ_SCHEMA
     issuer: Literal["PRIME_SENTINEL"] = "PRIME_SENTINEL"
@@ -47,9 +53,9 @@ class PrimeActionAuthorizationAssertion(BaseModel):
     provider_operation: str = Field(
         min_length=1, max_length=128, pattern=r"^[A-Z0-9._:-]+$"
     )
-    model_allowlist: list[str] = Field(default_factory=list, max_length=32)
-    tool_allowlist: list[str] = Field(default_factory=list, max_length=64)
-    resource_scope: list[str] = Field(default_factory=list, max_length=64)
+    model_allowlist: list[ModelIdentifier] = Field(min_length=1, max_length=32)
+    tool_allowlist: list[ToolIdentifier] = Field(default_factory=list, max_length=64)
+    resource_scope: list[ResourceIdentifier] = Field(default_factory=list, max_length=64)
 
     requested_authority: int = Field(ge=0, le=1_000_000)
     reversible: bool
@@ -85,11 +91,15 @@ class PrimeActionAuthorizationAssertion(BaseModel):
             raise ValueError("tool_allowlist must not contain duplicates")
         if len(set(self.resource_scope)) != len(self.resource_scope):
             raise ValueError("resource_scope must not contain duplicates")
-        if self.side_effect_class == "READ_ONLY" and not self.reversible:
-            raise ValueError("READ_ONLY authorization must be reversible")
-        if self.policy_disposition == "HUMAN_REVIEW_REQUIRED":
-            if not self.human_approval_required:
-                raise ValueError("human review disposition requires human approval")
+        if self.side_effect_class in {"READ_ONLY", "REVERSIBLE"} and not self.reversible:
+            raise ValueError(f"{self.side_effect_class} authorization must be reversible")
+        if self.side_effect_class == "IRREVERSIBLE" and self.reversible:
+            raise ValueError("IRREVERSIBLE authorization cannot be reversible")
+        review_required = self.policy_disposition == "HUMAN_REVIEW_REQUIRED"
+        if review_required != self.human_approval_required:
+            raise ValueError("policy disposition and human approval requirement must agree")
+        if self.side_effect_class in {"CONSEQUENTIAL", "IRREVERSIBLE"} and not review_required:
+            raise ValueError("consequential or irreversible execution requires human review")
         if self.human_approval_required:
             if not self.human_decision_id or not self.human_decision_sha256:
                 raise ValueError(
@@ -101,29 +111,67 @@ class PrimeActionAuthorizationAssertion(BaseModel):
 
 
 class VerifiedPrimeActionAuthorization(BaseModel):
-    authorization_id: str
-    action_id: str
-    prime_id: str
-    provider: str
-    provider_operation: str
-    model_allowlist: list[str]
-    tool_allowlist: list[str]
-    resource_scope: list[str]
-    requested_authority: int
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    authorization_id: str = Field(pattern=_SAFE_ID_PATTERN)
+    action_id: str = Field(pattern=_SAFE_ID_PATTERN)
+    prime_id: str = Field(pattern=_SAFE_ID_PATTERN)
+    provider: str = Field(min_length=1, max_length=64, pattern=r"^[A-Z0-9._:-]+$")
+    provider_operation: str = Field(
+        min_length=1, max_length=128, pattern=r"^[A-Z0-9._:-]+$"
+    )
+    model_allowlist: list[ModelIdentifier] = Field(min_length=1, max_length=32)
+    tool_allowlist: list[ToolIdentifier] = Field(default_factory=list, max_length=64)
+    resource_scope: list[ResourceIdentifier] = Field(default_factory=list, max_length=64)
+    requested_authority: int = Field(ge=0, le=1_000_000)
     reversible: bool
-    side_effect_class: str
-    policy_id: str
-    policy_sha256: str
-    policy_disposition: str
-    request_sha256: str
+    side_effect_class: Literal[
+        "READ_ONLY", "REVERSIBLE", "CONSEQUENTIAL", "IRREVERSIBLE"
+    ]
+    policy_id: str = Field(min_length=1, max_length=128)
+    policy_sha256: str = Field(pattern=_SHA256_PATTERN)
+    policy_disposition: Literal["AUTO_ELIGIBLE", "HUMAN_REVIEW_REQUIRED"]
+    request_sha256: str = Field(pattern=_SHA256_PATTERN)
     human_approval_required: bool
-    human_decision_id: str | None
-    human_decision_sha256: str | None
-    key_id: str
-    key_fingerprint_sha256: str
-    nonce: str
+    human_decision_id: str | None = Field(default=None, max_length=128)
+    human_decision_sha256: str | None = Field(default=None, pattern=_SHA256_PATTERN)
+    key_id: str = Field(pattern=_SAFE_ID_PATTERN)
+    key_fingerprint_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    nonce: str = Field(min_length=16, max_length=128)
     issued_at: datetime
     expires_at: datetime
+
+    @model_validator(mode="after")
+    def validate_contract(self) -> "VerifiedPrimeActionAuthorization":
+        if self.issued_at.tzinfo is None or self.expires_at.tzinfo is None:
+            raise ValueError("issued_at and expires_at must be timezone-aware")
+        if self.expires_at <= self.issued_at:
+            raise ValueError("expires_at must be after issued_at")
+        if self.expires_at - self.issued_at > MAX_ASSERTION_LIFETIME:
+            raise ValueError("authorization lifetime exceeds 15 minutes")
+        if len(set(self.model_allowlist)) != len(self.model_allowlist):
+            raise ValueError("model_allowlist must not contain duplicates")
+        if len(set(self.tool_allowlist)) != len(self.tool_allowlist):
+            raise ValueError("tool_allowlist must not contain duplicates")
+        if len(set(self.resource_scope)) != len(self.resource_scope):
+            raise ValueError("resource_scope must not contain duplicates")
+        if self.side_effect_class in {"READ_ONLY", "REVERSIBLE"} and not self.reversible:
+            raise ValueError(f"{self.side_effect_class} authorization must be reversible")
+        if self.side_effect_class == "IRREVERSIBLE" and self.reversible:
+            raise ValueError("IRREVERSIBLE authorization cannot be reversible")
+        review_required = self.policy_disposition == "HUMAN_REVIEW_REQUIRED"
+        if review_required != self.human_approval_required:
+            raise ValueError("policy disposition and human approval requirement must agree")
+        if self.side_effect_class in {"CONSEQUENTIAL", "IRREVERSIBLE"} and not review_required:
+            raise ValueError("consequential or irreversible execution requires human review")
+        if self.human_approval_required:
+            if not self.human_decision_id or not self.human_decision_sha256:
+                raise ValueError(
+                    "human approval requires human_decision_id and human_decision_sha256"
+                )
+        elif self.human_decision_id is not None or self.human_decision_sha256 is not None:
+            raise ValueError("human decision evidence is only valid when approval is required")
+        return self
 
 
 def _utc_iso(value: datetime) -> str:
