@@ -1,0 +1,4 @@
+services:
+  sara:
+    environment:
+      POO_REQUIRE_PRIME_AUTHORIZATION: "1"
