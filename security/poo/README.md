@@ -4,13 +4,12 @@
 
 PoO is a claims-controlled ownership-attestation protocol that composes independent evidence instead of treating any one consensus primitive as ownership.
 
-### The three proof legs
+### The proof and verification legs
 
 - **PoW — Proof of Work:** claim-specific bounded work tied to the asset and claim. This adds freshness/cost and makes cheap claim flooding harder. It does **not** prove ownership by itself.
 - **PoC — Proof of Concept:** a bounded demonstration that the claimed ownership mechanism for the asset actually works and can be independently checked. A PoC might demonstrate that an asset-binding method, custody handoff, secure-element challenge, registry integration, or other ownership mechanism performs as claimed. It does **not** prove current control or legal ownership by itself.
+- **COC — Control/Custody Verification:** verifies that the claimant currently controls or holds custody over the asset-bound authority or custody surface. It is a separate mandatory predicate and is not PoC.
 - **PoS — Proof of Stake:** bonded/slashable value or other accountable stake tied to the claim. This creates economic consequence for fraudulent assertions. It does **not** prove ownership by itself.
-
-PoO separately requires **control/custody verification**. That predicate establishes that the claimant currently controls the asset-bound authority or custody surface. It is intentionally not called PoC.
 
 PoO also requires title/provenance binding, asset fingerprint binding, claimant identity binding, freshness, and a non-revoked state.
 
@@ -25,25 +24,25 @@ PoO_valid =
     AND title_or_provenance_bound
     AND PoW_verified
     AND PoC_concept_verified
-    AND control_or_custody_verified
+    AND COC_verified
     AND PoS_bond_verified
     AND freshness_verified
     AND not_revoked
 ```
 
-A claimant cannot compensate for missing proof-of-concept, control/custody, or provenance by adding more work or stake.
+A claimant cannot compensate for missing Proof of Concept, COC, or provenance by adding more work or stake.
 
-## Why control/custody is separate from PoC
+## Why COC is separate from PoC
 
 Proof of Concept answers: **does the claimed ownership mechanism work as demonstrated?**
 
-Control/custody verification answers: **does this claimant currently control the asset-bound authority?**
+COC answers: **does this claimant currently control or hold custody over the asset-bound authority?**
 
-Those are different questions. A successful PoC cannot establish that the present claimant controls the asset, and a valid control proof cannot establish that the broader ownership mechanism has been demonstrated or validated.
+Those are different questions. A successful PoC cannot establish present control/custody, and a valid COC cannot establish that the broader ownership mechanism itself has been demonstrated or validated.
 
 ## Why the title/provenance predicate is separate
 
-PoW, PoC, control/custody, and PoS provide computational, demonstrative, control, and economic evidence. They cannot manufacture legal title. A valid PoO therefore means **technical ownership attestation under the supplied evidence**, not a court judgment, government registry entry, or statutory title determination.
+PoW, PoC, COC, and PoS provide computational, demonstrative, control/custody, and economic evidence. They cannot manufacture legal title. A valid PoO therefore means **technical ownership attestation under the supplied evidence**, not a court judgment, government registry entry, or statutory title determination.
 
 Even when an external title reference has been verified, Worldshepherd reports only:
 
@@ -84,7 +83,7 @@ Transfer_ready =
     AND current_owner_authorized
     AND recipient_identity_bound
     AND recipient_PoC_concept_verified
-    AND recipient_control_or_custody_verified
+    AND recipient_COC_verified
     AND recipient_PoW_verified
     AND recipient_PoS_bond_verified
     AND title_or_provenance_transition_bound
@@ -126,7 +125,7 @@ Recovery_ready =
     AND compromise_or_loss_evidence_bound
     AND recovery_PoW_verified
     AND recovery_PoC_concept_verified
-    AND alternate_control_or_custody_verified
+    AND alternate_COC_verified
     AND recovery_PoS_bond_verified
     AND multisource_or_quorum_verified
     AND freshness_verified
@@ -158,17 +157,17 @@ live_value_authorized = false
 legal_title_changed = false
 ```
 
-A ready recovery may derive a **same-claimant replacement PoO candidate** using a newly verified control surface and linking back to `previous_poo_digest`. It does not rotate credentials, revoke the prior control surface, modify ECHO records, or execute any transfer by itself.
+A ready recovery may derive a **same-claimant replacement PoO candidate** using a newly verified COC surface and linking back to `previous_poo_digest`. It does not rotate credentials, revoke the prior control surface, modify ECHO records, or execute any transfer by itself.
 
 An active dispute blocks recovery unless `dispute_resolution_verified` is explicitly present. This keeps dispute resolution visible and prevents recovery from becoming a hidden bypass around transfer/title conflicts.
 
 ## Worldshepherd mapping
 
-- **ECHO:** stores provenance, claim events, evidence hashes, revocations, PoC evidence, prior/new PoO lineage, disputes, recovery evidence, and transfer evidence.
-- **PRIME:** enforces ownership policy, required predicates, PoC acceptance criteria, control/custody rules, stake rules, asset-class rules, revocation policy, transfer policy, and dispute/recovery policy.
+- **ECHO:** stores provenance, claim events, evidence hashes, revocations, PoC evidence, COC evidence, prior/new PoO lineage, disputes, recovery evidence, and transfer evidence.
+- **PRIME:** enforces ownership policy, required predicates, PoC acceptance criteria, COC rules, stake rules, asset-class rules, revocation policy, transfer policy, and dispute/recovery policy.
 - **SARA:** orchestrates bounded claim, transfer, recovery, and dispute workflows with required human approvals.
-- **OVERWATCH:** monitors expiration, revocation, stale control proofs, bond state, conflicts, duplicate claims, recovery state, and unresolved disputes.
-- **QCRYPTO:** supplies crypto-agility and hybrid/PQ migration policy for signatures, control challenges, transfer authorization, and recovery evidence.
+- **OVERWATCH:** monitors expiration, revocation, stale COC evidence, bond state, conflicts, duplicate claims, recovery state, and unresolved disputes.
+- **QCRYPTO:** supplies crypto-agility and hybrid/PQ migration policy for signatures, COC challenges, transfer authorization, and recovery evidence.
 
 ## Asset classes
 
@@ -185,18 +184,18 @@ For off-chain regulated or titled property, PoO remains an evidence layer and mu
 
 ## Threat model
 
-| Attack | PoW | PoC | Control/custody | PoS | Title/provenance | Result |
+| Attack | PoW | PoC | COC | PoS | Title/provenance | Result |
 |---|---:|---:|---:|---:|---:|---|
 | cheap Sybil claims | helps | neutral | helps | helps | neutral | harder |
 | broken/fake ownership mechanism | neutral | detects failed concept | neutral | neutral | neutral | blocked |
 | stolen key | weak | may still pass | may pass until revoked | neutral | helps | recovery/revocation required |
-| wealthy false claimant | weak | insufficient alone | blocks without control | insufficient alone | blocks without provenance | fail closed |
-| compute-rich false claimant | insufficient alone | insufficient alone | blocks without control | neutral | blocks without provenance | fail closed |
-| replayed old claim | neutral | stale PoC can fail policy | freshness/control check | neutral | lineage helps | rejected when stale/revoked |
+| wealthy false claimant | weak | insufficient alone | blocks without COC | insufficient alone | blocks without provenance | fail closed |
+| compute-rich false claimant | insufficient alone | insufficient alone | blocks without COC | neutral | blocks without provenance | fail closed |
+| replayed old claim | neutral | stale PoC can fail policy | freshness/COC check | neutral | lineage helps | rejected when stale/revoked |
 | registry/provenance conflict | neutral | neutral | neutral | neutral | detects conflict | human/policy resolution |
-| unauthorized transfer | neutral | neutral | recipient proof insufficient | neutral | transition blocked | current-owner authorization required |
+| unauthorized transfer | neutral | neutral | recipient COC insufficient | neutral | transition blocked | current-owner authorization required |
 | double-transfer/conflicting lineage | neutral | neutral | neutral | neutral | lineage/dispute check | blocked pending resolution |
-| compromised current key recovery | fresh work required | recovery mechanism demonstrated | alternate control required | fresh bond required | reverified | governed recovery only |
+| compromised current key recovery | fresh work required | recovery mechanism demonstrated | alternate COC required | fresh bond required | reverified | governed recovery only |
 | disputed recovery | insufficient | insufficient | insufficient | insufficient | dispute resolution required | blocked until resolved |
 
 ## Claims boundary
@@ -210,10 +209,10 @@ PoO v1 does **not** claim:
 - automatic prior-control revocation;
 - live-value movement authority;
 - external validation or certification;
-- that PoW, PoC, control/custody, or PoS alone proves ownership.
+- that PoW, PoC, COC, or PoS alone proves ownership.
 
 Validation record:
 
-- Ownership-attestation core with **PoC = Proof of Concept**: **PROVEN INTERNALLY — protocol logic only** at `4aa948fb98ff3f97bc2acc724326a2c984f31b51`.
-- Governed transfer/supersession extension: **IMPLEMENTED IN SOFTWARE / exact-head validation pending**.
-- Same-owner recovery/dispute extension: **IMPLEMENTED IN SOFTWARE / exact-head validation pending**.
+- Ownership-attestation core with **PoC = Proof of Concept** and **COC = Control/Custody Verification**: schema `WS-POO-V2`; exact-head validation required after the COC schema correction.
+- Governed transfer/supersession extension: schema `WS-POO-TRANSFER-V2`; exact-head validation required after the COC schema correction.
+- Same-owner recovery/dispute extension: schema `WS-POO-RECOVERY-V2`; exact-head validation required after the COC schema correction.
