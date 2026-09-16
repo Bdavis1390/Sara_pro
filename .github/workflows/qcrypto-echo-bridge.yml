@@ -6,6 +6,7 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_**'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_**'
       - 'deployments/sara_verified_local_v1/tests/test_qcrypto_**'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint*.py'
       - 'deployments/sara_verified_local_v1/compose.yaml'
       - 'deployments/sara_verified_local_v1/compose.qcrypto-echo.yaml'
       - 'deployments/sara_verified_local_v1/scripts/verify_qcrypto_echo_bridge.sh'
@@ -15,6 +16,7 @@ on:
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_**'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_**'
       - 'deployments/sara_verified_local_v1/tests/test_qcrypto_**'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint*.py'
       - 'deployments/sara_verified_local_v1/compose.yaml'
       - 'deployments/sara_verified_local_v1/compose.qcrypto-echo.yaml'
       - 'deployments/sara_verified_local_v1/scripts/verify_qcrypto_echo_bridge.sh'
@@ -48,10 +50,10 @@ jobs:
           python -m pip install -c constraints-ci.txt -e '.[test]'
           python -m pip check
 
-      - name: Validate bridge shell and all QCRYPTO tests
+      - name: Validate bridge shell and QCRYPTO/PQ checkpoint tests
         run: |
           bash -n scripts/verify_qcrypto_echo_bridge.sh
-          pytest -q tests/test_qcrypto_*.py
+          pytest -q tests/test_qcrypto_*.py tests/test_echo_checkpoint*.py
 
       - name: Create isolated bridge environment
         run: |
@@ -66,6 +68,7 @@ jobs:
       - name: Validate opt-in Compose overlay
         run: |
           ECHO_INGEST_TOKEN_HOST_PATH=/tmp/qcrypto-config-token \
+          ECHO_CHECKPOINT_ALGORITHM=ML-DSA-65 \
           ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH=/tmp/qcrypto-config-key \
           docker compose \
             -f compose.yaml \
@@ -84,7 +87,7 @@ jobs:
           import json
           from pathlib import Path
           evidence=json.loads(Path('qcrypto_echo_bridge_ci/evidence.json').read_text(encoding='utf-8'))
-          assert evidence['schema']=='WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V1'
+          assert evidence['schema']=='WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V2'
           assert evidence['status']=='PASS'
           assert evidence['retained_history_events']==1
           expected={'MATCHED':4,'SARA_ONLY':0,'ECHO_ONLY':1,'PAYLOAD_MISMATCH':0}
@@ -93,18 +96,20 @@ jobs:
           assert evidence['first_sync']['stored_count']==4
           assert evidence['replay_sync']['deduplicated_count']==4
           assert evidence['echo_stored_events']==5
-          assert evidence['checkpoint_algorithm']=='Ed25519'
+          assert evidence['checkpoint_algorithm']=='ML-DSA-65'
+          assert evidence['checkpoint_signature_context']=='WS-ECHO-CHECKPOINT-V2'
+          assert evidence['checkpoint_post_quantum_signature_protection'] is True
           assert evidence['checkpoint_event_count']==5
           assert evidence['execution_authority'] is False
           assert evidence['live_value_authorized'] is False
+          assert evidence['end_to_end_pq_security_established'] is False
           boundary=evidence['claims_boundary'].lower()
           for phrase in (
-              'non-empty retained echo history',
-              'does not establish post-quantum checkpoint security',
-              'migration execution',
+              'ml-dsa-65 post-quantum signature protection',
+              'pq-secure transport',
+              'prime signing migration',
               'live-value authorization',
-              'federal compliance',
-              'production deployment',
+              'end-to-end post-quantum security',
           ):
               assert phrase in boundary
           PY
@@ -112,6 +117,6 @@ jobs:
       - name: Upload deployed bridge evidence
         uses: actions/upload-artifact@v4
         with:
-          name: qcrypto-echo-deployed-bridge-evidence
+          name: qcrypto-echo-deployed-pq-checkpoint-evidence
           path: deployments/sara_verified_local_v1/qcrypto_echo_bridge_ci/evidence.json
           if-no-files-found: error
