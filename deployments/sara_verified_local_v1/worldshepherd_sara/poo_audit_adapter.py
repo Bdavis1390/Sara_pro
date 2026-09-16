@@ -90,49 +90,13 @@ def validate_poo_audit_instance_id(value: str) -> str:
     return value
 
 
-def _validate_lineage_semantics(projection: dict[str, Any], operation: str) -> None:
-    bool_fields = (
-        "lineage_checked",
-        "lineage_valid",
-        "fork_detected",
-        "cycle_detected",
-    )
-    for field in bool_fields:
-        if not isinstance(projection.get(field), bool):
-            raise PoOAuditAdapterError(f"{field} must be boolean")
-
-    issue_count = projection.get("lineage_issue_count")
-    if not isinstance(issue_count, int) or isinstance(issue_count, bool) or issue_count < 0:
-        raise PoOAuditAdapterError("lineage_issue_count must be a non-negative integer")
-
-    conflict_type = projection.get("lineage_conflict_type")
-    if conflict_type not in _VALID_LINEAGE_CONFLICT_TYPES:
-        raise PoOAuditAdapterError("unsupported lineage_conflict_type")
-
-    active_tip = projection.get("active_tip_digest")
-    if active_tip is not None and (not isinstance(active_tip, str) or not active_tip):
-        raise PoOAuditAdapterError("active_tip_digest must be null or a non-empty string")
-
-    if operation != "LINEAGE_INTEGRITY":
-        if projection["lineage_checked"]:
-            raise PoOAuditAdapterError("lineage_checked mismatches operation")
-        if any((projection["lineage_valid"], projection["fork_detected"], projection["cycle_detected"])):
-            raise PoOAuditAdapterError("lineage state must remain false outside lineage operation")
-        if active_tip is not None or issue_count != 0 or conflict_type != "NONE":
-            raise PoOAuditAdapterError("lineage detail must be empty outside lineage operation")
-        return
-
-    if projection["lineage_checked"] is not True:
-        raise PoOAuditAdapterError("LINEAGE_INTEGRITY requires lineage_checked=true")
-    if any(
-        (
-            projection["technical_attestation_ready"],
-            projection["transfer_ready"],
-            projection["recovery_ready"],
-        )
-    ):
-        raise PoOAuditAdapterError("lineage operation cannot grant ownership/transfer/recovery readiness")
-
+def _validate_checked_lineage(
+    projection: dict[str, Any],
+    *,
+    active_tip: str | None,
+    issue_count: int,
+    conflict_type: str,
+) -> None:
     if projection["lineage_valid"]:
         if projection["fork_detected"] or projection["cycle_detected"]:
             raise PoOAuditAdapterError("valid lineage cannot report fork/cycle conflict")
@@ -151,6 +115,71 @@ def _validate_lineage_semantics(projection: dict[str, Any], operation: str) -> N
             raise PoOAuditAdapterError("fork_detected conflicts with lineage_conflict_type")
         if projection["cycle_detected"] and conflict_type not in {"CYCLE", "MULTIPLE"}:
             raise PoOAuditAdapterError("cycle_detected conflicts with lineage_conflict_type")
+
+
+def _validate_lineage_semantics(projection: dict[str, Any], operation: str) -> None:
+    for field in ("lineage_checked", "lineage_valid", "fork_detected", "cycle_detected"):
+        if not isinstance(projection.get(field), bool):
+            raise PoOAuditAdapterError(f"{field} must be boolean")
+
+    issue_count = projection.get("lineage_issue_count")
+    if not isinstance(issue_count, int) or isinstance(issue_count, bool) or issue_count < 0:
+        raise PoOAuditAdapterError("lineage_issue_count must be a non-negative integer")
+
+    conflict_type = projection.get("lineage_conflict_type")
+    if conflict_type not in _VALID_LINEAGE_CONFLICT_TYPES:
+        raise PoOAuditAdapterError("unsupported lineage_conflict_type")
+
+    active_tip = projection.get("active_tip_digest")
+    if active_tip is not None and (not isinstance(active_tip, str) or not active_tip):
+        raise PoOAuditAdapterError("active_tip_digest must be null or a non-empty string")
+
+    if operation == "OWNERSHIP_ATTESTATION":
+        if projection["lineage_checked"]:
+            raise PoOAuditAdapterError("ownership attestation cannot assert lineage_checked")
+        if any((projection["lineage_valid"], projection["fork_detected"], projection["cycle_detected"])):
+            raise PoOAuditAdapterError("ownership attestation must not carry lineage decision state")
+        if active_tip is not None or issue_count != 0 or conflict_type != "NONE":
+            raise PoOAuditAdapterError("ownership attestation lineage detail must be empty")
+        return
+
+    if projection["lineage_checked"] is not True:
+        raise PoOAuditAdapterError(f"{operation} requires lineage_checked=true")
+
+    _validate_checked_lineage(
+        projection,
+        active_tip=active_tip,
+        issue_count=issue_count,
+        conflict_type=str(conflict_type),
+    )
+
+    if operation == "LINEAGE_INTEGRITY":
+        if projection.get("previous_poo_digest") is not None:
+            raise PoOAuditAdapterError("LINEAGE_INTEGRITY previous_poo_digest must be null")
+        if any(
+            (
+                projection["technical_attestation_ready"],
+                projection["transfer_ready"],
+                projection["recovery_ready"],
+            )
+        ):
+            raise PoOAuditAdapterError("lineage operation cannot grant ownership/transfer/recovery readiness")
+        return
+
+    previous = projection.get("previous_poo_digest")
+    if not isinstance(previous, str) or not previous:
+        raise PoOAuditAdapterError(f"{operation} requires previous_poo_digest")
+
+    if operation == "TRANSFER_READINESS":
+        if projection["transfer_ready"] and not projection["lineage_valid"]:
+            raise PoOAuditAdapterError("transfer_ready requires a valid lineage")
+        if projection["transfer_ready"] and previous != active_tip:
+            raise PoOAuditAdapterError("transfer_ready requires previous_poo_digest to equal active_tip_digest")
+    elif operation == "RECOVERY_READINESS":
+        if projection["recovery_ready"] and not projection["lineage_valid"]:
+            raise PoOAuditAdapterError("recovery_ready requires a valid lineage")
+        if projection["recovery_ready"] and previous != active_tip:
+            raise PoOAuditAdapterError("recovery_ready requires previous_poo_digest to equal active_tip_digest")
 
 
 def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
