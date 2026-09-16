@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
 
-RECOVERY_SCHEMA = "WS-POO-RECOVERY-V2"
+RECOVERY_SCHEMA = "WS-POO-RECOVERY-V3"
 _ALLOWED_REASONS = {
     "LOST_CONTROL",
     "COMPROMISED_CONTROL",
@@ -33,6 +33,7 @@ class RecoveryEvidence:
     new_control_key_fingerprint: str
     recovery_work_reference: str
     recovery_concept_reference: str
+    recovery_coc_reference: str
     recovery_stake_reference: str
     recovery_request_reference: str
     issued_at: str
@@ -84,6 +85,7 @@ def canonical_recovery_payload(evidence: RecoveryEvidence) -> Dict[str, object]:
         "new_control_key_fingerprint": evidence.new_control_key_fingerprint,
         "recovery_work_reference": evidence.recovery_work_reference,
         "recovery_concept_reference": evidence.recovery_concept_reference,
+        "recovery_coc_reference": evidence.recovery_coc_reference,
         "recovery_stake_reference": evidence.recovery_stake_reference,
         "recovery_request_reference": evidence.recovery_request_reference,
         "issued_at": evidence.issued_at,
@@ -118,6 +120,8 @@ def _missing_predicates(evidence: RecoveryEvidence) -> List[str]:
         "human_approval_verified": "human approval not verified",
     }
     missing = [reason for field, reason in required.items() if not getattr(evidence, field)]
+    if not evidence.recovery_coc_reference:
+        missing.append("recovery COC reference must be non-empty")
     if evidence.recovery_reason not in _ALLOWED_REASONS:
         missing.append("recovery reason not allowed")
     if evidence.active_dispute and not evidence.dispute_resolution_verified:
@@ -166,11 +170,6 @@ def derive_recovery_ownership_candidate(
     *,
     title_reference: Optional[str] = None,
 ) -> OwnershipEvidence:
-    """Build a same-claimant replacement PoO candidate after recovery readiness.
-
-    The candidate references the prior PoO and uses the newly verified control surface.
-    No key rotation, prior-record revocation, or ownership change occurs here.
-    """
     decision = evaluate_recovery(recovery)
     if not decision.recovery_ready:
         raise ValueError("recovery is not ready for governed supersession")
@@ -182,6 +181,7 @@ def derive_recovery_ownership_candidate(
         control_key_fingerprint=recovery.new_control_key_fingerprint,
         work_reference=recovery.recovery_work_reference,
         concept_reference=recovery.recovery_concept_reference,
+        coc_reference=recovery.recovery_coc_reference,
         stake_reference=recovery.recovery_stake_reference,
         issued_at=recovery.issued_at,
         expires_at=recovery.expires_at,
