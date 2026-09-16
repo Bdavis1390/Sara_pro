@@ -18,7 +18,7 @@ def projection(**overrides):
         "operation": "TRANSFER_READINESS",
         "asset_id": "asset:alpha",
         "source_digest": "source:decision:001",
-        "source_status": "READY_FOR_GOVERNED_SUPERSESSION",
+        "source_status": "TRANSFER_READY_WITH_LINEAGE_GUARD",
         "previous_poo_digest": "prior:001",
         "echo_state": "ECHO_POO_TRANSFER_EVIDENCE_ACCEPTED",
         "prime_state": "PRIME_POO_TRANSFER_READY",
@@ -27,11 +27,11 @@ def projection(**overrides):
         "technical_attestation_ready": False,
         "transfer_ready": True,
         "recovery_ready": False,
-        "lineage_checked": False,
-        "lineage_valid": False,
+        "lineage_checked": True,
+        "lineage_valid": True,
         "fork_detected": False,
         "cycle_detected": False,
-        "active_tip_digest": None,
+        "active_tip_digest": "prior:001",
         "lineage_issue_count": 0,
         "lineage_conflict_type": "NONE",
         "human_approval_required": True,
@@ -80,6 +80,24 @@ def lineage_projection(*, valid: bool = True, conflict_type: str = "NONE", **ove
     return value
 
 
+def blocked_transfer_projection(**overrides):
+    value = projection(
+        source_status="LINEAGE_CONFLICT_BLOCKED",
+        echo_state="ECHO_POO_LINEAGE_CONFLICT_CUSTODIED",
+        prime_state="PRIME_POO_TRANSFER_BLOCKED_LINEAGE",
+        sara_state="SARA_POO_TRANSFER_DISPUTE_BLOCK",
+        overwatch_state="OVERWATCH_POO_LINEAGE_CONFLICT_ACTIVE",
+        transfer_ready=False,
+        lineage_valid=False,
+        fork_detected=True,
+        active_tip_digest=None,
+        lineage_issue_count=1,
+        lineage_conflict_type="FORK",
+    )
+    value.update(overrides)
+    return value
+
+
 def test_projection_maps_to_four_native_sara_events():
     events = poo_outbox_events(projection(), actor="SSPADAWANZZ")
     assert [item["event"] for item in events] == [
@@ -98,6 +116,9 @@ def test_projection_maps_to_four_native_sara_events():
     assert len(instance_ids) == 1
     for item in events:
         payload = item["payload"]
+        assert payload["lineage_checked"] is True
+        assert payload["lineage_valid"] is True
+        assert payload["active_tip_digest"] == "prior:001"
         assert payload["human_approval_required"] is True
         assert payload["ownership_changed"] is False
         assert payload["transfer_executed"] is False
@@ -172,6 +193,15 @@ def test_forked_lineage_persists_as_blocked_dispute_without_winner(tmp_path):
     assert all(r["payload"]["recovery_ready"] is False for r in records)
 
 
+def test_blocked_transfer_with_invalid_lineage_is_auditable_but_not_ready():
+    events = poo_outbox_events(blocked_transfer_projection(), actor="SSPADAWANZZ")
+    assert len(events) == 4
+    assert all(event["payload"]["transfer_ready"] is False for event in events)
+    assert all(event["payload"]["lineage_valid"] is False for event in events)
+    assert all(event["payload"]["fork_detected"] is True for event in events)
+    assert all(event["payload"]["conflict_winner_selected"] is False for event in events)
+
+
 @pytest.mark.parametrize(
     "field",
     [
@@ -202,6 +232,27 @@ def test_adapter_rejects_operation_readiness_mismatch():
     with pytest.raises(PoOAuditAdapterError, match="transfer_ready mismatches operation"):
         poo_outbox_events(
             projection(operation="OWNERSHIP_ATTESTATION", transfer_ready=True),
+            actor="SSPADAWANZZ",
+        )
+
+
+def test_transfer_readiness_requires_lineage_check():
+    with pytest.raises(PoOAuditAdapterError, match="requires lineage_checked=true"):
+        poo_outbox_events(
+            projection(
+                lineage_checked=False,
+                lineage_valid=False,
+                active_tip_digest=None,
+                lineage_issue_count=0,
+            ),
+            actor="SSPADAWANZZ",
+        )
+
+
+def test_transfer_readiness_requires_active_tip_match():
+    with pytest.raises(PoOAuditAdapterError, match="previous_poo_digest to equal active_tip_digest"):
+        poo_outbox_events(
+            projection(active_tip_digest="different-tip"),
             actor="SSPADAWANZZ",
         )
 
