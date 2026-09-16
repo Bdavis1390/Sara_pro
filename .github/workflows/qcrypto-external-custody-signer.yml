@@ -50,6 +50,7 @@ jobs:
       - name: Generate synthetic custody evidence
         run: |
           python scripts/verify_external_custody.py --output external-custody-evidence.json
+          python scripts/verify_opaque_provider_custody.py --output opaque-provider-custody-evidence.json
 
       - name: Assert custody claims boundary
         run: |
@@ -96,6 +97,51 @@ jobs:
           assert len(r['receipt_sha256'])==64
           assert len(e['evidence_sha256'])==64
 
+          p=json.loads(Path('opaque-provider-custody-evidence.json').read_text(encoding='utf-8'))
+          assert p['schema']=='WS-QCRYPTO-OPAQUE-PROVIDER-CUSTODY-EVIDENCE-V1'
+          assert p['status']=='PASS'
+          assert p['claim_state']=='OPAQUE_PROVIDER_CUSTODY_SOFTWARE_BEHAVIOR_ONLY'
+          assert p['synthetic_ci_only'] is True
+          assert p['separate_trust_domain'] is True
+          assert p['private_key_export_api_present'] is False
+          assert p['provider_ack_loss_blocked_as_indeterminate'] is True
+          assert p['durable_indeterminate_state']=='INDETERMINATE'
+          assert p['provider_operation_id_retained_before_reconciliation'] is True
+          assert p['release_binding_retained_before_reconciliation'] is True
+          assert p['provider_invocations_before_reconcile']==1
+          assert p['provider_invocations_after_reconcile']==1
+          assert p['reconciliation_did_not_reinvoke_signer'] is True
+          assert p['receipt_verified'] is True
+          assert p['receipt_provider_reconciled'] is True
+          assert p['receipt_provider_operation_matches_ledger'] is True
+          assert p['durable_final_state']=='SIGNED'
+          assert p['durable_provider_reconciled'] is True
+          assert p['post_expiry_retry_identical'] is True
+          assert p['provider_invocations_after_restart_retry']==1
+          assert p['provider_not_found_safe_to_retry_reported'] is True
+          assert p['provider_not_found_did_not_auto_retry'] is True
+          assert p['provider_not_found_requires_new_human_authorization'] is True
+          assert p['production_hsm_integrated'] is False
+          assert p['fips_validated_module_established'] is False
+          assert p['native_chain_transaction_signature'] is False
+          assert p['transaction_broadcast'] is False
+          assert p['mainnet_permitted'] is False
+          assert p['real_value_moved'] is False
+
+          pr=p['receipt']
+          assert pr['state']=='SIGNED_CUSTODY_RELEASE_ATTESTATION'
+          assert pr['signing_algorithm']=='ML-DSA-65'
+          assert pr['signature_context']=='WS-QCRYPTO-OPAQUE-PROVIDER-V1'
+          assert pr['provider_reconciled'] is True
+          assert pr['provider_operation_id']==p['provider_operation_id']
+          assert pr['chain_native_transaction_signature'] is False
+          assert pr['transaction_broadcast'] is False
+          assert pr['real_value_moved'] is False
+          assert pr['mainnet'] is False
+          assert pr['production_hsm_integrated'] is False
+          assert len(pr['receipt_sha256'])==64
+          assert len(p['evidence_sha256'])==64
+
           forbidden_keys={
               'private_key_pem','private_key_bytes','secret_key','secret_key_bytes',
               'seed_phrase','mnemonic','xprv','wallet_seed','validator_key','withdrawal_key',
@@ -113,15 +159,21 @@ jobs:
                   assert 'seed phrase' not in lowered
                   assert 'mnemonic' not in lowered
           walk(e)
+          walk(p)
 
           print('qcrypto_external_custody_gate: PASS')
           print('receipt_sha256:', r['receipt_sha256'])
+          print('opaque_provider_receipt_sha256:', pr['receipt_sha256'])
+          print('opaque_provider_operation_id:', p['provider_operation_id'])
           print('evidence_sha256:', e['evidence_sha256'])
+          print('opaque_provider_evidence_sha256:', p['evidence_sha256'])
           PY
 
       - name: Upload external custody evidence
         uses: actions/upload-artifact@v4
         with:
           name: qcrypto-external-custody-release-evidence
-          path: deployments/qcrypto_external_signer/external-custody-evidence.json
+          path: |
+            deployments/qcrypto_external_signer/external-custody-evidence.json
+            deployments/qcrypto_external_signer/opaque-provider-custody-evidence.json
           if-no-files-found: error
