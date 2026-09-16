@@ -18,8 +18,22 @@ Relevant official specification surfaces:
 - `SpdxDocument`: https://spdx.github.io/spdx-spec/v3.0.1/model/Core/Classes/SpdxDocument/
 - software `Sbom`: https://spdx.github.io/spdx-spec/v3.0.1/model/Software/Classes/Sbom/
 - software `Package`: https://spdx.github.io/spdx-spec/v3.0.1/model/Software/Classes/Package/
+- published examples: https://github.com/spdx/spdx-examples
 
 The SPDX specification states that JSON-LD conformance requires both structural validation against the SPDX JSON Schema and semantic validation against the SPDX ontology/SHACL constraints. Worldshepherd does not currently perform those validations in this adapter.
+
+### Published-example compatibility correction
+
+The first internal fixture used conceptual model names (`Sbom`, `Package`, `packageVersion`, `packageUrl`). Testing against the SPDX project's published 3.0.1 example corpus caught that this is not the compact JSON-LD spelling used for Software-profile terms. Published examples use the namespace-prefixed aliases:
+
+- `software_Sbom`;
+- `software_Package`;
+- `software_packageVersion`; and
+- `software_packageUrl` when a package URL is present.
+
+The adapter and regression fixtures were corrected before any `PROVEN INTERNALLY` promotion. A minimal regression modeled on the published `software/example13/spdx3.0/example13.spdx3.json` vocabulary must now pass, while the old unprefixed Software-profile spellings fail closed.
+
+This compatibility test is still **not** SPDX conformance testing. It establishes only that the bounded parser recognizes the compact vocabulary observed in the official example corpus.
 
 ## What the intake evaluator checks
 
@@ -28,14 +42,14 @@ The SPDX specification states that JSON-LD conformance requires both structural 
 1. the official SPDX 3.0.1 context is present;
 2. `@graph` is present and non-empty;
 3. exactly one `SpdxDocument` exists;
-4. at least one software `Sbom` and one `Package` exist;
+4. at least one `software_Sbom` and one `software_Package` exist;
 5. at least one `CreationInfo` declares SPDX 3.0.1;
 6. relevant elements carry stable identifiers and creation-info references;
 7. software packages carry names;
 8. SPDX identifiers are unique within the input graph;
 9. `element` and `rootElement` references from the document/SBOM resolve inside the graph;
 10. the input object is unchanged by evaluation; and
-11. package identity hints such as `packageUrl` are extracted only into a derived review projection.
+11. package identity hints such as `software_packageVersion` and `software_packageUrl` are extracted only into a derived review projection.
 
 ## State transition
 
