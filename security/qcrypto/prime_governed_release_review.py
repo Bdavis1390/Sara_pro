@@ -6,10 +6,10 @@ bounded evidence products:
 * deployed PRIME SENTINEL ML-DSA-65 authorization/integration evidence; and
 * QCRYPTO governed signing-readiness evidence that terminates at HUMAN_REVIEW_REQUIRED.
 
-A successful result creates a deterministic review-package digest for a human
-reviewer. It never converts PRIME's deployment-local ``ACTIVATION_ALLOWED`` state
-into wallet authority, live-value authorization, transaction signing, or production
-protocol approval.
+A successful result creates a deterministic, independently reconstructable review-
+package digest for a human reviewer. It never converts PRIME's deployment-local
+``ACTIVATION_ALLOWED`` state into wallet authority, live-value authorization,
+transaction signing, or production protocol approval.
 """
 
 from __future__ import annotations
@@ -44,6 +44,8 @@ class PrimeGovernedReleaseReviewDecision:
     governed_terminal_state: str | None
     governed_selected_suite_id: str | None
     governed_pq_algorithm_id: str | None
+    governed_negotiated_context_digest: str | None
+    governed_negotiation_transcript_digest: str | None
     human_release_required: bool = True
     human_release_recorded: bool = False
     execution_authority: bool = False
@@ -65,9 +67,56 @@ class PrimeGovernedReleaseReviewDecision:
         return result
 
 
-def _canonical_json_digest(value: Any) -> str:
-    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode()
+def canonical_json_digest(value: Any) -> str:
+    """Return the canonical SHA-256 digest used by cross-boundary evidence records."""
+
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode()
     return sha256(encoded).hexdigest()
+
+
+def prime_governed_review_binding(
+    *,
+    prime_evidence_sha256: str,
+    governed_evidence_sha256: str,
+    prime_signing_algorithm: str,
+    prime_signature_context: str,
+    prime_activation_disposition: str,
+    prime_authorization_registry_status: str,
+    governed_terminal_state: str,
+    governed_selected_suite_id: str,
+    governed_pq_algorithm_id: str,
+    governed_negotiated_context_digest: str,
+    governed_negotiation_transcript_digest: str,
+) -> dict[str, Any]:
+    """Return the complete deterministic review-warrant preimage.
+
+    This intentionally excludes mutable audit-instance identifiers and any raw
+    signature, key, or secret material so downstream custody layers can reconstruct
+    the warrant identity from the bounded evidence summary alone.
+    """
+
+    return {
+        "schema": BRIDGE_SCHEMA,
+        "prime_evidence_sha256": prime_evidence_sha256,
+        "governed_evidence_sha256": governed_evidence_sha256,
+        "prime_signing_algorithm": prime_signing_algorithm,
+        "prime_signature_context": prime_signature_context,
+        "prime_activation_disposition": prime_activation_disposition,
+        "prime_authorization_registry_status": prime_authorization_registry_status,
+        "governed_terminal_state": governed_terminal_state,
+        "governed_selected_suite_id": governed_selected_suite_id,
+        "governed_pq_algorithm_id": governed_pq_algorithm_id,
+        "governed_negotiated_context_digest": governed_negotiated_context_digest,
+        "governed_negotiation_transcript_digest": governed_negotiation_transcript_digest,
+        "human_release_required": True,
+        "execution_authority": False,
+        "live_value_authorized": False,
+    }
 
 
 def _bool_is(value: Any, expected: bool) -> bool:
@@ -92,8 +141,8 @@ def assess_prime_governed_release_review(
 
     blockers: list[str] = []
     warnings: list[str] = []
-    prime_digest = _canonical_json_digest(prime_evidence)
-    governed_digest = _canonical_json_digest(governed_evidence)
+    prime_digest = canonical_json_digest(prime_evidence)
+    governed_digest = canonical_json_digest(governed_evidence)
 
     if prime_evidence.get("schema") != PRIME_EVIDENCE_SCHEMA:
         blockers.append("PRIME evidence schema is not the governed integration schema.")
@@ -149,13 +198,15 @@ def assess_prime_governed_release_review(
 
     selected_suite = complete.get("selected_suite_id")
     pq_algorithm = complete.get("pq_algorithm_id")
+    negotiated_context_digest = complete.get("negotiated_context_digest")
+    negotiation_transcript_digest = complete.get("negotiation_transcript_digest")
     if pq_algorithm != "ML-DSA":
         blockers.append("Governed QCRYPTO PQ algorithm family does not match PRIME ML-DSA-65.")
     if not isinstance(selected_suite, str) or "MLDSA" not in selected_suite:
         blockers.append("Governed selected suite does not bind an ML-DSA family suite.")
-    if not isinstance(complete.get("negotiated_context_digest"), str):
+    if not isinstance(negotiated_context_digest, str) or len(negotiated_context_digest) != 64:
         blockers.append("Governed evidence is missing its negotiated context digest.")
-    if not isinstance(complete.get("negotiation_transcript_digest"), str):
+    if not isinstance(negotiation_transcript_digest, str) or len(negotiation_transcript_digest) != 64:
         blockers.append("Governed evidence is missing its negotiation transcript digest.")
     if int(complete.get("verified_compatible_probe_count", 0) or 0) < 1:
         blockers.append("Governed evidence has no verified compatible PQ reference probe.")
@@ -168,24 +219,26 @@ def assess_prime_governed_release_review(
 
     review_digest: str | None = None
     if not blockers:
-        review_binding = {
-            "schema": BRIDGE_SCHEMA,
-            "prime_evidence_sha256": prime_digest,
-            "governed_evidence_sha256": governed_digest,
-            "prime_signing_algorithm": prime_evidence.get("signing_algorithm"),
-            "prime_signature_context": prime_evidence.get("signature_context"),
-            "prime_activation_disposition": prime_evidence.get("activation_disposition"),
-            "prime_authorization_registry_status": prime_evidence.get("authorization_registry_status"),
-            "governed_terminal_state": summary.get("terminal_state"),
-            "governed_selected_suite_id": selected_suite,
-            "governed_pq_algorithm_id": pq_algorithm,
-            "governed_negotiated_context_digest": complete.get("negotiated_context_digest"),
-            "governed_negotiation_transcript_digest": complete.get("negotiation_transcript_digest"),
-            "human_release_required": True,
-            "execution_authority": False,
-            "live_value_authorized": False,
-        }
-        review_digest = _canonical_json_digest(review_binding)
+        assert isinstance(selected_suite, str)
+        assert isinstance(pq_algorithm, str)
+        assert isinstance(negotiated_context_digest, str)
+        assert isinstance(negotiation_transcript_digest, str)
+        review_binding = prime_governed_review_binding(
+            prime_evidence_sha256=prime_digest,
+            governed_evidence_sha256=governed_digest,
+            prime_signing_algorithm=str(prime_evidence.get("signing_algorithm")),
+            prime_signature_context=str(prime_evidence.get("signature_context")),
+            prime_activation_disposition=str(prime_evidence.get("activation_disposition")),
+            prime_authorization_registry_status=str(
+                prime_evidence.get("authorization_registry_status")
+            ),
+            governed_terminal_state=str(summary.get("terminal_state")),
+            governed_selected_suite_id=selected_suite,
+            governed_pq_algorithm_id=pq_algorithm,
+            governed_negotiated_context_digest=negotiated_context_digest,
+            governed_negotiation_transcript_digest=negotiation_transcript_digest,
+        )
+        review_digest = canonical_json_digest(review_binding)
 
     return PrimeGovernedReleaseReviewDecision(
         verdict=(
@@ -206,4 +259,10 @@ def assess_prime_governed_release_review(
         governed_terminal_state=summary.get("terminal_state"),
         governed_selected_suite_id=selected_suite if isinstance(selected_suite, str) else None,
         governed_pq_algorithm_id=pq_algorithm if isinstance(pq_algorithm, str) else None,
+        governed_negotiated_context_digest=(
+            negotiated_context_digest if isinstance(negotiated_context_digest, str) else None
+        ),
+        governed_negotiation_transcript_digest=(
+            negotiation_transcript_digest if isinstance(negotiation_transcript_digest, str) else None
+        ),
     )
