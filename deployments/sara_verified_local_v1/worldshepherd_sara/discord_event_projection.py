@@ -11,10 +11,10 @@ from typing import Any
 from .discord_connector import DiscordConnector
 from .discord_webhook import DiscordNotification, DiscordWebhookError
 from .event_outbox import EVENT_OUTBOX_REGISTRY_KEY, EventOutboxError, outbox_status
+from .registry_namespaces import DISCORD_RECEIPTS_REGISTRY_KEY
 from .storage import DurableStore
 
 
-DISCORD_RECEIPTS_REGISTRY_KEY = "SARA_DISCORD_NOTIFICATION_RECEIPTS"
 DISCORD_RECEIPTS_SCHEMA = "WS-SARA-DISCORD-NOTIFICATION-RECEIPTS-V1"
 MAX_DISCORD_RECEIPTS = 32
 AUDIT_CONFIRMATION_LOOKBACK = 8192
