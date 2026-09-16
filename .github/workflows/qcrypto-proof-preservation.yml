@@ -1,0 +1,61 @@
+name: QCRYPTO Proof Preservation Gate
+
+on:
+  pull_request:
+    paths:
+      - 'proof/qcrypto/v1/**'
+      - 'docs/WS_QCRYPTO_PUBLIC_WHITE_PAGE_2026-09-14.md'
+      - '.github/workflows/qcrypto-proof-preservation.yml'
+  push:
+    paths:
+      - 'proof/qcrypto/v1/**'
+      - 'docs/WS_QCRYPTO_PUBLIC_WHITE_PAGE_2026-09-14.md'
+      - '.github/workflows/qcrypto-proof-preservation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof-preservation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out full repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate preserved proof chain
+        run: |
+          python proof/qcrypto/v1/validate.py | tee qcrypto-proof-preservation-result.json
+
+      - name: Assert preservation status
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('qcrypto-proof-preservation-result.json').read_text(encoding='utf-8'))
+          assert result['schema']=='WS-QCRYPTO-PROOF-PRESERVATION-RESULT-V1'
+          assert result['status']=='PASS'
+          assert result['preservation_state']=='REPOSITORY_PAYLOADS_PRESERVED_HASH_VERIFIABLE'
+          assert result['implementation_commit']=='b65302d2e849dcad67b553378d3fce11b404f3c5'
+          assert result['publication_commit']=='c34ab9017c75ead5fde2f4e4c6ed8a883e1e9233'
+          assert result['bridge_payload_sha256']=='d4bb8706ae6ef9f655a4c9b883a8a202b319feec20f7da65ae97fbd9db12fe58'
+          assert result['publication_payload_sha256']=='f54521c22943e2eb87aaa8a08695677bd88f6b6bd31d31c988ed17848cd66e99'
+          assert result['external_notarization'] is False
+          assert result['signed_release_or_tag'] is False
+          PY
+
+      - name: Upload proof-preservation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-proof-preservation-result
+          path: qcrypto-proof-preservation-result.json
+          if-no-files-found: error

@@ -1,0 +1,122 @@
+name: QCRYPTO ECHO Bridge Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_**'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_**'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_**'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint*.py'
+      - 'deployments/sara_verified_local_v1/compose.yaml'
+      - 'deployments/sara_verified_local_v1/compose.qcrypto-echo.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_qcrypto_echo_bridge.sh'
+      - '.github/workflows/qcrypto-echo-bridge.yml'
+  push:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_**'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_**'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_**'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint*.py'
+      - 'deployments/sara_verified_local_v1/compose.yaml'
+      - 'deployments/sara_verified_local_v1/compose.qcrypto-echo.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_qcrypto_echo_bridge.sh'
+      - '.github/workflows/qcrypto-echo-bridge.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  qcrypto-echo-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned test environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Validate bridge shell and QCRYPTO/PQ checkpoint tests
+        run: |
+          bash -n scripts/verify_qcrypto_echo_bridge.sh
+          pytest -q tests/test_qcrypto_*.py tests/test_echo_checkpoint*.py
+
+      - name: Create isolated bridge environment
+        run: |
+          printf 'SARA_RELAY_TOKEN=%s\nSARA_ADMIN_TOKEN=%s\nSARA_PORT=9530\nSARA_BUILD_COMMIT=%s\nSARA_RELEASE_ID=%s\n' \
+            "$(openssl rand -hex 32)" \
+            "$(openssl rand -hex 32)" \
+            "$GITHUB_SHA" \
+            "qcrypto-echo-ci-${GITHUB_SHA}" > .env
+          chmod 600 .env
+          mkdir -p qcrypto_echo_bridge_ci
+
+      - name: Validate opt-in Compose overlay
+        run: |
+          ECHO_INGEST_TOKEN_HOST_PATH=/tmp/qcrypto-config-token \
+          ECHO_CHECKPOINT_ALGORITHM=ML-DSA-65 \
+          ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH=/tmp/qcrypto-config-key \
+          docker compose \
+            -f compose.yaml \
+            -f compose.qcrypto-echo.yaml \
+            --profile echo \
+            config --quiet
+
+      - name: Run deployed SARA to ECHO bridge exercise
+        env:
+          QCRYPTO_ECHO_BRIDGE_EVIDENCE_FILE: ${{ github.workspace }}/deployments/sara_verified_local_v1/qcrypto_echo_bridge_ci/evidence.json
+        run: bash scripts/verify_qcrypto_echo_bridge.sh
+
+      - name: Validate bridge evidence claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          evidence=json.loads(Path('qcrypto_echo_bridge_ci/evidence.json').read_text(encoding='utf-8'))
+          assert evidence['schema']=='WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V2'
+          assert evidence['status']=='PASS'
+          assert evidence['retained_history_events']==1
+          expected={'MATCHED':4,'SARA_ONLY':0,'ECHO_ONLY':1,'PAYLOAD_MISMATCH':0}
+          assert evidence['first_sync']['reconciliation_counts']==expected
+          assert evidence['replay_sync']['reconciliation_counts']==expected
+          assert evidence['first_sync']['stored_count']==4
+          assert evidence['replay_sync']['deduplicated_count']==4
+          assert evidence['echo_stored_events']==5
+          assert evidence['checkpoint_algorithm']=='ML-DSA-65'
+          assert evidence['checkpoint_signature_context']=='WS-ECHO-CHECKPOINT-V2'
+          assert evidence['checkpoint_post_quantum_signature_protection'] is True
+          assert evidence['checkpoint_event_count']==5
+          assert evidence['execution_authority'] is False
+          assert evidence['live_value_authorized'] is False
+          assert evidence['end_to_end_pq_security_established'] is False
+          boundary=evidence['claims_boundary'].lower()
+          for phrase in (
+              'ml-dsa-65 post-quantum signature protection',
+              'pq-secure transport',
+              'prime signing migration',
+              'live-value authorization',
+              'end-to-end post-quantum security',
+          ):
+              assert phrase in boundary
+          PY
+
+      - name: Upload deployed bridge evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-echo-deployed-pq-checkpoint-evidence
+          path: deployments/sara_verified_local_v1/qcrypto_echo_bridge_ci/evidence.json
+          if-no-files-found: error

@@ -1,0 +1,36 @@
+{
+  "schema": "WS-QCRYPTO-PUBLICATION-MANIFEST-V1",
+  "document": "docs/WS_QCRYPTO_PUBLIC_WHITE_PAGE_2026-09-14.md",
+  "publication_class": "PUBLIC_TECHNICAL_WHITE_PAGE_NON_CONFIDENTIAL",
+  "publication_state": "POSTABLE_CANDIDATE",
+  "validated_implementation_anchor": "b65302d2e849dcad67b553378d3fce11b404f3c5",
+  "claims_state": "PROVEN_INTERNALLY_BOUNDED_SOFTWARE_BEHAVIOR",
+  "bridge_workflow_run": 34873323676,
+  "bridge_artifact_name": "qcrypto-echo-deployed-bridge-evidence",
+  "bridge_artifact_digest": "sha256:15dc39ef59a8bbe10e48f858f1bb42d34c9c35adb33045b9f7635201c5df698e",
+  "required_gates": [
+    "QCRYPTO Risk Gate",
+    "QCRYPTO ECHO Bridge Gate",
+    "SARA Verified Local v1 Gate",
+    "Required Test and Build",
+    "CodeQL Required Gate",
+    "SARA Commit Closure Evidence",
+    "SARA Operational Resilience Drill",
+    "SARA Replacement Environment Restore",
+    "SARA Rollback Drill",
+    "SARA NIST 800-171 SSP Precursor",
+    "SARA TLS Private Backend Architecture"
+  ],
+  "required_nonclaims": [
+    "production deployment",
+    "cryptographic migration execution",
+    "live-value authorization",
+    "post-quantum security of the current Ed25519 ECHO checkpoint",
+    "Federal compliance",
+    "WS-CAE conformance",
+    "third-party, partner, regulator, or government validation",
+    "physical-system qualification"
+  ],
+  "safety_boundary": "No real third-party wallet, private key, exchange, bridge, network, or fund is targeted by this work.",
+  "posting_rule": "GO only after the QCRYPTO White Page Publication Gate passes on the publication revision and this manifest still points to the validated implementation anchor above."
+}

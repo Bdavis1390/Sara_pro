@@ -28,7 +28,7 @@ evidence_file="${ECHO_PERSISTENCE_EVIDENCE_FILE:-echo-persistence-integration.js
 
 secret_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/echo-ci.XXXXXX")"
 token_file="${secret_dir}/echo-ingest-token"
-checkpoint_key_file="${secret_dir}/echo-checkpoint-ed25519-private.pem"
+checkpoint_key_file="${secret_dir}/echo-checkpoint-mldsa65-private.pem"
 cleanup() {
   docker compose --profile echo rm -sf echo >/dev/null 2>&1 || true
   rm -rf "$secret_dir" 2>/dev/null || true
@@ -37,7 +37,20 @@ trap cleanup EXIT
 
 echo_token="$(openssl rand -hex 32)"
 printf '%s\n' "$echo_token" > "$token_file"
-openssl genpkey -algorithm Ed25519 -out "$checkpoint_key_file" >/dev/null 2>&1
+python3 - "$checkpoint_key_file" <<'PY'
+import sys
+from pathlib import Path
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
+key=MLDSA65PrivateKey.generate()
+Path(sys.argv[1]).write_bytes(
+    key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    )
+)
+PY
 chmod 600 "$token_file" "$checkpoint_key_file"
 checkpoint_fingerprint="$(python3 - "$checkpoint_key_file" <<'PY'
 import hashlib, sys
@@ -45,6 +58,7 @@ from pathlib import Path
 from cryptography.hazmat.primitives import serialization
 key=serialization.load_pem_private_key(Path(sys.argv[1]).read_bytes(), password=None)
 raw=key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+assert len(raw)==1952
 print(hashlib.sha256(raw).hexdigest())
 PY
 )"
@@ -59,8 +73,9 @@ else
 fi
 
 export ECHO_INGEST_TOKEN_HOST_PATH="$token_file"
+export ECHO_CHECKPOINT_ALGORITHM="ML-DSA-65"
 export ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH="$checkpoint_key_file"
-export ECHO_CHECKPOINT_KEY_ID="ECHO-CHECKPOINT-CI-${short_sha}"
+export ECHO_CHECKPOINT_KEY_ID="ECHO-CHECKPOINT-MLDSA65-CI-${short_sha}"
 export ECHO_HOST_PORT="$echo_port"
 
 docker compose --profile echo up -d --build echo
@@ -81,6 +96,16 @@ wait_echo || {
   exit 1
 }
 
+python3 - "${secret_dir}/echo-ready.json" <<'PY'
+import json,sys
+from pathlib import Path
+body=json.loads(Path(sys.argv[1]).read_text())
+assert body['ok'] is True
+assert body['checkpoint_signing_algorithm']=='ML-DSA-65'
+assert body['checkpoint_post_quantum_signature_protection'] is True
+assert body['checkpoint_pq_runtime_signer_installed'] is True
+PY
+
 echo_container="$(docker compose --profile echo ps -q echo)"
 sara_container="$(docker compose ps -q sara)"
 [[ -n "$echo_container" && -n "$sara_container" ]] || {
@@ -99,14 +124,16 @@ sara_env=set(sara['Config'].get('Env') or [])
 for item in ('SARA_ADMIN_TOKEN=', 'SARA_RELAY_TOKEN=', 'PRIME_SENTINEL_SERVICE_TOKEN='):
     assert item in echo_env
 assert 'ECHO_INGEST_TOKEN_FILE=/run/worldshepherd-echo/ingest-token' in echo_env
-assert 'ECHO_CHECKPOINT_PRIVATE_KEY_FILE=/run/worldshepherd-echo/checkpoint-ed25519-private.pem' in echo_env
+assert 'ECHO_CHECKPOINT_ALGORITHM=ML-DSA-65' in echo_env
+assert 'ECHO_CHECKPOINT_PRIVATE_KEY_FILE=/run/worldshepherd-echo/checkpoint-mldsa65-private.pem' in echo_env
 assert 'ECHO_INGEST_TOKEN_FILE=' in sara_env
 assert 'ECHO_DATA_DIR=' in sara_env
+assert 'ECHO_CHECKPOINT_ALGORITHM=' in sara_env
 assert 'ECHO_CHECKPOINT_PRIVATE_KEY_FILE=' in sara_env
 assert 'ECHO_CHECKPOINT_KEY_ID=' in sara_env
 echo_mounts={item['Destination'] for item in echo.get('Mounts', [])}
 sara_mounts={item['Destination'] for item in sara.get('Mounts', [])}
-for target in ('/run/worldshepherd-echo/ingest-token','/run/worldshepherd-echo/checkpoint-ed25519-private.pem','/var/lib/echo'):
+for target in ('/run/worldshepherd-echo/ingest-token','/run/worldshepherd-echo/checkpoint-mldsa65-private.pem','/var/lib/echo'):
     assert target in echo_mounts
     assert target not in sara_mounts
 assert '/var/lib/sara' not in echo_mounts
@@ -171,6 +198,10 @@ from pathlib import Path
 body=json.loads(Path(sys.argv[1]).read_text())
 assert body['manifest']['sequence']==1 and body['manifest']['event_count']>=1
 assert body['manifest']['previous_checkpoint_sha256'] is None
+assert body['manifest']['algorithm']=='ML-DSA-65'
+assert body['manifest']['signature_context']=='WS-ECHO-CHECKPOINT-V2'
+assert body['public_key']['algorithm']=='ML-DSA-65'
+assert body['public_key']['signature_context']=='WS-ECHO-CHECKPOINT-V2'
 PY
 
 docker compose --profile echo restart echo >/dev/null
@@ -214,7 +245,10 @@ from pathlib import Path
 pub=json.loads(Path(sys.argv[1]).read_text()); fp=sys.argv[2]
 one=json.loads(Path(sys.argv[3]).read_text()); two=json.loads(Path(sys.argv[4]).read_text())
 assert pub['fingerprint_sha256']==fp
+assert pub['algorithm']=='ML-DSA-65'
+assert pub['signature_context']=='WS-ECHO-CHECKPOINT-V2'
 assert two['manifest']['sequence']==2
+assert two['manifest']['algorithm']=='ML-DSA-65'
 assert two['manifest']['previous_checkpoint_sha256']==one['checkpoint_sha256']
 assert two['manifest']['event_count'] >= 2
 PY
@@ -224,20 +258,21 @@ ws-echo-checkpoint-verify --expected-fingerprint "$checkpoint_fingerprint" \
   "${secret_dir}/checkpoint1.json" "${secret_dir}/checkpoint2.json" >/dev/null
 
 python3 - "${secret_dir}/checkpoint2.json" "$secret_dir" <<'PY'
-import copy,json,sys
+import base64,copy,json,sys
 from pathlib import Path
 source=json.loads(Path(sys.argv[1]).read_text()); root=Path(sys.argv[2])
 variants={}
 a=copy.deepcopy(source); a['manifest']['events']=a['manifest']['events'][:-1]; a['manifest']['event_count']=len(a['manifest']['events']); variants['deleted']=a
 a=copy.deepcopy(source); a['manifest']['events'].reverse(); variants['reordered']=a
 a=copy.deepcopy(source); a['manifest']['events'][0]['semantic_sha256']='0'*64; variants['substituted']=a
-a=copy.deepcopy(source); a['signature_b64url']='A'*86; variants['signature']=a
+a=copy.deepcopy(source); a['manifest']['signature_context']='WS-ECHO-CHECKPOINT-TAMPERED'; variants['context']=a
+a=copy.deepcopy(source); a['signature_b64url']=base64.urlsafe_b64encode(b'\x00'*3309).rstrip(b'=').decode(); variants['signature']=a
 a=copy.deepcopy(source); a['manifest']['previous_checkpoint_sha256']='0'*64; variants['predecessor']=a
 a=copy.deepcopy(source); a['public_key']['fingerprint_sha256']='0'*64; variants['key']=a
 for name,value in variants.items():
     (root/f'tamper-{name}.json').write_text(json.dumps(value,sort_keys=True)+'\n')
 PY
-for mutation in deleted reordered substituted signature predecessor key; do
+for mutation in deleted reordered substituted context signature predecessor key; do
   if ws-echo-checkpoint-verify --expected-fingerprint "$checkpoint_fingerprint" \
     "${secret_dir}/checkpoint1.json" "${secret_dir}/tamper-${mutation}.json" >/dev/null 2>&1; then
     echo "ERROR: tampered checkpoint unexpectedly verified: ${mutation}" >&2
@@ -283,11 +318,17 @@ out=Path(sys.argv[7])
 assert stored['delivery_count']==3
 assert status['ok'] is True and status['rejected_conflicts'] >= 1
 assert status['checkpoints']['ok'] is True and status['checkpoints']['checkpoint_count']==2
-expected_counts={'MATCHED':1,'ECHO_ONLY':1}
+assert status['checkpoints']['algorithm']=='ML-DSA-65'
+assert status['checkpoints']['post_quantum_signature_protection'] is True
+assert status['checkpoints']['pq_anchor_sequence']==1
+expected_counts={'MATCHED':1,'SARA_ONLY':0,'ECHO_ONLY':1,'PAYLOAD_MISMATCH':0}
 assert reconcile['scope']=='PROVIDED_SARA_AUDIT_WINDOW' and reconcile['counts']==expected_counts, reconcile
 assert verification['status']=='PASS' and verification['checkpoint_count']==2
+assert verification['latest_algorithm']=='ML-DSA-65'
+assert verification['post_quantum_signature_protection'] is True
+assert verification['pq_anchor_sequence']==1
 summary={
-  'schema':'WS-ECHO-CHECKPOINT-INTEGRATION-V1',
+  'schema':'WS-ECHO-CHECKPOINT-INTEGRATION-V2',
   'status':'PASS',
   'prime_id':sys.argv[6],
   'event_id':sys.argv[5],
@@ -295,8 +336,11 @@ summary={
   'delivery_count_after_restart':stored['delivery_count'],
   'checkpoint_count':verification['checkpoint_count'],
   'last_checkpoint_sha256':verification['last_checkpoint_sha256'],
+  'checkpoint_algorithm':verification['latest_algorithm'],
+  'post_quantum_signature_protection':verification['post_quantum_signature_protection'],
+  'pq_anchor_sequence':verification['pq_anchor_sequence'],
   'expected_key_fingerprint_sha256':verification['expected_key_fingerprint_sha256'],
-  'tamper_cases_rejected':['deleted','reordered','substituted','signature','predecessor','key'],
+  'tamper_cases_rejected':['deleted','reordered','substituted','context','signature','predecessor','key'],
   'semantic_conflict_rejected_http_status':409,
   'reconciliation_scope':reconcile['scope'],
   'reconciliation_counts':reconcile['counts'],
@@ -306,15 +350,16 @@ summary={
     'sara_has_no_echo_ingest_or_checkpoint_secret_or_data_mount':True,
     'sara_and_echo_share_no_docker_network':True,
   },
+  'end_to_end_pq_security_established':False,
   'claims_boundary':(
-    'Internal reference software evidence only. Signed ECHO checkpoint creation, restart persistence, '
-    'pinned-key independent verification, predecessor chaining, and tested tamper rejection are demonstrated. '
-    'Immutable/WORM retention, external anchoring, privileged rollback resistance, third-party attestation, '
-    'exactly-once transport, certification, and physical PRIME qualification are not established.'
+    'Internal reference software evidence demonstrates ML-DSA-65 post-quantum signature protection '
+    'for the ECHO checkpoint layer, including restart persistence, pinned-key verification, predecessor '
+    'chaining and tamper rejection. PQ-secure transport, PRIME signing migration, immutable/WORM retention, '
+    'external anchoring, third-party attestation, certification, and end-to-end PQ security are not established.'
   ),
 }
 out.parent.mkdir(parents=True,exist_ok=True)
 out.write_text(json.dumps(summary,sort_keys=True,indent=2)+'\n')
 PY
 
-echo "ECHO persistence/checkpoint integration: PASS (${evidence_file})"
+echo "ECHO ML-DSA-65 persistence/checkpoint integration: PASS (${evidence_file})"

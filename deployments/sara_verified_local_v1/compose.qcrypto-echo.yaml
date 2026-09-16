@@ -1,0 +1,16 @@
+services:
+  sara:
+    environment:
+      ECHO_PERSISTENCE_URL: http://echo:9550
+      ECHO_FORWARD_TOKEN_FILE: /run/worldshepherd-sara/echo-forward-token
+    volumes:
+      - type: bind
+        source: ${ECHO_INGEST_TOKEN_HOST_PATH:-/var/lib/worldshepherd/echo/ingest-token}
+        target: /run/worldshepherd-sara/echo-forward-token
+        read_only: true
+    networks:
+      - echo_private
+
+# This overlay is intentionally opt-in. Launch it together with the base file
+# and the ECHO profile. It grants SARA only authenticated evidence-forwarding
+# connectivity to ECHO; it does not grant migration, signing, or live-value authority.

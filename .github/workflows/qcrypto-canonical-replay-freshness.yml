@@ -1,0 +1,104 @@
+name: QCRYPTO Canonical Replay Freshness Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_replay_freshness_guard.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_canonical_replay_freshness_guard.py'
+      - 'scripts/qcrypto_canonical_replay_freshness_evidence.py'
+      - '.github/workflows/qcrypto-canonical-replay-freshness.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_replay_freshness_guard.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_canonical_replay_freshness_guard.py'
+      - 'scripts/qcrypto_canonical_replay_freshness_evidence.py'
+      - '.github/workflows/qcrypto-canonical-replay-freshness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-replay-freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile replay and freshness controls
+        run: |
+          python -m compileall \
+            security/qcrypto/canonical_authority_envelope.py \
+            security/qcrypto/canonical_pq_signing_context.py \
+            security/qcrypto/canonical_replay_freshness_guard.py \
+            scripts/qcrypto_canonical_replay_freshness_evidence.py
+
+      - name: Run canonical-context and replay regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_canonical_pq_signing_context.py \
+            tests/test_qcrypto_canonical_replay_freshness_guard.py
+
+      - name: Generate bounded replay evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_canonical_replay_freshness_evidence.py \
+            --output canonical-replay-freshness-evidence.json
+
+      - name: Assert fail-closed replay posture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence=json.loads(Path('canonical-replay-freshness-evidence.json').read_text())
+          assert evidence['schema']=='WS-QCRYPTO-CANONICAL-REPLAY-FRESHNESS-EVIDENCE-V1'
+          assert evidence['status']=='PASS'
+          r=evidence['results']
+          assert r['FIRST_ACCEPT']['verdict']=='REPLAY_FRESHNESS_ACCEPTED'
+          assert r['SECOND_ACCEPT']['verdict']=='REPLAY_FRESHNESS_ACCEPTED'
+          assert r['DUPLICATE_REJECT']['verdict']=='REPLAY_DUPLICATE_REJECTED'
+          assert r['EXPIRED_REJECT']['verdict']=='FRESHNESS_REJECTED'
+          assert r['KEY_EPOCH_ROLLBACK_REJECT']['verdict']=='MONOTONIC_STATE_ROLLBACK_REJECTED'
+          s=evidence['summary']
+          assert s['monotonic_checkpoint_established'] is True
+          assert s['second_sequence_accepted'] is True
+          assert s['duplicate_rejected'] is True
+          assert s['expired_rejected'] is True
+          assert s['key_epoch_rollback_rejected'] is True
+          assert s['execution_authority'] is False
+          assert s['live_value_authorized'] is False
+          assert s['transaction_authorized'] is False
+          assert s['production_deployment_established'] is False
+          assert len(evidence['evidence_sha256'])==64
+          print('canonical_replay_freshness_gate: PASS')
+          print('evidence_sha256:', evidence['evidence_sha256'])
+          PY
+
+      - name: Upload canonical replay freshness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qcrypto-canonical-replay-freshness-evidence
+          path: canonical-replay-freshness-evidence.json
+          if-no-files-found: error

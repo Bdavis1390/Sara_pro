@@ -1,0 +1,394 @@
+name: QCRYPTO PRIME Governed Release Review Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_pq_context_interop.py'
+      - 'security/qcrypto/canonical_replay_freshness_guard.py'
+      - 'security/qcrypto/pqc_suite_negotiation_guard.py'
+      - 'security/qcrypto/negotiated_canonical_context.py'
+      - 'security/qcrypto/governed_pq_signing_state_machine.py'
+      - 'security/qcrypto/prime_governed_release_review.py'
+      - 'scripts/qcrypto_governed_pq_signing_state_evidence.py'
+      - 'scripts/qcrypto_prime_governed_release_review_evidence.py'
+      - 'tests/test_qcrypto_governed_pq_signing_state_machine.py'
+      - 'tests/test_qcrypto_prime_governed_release_review.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_authorization.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_service.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_issuance_store.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_ledger_integrity.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_verifier.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_prime_review_adapter.py'
+      - 'deployments/sara_verified_local_v1/tests/test_prime_sentinel_*.py'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_audit_verifier.py'
+      - 'deployments/sara_verified_local_v1/tests/test_qcrypto_prime_review_adapter.py'
+      - 'deployments/sara_verified_local_v1/compose.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_prime_sentinel_integration.sh'
+      - 'deployments/sara_verified_local_v1/scripts/verify_qcrypto_prime_review_audit_custody.py'
+      - '.github/workflows/qcrypto-prime-governed-release-review.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  governed-qcrypto-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned QCRYPTO test backend
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: 'pqcrypto==1.0.0' pytest
+
+      - name: Compile governed QCRYPTO bridge controls
+        run: |
+          python -m compileall \
+            security/qcrypto/governed_pq_signing_state_machine.py \
+            security/qcrypto/prime_governed_release_review.py \
+            scripts/qcrypto_governed_pq_signing_state_evidence.py \
+            scripts/qcrypto_prime_governed_release_review_evidence.py
+
+      - name: Run governed signing and cross-boundary regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_governed_pq_signing_state_machine.py \
+            tests/test_qcrypto_prime_governed_release_review.py
+
+      - name: Generate governed pre-approval evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_governed_pq_signing_state_evidence.py \
+            --output governed-pq-signing-state-evidence.json
+
+      - name: Assert governed terminal boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path('governed-pq-signing-state-evidence.json').read_text())
+          assert e['schema']=='WS-QCRYPTO-GOVERNED-PQ-SIGNING-STATE-EVIDENCE-V1'
+          assert e['status']=='PASS'
+          assert e['proof_scope']=='EPHEMERAL_ZERO_VALUE_PRE_APPROVAL_ONLY'
+          s=e['summary']
+          assert s['terminal_state']=='HUMAN_REVIEW_REQUIRED'
+          assert s['ready_for_human_review'] is True
+          assert s['human_approval_required'] is True
+          assert s['human_approval_recorded'] is False
+          assert s['replay_checkpoint_bound'] is True
+          assert s['verified_compatible_probe_count'] >= 1
+          assert s['duplicate_replay_blocked'] is True
+          assert s['suite_downgrade_blocked'] is True
+          assert s['signature_digest_mismatch_blocked'] is True
+          assert s['incompatible_pq_family_blocked'] is True
+          assert s['execution_authority'] is False
+          assert s['live_value_authorized'] is False
+          assert s['live_transaction_signed'] is False
+          assert s['production_protocol_integration'] is False
+          assert s['end_to_end_pq_security_established'] is False
+          PY
+
+      - name: Upload governed QCRYPTO evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-governed-pq-signing-state-evidence
+          path: governed-pq-signing-state-evidence.json
+          if-no-files-found: error
+
+  prime-deployed-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: deployments/sara_verified_local_v1
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned PRIME environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile PRIME PQ runtime
+        run: |
+          python -m compileall -q \
+            worldshepherd_sara/prime_sentinel_authorization.py \
+            worldshepherd_sara/prime_sentinel_service.py \
+            worldshepherd_sara/prime_sentinel_issuance_store.py \
+            worldshepherd_sara/prime_sentinel_ledger_integrity.py
+          bash -n scripts/verify_prime_sentinel_integration.sh
+
+      - name: Run PRIME authorization regressions
+        run: |
+          pytest -q \
+            tests/test_prime_sentinel_authorization.py \
+            tests/test_prime_sentinel_pq_authorization.py \
+            tests/test_prime_sentinel_service.py \
+            tests/test_prime_sentinel_issuance_store.py \
+            tests/test_prime_sentinel_ledger_integrity.py
+
+      - name: Create isolated PRIME deployment environment
+        run: |
+          printf 'SARA_RELAY_TOKEN=%s\nSARA_ADMIN_TOKEN=%s\nSARA_PORT=9530\nSARA_HOST_PORT=19530\nSARA_BUILD_COMMIT=%s\nSARA_RELEASE_ID=%s\n' \
+            "$(openssl rand -hex 32)" \
+            "$(openssl rand -hex 32)" \
+            "$GITHUB_SHA" \
+            "prime-governed-review-${GITHUB_SHA}" > .env
+          chmod 600 .env
+          docker compose up -d --build sara
+
+      - name: Run deployed PRIME ML-DSA-65 integration
+        env:
+          PRIME_SENTINEL_EVIDENCE_FILE: ${{ github.workspace }}/deployments/sara_verified_local_v1/prime-sentinel-pq-evidence.json
+        run: bash scripts/verify_prime_sentinel_integration.sh
+
+      - name: Assert bounded PRIME evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path('prime-sentinel-pq-evidence.json').read_text())
+          assert e['schema']=='WS-PRIME-SENTINEL-TWO-CONTAINER-INTEGRATION-V3'
+          assert e['status']=='PASS'
+          assert e['signing_algorithm']=='ML-DSA-65'
+          assert e['signature_context']=='WS-PRIME-SENTINEL-AUTHZ-V2'
+          assert e['post_quantum_signature_protection'] is True
+          assert e['same_request_retry_identical_before_restart'] is True
+          assert e['same_request_retry_identical_after_restart'] is True
+          assert e['conflicting_request_rejected_http_status']==409
+          assert e['assertion_replay_rejected_http_status']==403
+          assert e['activation_disposition']=='ACTIVATION_ALLOWED'
+          assert e['authorization_registry_status']=='CONSUMED'
+          assert e['end_to_end_pq_security_established'] is False
+          PY
+
+      - name: Upload deployed PRIME evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-prime-mldsa65-source-evidence
+          path: deployments/sara_verified_local_v1/prime-sentinel-pq-evidence.json
+          if-no-files-found: error
+
+  cross-boundary-human-review:
+    needs:
+      - governed-qcrypto-evidence
+      - prime-deployed-evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download governed QCRYPTO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: qcrypto-governed-pq-signing-state-evidence
+          path: evidence/governed
+
+      - name: Download PRIME artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: qcrypto-prime-mldsa65-source-evidence
+          path: evidence/prime
+
+      - name: Build deterministic cross-boundary review package
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_prime_governed_release_review_evidence.py \
+            --prime evidence/prime/prime-sentinel-pq-evidence.json \
+            --governed evidence/governed/governed-pq-signing-state-evidence.json \
+            --output prime-governed-release-review-evidence.json
+
+      - name: Assert self-verifying human-review-only boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from security.qcrypto.prime_governed_release_review import (
+              canonical_json_digest,
+              prime_governed_review_binding,
+          )
+          e=json.loads(Path('prime-governed-release-review-evidence.json').read_text())
+          assert e['schema']=='WS-QCRYPTO-PRIME-GOVERNED-RELEASE-REVIEW-V1'
+          assert e['status']=='PASS'
+          assert e['claim_state']=='PRIME_AND_QCRYPTO_EVIDENCE_BOUND_FOR_HUMAN_REVIEW_ONLY'
+          assert e['proof_scope']=='CROSS_BOUNDARY_REVIEW_PACKAGE_NO_EXECUTION_AUTHORITY'
+          d=e['decision']
+          s=e['summary']
+          assert d['verdict']=='PRIME_GOVERNED_RELEASE_READY_FOR_HUMAN_REVIEW'
+          assert d['ready_for_human_release_review'] is True
+          assert len(d['prime_evidence_sha256'])==64
+          assert len(d['governed_evidence_sha256'])==64
+          assert len(d['governed_negotiated_context_digest'])==64
+          assert len(d['governed_negotiation_transcript_digest'])==64
+          assert len(d['review_package_sha256'])==64
+          binding=prime_governed_review_binding(
+              prime_evidence_sha256=d['prime_evidence_sha256'],
+              governed_evidence_sha256=d['governed_evidence_sha256'],
+              prime_signing_algorithm=d['prime_signing_algorithm'],
+              prime_signature_context=d['prime_signature_context'],
+              prime_activation_disposition=d['prime_activation_disposition'],
+              prime_authorization_registry_status=d['prime_authorization_registry_status'],
+              governed_terminal_state=d['governed_terminal_state'],
+              governed_selected_suite_id=d['governed_selected_suite_id'],
+              governed_pq_algorithm_id=d['governed_pq_algorithm_id'],
+              governed_negotiated_context_digest=d['governed_negotiated_context_digest'],
+              governed_negotiation_transcript_digest=d['governed_negotiation_transcript_digest'],
+          )
+          assert canonical_json_digest(binding)==d['review_package_sha256']
+          assert s['human_release_required'] is True
+          assert s['human_release_recorded'] is False
+          assert s['prime_signing_algorithm']=='ML-DSA-65'
+          assert s['prime_signature_context']=='WS-PRIME-SENTINEL-AUTHZ-V2'
+          assert s['prime_activation_disposition']=='ACTIVATION_ALLOWED'
+          assert s['prime_authorization_registry_status']=='CONSUMED'
+          assert s['governed_terminal_state']=='HUMAN_REVIEW_REQUIRED'
+          assert s['governed_pq_algorithm_id']=='ML-DSA'
+          assert s['execution_authority'] is False
+          assert s['live_value_authorized'] is False
+          assert s['live_transaction_signed'] is False
+          assert s['production_protocol_integration'] is False
+          assert s['end_to_end_pq_security_established'] is False
+          digest_source=dict(e)
+          supplied=digest_source.pop('evidence_sha256')
+          assert canonical_json_digest(digest_source)==supplied
+          print('prime_governed_release_review_gate: PASS')
+          print('review_package_sha256:', s['review_package_sha256'])
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload cross-boundary human-review package
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-prime-governed-release-review-evidence
+          path: prime-governed-release-review-evidence.json
+          if-no-files-found: error
+
+  native-sara-audit-custody:
+    needs:
+      - cross-boundary-human-review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: deployments/sara_verified_local_v1
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned SARA audit environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Download cross-boundary review warrant
+        uses: actions/download-artifact@v4
+        with:
+          name: qcrypto-prime-governed-release-review-evidence
+          path: ${{ github.workspace }}/evidence/review
+
+      - name: Compile native review custody controls
+        run: |
+          python -m compileall -q \
+            worldshepherd_sara/qcrypto_audit_adapter.py \
+            worldshepherd_sara/qcrypto_audit_verifier.py \
+            worldshepherd_sara/qcrypto_prime_review_adapter.py \
+            scripts/verify_qcrypto_prime_review_audit_custody.py
+
+      - name: Run native audit and review-warrant regressions
+        run: |
+          pytest -q \
+            tests/test_qcrypto_audit_adapter.py \
+            tests/test_qcrypto_audit_verifier.py \
+            tests/test_qcrypto_prime_review_adapter.py
+
+      - name: Persist and reconstruct warrant through native SARA audit
+        run: |
+          python scripts/verify_qcrypto_prime_review_audit_custody.py \
+            --review '${{ github.workspace }}/evidence/review/prime-governed-release-review-evidence.json' \
+            --output '${{ github.workspace }}/prime-review-sara-audit-custody.json'
+
+      - name: Assert durable four-stage custody boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('${{ github.workspace }}/prime-review-sara-audit-custody.json')
+          e=json.loads(p.read_text())
+          assert e['schema']=='WS-QCRYPTO-PRIME-REVIEW-SARA-AUDIT-CUSTODY-V1'
+          assert e['status']=='PASS'
+          assert e['claim_state']=='PRIME_GOVERNED_REVIEW_WARRANT_RECONSTRUCTED_IN_NATIVE_SARA_AUDIT'
+          assert e['proof_scope']=='DURABLE_INTERNAL_AUDIT_CUSTODY_NO_EXECUTION_AUTHORITY'
+          assert e['decision_digest'].startswith('sha256:')
+          assert len(e['outbox_event_ids'])==4
+          assert len(set(e['outbox_event_ids']))==4
+          assert e['delivered_event_count']==4
+          assert e['outbox_before_drain']=={'pending':4,'delivered_retained':0,'malformed':0}
+          assert e['outbox_after_drain']['pending']==0
+          v=e['verification']
+          assert v['verdict']=='INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN'
+          assert v['complete'] is True
+          assert v['consistent'] is True
+          assert v['stages_present']==['ECHO','PRIME','SARA','OVERWATCH']
+          s=e['summary']
+          assert s['four_stage_chain_reconstructed'] is True
+          assert s['stable_outbox_event_id_count']==4
+          assert s['at_least_once_delivery_preserved'] is True
+          assert s['review_correlation_preserved'] is True
+          assert s['human_approval_required'] is True
+          assert s['migration_executed'] is False
+          assert s['execution_authority'] is False
+          assert s['live_value_authorized'] is False
+          assert s['federal_compliance_established'] is False
+          assert s['ws_cae_conformance_established'] is False
+          assert s['production_protocol_integration'] is False
+          assert s['end_to_end_pq_security_established'] is False
+          assert len(e['evidence_sha256'])==64
+          print('prime_review_sara_audit_custody_gate: PASS')
+          print('decision_digest:', e['decision_digest'])
+          print('audit_instance_id:', e['audit_instance_id'])
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload native SARA audit custody receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-prime-review-sara-audit-custody
+          path: ${{ github.workspace }}/prime-review-sara-audit-custody.json
+          if-no-files-found: error
