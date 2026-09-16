@@ -14,7 +14,7 @@ from typing import Dict, List, Optional
 
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
 
-RECOVERY_SCHEMA = "WS-POO-RECOVERY-V1"
+RECOVERY_SCHEMA = "WS-POO-RECOVERY-V2"
 _ALLOWED_REASONS = {
     "LOST_CONTROL",
     "COMPROMISED_CONTROL",
@@ -46,7 +46,7 @@ class RecoveryEvidence:
     compromise_or_loss_evidence_bound: bool = False
     recovery_pow_verified: bool = False
     recovery_poc_concept_verified: bool = False
-    alternate_control_or_custody_verified: bool = False
+    alternate_coc_verified: bool = False
     recovery_pos_bond_verified: bool = False
     multisource_or_quorum_verified: bool = False
     freshness_verified: bool = False
@@ -110,7 +110,7 @@ def _missing_predicates(evidence: RecoveryEvidence) -> List[str]:
         "compromise_or_loss_evidence_bound": "loss/compromise evidence not bound",
         "recovery_pow_verified": "recovery PoW not verified",
         "recovery_poc_concept_verified": "recovery PoC concept not verified",
-        "alternate_control_or_custody_verified": "alternate control/custody not verified",
+        "alternate_coc_verified": "alternate COC not verified",
         "recovery_pos_bond_verified": "recovery PoS bond not verified",
         "multisource_or_quorum_verified": "multisource/quorum evidence not verified",
         "freshness_verified": "recovery freshness not verified",
@@ -191,7 +191,7 @@ def derive_recovery_ownership_candidate(
         title_or_provenance_bound=recovery.title_or_provenance_reverified,
         pow_verified=recovery.recovery_pow_verified,
         poc_concept_verified=recovery.recovery_poc_concept_verified,
-        control_or_custody_verified=recovery.alternate_control_or_custody_verified,
+        coc_verified=recovery.alternate_coc_verified,
         pos_bond_verified=recovery.recovery_pos_bond_verified,
         freshness_verified=recovery.freshness_verified,
         not_revoked=recovery.recovery_not_revoked,
