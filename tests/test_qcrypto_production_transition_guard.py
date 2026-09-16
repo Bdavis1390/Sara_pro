@@ -7,7 +7,8 @@ from security.qcrypto.production_transition_guard import (
 def mature_nonproduction_evidence(**overrides):
     data = dict(
         bitcoin_environment="SIGNET",
-        ethereum_environment="HOLESKY_OR_EQUIVALENT_TESTNET",
+        ethereum_environment="HOODI",
+        ethereum_chain_id=560048,
         bitcoin_adapter_tested=True,
         ethereum_validator_change_tested=True,
         external_signer_or_hsm_configured=True,
@@ -34,6 +35,27 @@ def test_mature_nonproduction_evidence_can_only_reach_external_change_control():
     assert result.live_value_authorized is False
     assert result.private_key_operations_permitted is False
     assert result.production_deployment_permitted is False
+
+
+def test_wrong_bitcoin_environment_fails_closed():
+    result = assess_production_transition(
+        mature_nonproduction_evidence(bitcoin_environment="MAINNET")
+    )
+    assert result.state == "PRODUCTION_TRANSITION_BLOCKED"
+    assert any("SIGNET" in blocker for blocker in result.blockers)
+
+
+def test_wrong_ethereum_environment_or_chain_id_fails_closed():
+    wrong_network = assess_production_transition(
+        mature_nonproduction_evidence(ethereum_environment="HOLESKY", ethereum_chain_id=17000)
+    )
+    wrong_chain = assess_production_transition(
+        mature_nonproduction_evidence(ethereum_chain_id=1)
+    )
+    assert wrong_network.state == "PRODUCTION_TRANSITION_BLOCKED"
+    assert wrong_chain.state == "PRODUCTION_TRANSITION_BLOCKED"
+    assert any("HOODI" in blocker for blocker in wrong_network.blockers)
+    assert any("560048" in blocker for blocker in wrong_chain.blockers)
 
 
 def test_private_key_export_requirement_fails_closed():
