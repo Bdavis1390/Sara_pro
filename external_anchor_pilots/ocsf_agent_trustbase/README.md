@@ -15,6 +15,13 @@ The pilot is grounded in concepts already present on OCSF `main`, including:
 - `attestation.prev_event`
 - `fingerprint` objects
 
+It also tracks adjacent upstream AI work so the trust-base contribution does not duplicate behavior telemetry:
+
+- `ocsf/ocsf-schema#1754` — draft `AI Agent Activity`
+- `ocsf/ocsf-schema#1704` — `ai_status` outcome container under `ai_operation`
+
+See `CROSS_PLANE_MAPPING.md` for the behavior-vs-configuration separation.
+
 ## What it checks
 
 The current verifier enforces these provisional invariants:
@@ -42,6 +49,18 @@ The current verifier enforces these provisional invariants:
 - broken `prev_event` chain — expected fail
 - raw credential material present — expected fail
 
+## Architectural boundary
+
+The pilot is a **configuration/evidence-plane** contribution.
+
+It should not become a second event taxonomy for actions already represented by OCSF. File operations, process launches, API calls, and other existing activities should stay in their native OCSF classes with AI context attached where appropriate. Agent-specific lifecycle/action semantics belong with the emerging `AI Agent Activity` work, while shared outcome scalars such as stop reason should reuse `ai_status` if that architecture is accepted upstream.
+
+The trust-base contribution instead answers the complementary question:
+
+> What discrete agent configuration and dependency state was in force when an activity occurred, and is the evidence chain complete?
+
+The exact correlation field between behavior events and trust-base emissions remains an upstream decision; this pilot does not invent a normative one.
+
 ## Run
 
 ```bash
@@ -55,4 +74,4 @@ The command exits non-zero only when an actual result disagrees with a fixture's
 
 This verifier does **not** implement OCSF canonical serialization, cryptographic signature verification, or final field names for the proposed trust-base inventory class. Those should remain aligned to upstream OCSF decisions and existing validator/compiler behavior.
 
-The intended upstream contribution is the **conformance-test slice**: once the class PR stabilizes, translate these invariants and vectors into the exact accepted OCSF fields and, where maintainers agree, integrate suitable checks into the existing validator/CI path.
+The intended upstream contribution is the **conformance-test slice**: once the class PR stabilizes, translate these invariants and vectors into the exact accepted OCSF fields, preserve separation from existing activity/`ai_status` semantics, and where maintainers agree integrate suitable checks into the existing validator/CI path.
