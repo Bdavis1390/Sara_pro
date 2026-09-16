@@ -34,6 +34,14 @@ jobs:
         working-directory: tools/oss_health
         run: python -m unittest -v test_semantic_health.py
 
+      - name: Install canonical SARA test dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pip install -e '.[test]'
+
+      - name: Test Discord notification security boundary
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pytest -q tests/test_discord_webhook.py
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |
