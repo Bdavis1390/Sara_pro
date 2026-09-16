@@ -1,0 +1,113 @@
+name: Opportunity / PRE Capture
+description: Track an external opportunity, requirement delta, deadline, evidence gap, and bid/partner decision.
+title: "[OPPORTUNITY][P1][TRIAGE] "
+labels: []
+body:
+  - type: input
+    id: source
+    attributes:
+      label: Official source
+      description: Solicitation, amendment, BAA, CSO, OTA, SBIR/STTR, prize, CRADA, or other controlling source.
+    validations:
+      required: true
+
+  - type: input
+    id: deadline
+    attributes:
+      label: Deadline / decision date
+    validations:
+      required: false
+
+  - type: dropdown
+    id: posture
+    attributes:
+      label: Worldshepherd posture
+      options:
+        - PRIME CANDIDATE
+        - SUB / PARTNER
+        - VALIDATION PARTNER
+        - COMMERCIAL / RESEARCH POSITIONING
+        - WATCH / PREPARE ONLY
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirement
+    attributes:
+      label: Controlling requirement / demand signal
+      description: Quote minimally; summarize the actual requirement and identify what controls acceptance.
+    validations:
+      required: true
+
+  - type: textarea
+    id: fit
+    attributes:
+      label: Worldshepherd fit
+      description: What existing software, governance, evidence, integration, engineering, or research capability maps to this need?
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Existing evidence
+      description: Link tests, PRs, reports, prior demonstrations, literature, or partner evidence. Keep software and physical readiness separate.
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaps
+    attributes:
+      label: Gaps to submit / demonstrate
+      description: Missing technical evidence, hardware, validation, eligibility, certifications, security, data rights, partner capability, or schedule margin.
+    validations:
+      required: true
+
+  - type: textarea
+    id: pre
+    attributes:
+      label: PRE Requirement Delta
+      description: Recurrence, forecast horizon, reusable capability to prepare, experiment/demo needed, and likely future programs.
+    validations:
+      required: false
+
+  - type: textarea
+    id: partners
+    attributes:
+      label: Partner need / candidates
+      description: Define the capability gap a partner must close. Link partner diligence issues rather than claiming partner capability as Worldshepherd capability.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: gate
+    attributes:
+      label: Current decision gate
+      options:
+        - CRE1AWS APPROVAL
+        - SSPADAWANZZ EXECUTION
+        - EXTERNAL RESPONSE
+        - EVIDENCE VALIDATION
+        - LEGAL REVIEW
+        - NO GATE
+    validations:
+      required: true
+
+  - type: textarea
+    id: next
+    attributes:
+      label: Next action and owner
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: discipline
+    attributes:
+      label: Claims and capture discipline
+      options:
+        - label: Official source controls final requirements.
+          required: true
+        - label: Forecasting has not been represented as customer validation, eligibility, certification, or technical maturity.
+          required: true
+        - label: Opportunity attractiveness and capability maturity are being tracked separately.
+          required: true
