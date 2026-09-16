@@ -24,7 +24,7 @@ See `CROSS_PLANE_MAPPING.md` for the behavior-vs-configuration separation.
 
 ## What it checks
 
-The current verifier enforces these provisional invariants:
+The main trust-base verifier enforces these provisional invariants:
 
 1. Every emission has `metadata.uid`.
 2. Every emission identifies `ai_agent.instance_uid`.
@@ -38,9 +38,11 @@ The current verifier enforces these provisional invariants:
 10. Remotely hosted models use an identity tuple (`ai_provider`, `name`, `version`) rather than pretending the producer can hash unavailable weights.
 11. Credential references and scopes may be represented, but raw credential material keys are rejected.
 
+A second checker, `verify_plane_separation.py`, enforces the harness-level non-duplication boundary: behavior/outcome keys under discussion in adjacent OCSF work are rejected if copied into the provisional `trust_base` payload.
+
 ## Test vectors
 
-`fixtures.json` currently includes six scenarios:
+`fixtures.json` includes six trust-base scenarios:
 
 - session-start baseline — expected pass
 - MCP/tool-schema refresh with benign declared/observed divergence — expected pass
@@ -48,6 +50,14 @@ The current verifier enforces these provisional invariants:
 - missing closure emission — expected fail
 - broken `prev_event` chain — expected fail
 - raw credential material present — expected fail
+
+`plane_separation_fixtures.json` adds three architectural-separation scenarios:
+
+- clean trust-base evidence with an external harness-only correlation reference — expected pass
+- stop reason duplicated inside trust base — expected fail
+- tool input duplicated inside trust base — expected fail
+
+All three plane-separation expectations were exercised successfully before commit.
 
 ## Architectural boundary
 
@@ -63,15 +73,24 @@ The exact correlation field between behavior events and trust-base emissions rem
 
 ## Run
 
+Run the trust-base semantic fixtures:
+
 ```bash
 python external_anchor_pilots/ocsf_agent_trustbase/verify_trustbase.py \
   external_anchor_pilots/ocsf_agent_trustbase/fixtures.json
 ```
 
-The command exits non-zero only when an actual result disagrees with a fixture's declared expectation.
+Run the behavior/configuration plane-separation fixtures:
+
+```bash
+python external_anchor_pilots/ocsf_agent_trustbase/verify_plane_separation.py \
+  external_anchor_pilots/ocsf_agent_trustbase/plane_separation_fixtures.json
+```
+
+The commands exit non-zero only when an actual result disagrees with a fixture's declared expectation.
 
 ## Important boundary
 
-This verifier does **not** implement OCSF canonical serialization, cryptographic signature verification, or final field names for the proposed trust-base inventory class. Those should remain aligned to upstream OCSF decisions and existing validator/compiler behavior.
+These verifiers do **not** implement OCSF canonical serialization, cryptographic signature verification, or final field names for the proposed trust-base inventory class. Those should remain aligned to upstream OCSF decisions and existing validator/compiler behavior.
 
 The intended upstream contribution is the **conformance-test slice**: once the class PR stabilizes, translate these invariants and vectors into the exact accepted OCSF fields, preserve separation from existing activity/`ai_status` semantics, and where maintainers agree integrate suitable checks into the existing validator/CI path.
