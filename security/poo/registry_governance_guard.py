@@ -30,6 +30,14 @@ class GovernedRegistryCommitDecision:
     state_governance_ready: bool
     state_lineage_checked: bool
     state_lineage_valid: bool
+    poo_lineage_valid: bool
+    coc_lineage_valid: bool
+    generation_valid: bool
+    fork_detected: bool
+    cycle_detected: bool
+    active_tip_poo_digest: Optional[str]
+    active_tip_state_digest: Optional[str]
+    lineage_issue_count: int
     optimistic_concurrency_checked: bool
     optimistic_concurrency_match: bool
     expected_registry_digest: str
@@ -153,6 +161,14 @@ def evaluate_governed_registry_commit(
         state_governance_ready=governed.ready,
         state_lineage_checked=governed.state_lineage_checked,
         state_lineage_valid=governed.state_lineage_valid,
+        poo_lineage_valid=governed.poo_lineage_valid,
+        coc_lineage_valid=governed.coc_lineage_valid,
+        generation_valid=governed.generation_valid,
+        fork_detected=governed.fork_detected,
+        cycle_detected=governed.cycle_detected,
+        active_tip_poo_digest=governed.active_tip_poo_digest,
+        active_tip_state_digest=governed.active_tip_state_digest,
+        lineage_issue_count=governed.lineage_issue_count,
         optimistic_concurrency_checked=True,
         optimistic_concurrency_match=concurrency_match,
         expected_registry_digest=expected_registry_digest,
