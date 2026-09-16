@@ -1,0 +1,9 @@
+{
+  "target": "",
+  "action": "canonical_runtime_fixture_validation",
+  "payload": {
+    "scope": "local",
+    "purpose": "negative-schema-validation"
+  },
+  "correlation_id": "fixture-invalid-v1"
+}

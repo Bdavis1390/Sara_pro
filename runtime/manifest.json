@@ -1,0 +1,45 @@
+{
+  "schema": "WS-SARA-CANONICAL-RUNTIME-V1",
+  "status": "CANONICAL",
+  "claim_state": [
+    "IMPLEMENTED IN SOFTWARE"
+  ],
+  "canonical_path": "deployments/sara_verified_local_v1",
+  "operator_entrypoint": "scripts/sara.sh",
+  "package": {
+    "name": "worldshepherd-sara",
+    "version": "0.1.0",
+    "python": ">=3.11"
+  },
+  "default_interface": "http://127.0.0.1:9530/ui",
+  "endpoints": {
+    "health": "/health",
+    "liveness": "/livez",
+    "readiness": "/readyz",
+    "ui": "/ui",
+    "relay_record": "/v1/relay",
+    "audit": "/v1/audit?limit=50",
+    "registry": "/admin/registry",
+    "selftest": "/admin/selftest"
+  },
+  "relay_semantics": "recorded_local_only",
+  "verification": {
+    "implementation_workflow": ".github/workflows/sara-verified-local-v1.yml",
+    "entrypoint_workflow": ".github/workflows/sara-runtime-entrypoint.yml",
+    "historical_current_differential": "deployments/sara_verified_local_v1/docs/WS_QE_2026_ADM_001.md",
+    "runtime_manifest": "deployments/sara_verified_local_v1/MANIFEST.json"
+  },
+  "claims_boundary": [
+    "No external message-delivery claim",
+    "No arbitrary command-execution claim",
+    "No autonomous scanning, broadcasting, or self-expansion claim",
+    "No immutable or independently attested audit claim",
+    "No CMMC certification claim",
+    "No NIST 800-171 conformity or authorization claim",
+    "No DFARS compliance claim",
+    "No CUI or classified-system authorization claim",
+    "No partner or government validation claim",
+    "No field, flight, or physical-system validation claim"
+  ],
+  "decision_record": "docs/adr/0001-canonical-sara-runtime.md"
+}

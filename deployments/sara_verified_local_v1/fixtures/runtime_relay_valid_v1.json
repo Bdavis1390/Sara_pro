@@ -1,0 +1,9 @@
+{
+  "target": "SSPADAWANZZ",
+  "action": "canonical_runtime_fixture_validation",
+  "payload": {
+    "scope": "local",
+    "purpose": "schema-and-ci-validation"
+  },
+  "correlation_id": "fixture-valid-v1"
+}

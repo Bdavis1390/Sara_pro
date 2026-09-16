@@ -1,0 +1,109 @@
+name: SARA Canonical Runtime Entrypoint
+
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'runtime/**'
+      - 'scripts/sara.sh'
+      - 'docs/README.md'
+      - 'docs/adr/0001-canonical-sara-runtime.md'
+      - '.github/workflows/sara-runtime-entrypoint.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'README.md'
+      - 'runtime/**'
+      - 'scripts/sara.sh'
+      - 'docs/README.md'
+      - 'docs/adr/0001-canonical-sara-runtime.md'
+      - '.github/workflows/sara-runtime-entrypoint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-runtime-entrypoint:
+    name: canonical-runtime-entrypoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Validate root wrapper shell syntax
+        run: bash -n scripts/sara.sh
+
+      - name: Verify canonical runtime locator
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_WORKSPACE/deployments/sara_verified_local_v1"
+          actual="$(bash scripts/sara.sh path)"
+          [[ "$actual" == "$expected" ]] || {
+            echo "Canonical path mismatch: expected $expected, got $actual" >&2
+            exit 1
+          }
+          bash scripts/sara.sh check
+
+      - name: Verify canonical package contract files
+        shell: bash
+        run: |
+          set -euo pipefail
+          runtime='deployments/sara_verified_local_v1'
+          test -s "$runtime/README.md"
+          test -s "$runtime/pyproject.toml"
+          test -s "$runtime/constraints-runtime.txt"
+          test -s "$runtime/constraints-ci.txt"
+          test -s "$runtime/.env.example"
+          test -s "$runtime/worldshepherd_sara/app.py"
+          test -s "$runtime/worldshepherd_sara/auth.py"
+          test -s "$runtime/scripts/start_interface.sh"
+          test -s "$runtime/scripts/admin_smoke_test.sh"
+          test -s "$runtime/tests/test_api.py"
+          test -s '.github/workflows/sara-verified-local-v1.yml'
+
+      - name: Validate machine-readable runtime manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool runtime/manifest.json >/dev/null
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path('runtime/manifest.json').read_text(encoding='utf-8'))
+          assert manifest['schema'] == 'WS-SARA-CANONICAL-RUNTIME-V1'
+          assert manifest['status'] == 'CANONICAL'
+          assert manifest['canonical_path'] == 'deployments/sara_verified_local_v1'
+          assert manifest['operator_entrypoint'] == 'scripts/sara.sh'
+          assert manifest['relay_semantics'] == 'recorded_local_only'
+          assert manifest['verification']['implementation_workflow'] == '.github/workflows/sara-verified-local-v1.yml'
+          assert Path(manifest['canonical_path']).is_dir()
+          assert Path(manifest['operator_entrypoint']).is_file()
+          PY
+
+      - name: Verify public navigation and boundary text
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'runtime/README.md' README.md
+          grep -Fq 'deployments/sara_verified_local_v1/' README.md
+          grep -Fq 'recorded_local_only' README.md
+          grep -Fq 'deployments/sara_verified_local_v1/' runtime/README.md
+          grep -Fq 'WS_QE_2026_ADM_001.md' runtime/README.md
+          grep -Fq 'ADR-0001' docs/README.md
+          grep -Fq 'deployments/sara_verified_local_v1/' docs/adr/0001-canonical-sara-runtime.md
+
+      - name: Verify no secret material is embedded in entry-point files
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -n -E '(SARA_(RELAY|ADMIN)_TOKEN=[A-Za-z0-9_-]{24,}|BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY)' \
+            README.md runtime scripts/sara.sh docs/README.md docs/adr/0001-canonical-sara-runtime.md; then
+            echo 'Potential secret material found in canonical entry-point files' >&2
+            exit 1
+          fi

@@ -1,14 +1,18 @@
 From: Worldshepherd OSS contribution workbench
 Subject: [PATCH DRAFT] push-model agent: retain verifier cadence on malformed accepted response
 Upstream target: keylime/keylime#1941 (agent side: keylime/rust-keylime)
-Claims state: IMPLEMENTED AS PATCH DRAFT / REQUIRES UPSTREAM TESTS
+Reviewed rust-keylime master: 35129d0608a1509550c96a3ec2113742db87244a
+Ownership audit: NO MATCHING rust-keylime PR FOUND FOR THIS CADENCE FIX
+Claims state: SOURCE-REVIEWED PATCH DRAFT / REQUIRES RUST TESTS
 
 Design goal
 -----------
 Do not globally change the agent's configured attestation_interval_seconds from
-60 to 2. That value is also used for retrying registration/attestation failures,
-so lowering it globally would change outage behavior and could create a retry
-storm.
+60 to 2. Current source confirms that 60 seconds is the default in
+keylime-agent.conf, config/base.rs, push-model CLI code, and tests, and the
+state machine also uses the configured measurement interval for failure/retry
+paths. Lowering that global value would alter outage behavior and could create a
+retry storm.
 
 Instead, distinguish two cases:
 
@@ -21,6 +25,13 @@ Instead, distinguish two cases:
 
 Network/authentication/registration failures continue using the configured
 measurement_interval and are outside this patch.
+
+Current-source validation
+-------------------------
+`StateMachine::attest()` is an `&mut self` method and calls
+`self.extract_next_attestation_interval(&res.body)` after HTTP ACCEPTED, so
+changing the helper from `&self` to `&mut self` is compatible with the current
+call site and allows the last valid verifier cadence to be retained as state.
 
 --- a/keylime-push-model-agent/src/state_machine.rs
 +++ b/keylime-push-model-agent/src/state_machine.rs
@@ -101,9 +112,19 @@ Add focused unit tests around extract_next_attestation_interval:
 - measurement_interval remains unchanged and is still used by
   RegistrationFailed/AttestationFailed branches.
 
+Also preserve current custom interval tests so explicit operator configuration
+continues to override defaults.
+
 Safety boundary
 ---------------
-This proposal changes only cadence fallback after HTTP success/ACCEPTED. It does
+This proposal changes cadence fallback only after HTTP success/ACCEPTED. It does
 not shorten retries after transport failure, authentication failure, registrar
 failure, or rejected evidence. That separation avoids converting a semantic
 fallback fix into a verifier-outage retry-rate change.
+
+Submission boundary
+-------------------
+Before upstream submission, re-check ownership, apply to current rust-keylime,
+run push-model state-machine/config tests, rustfmt/clippy as required, and verify
+with Keylime maintainers that retaining the last valid verifier cadence is the
+preferred semantic fallback. This draft has not been compiled by Worldshepherd.

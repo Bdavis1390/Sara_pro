@@ -1,0 +1,53 @@
+name: Repository Freshness Gate
+
+on:
+  pull_request:
+    paths:
+      - "README.md"
+      - "runtime/**"
+      - "scripts/sara.sh"
+      - "docs/**"
+      - "tools/repository_freshness.py"
+      - ".github/pull_request_template.md"
+      - ".github/workflows/repository-freshness.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "README.md"
+      - "runtime/**"
+      - "scripts/sara.sh"
+      - "docs/**"
+      - "tools/repository_freshness.py"
+      - ".github/pull_request_template.md"
+      - ".github/workflows/repository-freshness.yml"
+  schedule:
+    - cron: "17 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-freshness:
+    name: repository-freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Compile freshness checker
+        run: python -m py_compile tools/repository_freshness.py
+
+      - name: Verify repository source-of-truth freshness
+        run: python tools/repository_freshness.py
+
+      - name: Reject whitespace errors
+        run: git diff --check HEAD^ -- . || git diff --check

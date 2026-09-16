@@ -1,0 +1,65 @@
+name: WS CISNET v0.1 Evidence Gate
+
+on:
+  pull_request:
+    paths:
+      - "cisnet/**"
+      - "tests/test_cisnet.py"
+      - "docs/WS_CISNET_V0_1.md"
+      - ".github/workflows/ws-cisnet-v0-1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cisnet-evidence-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile CISNET
+        run: python -m compileall -q cisnet
+
+      - name: Run CISNET tests
+        run: python -m pytest -q tests/test_cisnet.py
+
+      - name: Run 100 GB fault campaign
+        run: python -m cisnet.cli --payload-gb 100 --max-time 5000 | tee cisnet-result.json
+
+      - name: Enforce evidence gates
+        shell: python
+        run: |
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path("cisnet-result.json").read_text())
+          assert result["completed"] is True
+          assert result["payload_bytes"] == 100_000_000_000
+          assert result["received_bytes"] == result["payload_bytes"]
+          assert result["dropped_bytes"] == 0
+          assert result["ledger_valid"] is True
+          assert result["failovers"] >= 4
+          assert result["node_restarts"] == 1
+          assert result["link_bytes"]["ab_rf"] > 0
+          assert result["link_bytes"]["bc_rf"] > 0
+          assert result["completed_at_s"] < 5000
+          print("CISNET evidence gate: PASS")
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cisnet-v0-1-evidence
+          path: cisnet-result.json
+          if-no-files-found: error
