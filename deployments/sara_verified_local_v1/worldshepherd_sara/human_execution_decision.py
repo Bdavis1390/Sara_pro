@@ -6,7 +6,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 HUMAN_EXECUTION_DECISION_SCHEMA = "WS-HUMAN-EXECUTION-DECISION-V1"
@@ -20,7 +20,7 @@ class HumanExecutionAction(str, Enum):
 
 
 class HumanExecutionDecision(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema: Literal[HUMAN_EXECUTION_DECISION_SCHEMA] = HUMAN_EXECUTION_DECISION_SCHEMA
     decision_id: str = Field(min_length=1, max_length=128)
@@ -31,6 +31,12 @@ class HumanExecutionDecision(BaseModel):
     action: HumanExecutionAction
     rationale: str = Field(min_length=1, max_length=4096)
     decision_sha256: str = Field(pattern=_SHA256_PATTERN)
+
+    @model_validator(mode="after")
+    def validate_contract(self) -> "HumanExecutionDecision":
+        if self.decided_at.tzinfo is None:
+            raise ValueError("decided_at must be timezone-aware")
+        return self
 
 
 class HumanExecutionDecisionError(ValueError):
