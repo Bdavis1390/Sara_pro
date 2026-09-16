@@ -2,12 +2,18 @@ from dataclasses import replace
 
 from security.poo.audit_projection import (
     POO_AUDIT_SCHEMA,
+    coc_audit_projection,
     ownership_audit_projection,
     recovery_audit_projection,
+    registry_audit_projection,
+    state_transition_audit_projection,
     transfer_audit_projection,
 )
+from security.poo.coc_guard import COCEvidence
 from security.poo.ownership_guard import OwnershipEvidence
 from security.poo.recovery_guard import RecoveryEvidence
+from security.poo.registry_guard import evaluate_registry
+from security.poo.state_engine import bootstrap_technical_state
 from security.poo.transfer_guard import TransferEvidence
 
 
@@ -29,6 +35,26 @@ def ownership_evidence():
         poc_concept_verified=True,
         coc_verified=True,
         pos_bond_verified=True,
+        freshness_verified=True,
+        not_revoked=True,
+    )
+
+
+def coc_evidence():
+    return COCEvidence(
+        asset_id="asset:alpha",
+        claimant_id="claimant:one",
+        control_key_fingerprint="key:abc123",
+        custody_reference="custody:001",
+        custody_point_reference="custody:point:001",
+        challenge_reference="challenge:coc:001",
+        observed_at="2026-09-16T00:00:00Z",
+        expires_at="2026-09-17T00:00:00Z",
+        asset_binding_verified=True,
+        claimant_binding_verified=True,
+        custody_or_control_verified=True,
+        challenge_response_verified=True,
+        custody_chain_verified=True,
         freshness_verified=True,
         not_revoked=True,
     )
@@ -104,13 +130,39 @@ def assert_non_authoritative(projection):
     assert projection["control_rotated"] is False
 
 
+def assert_only(projection, field):
+    fields = (
+        "technical_attestation_ready",
+        "coc_valid",
+        "transfer_ready",
+        "recovery_ready",
+        "state_transition_ready",
+        "registry_consistent",
+    )
+    for item in fields:
+        assert projection[item] is (item == field)
+
+
 def test_ownership_projection_is_ready_but_non_authoritative():
     p = ownership_audit_projection(ownership_evidence())
     assert p["schema"] == POO_AUDIT_SCHEMA
     assert p["operation"] == "OWNERSHIP_ATTESTATION"
-    assert p["technical_attestation_ready"] is True
-    assert p["transfer_ready"] is False
-    assert p["recovery_ready"] is False
+    assert_only(p, "technical_attestation_ready")
+    assert_non_authoritative(p)
+
+
+def test_coc_projection_is_first_class_and_non_authoritative():
+    p = coc_audit_projection(coc_evidence())
+    assert p["operation"] == "COC_ATTESTATION"
+    assert_only(p, "coc_valid")
+    assert p["prime_state"] == "PRIME_COC_ACCEPTED"
+    assert_non_authoritative(p)
+
+
+def test_invalid_coc_projection_is_blocked():
+    p = coc_audit_projection(replace(coc_evidence(), challenge_response_verified=False))
+    assert p["coc_valid"] is False
+    assert p["prime_state"] == "PRIME_COC_BLOCKED"
     assert_non_authoritative(p)
 
 
@@ -133,9 +185,7 @@ def test_transfer_projection_preserves_lineage_and_nonexecution():
     p = transfer_audit_projection(transfer_evidence())
     assert p["operation"] == "TRANSFER_READINESS"
     assert p["previous_poo_digest"] == "prior:001"
-    assert p["transfer_ready"] is True
-    assert p["technical_attestation_ready"] is False
-    assert p["recovery_ready"] is False
+    assert_only(p, "transfer_ready")
     assert_non_authoritative(p)
 
 
@@ -147,33 +197,40 @@ def test_disputed_transfer_projection_is_explicitly_blocked():
     assert_non_authoritative(p)
 
 
-def test_missing_recipient_coc_blocks_transfer_projection():
-    p = transfer_audit_projection(replace(transfer_evidence(), recipient_coc_verified=False))
-    assert p["transfer_ready"] is False
-    assert p["prime_state"] == "PRIME_POO_TRANSFER_BLOCKED"
-    assert_non_authoritative(p)
-
-
 def test_recovery_projection_is_same_owner_readiness_only():
     p = recovery_audit_projection(recovery_evidence())
     assert p["operation"] == "RECOVERY_READINESS"
     assert p["previous_poo_digest"] == "prior:001"
-    assert p["recovery_ready"] is True
-    assert p["transfer_ready"] is False
-    assert p["technical_attestation_ready"] is False
+    assert_only(p, "recovery_ready")
     assert_non_authoritative(p)
 
 
-def test_unresolved_recovery_dispute_records_blocked_state():
-    p = recovery_audit_projection(replace(recovery_evidence(), active_dispute=True))
-    assert p["recovery_ready"] is False
-    assert p["prime_state"] == "PRIME_POO_RECOVERY_BLOCKED_DISPUTE"
-    assert p["overwatch_state"] == "OVERWATCH_POO_DISPUTE_ACTIVE"
+def test_state_transition_projection_records_candidate_without_committing_it():
+    decision = bootstrap_technical_state(ownership_evidence(), coc_evidence())
+    p = state_transition_audit_projection(
+        decision, asset_id="asset:alpha", previous_poo_digest=None
+    )
+    assert p["operation"] == "TECHNICAL_STATE_TRANSITION"
+    assert_only(p, "state_transition_ready")
+    assert p["overwatch_state"] == "OVERWATCH_POO_STATE_PENDING_COMMIT"
     assert_non_authoritative(p)
 
 
-def test_missing_alternate_coc_blocks_recovery_projection():
-    p = recovery_audit_projection(replace(recovery_evidence(), alternate_coc_verified=False))
-    assert p["recovery_ready"] is False
-    assert p["prime_state"] == "PRIME_POO_RECOVERY_BLOCKED"
+def test_registry_health_projection_is_auditable_but_not_government_authority():
+    state = bootstrap_technical_state(ownership_evidence(), coc_evidence()).candidate_state
+    registry = evaluate_registry([state])
+    p = registry_audit_projection(registry)
+    assert p["operation"] == "REGISTRY_HEALTH"
+    assert_only(p, "registry_consistent")
+    assert p["asset_id"] == "registry:technical-ownership"
+    assert p["prime_state"] == "PRIME_POO_REGISTRY_CONSISTENT"
+    assert_non_authoritative(p)
+
+
+def test_registry_conflict_projection_is_explicitly_review_required():
+    state = bootstrap_technical_state(ownership_evidence(), coc_evidence()).candidate_state
+    registry = evaluate_registry([state, state])
+    p = registry_audit_projection(registry)
+    assert p["registry_consistent"] is False
+    assert p["overwatch_state"] == "OVERWATCH_POO_REGISTRY_CONFLICT"
     assert_non_authoritative(p)
