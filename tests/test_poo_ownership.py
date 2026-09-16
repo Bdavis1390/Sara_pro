@@ -14,6 +14,7 @@ def valid_evidence():
         title_reference="title:ref:001",
         control_key_fingerprint="key:abc123",
         work_reference="work:challenge:001",
+        concept_reference="concept:demo:001",
         stake_reference="stake:bond:001",
         issued_at="2026-09-15T22:00:00Z",
         expires_at="2026-09-16T22:00:00Z",
@@ -22,7 +23,8 @@ def valid_evidence():
         claimant_identity_bound=True,
         title_or_provenance_bound=True,
         pow_verified=True,
-        poc_control_verified=True,
+        poc_concept_verified=True,
+        control_or_custody_verified=True,
         pos_bond_verified=True,
         freshness_verified=True,
         not_revoked=True,
@@ -45,7 +47,8 @@ def test_each_independent_leg_is_fail_closed():
         "claimant_identity_bound",
         "title_or_provenance_bound",
         "pow_verified",
-        "poc_control_verified",
+        "poc_concept_verified",
+        "control_or_custody_verified",
         "pos_bond_verified",
         "freshness_verified",
         "not_revoked",
@@ -64,11 +67,27 @@ def test_external_title_reference_does_not_create_legal_ownership_claim():
     assert d.claims_boundary["legal_title_adjudicated"] is False
 
 
-def test_stake_or_work_cannot_compensate_for_missing_control():
-    e = replace(valid_evidence(), poc_control_verified=False)
+def test_proof_of_concept_does_not_substitute_for_control_or_custody():
+    e = replace(valid_evidence(), control_or_custody_verified=False)
     d = evaluate_ownership(e)
     assert d.poo_valid is False
-    assert "PoC control not verified" in d.missing_predicates
+    assert e.poc_concept_verified is True
+    assert "control/custody not verified" in d.missing_predicates
+
+
+def test_control_does_not_substitute_for_proof_of_concept():
+    e = replace(valid_evidence(), poc_concept_verified=False)
+    d = evaluate_ownership(e)
+    assert d.poo_valid is False
+    assert e.control_or_custody_verified is True
+    assert "PoC concept not verified" in d.missing_predicates
+
+
+def test_stake_or_work_cannot_compensate_for_missing_control():
+    e = replace(valid_evidence(), control_or_custody_verified=False)
+    d = evaluate_ownership(e)
+    assert d.poo_valid is False
+    assert "control/custody not verified" in d.missing_predicates
 
 
 def test_revocation_is_terminal_for_current_attestation():
@@ -82,6 +101,12 @@ def test_digest_is_deterministic_and_transfer_chain_sensitive():
     assert ownership_digest(e) == ownership_digest(e)
     chained = replace(e, previous_poo_digest="deadbeef")
     assert ownership_digest(chained) != ownership_digest(e)
+
+
+def test_concept_reference_is_semantically_committed():
+    e = valid_evidence()
+    changed = replace(e, concept_reference="concept:demo:002")
+    assert ownership_digest(changed) != ownership_digest(e)
 
 
 def test_evidence_flags_do_not_change_semantic_digest():
