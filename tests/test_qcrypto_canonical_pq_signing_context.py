@@ -93,7 +93,7 @@ def request(**overrides):
     return CanonicalSigningContextRequest(**data)
 
 
-def ready_digest(req=None):
+def ready_result(req=None):
     result = build_canonical_signing_context(req or request())
     assert result.ready is True
     assert result.verdict == "CANONICAL_SIGNING_CONTEXT_READY"
@@ -103,17 +103,38 @@ def ready_digest(req=None):
     assert result.execution_authority is False
     assert result.live_value_authorized is False
     assert result.transaction_signed is False
-    return result.context_digest
+    return result
+
+
+def ready_digest(req=None):
+    return ready_result(req).context_digest
 
 
 def test_context_is_deterministic_for_identical_inputs():
     assert ready_digest() == ready_digest()
 
 
+def test_context_records_effective_policy_semantics():
+    result = ready_result()
+    assert result.canonical_fields["authority_domain_separator"] == DOMAIN
+    assert result.canonical_fields["declared_migration_requirement"] == "HYBRID_REQUIRED"
+    assert result.canonical_fields["policy_minimum_requirement"] == "HYBRID_REQUIRED"
+    assert result.canonical_fields["effective_migration_requirement"] == "HYBRID_REQUIRED"
+    assert result.canonical_fields["policy_requires_recovery_evidence"] == "1"
+
+
 def test_network_binding_changes_context_digest():
     base = ready_digest()
     alt_authority = replace(authority(), network_id="other-testnet")
     alt_policy = replace(policy(), network_id="other-testnet")
+    changed = ready_digest(request(authority=alt_authority, authority_policy=alt_policy))
+    assert changed != base
+
+
+def test_authority_domain_binding_changes_context_digest():
+    base = ready_digest()
+    alt_authority = replace(authority(), domain_separator="WS-QCRYPTO-AUTH-V2")
+    alt_policy = replace(policy(), domain_separator="WS-QCRYPTO-AUTH-V2")
     changed = ready_digest(request(authority=alt_authority, authority_policy=alt_policy))
     assert changed != base
 
@@ -134,6 +155,13 @@ def test_algorithm_suite_binding_changes_context_digest():
 
 def test_policy_version_binding_changes_context_digest():
     assert ready_digest(request(policy_version=5)) != ready_digest(request(policy_version=6))
+
+
+def test_policy_floor_configuration_changes_context_digest_even_when_both_accept():
+    base = ready_digest()
+    relaxed = policy(minimum_envelope_version=2, minimum_key_epoch=10, require_recovery_evidence=False)
+    changed = ready_digest(request(authority_policy=relaxed))
+    assert changed != base
 
 
 def test_key_epoch_binding_changes_context_digest_when_policy_allows_new_epoch():
