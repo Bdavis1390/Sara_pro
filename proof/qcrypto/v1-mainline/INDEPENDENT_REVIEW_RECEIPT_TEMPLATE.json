@@ -1,0 +1,55 @@
+{
+  "schema": "WS-QCRYPTO-INDEPENDENT-REVIEW-RECEIPT-V1",
+  "reviewer_identity": "",
+  "reviewer_organization": "",
+  "reviewer_contact_or_public_profile": "",
+  "review_date_utc": "",
+  "repository_revision_reviewed": "",
+  "review_environment": {
+    "operating_system": "",
+    "git_version": "",
+    "cosign_version": "",
+    "openssl_version": ""
+  },
+  "custody_object": {
+    "path": "proof/qcrypto/v1-mainline/CUSTODY_RECORD.json",
+    "expected_sha256": "844a88add18a081eea8722ac69de13575fbb7db1d26d52e47b6d8cf13590f201",
+    "observed_sha256": "",
+    "hash_match": null
+  },
+  "sigstore_attestation": {
+    "workflow_run": 35001901863,
+    "artifact_zip_expected_sha256": "a6addc6b513f09a41b627d48c2476317ab4a94c5269931056a93dad5350e9a8a",
+    "artifact_zip_observed_sha256": "",
+    "bundle_expected_sha256": "a8669a592f84bb3e67cc063b67be1bba811606291bf64febbf748d24669fd862",
+    "bundle_observed_sha256": "",
+    "certificate_identity": "https://github.com/Bdavis1390/Sara_pro/.github/workflows/qcrypto-custody-sigstore.yml@refs/heads/proof/qcrypto-v1-mainline-custody",
+    "oidc_issuer": "https://token.actions.githubusercontent.com",
+    "cosign_verification_passed": null
+  },
+  "anchor_checks": {
+    "implementation_commit_and_tree_match": null,
+    "publication_commit_and_tree_match": null,
+    "preservation_commit_and_tree_match": null,
+    "historical_white_page_blob_exists": null,
+    "primary_frozen_ref_matches": null,
+    "mirror_frozen_ref_matches": null,
+    "portable_bundle_hash_matches": null
+  },
+  "claims_review": {
+    "internal_proof_not_promoted_to_external_certification": null,
+    "workflow_signature_not_promoted_to_personal_signature": null,
+    "rfc3161_request_not_promoted_to_external_timestamp": null,
+    "technical_evidence_not_promoted_to_patent_priority": null,
+    "limitations_clearly_stated": null
+  },
+  "discrepancies": [],
+  "reviewer_notes": "",
+  "result": "NOT_COMPLETED",
+  "allowed_completed_results": [
+    "INDEPENDENT_CUSTODY_REPRODUCTION_PASSED",
+    "INDEPENDENT_CUSTODY_REPRODUCTION_PASSED_WITH_NOTES",
+    "INDEPENDENT_CUSTODY_REPRODUCTION_FAILED"
+  ],
+  "attestation_boundary": "A completed receipt can establish only that the recorded custody/provenance checks were independently reproduced. It does not establish personal authorship, patent priority, Federal compliance, WS-CAE conformance, production deployment, post-quantum security, or independent validation of every technical claim in the underlying research."
+}

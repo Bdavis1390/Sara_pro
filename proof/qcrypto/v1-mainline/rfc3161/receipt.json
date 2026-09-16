@@ -1,0 +1,32 @@
+{
+  "claims_boundary": "This receipt establishes a cryptographically verified RFC3161 timestamp over the frozen portable proof-bundle SHA-256. It does not constitute a personal signature, does not retroactively sign historical commits, and does not establish technical correctness, patent priority, Federal compliance, or third-party technical validation.",
+  "external_timestamp_verified": true,
+  "frozen_bundle_sha256": "3ac4b9d6a94c50dad951ed5c33446ccaaffc876b9d9ad398aefe2a6b7e472522",
+  "github_repository": "Bdavis1390/Sara_pro",
+  "intermediate_certificate_sha256": "5e13de210e735b614d6ec948361aadef9dd6c0ef575382a75f57fd59e183b90e",
+  "policy_oid": "2.16.840.1.114412.7.1",
+  "request_sha256": "55f0cf1ace2a7c509bf92a3e2843895d0c39f1c0ea12324f4724836238bab1ce",
+  "responder_certificate_sha256": "f8ecbaae3ef6421377063a31d238b1cee48060528791854d3d3fcda965d565e6",
+  "response_sha256": "b6d2ecd32015932f7f472dd5f80f06123fc9f31aa005d509fa6c5c9e85be942a",
+  "response_text_sha256": "a0802c373f7e9cf7e74b0044708f45318338749432e95002b85b0b9fd9b2f3a5",
+  "root_certificate_expected_sha256_fingerprint": "552F7BDCF1A7AF9E6CE672017F4F12ABF77240C78E761AC203D1D9D20AC89988",
+  "root_certificate_sha256": "ce7d6b44f5d510391be98c8d76b18709400a30cd87659bfebe1c6f97ff5181ee",
+  "schema": "WS-QCRYPTO-RFC3161-CUSTODY-RECEIPT-V1",
+  "serial_number": "0xF888263D1F416AB1BAFE7168F5A3B6B6",
+  "status": "PASS",
+  "timestamp_time_utc": "Sep 16 03:02:58 2026 GMT",
+  "tsa_provider": "DigiCert",
+  "tsa_url": "http://timestamp.digicert.com",
+  "verification": "OPENSSL_TS_VERIFY_OK",
+  "workflow_commit": "ebec68344fb5effddda553d8d6b7303bdf2685d2",
+  "workflow_run_id": 35050299470,
+  "workflow_artifact_sha256": "e907ffb24eb21f04d4071e119bfa796ba4a1478235b58be707219383307d61bd",
+  "independent_local_reverification": {
+    "status": "PASS",
+    "openssl_ts_verify": "Verification: OK",
+    "root_verify": "OK",
+    "intermediate_verify": "OK",
+    "responder_verify": "OK",
+    "root_fingerprint_matches_digicert_published_value": true
+  }
+}

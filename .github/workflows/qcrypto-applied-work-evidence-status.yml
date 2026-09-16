@@ -1,0 +1,77 @@
+name: QCRYPTO Applied Work Evidence Status
+
+on:
+  pull_request:
+    paths:
+      - 'proof/qcrypto/v1-mainline/APPLIED_WORK_EVIDENCE_STATUS.json'
+      - '.github/workflows/qcrypto-applied-work-evidence-status.yml'
+  push:
+    paths:
+      - 'proof/qcrypto/v1-mainline/APPLIED_WORK_EVIDENCE_STATUS.json'
+      - '.github/workflows/qcrypto-applied-work-evidence-status.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-historical-work-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Validate no retroactive resource estimates
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path=Path('proof/qcrypto/v1-mainline/APPLIED_WORK_EVIDENCE_STATUS.json')
+          record=json.loads(path.read_text(encoding='utf-8'))
+          assert record['schema']=='WS-APPLIED-WORK-EVIDENCE-STATUS-V1'
+
+          expected_not_recorded={
+              'compute_operations',
+              'electrical_energy',
+              'resource_time',
+              'labor_time',
+              'data_processed',
+              'monetary_cost',
+          }
+          quantities=record['resource_quantities']
+          for name in expected_not_recorded:
+              item=quantities[name]
+              assert item['status']=='NOT_RECORDED', (name, item)
+              assert item['unit'] is None, (name, item)
+              assert item['basis'] is None, (name, item)
+              assert 'value' not in item, (name, item)
+
+          output=quantities['output_count']
+          assert output['status']=='PARTIALLY_RECORDED'
+          assert output['unit']=='count'
+
+          prohibited=set(record['inference_prohibitions'])
+          required={
+              'SHA-256 digest -> compute quantity',
+              'CI duration -> labor time',
+              'CI duration -> resource time without runner telemetry',
+              'artifact size -> total data processed',
+              'commit count -> engineering effort',
+              'compute quantity -> kWh without an explicit measured/benchmarked model',
+              'kWh -> monetary cost without an explicit tariff/model',
+              'kWh -> emissions without an explicit emissions-factor model',
+          }
+          assert required <= prohibited
+          boundary=record['claims_boundary'].lower()
+          assert 'not the magnitude' in boundary
+          assert 'not_recorded' in boundary
+          print(json.dumps({
+              'schema':'WS-APPLIED-WORK-EVIDENCE-GATE-V1',
+              'status':'PASS',
+              'historical_resource_estimates_backfilled':False,
+              'not_recorded_quantity_count':len(expected_not_recorded),
+          }, sort_keys=True))
+          PY
