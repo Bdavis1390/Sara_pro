@@ -43,9 +43,17 @@ jobs:
           grep -q 'employment_offer_authorized=False' collaboration/candidate_guard.py
           grep -q 'partnership_authorized=False' collaboration/candidate_guard.py
           grep -q 'RESPONSE_SCHEMA = "WS-COLLAB-RESPONSE-V1"' collaboration/response_guard.py
+          grep -q 'COMMUNITY_CHANNEL_INVITE_AVAILABLE' collaboration/response_guard.py
+          grep -q 'PROGRAM_ELIGIBILITY_CRITERIA_RECEIVED' collaboration/response_guard.py
           grep -q 'budget_commitment_authorized=False' collaboration/response_guard.py
           grep -q 'outreach_expansion_authorized=False' collaboration/response_guard.py
           grep -q 'teammate_relationship_established=False' collaboration/response_guard.py
           grep -q 'partnership_established=False' collaboration/response_guard.py
+          grep -q 'community_membership_established=False' collaboration/response_guard.py
+          grep -q 'program_membership_established=False' collaboration/response_guard.py
+          grep -q 'technical_validation_established=False' collaboration/response_guard.py
+          grep -q 'invite_implies_membership' collaboration/response_guard.py
+          grep -q 'eligibility_criteria_imply_acceptance' collaboration/response_guard.py
+          grep -q 'program_contact_implies_technical_validation' collaboration/response_guard.py
           grep -q 'private_message_content_stored' collaboration/response_guard.py
           grep -q 'AMBIGUOUS_OR_LOW_RELEVANCE' collaboration/web3_candidate_seed_2026-09-15.json
