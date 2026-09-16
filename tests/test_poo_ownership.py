@@ -24,7 +24,7 @@ def valid_evidence():
         title_or_provenance_bound=True,
         pow_verified=True,
         poc_concept_verified=True,
-        control_or_custody_verified=True,
+        coc_verified=True,
         pos_bond_verified=True,
         freshness_verified=True,
         not_revoked=True,
@@ -48,7 +48,7 @@ def test_each_independent_leg_is_fail_closed():
         "title_or_provenance_bound",
         "pow_verified",
         "poc_concept_verified",
-        "control_or_custody_verified",
+        "coc_verified",
         "pos_bond_verified",
         "freshness_verified",
         "not_revoked",
@@ -67,27 +67,27 @@ def test_external_title_reference_does_not_create_legal_ownership_claim():
     assert d.claims_boundary["legal_title_adjudicated"] is False
 
 
-def test_proof_of_concept_does_not_substitute_for_control_or_custody():
-    e = replace(valid_evidence(), control_or_custody_verified=False)
+def test_proof_of_concept_does_not_substitute_for_coc():
+    e = replace(valid_evidence(), coc_verified=False)
     d = evaluate_ownership(e)
     assert d.poo_valid is False
     assert e.poc_concept_verified is True
-    assert "control/custody not verified" in d.missing_predicates
+    assert "COC not verified" in d.missing_predicates
 
 
-def test_control_does_not_substitute_for_proof_of_concept():
+def test_coc_does_not_substitute_for_proof_of_concept():
     e = replace(valid_evidence(), poc_concept_verified=False)
     d = evaluate_ownership(e)
     assert d.poo_valid is False
-    assert e.control_or_custody_verified is True
+    assert e.coc_verified is True
     assert "PoC concept not verified" in d.missing_predicates
 
 
-def test_stake_or_work_cannot_compensate_for_missing_control():
-    e = replace(valid_evidence(), control_or_custody_verified=False)
+def test_stake_or_work_cannot_compensate_for_missing_coc():
+    e = replace(valid_evidence(), coc_verified=False)
     d = evaluate_ownership(e)
     assert d.poo_valid is False
-    assert "control/custody not verified" in d.missing_predicates
+    assert "COC not verified" in d.missing_predicates
 
 
 def test_revocation_is_terminal_for_current_attestation():
