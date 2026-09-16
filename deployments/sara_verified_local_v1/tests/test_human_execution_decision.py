@@ -53,3 +53,16 @@ def test_reject_never_satisfies_approval_gate():
             action_id="ACTION-001",
             action_digest_sha256="sha256:" + "1" * 64,
         )
+
+
+def test_human_decision_requires_timezone_aware_timestamp():
+    with pytest.raises(ValueError, match="timezone-aware"):
+        record_human_execution_decision(
+            decision_id="HUMAN-003",
+            action_id="ACTION-001",
+            action_digest_sha256="sha256:" + "1" * 64,
+            decision_by="CRE1AWS",
+            decided_at=datetime.now(),
+            action=HumanExecutionAction.APPROVE,
+            rationale="Naive timestamps are not admissible evidence.",
+        )
