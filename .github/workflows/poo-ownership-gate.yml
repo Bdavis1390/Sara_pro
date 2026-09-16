@@ -26,13 +26,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
       - name: Compile PoO modules
         run: python -m py_compile security/poo/ownership_guard.py
       - name: Run PoO regression tests
-        run: pytest -q tests/test_poo_*.py
+        run: python -m pytest -q tests/test_poo_*.py
       - name: Enforce core claims boundaries
         run: |
           grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
           grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
-          grep -q 'PoC means \*\*Proof of Control\*\*' security/poo/README.md
+          grep -q 'PoC — Proof of Concept' security/poo/README.md
+          grep -q 'control/custody verification' security/poo/README.md
           grep -q 'fail-closed AND semantics' security/poo/README.md
