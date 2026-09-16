@@ -30,19 +30,22 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install test dependencies
-        run: python -m pip install --disable-pip-version-check pytest 'pydantic>=2,<3'
+      - name: Install pinned SARA runtime and test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check \
+            -c deployments/sara_verified_local_v1/constraints-runtime.txt \
+            './deployments/sara_verified_local_v1[test]'
       - name: Compile all PoO modules and SARA adapter
         run: |
           python -m compileall -q security/poo
           python -m py_compile deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-      - name: Run all PoO protocol regressions
+      - name: Run all PoO protocol, state-lineage, registry, and governance regressions
         run: python -m pytest -q tests/test_poo_*.py
-      - name: Run native SARA PoO audit adapter regression
+      - name: Run native SARA PoO V3 audit adapter regression
         env:
           PYTHONPATH: deployments/sara_verified_local_v1
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py
-      - name: Enforce core claims boundaries
+      - name: Enforce core claims, lineage, and commit-governance boundaries
         run: |
           grep -q 'POO_SCHEMA = "WS-POO-V2"' security/poo/ownership_guard.py
           grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V2"' security/poo/transfer_guard.py
@@ -51,11 +54,13 @@ jobs:
           grep -q 'STATE_SCHEMA = "WS-POO-TECHNICAL-STATE-V1"' security/poo/state_engine.py
           grep -q 'STATE_LINEAGE_SCHEMA = "WS-POO-STATE-LINEAGE-V1"' security/poo/state_engine.py
           grep -q 'REGISTRY_SCHEMA = "WS-POO-TECHNICAL-REGISTRY-V1"' security/poo/registry_guard.py
-          grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"' security/poo/audit_projection.py
-          grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'COMMIT_SCHEMA = "WS-POO-REGISTRY-COMMIT-V1"' security/poo/commit_guard.py
+          grep -q 'STATE_GOVERNANCE_SCHEMA = "WS-POO-STATE-GOVERNANCE-V1"' security/poo/state_governance_guard.py
+          grep -q 'REGISTRY_GOVERNANCE_SCHEMA = "WS-POO-REGISTRY-GOVERNANCE-V1"' security/poo/registry_governance_guard.py
+          grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V3"' security/poo/audit_projection.py
+          grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V3"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V3"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
-          grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
           grep -q 'legal_custody_established=False' security/poo/coc_guard.py
           grep -q 'PoC — Proof of Concept' security/poo/README.md
           grep -q 'COC — Control/Custody Verification' security/poo/README.md
@@ -69,11 +74,19 @@ jobs:
           grep -q 'READY_FOR_GOVERNED_RECOVERY_SUPERSESSION' security/poo/recovery_guard.py
           grep -q 'LINEAGE_INTERNALLY_CONSISTENT' security/poo/lineage_guard.py
           grep -q 'forked ownership lineage detected' security/poo/lineage_guard.py
-          grep -q 'legal_title_established=False' security/poo/lineage_guard.py
           grep -q 'technical_state_committed=False' security/poo/state_engine.py
           grep -q 'COC: predecessor mismatch' security/poo/state_engine.py
-          grep -q 'legal_registry_authority=False' security/poo/registry_guard.py
-          grep -q 'state_transition_ready' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'registry_consistent' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'ownership_changed' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'legal_title_transferred' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'STATE_TRANSFER_READY_WITH_LINEAGE_GUARD' security/poo/state_governance_guard.py
+          grep -q 'STATE_RECOVERY_READY_WITH_LINEAGE_GUARD' security/poo/state_governance_guard.py
+          grep -q 'REGISTRY_COMMIT_READY_WITH_FULL_GOVERNANCE' security/poo/registry_governance_guard.py
+          grep -q 'REGISTRY_COMMIT_BLOCKED_STALE_SNAPSHOT' security/poo/registry_governance_guard.py
+          grep -q 'technical_registry_committed=False' security/poo/registry_governance_guard.py
+          grep -q 'durable_registry_write_authorized=False' security/poo/registry_governance_guard.py
+          grep -q 'conflict_winner_selected=False' security/poo/registry_governance_guard.py
+          grep -q 'lineage_auto_resolved=False' security/poo/registry_governance_guard.py
+          grep -q 'PRIME_POO_STATE_LINEAGE_BLOCKED' security/poo/audit_projection.py
+          grep -q 'SARA_POO_STATE_LINEAGE_DISPUTE_BLOCK' security/poo/audit_projection.py
+          grep -q 'PRIME_POO_REGISTRY_COMMIT_BLOCKED_STALE' security/poo/audit_projection.py
+          grep -q 'optimistic_concurrency_checked' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'durable_registry_write_authorized' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'conflict_winner_selected' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
