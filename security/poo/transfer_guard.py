@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
 
-TRANSFER_SCHEMA = "WS-POO-TRANSFER-V1"
+TRANSFER_SCHEMA = "WS-POO-TRANSFER-V2"
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class TransferEvidence:
     current_owner_authorized: bool = False
     recipient_identity_bound: bool = False
     recipient_poc_concept_verified: bool = False
-    recipient_control_or_custody_verified: bool = False
+    recipient_coc_verified: bool = False
     recipient_pow_verified: bool = False
     recipient_pos_bond_verified: bool = False
     title_or_provenance_transition_bound: bool = False
@@ -66,7 +66,7 @@ _REQUIRED = {
     "current_owner_authorized": "current owner authorization not verified",
     "recipient_identity_bound": "recipient identity not bound",
     "recipient_poc_concept_verified": "recipient PoC concept not verified",
-    "recipient_control_or_custody_verified": "recipient control/custody not verified",
+    "recipient_coc_verified": "recipient COC not verified",
     "recipient_pow_verified": "recipient PoW not verified",
     "recipient_pos_bond_verified": "recipient PoS bond not verified",
     "title_or_provenance_transition_bound": "title/provenance transition not bound",
@@ -164,14 +164,13 @@ def derive_recipient_ownership_evidence(
         title_or_provenance_bound=transfer.title_or_provenance_transition_bound,
         pow_verified=transfer.recipient_pow_verified,
         poc_concept_verified=transfer.recipient_poc_concept_verified,
-        control_or_custody_verified=transfer.recipient_control_or_custody_verified,
+        coc_verified=transfer.recipient_coc_verified,
         pos_bond_verified=transfer.recipient_pos_bond_verified,
         freshness_verified=transfer.freshness_verified,
         not_revoked=transfer.transfer_not_revoked,
         external_title_reference_verified=transfer.external_title_transition_verified,
     )
 
-    # Defensive invariant: a derived candidate must itself satisfy PoO semantics.
     if not evaluate_ownership(candidate).poo_valid:
         raise ValueError("derived recipient ownership candidate is not PoO-valid")
     return candidate
