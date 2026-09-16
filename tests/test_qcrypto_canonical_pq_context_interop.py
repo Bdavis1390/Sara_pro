@@ -8,11 +8,11 @@ from security.qcrypto.canonical_pq_context_interop import (
     run_canonical_context_probe,
 )
 from security.qcrypto.canonical_pq_signing_context import (
+    AuthoritySigningIntent,
     CanonicalSigningContextRequest,
     build_canonical_signing_context,
 )
 from security.qcrypto.hybrid_authority_migration import (
-    AuthorityEnvelope,
     AuthorityLayer,
     AuthorityPolicy,
     MigrationRequirement,
@@ -25,7 +25,7 @@ EVIDENCE = "b" * 64
 RECOVERY = "c" * 64
 
 
-def authority(**overrides):
+def intent(**overrides):
     data = dict(
         network_id="interop-testnet",
         domain_separator="WS-QCRYPTO-AUTH-V1",
@@ -37,14 +37,12 @@ def authority(**overrides):
         key_epoch=30,
         classical_algorithm_id="ECDSA",
         pq_algorithm_id="ML-DSA",
-        classical_signature_present=True,
-        pq_signature_present=True,
         classical_required_for_acceptance=True,
         pq_required_for_acceptance=True,
         recovery_evidence_present=True,
     )
     data.update(overrides)
-    return AuthorityEnvelope(**data)
+    return AuthoritySigningIntent(**data)
 
 
 def policy(**overrides):
@@ -80,9 +78,9 @@ def adapter():
 
 
 def context(replay_sequence=500):
-    return build_canonical_signing_context(
+    result = build_canonical_signing_context(
         CanonicalSigningContextRequest(
-            authority=authority(),
+            intent=intent(),
             authority_policy=policy(),
             adapter=adapter(),
             policy_version=9,
@@ -92,9 +90,13 @@ def context(replay_sequence=500):
             recovery_commitment_digest=RECOVERY,
         )
     )
+    if result.ready:
+        assert result.pre_sign_intent_only is True
+        assert result.signature_presence_assumed is False
+    return result
 
 
-def test_all_standardized_pq_schemes_verify_canonical_context_and_reject_replay():
+def test_all_standardized_pq_schemes_sign_after_intent_commitment_and_reject_replay():
     primary = context(500)
     alternate = context(501)
     results = run_all_canonical_context_probes(primary, alternate)
@@ -111,7 +113,7 @@ def test_all_standardized_pq_schemes_verify_canonical_context_and_reject_replay(
         assert result.execution_authority is False
 
 
-def test_each_scheme_is_bound_to_exact_context_commitment():
+def test_each_scheme_is_bound_to_exact_pre_sign_context_commitment():
     primary = context(500)
     alternate = context(501)
     for scheme in SCHEMES:
@@ -121,10 +123,10 @@ def test_each_scheme_is_bound_to_exact_context_commitment():
         assert result.cross_context_replay_rejected is True
 
 
-def test_unready_context_cannot_enter_signature_interop():
+def test_unready_intent_context_cannot_enter_signature_interop():
     blocked = build_canonical_signing_context(
         CanonicalSigningContextRequest(
-            authority=replace(authority(), declared_requirement=MigrationRequirement.CLASSICAL_ALLOWED),
+            intent=replace(intent(), declared_requirement=MigrationRequirement.CLASSICAL_ALLOWED),
             authority_policy=policy(),
             adapter=adapter(),
             policy_version=9,
