@@ -25,7 +25,7 @@ service_uid="${QCRYPTO_CONTAINER_UID:-10001}"
 
 secret_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/qcrypto-echo-bridge.XXXXXX")"
 token_file="${secret_dir}/echo-ingest-token"
-checkpoint_key_file="${secret_dir}/echo-checkpoint-ed25519-private.pem"
+checkpoint_key_file="${secret_dir}/echo-checkpoint-mldsa65-private.pem"
 evidence_file="${QCRYPTO_ECHO_BRIDGE_EVIDENCE_FILE:-${secret_dir}/qcrypto-echo-bridge-evidence.json}"
 
 compose=(
@@ -46,7 +46,20 @@ trap cleanup EXIT
 
 echo_token="$(openssl rand -hex 32)"
 printf '%s\n' "$echo_token" > "$token_file"
-openssl genpkey -algorithm Ed25519 -out "$checkpoint_key_file" >/dev/null 2>&1
+python3 - "$checkpoint_key_file" <<'PY'
+import sys
+from pathlib import Path
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
+key=MLDSA65PrivateKey.generate()
+Path(sys.argv[1]).write_bytes(
+    key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    )
+)
+PY
 chmod 0600 "$token_file" "$checkpoint_key_file"
 if [[ "$(id -u)" -eq 0 ]]; then
   chown "${service_uid}:${service_uid}" "$token_file" "$checkpoint_key_file"
@@ -60,8 +73,9 @@ fi
 export SARA_HOST_PORT="$sara_port"
 export ECHO_HOST_PORT="$echo_port"
 export ECHO_INGEST_TOKEN_HOST_PATH="$token_file"
+export ECHO_CHECKPOINT_ALGORITHM="ML-DSA-65"
 export ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH="$checkpoint_key_file"
-export ECHO_CHECKPOINT_KEY_ID="ECHO-QCRYPTO-BRIDGE-${GITHUB_SHA:-LOCAL}"
+export ECHO_CHECKPOINT_KEY_ID="ECHO-QCRYPTO-BRIDGE-MLDSA65-${GITHUB_SHA:-LOCAL}"
 
 "${compose[@]}" config --quiet
 "${compose[@]}" up -d --build sara echo
@@ -86,6 +100,17 @@ wait_url "${echo_url}/readyz" || {
   exit 1
 }
 
+curl --fail --silent --show-error "${echo_url}/readyz" > "${secret_dir}/echo-ready.json"
+python3 - "${secret_dir}/echo-ready.json" <<'PY'
+import json,sys
+from pathlib import Path
+body=json.loads(Path(sys.argv[1]).read_text())
+assert body['ok'] is True
+assert body['checkpoint_signing_algorithm']=='ML-DSA-65'
+assert body['checkpoint_post_quantum_signature_protection'] is True
+assert body['checkpoint_pq_runtime_signer_installed'] is True
+PY
+
 sara_container="$("${compose[@]}" ps -q sara)"
 echo_container="$("${compose[@]}" ps -q echo)"
 docker inspect "$sara_container" > "${secret_dir}/sara-inspect.json"
@@ -99,20 +124,20 @@ sara_mounts={m['Destination'] for m in sara.get('Mounts', [])}
 echo_mounts={m['Destination'] for m in echo.get('Mounts', [])}
 sara_networks=set((sara.get('NetworkSettings',{}).get('Networks') or {}).keys())
 echo_networks=set((echo.get('NetworkSettings',{}).get('Networks') or {}).keys())
+echo_env=set(echo.get('Config',{}).get('Env') or [])
 assert sara_networks & echo_networks, (sara_networks, echo_networks)
+assert 'ECHO_CHECKPOINT_ALGORITHM=ML-DSA-65' in echo_env
+assert 'ECHO_CHECKPOINT_PRIVATE_KEY_FILE=/run/worldshepherd-echo/checkpoint-mldsa65-private.pem' in echo_env
 assert '/run/worldshepherd-sara/echo-forward-token' in sara_mounts
-assert '/run/worldshepherd-echo/checkpoint-ed25519-private.pem' not in sara_mounts
+assert '/run/worldshepherd-echo/checkpoint-mldsa65-private.pem' not in sara_mounts
 assert '/var/lib/echo' not in sara_mounts
-assert '/run/worldshepherd-echo/checkpoint-ed25519-private.pem' in echo_mounts
+assert '/run/worldshepherd-echo/checkpoint-mldsa65-private.pem' in echo_mounts
 assert '/var/lib/echo' in echo_mounts
 PY
 
 admin_header=( -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" -H 'Content-Type: application/json' )
 echo_header=( -H "Authorization: Bearer ${echo_token}" -H 'Content-Type: application/json' )
 
-# Seed one unrelated retained event before QCRYPTO synchronization. A persistent
-# ECHO store is expected to contain prior evidence; that history must remain
-# ECHO_ONLY without causing the four submitted QCRYPTO records to fail.
 cat > "${secret_dir}/retained.json" <<'JSON'
 {
   "timestamp": "2026-09-14T12:00:00+00:00",
@@ -229,12 +254,16 @@ assert verify['verification']['verdict']=='INTERNALLY_RECONSTRUCTED_AUDIT_CHAIN'
 assert verify['verification']['logical_event_count']==4
 assert verify['verification']['audit_instance_id']==instance
 assert status['ok'] is True and status['stored_events']==5
+assert status['checkpoints']['algorithm']=='ML-DSA-65'
+assert status['checkpoints']['post_quantum_signature_protection'] is True
 assert checkpoint['manifest']['event_count']==5
-assert checkpoint['manifest']['algorithm']=='Ed25519'
+assert checkpoint['manifest']['algorithm']=='ML-DSA-65'
+assert checkpoint['manifest']['signature_context']=='WS-ECHO-CHECKPOINT-V2'
+assert checkpoint['public_key']['algorithm']=='ML-DSA-65'
 assert first['sync']['reconciliation']['counts']==expected
 assert replay['sync']['reconciliation']['counts']==expected
 summary={
-    'schema':'WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V1',
+    'schema':'WS-QCRYPTO-ECHO-DEPLOYED-BRIDGE-EVIDENCE-V2',
     'status':'PASS',
     'decision_digest':digest,
     'audit_instance_id':instance,
@@ -251,19 +280,21 @@ summary={
     },
     'echo_stored_events':status['stored_events'],
     'checkpoint_algorithm':checkpoint['manifest']['algorithm'],
+    'checkpoint_signature_context':checkpoint['manifest']['signature_context'],
+    'checkpoint_post_quantum_signature_protection':True,
     'checkpoint_event_count':checkpoint['manifest']['event_count'],
     'execution_authority':False,
     'live_value_authorized':False,
+    'end_to_end_pq_security_established':False,
     'claims_boundary':(
-        'Internal containerized software evidence only. This exercise demonstrates bounded SARA-to-ECHO '
-        'evidence synchronization against a non-empty retained ECHO history, explicit four-record matching, '
-        'retry deduplication, instance-scoped identity, and classical Ed25519 checkpoint creation. It does not '
-        'establish post-quantum checkpoint security, migration execution, live-value authorization, external '
-        'attestation, Federal compliance, WS-CAE conformance, or production deployment.'
+        'Internal containerized software evidence demonstrates bounded SARA-to-ECHO synchronization '
+        'and ML-DSA-65 post-quantum signature protection for the ECHO checkpoint layer. It does not '
+        'establish PQ-secure transport, PRIME signing migration, migration execution, live-value authorization, '
+        'external attestation, Federal compliance, WS-CAE conformance, or end-to-end post-quantum security.'
     ),
 }
 out.parent.mkdir(parents=True,exist_ok=True)
 out.write_text(json.dumps(summary,sort_keys=True,indent=2)+'\n',encoding='utf-8')
 PY
 
-echo "QCRYPTO SARA-to-ECHO deployed bridge with retained history: PASS (${evidence_file})"
+echo "QCRYPTO SARA-to-ECHO deployed bridge with ML-DSA-65 checkpoint: PASS (${evidence_file})"
