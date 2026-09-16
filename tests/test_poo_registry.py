@@ -60,14 +60,24 @@ def test_reused_poo_digest_across_assets_is_blocked():
     assert "PoO digest reused across registry states" in d.issues
 
 
-def test_generation_gap_is_blocked_even_if_poo_links_connect():
+def test_generation_gap_is_blocked_even_if_poo_and_coc_links_connect():
     g = state("asset:a", "alice", "poo:a0", "coc:a0")
     bad = state(
         "asset:a", "bob", "poo:a1", "coc:a1", 2, "TRANSFER", "poo:a0", "coc:a0"
     )
     d = evaluate_registry([g, bad])
     assert d.registry_valid is False
-    assert any("lineage" in issue.lower() or "valid technical PoO" in issue for issue in d.issues)
+    assert "asset:a: state generations must be contiguous from zero" in d.issues
+
+
+def test_broken_coc_lineage_is_blocked_even_if_poo_links_connect():
+    g = state("asset:a", "alice", "poo:a0", "coc:a0")
+    bad = state(
+        "asset:a", "bob", "poo:a1", "coc:a1", 1, "TRANSFER", "poo:a0", "coc:wrong"
+    )
+    d = evaluate_registry([g, bad])
+    assert d.registry_valid is False
+    assert "asset:a: COC: predecessor mismatch at generation 1" in d.issues
 
 
 def test_registry_digest_is_order_independent_but_content_sensitive():
