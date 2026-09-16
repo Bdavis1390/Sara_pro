@@ -48,5 +48,5 @@ jobs:
           grep -q 'global_superiority_established=False' security/poo/methodology_benchmark.py
           grep -q 'standards_compliance_established=False' security/poo/methodology_benchmark.py
           grep -q 'legal_superiority_established=False' security/poo/methodology_benchmark.py
-          grep -q 'not external validation' security/poo/METHODOLOGY_BENCHMARK.md
+          grep -q 'global_superiority_established = false' security/poo/METHODOLOGY_BENCHMARK.md
           grep -q 'Known areas where PoO V3 is not yet stronger' security/poo/METHODOLOGY_BENCHMARK.md
