@@ -54,7 +54,7 @@ _EXTERNAL_BLOCK_PATTERNS: tuple[
     (
         "EXT-REL-01",
         re.compile(
-            r"\b(in partnership with|partnered with|official partner of|endorsed by|selected by|awarded by|"
+            r"\b((?:in\s+)?partnership with|partnered with|official partner of|endorsed by|selected by|awarded by|"
             r"under contract with|contracted by|customer of)\b",
             re.I,
         ),
