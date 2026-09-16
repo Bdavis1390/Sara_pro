@@ -12,11 +12,17 @@ from .human_execution_decision import (
     HumanExecutionDecision,
     assert_human_approval_matches,
 )
-from .prime_action_authorization import VerifiedPrimeActionAuthorization
+from .prime_action_authorization import (
+    ModelIdentifier,
+    ResourceIdentifier,
+    ToolIdentifier,
+    VerifiedPrimeActionAuthorization,
+)
 
 
 AI_EXECUTION_ENVELOPE_SCHEMA = "WS-AI-EXECUTION-ENVELOPE-V1"
 _SHA256_PATTERN = r"^sha256:[0-9a-f]{64}$"
+_SAFE_ID_PATTERN = r"^[A-Za-z0-9._:-]{1,128}$"
 
 
 class AIExecutionEnvelopeError(ValueError):
@@ -26,18 +32,18 @@ class AIExecutionEnvelopeError(ValueError):
 class AIExecutionEnvelope(BaseModel):
     """Provider-neutral immutable description of one proposed execution."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
     schema: Literal[AI_EXECUTION_ENVELOPE_SCHEMA] = AI_EXECUTION_ENVELOPE_SCHEMA
-    execution_id: str = Field(min_length=1, max_length=128)
-    action_id: str = Field(min_length=1, max_length=128)
+    execution_id: str = Field(pattern=_SAFE_ID_PATTERN)
+    action_id: str = Field(pattern=_SAFE_ID_PATTERN)
     provider: str = Field(min_length=1, max_length=64, pattern=r"^[A-Z0-9._:-]+$")
     provider_operation: str = Field(
         min_length=1, max_length=128, pattern=r"^[A-Z0-9._:-]+$"
     )
-    model: str = Field(min_length=1, max_length=256)
-    tools: list[str] = Field(default_factory=list, max_length=64)
-    resource_scope: list[str] = Field(default_factory=list, max_length=64)
+    model: ModelIdentifier
+    tools: list[ToolIdentifier] = Field(default_factory=list, max_length=64)
+    resource_scope: list[ResourceIdentifier] = Field(default_factory=list, max_length=64)
     requested_authority: int = Field(ge=0, le=1_000_000)
     reversible: bool
     side_effect_class: Literal[
@@ -57,8 +63,10 @@ class AIExecutionEnvelope(BaseModel):
             raise ValueError("tools must not contain duplicates")
         if len(set(self.resource_scope)) != len(self.resource_scope):
             raise ValueError("resource_scope must not contain duplicates")
-        if self.side_effect_class == "READ_ONLY" and not self.reversible:
-            raise ValueError("READ_ONLY execution must be reversible")
+        if self.side_effect_class in {"READ_ONLY", "REVERSIBLE"} and not self.reversible:
+            raise ValueError(f"{self.side_effect_class} execution must be reversible")
+        if self.side_effect_class == "IRREVERSIBLE" and self.reversible:
+            raise ValueError("IRREVERSIBLE execution cannot be reversible")
         expected = execution_request_sha256(self)
         if self.request_sha256 != expected:
             raise ValueError("request_sha256 does not match canonical execution request")
@@ -141,7 +149,11 @@ def assert_execution_authorized(
     authorization: VerifiedPrimeActionAuthorization,
     *,
     human_decision: HumanExecutionDecision | None = None,
+    now: datetime | None = None,
 ) -> None:
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    if current >= authorization.expires_at.astimezone(timezone.utc):
+        raise AIExecutionEnvelopeError("authorization is expired at execution time")
     if authorization.action_id != envelope.action_id:
         raise AIExecutionEnvelopeError("authorization action identity mismatch")
     if authorization.request_sha256 != envelope.request_sha256:
