@@ -2,7 +2,7 @@
 
 ## Status
 
-This runbook covers the first, deliberately narrow Discord integration: an **outbound incoming-webhook publisher** from Worldshepherd/SARA plus a redacted application-level connector adapter.
+This runbook covers the deliberately narrow Discord integration: an **outbound incoming-webhook publisher**, a redacted application-level connector adapter, and a post-audit SARA event projector.
 
 It is designed as a notification surface only. GitHub and the SARA evidence/audit path remain authoritative.
 
@@ -17,7 +17,7 @@ The publisher may only send bounded status messages to the single Discord channe
 It cannot:
 
 - approve Worldshepherd actions;
-- mutate SARA registry state;
+- mutate authoritative SARA event/audit state;
 - change a technical claim state;
 - mark evidence as accepted;
 - create partner commitments;
@@ -78,6 +78,70 @@ ws-discord-notify \
 
 Dry-run mode validates and renders the message but performs no network call and does not require a webhook credential.
 
+## Post-audit SARA event projection
+
+The installed projector entry point is:
+
+```bash
+ws-discord-project-events --dry-run --limit 10
+```
+
+The projector does **not** create authoritative events. It examines the existing `SARA_EVENT_OUTBOX` only after SARA has already marked an event `DELIVERED`, and for mapped events it requires matching recent SARA audit evidence carrying the same stable outbox event ID and `AT_LEAST_ONCE` delivery metadata.
+
+The first allowlisted projections are deliberately narrow:
+
+- `prime_custody_provenance` becomes an `EVIDENCE_STATUS` notification containing bounded PRIME identity/state-transition data and the transition ID;
+- `prime_sentinel_authorization_rejected` becomes a `SYSTEM_ALERT` directing the operator to the durable SARA audit for the rejection reason and authorization context.
+
+The projector does not forward raw evidence-reference arrays, arbitrary event `details`, rejection reasons, authorization context, credentials, or unknown event families.
+
+Dry-run projection:
+
+```bash
+ws-discord-project-events --dry-run --limit 10
+```
+
+- requires no webhook credential;
+- performs no Discord network request;
+- writes no notification receipt;
+- does not change the authoritative event outbox or audit log.
+
+After controlled live validation of the webhook, live projection is:
+
+```bash
+ws-discord-project-events --limit 10
+```
+
+A successful live notification receives a compact local receipt in `SARA_DISCORD_NOTIFICATION_RECEIPTS`, keyed by the stable SARA event ID. That receipt exists only to suppress routine duplicate notifications. It is not evidence, approval, claim state, partner state, or execution state.
+
+### Projection delivery semantics
+
+Projection is **at least once**, not exactly once.
+
+If the Discord HTTP delivery succeeds but receipt persistence fails, the projector reports the failure and a later run may send the same stable event ID again. Concurrent projector instances can also race and produce duplicates. Operate a single projector instance unless a separately reviewed coordination mechanism is introduced.
+
+The stable SARA event ID is included in each projected message so duplicates can be reconciled deterministically.
+
+Do not claim exactly-once Discord delivery from this implementation.
+
+### Projection cadence and retention
+
+The authoritative SARA outbox intentionally retains only a bounded set of delivered events. Run projection frequently enough that eligible delivered events are examined before normal outbox pruning removes old delivered entries.
+
+Discord projection is therefore an operational notification side effect, not a durable archival export. If complete long-horizon notification delivery becomes a requirement, design a separately reviewed notification cursor/queue rather than changing SARA audit semantics or treating Discord as evidence storage.
+
+### Projection fail-closed conditions
+
+Projection stops or skips disclosure when:
+
+- the authoritative outbox is malformed;
+- the Discord receipt registry is malformed;
+- a mapped delivered event lacks matching recent audit confirmation;
+- an allowlisted event does not satisfy its bounded schema/identifier requirements;
+- Discord delivery fails.
+
+Unknown event families are not generically serialized to Discord.
+
 ## Controlled live validation
 
 After a dry run is reviewed:
@@ -87,12 +151,14 @@ After a dry run is reviewed:
 3. Send one non-sensitive `WORKFLOW_STATUS` test notification to a dedicated Worldshepherd Discord test/operations channel.
 4. Confirm that the Discord message content matches the dry-run content.
 5. Record the test time, source event/reference, CLI result fingerprint, and the human-observed Discord message link in a GitHub validation issue or evidence record.
-6. Rotate/revoke the webhook immediately if the URL is exposed.
+6. Only after the basic webhook delivery test succeeds, run `ws-discord-project-events --dry-run` and review the bounded projections before enabling live projection.
+7. Rotate/revoke the webhook immediately if the URL is exposed.
 
 Until that controlled external test is completed, the correct claim boundary is:
 
 - code/tests: `IMPLEMENTED IN SOFTWARE` after repository validation;
 - connector configuration status: local/redacted configuration evidence only;
+- post-audit projector behavior: internal software evidence only after exact-head tests pass;
 - live Discord delivery: **not yet claimed**;
 - Discord availability/reliability: **not yet claimed**;
 - external partner validation/adoption: **not claimed**.
@@ -126,6 +192,8 @@ Before delivery the publisher:
 
 The connector-health adapter additionally reports only redacted host-level configuration metadata and never performs an external network check merely to answer a health query.
 
+The post-audit projector additionally uses explicit event-family mappings and bounded selected fields rather than forwarding arbitrary source payloads.
+
 These controls reduce accidental disclosure; they do not replace normal data-classification review. Do not send CUI, classified information, export-controlled technical data, private credentials, or proprietary partner material through this integration unless a separately approved handling architecture explicitly permits it.
 
 ## Retry behavior
@@ -137,6 +205,8 @@ The publisher does not treat a retry or an HTTP success as technical evidence. I
 ## Provenance correspondence
 
 When available, include the SARA outbox/audit stable event ID in `--source-event-id`. This is correspondence metadata so a Discord notification can point back to durable provenance.
+
+For automated post-audit projection, the stable source event ID is mandatory and is used as the notification receipt key.
 
 Discord does not replace `SARA_EVENT_OUTBOX`, the audit log, GitHub issues/PRs, or an evidence package. If Discord and the durable record disagree, reconcile from the durable record.
 

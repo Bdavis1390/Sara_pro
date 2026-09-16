@@ -27,6 +27,7 @@ from .prime_sentinel_authorization import (
     PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
     PrimeSentinelVerifier,
 )
+from .registry_namespaces import DISCORD_RECEIPTS_REGISTRY_KEY
 from .storage import DurableStore
 
 
@@ -35,6 +36,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         PRIME_PASSPORTS_REGISTRY_KEY,
         PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
         EVENT_OUTBOX_REGISTRY_KEY,
+        DISCORD_RECEIPTS_REGISTRY_KEY,
     }
 )
 
