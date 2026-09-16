@@ -84,8 +84,10 @@ jobs:
           assert e['baseline']['verdict'] == 'CANONICAL_SIGNING_CONTEXT_READY'
           assert e['baseline']['ready'] is True
           assert len(e['baseline']['context_digest']) == 64
-          assert e['summary']['distinct_context_digest_count'] == 6
-          assert e['summary']['expected_distinct_context_digest_count'] == 6
+          assert e['summary']['distinct_context_digest_count'] == 8
+          assert e['summary']['expected_distinct_context_digest_count'] == 8
+          assert e['summary']['authority_domain_bound'] is True
+          assert e['summary']['policy_floor_bound'] is True
           assert e['summary']['downgrade_blocked'] is True
           assert e['summary']['self_authorization_blocked'] is True
           assert e['negative_controls']['migration_downgrade']['ready'] is False
