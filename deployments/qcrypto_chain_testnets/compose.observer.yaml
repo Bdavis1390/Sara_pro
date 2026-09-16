@@ -59,6 +59,11 @@ services:
       - --execution-jwt
       - /run/secrets/engine-jwt
       - --disable-upnp
+      - --http
+      - --http-address
+      - 0.0.0.0
+      - --http-port
+      - "5052"
     restart: unless-stopped
     depends_on:
       ethereum-execution:
@@ -69,6 +74,8 @@ services:
       - engine-jwt
     networks:
       - qcrypto-chain
+    ports:
+      - "127.0.0.1:5052:5052"
     healthcheck:
       test: ["CMD-SHELL", "lighthouse --version >/dev/null 2>&1 || exit 1"]
       interval: 30s
