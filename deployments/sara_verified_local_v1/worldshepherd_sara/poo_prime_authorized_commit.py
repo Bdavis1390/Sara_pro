@@ -18,6 +18,7 @@ from .prime_sentinel_poo_authorization import (
     PrimeSentinelPoOVerifier,
     VerifiedPrimeSentinelPoOAuthorization,
     consumed_poo_authorization_registry_patch,
+    signed_poo_authorization_fingerprint,
 )
 
 
@@ -124,6 +125,7 @@ def _stored_exact_authorization(
         "expected_registry_digest": projection["expected_registry_digest"],
         "candidate_registry_digest": result.registry_digest,
         "candidate_state_digest": result.candidate_state_digest,
+        "signed_assertion_sha256": signed_poo_authorization_fingerprint(assertion),
         "key_id": assertion.key_id,
         "nonce": assertion.nonce,
     }
@@ -223,6 +225,7 @@ def prepare_prime_authorized_poo_commit_patch(
             "authorization_id": verified.authorization_id,
             "key_id": verified.key_id,
             "key_fingerprint_sha256": verified.key_fingerprint_sha256,
+            "signed_assertion_sha256": verified.signed_assertion_sha256,
             "asset_id": verified.asset_id,
             "governance_projection_digest": verified.governance_projection_digest,
             "source_decision_digest": verified.source_decision_digest,
