@@ -1,0 +1,144 @@
+name: QCRYPTO Chain Canonical PQ Vector Interop Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_pq_context_interop.py'
+      - 'security/qcrypto/chain_pq_readiness_profiles.py'
+      - 'security/qcrypto/chain_canonical_test_vectors.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'security/qcrypto/pq_signature_interop.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_chain_canonical_test_vectors.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_canonical_pq_context_interop.py'
+      - 'scripts/qcrypto_chain_canonical_vector_interop_evidence.py'
+      - '.github/workflows/qcrypto-chain-canonical-vector-interop.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_pq_context_interop.py'
+      - 'security/qcrypto/chain_pq_readiness_profiles.py'
+      - 'security/qcrypto/chain_canonical_test_vectors.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'security/qcrypto/pq_signature_interop.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_chain_canonical_test_vectors.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_canonical_pq_context_interop.py'
+      - 'scripts/qcrypto_chain_canonical_vector_interop_evidence.py'
+      - '.github/workflows/qcrypto-chain-canonical-vector-interop.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chain-canonical-vector-interop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned PQ backend and test dependency
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: "pqcrypto==1.0.0" pytest
+
+      - name: Compile chain canonical interop controls
+        run: |
+          python -m compileall \
+            security/qcrypto/canonical_authority_envelope.py \
+            security/qcrypto/canonical_pq_signing_context.py \
+            security/qcrypto/canonical_pq_context_interop.py \
+            security/qcrypto/chain_pq_readiness_profiles.py \
+            security/qcrypto/chain_canonical_test_vectors.py \
+            security/qcrypto/hybrid_authority_migration.py \
+            security/qcrypto/pq_signature_interop.py \
+            security/qcrypto/pqc_algorithm_policy.py \
+            scripts/qcrypto_chain_canonical_vector_interop_evidence.py
+
+      - name: Run chain vector and canonical PQ regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_chain_canonical_test_vectors.py \
+            tests/test_qcrypto_canonical_pq_signing_context.py \
+            tests/test_qcrypto_canonical_pq_context_interop.py
+
+      - name: Generate source-backed chain PQ interop evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_chain_canonical_vector_interop_evidence.py \
+            --output chain-canonical-vector-interop-evidence.json
+
+      - name: Assert three-chain claims boundary and replay rejection
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e = json.loads(Path('chain-canonical-vector-interop-evidence.json').read_text())
+          assert e['schema'] == 'WS-QCRYPTO-CHAIN-CANONICAL-VECTOR-INTEROP-EVIDENCE-V1'
+          assert e['status'] == 'PASS'
+          assert e['claim_state'] == 'THREE_CHAIN_CANONICAL_REFERENCE_PQ_INTEROP_PROVEN_IN_CI'
+          assert e['proof_scope'] == 'SOURCE_BACKED_ZERO_VALUE_REFERENCE_VECTORS_ONLY'
+          assert e['backend']['pinned_version'] == '1.0.0'
+          assert e['chain_count'] == 3
+          assert e['scheme_count'] == 3
+          assert e['probe_count'] == 9
+          assert set(e['primary_vectors']) == {'BITCOIN', 'ETHEREUM', 'ALGORAND'}
+          assert e['summary']['bitcoin_vector_class'] == 'DESIGN_ONLY'
+          assert e['summary']['bitcoin_native_pq_algorithm'] is None
+          assert e['summary']['ethereum_vector_class'] == 'ROADMAP_INTEROP'
+          assert e['summary']['ethereum_native_pq_algorithm'] is None
+          assert e['summary']['algorand_account_readiness'] == 'PQ_CAPABLE'
+          assert e['summary']['algorand_consensus_readiness'] == 'CLASSICAL'
+          assert e['summary']['algorand_native_pq_algorithm'] == 'FALCON-1024'
+          assert e['summary']['algorand_ws_reference_pq_algorithm'] == 'ML-DSA'
+          assert e['summary']['algorand_native_and_reference_algorithm_same'] is False
+          assert e['summary']['all_test_signatures_verified'] is True
+          assert e['summary']['all_tampered_contexts_rejected'] is True
+          assert e['summary']['all_cross_sequence_replays_rejected'] is True
+          assert e['summary']['all_wrong_keys_rejected'] is True
+          assert e['summary']['native_signature_generated'] is False
+          assert e['summary']['native_transaction_format_implemented'] is False
+          assert e['summary']['live_value_authorized'] is False
+          assert e['summary']['execution_authority'] is False
+          assert e['summary']['production_protocol_integration'] is False
+          assert e['summary']['whole_chain_pq_security_established'] is False
+          for row in e['interop_results']:
+              assert row['valid_signature_verified'] is True
+              assert row['tampered_context_rejected'] is True
+              assert row['cross_context_replay_rejected'] is True
+              assert row['wrong_key_rejected'] is True
+              assert row['native_signature_generated'] is False
+              assert row['secret_material_retained'] is False
+              assert row['live_transaction_signed'] is False
+              assert row['live_value_authorized'] is False
+              assert row['execution_authority'] is False
+          assert len(e['evidence_sha256']) == 64
+          print('chain_canonical_vector_interop_gate: PASS')
+          print('probe_count:', e['probe_count'])
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload chain canonical PQ vector evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qcrypto-chain-canonical-vector-interop-evidence
+          path: chain-canonical-vector-interop-evidence.json
+          if-no-files-found: error
