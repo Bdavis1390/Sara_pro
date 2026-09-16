@@ -6,6 +6,7 @@ on:
       - 'security/poo/**'
       - 'tests/test_poo_*.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_*.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
       - 'deployments/sara_verified_local_v1/tests/test_poo_*.py'
       - '.github/workflows/poo-ownership-gate.yml'
@@ -17,6 +18,7 @@ on:
       - 'security/poo/**'
       - 'tests/test_poo_*.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_*.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
       - 'deployments/sara_verified_local_v1/tests/test_poo_*.py'
       - '.github/workflows/poo-ownership-gate.yml'
@@ -44,6 +46,8 @@ jobs:
             deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py \
+            deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py \
+            deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_authorization.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/app.py
       - name: Run all PoO protocol and governance regressions
         run: python -m pytest -q tests/test_poo_*.py
@@ -51,7 +55,7 @@ jobs:
         env:
           PYTHONPATH: deployments/sara_verified_local_v1
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_*.py
-      - name: Enforce core claims, governance, and durable-commit boundaries
+      - name: Enforce core claims, governance, durable-commit, and PRIME-authorization boundaries
         run: |
           grep -q 'POO_SCHEMA = "WS-POO-V3"' security/poo/ownership_guard.py
           grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V3"' security/poo/transfer_guard.py
@@ -70,6 +74,12 @@ jobs:
           grep -q 'POO_SARA_REGISTRY_SCHEMA = "WS-POO-SARA-TECHNICAL-REGISTRY-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
           grep -q 'POO_DURABLE_COMMIT_REQUEST_SCHEMA = "WS-POO-DURABLE-COMMIT-REQUEST-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
           grep -q 'POO_APPROVAL_INTENT = "COMMIT_INTERNAL_TECHNICAL_STATE"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'PRIME_SENTINEL_POO_AUTHZ_SCHEMA = "WS-PRIME-SENTINEL-POO-COMMIT-AUTHZ-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_authorization.py
+          grep -q 'PRIME_SENTINEL_POO_ACTION = "POO_TECHNICAL_STATE_COMMIT"' deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_authorization.py
+          grep -q 'POO_PRIME_AUTHORIZED_COMMIT_REQUEST_SCHEMA' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py
+          grep -q 'prime_cryptographic_authorization_verified: Literal\[True\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py
+          grep -q 'legal_title_changed: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py
+          grep -q 'live_value_moved: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py
           grep -q 'REGISTRY_BOOTSTRAP_COMMIT_READY_WITH_FULL_GOVERNANCE' security/poo/bootstrap_governance_guard.py
           grep -q 'REGISTRY_COMMIT_READY_WITH_FULL_GOVERNANCE' security/poo/registry_governance_guard.py
           grep -q 'REGISTRY_COMMIT_BLOCKED_STALE_SNAPSHOT' security/poo/registry_governance_guard.py
@@ -82,3 +92,4 @@ jobs:
           grep -q 'POO_TECHNICAL_REGISTRY_KEY' deployments/sara_verified_local_v1/worldshepherd_sara/app.py
           grep -q 'app.include_router(poo_registry_commit_router)' deployments/sara_verified_local_v1/worldshepherd_sara/app.py
           grep -q '@router.post("/registry/commit")' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py
+          grep -q '@router.post("/registry/commit-prime-authorized")' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py
