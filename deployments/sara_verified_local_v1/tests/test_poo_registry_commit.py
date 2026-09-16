@@ -319,7 +319,7 @@ def test_stored_registry_rejects_structural_fork_independent_of_projection():
             "claimant_id": "claimant:right",
             "control_key_fingerprint": "key:right",
             "title_reference": "title:right",
-            "source_event_type": "RECOVERY",
+            "source_event_type": "TRANSFER",
         }
     )
     states = [genesis, left, right]
