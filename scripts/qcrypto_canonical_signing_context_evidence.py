@@ -108,11 +108,26 @@ def main() -> int:
             authority_policy=replace(policy(), network_id="other-testnet"),
         )
     )
+    authority_domain = build_canonical_signing_context(
+        request(
+            authority=replace(authority(), domain_separator="WS-QCRYPTO-AUTH-V2"),
+            authority_policy=replace(policy(), domain_separator="WS-QCRYPTO-AUTH-V2"),
+        )
+    )
     role_change = build_canonical_signing_context(
         request(authority=replace(authority(), authority_layer=AuthorityLayer.CONSENSUS_VALIDATOR))
     )
     algorithm_change = build_canonical_signing_context(
         request(authority=replace(authority(), pq_algorithm_id="SLH-DSA"))
+    )
+    policy_floor_change = build_canonical_signing_context(
+        request(
+            authority_policy=policy(
+                minimum_envelope_version=3,
+                minimum_key_epoch=20,
+                require_recovery_evidence=False,
+            )
+        )
     )
     epoch_change = build_canonical_signing_context(
         request(authority=replace(authority(), key_epoch=22))
@@ -128,8 +143,10 @@ def main() -> int:
     distinct = {
         baseline.context_digest,
         cross_network.context_digest,
+        authority_domain.context_digest,
         role_change.context_digest,
         algorithm_change.context_digest,
+        policy_floor_change.context_digest,
         epoch_change.context_digest,
         replay_change.context_digest,
     }
@@ -140,8 +157,10 @@ def main() -> int:
         "baseline": baseline.to_dict(),
         "binding_variants": {
             "cross_network": cross_network.to_dict(),
+            "authority_domain": authority_domain.to_dict(),
             "authority_role": role_change.to_dict(),
             "pq_algorithm": algorithm_change.to_dict(),
+            "policy_floor": policy_floor_change.to_dict(),
             "key_epoch": epoch_change.to_dict(),
             "replay_sequence": replay_change.to_dict(),
         },
@@ -151,7 +170,9 @@ def main() -> int:
         },
         "summary": {
             "distinct_context_digest_count": len(distinct),
-            "expected_distinct_context_digest_count": 6,
+            "expected_distinct_context_digest_count": 8,
+            "authority_domain_bound": authority_domain.context_digest != baseline.context_digest,
+            "policy_floor_bound": policy_floor_change.context_digest != baseline.context_digest,
             "downgrade_blocked": not downgrade.ready,
             "self_authorization_blocked": not self_authorize.ready,
             "execution_authority": False,
@@ -167,7 +188,7 @@ def main() -> int:
 
     if not baseline.ready:
         raise SystemExit("baseline canonical context did not become ready")
-    if len(distinct) != 6:
+    if len(distinct) != 8:
         raise SystemExit("one or more governed field changes failed to change the context digest")
     if downgrade.ready or self_authorize.ready:
         raise SystemExit("negative control was improperly accepted")
