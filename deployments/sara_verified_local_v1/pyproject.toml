@@ -54,6 +54,7 @@ ws-nsb-g14 = "worldshepherd_sara.nsb_g14_cli:main"
 ws-nsb-g15 = "worldshepherd_sara.nsb_g15_cli:main"
 ws-omega-recursion = "worldshepherd_sara.recursive_discovery_cli:main"
 ws-discord-notify = "worldshepherd_sara.discord_notify_cli:main"
+ws-discord-connector-status = "worldshepherd_sara.discord_connector:main"
 
 [tool.setuptools]
 packages = ["worldshepherd_sara"]
