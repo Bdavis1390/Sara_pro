@@ -70,6 +70,7 @@ class VerifiedPrimeSentinelPoOAuthorization(BaseModel):
     candidate_state_digest: str
     key_id: str
     key_fingerprint_sha256: str
+    signed_assertion_sha256: str
     nonce: str
     issued_at: datetime
     expires_at: datetime
@@ -101,6 +102,19 @@ def canonical_poo_authorization_message(
         "nonce": assertion.nonce,
     }
     return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def signed_poo_authorization_fingerprint(
+    assertion: PrimeSentinelPoOAuthorizationAssertion,
+) -> str:
+    payload = assertion.model_dump(mode="json")
+    raw = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(raw).hexdigest()
 
 
 def _decode_b64url(value: str, *, expected_length: int, label: str) -> bytes:
@@ -211,6 +225,7 @@ class PrimeSentinelPoOVerifier:
             candidate_state_digest=assertion.candidate_state_digest,
             key_id=assertion.key_id,
             key_fingerprint_sha256=hashlib.sha256(key_bytes).hexdigest(),
+            signed_assertion_sha256=signed_poo_authorization_fingerprint(assertion),
             nonce=assertion.nonce,
             issued_at=issued,
             expires_at=expires,
@@ -247,6 +262,7 @@ def consumed_poo_authorization_registry_patch(
             and existing.get("expected_registry_digest") == verified.expected_registry_digest
             and existing.get("candidate_registry_digest") == verified.candidate_registry_digest
             and existing.get("candidate_state_digest") == verified.candidate_state_digest
+            and existing.get("signed_assertion_sha256") == verified.signed_assertion_sha256
             and existing.get("nonce") == verified.nonce
             and existing.get("key_id") == verified.key_id
         )
@@ -274,6 +290,7 @@ def consumed_poo_authorization_registry_patch(
         "candidate_state_digest": verified.candidate_state_digest,
         "key_id": verified.key_id,
         "key_fingerprint_sha256": verified.key_fingerprint_sha256,
+        "signed_assertion_sha256": verified.signed_assertion_sha256,
         "nonce": verified.nonce,
         "issued_at": _utc_iso(verified.issued_at),
         "expires_at": _utc_iso(verified.expires_at),
