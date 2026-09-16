@@ -24,6 +24,7 @@ from security.qcrypto.chain_online_guard import ChainOnlineEvidence, assess_chai
 COMPOSE = ROOT / "compose.observer.yaml"
 ARTIFACT_DIR = ROOT / "artifacts"
 START_RECEIPT = ARTIFACT_DIR / "qcrypto_chain_start_receipt.json"
+CHECKPOINT_RECEIPT = ARTIFACT_DIR / "qcrypto_hoodi_checkpoint_quorum.json"
 
 
 def run(*args: str, cwd: Path | None = None) -> str:
@@ -68,11 +69,15 @@ def as_int(value) -> int:
     raise TypeError(f"Expected integer-like value, got {value!r}")
 
 
+def sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def load_and_verify_start_receipt() -> dict:
     if not START_RECEIPT.is_file():
         raise RuntimeError("Start receipt is missing; run bootstrap_host.sh before online verification")
     start = json.loads(START_RECEIPT.read_text(encoding="utf-8"))
-    if start.get("schema") != "WS-QCRYPTO-CHAIN-START-RECEIPT-V2":
+    if start.get("schema") != "WS-QCRYPTO-CHAIN-START-RECEIPT-V3":
         raise RuntimeError("Unsupported or missing chain start receipt schema")
 
     current_revision = run("git", "rev-parse", "HEAD", cwd=REPO_ROOT)
@@ -88,6 +93,31 @@ def load_and_verify_start_receipt() -> dict:
         value = images.get(key)
         if not isinstance(value, str) or "@sha256:" not in value:
             raise RuntimeError(f"Start receipt lacks immutable image digest for {key}")
+
+    bootstrap = start.get("hoodi_checkpoint_bootstrap") or {}
+    if bootstrap.get("consensus_verification_replaced") is not False:
+        raise RuntimeError("Checkpoint bootstrap must not claim to replace Ethereum consensus verification")
+    if not CHECKPOINT_RECEIPT.is_file():
+        raise RuntimeError("Hoodi checkpoint quorum receipt is missing")
+    expected_quorum_sha = bootstrap.get("quorum_receipt_sha256")
+    if not isinstance(expected_quorum_sha, str) or len(expected_quorum_sha) != 64:
+        raise RuntimeError("Start receipt lacks Hoodi checkpoint quorum receipt digest")
+    if sha256_file(CHECKPOINT_RECEIPT) != expected_quorum_sha:
+        raise RuntimeError("Hoodi checkpoint quorum receipt changed after node start")
+
+    quorum = json.loads(CHECKPOINT_RECEIPT.read_text(encoding="utf-8"))
+    if quorum.get("schema") != "WS-QCRYPTO-HOODI-CHECKPOINT-QUORUM-V1":
+        raise RuntimeError("Unsupported Hoodi checkpoint quorum receipt schema")
+    if quorum.get("state") != "HOODI_CHECKPOINT_QUORUM_ACCEPTED" or quorum.get("accepted") is not True:
+        raise RuntimeError("Hoodi checkpoint quorum receipt is not accepted")
+    if quorum.get("consensus_verification_replaced") is not False:
+        raise RuntimeError("Checkpoint quorum receipt improperly replaces consensus verification")
+    if quorum.get("quorum_root") != bootstrap.get("quorum_root"):
+        raise RuntimeError("Hoodi finalized-root quorum changed after node start")
+    if quorum.get("configured_url", "").rstrip("/") != str(bootstrap.get("configured_url", "")).rstrip("/"):
+        raise RuntimeError("Hoodi configured checkpoint provider changed after node start")
+    if sorted(quorum.get("agreeing_providers") or []) != sorted(bootstrap.get("agreeing_providers") or []):
+        raise RuntimeError("Hoodi checkpoint quorum provider set changed after node start")
 
     claims = start.get("claims") or {}
     for key in (
@@ -147,13 +177,14 @@ def main() -> int:
         raise RuntimeError("; ".join(assessment.blockers))
 
     receipt = {
-        "schema": "WS-QCRYPTO-CHAIN-ONLINE-RECEIPT-V2",
+        "schema": "WS-QCRYPTO-CHAIN-ONLINE-RECEIPT-V3",
         "status": assessment.state,
         "lineage": {
             "deployment_revision": start["deployment_revision"],
             "compose_sha256": start["compose_sha256"],
             "images": start["images"],
             "start_receipt_schema": start["schema"],
+            "hoodi_checkpoint_bootstrap": start["hoodi_checkpoint_bootstrap"],
         },
         "bitcoin": {
             "network": "SIGNET",
