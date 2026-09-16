@@ -1,0 +1,93 @@
+name: PoO PRIME Signed Stack Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_signed_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_*.py'
+      - '.github/workflows/poo-prime-signed-stack.yml'
+  push:
+    branches:
+      - 'worldshepherd-proof-of-ownership-prime-stack-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_signed_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_*.py'
+      - '.github/workflows/poo-prime-signed-stack.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  signed-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned test dependencies
+        run: >-
+          python -m pip install --disable-pip-version-check
+          -c deployments/sara_verified_local_v1/constraints-runtime.txt
+          './deployments/sara_verified_local_v1[test]'
+      - name: Validate signed-stack shell
+        run: bash -n deployments/sara_verified_local_v1/scripts/verify_poo_prime_signed_stack.sh
+      - name: Validate opt-in Compose overlay
+        working-directory: deployments/sara_verified_local_v1
+        env:
+          SARA_RELAY_TOKEN: ci-relay-token-that-is-independent-and-long
+          SARA_ADMIN_TOKEN: ci-admin-token-that-is-different-and-long
+          PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH: /tmp/nonexistent-prime-private-key
+          PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH: /tmp/nonexistent-prime-service-token
+        run: |
+          cp .env.example .env
+          docker compose -f compose.yaml -f compose.poo-prime.yaml --profile prime-sentinel config >/tmp/poo-prime-compose.yaml
+          grep -q 'worldshepherd_sara.prime_sentinel_poo_service:create_prime_sentinel_poo_app' /tmp/poo-prime-compose.yaml
+          rm -f .env
+      - name: Run containerized PRIME to SARA signed-stack exercise
+        env:
+          POO_PRIME_EVIDENCE_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/poo_prime_stack_evidence
+        run: bash deployments/sara_verified_local_v1/scripts/verify_poo_prime_signed_stack.sh
+      - name: Validate signed-stack evidence contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path('deployments/sara_verified_local_v1/poo_prime_stack_evidence/result.json')
+          r=json.loads(p.read_text(encoding='utf-8'))
+          assert r['schema']=='WS-POO-PRIME-SIGNED-STACK-EVIDENCE-V1'
+          assert r['evidence_status']=='INTERNAL_CI_GENERATED_UNSIGNED'
+          assert r['result']=='PASS'
+          assert r['tested_head_sha']==os.environ['GITHUB_SHA']
+          assert r['poo_state_count']==1 and r['poo_commit_count']==1
+          assert r['consumed_prime_authorization_count']==1
+          assert r['technical_commit_audit_count']==1
+          assert r['prime_authorization_audit_count']==1
+          assert r['restart_issuance_idempotent'] is True
+          assert r['restart_commit_idempotent'] is True
+          assert r['tampered_signed_replay_rejected'] is True
+          assert r['prime_cryptographic_authorization_verified'] is True
+          assert r['durable_internal_state_committed'] is True
+          assert r['legal_title_changed'] is False
+          assert r['live_value_moved'] is False
+          assert r['credential_rotated'] is False
+          assert r['external_transfer_executed'] is False
+          assert len(r['prime_signing_key_fingerprint_sha256'])==64
+          assert 'not legal title' in r['claims_boundary'].lower()
+          PY
+      - name: Upload signed-stack evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: poo-prime-signed-stack-evidence
+          path: deployments/sara_verified_local_v1/poo_prime_stack_evidence
+          if-no-files-found: error
+          retention-days: 90
+      - name: Capture Docker state on failure
+        if: failure()
+        run: |
+          docker ps -a --no-trunc || true
+          docker volume ls || true
