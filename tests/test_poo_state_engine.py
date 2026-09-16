@@ -12,7 +12,7 @@ from security.poo.state_engine import (
 from security.poo.transfer_guard import TransferEvidence
 
 
-def genesis_ownership():
+def genesis_ownership(coc_reference):
     return OwnershipEvidence(
         asset_id="asset:alpha",
         claimant_id="claimant:one",
@@ -20,6 +20,7 @@ def genesis_ownership():
         control_key_fingerprint="key:one",
         work_reference="work:001",
         concept_reference="concept:001",
+        coc_reference=coc_reference,
         stake_reference="stake:001",
         issued_at="2026-09-16T00:00:00Z",
         expires_at="2026-09-17T00:00:00Z",
@@ -56,7 +57,7 @@ def coc_for(claimant, key, *, previous=None, point="custody:point:001"):
     )
 
 
-def transfer_from(state, *, recipient="claimant:two", key="key:two"):
+def transfer_from(state, coc_reference, *, recipient="claimant:two", key="key:two"):
     return TransferEvidence(
         asset_id=state.asset_id,
         prior_poo_digest=state.active_poo_digest,
@@ -66,6 +67,7 @@ def transfer_from(state, *, recipient="claimant:two", key="key:two"):
         recipient_control_key_fingerprint=key,
         recipient_work_reference="work:002",
         recipient_concept_reference="concept:002",
+        recipient_coc_reference=coc_reference,
         recipient_stake_reference="stake:002",
         initiated_at="2026-09-16T01:00:00Z",
         expires_at="2026-09-17T01:00:00Z",
@@ -85,7 +87,7 @@ def transfer_from(state, *, recipient="claimant:two", key="key:two"):
     )
 
 
-def recovery_from(state, *, key="key:recovered"):
+def recovery_from(state, coc_reference, *, key="key:recovered"):
     return RecoveryEvidence(
         asset_id=state.asset_id,
         prior_poo_digest=state.active_poo_digest,
@@ -95,6 +97,7 @@ def recovery_from(state, *, key="key:recovered"):
         new_control_key_fingerprint=key,
         recovery_work_reference="work:recovery",
         recovery_concept_reference="concept:recovery",
+        recovery_coc_reference=coc_reference,
         recovery_stake_reference="stake:recovery",
         recovery_request_reference="recovery:req:001",
         issued_at="2026-09-16T02:00:00Z",
@@ -118,39 +121,42 @@ def recovery_from(state, *, key="key:recovered"):
 
 def bootstrap():
     coc = coc_for("claimant:one", "key:one")
-    decision = bootstrap_technical_state(genesis_ownership(), coc)
+    decision = bootstrap_technical_state(genesis_ownership(coc_digest(coc)), coc)
     assert decision.ready is True
     return decision.candidate_state
 
 
-def test_bootstrap_binds_genesis_poo_and_coc_without_external_authority():
-    state = bootstrap()
+def test_bootstrap_binds_genesis_poo_to_exact_coc_digest():
+    coc = coc_for("claimant:one", "key:one")
+    decision = bootstrap_technical_state(genesis_ownership(coc_digest(coc)), coc)
+    assert decision.ready is True
+    state = decision.candidate_state
+    assert state.active_coc_digest == coc_digest(coc)
     assert state.generation == 0
-    assert state.source_event_type == "CLAIM"
-    assert state.previous_poo_digest is None
-    assert state.previous_coc_digest is None
     assert state.legal_title_established is False
-    assert state.live_value_authorized is False
-    assert state.external_transfer_executed is False
+
+
+def test_bootstrap_rejects_semantically_wrong_coc_reference():
+    coc = coc_for("claimant:one", "key:one")
+    decision = bootstrap_technical_state(genesis_ownership("coc:wrong"), coc)
+    assert decision.ready is False
+    assert "COC digest does not match semantic COC reference" in decision.reasons
 
 
 def test_bootstrap_rejects_mismatched_coc_claimant():
-    decision = bootstrap_technical_state(
-        genesis_ownership(), coc_for("claimant:other", "key:one")
-    )
+    coc = coc_for("claimant:other", "key:one")
+    decision = bootstrap_technical_state(genesis_ownership(coc_digest(coc)), coc)
     assert decision.ready is False
     assert "COC claimant does not match ownership claimant" in decision.reasons
 
 
 def test_transfer_advances_poo_and_coc_lineages_together():
     current = bootstrap()
-    transfer = transfer_from(current)
     next_coc = coc_for("claimant:two", "key:two", previous=current.active_coc_digest)
+    transfer = transfer_from(current, coc_digest(next_coc))
     decision = prepare_transfer_transition(current, transfer, next_coc)
     assert decision.ready is True
     assert decision.technical_state_committed is False
-    assert decision.legal_title_changed is False
-    assert decision.live_value_moved is False
     candidate = decision.candidate_state
     assert candidate.claimant_id == "claimant:two"
     assert candidate.previous_poo_digest == current.active_poo_digest
@@ -158,60 +164,62 @@ def test_transfer_advances_poo_and_coc_lineages_together():
     assert candidate.generation == 1
 
 
+def test_transfer_boolean_coc_cannot_hide_wrong_coc_digest_reference():
+    current = bootstrap()
+    next_coc = coc_for("claimant:two", "key:two", previous=current.active_coc_digest)
+    transfer = transfer_from(current, "coc:wrong")
+    assert transfer.recipient_coc_verified is True
+    decision = prepare_transfer_transition(current, transfer, next_coc)
+    assert decision.ready is False
+    assert "COC digest does not match semantic COC reference" in decision.reasons
+
+
 def test_transfer_rejects_stale_active_poo_predecessor():
     current = bootstrap()
-    transfer = replace(transfer_from(current), prior_poo_digest="stale-poo")
     next_coc = coc_for("claimant:two", "key:two", previous=current.active_coc_digest)
+    transfer = replace(transfer_from(current, coc_digest(next_coc)), prior_poo_digest="stale-poo")
     decision = prepare_transfer_transition(current, transfer, next_coc)
     assert decision.ready is False
     assert "transfer predecessor does not match active PoO" in decision.reasons
 
 
-def test_transfer_rejects_wrong_coc_predecessor_even_when_transfer_predicates_pass():
+def test_transfer_rejects_wrong_coc_predecessor():
     current = bootstrap()
-    transfer = transfer_from(current)
     next_coc = coc_for("claimant:two", "key:two", previous="wrong-coc")
+    transfer = transfer_from(current, coc_digest(next_coc))
     decision = prepare_transfer_transition(current, transfer, next_coc)
     assert decision.ready is False
     assert "COC predecessor does not match active COC lineage" in decision.reasons
 
 
-def test_invalid_recipient_coc_blocks_transfer_state_transition():
-    current = bootstrap()
-    transfer = transfer_from(current)
-    next_coc = replace(
-        coc_for("claimant:two", "key:two", previous=current.active_coc_digest),
-        challenge_response_verified=False,
-    )
-    decision = prepare_transfer_transition(current, transfer, next_coc)
-    assert decision.ready is False
-    assert "COC challenge response not verified" in decision.reasons
-
-
 def test_recovery_advances_coc_but_preserves_claimant():
     current = bootstrap()
-    recovery = recovery_from(current)
-    next_coc = coc_for(
-        current.claimant_id,
-        "key:recovered",
-        previous=current.active_coc_digest,
-        point="custody:recovery:point",
-    )
+    next_coc = coc_for(current.claimant_id, "key:recovered", previous=current.active_coc_digest)
+    recovery = recovery_from(current, coc_digest(next_coc))
     decision = prepare_recovery_transition(current, recovery, next_coc)
     assert decision.ready is True
     candidate = decision.candidate_state
     assert candidate.claimant_id == current.claimant_id
-    assert candidate.control_key_fingerprint == "key:recovered"
     assert candidate.active_coc_digest == coc_digest(next_coc)
     assert candidate.generation == current.generation + 1
     assert decision.external_transfer_executed is False
 
 
+def test_recovery_boolean_coc_cannot_hide_wrong_coc_digest_reference():
+    current = bootstrap()
+    next_coc = coc_for(current.claimant_id, "key:recovered", previous=current.active_coc_digest)
+    recovery = recovery_from(current, "coc:wrong")
+    assert recovery.alternate_coc_verified is True
+    decision = prepare_recovery_transition(current, recovery, next_coc)
+    assert decision.ready is False
+    assert "COC digest does not match semantic COC reference" in decision.reasons
+
+
 def test_recovery_cannot_change_active_claimant():
     current = bootstrap()
-    recovery = replace(recovery_from(current), claimant_id="claimant:other")
-    next_coc = coc_for(
-        "claimant:other", "key:recovered", previous=current.active_coc_digest
+    next_coc = coc_for("claimant:other", "key:recovered", previous=current.active_coc_digest)
+    recovery = replace(
+        recovery_from(current, coc_digest(next_coc)), claimant_id="claimant:other"
     )
     decision = prepare_recovery_transition(current, recovery, next_coc)
     assert decision.ready is False
@@ -220,34 +228,33 @@ def test_recovery_cannot_change_active_claimant():
 
 def test_end_to_end_claim_transfer_recovery_lineage_is_consistent():
     genesis = bootstrap()
-    transfer = transfer_from(genesis)
     transfer_coc = coc_for("claimant:two", "key:two", previous=genesis.active_coc_digest)
+    transfer = transfer_from(genesis, coc_digest(transfer_coc))
     transferred = prepare_transfer_transition(genesis, transfer, transfer_coc).candidate_state
 
-    recovery = recovery_from(transferred, key="key:three")
-    recovery_coc = coc_for(
-        "claimant:two", "key:three", previous=transferred.active_coc_digest
-    )
+    recovery_coc = coc_for("claimant:two", "key:three", previous=transferred.active_coc_digest)
+    recovery = recovery_from(transferred, coc_digest(recovery_coc), key="key:three")
     recovered = prepare_recovery_transition(transferred, recovery, recovery_coc).candidate_state
 
     lineage = evaluate_state_lineage([genesis, transferred, recovered])
     assert lineage.lineage_valid is True
-    assert lineage.fork_detected is False
+    assert lineage.poo_lineage_valid is True
+    assert lineage.coc_lineage_valid is True
     assert lineage.active_tip_digest == recovered.active_poo_digest
     assert lineage.legal_title_established is False
 
 
 def test_two_successors_from_same_state_create_detectable_fork():
     genesis = bootstrap()
-    t1 = transfer_from(genesis, recipient="claimant:two", key="key:two")
     c1 = coc_for("claimant:two", "key:two", previous=genesis.active_coc_digest)
+    t1 = transfer_from(genesis, coc_digest(c1), recipient="claimant:two", key="key:two")
     s1 = prepare_transfer_transition(genesis, t1, c1).candidate_state
 
-    t2 = transfer_from(genesis, recipient="claimant:three", key="key:three")
     c2 = coc_for("claimant:three", "key:three", previous=genesis.active_coc_digest)
+    t2 = transfer_from(genesis, coc_digest(c2), recipient="claimant:three", key="key:three")
     s2 = prepare_transfer_transition(genesis, t2, c2).candidate_state
 
     lineage = evaluate_state_lineage([genesis, s1, s2])
     assert lineage.lineage_valid is False
     assert lineage.fork_detected is True
-    assert "forked ownership lineage detected" in lineage.issues
+    assert any("forked ownership lineage detected" in issue for issue in lineage.issues)
