@@ -18,8 +18,11 @@ POO_REGISTRY_SCHEMA = "WS-POO-TECHNICAL-REGISTRY-V1"
 POO_STATE_SCHEMA = "WS-POO-TECHNICAL-STATE-V1"
 POO_DURABLE_COMMIT_REQUEST_SCHEMA = "WS-POO-DURABLE-COMMIT-REQUEST-V1"
 POO_DURABLE_COMMIT_RECORD_SCHEMA = "WS-POO-DURABLE-COMMIT-RECORD-V1"
+POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V3"
 POO_BOOTSTRAP_AUDIT_SCHEMA = "WS-POO-BOOTSTRAP-COMMIT-DECISION-V1"
 POO_APPROVAL_INTENT = "COMMIT_INTERNAL_TECHNICAL_STATE"
+POO_CLAIM_BOUNDARY = "INTERNAL_POO_EVIDENCE_NOT_LEGAL_TITLE_OR_EXECUTION_AUTHORITY"
+POO_BOOTSTRAP_CLAIM_BOUNDARY = "INTERNAL_POO_EMPTY_REGISTRY_BOOTSTRAP_ONLY"
 MAX_POO_STATES = 32
 MAX_POO_COMMIT_RECORDS = 32
 
@@ -52,6 +55,89 @@ class PoOTechnicalStateRecord(BaseModel):
         if value == "":
             raise ValueError("predecessor digest must be null or non-empty")
         return value
+
+
+class PoOV3CommitReadinessProjection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    schema: Literal[POO_AUDIT_SCHEMA]
+    operation: Literal["REGISTRY_COMMIT_READINESS"]
+    asset_id: str = Field(min_length=1, max_length=256)
+    source_digest: str = Field(min_length=1, max_length=256)
+    source_status: Literal["REGISTRY_COMMIT_READY_WITH_FULL_GOVERNANCE"]
+    previous_poo_digest: str = Field(min_length=1, max_length=256)
+    echo_state: Literal["ECHO_POO_REGISTRY_COMMIT_EVIDENCE_ACCEPTED"]
+    prime_state: Literal["PRIME_POO_REGISTRY_COMMIT_CANDIDATE_READY"]
+    sara_state: Literal["SARA_POO_REGISTRY_COMMIT_HUMAN_REVIEW_READY"]
+    overwatch_state: Literal["OVERWATCH_POO_REGISTRY_COMMIT_PENDING"]
+    technical_attestation_ready: Literal[False]
+    coc_valid: Literal[False]
+    transfer_ready: Literal[False]
+    recovery_ready: Literal[False]
+    state_transition_ready: Literal[False]
+    registry_consistent: Literal[False]
+    state_lineage_checked: Literal[True]
+    state_lineage_valid: Literal[True]
+    poo_lineage_valid: Literal[True]
+    coc_lineage_valid: Literal[True]
+    generation_valid: Literal[True]
+    fork_detected: Literal[False]
+    cycle_detected: Literal[False]
+    active_tip_digest: str = Field(min_length=1, max_length=256)
+    lineage_issue_count: Literal[0]
+    registry_commit_ready: Literal[True]
+    optimistic_concurrency_checked: Literal[True]
+    optimistic_concurrency_match: Literal[True]
+    expected_registry_digest: str = Field(min_length=1, max_length=256)
+    current_registry_digest: str = Field(min_length=1, max_length=256)
+    candidate_registry_digest: str = Field(min_length=1, max_length=256)
+    candidate_state_digest: str = Field(min_length=1, max_length=256)
+    human_approval_required: Literal[True]
+    ownership_changed: Literal[False]
+    transfer_executed: Literal[False]
+    live_value_authorized: Literal[False]
+    legal_title_established: Literal[False]
+    legal_title_transferred: Literal[False]
+    control_rotated: Literal[False]
+    technical_registry_committed: Literal[False]
+    durable_registry_write_authorized: Literal[False]
+    conflict_winner_selected: Literal[False]
+    lineage_auto_resolved: Literal[False]
+    claim_boundary: Literal[POO_CLAIM_BOUNDARY]
+
+
+class PoOBootstrapCommitReadinessProjection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    schema: Literal[POO_BOOTSTRAP_AUDIT_SCHEMA]
+    operation: Literal["REGISTRY_BOOTSTRAP_COMMIT_READINESS"]
+    asset_id: str = Field(min_length=1, max_length=256)
+    source_digest: str = Field(min_length=1, max_length=256)
+    source_status: Literal["REGISTRY_BOOTSTRAP_COMMIT_READY_WITH_FULL_GOVERNANCE"]
+    echo_state: Literal["ECHO_POO_BOOTSTRAP_EVIDENCE_ACCEPTED"]
+    prime_state: Literal["PRIME_POO_BOOTSTRAP_COMMIT_CANDIDATE_READY"]
+    sara_state: Literal["SARA_POO_BOOTSTRAP_HUMAN_REVIEW_READY"]
+    overwatch_state: Literal["OVERWATCH_POO_BOOTSTRAP_PENDING"]
+    empty_registry_verified: Literal[True]
+    ownership_evidence_ready: Literal[True]
+    coc_valid: Literal[True]
+    state_transition_ready: Literal[True]
+    registry_commit_ready: Literal[True]
+    optimistic_concurrency_checked: Literal[True]
+    optimistic_concurrency_match: Literal[True]
+    expected_registry_digest: str = Field(min_length=1, max_length=256)
+    current_registry_digest: str = Field(min_length=1, max_length=256)
+    candidate_registry_digest: str = Field(min_length=1, max_length=256)
+    candidate_state_digest: str = Field(min_length=1, max_length=256)
+    human_approval_required: Literal[True]
+    technical_registry_committed: Literal[False]
+    durable_registry_write_authorized: Literal[False]
+    legal_title_established: Literal[False]
+    legal_title_changed: Literal[False]
+    live_value_moved: Literal[False]
+    credential_rotated: Literal[False]
+    external_transfer_executed: Literal[False]
+    claim_boundary: Literal[POO_BOOTSTRAP_CLAIM_BOUNDARY]
 
 
 class PoODurableCommitRecord(BaseModel):
@@ -88,15 +174,10 @@ class PoODurableCommitRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema: Literal[POO_DURABLE_COMMIT_REQUEST_SCHEMA] = POO_DURABLE_COMMIT_REQUEST_SCHEMA
-    governance_projection: dict[str, Any]
+    governance_projection: PoOV3CommitReadinessProjection | PoOBootstrapCommitReadinessProjection
     candidate_states: list[PoOTechnicalStateRecord] = Field(min_length=1, max_length=MAX_POO_STATES)
     approval_intent: Literal[POO_APPROVAL_INTENT]
     approval_reference: str = Field(min_length=1, max_length=256)
-
-    @field_validator("governance_projection")
-    @classmethod
-    def projection_within_limits(cls, value: dict[str, Any]) -> dict[str, Any]:
-        return validate_json_resource(value)
 
 
 class PoODurableCommitResult(BaseModel):
@@ -179,7 +260,7 @@ def _validate_internal_registry_structure(states: list[PoOTechnicalStateRecord])
 
         children: dict[str, list[PoOTechnicalStateRecord]] = {}
         for state in asset_states:
-            if state is root:
+            if state.active_poo_digest == root.active_poo_digest:
                 continue
             previous = state.previous_poo_digest
             if previous is None:
@@ -261,58 +342,6 @@ def _canonical_projection_digest(projection: dict[str, Any]) -> str:
 
 
 def _validate_bootstrap_projection(projection: dict[str, Any]) -> str:
-    if projection.get("schema") != POO_BOOTSTRAP_AUDIT_SCHEMA:
-        raise PoODurableCommitError("unsupported PoO bootstrap projection schema")
-    expected_states = {
-        "operation": "REGISTRY_BOOTSTRAP_COMMIT_READINESS",
-        "source_status": "REGISTRY_BOOTSTRAP_COMMIT_READY_WITH_FULL_GOVERNANCE",
-        "echo_state": "ECHO_POO_BOOTSTRAP_EVIDENCE_ACCEPTED",
-        "prime_state": "PRIME_POO_BOOTSTRAP_COMMIT_CANDIDATE_READY",
-        "sara_state": "SARA_POO_BOOTSTRAP_HUMAN_REVIEW_READY",
-        "overwatch_state": "OVERWATCH_POO_BOOTSTRAP_PENDING",
-        "claim_boundary": "INTERNAL_POO_EMPTY_REGISTRY_BOOTSTRAP_ONLY",
-    }
-    for field, expected in expected_states.items():
-        if projection.get(field) != expected:
-            raise PoODurableCommitError(f"{field} is not the ready bootstrap commit state")
-
-    for field in (
-        "empty_registry_verified",
-        "ownership_evidence_ready",
-        "coc_valid",
-        "state_transition_ready",
-        "registry_commit_ready",
-        "optimistic_concurrency_checked",
-        "optimistic_concurrency_match",
-        "human_approval_required",
-    ):
-        if projection.get(field) is not True:
-            raise PoODurableCommitError(f"bootstrap projection requires {field}=true")
-
-    for field in (
-        "technical_registry_committed",
-        "durable_registry_write_authorized",
-        "legal_title_established",
-        "legal_title_changed",
-        "live_value_moved",
-        "credential_rotated",
-        "external_transfer_executed",
-    ):
-        if projection.get(field) is not False:
-            raise PoODurableCommitError(f"{field} must remain false before durable commit")
-
-    for field in (
-        "asset_id",
-        "source_digest",
-        "expected_registry_digest",
-        "current_registry_digest",
-        "candidate_registry_digest",
-        "candidate_state_digest",
-    ):
-        value = projection.get(field)
-        if not isinstance(value, str) or not value:
-            raise PoODurableCommitError(f"bootstrap projection {field} must be non-empty")
-
     if projection["expected_registry_digest"] != projection["current_registry_digest"]:
         raise PoODurableCommitError("bootstrap projection snapshot digests disagree")
     return _canonical_projection_digest(projection)
@@ -323,29 +352,9 @@ def _validated_ready_projection(projection: dict[str, Any]) -> str:
         return _validate_bootstrap_projection(projection)
 
     try:
-        projection_digest = poo_decision_digest(projection)
+        return poo_decision_digest(projection)
     except PoOAuditAdapterError as exc:
         raise PoODurableCommitError("invalid PoO governance projection") from exc
-
-    expected_states = {
-        "source_status": "REGISTRY_COMMIT_READY_WITH_FULL_GOVERNANCE",
-        "echo_state": "ECHO_POO_REGISTRY_COMMIT_EVIDENCE_ACCEPTED",
-        "prime_state": "PRIME_POO_REGISTRY_COMMIT_CANDIDATE_READY",
-        "sara_state": "SARA_POO_REGISTRY_COMMIT_HUMAN_REVIEW_READY",
-        "overwatch_state": "OVERWATCH_POO_REGISTRY_COMMIT_PENDING",
-    }
-    if projection.get("operation") != "REGISTRY_COMMIT_READINESS":
-        raise PoODurableCommitError("governance projection is not registry commit readiness")
-    for field, expected in expected_states.items():
-        if projection.get(field) != expected:
-            raise PoODurableCommitError(f"{field} is not the ready V3 commit state")
-    if projection.get("registry_commit_ready") is not True:
-        raise PoODurableCommitError("registry commit projection is not ready")
-    if projection.get("state_lineage_checked") is not True or projection.get("state_lineage_valid") is not True:
-        raise PoODurableCommitError("registry commit requires valid checked state lineage")
-    if projection.get("optimistic_concurrency_checked") is not True or projection.get("optimistic_concurrency_match") is not True:
-        raise PoODurableCommitError("registry commit requires a matching checked registry snapshot")
-    return projection_digest
 
 
 def _deterministic_commit_id(projection: dict[str, Any], projection_digest: str) -> str:
@@ -387,7 +396,7 @@ def prepare_poo_durable_commit_patch(
     if not actor:
         raise PoODurableCommitError("approved actor must be non-empty")
 
-    projection = dict(request.governance_projection)
+    projection = request.governance_projection.model_dump(mode="json")
     projection_digest = _validated_ready_projection(projection)
     commit_id = _deterministic_commit_id(projection, projection_digest)
     audit_event_id = f"SARA-EVENT-{commit_id}"
@@ -395,13 +404,11 @@ def prepare_poo_durable_commit_patch(
 
     candidate_states = list(request.candidate_states)
     candidate_registry_digest = poo_registry_digest(candidate_states)
-    if candidate_registry_digest != projection.get("candidate_registry_digest"):
+    if candidate_registry_digest != projection["candidate_registry_digest"]:
         raise PoODurableCommitError("candidate states do not match governance candidate registry digest")
     _validate_internal_registry_structure(candidate_states)
 
-    candidate_state_digest = str(projection.get("candidate_state_digest") or "")
-    if not candidate_state_digest:
-        raise PoODurableCommitError("governance projection is missing candidate state digest")
+    candidate_state_digest = projection["candidate_state_digest"]
 
     existing = namespace.commits.get(commit_id)
     if existing is not None:
@@ -416,10 +423,8 @@ def prepare_poo_durable_commit_patch(
             raise PoODurableCommitError("recorded PoO commit candidate state is missing from active registry")
         return None, _result_from_record(existing, status="ALREADY_COMMITTED")
 
-    expected_registry_digest = str(projection.get("expected_registry_digest") or "")
-    projected_current_digest = str(projection.get("current_registry_digest") or "")
-    if not expected_registry_digest or not projected_current_digest:
-        raise PoODurableCommitError("governance projection is missing current registry digests")
+    expected_registry_digest = projection["expected_registry_digest"]
+    projected_current_digest = projection["current_registry_digest"]
     if expected_registry_digest != projected_current_digest:
         raise PoODurableCommitError("governance projection snapshot digests disagree")
     if namespace.registry_digest != expected_registry_digest:
@@ -443,7 +448,7 @@ def prepare_poo_durable_commit_patch(
     commit_record = PoODurableCommitRecord(
         commit_id=commit_id,
         projection_digest=projection_digest,
-        source_decision_digest=str(projection["source_digest"]),
+        source_decision_digest=projection["source_digest"],
         previous_registry_digest=namespace.registry_digest,
         registry_digest=candidate_registry_digest,
         candidate_state_digest=candidate_state_digest,
@@ -472,7 +477,7 @@ def prepare_poo_durable_commit_patch(
         event_id=audit_event_id,
         payload={
             "commit_id": commit_id,
-            "projection_schema": projection.get("schema"),
+            "projection_schema": projection["schema"],
             "projection_digest": projection_digest,
             "source_decision_digest": projection["source_digest"],
             "approval_reference": request.approval_reference,
