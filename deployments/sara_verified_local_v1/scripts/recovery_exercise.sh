@@ -14,6 +14,7 @@ rm -f \
   "$RECOVERY_DIR"/after.json \
   "$RECOVERY_DIR"/before-poo.json \
   "$RECOVERY_DIR"/after-poo.json \
+  "$RECOVERY_DIR"/poststart-poo.json \
   "$RECOVERY_DIR"/mount-before.json \
   "$RECOVERY_DIR"/mount-after.json \
   "$RECOVERY_DIR"/result.json
@@ -51,10 +52,12 @@ print(json.dumps({
 ' > "$output"
 }
 
-inventory_live_service() {
-  docker compose exec -T --user 0 sara python -c '
+inventory_named_volume() {
+  local volume="$1"
+  local image="$2"
+  docker run --rm --user 0 -v "${volume}:/data:ro" --entrypoint python "$image" -c '
 import hashlib,json,pathlib
-root=pathlib.Path("/var/lib/sara")
+root=pathlib.Path("/data")
 rows=[]
 for p in sorted(x for x in root.rglob("*") if x.is_file()):
     rows.append({
@@ -66,12 +69,14 @@ print(json.dumps(rows,sort_keys=True,indent=2))
 '
 }
 
-poo_snapshot_live_service() {
-  docker compose exec -T --user 0 sara python -c '
+poo_snapshot_named_volume() {
+  local volume="$1"
+  local image="$2"
+  docker run --rm --user 0 -v "${volume}:/data:ro" --entrypoint python "$image" -c '
 import json,pathlib
-path=pathlib.Path("/var/lib/sara/registry.json")
+path=pathlib.Path("/data/registry.json")
 if not path.is_file():
-    raise SystemExit("registry.json missing from live SARA volume")
+    raise SystemExit("registry.json missing from SARA volume")
 registry=json.loads(path.read_text(encoding="utf-8"))
 poo=registry.get("POO_TECHNICAL_REGISTRY")
 if not isinstance(poo,dict):
@@ -99,17 +104,26 @@ print(json.dumps({
 '
 }
 
-# The service is expected to have been populated by verify_deployment.sh before
-# this exercise. Read and archive the ACTUAL live service mount, not a separate
-# helper container's view of a similarly configured volume.
+# verify_deployment.sh populates the SARA registry before this exercise. Start
+# the exact Compose service, resolve the ACTUAL /var/lib/sara named volume from
+# the running container, then quiesce the service before taking authoritative
+# bytes. This avoids both helper-volume ambiguity and audit-log write races.
 docker compose up -d --build
 wait_ready
 live_container="$(docker compose ps -q sara)"
 [[ -n "$live_container" ]] || { echo "ERROR: SARA container is not running." >&2; exit 1; }
 write_mount_evidence "$live_container" "$RECOVERY_DIR/mount-before.json"
+source_volume="$(python3 - "$RECOVERY_DIR/mount-before.json" <<'PY'
+import json,sys
+print(json.load(open(sys.argv[1],encoding="utf-8"))["name"])
+PY
+)"
+source_image="$(docker inspect --format '{{.Config.Image}}' "$live_container")"
+[[ -n "$source_volume" && -n "$source_image" ]] || { echo "ERROR: Source volume/image resolution failed." >&2; exit 1; }
 
-inventory_live_service > "$RECOVERY_DIR/before.json"
-poo_snapshot_live_service > "$RECOVERY_DIR/before-poo.json"
+docker compose stop sara >/dev/null
+inventory_named_volume "$source_volume" "$source_image" > "$RECOVERY_DIR/before.json"
+poo_snapshot_named_volume "$source_volume" "$source_image" > "$RECOVERY_DIR/before-poo.json"
 python3 - "$RECOVERY_DIR/before.json" <<'PY'
 import json,sys
 rows=json.load(open(sys.argv[1],encoding="utf-8"))
@@ -122,21 +136,19 @@ if not rows:
     raise SystemExit("recovery source inventory must not be empty")
 PY
 
-# Stream a root-readable archive from the running service's exact named volume.
-# Root is used only for the bounded backup/restore helper operation; the service
-# itself continues to run as UID 10001.
-docker compose exec -T --user 0 sara python -c '
+# Back up the exact quiesced volume through an explicitly named, read-only
+# mount. Root is used only for bounded backup/restore access; SARA runs UID 10001.
+docker run --rm --user 0 -v "${source_volume}:/data:ro" --entrypoint python "$source_image" -c '
 import pathlib,sys,tarfile
-root=pathlib.Path("/var/lib/sara")
+root=pathlib.Path("/data")
 with tarfile.open(fileobj=sys.stdout.buffer,mode="w|gz") as tf:
     for p in sorted(root.rglob("*")):
         tf.add(p,arcname=str(p.relative_to(root)),recursive=False)
 ' > "$RECOVERY_DIR/sara-data.tar.gz"
 sha256sum "$RECOVERY_DIR/sara-data.tar.gz" > "$RECOVERY_DIR/sara-data.tar.gz.sha256"
 
-# Destroy the source volume, create a fresh SARA service/volume, discover the
-# exact recreated volume from the created container, and restore into that
-# named volume explicitly.
+# Hard destruction boundary: remove the Compose service and its source volume,
+# then create a fresh service/volume and restore only from the exported archive.
 docker compose down -v
 docker compose create sara >/dev/null
 restore_container="$(docker compose ps -aq sara | head -n1)"
@@ -165,9 +177,17 @@ for p in [root,*root.rglob("*")]:
         pass
 ' < "$RECOVERY_DIR/sara-data.tar.gz"
 
+# Compare restored bytes BEFORE service startup, because normal startup appends
+# a new service_started audit record and should not be mistaken for corruption.
+inventory_named_volume "$restore_volume" "$restore_image" > "$RECOVERY_DIR/after.json"
+poo_snapshot_named_volume "$restore_volume" "$restore_image" > "$RECOVERY_DIR/after-poo.json"
+cmp "$RECOVERY_DIR/before.json" "$RECOVERY_DIR/after.json"
+cmp "$RECOVERY_DIR/before-poo.json" "$RECOVERY_DIR/after-poo.json"
+
+# Now prove the restored volume is the one used by the restarted service and
+# that startup leaves the PoO technical registry semantically unchanged.
 docker compose up -d
 wait_ready
-
 restored_container="$(docker compose ps -q sara)"
 [[ -n "$restored_container" ]] || { echo "ERROR: Restored SARA container is not running." >&2; exit 1; }
 restored_volume="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/sara"}}{{.Name}}{{end}}{{end}}' "$restored_container")"
@@ -175,11 +195,8 @@ restored_volume="$(docker inspect --format '{{range .Mounts}}{{if eq .Destinatio
   echo "ERROR: Running restored service is not using the restored named volume." >&2
   exit 1
 }
-
-inventory_live_service > "$RECOVERY_DIR/after.json"
-poo_snapshot_live_service > "$RECOVERY_DIR/after-poo.json"
-cmp "$RECOVERY_DIR/before.json" "$RECOVERY_DIR/after.json"
-cmp "$RECOVERY_DIR/before-poo.json" "$RECOVERY_DIR/after-poo.json"
+poo_snapshot_named_volume "$restore_volume" "$restore_image" > "$RECOVERY_DIR/poststart-poo.json"
+cmp "$RECOVERY_DIR/before-poo.json" "$RECOVERY_DIR/poststart-poo.json"
 
 python3 - <<'PY'
 import datetime,hashlib,json,os,pathlib,subprocess
@@ -200,12 +217,14 @@ result={
   "source_file_count":len(before),
   "source_volume_name":mount_before["name"],
   "restored_volume_name":mount_after["name"],
+  "source_volume_destroyed_before_restore":True,
   "poo_registry_digest":poo["registry_digest"],
   "poo_state_count":poo["state_count"],
   "poo_commit_count":poo["commit_count"],
   "deployment_smoke_state_preserved":poo["deployment_smoke_present"],
-  "byte_identical_inventory_after_restore":True,
-  "poo_snapshot_identical_after_restore":True,
+  "byte_identical_prestart_inventory_after_restore":True,
+  "poo_snapshot_identical_prestart_after_restore":True,
+  "poo_snapshot_unchanged_after_service_restart":True,
   "external_compliance_claim":"NONE",
 }
 (p/"result.json").write_text(json.dumps(result,sort_keys=True,indent=2)+"\n",encoding="utf-8")
