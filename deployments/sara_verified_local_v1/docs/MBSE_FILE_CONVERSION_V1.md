@@ -20,7 +20,7 @@ separate source files
     -> frozen ground-truth scoring + retained negative evidence
 ```
 
-## Frozen corpus
+## Frozen corpora
 
 `fixtures/mbse_file_corpus_v1/manifest.json` defines synthetic fixture `WS-MBSE-FILE-SYNTH-002`.
 
@@ -31,9 +31,13 @@ The source corpus is deliberately file-backed and heterogeneous:
 - `network_configuration.json` — synthetic host/service/consumer configuration;
 - `cable_record.csv` — synthetic power cable record.
 
+`manifest_paraphrase.json` defines a second synthetic fixture, `WS-MBSE-FILE-SYNTH-003`. It keeps the structured sources and ground truth fixed but replaces the manual sentence with a held-out paraphrase using different syntax for the same two facts. The extractor must recover the same graph from both predeclared phrase forms without adding unsupported relationships.
+
+This is a **limited paraphrase check**, not evidence of general NLP or arbitrary-document understanding.
+
 Every manifest source has a predeclared SHA-256 digest. The loader recomputes the digest before extraction and fails closed on mismatch.
 
-The corpus is synthetic and contains no AEGIS, Navy, partner, proprietary, CUI, or classified source material.
+The corpora are synthetic and contain no AEGIS, Navy, partner, proprietary, CUI, or classified source material.
 
 ## Security / source-custody behavior
 
@@ -55,8 +59,8 @@ The current extraction engine remains intentionally conservative.
 
 Supported semantics in the frozen family include:
 
-- explicit 28 VDC `powers` relationships from supported prose/cable patterns;
-- explicit sensor-to-processor Ethernet-data relationship from the frozen prose pattern;
+- explicit 28 VDC `powers` relationships from two predeclared prose forms plus the structured cable pattern;
+- explicit sensor-to-processor Ethernet-data relationship from two predeclared prose forms;
 - host-to-service `hosts` relationships from structured network rows;
 - service-to-consumer `publishes_track_data` relationships from structured network rows;
 - entity identity/type/part metadata from the BOM where explicitly supplied.
@@ -77,23 +81,23 @@ The candidate graph retains source references plus source file path, SHA-256, an
 
 ## What this closes
 
-If the exact-head tests pass, this can support a narrow statement such as:
+If the exact-head tests pass for both manifests, this can support a narrow statement such as:
 
-> `IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY` for deterministic conversion of the exact frozen synthetic TXT/CSV/JSON fixture family into a provenance-bearing Worldshepherd neutral model.
+> `IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY` for deterministic conversion of two predeclared synthetic TXT/CSV/JSON fixture variants, including one held-out prose paraphrase, into the same provenance-bearing Worldshepherd neutral model without unsupported relationships.
 
-It would strengthen evidence that the pipeline accepts separate legacy-like files rather than only preconstructed in-memory objects.
+It would strengthen evidence that the pipeline accepts separate legacy-like files rather than only preconstructed in-memory objects, and that the two specifically tested prose forms map consistently.
 
 ## What this does **not** close
 
 This candidate does not establish:
 
 - general document understanding;
+- general NLP or robustness to unseen technical language beyond the two declared phrase forms;
 - OCR;
 - PDF parsing or semantic recovery from arbitrary PDFs;
 - image/diagram understanding;
 - arbitrary spreadsheet/workbook parsing;
-- robust NLP across unknown technical-manual language;
-- requirement/configuration-document generalization beyond supported patterns;
+- broad requirements/configuration-document generalization;
 - automatic SysML reconstruction;
 - valid SysML/XMI serialization;
 - Cameo/MagicDraw import compatibility;
@@ -106,13 +110,14 @@ This candidate does not establish:
 
 ## Next technical gates
 
-1. Add synthetic requirements/configuration artifacts with unseen phrasing and score held-out generalization rather than only the frozen known phrases.
-2. Add a bounded PDF text-extraction lane only with a pinned parser and source-page provenance; image-only documents remain a separate OCR/vision problem.
-3. Add diagram/image extraction as its own measured lane rather than treating file acceptance as semantic understanding.
-4. Define a target modeling interoperability contract from authoritative SysML/tool documentation.
-5. Export only the subset actually represented by that contract and test round-trip/import behavior in an appropriate tool/environment.
-6. Move provenance/bookkeeping sophistication into the Phase-II expansion path after conversion feasibility is independently credible.
+1. Add additional synthetic requirements/configuration artifacts with separately frozen unseen phrasing and measure generalization rather than broadening regexes after seeing each test case.
+2. Predeclare a development/holdout split before adding more language families so rules are not evaluated only on examples used to write them.
+3. Add a bounded PDF text-extraction lane only with a pinned parser and source-page provenance; image-only documents remain a separate OCR/vision problem.
+4. Add diagram/image extraction as its own measured lane rather than treating file acceptance as semantic understanding.
+5. Define a target modeling interoperability contract from authoritative SysML/tool documentation.
+6. Export only the subset actually represented by that contract and test round-trip/import behavior in an appropriate tool/environment.
+7. Move provenance/bookkeeping sophistication into the Phase-II expansion path after conversion feasibility is independently credible.
 
 ## Falsification
 
-The candidate fails its own bounded claim if any frozen source digest mismatch is silently accepted, path escape succeeds, extracted relationships lose source evidence, unsupported inference appears, ground-truth content is missed beyond the declared thresholds, or repeated execution over identical frozen inputs changes the output digest.
+The candidate fails its own bounded claim if any frozen source digest mismatch is silently accepted, path escape succeeds, extracted relationships lose source evidence, either predeclared fixture misses the declared ground truth beyond threshold, either fixture adds unsupported inference, the held-out paraphrase does not reproduce the same relationship graph, or repeated execution over identical frozen inputs changes the output digest.
