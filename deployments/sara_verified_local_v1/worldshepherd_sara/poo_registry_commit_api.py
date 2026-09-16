@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -22,6 +23,21 @@ from .storage import DurableStore
 
 
 router = APIRouter(prefix="/admin/poo", tags=["poo-governance"])
+POO_REQUIRE_PRIME_AUTHORIZATION_ENV = "POO_REQUIRE_PRIME_AUTHORIZATION"
+_TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
+_FALSE_VALUES = frozenset({"", "0", "false", "no", "off"})
+
+
+def poo_prime_authorization_required() -> bool:
+    raw = os.getenv(POO_REQUIRE_PRIME_AUTHORIZATION_ENV, "").strip().lower()
+    if raw in _TRUE_VALUES:
+        return True
+    if raw in _FALSE_VALUES:
+        return False
+    raise RuntimeError(
+        f"{POO_REQUIRE_PRIME_AUTHORIZATION_ENV} must be one of: "
+        "0/1, false/true, no/yes, off/on"
+    )
 
 
 def _store(request: Request) -> DurableStore:
@@ -51,8 +67,13 @@ def get_poo_technical_registry(
             status_code=500,
             detail="PoO technical registry validation failed",
         ) from exc
+    try:
+        prime_required = poo_prime_authorization_required()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {
         "registry": namespace.model_dump(mode="json"),
+        "prime_authorization_required": prime_required,
         "claims_boundary": "INTERNAL_TECHNICAL_REGISTRY_ONLY",
     }
 
@@ -64,6 +85,17 @@ def commit_poo_technical_registry(
     role: Annotated[Role, Depends(resolve_role)],
 ) -> dict[str, Any]:
     require_admin(role)
+    try:
+        if poo_prime_authorization_required():
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    "Unsigned PoO technical commits are disabled by policy; "
+                    "use /admin/poo/registry/commit-prime-authorized"
+                ),
+            )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     durable_store = _store(request)
 
     def operation(registry: dict[str, Any]):
@@ -103,6 +135,10 @@ def commit_poo_technical_registry_prime_authorized(
     role: Annotated[Role, Depends(resolve_role)],
 ) -> dict[str, Any]:
     require_admin(role)
+    try:
+        prime_required = poo_prime_authorization_required()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     durable_store = _store(request)
     try:
         verifier = PrimeSentinelPoOVerifier.from_environment()
@@ -147,6 +183,7 @@ def commit_poo_technical_registry_prime_authorized(
     return {
         "commit": result.model_dump(mode="json"),
         "audit_delivery": delivery,
+        "prime_authorization_required": prime_required,
         "claims_boundary": (
             "PRIME_SIGNED_INTERNAL_TECHNICAL_STATE_COMMIT_NOT_LEGAL_TITLE_OR_"
             "LIVE_VALUE_AUTHORITY"
