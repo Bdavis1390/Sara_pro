@@ -13,9 +13,13 @@ import sys
 from pathlib import Path
 from urllib.request import urlopen
 
+ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from security.qcrypto.chain_online_guard import ChainOnlineEvidence, assess_chain_online
 
-ROOT = Path(__file__).resolve().parent
 COMPOSE = ROOT / "compose.observer.yaml"
 ARTIFACT_DIR = ROOT / "artifacts"
 
