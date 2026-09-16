@@ -21,6 +21,8 @@ from .event_outbox import (
 from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
 from .models import AuditRecord, RegistryPatch, RelayRequest, RelayResponse
+from .poo_registry_commit import POO_TECHNICAL_REGISTRY_KEY
+from .poo_registry_commit_api import router as poo_registry_commit_router
 from .prime_passport import PRIME_PASSPORTS_REGISTRY_KEY
 from .prime_passport_api import router as prime_passport_router
 from .prime_sentinel_authorization import (
@@ -35,6 +37,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         PRIME_PASSPORTS_REGISTRY_KEY,
         PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
         EVENT_OUTBOX_REGISTRY_KEY,
+        POO_TECHNICAL_REGISTRY_KEY,
     }
 )
 
@@ -141,6 +144,7 @@ app = FastAPI(
 )
 app.add_middleware(RequestSizeLimitMiddleware)
 app.include_router(prime_passport_router)
+app.include_router(poo_registry_commit_router)
 
 
 @app.middleware("http")
@@ -180,6 +184,8 @@ def health(request: Request) -> dict[str, object]:
             "hmaa_status": "/v1/hmaa/status",
             "hmaa_evidence": "/v1/hmaa/evidence?limit=50",
             "registry": "/admin/registry",
+            "poo_registry": "/admin/poo/registry",
+            "poo_registry_commit": "/admin/poo/registry/commit",
             "prime_passport": "/admin/prime/{prime_id}/passport",
             "prime_requalification_authorize": "/admin/prime/{prime_id}/requalification/authorize",
             "relay": "/v1/relay",
@@ -221,7 +227,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/poo/registry</code>, <code>/admin/poo/registry/commit</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. PRIME SENTINEL private signing keys are not stored by SARA.</p></div>
 </body></html>"""
 
