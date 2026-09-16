@@ -1,3 +1,5 @@
+from itertools import permutations
+
 from security.poo.coc_guard import COCEvidence, coc_digest
 from security.poo.commit_guard import prepare_registry_commit
 from security.poo.ownership_guard import OwnershipEvidence
@@ -61,12 +63,7 @@ def genesis():
 
 
 def transfer(current, recipient, key, suffix):
-    next_coc = coc(
-        recipient,
-        key,
-        previous=current.active_coc_digest,
-        suffix=suffix,
-    )
+    next_coc = coc(recipient, key, previous=current.active_coc_digest, suffix=suffix)
     evidence = TransferEvidence(
         asset_id=current.asset_id,
         prior_poo_digest=current.active_poo_digest,
@@ -162,18 +159,9 @@ def test_two_prepared_transfers_cannot_both_commit_regardless_of_order():
         first = commit([root], prepared[winner_index])
         assert first.commit_ready is True
         advanced = list(first.candidate_states)
-
-        # A stale writer using the old compare-and-swap digest fails immediately.
-        stale = commit(
-            advanced,
-            prepared[loser_index],
-            expected=registry_digest([root]),
-        )
+        stale = commit(advanced, prepared[loser_index], expected=registry_digest([root]))
         assert stale.commit_ready is False
         assert "stale registry digest" in stale.reasons
-
-        # Even if the stale writer refreshes the registry digest, its predecessor
-        # remains obsolete and cannot become a second active branch.
         refreshed = commit(advanced, prepared[loser_index])
         assert refreshed.commit_ready is False
         assert "candidate predecessor is not the active PoO tip" in refreshed.reasons
@@ -206,8 +194,39 @@ def test_committed_candidate_replay_is_always_rejected():
     first = commit([root], transition)
     assert first.commit_ready is True
     advanced = list(first.candidate_states)
-
     replay = commit(advanced, transition)
     assert replay.commit_ready is False
     assert "candidate technical state is a replay" in replay.reasons
     assert "candidate PoO already exists in registry" in replay.reasons
+
+
+def test_bounded_scheduler_all_permutations_allow_at_most_one_same_tip_candidate():
+    """Bounded model-check all 24 schedules of four simultaneous candidates.
+
+    Three transfers and one recovery are all valid when prepared against the same
+    initial PoO/COC tip. Whichever candidate is scheduled first may produce a valid
+    candidate registry; every remaining stale transition must fail even after seeing
+    the updated registry digest. This proves the compare-and-swap/predecessor guards
+    are order-independent for this bounded one-generation race model.
+    """
+    root = genesis()
+    candidates = (
+        transfer(root, "bob", "key:bob", "sched-bob"),
+        transfer(root, "carol", "key:carol", "sched-carol"),
+        transfer(root, "dave", "key:dave", "sched-dave"),
+        recovery(root, "sched-recovery"),
+    )
+    schedules_checked = 0
+    for schedule in permutations(candidates):
+        first = commit([root], schedule[0])
+        assert first.commit_ready is True
+        active_registry = list(first.candidate_states)
+        accepted = 1
+        for stale_candidate in schedule[1:]:
+            decision = commit(active_registry, stale_candidate)
+            assert decision.commit_ready is False
+            assert "candidate predecessor is not the active PoO tip" in decision.reasons
+            assert "candidate predecessor is not the active COC tip" in decision.reasons
+        assert accepted == 1
+        schedules_checked += 1
+    assert schedules_checked == 24
