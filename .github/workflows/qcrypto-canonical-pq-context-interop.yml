@@ -76,7 +76,7 @@ jobs:
           python scripts/qcrypto_canonical_pq_context_interop_evidence.py \
             --output canonical-pq-context-interop-evidence.json
 
-      - name: Assert exact-context PQ verification posture
+      - name: Assert intent-before-signature exact-context PQ verification posture
         run: |
           python - <<'PY'
           import json
@@ -88,6 +88,8 @@ jobs:
           assert e['claim_state'] == 'CANONICAL_CONTEXT_PQ_SIGNATURE_INTEROPERABILITY_PROVEN_IN_CI'
           assert e['proof_scope'] == 'EPHEMERAL_ZERO_VALUE_CANONICAL_CONTEXT_ONLY'
           assert e['backend']['pinned_version'] == '1.0.0'
+          assert e['pre_sign_intent_only'] is True
+          assert e['signature_presence_assumed'] is False
           assert e['scheme_count'] == 3
           assert e['primary_context_digest'] != e['alternate_context_digest']
           assert len(e['results']) == 3
@@ -102,6 +104,7 @@ jobs:
               assert result['live_value_authorized'] is False
               assert result['execution_authority'] is False
           s = e['summary']
+          assert s['intent_before_signature_generation'] is True
           assert s['all_valid_signatures_verified'] is True
           assert s['all_tampered_contexts_rejected'] is True
           assert s['all_cross_context_replays_rejected'] is True
