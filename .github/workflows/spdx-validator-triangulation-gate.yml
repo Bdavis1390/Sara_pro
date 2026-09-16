@@ -1,0 +1,218 @@
+name: SPDX Validator Triangulation Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_VALIDATOR_TRIANGULATION.md'
+      - '.github/workflows/spdx-validator-triangulation-gate.yml'
+  push:
+    branches:
+      - 'worldshepherd-spdx-validator-triangulation-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_VALIDATOR_TRIANGULATION.md'
+      - '.github/workflows/spdx-validator-triangulation-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  triangulate-spdx301-fixture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Fetch versioned canonical SPDX 3.0.1 validation resources
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            'https://spdx.org/schema/3.0.1/spdx-json-schema.json' \
+            --output /tmp/spdx-3.0.1-schema.json
+          curl --fail --silent --show-error --location \
+            'https://spdx.org/rdf/3.0.1/spdx-model.ttl' \
+            --output /tmp/spdx-3.0.1-model.ttl
+          test -s /tmp/spdx-3.0.1-schema.json
+          test -s /tmp/spdx-3.0.1-model.ttl
+          sha256sum /tmp/spdx-3.0.1-schema.json /tmp/spdx-3.0.1-model.ttl
+
+      - name: Install isolated validator toolchains
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/ws-spdx-validator
+          /tmp/ws-spdx-validator/bin/python -m pip install --disable-pip-version-check \
+            'spdx3-validate==0.0.7' 'pyshacl==0.40.1'
+          /tmp/ws-spdx-validator/bin/python -m pip check
+          mkdir -p /tmp/ws-spdx-ajv
+          npm install --prefix /tmp/ws-spdx-ajv --no-save 'ajv-cli@5.0.0'
+          /tmp/ws-spdx-ajv/node_modules/.bin/ajv help validate >/dev/null
+
+      - name: Run combined SPDX validator
+        run: |
+          set -euo pipefail
+          /tmp/ws-spdx-validator/bin/spdx3-validate --json \
+            deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json
+
+      - name: Run independent structural path with AJV
+        run: |
+          set -euo pipefail
+          /tmp/ws-spdx-ajv/node_modules/.bin/ajv validate \
+            --spec=draft2020 \
+            -s /tmp/spdx-3.0.1-schema.json \
+            -d deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json
+
+      - name: Run direct semantic path with pySHACL
+        run: |
+          set -euo pipefail
+          /tmp/ws-spdx-validator/bin/pyshacl \
+            -f human \
+            -df json-ld \
+            --shacl /tmp/spdx-3.0.1-model.ttl \
+            --ont-graph /tmp/spdx-3.0.1-model.ttl \
+            deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json
+
+      - name: Prove a structural mutation fails closed
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          src = Path('deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json')
+          doc = json.loads(src.read_text(encoding='utf-8'))
+          for element in doc['@graph']:
+              if element.get('type') == 'SpdxDocument':
+                  element['profileConformance'] = 'core'
+                  break
+          Path('/tmp/spdx301-invalid-cardinality.spdx3.json').write_text(
+              json.dumps(doc, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          PY
+          if /tmp/ws-spdx-ajv/node_modules/.bin/ajv validate \
+            --spec=draft2020 \
+            -s /tmp/spdx-3.0.1-schema.json \
+            -d /tmp/spdx301-invalid-cardinality.spdx3.json; then
+            echo 'AJV unexpectedly accepted structurally invalid SPDX fixture' >&2
+            exit 1
+          fi
+          if /tmp/ws-spdx-validator/bin/spdx3-validate --json \
+            /tmp/spdx301-invalid-cardinality.spdx3.json; then
+            echo 'spdx3-validate unexpectedly accepted structurally invalid SPDX fixture' >&2
+            exit 1
+          fi
+
+      - name: Build triangulation evidence record
+        run: |
+          set -euo pipefail
+          mkdir -p spdx_validator_evidence_ci
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          fixture = Path('deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json')
+          schema = Path('/tmp/spdx-3.0.1-schema.json')
+          model = Path('/tmp/spdx-3.0.1-model.ttl')
+
+          def digest(path: Path) -> str:
+              return 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest()
+
+          record = {
+              'schema': 'WS-SPDX-VALIDATOR-TRIANGULATION-EVIDENCE-V1',
+              'repository': os.environ.get('GITHUB_REPOSITORY'),
+              'commit_sha': os.environ.get('GITHUB_SHA'),
+              'spdx_version': '3.0.1',
+              'fixture': {
+                  'path': str(fixture),
+                  'sha256': digest(fixture),
+              },
+              'canonical_resources': [
+                  {
+                      'url': 'https://spdx.org/schema/3.0.1/spdx-json-schema.json',
+                      'sha256': digest(schema),
+                      'role': 'STRUCTURAL_SCHEMA',
+                  },
+                  {
+                      'url': 'https://spdx.org/rdf/3.0.1/spdx-model.ttl',
+                      'sha256': digest(model),
+                      'role': 'ONTOLOGY_AND_SHACL',
+                  },
+              ],
+              'validators': [
+                  {
+                      'name': 'spdx3-validate',
+                      'version': '0.0.7',
+                      'structural_validation': True,
+                      'semantic_validation': True,
+                      'result': 'PASS',
+                  },
+                  {
+                      'name': 'ajv-cli',
+                      'version': '5.0.0',
+                      'structural_validation': True,
+                      'semantic_validation': False,
+                      'result': 'PASS',
+                  },
+                  {
+                      'name': 'pyshacl',
+                      'version': '0.40.1',
+                      'structural_validation': False,
+                      'semantic_validation': True,
+                      'result': 'PASS',
+                  },
+              ],
+              'negative_control': {
+                  'mutation': 'SpdxDocument.profileConformance array -> scalar string',
+                  'ajv_rejected': True,
+                  'spdx3_validate_rejected': True,
+              },
+              'evidence_state': 'EXACT_FIXTURE_CROSS_VALIDATOR_AGREEMENT',
+              'structural_engine_diversity_established': True,
+              'semantic_engine_diversity_established': False,
+              'general_spdx_conformance_established': False,
+              'arbitrary_input_conformance_established': False,
+              'independent_external_validation_established': False,
+              'community_endorsement_established': False,
+              'admission_authorized': False,
+              'release_approved': False,
+              'legal_license_conclusions_established': False,
+              'claims_boundary': (
+                  'Agreement is limited to the exact frozen fixture, canonical resources fetched at this run, and pinned '
+                  'tool versions. spdx3-validate depends on pySHACL, so direct pySHACL execution is not an independent '
+                  'semantic engine. AJV provides a distinct structural engine only.'
+              ),
+          }
+          out = Path('spdx_validator_evidence_ci/validator-triangulation.json')
+          out.write_text(json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+          python -m json.tool spdx_validator_evidence_ci/validator-triangulation.json >/dev/null
+
+      - name: Enforce claims boundaries
+        run: |
+          set -euo pipefail
+          grep -q 'EXACT_FIXTURE_CROSS_VALIDATOR_AGREEMENT' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"structural_engine_diversity_established": true' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"semantic_engine_diversity_established": false' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"general_spdx_conformance_established": false' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"arbitrary_input_conformance_established": false' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"independent_external_validation_established": false' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"community_endorsement_established": false' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"admission_authorized": false' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"release_approved": false' spdx_validator_evidence_ci/validator-triangulation.json
+          grep -q '"legal_license_conclusions_established": false' spdx_validator_evidence_ci/validator-triangulation.json
+
+      - name: Upload validator triangulation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: spdx-validator-triangulation-evidence
+          path: spdx_validator_evidence_ci/validator-triangulation.json
+          if-no-files-found: error
