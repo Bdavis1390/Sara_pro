@@ -1,0 +1,10 @@
+services:
+  prime-sentinel:
+    command:
+      - uvicorn
+      - --factory
+      - worldshepherd_sara.prime_sentinel_poo_service:create_prime_sentinel_poo_app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "9540"
