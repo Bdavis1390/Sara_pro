@@ -19,6 +19,22 @@ The pilot deliberately reuses OCSF concepts already present on `main` rather tha
 - `attestation.fingerprint`
 - `attestation.signatures`
 
+## September 2026 upstream architecture delta
+
+Two adjacent OCSF efforts now define the boundary more clearly:
+
+- `#1754` is developing an `AI Agent Activity` class for agent-specific lifecycle/action telemetry.
+- `#1704` is consolidating per-operation AI outcome scalars into the shared `ai_status` object contributed by `ai_operation`, including stop reason and placeholders for permission, compaction, and sub-agent outcomes.
+
+This pilot therefore adopts a strict **non-duplication rule**:
+
+- existing OCSF event classes remain the preferred home for file, process, API, and other already-representable actions;
+- `AI Agent Activity` covers agent-specific events that do not fit an existing class;
+- `ai_status` is the emerging shared outcome container;
+- the #1724 trust-base contribution remains a separate configuration/evidence timeline that correlates with activity events rather than redefining them.
+
+See `CROSS_PLANE_MAPPING.md` for the current mapping discipline.
+
 ## Current contribution boundary
 
 What is ready now:
@@ -26,12 +42,14 @@ What is ready now:
 1. Six semantic pass/fail vectors covering session baseline, mid-session dependency change, adapter digest divergence, missing closure, broken chain linkage, and unsafe credential material.
 2. A standalone verifier for the provisional invariants discussed in issue #1724.
 3. A separate checker that confirms an OCSF checkout still exposes the existing semantic anchors used by this pilot.
+4. A cross-plane mapping that keeps activity semantics, `ai_status`, and trust-base evidence separated but correlatable.
 
 What is **not** ready to claim:
 
 - final event-class name or `uid`
 - final proposed class field names
 - acceptance of admission/closure activity mapping
+- final correlation attribute(s) between trust-base and behavior events
 - canonical-serialization compliance
 - signature-verification compliance
 - OCSF maintainer endorsement
@@ -44,18 +62,20 @@ Once the class PR for #1724 is available:
 2. Preserve the semantic distinction between declared configuration and executed/observed state.
 3. Preserve chain semantics already provided by `record_integrity`; do not create a second chaining model.
 4. Confirm genesis behavior and `prev_event` linkage against the accepted wording.
-5. Translate the admission/closure vectors into the accepted activity mapping, if maintainers retain that design.
-6. Run the OCSF schema compiler against the full fork.
-7. Run OCSF compatibility validation where classification IDs or existing attributes are affected.
-8. Run OCSF server validation to ensure the schema can be consumed by `ocsf-server`.
-9. Add an `Unreleased` changelog entry and DCO-sign all commits before opening the upstream PR.
-10. Keep the PR focused on one coherent class/test contribution and respond to CI/reviewer findings until clean.
+5. Translate the admission/closure vectors into the accepted activity/emission mapping, if maintainers retain that design.
+6. Recheck `#1754` and `#1704`; remove any fixture or field that would duplicate accepted `AI Agent Activity`, existing OCSF activity classes, `security_control`, or `ai_status` semantics.
+7. Add only the minimum correlation mechanism needed to join trust-base state to relevant activity events, using accepted OCSF attributes rather than inventing a parallel correlation model.
+8. Run the OCSF schema compiler against the full fork.
+9. Run OCSF compatibility validation where classification IDs or existing attributes are affected.
+10. Run OCSF server validation to ensure the schema can be consumed by `ocsf-server`.
+11. Add an `Unreleased` changelog entry and DCO-sign all commits before opening the upstream PR.
+12. Keep the PR focused on one coherent class/test contribution and respond to CI/reviewer findings until clean.
 
 ## Suggested maintainer handoff
 
 A concise offer to OCSF maintainers:
 
-> I can take the conformance-test/fixture slice for the agent trust-base inventory proposal. I have a provisional harness with six semantic vectors covering per-emission chain continuity, declared-vs-observed state, admission/closure pairing, content fingerprints, remote-model identity handling, and credential hygiene. It is intentionally non-normative today. Once the class fields stabilize, I can translate the fixtures to the accepted OCSF shape and run them alongside the existing compiler/server validation path.
+> I can take the conformance-test/fixture slice for the agent trust-base inventory proposal. I have a provisional harness with semantic vectors covering per-emission chain continuity, declared-vs-observed state, admission/closure pairing, content fingerprints, remote-model identity handling, and credential hygiene. I have also separated those checks from the activity semantics emerging in #1754 and the `ai_status` work in #1704 so this does not create a parallel AI event taxonomy. Once the #1724 class fields stabilize, I can translate the fixtures to the accepted OCSF shape and run them alongside the existing compiler/server validation path.
 
 ## Commands
 
