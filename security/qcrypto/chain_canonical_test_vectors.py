@@ -2,7 +2,7 @@
 
 The vectors bridge public chain-readiness evidence into the generic Worldshepherd
 canonical authority context without pretending to implement a chain's native
-transaction format.  Native cryptographic capability and Worldshepherd reference
+transaction format. Native cryptographic capability and Worldshepherd reference
 PQC are deliberately separate fields.
 
 No vector creates a native transaction, wallet signature, consensus message,
@@ -48,6 +48,7 @@ class ChainVectorSpec:
     vector_class: VectorClass
     adapter_class: str
     native_authority_capability: str
+    native_classical_algorithm: str
     native_pq_algorithm: str | None
     ws_reference_pq_algorithm: str
     ws_reference_class: str
@@ -69,10 +70,12 @@ class ChainCanonicalVectorDecision:
     account_readiness: str
     consensus_readiness: str
     native_authority_capability: str
+    native_classical_algorithm: str
     native_pq_algorithm: str | None
     ws_reference_pq_algorithm: str
     ws_reference_class: str
     native_and_reference_algorithm_same: bool
+    live_native_pq_account_support: bool
     canonical_context_ready: bool
     canonical_context_digest: str | None
     canonical_preimage_hex: str | None
@@ -106,6 +109,7 @@ SPECS: dict[str, ChainVectorSpec] = {
         vector_class=VectorClass.DESIGN_ONLY,
         adapter_class="DRAFT_PQ_OUTPUT_MIGRATION_REFERENCE",
         native_authority_capability="BIP-360/BIP-361 DRAFT MIGRATION CONCEPTS",
+        native_classical_algorithm="ECDSA",
         native_pq_algorithm=None,
         ws_reference_pq_algorithm="ML-DSA",
         ws_reference_class="WORLDSHEPHERD_REFERENCE_NOT_BIP_SIGNATURE_SELECTION",
@@ -118,6 +122,7 @@ SPECS: dict[str, ChainVectorSpec] = {
         vector_class=VectorClass.ROADMAP_INTEROP,
         adapter_class="PQ_ACCOUNT_ABSTRACTION_ROADMAP_REFERENCE",
         native_authority_capability="PQ INTEROP DEVNET / SIGNATURE-AGILITY ROADMAP",
+        native_classical_algorithm="ECDSA",
         native_pq_algorithm=None,
         ws_reference_pq_algorithm="ML-DSA",
         ws_reference_class="WORLDSHEPHERD_REFERENCE_NOT_MAINNET_ACCOUNT_PRIMITIVE",
@@ -130,6 +135,7 @@ SPECS: dict[str, ChainVectorSpec] = {
         vector_class=VectorClass.LIVE_ACCOUNT_REFERENCE,
         adapter_class="NATIVE_REKEY_PQ_ACCOUNT_REFERENCE",
         native_authority_capability="LIVE FALCON-1024 ACCOUNT AUTHORIZATION",
+        native_classical_algorithm="ED25519",
         native_pq_algorithm="FALCON-1024",
         ws_reference_pq_algorithm="ML-DSA",
         ws_reference_class="STANDARDIZED_REFERENCE_DISTINCT_FROM_NATIVE_FALCON",
@@ -180,6 +186,7 @@ def build_chain_canonical_vector(chain_id: str) -> ChainCanonicalVectorDecision:
             "account_readiness": account.readiness.name,
             "consensus_readiness": consensus.readiness.name,
             "native_authority_capability": spec.native_authority_capability,
+            "native_classical_algorithm": spec.native_classical_algorithm,
             "native_pq_algorithm": spec.native_pq_algorithm,
             "ws_reference_pq_algorithm": spec.ws_reference_pq_algorithm,
         }
@@ -211,7 +218,7 @@ def build_chain_canonical_vector(chain_id: str) -> ChainCanonicalVectorDecision:
         declared_requirement=MigrationRequirement.HYBRID_REQUIRED,
         envelope_version=1,
         key_epoch=0,
-        classical_algorithm_id="ECDSA",
+        classical_algorithm_id=spec.native_classical_algorithm,
         pq_algorithm_id=spec.ws_reference_pq_algorithm,
         classical_signature_present=True,
         pq_signature_present=True,
@@ -284,12 +291,14 @@ def build_chain_canonical_vector(chain_id: str) -> ChainCanonicalVectorDecision:
         account_readiness=account.readiness.name,
         consensus_readiness=consensus.readiness.name,
         native_authority_capability=spec.native_authority_capability,
+        native_classical_algorithm=spec.native_classical_algorithm,
         native_pq_algorithm=spec.native_pq_algorithm,
         ws_reference_pq_algorithm=spec.ws_reference_pq_algorithm,
         ws_reference_class=spec.ws_reference_class,
         native_and_reference_algorithm_same=(
             spec.native_pq_algorithm == spec.ws_reference_pq_algorithm
         ),
+        live_native_pq_account_support=spec.live_native_pq_account_support,
         canonical_context_ready=context.ready,
         canonical_context_digest=context.context_digest,
         canonical_preimage_hex=context.canonical_preimage_hex,
