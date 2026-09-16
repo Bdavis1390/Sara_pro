@@ -4,7 +4,7 @@ PoO composes independent predicates:
 - title/provenance binding
 - PoW: bounded claim-specific work evidence
 - PoC: bounded Proof of Concept showing the claimed ownership mechanism works
-- control/custody: current authority over the asset-bound control surface
+- COC: Control/Custody verification over the asset-bound control surface
 - PoS: slashable/bonded economic commitment
 
 This module produces a technical ownership attestation only. It never adjudicates
@@ -19,7 +19,7 @@ import json
 from typing import Dict, List, Optional
 
 
-POO_SCHEMA = "WS-POO-V1"
+POO_SCHEMA = "WS-POO-V2"
 
 
 @dataclass(frozen=True)
@@ -40,7 +40,7 @@ class OwnershipEvidence:
     title_or_provenance_bound: bool = False
     pow_verified: bool = False
     poc_concept_verified: bool = False
-    control_or_custody_verified: bool = False
+    coc_verified: bool = False
     pos_bond_verified: bool = False
     freshness_verified: bool = False
     not_revoked: bool = True
@@ -65,7 +65,7 @@ _REQUIRED = {
     "title_or_provenance_bound": "title/provenance not bound",
     "pow_verified": "PoW not verified",
     "poc_concept_verified": "PoC concept not verified",
-    "control_or_custody_verified": "control/custody not verified",
+    "coc_verified": "COC not verified",
     "pos_bond_verified": "PoS bond not verified",
     "freshness_verified": "freshness not verified",
     "not_revoked": "claim revoked",
@@ -102,8 +102,7 @@ def evaluate_ownership(evidence: OwnershipEvidence) -> OwnershipDecision:
     """Evaluate a PoO claim with fail-closed AND semantics.
 
     No weighted score is used. A wealthy or compute-rich claimant cannot compensate
-    for missing proof-of-concept, control/custody, provenance, freshness, or revocation
-    checks.
+    for missing proof-of-concept, COC, provenance, freshness, or revocation checks.
     """
     missing = [reason for field, reason in _REQUIRED.items() if not getattr(evidence, field)]
     valid = not missing
