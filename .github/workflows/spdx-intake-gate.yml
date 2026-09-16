@@ -39,10 +39,15 @@ jobs:
         env:
           PYTHONPATH: deployments/sara_verified_local_v1
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_spdx_intake.py
-      - name: Enforce claims and authority boundaries
+      - name: Enforce serialization, claims, and authority boundaries
         run: |
           grep -q 'SPDX_INTAKE_SCHEMA = "WS-SPDX-INTAKE-EVIDENCE-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'SPDX_CONTEXT_301 = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'SOFTWARE_SBOM_TYPE = "software_Sbom"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'SOFTWARE_PACKAGE_TYPE = "software_Package"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'SOFTWARE_PACKAGE_VERSION = "software_packageVersion"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'SOFTWARE_PACKAGE_URL = "software_packageUrl"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'test_published_example13_profile_names_are_recognized' deployments/sara_verified_local_v1/tests/test_spdx_intake.py
           grep -q 'spdx_conformance_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'json_schema_validation_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
           grep -q 'semantic_ontology_validation_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
