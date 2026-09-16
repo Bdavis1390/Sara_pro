@@ -3,17 +3,15 @@ name: PoO Methodology Benchmark Gate
 on:
   pull_request:
     paths:
-      - 'security/poo/methodology_benchmark.py'
-      - 'security/poo/METHODOLOGY_BENCHMARK.md'
-      - 'tests/test_poo_methodology_benchmark.py'
+      - 'security/poo/**'
+      - 'tests/test_poo_*.py'
       - '.github/workflows/poo-methodology-benchmark-gate.yml'
   push:
     branches:
       - 'worldshepherd-poo-methodology-benchmark-*'
     paths:
-      - 'security/poo/methodology_benchmark.py'
-      - 'security/poo/METHODOLOGY_BENCHMARK.md'
-      - 'tests/test_poo_methodology_benchmark.py'
+      - 'security/poo/**'
+      - 'tests/test_poo_*.py'
       - '.github/workflows/poo-methodology-benchmark-gate.yml'
 
 permissions:
@@ -33,7 +31,7 @@ jobs:
         run: |
           python -m compileall -q security/poo
           python -m py_compile deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-      - name: Layer 1 — protocol invariants and exhaustive fail-closed tests
+      - name: Layer 1 — protocol invariants, race model, and exhaustive fail-closed tests
         run: python -m pytest -q tests/test_poo_*.py
       - name: Layer 2 — native SARA integration
         env:
@@ -41,6 +39,10 @@ jobs:
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py
       - name: Layer 3 — comparative assurance benchmark
         run: python -m pytest -q tests/test_poo_methodology_benchmark.py
+      - name: Layer 4 — shared Python interoperability vectors
+        run: python -m pytest -q tests/test_poo_interop_vectors.py
+      - name: Layer 4 — JavaScript interoperability reproduction
+        run: node security/poo/interop/verify_vectors.mjs
       - name: Enforce methodology claims boundary
         run: |
           grep -q 'BENCHMARK_SCHEMA = "WS-POO-METHODOLOGY-BENCHMARK-V1"' security/poo/methodology_benchmark.py
@@ -50,3 +52,5 @@ jobs:
           grep -q 'legal_superiority_established=False' security/poo/methodology_benchmark.py
           grep -q 'global_superiority_established = false' security/poo/METHODOLOGY_BENCHMARK.md
           grep -q 'Known areas where PoO V3 is not yet stronger' security/poo/METHODOLOGY_BENCHMARK.md
+          grep -q 'INTERNAL_SECOND_LANGUAGE_REPRODUCTION_NOT_INDEPENDENT_EXTERNAL_VALIDATION' security/poo/interop/poo_v3_vectors.json
+          grep -q 'independent_external_validation: false' security/poo/interop/verify_vectors.mjs
