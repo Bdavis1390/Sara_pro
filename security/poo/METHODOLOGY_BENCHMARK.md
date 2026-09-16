@@ -1,6 +1,7 @@
 # Worldshepherd PoO V3 — Comparative Methodology Benchmark
 
-**Benchmark date:** 2026-09-15  
+**Benchmark date:** 2026-09-15
+
 **Status:** INTERNAL COMPARATIVE ASSURANCE BENCHMARK — NOT GLOBAL SUPERIORITY, NOT CERTIFICATION
 
 ## Why this exists
