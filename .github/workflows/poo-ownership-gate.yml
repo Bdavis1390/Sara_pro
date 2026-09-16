@@ -51,6 +51,7 @@ jobs:
           grep -q 'STATE_SCHEMA = "WS-POO-TECHNICAL-STATE-V1"' security/poo/state_engine.py
           grep -q 'STATE_LINEAGE_SCHEMA = "WS-POO-STATE-LINEAGE-V1"' security/poo/state_engine.py
           grep -q 'REGISTRY_SCHEMA = "WS-POO-TECHNICAL-REGISTRY-V1"' security/poo/registry_guard.py
+          grep -q 'COMMIT_SCHEMA = "WS-POO-REGISTRY-COMMIT-V1"' security/poo/commit_guard.py
           grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"' security/poo/audit_projection.py
           grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
@@ -73,6 +74,9 @@ jobs:
           grep -q 'technical_state_committed=False' security/poo/state_engine.py
           grep -q 'COC: predecessor mismatch' security/poo/state_engine.py
           grep -q 'legal_registry_authority=False' security/poo/registry_guard.py
+          grep -q 'technical_registry_committed=False' security/poo/commit_guard.py
+          grep -q 'stale registry digest' security/poo/commit_guard.py
+          grep -q 'candidate predecessor is not the active COC tip' security/poo/commit_guard.py
           grep -q 'state_transition_ready' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'registry_consistent' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'ownership_changed' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
