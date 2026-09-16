@@ -8,7 +8,7 @@ from qcrypto_external_signer import (
     CustodyPolicy,
     ExternalCustodyService,
 )
-from test_custody import fixture
+from tests.test_custody import fixture
 
 
 def strict_service(tmp_path, signer, human_public):
