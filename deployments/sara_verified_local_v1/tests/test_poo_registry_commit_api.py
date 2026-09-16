@@ -167,3 +167,23 @@ def test_different_second_genesis_is_permanently_blocked(client, tokens):
     registry = client.get("/admin/poo/registry", headers=auth(admin)).json()["registry"]
     assert len(registry["states"]) == 1
     assert registry["states"][0]["asset_id"] == "asset:first"
+
+
+def test_unknown_projection_claim_is_rejected_before_transaction(client, tokens):
+    _relay, admin = tokens
+    body = bootstrap_body()
+    body["governance_projection"]["government_title_authorized"] = True
+    response = client.post("/admin/poo/registry/commit", json=body, headers=auth(admin))
+    assert response.status_code == 422
+    registry = client.get("/admin/registry", headers=auth(admin)).json()["registry"]
+    assert POO_TECHNICAL_REGISTRY_KEY not in registry
+
+
+def test_wrong_approval_intent_is_rejected_before_transaction(client, tokens):
+    _relay, admin = tokens
+    body = bootstrap_body()
+    body["approval_intent"] = "MOVE_LIVE_VALUE"
+    response = client.post("/admin/poo/registry/commit", json=body, headers=auth(admin))
+    assert response.status_code == 422
+    registry = client.get("/admin/registry", headers=auth(admin)).json()["registry"]
+    assert POO_TECHNICAL_REGISTRY_KEY not in registry
