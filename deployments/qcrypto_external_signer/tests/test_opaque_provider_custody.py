@@ -11,6 +11,8 @@ from qcrypto_external_signer.custody import (
     CustodyIndeterminate,
     CustodyLedger,
     CustodyPolicy,
+    _canonical,
+    _sha,
 )
 from qcrypto_external_signer.opaque_provider import (
     OpaqueProviderReleaseSigner,
@@ -18,6 +20,7 @@ from qcrypto_external_signer.opaque_provider import (
     ProviderResult,
     ProviderState,
     ReferenceOpaqueMlDsa65Provider,
+    provider_operation_id,
 )
 from qcrypto_external_signer.provider_custody import (
     OpaqueProviderCustodyService,
@@ -50,6 +53,7 @@ def test_ack_loss_reconciles_after_expiry_without_second_signer_invocation(tmp_p
     assert entry["state"] == "INDETERMINATE"
     assert entry["provider_operation_id"].startswith("QCRYPTO-PROVIDER-")
     assert isinstance(entry["release_binding"], dict)
+    assert entry["release_binding"]["provider_key_handle"] == provider.key_handle
     assert "signature_b64url" not in entry
 
     # Reconciliation is recovery of the already-invoked provider operation, so it
@@ -57,6 +61,7 @@ def test_ack_loss_reconciles_after_expiry_without_second_signer_invocation(tmp_p
     receipt = svc.reconcile_release(request)
     assert receipt["provider_reconciled"] is True
     assert receipt["provider_operation_id"] == entry["provider_operation_id"]
+    assert receipt["provider_key_handle"] == provider.key_handle
     assert provider.invocation_count == 1
     assert verify_opaque_provider_receipt(
         receipt,
@@ -162,3 +167,45 @@ def test_provider_operation_id_is_bound_into_ledger_and_receipt(tmp_path):
     assert "private_key_bytes" not in serialized
     assert "seed phrase" not in serialized
     assert "mnemonic" not in serialized
+
+
+def test_provider_handle_and_operation_id_cannot_be_substituted_together(tmp_path):
+    provider = ReferenceOpaqueMlDsa65Provider()
+    signer = OpaqueProviderReleaseSigner(provider)
+    request, _signer, human_public, now = fixture(signer=signer)
+    receipt = opaque_service(tmp_path, signer, human_public).execute_release(
+        request,
+        now=now + timedelta(seconds=1),
+    )
+    assert verify_opaque_provider_receipt(receipt, public_key_bytes=signer.public_key_bytes)
+
+    tampered = deepcopy(receipt)
+    tampered["provider_key_handle"] = "ref-hsm://qcrypto/ml-dsa-65/substituted-key"
+    binding = {
+        key: value
+        for key, value in tampered.items()
+        if key
+        not in {
+            "state",
+            "signature_b64url",
+            "provider_operation_id",
+            "provider_reconciled",
+            "claims_boundary",
+            "receipt_sha256",
+        }
+    }
+    tampered["provider_operation_id"] = provider_operation_id(
+        key_handle=tampered["provider_key_handle"],
+        message=_canonical(binding),
+        context=signer.context,
+    )
+    unsigned_receipt = dict(tampered)
+    unsigned_receipt.pop("receipt_sha256", None)
+    tampered["receipt_sha256"] = _sha(unsigned_receipt)
+
+    # Even after recomputing every unkeyed digest the attacker can recompute, the
+    # receipt fails because provider_key_handle itself is inside the ML-DSA signature.
+    assert verify_opaque_provider_receipt(
+        tampered,
+        public_key_bytes=signer.public_key_bytes,
+    ) is False
