@@ -59,21 +59,35 @@ jobs:
           grep -Eq 'Status: Granted|Status: Granted with mods' rfc3161-evidence/response.txt
           grep -F 'Hash Algorithm: sha256' rfc3161-evidence/response.txt
 
-      - name: Download DigiCert published timestamping chain
+      - name: Download and normalize DigiCert published timestamping chain
         run: |
           set -euo pipefail
           curl --fail --show-error --silent "$DIGICERT_RESPONDER_URL" \
-            --output rfc3161-evidence/responder.cer
+            --output rfc3161-evidence/responder.download
           curl --fail --show-error --silent "$DIGICERT_INTERMEDIATE_URL" \
-            --output rfc3161-evidence/intermediate.pem
+            --output rfc3161-evidence/intermediate.download
           curl --fail --show-error --silent "$DIGICERT_ROOT_URL" \
-            --output rfc3161-evidence/root.cer
-          openssl x509 -inform DER \
-            -in rfc3161-evidence/responder.cer \
-            -out rfc3161-evidence/responder.pem
-          openssl x509 -inform DER \
-            -in rfc3161-evidence/root.cer \
-            -out rfc3161-evidence/root.pem
+            --output rfc3161-evidence/root.download
+
+          normalize_cert() {
+            input="$1"
+            output="$2"
+            if openssl x509 -in "$input" -out "$output" >/dev/null 2>&1; then
+              return 0
+            fi
+            openssl x509 -inform DER -in "$input" -out "$output"
+          }
+
+          normalize_cert rfc3161-evidence/responder.download rfc3161-evidence/responder.pem
+          normalize_cert rfc3161-evidence/intermediate.download rfc3161-evidence/intermediate.pem
+          normalize_cert rfc3161-evidence/root.download rfc3161-evidence/root.pem
+
+          openssl x509 -in rfc3161-evidence/responder.pem -noout -subject -issuer -serial \
+            > rfc3161-evidence/responder-cert.txt
+          openssl x509 -in rfc3161-evidence/intermediate.pem -noout -subject -issuer -serial \
+            > rfc3161-evidence/intermediate-cert.txt
+          openssl x509 -in rfc3161-evidence/root.pem -noout -subject -issuer -serial \
+            > rfc3161-evidence/root-cert.txt
           cat rfc3161-evidence/responder.pem rfc3161-evidence/intermediate.pem \
             > rfc3161-evidence/untrusted-chain.pem
 
@@ -118,12 +132,10 @@ jobs:
 
           if 'Verification: OK' not in verification_text:
               raise SystemExit('OpenSSL timestamp verification did not succeed')
-          if os.environ['FROZEN_BUNDLE_SHA256'] not in request_text.replace(' ', '').replace(':', '').lower():
-              # OpenSSL renders the message imprint as spaced hex; reconstruct it below as a second check.
-              hex_pairs = re.findall(r'\b[0-9a-fA-F]{2}\b', request_text)
-              rendered = ''.join(hex_pairs).lower()
-              if os.environ['FROZEN_BUNDLE_SHA256'] not in rendered:
-                  raise SystemExit('timestamp request does not contain frozen bundle digest')
+          hex_pairs = re.findall(r'\b[0-9a-fA-F]{2}\b', request_text)
+          rendered = ''.join(hex_pairs).lower()
+          if os.environ['FROZEN_BUNDLE_SHA256'] not in request_text.replace(' ', '').replace(':', '').lower() and os.environ['FROZEN_BUNDLE_SHA256'] not in rendered:
+              raise SystemExit('timestamp request does not contain frozen bundle digest')
 
           receipt = {
               'schema': 'WS-QCRYPTO-RFC3161-CUSTODY-RECEIPT-V1',
@@ -138,9 +150,9 @@ jobs:
               'request_sha256': sha256(evidence / 'request.tsq'),
               'response_sha256': sha256(evidence / 'response.tsr'),
               'response_text_sha256': sha256(evidence / 'response.txt'),
-              'responder_certificate_sha256': sha256(evidence / 'responder.cer'),
+              'responder_certificate_sha256': sha256(evidence / 'responder.pem'),
               'intermediate_certificate_sha256': sha256(evidence / 'intermediate.pem'),
-              'root_certificate_sha256': sha256(evidence / 'root.cer'),
+              'root_certificate_sha256': sha256(evidence / 'root.pem'),
               'github_repository': os.environ['GITHUB_REPOSITORY_VALUE'],
               'workflow_commit': os.environ['GITHUB_SHA_VALUE'],
               'workflow_run_id': int(os.environ['GITHUB_RUN_ID_VALUE']),
