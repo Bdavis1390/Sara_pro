@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate zero-value evidence for the canonical PQ signing context."""
+"""Generate zero-value evidence for the canonical PQ pre-signing context."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from pathlib import Path
 
 from security.qcrypto.canonical_authority_envelope import CanonicalAuthorityEnvelope
 from security.qcrypto.canonical_pq_signing_context import (
+    AuthoritySigningIntent,
     CanonicalSigningContextRequest,
     build_canonical_signing_context,
 )
 from security.qcrypto.hybrid_authority_migration import (
-    AuthorityEnvelope,
     AuthorityLayer,
     AuthorityPolicy,
     MigrationRequirement,
@@ -27,7 +27,7 @@ EVIDENCE = "b" * 64
 RECOVERY = "c" * 64
 
 
-def authority(**overrides):
+def intent(**overrides):
     data = dict(
         network_id="evidence-testnet",
         domain_separator="WS-QCRYPTO-AUTH-V1",
@@ -39,14 +39,12 @@ def authority(**overrides):
         key_epoch=21,
         classical_algorithm_id="ECDSA",
         pq_algorithm_id="ML-DSA",
-        classical_signature_present=True,
-        pq_signature_present=True,
         classical_required_for_acceptance=True,
         pq_required_for_acceptance=True,
         recovery_evidence_present=True,
     )
     data.update(overrides)
-    return AuthorityEnvelope(**data)
+    return AuthoritySigningIntent(**data)
 
 
 def policy(**overrides):
@@ -83,7 +81,7 @@ def adapter():
 
 def request(**overrides):
     data = dict(
-        authority=authority(),
+        intent=intent(),
         authority_policy=policy(),
         adapter=adapter(),
         policy_version=7,
@@ -104,21 +102,21 @@ def main() -> int:
     baseline = build_canonical_signing_context(request())
     cross_network = build_canonical_signing_context(
         request(
-            authority=replace(authority(), network_id="other-testnet"),
+            intent=replace(intent(), network_id="other-testnet"),
             authority_policy=replace(policy(), network_id="other-testnet"),
         )
     )
     authority_domain = build_canonical_signing_context(
         request(
-            authority=replace(authority(), domain_separator="WS-QCRYPTO-AUTH-V2"),
+            intent=replace(intent(), domain_separator="WS-QCRYPTO-AUTH-V2"),
             authority_policy=replace(policy(), domain_separator="WS-QCRYPTO-AUTH-V2"),
         )
     )
     role_change = build_canonical_signing_context(
-        request(authority=replace(authority(), authority_layer=AuthorityLayer.CONSENSUS_VALIDATOR))
+        request(intent=replace(intent(), authority_layer=AuthorityLayer.CONSENSUS_VALIDATOR))
     )
     algorithm_change = build_canonical_signing_context(
-        request(authority=replace(authority(), pq_algorithm_id="SLH-DSA"))
+        request(intent=replace(intent(), pq_algorithm_id="SLH-DSA"))
     )
     policy_floor_change = build_canonical_signing_context(
         request(
@@ -130,14 +128,14 @@ def main() -> int:
         )
     )
     epoch_change = build_canonical_signing_context(
-        request(authority=replace(authority(), key_epoch=22))
+        request(intent=replace(intent(), key_epoch=22))
     )
     replay_change = build_canonical_signing_context(request(replay_sequence=101))
     downgrade = build_canonical_signing_context(
-        request(authority=replace(authority(), declared_requirement=MigrationRequirement.CLASSICAL_ALLOWED))
+        request(intent=replace(intent(), declared_requirement=MigrationRequirement.CLASSICAL_ALLOWED))
     )
     self_authorize = build_canonical_signing_context(
-        request(authority=replace(authority(), live_value_authorized=True))
+        request(intent=replace(intent(), live_value_authorized=True))
     )
 
     distinct = {
@@ -171,6 +169,8 @@ def main() -> int:
         "summary": {
             "distinct_context_digest_count": len(distinct),
             "expected_distinct_context_digest_count": 8,
+            "pre_sign_intent_only": baseline.pre_sign_intent_only,
+            "signature_presence_assumed": baseline.signature_presence_assumed,
             "authority_domain_bound": authority_domain.context_digest != baseline.context_digest,
             "policy_floor_bound": policy_floor_change.context_digest != baseline.context_digest,
             "downgrade_blocked": not downgrade.ready,
@@ -188,6 +188,10 @@ def main() -> int:
 
     if not baseline.ready:
         raise SystemExit("baseline canonical context did not become ready")
+    if not baseline.pre_sign_intent_only or baseline.signature_presence_assumed:
+        raise SystemExit("pre-sign lifecycle boundary was not preserved")
+    if any("signature_present" in key for key in baseline.canonical_fields):
+        raise SystemExit("canonical preimage improperly contains signature-presence state")
     if len(distinct) != 8:
         raise SystemExit("one or more governed field changes failed to change the context digest")
     if downgrade.ready or self_authorize.ready:
