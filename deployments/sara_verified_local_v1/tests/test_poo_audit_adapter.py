@@ -25,8 +25,11 @@ def projection(**overrides):
         "sara_state": "SARA_POO_TRANSFER_HUMAN_REVIEW_READY",
         "overwatch_state": "OVERWATCH_POO_TRANSFER_PENDING_SUPERSESSION",
         "technical_attestation_ready": False,
+        "coc_valid": False,
         "transfer_ready": True,
         "recovery_ready": False,
+        "state_transition_ready": False,
+        "registry_consistent": False,
         "human_approval_required": True,
         "ownership_changed": False,
         "transfer_executed": False,
@@ -37,6 +40,16 @@ def projection(**overrides):
         "claim_boundary": "INTERNAL_POO_EVIDENCE_NOT_LEGAL_TITLE_OR_EXECUTION_AUTHORITY",
     }
     value.update(overrides)
+    return value
+
+
+def for_operation(operation, readiness_field):
+    value = projection(
+        operation=operation,
+        transfer_ready=False,
+        previous_poo_digest=None,
+    )
+    value[readiness_field] = True
     return value
 
 
@@ -65,6 +78,9 @@ def test_projection_maps_to_four_native_sara_events():
         assert payload["legal_title_established"] is False
         assert payload["legal_title_transferred"] is False
         assert payload["control_rotated"] is False
+        assert payload["coc_valid"] is False
+        assert payload["state_transition_ready"] is False
+        assert payload["registry_consistent"] is False
 
 
 def test_projection_persists_through_native_outbox_and_audit_log(tmp_path):
@@ -103,6 +119,23 @@ def test_projection_persists_through_native_outbox_and_audit_log(tmp_path):
 
 
 @pytest.mark.parametrize(
+    "operation,field",
+    [
+        ("OWNERSHIP_ATTESTATION", "technical_attestation_ready"),
+        ("COC_ATTESTATION", "coc_valid"),
+        ("TRANSFER_READINESS", "transfer_ready"),
+        ("RECOVERY_READINESS", "recovery_ready"),
+        ("TECHNICAL_STATE_TRANSITION", "state_transition_ready"),
+        ("REGISTRY_HEALTH", "registry_consistent"),
+    ],
+)
+def test_all_v2_operations_accept_only_their_own_readiness_flag(operation, field):
+    events = poo_outbox_events(for_operation(operation, field), actor="SSPADAWANZZ")
+    assert len(events) == 4
+    assert all(item["payload"][field] is True for item in events)
+
+
+@pytest.mark.parametrize(
     "field",
     [
         "ownership_changed",
@@ -132,6 +165,38 @@ def test_adapter_rejects_operation_readiness_mismatch():
             projection(operation="OWNERSHIP_ATTESTATION", transfer_ready=True),
             actor="SSPADAWANZZ",
         )
+
+
+def test_state_transition_cannot_smuggle_transfer_readiness():
+    value = for_operation("TECHNICAL_STATE_TRANSITION", "state_transition_ready")
+    value["transfer_ready"] = True
+    with pytest.raises(PoOAuditAdapterError, match="transfer_ready mismatches operation"):
+        poo_outbox_events(value, actor="SSPADAWANZZ")
+
+
+def test_registry_health_persists_as_evidence_not_authority(tmp_path):
+    store = DurableStore(tmp_path / "data")
+    value = for_operation("REGISTRY_HEALTH", "registry_consistent")
+    value.update(
+        asset_id="registry:technical-ownership",
+        source_status="TECHNICAL_REGISTRY_INTERNALLY_CONSISTENT",
+        echo_state="ECHO_POO_REGISTRY_SNAPSHOT_ACCEPTED",
+        prime_state="PRIME_POO_REGISTRY_CONSISTENT",
+        sara_state="SARA_POO_REGISTRY_REVIEW_READY",
+        overwatch_state="OVERWATCH_POO_REGISTRY_HEALTHY",
+    )
+
+    def operation(registry):
+        return queue_poo_projection_patch(registry, value, actor="SSPADAWANZZ")
+
+    ids = store.transact_registry(operation)
+    assert len(ids) == 4
+    assert drain_event_outbox(store, limit=4) == 4
+    records = [r for r in store.read_audit(50) if str(r.get("event", "")).startswith("poo_")]
+    assert len(records) == 4
+    assert all(r["payload"]["registry_consistent"] is True for r in records)
+    assert all(r["payload"]["ownership_changed"] is False for r in records)
+    assert all(r["payload"]["legal_title_established"] is False for r in records)
 
 
 def test_adapter_requires_actor():
