@@ -22,7 +22,7 @@ This file records what the public #1724 discussion has converged on strongly eno
 These are useful implementation rules but should not be misrepresented as merged OCSF requirements:
 
 1. **Integrity-protected correlation.** A closure/activity correlation key should be inside the event bytes protected by `record_integrity`, not carried only in external metadata. On current OCSF main, `attestation` covers the entire canonicalized event except its own `fingerprint` and `signatures`, so a present `metadata.correlation_uid` is within the integrity scope.
-2. **Evidence-strength vocabulary.** The proposed `verification_id` vocabulary distinguishes Unknown, Locally computed, Provider asserted, Third-party attested, Not observable, and Other. This is descriptive; sufficiency remains consumer policy.
+2. **Evidence-strength vocabulary.** The proposed `verification_id` vocabulary distinguishes Unknown (`0`), Locally computed (`1`), Provider asserted (`2`), Third-party attested (`3`), Not observable (`4`), and Other (`99`). This is descriptive; sufficiency remains consumer policy.
 3. **Sampling configuration belongs in the declared/executed comparison.** The thread proposes carrying sampling controls and runtime binding in both halves so gateway/router rewrites are observable as evidence.
 4. **Constraint source vs compiled form.** Source constraints represent what was approved; compiled constraints represent what ran. The delta may itself be evidence.
 
@@ -35,10 +35,11 @@ These are useful implementation rules but should not be misrepresented as merged
 - Exact source-vs-compiled constraint representation.
 - Final field name and placement of `verification_id`.
 - The signature/key-id gap tracked separately upstream.
+- Canonical examples, compiler compatibility, validator behavior, and changelog text for the eventual class PR.
 
 ## Adjacent OCSF architecture
 
-- `#1704` is consolidating AI outcome scalars under `ai_status` for the `ai_operation` profile.
+- `#1704` is consolidating shared AI outcome/status semantics under `ai_operation`.
 - `#1754` is developing `AI Agent Activity` for agent-specific lifecycle/actions not already better represented by existing OCSF activity classes.
 - Existing File System, Process, API, and other activity classes remain the preferred representation for actions already expressible in OCSF; AI context should be attached rather than duplicating the action taxonomy.
 
@@ -46,7 +47,11 @@ These are useful implementation rules but should not be misrepresented as merged
 
 Worldshepherd's pilot therefore treats the architecture as two planes:
 
-- **Behavior plane:** OCSF activity events + `ai_operation` / `ai_status` / AI Agent Activity where appropriate.
+- **Behavior plane:** OCSF activity events + adjacent AI-operation/activity work where appropriate.
 - **Configuration/evidence plane:** #1724 trust-base inventory emissions with record integrity.
 
 The planes are joined by correlation and common identity, not by duplicating each other's fields.
+
+The pilot now contains executable coverage for trust-base chain/admission/closure structure, plane separation, evidence-grade correlation, discussion-level evidence-strength consistency, and declared-versus-observed sampling/runtime delta reporting.
+
+A dedicated GitHub Actions workflow compiles and exercises those local pilot tools. Successful pilot CI demonstrates that the harness behaves as declared; it does **not** demonstrate OCSF upstream acceptance or final schema conformance.
