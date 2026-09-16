@@ -1,0 +1,111 @@
+name: QCRYPTO External Signer Custody Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/qcrypto_external_signer/**'
+      - '.github/workflows/qcrypto-external-custody-signer.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'deployments/qcrypto_external_signer/**'
+      - '.github/workflows/qcrypto-external-custody-signer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/qcrypto_external_signer
+
+jobs:
+  external-custody-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install isolated custody environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -e '.[test]'
+          python -m pip check
+
+      - name: Compile isolated custody package
+        run: |
+          python -m compileall -q qcrypto_external_signer scripts tests
+
+      - name: Run custody and strict-boundary regressions
+        run: |
+          pytest -q
+
+      - name: Generate synthetic custody evidence
+        run: |
+          python scripts/verify_external_custody.py --output external-custody-evidence.json
+
+      - name: Assert custody claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e=json.loads(Path('external-custody-evidence.json').read_text(encoding='utf-8'))
+          assert e['schema']=='WS-QCRYPTO-EXTERNAL-CUSTODY-EVIDENCE-V1'
+          assert e['status']=='PASS'
+          assert e['claim_state']=='EXTERNAL_CUSTODY_RELEASE_SOFTWARE_BEHAVIOR_ONLY'
+          assert e['synthetic_ci_only'] is True
+          assert e['separate_trust_domain'] is True
+          assert e['sara_runtime_dependency'] is False
+          assert e['receipt_verified'] is True
+          assert e['exact_retry_identical'] is True
+          assert e['restart_retry_identical'] is True
+          assert e['signer_invocation_count']==1
+          assert e['durable_signed_state']=='SIGNED'
+          assert e['ambiguous_outcome_state']=='INDETERMINATE'
+          assert e['ambiguous_outcome_retry_blocked'] is True
+          assert e['ambiguous_signer_invocation_count']==1
+          assert e['broadcast_request_blocked'] is True
+          assert e['mainnet_permitted'] is False
+          assert e['transaction_broadcast'] is False
+          assert e['chain_native_transaction_signature'] is False
+          assert e['real_wallet_used'] is False
+          assert e['real_value_moved'] is False
+          assert e['private_key_exported'] is False
+          assert e['production_hsm_integrated'] is False
+          assert e['end_to_end_pq_security_established'] is False
+
+          r=e['receipt']
+          assert r['state']=='SIGNED_CUSTODY_RELEASE_ATTESTATION'
+          assert r['signing_algorithm']=='ML-DSA-65'
+          assert r['signature_context']=='WS-QCRYPTO-EXTERNAL-CUSTODY-RELEASE-V1'
+          assert r['chain_native_transaction_signature'] is False
+          assert r['transaction_broadcast'] is False
+          assert r['real_value_moved'] is False
+          assert r['mainnet'] is False
+          assert r['production_hsm_integrated'] is False
+          assert len(r['receipt_sha256'])==64
+          assert len(e['evidence_sha256'])==64
+
+          text=json.dumps(e, sort_keys=True).lower()
+          assert 'private_key' not in text
+          assert 'seed phrase' not in text
+          assert 'mnemonic' not in text
+          print('qcrypto_external_custody_gate: PASS')
+          print('receipt_sha256:', r['receipt_sha256'])
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload external custody evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-external-custody-release-evidence
+          path: deployments/qcrypto_external_signer/external-custody-evidence.json
+          if-no-files-found: error
