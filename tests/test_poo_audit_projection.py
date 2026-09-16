@@ -9,35 +9,12 @@ from security.poo.audit_projection import (
     state_transition_audit_projection,
     transfer_audit_projection,
 )
-from security.poo.coc_guard import COCEvidence
+from security.poo.coc_guard import COCEvidence, coc_digest
 from security.poo.ownership_guard import OwnershipEvidence
 from security.poo.recovery_guard import RecoveryEvidence
 from security.poo.registry_guard import evaluate_registry
 from security.poo.state_engine import bootstrap_technical_state
 from security.poo.transfer_guard import TransferEvidence
-
-
-def ownership_evidence():
-    return OwnershipEvidence(
-        asset_id="asset:alpha",
-        claimant_id="claimant:one",
-        title_reference="title:ref:001",
-        control_key_fingerprint="key:abc123",
-        work_reference="work:challenge:001",
-        concept_reference="concept:demo:001",
-        stake_reference="stake:bond:001",
-        issued_at="2026-09-16T00:00:00Z",
-        expires_at="2026-09-17T00:00:00Z",
-        asset_fingerprint_bound=True,
-        claimant_identity_bound=True,
-        title_or_provenance_bound=True,
-        pow_verified=True,
-        poc_concept_verified=True,
-        coc_verified=True,
-        pos_bond_verified=True,
-        freshness_verified=True,
-        not_revoked=True,
-    )
 
 
 def coc_evidence():
@@ -60,6 +37,30 @@ def coc_evidence():
     )
 
 
+def ownership_evidence():
+    return OwnershipEvidence(
+        asset_id="asset:alpha",
+        claimant_id="claimant:one",
+        title_reference="title:ref:001",
+        control_key_fingerprint="key:abc123",
+        work_reference="work:challenge:001",
+        concept_reference="concept:demo:001",
+        coc_reference=coc_digest(coc_evidence()),
+        stake_reference="stake:bond:001",
+        issued_at="2026-09-16T00:00:00Z",
+        expires_at="2026-09-17T00:00:00Z",
+        asset_fingerprint_bound=True,
+        claimant_identity_bound=True,
+        title_or_provenance_bound=True,
+        pow_verified=True,
+        poc_concept_verified=True,
+        coc_verified=True,
+        pos_bond_verified=True,
+        freshness_verified=True,
+        not_revoked=True,
+    )
+
+
 def transfer_evidence():
     return TransferEvidence(
         asset_id="asset:alpha",
@@ -70,6 +71,7 @@ def transfer_evidence():
         recipient_control_key_fingerprint="key:def456",
         recipient_work_reference="work:challenge:002",
         recipient_concept_reference="concept:demo:002",
+        recipient_coc_reference="coc:recipient:002",
         recipient_stake_reference="stake:bond:002",
         initiated_at="2026-09-16T01:00:00Z",
         expires_at="2026-09-17T01:00:00Z",
@@ -99,6 +101,7 @@ def recovery_evidence():
         new_control_key_fingerprint="key:new789",
         recovery_work_reference="work:recovery:001",
         recovery_concept_reference="concept:recovery:001",
+        recovery_coc_reference="coc:recovery:001",
         recovery_stake_reference="stake:recovery:001",
         recovery_request_reference="recovery:req:001",
         issued_at="2026-09-16T02:00:00Z",
@@ -207,6 +210,7 @@ def test_recovery_projection_is_same_owner_readiness_only():
 
 def test_state_transition_projection_records_candidate_without_committing_it():
     decision = bootstrap_technical_state(ownership_evidence(), coc_evidence())
+    assert decision.ready is True
     p = state_transition_audit_projection(
         decision, asset_id="asset:alpha", previous_poo_digest=None
     )
