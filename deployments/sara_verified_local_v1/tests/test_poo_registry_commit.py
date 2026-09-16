@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, replace
+from dataclasses import asdict
 
 import pytest
 
@@ -24,6 +24,7 @@ from worldshepherd_sara.poo_registry_commit import (
     POO_TECHNICAL_REGISTRY_KEY,
     PoODurableCommitError,
     PoODurableCommitRequest,
+    PoOTechnicalRegistryNamespace,
     PoOTechnicalStateRecord,
     load_poo_registry_namespace,
     poo_registry_digest,
@@ -168,6 +169,12 @@ def apply_patch(registry: dict, patch: dict | None) -> dict:
     return updated
 
 
+def update_projection(request: PoODurableCommitRequest, **changes) -> PoODurableCommitRequest:
+    updated = request.model_copy(deep=True)
+    updated.governance_projection = updated.governance_projection.model_copy(update=changes)
+    return updated
+
+
 def test_sara_state_and_registry_digests_match_security_reference():
     decision, request = genesis_material()
     state = decision.commit_decision.candidate_states[0]
@@ -225,18 +232,40 @@ def test_transfer_extends_durable_genesis_by_exactly_one_state():
     assert namespace.registry_digest == result2.registry_digest
 
 
+def test_historical_retry_remains_idempotent_after_registry_advances():
+    bootstrap_decision, bootstrap_request = genesis_material()
+    patch1, first = prepare_poo_durable_commit_patch({}, bootstrap_request, actor="admin")
+    registry1 = apply_patch({}, patch1)
+    current_state = bootstrap_decision.commit_decision.candidate_states[0]
+    _transfer_decision, transfer_request = transfer_material(current_state)
+    patch2, _second = prepare_poo_durable_commit_patch(registry1, transfer_request, actor="admin")
+    registry2 = apply_patch(registry1, patch2)
+    before_digest = load_poo_registry_namespace(registry2).registry_digest
+
+    retry_patch, retry = prepare_poo_durable_commit_patch(registry2, bootstrap_request, actor="admin")
+    assert retry_patch is None
+    assert retry.status == "ALREADY_COMMITTED"
+    assert retry.commit_id == first.commit_id
+    namespace = load_poo_registry_namespace(registry2)
+    assert len(namespace.states) == 2
+    assert namespace.registry_digest == before_digest
+
+
 def test_stale_registry_snapshot_blocks_without_mutation():
     bootstrap_decision, bootstrap_request = genesis_material()
     patch, _ = prepare_poo_durable_commit_patch({}, bootstrap_request, actor="admin")
     registry = apply_patch({}, patch)
+    before_digest = load_poo_registry_namespace(registry).registry_digest
     current_state = bootstrap_decision.commit_decision.candidate_states[0]
     _decision, transfer_request = transfer_material(current_state)
-    stale = transfer_request.model_copy(deep=True)
-    stale.governance_projection["expected_registry_digest"] = "stale"
-    stale.governance_projection["current_registry_digest"] = "stale"
+    stale = update_projection(
+        transfer_request,
+        expected_registry_digest="stale",
+        current_registry_digest="stale",
+    )
     with pytest.raises(PoODurableCommitError):
         prepare_poo_durable_commit_patch(registry, stale, actor="admin")
-    assert load_poo_registry_namespace(registry).registry_digest == load_poo_registry_namespace(registry).registry_digest
+    assert load_poo_registry_namespace(registry).registry_digest == before_digest
 
 
 def test_candidate_cannot_remove_or_modify_existing_state_even_with_matching_submitted_digest():
@@ -246,8 +275,12 @@ def test_candidate_cannot_remove_or_modify_existing_state_even_with_matching_sub
     current_state = bootstrap_decision.commit_decision.candidate_states[0]
     _decision, transfer_request = transfer_material(current_state)
     mutated = transfer_request.model_copy(deep=True)
-    mutated.candidate_states[0] = mutated.candidate_states[0].model_copy(update={"title_reference": "title:tampered"})
-    mutated.governance_projection["candidate_registry_digest"] = poo_registry_digest(mutated.candidate_states)
+    mutated.candidate_states[0] = mutated.candidate_states[0].model_copy(
+        update={"title_reference": "title:tampered"}
+    )
+    mutated.governance_projection = mutated.governance_projection.model_copy(
+        update={"candidate_registry_digest": poo_registry_digest(mutated.candidate_states)}
+    )
     with pytest.raises(PoODurableCommitError, match="modifies or removes existing"):
         prepare_poo_durable_commit_patch(registry, mutated, actor="admin")
 
@@ -258,10 +291,45 @@ def test_authority_escalation_in_v3_projection_is_rejected():
     registry = apply_patch({}, patch)
     current_state = bootstrap_decision.commit_decision.candidate_states[0]
     _decision, transfer_request = transfer_material(current_state)
-    forged = transfer_request.model_copy(deep=True)
-    forged.governance_projection["durable_registry_write_authorized"] = True
+    forged = update_projection(transfer_request, durable_registry_write_authorized=True)
     with pytest.raises(PoODurableCommitError, match="invalid PoO governance projection"):
         prepare_poo_durable_commit_patch(registry, forged, actor="admin")
+
+
+def test_stored_registry_rejects_structural_fork_independent_of_projection():
+    _bootstrap_decision, bootstrap_request = genesis_material()
+    genesis = bootstrap_request.candidate_states[0]
+    left = genesis.model_copy(
+        update={
+            "active_poo_digest": "poo:left",
+            "active_coc_digest": "coc:left",
+            "claimant_id": "claimant:left",
+            "control_key_fingerprint": "key:left",
+            "title_reference": "title:left",
+            "generation": 1,
+            "source_event_type": "TRANSFER",
+            "previous_poo_digest": genesis.active_poo_digest,
+            "previous_coc_digest": genesis.active_coc_digest,
+        }
+    )
+    right = left.model_copy(
+        update={
+            "active_poo_digest": "poo:right",
+            "active_coc_digest": "coc:right",
+            "claimant_id": "claimant:right",
+            "control_key_fingerprint": "key:right",
+            "title_reference": "title:right",
+            "source_event_type": "RECOVERY",
+        }
+    )
+    states = [genesis, left, right]
+    namespace = PoOTechnicalRegistryNamespace(
+        registry_digest=poo_registry_digest(states),
+        states=states,
+        commits={},
+    )
+    with pytest.raises(PoODurableCommitError, match="fork"):
+        load_poo_registry_namespace({POO_TECHNICAL_REGISTRY_KEY: namespace.model_dump(mode="json")})
 
 
 def test_outbox_capacity_failure_aborts_state_commit(tmp_path):
