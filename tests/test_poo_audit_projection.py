@@ -3,17 +3,22 @@ from dataclasses import replace
 from security.poo.audit_projection import (
     POO_AUDIT_SCHEMA,
     coc_audit_projection,
+    governed_state_transition_audit_projection,
     ownership_audit_projection,
     recovery_audit_projection,
     registry_audit_projection,
+    registry_commit_readiness_audit_projection,
+    state_lineage_audit_projection,
     state_transition_audit_projection,
     transfer_audit_projection,
 )
 from security.poo.coc_guard import COCEvidence
 from security.poo.ownership_guard import OwnershipEvidence
 from security.poo.recovery_guard import RecoveryEvidence
-from security.poo.registry_guard import evaluate_registry
-from security.poo.state_engine import bootstrap_technical_state
+from security.poo.registry_governance_guard import evaluate_governed_registry_commit
+from security.poo.registry_guard import evaluate_registry, registry_digest
+from security.poo.state_engine import bootstrap_technical_state, evaluate_state_lineage
+from security.poo.state_governance_guard import evaluate_governed_transfer_transition
 from security.poo.transfer_guard import TransferEvidence
 
 
@@ -120,6 +125,27 @@ def recovery_evidence():
     )
 
 
+def recipient_coc(previous_coc_digest: str):
+    return COCEvidence(
+        asset_id="asset:alpha",
+        claimant_id="claimant:two",
+        control_key_fingerprint="key:def456",
+        custody_reference="custody:002",
+        custody_point_reference="custody:point:002",
+        challenge_reference="challenge:coc:002",
+        observed_at="2026-09-16T01:00:00Z",
+        expires_at="2026-09-17T01:00:00Z",
+        previous_coc_digest=previous_coc_digest,
+        asset_binding_verified=True,
+        claimant_binding_verified=True,
+        custody_or_control_verified=True,
+        challenge_response_verified=True,
+        custody_chain_verified=True,
+        freshness_verified=True,
+        not_revoked=True,
+    )
+
+
 def assert_non_authoritative(projection):
     assert projection["human_approval_required"] is True
     assert projection["ownership_changed"] is False
@@ -128,6 +154,10 @@ def assert_non_authoritative(projection):
     assert projection["legal_title_established"] is False
     assert projection["legal_title_transferred"] is False
     assert projection["control_rotated"] is False
+    assert projection["technical_registry_committed"] is False
+    assert projection["durable_registry_write_authorized"] is False
+    assert projection["conflict_winner_selected"] is False
+    assert projection["lineage_auto_resolved"] is False
 
 
 def assert_only(projection, field):
@@ -138,6 +168,7 @@ def assert_only(projection, field):
         "recovery_ready",
         "state_transition_ready",
         "registry_consistent",
+        "registry_commit_ready",
     )
     for item in fields:
         assert projection[item] is (item == field)
@@ -181,11 +212,13 @@ def test_missing_coc_blocks_ownership_projection():
     assert_non_authoritative(p)
 
 
-def test_transfer_projection_preserves_lineage_and_nonexecution():
+def test_transfer_projection_remains_base_evidence_only():
     p = transfer_audit_projection(transfer_evidence())
     assert p["operation"] == "TRANSFER_READINESS"
     assert p["previous_poo_digest"] == "prior:001"
     assert_only(p, "transfer_ready")
+    assert p["state_lineage_checked"] is False
+    assert p["registry_commit_ready"] is False
     assert_non_authoritative(p)
 
 
@@ -197,22 +230,76 @@ def test_disputed_transfer_projection_is_explicitly_blocked():
     assert_non_authoritative(p)
 
 
-def test_recovery_projection_is_same_owner_readiness_only():
+def test_recovery_projection_is_same_owner_base_readiness_only():
     p = recovery_audit_projection(recovery_evidence())
     assert p["operation"] == "RECOVERY_READINESS"
     assert p["previous_poo_digest"] == "prior:001"
     assert_only(p, "recovery_ready")
+    assert p["state_lineage_checked"] is False
     assert_non_authoritative(p)
 
 
-def test_state_transition_projection_records_candidate_without_committing_it():
+def test_local_state_transition_projection_is_candidate_only_not_commit_ready():
     decision = bootstrap_technical_state(ownership_evidence(), coc_evidence())
     p = state_transition_audit_projection(
         decision, asset_id="asset:alpha", previous_poo_digest=None
     )
     assert p["operation"] == "TECHNICAL_STATE_TRANSITION"
     assert_only(p, "state_transition_ready")
-    assert p["overwatch_state"] == "OVERWATCH_POO_STATE_PENDING_COMMIT"
+    assert p["overwatch_state"] == "OVERWATCH_POO_STATE_CANDIDATE_MONITOR"
+    assert p["state_lineage_checked"] is False
+    assert p["registry_commit_ready"] is False
+    assert p["candidate_state_digest"] == decision.candidate_state_digest
+    assert_non_authoritative(p)
+
+
+def _governed_fixture():
+    state = bootstrap_technical_state(ownership_evidence(), coc_evidence()).candidate_state
+    history = [state]
+    transfer = replace(
+        transfer_evidence(),
+        prior_poo_digest=state.active_poo_digest,
+        current_owner_id=state.claimant_id,
+    )
+    governed = evaluate_governed_transfer_transition(
+        history,
+        transfer,
+        recipient_coc(state.active_coc_digest),
+    )
+    return history, transfer, governed
+
+
+def test_state_lineage_projection_exposes_poo_coc_generation_health():
+    history, _transfer, _governed = _governed_fixture()
+    lineage = evaluate_state_lineage(history)
+    p = state_lineage_audit_projection(lineage, asset_id="asset:alpha")
+    assert p["operation"] == "STATE_LINEAGE_INTEGRITY"
+    assert p["state_lineage_checked"] is True
+    assert p["state_lineage_valid"] is True
+    assert p["poo_lineage_valid"] is True
+    assert p["coc_lineage_valid"] is True
+    assert p["generation_valid"] is True
+    assert p["active_tip_digest"] == history[0].active_poo_digest
+    assert p["lineage_issue_count"] == 0
+    assert p["prime_state"] == "PRIME_POO_STATE_LINEAGE_ELIGIBLE"
+    assert_non_authoritative(p)
+
+
+def test_governed_state_projection_requires_full_lineage_but_still_does_not_commit():
+    history, transfer, governed = _governed_fixture()
+    p = governed_state_transition_audit_projection(
+        governed,
+        asset_id="asset:alpha",
+        previous_poo_digest=transfer.prior_poo_digest,
+    )
+    assert governed.ready is True
+    assert p["operation"] == "GOVERNED_STATE_TRANSITION"
+    assert_only(p, "state_transition_ready")
+    assert p["state_lineage_checked"] is True
+    assert p["state_lineage_valid"] is True
+    assert p["active_tip_digest"] == history[0].active_poo_digest
+    assert p["registry_commit_ready"] is False
+    assert p["prime_state"] == "PRIME_POO_GOVERNED_STATE_TRANSITION_READY"
     assert_non_authoritative(p)
 
 
@@ -233,4 +320,53 @@ def test_registry_conflict_projection_is_explicitly_review_required():
     p = registry_audit_projection(registry)
     assert p["registry_consistent"] is False
     assert p["overwatch_state"] == "OVERWATCH_POO_REGISTRY_CONFLICT"
+    assert_non_authoritative(p)
+
+
+def test_full_governance_commit_projection_binds_lineage_and_registry_snapshot():
+    history, transfer, governed = _governed_fixture()
+    decision = evaluate_governed_registry_commit(
+        history,
+        governed,
+        expected_registry_digest=registry_digest(history),
+    )
+    p = registry_commit_readiness_audit_projection(
+        decision,
+        asset_id="asset:alpha",
+        previous_poo_digest=transfer.prior_poo_digest,
+    )
+    assert decision.ready is True
+    assert p["operation"] == "REGISTRY_COMMIT_READINESS"
+    assert_only(p, "registry_commit_ready")
+    assert p["state_lineage_checked"] is True
+    assert p["state_lineage_valid"] is True
+    assert p["optimistic_concurrency_checked"] is True
+    assert p["optimistic_concurrency_match"] is True
+    assert p["expected_registry_digest"] == p["current_registry_digest"]
+    assert p["candidate_registry_digest"]
+    assert p["candidate_state_digest"] == governed.candidate_state_digest
+    assert p["prime_state"] == "PRIME_POO_REGISTRY_COMMIT_CANDIDATE_READY"
+    assert_non_authoritative(p)
+
+
+def test_stale_snapshot_projection_is_fail_closed_and_requires_reevaluation():
+    history, transfer, governed = _governed_fixture()
+    decision = evaluate_governed_registry_commit(
+        history,
+        governed,
+        expected_registry_digest="stale-digest",
+    )
+    p = registry_commit_readiness_audit_projection(
+        decision,
+        asset_id="asset:alpha",
+        previous_poo_digest=transfer.prior_poo_digest,
+    )
+    assert decision.ready is False
+    assert p["registry_commit_ready"] is False
+    assert p["state_lineage_valid"] is True
+    assert p["optimistic_concurrency_checked"] is True
+    assert p["optimistic_concurrency_match"] is False
+    assert p["prime_state"] == "PRIME_POO_REGISTRY_COMMIT_BLOCKED_STALE"
+    assert p["sara_state"] == "SARA_POO_REGISTRY_COMMIT_REEVALUATION_REQUIRED"
+    assert p["candidate_registry_digest"] is None
     assert_non_authoritative(p)
