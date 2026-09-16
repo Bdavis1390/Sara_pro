@@ -11,10 +11,16 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 
 
+BITCOIN_NONPRODUCTION_NETWORK = "SIGNET"
+ETHEREUM_VALIDATOR_TEST_NETWORK = "HOODI"
+ETHEREUM_HOODI_CHAIN_ID = 560048
+
+
 @dataclass(frozen=True)
 class ProductionTransitionEvidence:
-    bitcoin_environment: str = "SIGNET_OR_TESTNET"
-    ethereum_environment: str = "DEVNET_OR_TESTNET"
+    bitcoin_environment: str = BITCOIN_NONPRODUCTION_NETWORK
+    ethereum_environment: str = ETHEREUM_VALIDATOR_TEST_NETWORK
+    ethereum_chain_id: int = ETHEREUM_HOODI_CHAIN_ID
 
     bitcoin_adapter_tested: bool = False
     bitcoin_native_pq_spend_path_deployed: bool = False
@@ -67,10 +73,20 @@ class ProductionTransitionAssessment:
 def assess_production_transition(
     evidence: ProductionTransitionEvidence,
 ) -> ProductionTransitionAssessment:
-    """Assess production-transition evidence while preserving a hard no-execution boundary."""
+    """Assess transition evidence while preserving a hard no-execution boundary."""
 
     blockers: list[str] = []
     warnings: list[str] = []
+
+    bitcoin_environment_ok = evidence.bitcoin_environment == BITCOIN_NONPRODUCTION_NETWORK
+    ethereum_environment_ok = (
+        evidence.ethereum_environment == ETHEREUM_VALIDATOR_TEST_NETWORK
+        and evidence.ethereum_chain_id == ETHEREUM_HOODI_CHAIN_ID
+    )
+    if not bitcoin_environment_ok:
+        blockers.append("Bitcoin integration evidence must come from SIGNET, not mainnet or an unpinned network.")
+    if not ethereum_environment_ok:
+        blockers.append("Ethereum validator evidence must come from HOODI chain_id=560048.")
 
     if evidence.private_key_export_required:
         blockers.append("Private-key export is incompatible with the QCRYPTO production boundary.")
@@ -88,7 +104,7 @@ def assess_production_transition(
         else "KEY_CUSTODY_BOUNDARY_INCOMPLETE"
     )
 
-    bitcoin_test_ready = evidence.bitcoin_adapter_tested and key_custody_ready
+    bitcoin_test_ready = evidence.bitcoin_adapter_tested and bitcoin_environment_ok and key_custody_ready
     bitcoin_protocol_pq = (
         evidence.bitcoin_native_pq_spend_path_deployed
         and evidence.bitcoin_consensus_change_deployed
@@ -104,7 +120,7 @@ def assess_production_transition(
     else:
         bitcoin_state = "BITCOIN_INTEGRATION_INCOMPLETE"
 
-    ethereum_test_ready = evidence.ethereum_validator_change_tested and key_custody_ready
+    ethereum_test_ready = evidence.ethereum_validator_change_tested and ethereum_environment_ok and key_custody_ready
     ethereum_protocol_pq = all(
         (
             evidence.ethereum_pq_validator_signatures_deployed,
@@ -170,12 +186,10 @@ def assess_production_transition(
 
     if integration_ready:
         state = "READY_FOR_EXTERNAL_HUMAN_CHANGE_CONTROL"
-        deployment_action = (
-            "HAND_OFF_SIGNET_TESTNET_EVIDENCE_TO_EXTERNAL_HUMAN_OPERATED_PRODUCTION_CHANGE_PROCESS"
-        )
+        deployment_action = "HAND_OFF_SIGNET_HOODI_EVIDENCE_TO_EXTERNAL_HUMAN_OPERATED_PRODUCTION_CHANGE_PROCESS"
     else:
         state = "PRODUCTION_TRANSITION_BLOCKED"
-        deployment_action = "COMPLETE_NONPRODUCTION_EVIDENCE_AND_GOVERNANCE_GATES"
+        deployment_action = "COMPLETE_SIGNET_HOODI_EVIDENCE_AND_GOVERNANCE_GATES"
 
     return ProductionTransitionAssessment(
         state=state,
