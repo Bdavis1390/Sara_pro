@@ -88,8 +88,24 @@ jobs:
             > rfc3161-evidence/intermediate-cert.txt
           openssl x509 -in rfc3161-evidence/root.pem -noout -subject -issuer -serial \
             > rfc3161-evidence/root-cert.txt
-          cat rfc3161-evidence/responder.pem rfc3161-evidence/intermediate.pem \
-            > rfc3161-evidence/untrusted-chain.pem
+
+          # The TSA response carries the responder leaf certificate. OpenSSL's
+          # -untrusted input should therefore contain only the issuing CA chain,
+          # not the non-CA responder leaf.
+          cp rfc3161-evidence/intermediate.pem rfc3161-evidence/untrusted-chain.pem
+
+          openssl verify \
+            -CAfile rfc3161-evidence/root.pem \
+            rfc3161-evidence/intermediate.pem \
+            | tee rfc3161-evidence/intermediate-verify.txt
+          grep -F ': OK' rfc3161-evidence/intermediate-verify.txt
+
+          openssl verify \
+            -CAfile rfc3161-evidence/root.pem \
+            -untrusted rfc3161-evidence/intermediate.pem \
+            rfc3161-evidence/responder.pem \
+            | tee rfc3161-evidence/responder-verify.txt
+          grep -F ': OK' rfc3161-evidence/responder-verify.txt
 
       - name: Cryptographically verify timestamp response
         run: |
