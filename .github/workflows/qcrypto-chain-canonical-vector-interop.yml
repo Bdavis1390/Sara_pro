@@ -85,7 +85,7 @@ jobs:
           python scripts/qcrypto_chain_canonical_vector_interop_evidence.py \
             --output chain-canonical-vector-interop-evidence.json
 
-      - name: Assert three-chain claims boundary and replay rejection
+      - name: Assert pre-sign three-chain claims boundary and replay rejection
         run: |
           python - <<'PY'
           import json
@@ -101,6 +101,10 @@ jobs:
           assert e['scheme_count'] == 3
           assert e['probe_count'] == 9
           assert set(e['primary_vectors']) == {'BITCOIN', 'ETHEREUM', 'ALGORAND'}
+          assert e['summary']['pre_sign_intent_vectors'] is True
+          assert e['summary']['signature_presence_assumed'] is False
+          for vector in e['primary_vectors'].values():
+              assert not any('signature_present' in key for key in vector['canonical_fields'])
           assert e['summary']['bitcoin_vector_class'] == 'DESIGN_ONLY'
           assert e['summary']['bitcoin_native_pq_algorithm'] is None
           assert e['summary']['ethereum_vector_class'] == 'ROADMAP_INTEROP'
