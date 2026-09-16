@@ -1,9 +1,10 @@
 """Worldshepherd Proof of Ownership (PoO) guard.
 
-PoO composes four independent predicates:
+PoO composes independent predicates:
 - title/provenance binding
 - PoW: bounded claim-specific work evidence
-- PoC: proof of current control/custody
+- PoC: bounded Proof of Concept showing the claimed ownership mechanism works
+- control/custody: current authority over the asset-bound control surface
 - PoS: slashable/bonded economic commitment
 
 This module produces a technical ownership attestation only. It never adjudicates
@@ -28,6 +29,7 @@ class OwnershipEvidence:
     title_reference: str
     control_key_fingerprint: str
     work_reference: str
+    concept_reference: str
     stake_reference: str
     issued_at: str
     expires_at: str
@@ -37,7 +39,8 @@ class OwnershipEvidence:
     claimant_identity_bound: bool = False
     title_or_provenance_bound: bool = False
     pow_verified: bool = False
-    poc_control_verified: bool = False
+    poc_concept_verified: bool = False
+    control_or_custody_verified: bool = False
     pos_bond_verified: bool = False
     freshness_verified: bool = False
     not_revoked: bool = True
@@ -61,7 +64,8 @@ _REQUIRED = {
     "claimant_identity_bound": "claimant identity not bound",
     "title_or_provenance_bound": "title/provenance not bound",
     "pow_verified": "PoW not verified",
-    "poc_control_verified": "PoC control not verified",
+    "poc_concept_verified": "PoC concept not verified",
+    "control_or_custody_verified": "control/custody not verified",
     "pos_bond_verified": "PoS bond not verified",
     "freshness_verified": "freshness not verified",
     "not_revoked": "claim revoked",
@@ -77,6 +81,7 @@ def canonical_claim_payload(evidence: OwnershipEvidence) -> Dict[str, object]:
         "title_reference": evidence.title_reference,
         "control_key_fingerprint": evidence.control_key_fingerprint,
         "work_reference": evidence.work_reference,
+        "concept_reference": evidence.concept_reference,
         "stake_reference": evidence.stake_reference,
         "issued_at": evidence.issued_at,
         "expires_at": evidence.expires_at,
@@ -97,7 +102,8 @@ def evaluate_ownership(evidence: OwnershipEvidence) -> OwnershipDecision:
     """Evaluate a PoO claim with fail-closed AND semantics.
 
     No weighted score is used. A wealthy or compute-rich claimant cannot compensate
-    for missing control, provenance, freshness, or revocation checks.
+    for missing proof-of-concept, control/custody, provenance, freshness, or revocation
+    checks.
     """
     missing = [reason for field, reason in _REQUIRED.items() if not getattr(evidence, field)]
     valid = not missing
