@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository is the durable system of record for Worldshepherd software, governance, evidence, opportunity preparation, engineering validation, and operational continuity. Slack is a coordination surface; GitHub is where durable technical and governance state should be anchored.
+This repository is the durable system of record for Worldshepherd software, governance, evidence, opportunity preparation, engineering validation, and operational continuity. Discord is the primary live coordination surface; GitHub is where durable technical and governance state is anchored. Slack is retained only as a legacy/fallback surface during migration and must not become a dependency for project continuity.
 
 ## Control doctrine
 
@@ -96,6 +96,6 @@ A failure remains a failure until corrected and rerun. Partner performance remai
 
 ## Repository operating rule
 
-Every Slack thread, external message, or research note that changes technical readiness, opportunity posture, partner state, architecture, or public claims should resolve to a durable GitHub artifact: issue, PR, test record, evidence package, or canonical document.
+Every Discord thread, external message, or research note that changes technical readiness, opportunity posture, partner state, architecture, or public claims should resolve to a durable GitHub artifact: issue, PR, test record, evidence package, or canonical document.
 
-GitHub should remain usable if Slack is unavailable.
+GitHub must remain usable if Discord, Slack, a bot, or any messaging connector is unavailable. Discord availability never determines whether engineering, evidence, capture, or governance work may continue.
