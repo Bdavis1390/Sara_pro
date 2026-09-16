@@ -21,6 +21,7 @@ def valid_transfer():
         recipient_control_key_fingerprint="key:def456",
         recipient_work_reference="work:challenge:002",
         recipient_concept_reference="concept:demo:002",
+        recipient_coc_reference="coc:digest:002",
         recipient_stake_reference="stake:bond:002",
         initiated_at="2026-09-16T00:00:00Z",
         expires_at="2026-09-17T00:00:00Z",
@@ -73,6 +74,12 @@ def test_every_transfer_predicate_is_fail_closed():
         assert d.missing_predicates, field
 
 
+def test_empty_recipient_coc_reference_blocks_transfer_even_if_verified_boolean_is_true():
+    d = evaluate_transfer(replace(valid_transfer(), recipient_coc_reference=""))
+    assert d.transfer_ready is False
+    assert "recipient COC reference must be non-empty" in d.missing_predicates
+
+
 def test_proof_of_concept_and_coc_are_distinct_transfer_requirements():
     base = valid_transfer()
     missing_concept = evaluate_transfer(replace(base, recipient_poc_concept_verified=False))
@@ -97,12 +104,13 @@ def test_human_approval_is_required_and_does_not_execute_transfer():
     assert d.transfer_executed is False
 
 
-def test_ready_transfer_derives_new_poo_candidate_linked_to_prior_digest():
+def test_ready_transfer_derives_new_poo_candidate_linked_to_prior_digest_and_coc():
     transfer = valid_transfer()
     candidate = derive_recipient_ownership_evidence(transfer)
     decision = evaluate_ownership(candidate)
     assert candidate.claimant_id == transfer.recipient_id
     assert candidate.previous_poo_digest == transfer.prior_poo_digest
+    assert candidate.coc_reference == transfer.recipient_coc_reference
     assert candidate.poc_concept_verified is True
     assert candidate.coc_verified is True
     assert decision.poo_valid is True
@@ -115,10 +123,11 @@ def test_unready_transfer_cannot_derive_recipient_poo_candidate():
         derive_recipient_ownership_evidence(transfer)
 
 
-def test_transfer_digest_is_deterministic_and_lineage_sensitive():
+def test_transfer_digest_commits_poo_lineage_and_recipient_coc_reference():
     t = valid_transfer()
     assert transfer_digest(t) == transfer_digest(t)
     assert transfer_digest(replace(t, prior_poo_digest="different-prior")) != transfer_digest(t)
+    assert transfer_digest(replace(t, recipient_coc_reference="coc:digest:other")) != transfer_digest(t)
 
 
 def test_derived_recipient_poo_digest_changes_from_prior_lineage_reference():
