@@ -10,7 +10,7 @@ from .custody import (
     FailingAfterInvocationSigner,
     verify_release_receipt,
 )
-from .strict_service import StrictExternalCustodyService as ExternalCustodyService
+from .durable_service import DurableExternalCustodyService as ExternalCustodyService
 
 __all__ = [
     "CustodyConflict",
