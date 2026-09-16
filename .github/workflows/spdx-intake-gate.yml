@@ -1,0 +1,54 @@
+name: SPDX Intake Review Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py'
+      - 'deployments/sara_verified_local_v1/tests/test_spdx_intake.py'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_INTAKE_REVIEW.md'
+      - '.github/workflows/spdx-intake-gate.yml'
+  push:
+    branches:
+      - 'worldshepherd-spdx-intake-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py'
+      - 'deployments/sara_verified_local_v1/tests/test_spdx_intake.py'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_INTAKE_REVIEW.md'
+      - '.github/workflows/spdx-intake-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  spdx-intake-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned SARA test environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          cd deployments/sara_verified_local_v1
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+      - name: Compile SPDX intake module
+        run: python -m py_compile deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+      - name: Run SPDX intake boundary regressions
+        env:
+          PYTHONPATH: deployments/sara_verified_local_v1
+        run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_spdx_intake.py
+      - name: Enforce claims and authority boundaries
+        run: |
+          grep -q 'SPDX_INTAKE_SCHEMA = "WS-SPDX-INTAKE-EVIDENCE-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'SPDX_CONTEXT_301 = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld"' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'spdx_conformance_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'json_schema_validation_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'semantic_ontology_validation_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'complete_sbom_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'license_legal_review_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'supplier_approval_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'admission_authorized=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'release_approved=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
+          grep -q 'external_validation_established=False' deployments/sara_verified_local_v1/worldshepherd_sara/spdx_intake.py
