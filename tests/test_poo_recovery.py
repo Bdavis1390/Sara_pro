@@ -33,7 +33,7 @@ def valid_recovery():
         compromise_or_loss_evidence_bound=True,
         recovery_pow_verified=True,
         recovery_poc_concept_verified=True,
-        alternate_control_or_custody_verified=True,
+        alternate_coc_verified=True,
         recovery_pos_bond_verified=True,
         multisource_or_quorum_verified=True,
         freshness_verified=True,
@@ -67,7 +67,7 @@ def test_every_recovery_predicate_is_fail_closed():
         "compromise_or_loss_evidence_bound",
         "recovery_pow_verified",
         "recovery_poc_concept_verified",
-        "alternate_control_or_custody_verified",
+        "alternate_coc_verified",
         "recovery_pos_bond_verified",
         "multisource_or_quorum_verified",
         "freshness_verified",
@@ -79,14 +79,14 @@ def test_every_recovery_predicate_is_fail_closed():
         assert d.missing_predicates, field
 
 
-def test_poc_and_control_are_distinct_recovery_requirements():
+def test_poc_and_coc_are_distinct_recovery_requirements():
     base = valid_recovery()
     missing_concept = evaluate_recovery(replace(base, recovery_poc_concept_verified=False))
-    missing_control = evaluate_recovery(replace(base, alternate_control_or_custody_verified=False))
+    missing_coc = evaluate_recovery(replace(base, alternate_coc_verified=False))
     assert "recovery PoC concept not verified" in missing_concept.missing_predicates
-    assert "alternate control/custody not verified" in missing_control.missing_predicates
+    assert "alternate COC not verified" in missing_coc.missing_predicates
     assert missing_concept.recovery_ready is False
-    assert missing_control.recovery_ready is False
+    assert missing_coc.recovery_ready is False
 
 
 def test_active_dispute_requires_explicit_resolution():
@@ -116,7 +116,7 @@ def test_ready_recovery_derives_same_claimant_poo_candidate():
     assert candidate.previous_poo_digest == recovery.prior_poo_digest
     assert candidate.control_key_fingerprint == recovery.new_control_key_fingerprint
     assert candidate.poc_concept_verified is True
-    assert candidate.control_or_custody_verified is True
+    assert candidate.coc_verified is True
     assert decision.poo_valid is True
     assert decision.legal_ownership_established is False
 
