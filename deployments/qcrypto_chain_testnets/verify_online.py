@@ -7,6 +7,7 @@ transactions, broadcast value, activate validators, or mutate chain state.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
@@ -22,12 +23,13 @@ from security.qcrypto.chain_online_guard import ChainOnlineEvidence, assess_chai
 
 COMPOSE = ROOT / "compose.observer.yaml"
 ARTIFACT_DIR = ROOT / "artifacts"
+START_RECEIPT = ARTIFACT_DIR / "qcrypto_chain_start_receipt.json"
 
 
-def run(*args: str) -> str:
+def run(*args: str, cwd: Path | None = None) -> str:
     result = subprocess.run(
         args,
-        cwd=ROOT,
+        cwd=cwd or ROOT,
         check=True,
         text=True,
         stdout=subprocess.PIPE,
@@ -66,7 +68,44 @@ def as_int(value) -> int:
     raise TypeError(f"Expected integer-like value, got {value!r}")
 
 
+def load_and_verify_start_receipt() -> dict:
+    if not START_RECEIPT.is_file():
+        raise RuntimeError("Start receipt is missing; run bootstrap_host.sh before online verification")
+    start = json.loads(START_RECEIPT.read_text(encoding="utf-8"))
+    if start.get("schema") != "WS-QCRYPTO-CHAIN-START-RECEIPT-V2":
+        raise RuntimeError("Unsupported or missing chain start receipt schema")
+
+    current_revision = run("git", "rev-parse", "HEAD", cwd=REPO_ROOT)
+    if start.get("deployment_revision") != current_revision:
+        raise RuntimeError("Repository revision changed after node start; deployment lineage is stale")
+
+    compose_sha256 = hashlib.sha256(COMPOSE.read_bytes()).hexdigest()
+    if start.get("compose_sha256") != compose_sha256:
+        raise RuntimeError("Compose bytes changed after node start; deployment lineage is stale")
+
+    images = start.get("images") or {}
+    for key in ("bitcoin_core", "ethereum_execution", "ethereum_consensus"):
+        value = images.get(key)
+        if not isinstance(value, str) or "@sha256:" not in value:
+            raise RuntimeError(f"Start receipt lacks immutable image digest for {key}")
+
+    claims = start.get("claims") or {}
+    for key in (
+        "mainnet_permitted",
+        "live_value_authorized",
+        "private_key_operations_permitted",
+        "bitcoin_transaction_broadcast",
+        "ethereum_validator_activated",
+        "end_to_end_post_quantum_security_established",
+    ):
+        if claims.get(key) is not False:
+            raise RuntimeError(f"Start receipt violates required negative claim: {key}")
+    return start
+
+
 def main() -> int:
+    start = load_and_verify_start_receipt()
+
     bitcoin_raw = docker_exec(
         "bitcoin-signet",
         "bitcoin-cli",
@@ -108,8 +147,14 @@ def main() -> int:
         raise RuntimeError("; ".join(assessment.blockers))
 
     receipt = {
-        "schema": "WS-QCRYPTO-CHAIN-ONLINE-RECEIPT-V1",
+        "schema": "WS-QCRYPTO-CHAIN-ONLINE-RECEIPT-V2",
         "status": assessment.state,
+        "lineage": {
+            "deployment_revision": start["deployment_revision"],
+            "compose_sha256": start["compose_sha256"],
+            "images": start["images"],
+            "start_receipt_schema": start["schema"],
+        },
         "bitcoin": {
             "network": "SIGNET",
             "reported_chain": measured.bitcoin_reported_chain,
