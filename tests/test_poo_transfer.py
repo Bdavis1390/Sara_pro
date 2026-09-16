@@ -29,7 +29,7 @@ def valid_transfer():
         current_owner_authorized=True,
         recipient_identity_bound=True,
         recipient_poc_concept_verified=True,
-        recipient_control_or_custody_verified=True,
+        recipient_coc_verified=True,
         recipient_pow_verified=True,
         recipient_pos_bond_verified=True,
         title_or_provenance_transition_bound=True,
@@ -58,7 +58,7 @@ def test_every_transfer_predicate_is_fail_closed():
         "current_owner_authorized",
         "recipient_identity_bound",
         "recipient_poc_concept_verified",
-        "recipient_control_or_custody_verified",
+        "recipient_coc_verified",
         "recipient_pow_verified",
         "recipient_pos_bond_verified",
         "title_or_provenance_transition_bound",
@@ -73,14 +73,14 @@ def test_every_transfer_predicate_is_fail_closed():
         assert d.missing_predicates, field
 
 
-def test_proof_of_concept_and_control_are_distinct_transfer_requirements():
+def test_proof_of_concept_and_coc_are_distinct_transfer_requirements():
     base = valid_transfer()
     missing_concept = evaluate_transfer(replace(base, recipient_poc_concept_verified=False))
-    missing_control = evaluate_transfer(replace(base, recipient_control_or_custody_verified=False))
+    missing_coc = evaluate_transfer(replace(base, recipient_coc_verified=False))
     assert "recipient PoC concept not verified" in missing_concept.missing_predicates
-    assert "recipient control/custody not verified" in missing_control.missing_predicates
+    assert "recipient COC not verified" in missing_coc.missing_predicates
     assert missing_concept.transfer_ready is False
-    assert missing_control.transfer_ready is False
+    assert missing_coc.transfer_ready is False
 
 
 def test_active_dispute_blocks_supersession_even_when_other_proofs_pass():
@@ -104,7 +104,7 @@ def test_ready_transfer_derives_new_poo_candidate_linked_to_prior_digest():
     assert candidate.claimant_id == transfer.recipient_id
     assert candidate.previous_poo_digest == transfer.prior_poo_digest
     assert candidate.poc_concept_verified is True
-    assert candidate.control_or_custody_verified is True
+    assert candidate.coc_verified is True
     assert decision.poo_valid is True
     assert decision.legal_ownership_established is False
 
