@@ -2,16 +2,22 @@
 
 This layer extends the isolated custody domain without expanding SARA authority.
 It persists the exact release binding and deterministic provider operation ID before
-calling an opaque signer provider.  If the provider acknowledgement is lost, a
-later reconciliation may recover the already-committed signature without invoking
+calling an opaque signer provider. If the provider acknowledgement is lost, a later
+reconciliation may recover the already-committed signature without invoking
 ``begin_sign`` again.
 
-Important boundary: reconciliation never authorizes a new signature.  A provider
-response of NOT_FOUND_SAFE_TO_RETRY is *not* automatically retried; human review is
-required instead.
+The opaque provider key handle is part of the ML-DSA-signed release binding. The
+provider operation ID is then deterministically derived from that signed binding,
+so a ledger editor cannot substitute both handle and operation ID while preserving
+a valid release signature.
+
+Important boundary: reconciliation never authorizes a new signature. A provider
+response of NOT_FOUND_SAFE_TO_RETRY is *not* automatically retried; new human
+authorization is required instead.
 """
 from __future__ import annotations
 
+import hashlib
 from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any
@@ -20,7 +26,6 @@ from .custody import (
     CustodyConflict,
     CustodyError,
     CustodyIndeterminate,
-    _b64decode,
     _canonical,
     _release_binding,
     _sha,
@@ -77,16 +82,25 @@ def _provider_receipt(
 ) -> dict[str, Any]:
     if result.state is not ProviderState.SIGNED or not result.signature_b64url:
         raise CustodyError("provider result is not a signed custody release")
+
+    signed_key_handle = binding.get("provider_key_handle")
+    if not isinstance(signed_key_handle, str) or not signed_key_handle:
+        raise CustodyError("signed release binding is missing the opaque provider key handle")
+    if signed_key_handle != signer.provider.key_handle:
+        raise CustodyError("signed provider key handle differs from the active provider")
+    if result.key_handle != signed_key_handle:
+        raise CustodyError("provider result key handle differs from the signed release binding")
+    if result.algorithm != signer.algorithm:
+        raise CustodyError("provider result algorithm differs from the custody signer")
+
     payload = _canonical(binding)
     expected_operation = provider_operation_id(
-        key_handle=signer.provider.key_handle,
+        key_handle=signed_key_handle,
         message=payload,
         context=signer.context,
     )
     if result.operation_id != expected_operation:
         raise CustodyError("provider operation ID does not match the signed release binding")
-    if result.key_handle != signer.provider.key_handle:
-        raise CustodyError("provider key handle changed during custody release")
     if not verify_provider_result(
         result,
         public_key_bytes=signer.public_key_bytes,
@@ -100,7 +114,6 @@ def _provider_receipt(
         "state": "SIGNED_CUSTODY_RELEASE_ATTESTATION",
         "signature_b64url": result.signature_b64url,
         "provider_operation_id": result.operation_id,
-        "provider_key_handle": result.key_handle,
         "provider_reconciled": reconciled,
         "claims_boundary": _PROVIDER_CLAIMS_BOUNDARY,
     }
@@ -113,7 +126,7 @@ def verify_opaque_provider_receipt(
     *,
     public_key_bytes: bytes,
 ) -> bool:
-    """Verify receipt integrity, provider operation binding, and ML-DSA signature."""
+    """Verify receipt integrity, signed key-handle binding, and provider signature."""
     try:
         receipt_digest = receipt.get("receipt_sha256")
         unsigned_receipt = dict(receipt)
@@ -129,6 +142,9 @@ def verify_opaque_provider_receipt(
         if not isinstance(signature_b64url, str):
             return False
 
+        # provider_key_handle remains in the binding: it is ML-DSA authenticated.
+        # provider_operation_id is derived from that signed binding, so it need not
+        # be recursively included in its own preimage.
         binding = {
             key: value
             for key, value in receipt.items()
@@ -137,12 +153,13 @@ def verify_opaque_provider_receipt(
                 "state",
                 "signature_b64url",
                 "provider_operation_id",
-                "provider_key_handle",
                 "provider_reconciled",
                 "claims_boundary",
                 "receipt_sha256",
             }
         }
+        if binding.get("provider_key_handle") != key_handle:
+            return False
         payload = _canonical(binding)
         context_text = binding.get("signature_context")
         if not isinstance(context_text, str):
@@ -160,8 +177,8 @@ def verify_opaque_provider_receipt(
             state=ProviderState.SIGNED,
             key_handle=key_handle,
             algorithm=str(binding.get("signing_algorithm")),
-            message_sha256=__import__("hashlib").sha256(payload).hexdigest(),
-            context_sha256=__import__("hashlib").sha256(context).hexdigest(),
+            message_sha256=hashlib.sha256(payload).hexdigest(),
+            context_sha256=hashlib.sha256(context).hexdigest(),
             signature_b64url=signature_b64url,
             safe_to_retry=False,
         )
@@ -179,7 +196,7 @@ class OpaqueProviderCustodyService(DurableExternalCustodyService):
     """Durable custody service for an opaque signer/HSM-style provider.
 
     ``execute_release`` crosses the provider invocation fence at most once for a
-    request.  ``reconcile_release`` can only recover a previously committed provider
+    request. ``reconcile_release`` can only recover a previously committed provider
     result; it never calls ``begin_sign`` and therefore cannot create a second
     signature operation.
     """
@@ -218,18 +235,20 @@ class OpaqueProviderCustodyService(DurableExternalCustodyService):
             )
             request_digest = _sha(semantic)
             approval_id = approval["approval_id"]
-            signed_at = datetime.now(timezone.utc)
             binding = _release_binding(
                 request_digest=request_digest,
                 handoff_digest=handoff_digest,
                 intent_digest=approval["intent_sha256"],
-                unsigned_payload_sha256=__import__("hashlib").sha256(unsigned_payload).hexdigest(),
+                unsigned_payload_sha256=hashlib.sha256(unsigned_payload).hexdigest(),
                 approval_id=approval_id,
                 signer=self.signer,
                 network_identity_sha256=approval["network_identity_sha256"],
                 destination_commitment_sha256=semantic["intent"]["destination_commitment_sha256"],
-                signed_at=signed_at,
+                signed_at=current,
             )
+            # The opaque handle is public metadata, not key material, and is part of
+            # the cryptographically signed release binding.
+            binding["provider_key_handle"] = self.signer.provider.key_handle
             payload = _canonical(binding)
             operation_id = provider_operation_id(
                 key_handle=self.signer.provider.key_handle,
@@ -260,8 +279,8 @@ class OpaqueProviderCustodyService(DurableExternalCustodyService):
                     "provider_operation_id": operation_id,
                     "provider_key_handle": self.signer.provider.key_handle,
                     "provider_signer_fingerprint_sha256": self.signer.fingerprint_sha256,
-                    "provider_message_sha256": __import__("hashlib").sha256(payload).hexdigest(),
-                    "provider_context_sha256": __import__("hashlib").sha256(self.signer.context).hexdigest(),
+                    "provider_message_sha256": hashlib.sha256(payload).hexdigest(),
+                    "provider_context_sha256": hashlib.sha256(self.signer.context).hexdigest(),
                 }
                 used[approval_id] = request_id
                 locked.commit()
@@ -360,9 +379,9 @@ class OpaqueProviderCustodyService(DurableExternalCustodyService):
     def reconcile_release(self, request: dict[str, Any]) -> dict[str, Any]:
         """Resolve one ambiguous provider operation without invoking sign again.
 
-        This method deliberately does not re-check approval freshness.  The original
+        This method deliberately does not re-check approval freshness. The original
         request crossed the invocation fence only after full validation and the exact
-        request envelope was durably committed.  Reconciliation is recovery of that
+        request envelope was durably committed. Reconciliation is recovery of that
         historical operation, not authorization for a new one.
         """
         _strict_surface(request)
@@ -393,14 +412,19 @@ class OpaqueProviderCustodyService(DurableExternalCustodyService):
             request_digest = entry.get("request_sha256")
             if not isinstance(operation_id, str) or not isinstance(request_digest, str):
                 raise CustodyError("custody invocation record is missing provider identity")
-            if entry.get("provider_key_handle") != self.signer.provider.key_handle:
+            signed_key_handle = binding.get("provider_key_handle")
+            if not isinstance(signed_key_handle, str) or not signed_key_handle:
+                raise CustodyError("custody release binding is missing its signed provider key handle")
+            if entry.get("provider_key_handle") != signed_key_handle:
+                raise CustodyError("ledger provider key handle differs from the signed release binding")
+            if signed_key_handle != self.signer.provider.key_handle:
                 raise CustodyConflict("current provider key handle differs from the invoked custody operation")
             if entry.get("provider_signer_fingerprint_sha256") != self.signer.fingerprint_sha256:
                 raise CustodyConflict("current provider signer differs from the invoked custody operation")
 
         payload = _canonical(binding)
         expected_operation = provider_operation_id(
-            key_handle=self.signer.provider.key_handle,
+            key_handle=signed_key_handle,
             message=payload,
             context=self.signer.context,
         )
@@ -410,6 +434,10 @@ class OpaqueProviderCustodyService(DurableExternalCustodyService):
         result = self.signer.provider.reconcile(operation_id)
         if result.operation_id != operation_id:
             raise CustodyError("provider reconciliation returned the wrong operation ID")
+        if result.key_handle != signed_key_handle:
+            raise CustodyError("provider reconciliation returned the wrong key handle")
+        if result.algorithm != self.signer.algorithm:
+            raise CustodyError("provider reconciliation returned the wrong algorithm")
         if result.state is ProviderState.SIGNED:
             receipt = _provider_receipt(
                 binding=binding,
