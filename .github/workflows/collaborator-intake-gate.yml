@@ -26,6 +26,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check pytest
       - name: Compile collaborator intake module
         run: python -m compileall -q collaboration
       - name: Run collaborator intake regressions
