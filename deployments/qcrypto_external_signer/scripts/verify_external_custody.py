@@ -181,8 +181,11 @@ def main() -> int:
         first = first_service.execute_release(request, now=now + timedelta(seconds=1))
         retry = first_service.execute_release(deepcopy(request), now=now + timedelta(seconds=2))
         restarted = svc(root, signer, human_public).execute_release(deepcopy(request), now=now + timedelta(seconds=3))
-        if not (first == retry == restarted):
-            raise SystemExit("exact retry/restart did not return the persisted receipt")
+        post_expiry = svc(root, signer, human_public).execute_release(
+            deepcopy(request), now=now + timedelta(hours=1)
+        )
+        if not (first == retry == restarted == post_expiry):
+            raise SystemExit("exact retry/restart/post-expiry retrieval did not return the persisted receipt")
         if signer.invocation_count != 1:
             raise SystemExit("custody signer was invoked more than once for an exact retry")
         if not verify_release_receipt(first, signer.public_key_bytes):
@@ -190,6 +193,9 @@ def main() -> int:
         ledger = json.loads((Path(root) / "ledger.json").read_text())
         if ledger["requests"][request["request_id"]]["state"] != "SIGNED":
             raise SystemExit("durable custody ledger did not reach SIGNED")
+        envelope_map = ledger.get("request_envelopes")
+        if not isinstance(envelope_map, dict) or len(envelope_map.get(request["request_id"], "")) != 64:
+            raise SystemExit("durable exact-request envelope identity was not retained")
 
     with tempfile.TemporaryDirectory(prefix="ws-custody-indeterminate-") as root:
         failing = FailingAfterInvocationSigner()
@@ -198,19 +204,21 @@ def main() -> int:
         )
         bad_service = svc(root, failing, bad_human_public)
         ambiguous_blocked = False
-        retry_blocked = False
+        post_expiry_retry_blocked = False
         try:
             bad_service.execute_release(bad_request, now=now + timedelta(seconds=1))
         except CustodyIndeterminate:
             ambiguous_blocked = True
         try:
-            bad_service.execute_release(bad_request, now=now + timedelta(seconds=2))
+            svc(root, failing, bad_human_public).execute_release(
+                deepcopy(bad_request), now=now + timedelta(hours=1)
+            )
         except CustodyIndeterminate:
-            retry_blocked = True
+            post_expiry_retry_blocked = True
         bad_ledger = json.loads((Path(root) / "ledger.json").read_text())
         indeterminate_state = bad_ledger["requests"][bad_request["request_id"]]["state"]
-        if not ambiguous_blocked or not retry_blocked or indeterminate_state != "INDETERMINATE" or failing.invocation_count != 1:
-            raise SystemExit("ambiguous signer outcome was not fail-stopped")
+        if not ambiguous_blocked or not post_expiry_retry_blocked or indeterminate_state != "INDETERMINATE" or failing.invocation_count != 1:
+            raise SystemExit("ambiguous signer outcome was not fail-stopped across expiry")
 
     broadcast_blocked = False
     with tempfile.TemporaryDirectory(prefix="ws-custody-broadcast-") as root:
@@ -235,10 +243,12 @@ def main() -> int:
         "receipt_verified": True,
         "exact_retry_identical": first == retry,
         "restart_retry_identical": first == restarted,
+        "post_expiry_retry_identical": first == post_expiry,
         "signer_invocation_count": signer.invocation_count,
         "durable_signed_state": ledger["requests"][request["request_id"]]["state"],
+        "durable_request_envelope_identity": True,
         "ambiguous_outcome_state": indeterminate_state,
-        "ambiguous_outcome_retry_blocked": retry_blocked,
+        "ambiguous_outcome_post_expiry_retry_blocked": post_expiry_retry_blocked,
         "ambiguous_signer_invocation_count": failing.invocation_count,
         "broadcast_request_blocked": broadcast_blocked,
         "mainnet_permitted": False,
