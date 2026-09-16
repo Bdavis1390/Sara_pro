@@ -6,7 +6,11 @@ on:
       - 'security/qcrypto/live_value_canary_gate.py'
       - 'security/qcrypto/production_transition_guard.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_handoff_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_verifier.py'
       - 'deployments/sara_verified_local_v1/tests/test_live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/tests/test_live_value_handoff_audit_adapter.py'
       - 'deployments/sara_verified_local_v1/scripts/verify_live_value_execution_handoff.py'
       - '.github/workflows/qcrypto-live-value-execution-handoff.yml'
   push:
@@ -16,7 +20,11 @@ on:
       - 'security/qcrypto/live_value_canary_gate.py'
       - 'security/qcrypto/production_transition_guard.py'
       - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_handoff_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_verifier.py'
       - 'deployments/sara_verified_local_v1/tests/test_live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/tests/test_live_value_handoff_audit_adapter.py'
       - 'deployments/sara_verified_local_v1/scripts/verify_live_value_execution_handoff.py'
       - '.github/workflows/qcrypto-live-value-execution-handoff.yml'
   workflow_dispatch:
@@ -48,14 +56,18 @@ jobs:
           python -m pip install -c constraints-ci.txt -e '.[test]'
           python -m pip check
 
-      - name: Compile last-mile handoff controls
+      - name: Compile last-mile handoff and custody controls
         run: |
           python -m compileall -q \
             worldshepherd_sara/live_value_execution_handoff.py \
+            worldshepherd_sara/live_value_handoff_audit_adapter.py \
             scripts/verify_live_value_execution_handoff.py
 
-      - name: Run last-mile handoff regressions
-        run: pytest -q tests/test_live_value_execution_handoff.py
+      - name: Run last-mile handoff and native custody regressions
+        run: |
+          pytest -q \
+            tests/test_live_value_execution_handoff.py \
+            tests/test_live_value_handoff_audit_adapter.py
 
       - name: Generate synthetic bounded handoff evidence
         run: |
