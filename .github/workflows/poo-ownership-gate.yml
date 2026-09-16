@@ -30,8 +30,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install test dependencies
-        run: python -m pip install --disable-pip-version-check pytest 'pydantic>=2,<3'
+      - name: Install pinned SARA runtime and test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check \
+            -c deployments/sara_verified_local_v1/constraints-runtime.txt \
+            './deployments/sara_verified_local_v1[test]'
       - name: Compile all PoO modules and SARA adapter
         run: |
           python -m compileall -q security/poo
