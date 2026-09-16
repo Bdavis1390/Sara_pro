@@ -1,0 +1,125 @@
+name: QCRYPTO Canonical PQ Context Interop Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_pq_context_interop.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'security/qcrypto/pq_signature_interop.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_canonical_pq_context_interop.py'
+      - 'scripts/qcrypto_canonical_pq_context_interop_evidence.py'
+      - '.github/workflows/qcrypto-canonical-pq-context-interop.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_pq_context_interop.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'security/qcrypto/pq_signature_interop.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_canonical_pq_context_interop.py'
+      - 'scripts/qcrypto_canonical_pq_context_interop_evidence.py'
+      - '.github/workflows/qcrypto-canonical-pq-context-interop.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-pq-context-interop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned PQ backend and test dependency
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: "pqcrypto==1.0.0" pytest
+
+      - name: Compile canonical PQ interop controls
+        run: |
+          python -m compileall \
+            security/qcrypto/canonical_authority_envelope.py \
+            security/qcrypto/canonical_pq_signing_context.py \
+            security/qcrypto/canonical_pq_context_interop.py \
+            security/qcrypto/hybrid_authority_migration.py \
+            security/qcrypto/pq_signature_interop.py \
+            security/qcrypto/pqc_algorithm_policy.py \
+            scripts/qcrypto_canonical_pq_context_interop_evidence.py
+
+      - name: Run canonical context and PQ interop regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_canonical_pq_signing_context.py \
+            tests/test_qcrypto_canonical_pq_context_interop.py
+
+      - name: Generate canonical PQ interop evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_canonical_pq_context_interop_evidence.py \
+            --output canonical-pq-context-interop-evidence.json
+
+      - name: Assert exact-context PQ verification posture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e = json.loads(Path('canonical-pq-context-interop-evidence.json').read_text())
+          assert e['schema'] == 'WS-QCRYPTO-CANONICAL-PQ-CONTEXT-INTEROP-EVIDENCE-V1'
+          assert e['status'] == 'PASS'
+          assert e['claim_state'] == 'CANONICAL_CONTEXT_PQ_SIGNATURE_INTEROPERABILITY_PROVEN_IN_CI'
+          assert e['proof_scope'] == 'EPHEMERAL_ZERO_VALUE_CANONICAL_CONTEXT_ONLY'
+          assert e['backend']['pinned_version'] == '1.0.0'
+          assert e['scheme_count'] == 3
+          assert e['primary_context_digest'] != e['alternate_context_digest']
+          assert len(e['results']) == 3
+          for result in e['results']:
+              assert result['valid_signature_verified'] is True
+              assert result['tampered_context_rejected'] is True
+              assert result['cross_context_replay_rejected'] is True
+              assert result['wrong_key_rejected'] is True
+              assert result['test_signature_generated'] is True
+              assert result['secret_material_retained'] is False
+              assert result['live_transaction_signed'] is False
+              assert result['live_value_authorized'] is False
+              assert result['execution_authority'] is False
+          s = e['summary']
+          assert s['all_valid_signatures_verified'] is True
+          assert s['all_tampered_contexts_rejected'] is True
+          assert s['all_cross_context_replays_rejected'] is True
+          assert s['all_wrong_keys_rejected'] is True
+          assert s['secret_material_in_evidence'] is False
+          assert s['live_transaction_signed'] is False
+          assert s['live_value_authorized'] is False
+          assert s['execution_authority'] is False
+          assert s['production_protocol_integration'] is False
+          assert s['end_to_end_pq_security_established'] is False
+          assert len(e['evidence_sha256']) == 64
+          print('canonical_pq_context_interop_gate: PASS')
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload canonical PQ context interop evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qcrypto-canonical-pq-context-interop-evidence
+          path: canonical-pq-context-interop-evidence.json
+          if-no-files-found: error
