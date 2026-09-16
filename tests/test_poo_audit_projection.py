@@ -6,9 +6,53 @@ from security.poo.audit_projection import (
     recovery_audit_projection,
     transfer_audit_projection,
 )
+from security.poo.lineage_guard import LineageNode
 from security.poo.ownership_guard import OwnershipEvidence
 from security.poo.recovery_guard import RecoveryEvidence
 from security.poo.transfer_guard import TransferEvidence
+
+
+def healthy_lineage():
+    return [
+        LineageNode(
+            poo_digest="prior:001",
+            asset_id="asset:alpha",
+            claimant_id="claimant:one",
+            previous_poo_digest=None,
+            event_type="CLAIM",
+            technical_poo_valid=True,
+        )
+    ]
+
+
+def forked_lineage():
+    return [
+        LineageNode(
+            poo_digest="poo:root",
+            asset_id="asset:alpha",
+            claimant_id="claimant:zero",
+            previous_poo_digest=None,
+            event_type="CLAIM",
+            technical_poo_valid=True,
+            superseded=True,
+        ),
+        LineageNode(
+            poo_digest="prior:001",
+            asset_id="asset:alpha",
+            claimant_id="claimant:one",
+            previous_poo_digest="poo:root",
+            event_type="TRANSFER",
+            technical_poo_valid=True,
+        ),
+        LineageNode(
+            poo_digest="prior:other",
+            asset_id="asset:alpha",
+            claimant_id="claimant:other",
+            previous_poo_digest="poo:root",
+            event_type="TRANSFER",
+            technical_poo_valid=True,
+        ),
+    ]
 
 
 def ownership_evidence():
@@ -102,6 +146,8 @@ def assert_non_authoritative(projection):
     assert projection["legal_title_established"] is False
     assert projection["legal_title_transferred"] is False
     assert projection["control_rotated"] is False
+    assert projection["conflict_winner_selected"] is False
+    assert projection["lineage_auto_resolved"] is False
 
 
 def test_ownership_projection_is_ready_but_non_authoritative():
@@ -111,6 +157,7 @@ def test_ownership_projection_is_ready_but_non_authoritative():
     assert p["technical_attestation_ready"] is True
     assert p["transfer_ready"] is False
     assert p["recovery_ready"] is False
+    assert p["lineage_checked"] is False
     assert_non_authoritative(p)
 
 
@@ -129,18 +176,35 @@ def test_missing_coc_blocks_ownership_projection():
     assert_non_authoritative(p)
 
 
-def test_transfer_projection_preserves_lineage_and_nonexecution():
-    p = transfer_audit_projection(transfer_evidence())
+def test_transfer_projection_requires_healthy_active_lineage():
+    p = transfer_audit_projection(transfer_evidence(), healthy_lineage())
     assert p["operation"] == "TRANSFER_READINESS"
     assert p["previous_poo_digest"] == "prior:001"
     assert p["transfer_ready"] is True
     assert p["technical_attestation_ready"] is False
     assert p["recovery_ready"] is False
+    assert p["lineage_checked"] is True
+    assert p["lineage_valid"] is True
+    assert p["active_tip_digest"] == "prior:001"
+    assert_non_authoritative(p)
+
+
+def test_fork_blocks_otherwise_ready_transfer_projection():
+    p = transfer_audit_projection(transfer_evidence(), forked_lineage())
+    assert p["transfer_ready"] is False
+    assert p["lineage_valid"] is False
+    assert p["fork_detected"] is True
+    assert p["prime_state"] == "PRIME_POO_TRANSFER_BLOCKED_LINEAGE"
+    assert p["sara_state"] == "SARA_POO_TRANSFER_DISPUTE_BLOCK"
+    assert p["overwatch_state"] == "OVERWATCH_POO_LINEAGE_CONFLICT_ACTIVE"
     assert_non_authoritative(p)
 
 
 def test_disputed_transfer_projection_is_explicitly_blocked():
-    p = transfer_audit_projection(replace(transfer_evidence(), no_active_dispute=False))
+    p = transfer_audit_projection(
+        replace(transfer_evidence(), no_active_dispute=False),
+        healthy_lineage(),
+    )
     assert p["transfer_ready"] is False
     assert p["prime_state"] == "PRIME_POO_TRANSFER_BLOCKED_DISPUTE"
     assert p["overwatch_state"] == "OVERWATCH_POO_DISPUTE_ACTIVE"
@@ -148,24 +212,43 @@ def test_disputed_transfer_projection_is_explicitly_blocked():
 
 
 def test_missing_recipient_coc_blocks_transfer_projection():
-    p = transfer_audit_projection(replace(transfer_evidence(), recipient_coc_verified=False))
+    p = transfer_audit_projection(
+        replace(transfer_evidence(), recipient_coc_verified=False),
+        healthy_lineage(),
+    )
     assert p["transfer_ready"] is False
     assert p["prime_state"] == "PRIME_POO_TRANSFER_BLOCKED"
     assert_non_authoritative(p)
 
 
-def test_recovery_projection_is_same_owner_readiness_only():
-    p = recovery_audit_projection(recovery_evidence())
+def test_recovery_projection_requires_same_owner_active_lineage():
+    p = recovery_audit_projection(recovery_evidence(), healthy_lineage())
     assert p["operation"] == "RECOVERY_READINESS"
     assert p["previous_poo_digest"] == "prior:001"
     assert p["recovery_ready"] is True
     assert p["transfer_ready"] is False
     assert p["technical_attestation_ready"] is False
+    assert p["lineage_checked"] is True
+    assert p["lineage_valid"] is True
+    assert p["active_tip_digest"] == "prior:001"
+    assert_non_authoritative(p)
+
+
+def test_fork_blocks_otherwise_ready_recovery_projection():
+    p = recovery_audit_projection(recovery_evidence(), forked_lineage())
+    assert p["recovery_ready"] is False
+    assert p["lineage_valid"] is False
+    assert p["fork_detected"] is True
+    assert p["prime_state"] == "PRIME_POO_RECOVERY_BLOCKED_LINEAGE"
+    assert p["sara_state"] == "SARA_POO_RECOVERY_DISPUTE_BLOCK"
     assert_non_authoritative(p)
 
 
 def test_unresolved_recovery_dispute_records_blocked_state():
-    p = recovery_audit_projection(replace(recovery_evidence(), active_dispute=True))
+    p = recovery_audit_projection(
+        replace(recovery_evidence(), active_dispute=True),
+        healthy_lineage(),
+    )
     assert p["recovery_ready"] is False
     assert p["prime_state"] == "PRIME_POO_RECOVERY_BLOCKED_DISPUTE"
     assert p["overwatch_state"] == "OVERWATCH_POO_DISPUTE_ACTIVE"
@@ -173,7 +256,10 @@ def test_unresolved_recovery_dispute_records_blocked_state():
 
 
 def test_missing_alternate_coc_blocks_recovery_projection():
-    p = recovery_audit_projection(replace(recovery_evidence(), alternate_coc_verified=False))
+    p = recovery_audit_projection(
+        replace(recovery_evidence(), alternate_coc_verified=False),
+        healthy_lineage(),
+    )
     assert p["recovery_ready"] is False
     assert p["prime_state"] == "PRIME_POO_RECOVERY_BLOCKED"
     assert_non_authoritative(p)
