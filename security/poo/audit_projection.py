@@ -1,8 +1,9 @@
 """Claims-controlled audit projections for Worldshepherd Proof of Ownership.
 
-The projection layer turns ownership, COC, transfer, recovery, technical-state,
-and registry decisions into a uniform governance record. It carries readiness and
-evidence state only and never conveys execution authority or legal-title adjudication.
+Governance Decision V3 preserves the existing ownership/COC/transfer/recovery/state/
+registry projections and adds explicit full-state-lineage and optimistic-concurrency
+commit-readiness evidence. Audit projections remain non-executing and never adjudicate
+legal title, perform a durable registry write, or select a winner in a conflict.
 """
 
 from __future__ import annotations
@@ -15,11 +16,13 @@ from typing import Dict
 from security.poo.coc_guard import COCEvidence, evaluate_coc
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
 from security.poo.recovery_guard import RecoveryEvidence, evaluate_recovery
+from security.poo.registry_governance_guard import GovernedRegistryCommitDecision
 from security.poo.registry_guard import RegistryDecision
-from security.poo.state_engine import StateTransitionDecision
+from security.poo.state_engine import StateLineageDecision, StateTransitionDecision
+from security.poo.state_governance_guard import GovernedStateTransitionDecision
 from security.poo.transfer_guard import TransferEvidence, evaluate_transfer
 
-POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"
+POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V3"
 POO_CLAIM_BOUNDARY = "INTERNAL_POO_EVIDENCE_NOT_LEGAL_TITLE_OR_EXECUTION_AUTHORITY"
 
 
@@ -40,6 +43,22 @@ def _base_projection(
     recovery_ready: bool = False,
     state_transition_ready: bool = False,
     registry_consistent: bool = False,
+    state_lineage_checked: bool = False,
+    state_lineage_valid: bool = False,
+    poo_lineage_valid: bool = False,
+    coc_lineage_valid: bool = False,
+    generation_valid: bool = False,
+    fork_detected: bool = False,
+    cycle_detected: bool = False,
+    active_tip_digest: str | None = None,
+    lineage_issue_count: int = 0,
+    registry_commit_ready: bool = False,
+    optimistic_concurrency_checked: bool = False,
+    optimistic_concurrency_match: bool = False,
+    expected_registry_digest: str | None = None,
+    current_registry_digest: str | None = None,
+    candidate_registry_digest: str | None = None,
+    candidate_state_digest: str | None = None,
 ) -> Dict[str, object]:
     return {
         "schema": POO_AUDIT_SCHEMA,
@@ -58,6 +77,22 @@ def _base_projection(
         "recovery_ready": recovery_ready,
         "state_transition_ready": state_transition_ready,
         "registry_consistent": registry_consistent,
+        "state_lineage_checked": state_lineage_checked,
+        "state_lineage_valid": state_lineage_valid,
+        "poo_lineage_valid": poo_lineage_valid,
+        "coc_lineage_valid": coc_lineage_valid,
+        "generation_valid": generation_valid,
+        "fork_detected": fork_detected,
+        "cycle_detected": cycle_detected,
+        "active_tip_digest": active_tip_digest,
+        "lineage_issue_count": lineage_issue_count,
+        "registry_commit_ready": registry_commit_ready,
+        "optimistic_concurrency_checked": optimistic_concurrency_checked,
+        "optimistic_concurrency_match": optimistic_concurrency_match,
+        "expected_registry_digest": expected_registry_digest,
+        "current_registry_digest": current_registry_digest,
+        "candidate_registry_digest": candidate_registry_digest,
+        "candidate_state_digest": candidate_state_digest,
         "human_approval_required": True,
         "ownership_changed": False,
         "transfer_executed": False,
@@ -65,6 +100,10 @@ def _base_projection(
         "legal_title_established": False,
         "legal_title_transferred": False,
         "control_rotated": False,
+        "technical_registry_committed": False,
+        "durable_registry_write_authorized": False,
+        "conflict_winner_selected": False,
+        "lineage_auto_resolved": False,
         "claim_boundary": POO_CLAIM_BOUNDARY,
     }
 
@@ -206,9 +245,7 @@ def recovery_audit_projection(evidence: RecoveryEvidence) -> Dict[str, object]:
 
 
 def _transition_digest(decision: StateTransitionDecision) -> str:
-    raw = json.dumps(
-        asdict(decision), sort_keys=True, separators=(",", ":")
-    ).encode("utf-8")
+    raw = json.dumps(asdict(decision), sort_keys=True, separators=(",", ":")).encode("utf-8")
     return sha256(raw).hexdigest()
 
 
@@ -218,12 +255,13 @@ def state_transition_audit_projection(
     asset_id: str,
     previous_poo_digest: str | None,
 ) -> Dict[str, object]:
+    """Project a local candidate-state result; this is not commit readiness."""
     states = (
         (
             "ECHO_POO_STATE_CANDIDATE_ACCEPTED",
-            "PRIME_POO_STATE_TRANSITION_READY",
-            "SARA_POO_STATE_HUMAN_REVIEW_READY",
-            "OVERWATCH_POO_STATE_PENDING_COMMIT",
+            "PRIME_POO_LOCAL_STATE_CANDIDATE_READY",
+            "SARA_POO_LOCAL_STATE_REVIEW_ONLY",
+            "OVERWATCH_POO_STATE_CANDIDATE_MONITOR",
         )
         if decision.ready
         else (
@@ -244,6 +282,115 @@ def state_transition_audit_projection(
         overwatch_state=states[3],
         previous_poo_digest=previous_poo_digest,
         state_transition_ready=decision.ready,
+        candidate_state_digest=decision.candidate_state_digest,
+    )
+
+
+def _conflict_type(decision: StateLineageDecision) -> str:
+    if decision.lineage_valid:
+        return "NONE"
+    if decision.fork_detected and decision.cycle_detected:
+        return "MULTIPLE"
+    if decision.fork_detected:
+        return "FORK"
+    if decision.cycle_detected:
+        return "CYCLE"
+    if not decision.coc_lineage_valid:
+        return "COC_LINEAGE"
+    if not decision.generation_valid:
+        return "GENERATION"
+    return "STRUCTURAL"
+
+
+def state_lineage_audit_projection(
+    decision: StateLineageDecision,
+    *,
+    asset_id: str,
+) -> Dict[str, object]:
+    if decision.lineage_valid:
+        states = (
+            "ECHO_POO_STATE_LINEAGE_ACCEPTED",
+            "PRIME_POO_STATE_LINEAGE_ELIGIBLE",
+            "SARA_POO_STATE_LINEAGE_MONITORABLE",
+            "OVERWATCH_POO_STATE_LINEAGE_HEALTHY",
+        )
+    else:
+        states = (
+            "ECHO_POO_STATE_LINEAGE_CONFLICT_CUSTODIED",
+            "PRIME_POO_STATE_LINEAGE_BLOCKED",
+            "SARA_POO_STATE_LINEAGE_DISPUTE_BLOCK",
+            "OVERWATCH_POO_STATE_LINEAGE_CONFLICT_ACTIVE",
+        )
+    return _base_projection(
+        operation="STATE_LINEAGE_INTEGRITY",
+        asset_id=asset_id,
+        source_digest=decision.digest,
+        status=decision.status + ":" + _conflict_type(decision),
+        echo_state=states[0],
+        prime_state=states[1],
+        sara_state=states[2],
+        overwatch_state=states[3],
+        previous_poo_digest=None,
+        state_lineage_checked=True,
+        state_lineage_valid=decision.lineage_valid,
+        poo_lineage_valid=decision.poo_lineage_valid,
+        coc_lineage_valid=decision.coc_lineage_valid,
+        generation_valid=decision.generation_valid,
+        fork_detected=decision.fork_detected,
+        cycle_detected=decision.cycle_detected,
+        active_tip_digest=decision.active_tip_digest,
+        lineage_issue_count=len(decision.issues),
+    )
+
+
+def governed_state_transition_audit_projection(
+    decision: GovernedStateTransitionDecision,
+    *,
+    asset_id: str,
+    previous_poo_digest: str | None,
+) -> Dict[str, object]:
+    if decision.ready:
+        states = (
+            "ECHO_POO_GOVERNED_STATE_CANDIDATE_ACCEPTED",
+            "PRIME_POO_GOVERNED_STATE_TRANSITION_READY",
+            "SARA_POO_GOVERNED_STATE_HUMAN_REVIEW_READY",
+            "OVERWATCH_POO_GOVERNED_STATE_PENDING_COMMIT",
+        )
+    elif not decision.state_lineage_valid:
+        states = (
+            "ECHO_POO_STATE_LINEAGE_CONFLICT_CUSTODIED",
+            "PRIME_POO_GOVERNED_STATE_BLOCKED_LINEAGE",
+            "SARA_POO_GOVERNED_STATE_DISPUTE_BLOCK",
+            "OVERWATCH_POO_STATE_LINEAGE_CONFLICT_ACTIVE",
+        )
+    else:
+        states = (
+            "ECHO_POO_GOVERNED_STATE_BLOCKED",
+            "PRIME_POO_GOVERNED_STATE_BLOCKED",
+            "SARA_POO_GOVERNED_STATE_BLOCKED",
+            "OVERWATCH_POO_GOVERNED_STATE_REVIEW_REQUIRED",
+        )
+    return _base_projection(
+        operation="GOVERNED_STATE_TRANSITION",
+        asset_id=asset_id,
+        source_digest=decision.digest,
+        status=decision.status,
+        echo_state=states[0],
+        prime_state=states[1],
+        sara_state=states[2],
+        overwatch_state=states[3],
+        previous_poo_digest=previous_poo_digest,
+        state_transition_ready=decision.ready,
+        state_lineage_checked=decision.state_lineage_checked,
+        state_lineage_valid=decision.state_lineage_valid,
+        poo_lineage_valid=decision.poo_lineage_valid,
+        coc_lineage_valid=decision.coc_lineage_valid,
+        generation_valid=decision.generation_valid,
+        fork_detected=decision.fork_detected,
+        cycle_detected=decision.cycle_detected,
+        active_tip_digest=decision.active_tip_poo_digest,
+        lineage_issue_count=decision.lineage_issue_count,
+        candidate_state_digest=decision.candidate_state_digest,
     )
 
 
@@ -274,4 +421,67 @@ def registry_audit_projection(decision: RegistryDecision) -> Dict[str, object]:
         overwatch_state=states[3],
         previous_poo_digest=None,
         registry_consistent=decision.registry_valid,
+    )
+
+
+def registry_commit_readiness_audit_projection(
+    decision: GovernedRegistryCommitDecision,
+    *,
+    asset_id: str,
+    previous_poo_digest: str | None,
+) -> Dict[str, object]:
+    if decision.ready:
+        states = (
+            "ECHO_POO_REGISTRY_COMMIT_EVIDENCE_ACCEPTED",
+            "PRIME_POO_REGISTRY_COMMIT_CANDIDATE_READY",
+            "SARA_POO_REGISTRY_COMMIT_HUMAN_REVIEW_READY",
+            "OVERWATCH_POO_REGISTRY_COMMIT_PENDING",
+        )
+    elif not decision.state_lineage_valid:
+        states = (
+            "ECHO_POO_STATE_LINEAGE_CONFLICT_CUSTODIED",
+            "PRIME_POO_REGISTRY_COMMIT_BLOCKED_LINEAGE",
+            "SARA_POO_REGISTRY_COMMIT_DISPUTE_BLOCK",
+            "OVERWATCH_POO_STATE_LINEAGE_CONFLICT_ACTIVE",
+        )
+    elif not decision.optimistic_concurrency_match:
+        states = (
+            "ECHO_POO_REGISTRY_STALE_SNAPSHOT_RECORDED",
+            "PRIME_POO_REGISTRY_COMMIT_BLOCKED_STALE",
+            "SARA_POO_REGISTRY_COMMIT_REEVALUATION_REQUIRED",
+            "OVERWATCH_POO_REGISTRY_STALE_SNAPSHOT_ALERT",
+        )
+    else:
+        states = (
+            "ECHO_POO_REGISTRY_COMMIT_BLOCKED",
+            "PRIME_POO_REGISTRY_COMMIT_BLOCKED",
+            "SARA_POO_REGISTRY_COMMIT_BLOCKED",
+            "OVERWATCH_POO_REGISTRY_COMMIT_REVIEW_REQUIRED",
+        )
+    return _base_projection(
+        operation="REGISTRY_COMMIT_READINESS",
+        asset_id=asset_id,
+        source_digest=decision.digest,
+        status=decision.status,
+        echo_state=states[0],
+        prime_state=states[1],
+        sara_state=states[2],
+        overwatch_state=states[3],
+        previous_poo_digest=previous_poo_digest,
+        state_lineage_checked=decision.state_lineage_checked,
+        state_lineage_valid=decision.state_lineage_valid,
+        poo_lineage_valid=decision.poo_lineage_valid,
+        coc_lineage_valid=decision.coc_lineage_valid,
+        generation_valid=decision.generation_valid,
+        fork_detected=decision.fork_detected,
+        cycle_detected=decision.cycle_detected,
+        active_tip_digest=decision.active_tip_poo_digest,
+        lineage_issue_count=decision.lineage_issue_count,
+        registry_commit_ready=decision.ready,
+        optimistic_concurrency_checked=decision.optimistic_concurrency_checked,
+        optimistic_concurrency_match=decision.optimistic_concurrency_match,
+        expected_registry_digest=decision.expected_registry_digest,
+        current_registry_digest=decision.current_registry_digest,
+        candidate_registry_digest=decision.candidate_registry_digest,
+        candidate_state_digest=decision.candidate_state_digest,
     )

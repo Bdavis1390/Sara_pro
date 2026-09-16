@@ -9,8 +9,8 @@ from typing import Any
 from .event_outbox import queue_events_outbox_patch
 
 
-POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"
-POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V2"
+POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V3"
+POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V3"
 AUDIT_INSTANCE_PREFIX = "POO-AUDIT-"
 _AUDIT_INSTANCE_PATTERN = re.compile(r"^POO-AUDIT-[0-9a-f]{32}$")
 _VALID_OPERATIONS = frozenset(
@@ -20,7 +20,10 @@ _VALID_OPERATIONS = frozenset(
         "TRANSFER_READINESS",
         "RECOVERY_READINESS",
         "TECHNICAL_STATE_TRANSITION",
+        "GOVERNED_STATE_TRANSITION",
+        "STATE_LINEAGE_INTEGRITY",
         "REGISTRY_HEALTH",
+        "REGISTRY_COMMIT_READINESS",
     }
 )
 _OPERATION_READINESS_FIELD = {
@@ -29,9 +32,29 @@ _OPERATION_READINESS_FIELD = {
     "TRANSFER_READINESS": "transfer_ready",
     "RECOVERY_READINESS": "recovery_ready",
     "TECHNICAL_STATE_TRANSITION": "state_transition_ready",
+    "GOVERNED_STATE_TRANSITION": "state_transition_ready",
+    "STATE_LINEAGE_INTEGRITY": None,
     "REGISTRY_HEALTH": "registry_consistent",
+    "REGISTRY_COMMIT_READINESS": "registry_commit_ready",
 }
-_READINESS_FIELDS = tuple(_OPERATION_READINESS_FIELD.values())
+_PRIMARY_READINESS_FIELDS = (
+    "technical_attestation_ready",
+    "coc_valid",
+    "transfer_ready",
+    "recovery_ready",
+    "state_transition_ready",
+    "registry_consistent",
+    "registry_commit_ready",
+)
+_LINEAGE_BOOL_FIELDS = (
+    "state_lineage_checked",
+    "state_lineage_valid",
+    "poo_lineage_valid",
+    "coc_lineage_valid",
+    "generation_valid",
+    "fork_detected",
+    "cycle_detected",
+)
 _FORBIDDEN_TRUE_FIELDS = (
     "ownership_changed",
     "transfer_executed",
@@ -39,6 +62,10 @@ _FORBIDDEN_TRUE_FIELDS = (
     "legal_title_established",
     "legal_title_transferred",
     "control_rotated",
+    "technical_registry_committed",
+    "durable_registry_write_authorized",
+    "conflict_winner_selected",
+    "lineage_auto_resolved",
 )
 _STAGE_FIELDS = (
     ("ECHO", "echo_state", "poo_echo_state"),
@@ -64,6 +91,22 @@ _REQUIRED_FIELDS = frozenset(
         "recovery_ready",
         "state_transition_ready",
         "registry_consistent",
+        "state_lineage_checked",
+        "state_lineage_valid",
+        "poo_lineage_valid",
+        "coc_lineage_valid",
+        "generation_valid",
+        "fork_detected",
+        "cycle_detected",
+        "active_tip_digest",
+        "lineage_issue_count",
+        "registry_commit_ready",
+        "optimistic_concurrency_checked",
+        "optimistic_concurrency_match",
+        "expected_registry_digest",
+        "current_registry_digest",
+        "candidate_registry_digest",
+        "candidate_state_digest",
         "human_approval_required",
         "ownership_changed",
         "transfer_executed",
@@ -71,8 +114,15 @@ _REQUIRED_FIELDS = frozenset(
         "legal_title_established",
         "legal_title_transferred",
         "control_rotated",
+        "technical_registry_committed",
+        "durable_registry_write_authorized",
+        "conflict_winner_selected",
+        "lineage_auto_resolved",
         "claim_boundary",
     }
+)
+_LINEAGE_OPERATIONS = frozenset(
+    {"STATE_LINEAGE_INTEGRITY", "GOVERNED_STATE_TRANSITION", "REGISTRY_COMMIT_READINESS"}
 )
 
 
@@ -90,6 +140,123 @@ def validate_poo_audit_instance_id(value: str) -> str:
             "audit_instance_id must be a server-format PoO audit instance ID"
         )
     return value
+
+
+def _optional_nonempty_string(projection: dict[str, Any], field: str) -> str | None:
+    value = projection.get(field)
+    if value is not None and (not isinstance(value, str) or not value):
+        raise PoOAuditAdapterError(f"{field} must be null or a non-empty string")
+    return value
+
+
+def _validate_primary_readiness(projection: dict[str, Any], operation: str) -> None:
+    for field in _PRIMARY_READINESS_FIELDS:
+        if not isinstance(projection.get(field), bool):
+            raise PoOAuditAdapterError(f"{field} must be boolean")
+    allowed = _OPERATION_READINESS_FIELD[operation]
+    for field in _PRIMARY_READINESS_FIELDS:
+        if field != allowed and projection[field]:
+            raise PoOAuditAdapterError(f"{field} mismatches operation")
+
+
+def _validate_lineage_semantics(projection: dict[str, Any], operation: str) -> None:
+    for field in _LINEAGE_BOOL_FIELDS:
+        if not isinstance(projection.get(field), bool):
+            raise PoOAuditAdapterError(f"{field} must be boolean")
+    issue_count = projection.get("lineage_issue_count")
+    if not isinstance(issue_count, int) or isinstance(issue_count, bool) or issue_count < 0:
+        raise PoOAuditAdapterError("lineage_issue_count must be a non-negative integer")
+    active_tip = _optional_nonempty_string(projection, "active_tip_digest")
+
+    if operation not in _LINEAGE_OPERATIONS:
+        if any(projection[field] for field in _LINEAGE_BOOL_FIELDS):
+            raise PoOAuditAdapterError("lineage state mismatches operation")
+        if active_tip is not None or issue_count != 0:
+            raise PoOAuditAdapterError("lineage detail must be empty outside lineage-aware operations")
+        return
+
+    if projection["state_lineage_checked"] is not True:
+        raise PoOAuditAdapterError(f"{operation} requires state_lineage_checked=true")
+
+    if projection["state_lineage_valid"]:
+        if not (
+            projection["poo_lineage_valid"]
+            and projection["coc_lineage_valid"]
+            and projection["generation_valid"]
+        ):
+            raise PoOAuditAdapterError("valid state lineage requires PoO, COC, and generation validity")
+        if projection["fork_detected"] or projection["cycle_detected"]:
+            raise PoOAuditAdapterError("valid state lineage cannot report fork/cycle conflict")
+        if active_tip is None:
+            raise PoOAuditAdapterError("valid state lineage requires active_tip_digest")
+        if issue_count != 0:
+            raise PoOAuditAdapterError("valid state lineage requires zero lineage issues")
+    else:
+        if active_tip is not None:
+            raise PoOAuditAdapterError("invalid state lineage cannot expose active_tip_digest")
+        if issue_count < 1:
+            raise PoOAuditAdapterError("invalid state lineage requires at least one lineage issue")
+
+    if operation == "STATE_LINEAGE_INTEGRITY":
+        if projection.get("previous_poo_digest") is not None:
+            raise PoOAuditAdapterError("STATE_LINEAGE_INTEGRITY previous_poo_digest must be null")
+        if any(projection[field] for field in _PRIMARY_READINESS_FIELDS):
+            raise PoOAuditAdapterError("state lineage integrity cannot grant operation readiness")
+    elif operation == "GOVERNED_STATE_TRANSITION":
+        previous = projection.get("previous_poo_digest")
+        if not isinstance(previous, str) or not previous:
+            raise PoOAuditAdapterError("GOVERNED_STATE_TRANSITION requires previous_poo_digest")
+        if projection["state_transition_ready"]:
+            if not projection["state_lineage_valid"]:
+                raise PoOAuditAdapterError("governed state readiness requires valid state lineage")
+            if previous != active_tip:
+                raise PoOAuditAdapterError(
+                    "governed state readiness requires previous_poo_digest to equal active_tip_digest"
+                )
+    elif operation == "REGISTRY_COMMIT_READINESS":
+        previous = projection.get("previous_poo_digest")
+        if not isinstance(previous, str) or not previous:
+            raise PoOAuditAdapterError("REGISTRY_COMMIT_READINESS requires previous_poo_digest")
+        if projection["registry_commit_ready"]:
+            if not projection["state_lineage_valid"]:
+                raise PoOAuditAdapterError("registry commit readiness requires valid state lineage")
+            if previous != active_tip:
+                raise PoOAuditAdapterError(
+                    "registry commit readiness requires previous_poo_digest to equal active_tip_digest"
+                )
+
+
+def _validate_concurrency_semantics(projection: dict[str, Any], operation: str) -> None:
+    for field in ("optimistic_concurrency_checked", "optimistic_concurrency_match"):
+        if not isinstance(projection.get(field), bool):
+            raise PoOAuditAdapterError(f"{field} must be boolean")
+    expected = _optional_nonempty_string(projection, "expected_registry_digest")
+    current = _optional_nonempty_string(projection, "current_registry_digest")
+    candidate_registry = _optional_nonempty_string(projection, "candidate_registry_digest")
+    candidate_state = _optional_nonempty_string(projection, "candidate_state_digest")
+
+    if operation != "REGISTRY_COMMIT_READINESS":
+        if projection["registry_commit_ready"]:
+            raise PoOAuditAdapterError("registry_commit_ready mismatches operation")
+        if projection["optimistic_concurrency_checked"] or projection["optimistic_concurrency_match"]:
+            raise PoOAuditAdapterError("optimistic concurrency state mismatches operation")
+        if any(value is not None for value in (expected, current, candidate_registry)):
+            raise PoOAuditAdapterError("registry digest detail mismatches operation")
+        if operation not in {"TECHNICAL_STATE_TRANSITION", "GOVERNED_STATE_TRANSITION"} and candidate_state is not None:
+            raise PoOAuditAdapterError("candidate_state_digest mismatches operation")
+        return
+
+    if projection["optimistic_concurrency_checked"] is not True:
+        raise PoOAuditAdapterError("REGISTRY_COMMIT_READINESS requires optimistic_concurrency_checked=true")
+    if expected is None or current is None:
+        raise PoOAuditAdapterError("registry commit readiness requires expected/current registry digests")
+    if projection["optimistic_concurrency_match"] != (expected == current):
+        raise PoOAuditAdapterError("optimistic_concurrency_match conflicts with registry digests")
+    if projection["registry_commit_ready"]:
+        if not projection["optimistic_concurrency_match"]:
+            raise PoOAuditAdapterError("registry commit readiness requires a matching registry snapshot")
+        if candidate_registry is None or candidate_state is None:
+            raise PoOAuditAdapterError("ready registry commit requires candidate registry/state digests")
 
 
 def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
@@ -112,11 +279,7 @@ def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(value, str) or not value:
             raise PoOAuditAdapterError(f"{field} must be a non-empty string")
 
-    previous = projection.get("previous_poo_digest")
-    if previous is not None and (not isinstance(previous, str) or not previous):
-        raise PoOAuditAdapterError(
-            "previous_poo_digest must be null or a non-empty string"
-        )
+    _optional_nonempty_string(projection, "previous_poo_digest")
 
     if projection.get("human_approval_required") is not True:
         raise PoOAuditAdapterError("PoO decisions must preserve the human approval gate")
@@ -125,14 +288,9 @@ def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
         if projection.get(field) is not False:
             raise PoOAuditAdapterError(f"{field} must remain false at the SARA audit boundary")
 
-    for field in _READINESS_FIELDS:
-        if not isinstance(projection.get(field), bool):
-            raise PoOAuditAdapterError(f"{field} must be boolean")
-
-    allowed_true_field = _OPERATION_READINESS_FIELD[operation]
-    for field in _READINESS_FIELDS:
-        if field != allowed_true_field and projection[field]:
-            raise PoOAuditAdapterError(f"{field} mismatches operation")
+    _validate_primary_readiness(projection, str(operation))
+    _validate_lineage_semantics(projection, str(operation))
+    _validate_concurrency_semantics(projection, str(operation))
 
     for _stage, state_field, _event_name in _STAGE_FIELDS:
         state = projection.get(state_field)
@@ -183,6 +341,22 @@ def poo_outbox_events(
         "recovery_ready": record["recovery_ready"],
         "state_transition_ready": record["state_transition_ready"],
         "registry_consistent": record["registry_consistent"],
+        "state_lineage_checked": record["state_lineage_checked"],
+        "state_lineage_valid": record["state_lineage_valid"],
+        "poo_lineage_valid": record["poo_lineage_valid"],
+        "coc_lineage_valid": record["coc_lineage_valid"],
+        "generation_valid": record["generation_valid"],
+        "fork_detected": record["fork_detected"],
+        "cycle_detected": record["cycle_detected"],
+        "active_tip_digest": record["active_tip_digest"],
+        "lineage_issue_count": record["lineage_issue_count"],
+        "registry_commit_ready": record["registry_commit_ready"],
+        "optimistic_concurrency_checked": record["optimistic_concurrency_checked"],
+        "optimistic_concurrency_match": record["optimistic_concurrency_match"],
+        "expected_registry_digest": record["expected_registry_digest"],
+        "current_registry_digest": record["current_registry_digest"],
+        "candidate_registry_digest": record["candidate_registry_digest"],
+        "candidate_state_digest": record["candidate_state_digest"],
         "human_approval_required": True,
         "ownership_changed": False,
         "transfer_executed": False,
@@ -190,6 +364,10 @@ def poo_outbox_events(
         "legal_title_established": False,
         "legal_title_transferred": False,
         "control_rotated": False,
+        "technical_registry_committed": False,
+        "durable_registry_write_authorized": False,
+        "conflict_winner_selected": False,
+        "lineage_auto_resolved": False,
         "claim_boundary": record["claim_boundary"],
     }
 
