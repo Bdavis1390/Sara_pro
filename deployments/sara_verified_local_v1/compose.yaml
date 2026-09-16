@@ -19,6 +19,7 @@ services:
       PRIME_SENTINEL_DATA_DIR: ""
       ECHO_INGEST_TOKEN_FILE: ""
       ECHO_DATA_DIR: ""
+      ECHO_CHECKPOINT_ALGORITHM: ""
       ECHO_CHECKPOINT_PRIVATE_KEY_FILE: ""
       ECHO_CHECKPOINT_KEY_ID: ""
     ports:
@@ -62,6 +63,7 @@ services:
       PRIME_SENTINEL_DATA_DIR: /var/lib/prime-sentinel
       ECHO_INGEST_TOKEN_FILE: ""
       ECHO_DATA_DIR: ""
+      ECHO_CHECKPOINT_ALGORITHM: ""
       ECHO_CHECKPOINT_PRIVATE_KEY_FILE: ""
       ECHO_CHECKPOINT_KEY_ID: ""
     ports:
@@ -111,7 +113,8 @@ services:
     environment:
       ECHO_INGEST_TOKEN_FILE: /run/worldshepherd-echo/ingest-token
       ECHO_DATA_DIR: /var/lib/echo
-      ECHO_CHECKPOINT_PRIVATE_KEY_FILE: /run/worldshepherd-echo/checkpoint-ed25519-private.pem
+      ECHO_CHECKPOINT_ALGORITHM: ${ECHO_CHECKPOINT_ALGORITHM:-ML-DSA-65}
+      ECHO_CHECKPOINT_PRIVATE_KEY_FILE: /run/worldshepherd-echo/checkpoint-mldsa65-private.pem
       ECHO_CHECKPOINT_KEY_ID: ${ECHO_CHECKPOINT_KEY_ID:-UNCONFIGURED}
       SARA_ADMIN_TOKEN: ""
       SARA_RELAY_TOKEN: ""
@@ -128,8 +131,8 @@ services:
         target: /run/worldshepherd-echo/ingest-token
         read_only: true
       - type: bind
-        source: ${ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/echo/checkpoint-ed25519-private.pem}
-        target: /run/worldshepherd-echo/checkpoint-ed25519-private.pem
+        source: ${ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/echo/checkpoint-mldsa65-private.pem}
+        target: /run/worldshepherd-echo/checkpoint-mldsa65-private.pem
         read_only: true
       - echo_data:/var/lib/echo
     read_only: true
