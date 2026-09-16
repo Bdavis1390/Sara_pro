@@ -18,6 +18,7 @@ import json
 
 from security.qcrypto.canonical_authority_envelope import CanonicalAuthorityEnvelope
 from security.qcrypto.canonical_pq_signing_context import (
+    AuthoritySigningIntent,
     CanonicalSigningContextDecision,
     CanonicalSigningContextRequest,
     build_canonical_signing_context,
@@ -28,7 +29,6 @@ from security.qcrypto.chain_pq_readiness_profiles import (
     assess_chain_profile,
 )
 from security.qcrypto.hybrid_authority_migration import (
-    AuthorityEnvelope,
     AuthorityLayer,
     AuthorityPolicy,
     MigrationRequirement,
@@ -159,7 +159,7 @@ def build_chain_canonical_vector(
     chain_id: str,
     replay_sequence: int = 0,
 ) -> ChainCanonicalVectorDecision:
-    """Build one non-native canonical migration vector for a tracked chain."""
+    """Build one non-native canonical migration vector from pre-sign intent."""
 
     try:
         profile = PROFILES[chain_id]
@@ -213,7 +213,7 @@ def build_chain_canonical_vector(
 
     network_id = f"ws-reference-{chain_id.lower()}"
     domain_separator = "WS-QCRYPTO-CHAIN-VECTOR-V1"
-    authority = AuthorityEnvelope(
+    signing_intent = AuthoritySigningIntent(
         network_id=network_id,
         domain_separator=domain_separator,
         payload_digest=payload_digest,
@@ -224,8 +224,6 @@ def build_chain_canonical_vector(
         key_epoch=0,
         classical_algorithm_id=spec.native_classical_algorithm,
         pq_algorithm_id=spec.ws_reference_pq_algorithm,
-        classical_signature_present=True,
-        pq_signature_present=True,
         classical_required_for_acceptance=True,
         pq_required_for_acceptance=True,
         recovery_evidence_present=True,
@@ -256,7 +254,7 @@ def build_chain_canonical_vector(
     )
     context: CanonicalSigningContextDecision = build_canonical_signing_context(
         CanonicalSigningContextRequest(
-            authority=authority,
+            intent=signing_intent,
             authority_policy=policy,
             adapter=adapter,
             policy_version=1,
@@ -270,6 +268,8 @@ def build_chain_canonical_vector(
     blockers: list[str] = []
     if not context.ready:
         blockers.extend(context.blockers)
+    if context.ready and (not context.pre_sign_intent_only or context.signature_presence_assumed):
+        blockers.append("Canonical context violated the pre-sign intent lifecycle boundary.")
     if profile_decision.known_blocking_layers:
         blockers.append(
             "Source-backed profile retains classical blocking layers: "
