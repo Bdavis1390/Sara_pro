@@ -7,8 +7,8 @@ controlled interoperability tests and later signer integration only after
 separate execution approval.
 
 Security goals of the context include preventing silent substitution across
-networks, authority roles, algorithm slots, policy versions, key epochs, replay
-domains, evidence records, and recovery commitments.
+networks, authority roles, algorithm slots, policy versions and floors, key
+epochs, replay domains, evidence records, and recovery commitments.
 """
 
 from __future__ import annotations
@@ -23,6 +23,7 @@ from security.qcrypto.canonical_authority_envelope import CanonicalAuthorityEnve
 from security.qcrypto.hybrid_authority_migration import (
     AuthorityEnvelope,
     AuthorityPolicy,
+    MigrationRequirement,
     assess_authority_envelope,
 )
 
@@ -147,6 +148,7 @@ def build_canonical_signing_context(
 
     identifiers = {
         "network_id": request.authority.network_id,
+        "authority_domain_separator": request.authority.domain_separator,
         "chain": adapter.chain,
         "adapter_class": adapter.adapter_class,
         "authority_id": request.authority.authority_id,
@@ -188,19 +190,34 @@ def build_canonical_signing_context(
             canonical_fields={},
         )
 
+    effective_requirement = MigrationRequirement(
+        max(
+            int(request.authority.declared_requirement),
+            int(request.authority_policy.minimum_requirement),
+        )
+    )
+
     fields: tuple[tuple[str, str], ...] = (
         ("schema", CONTEXT_SCHEMA),
         ("network_id", normalized["network_id"]),
+        ("authority_domain_separator", normalized["authority_domain_separator"]),
         ("chain", normalized["chain"]),
         ("adapter_class", normalized["adapter_class"]),
         ("authority_id", normalized["authority_id"]),
         ("authority_layer", normalized["authority_layer"]),
-        ("migration_requirement", request.authority.declared_requirement.name),
+        ("declared_migration_requirement", request.authority.declared_requirement.name),
+        ("policy_minimum_requirement", request.authority_policy.minimum_requirement.name),
+        ("effective_migration_requirement", effective_requirement.name),
         ("envelope_version", str(request.authority.envelope_version)),
+        ("policy_minimum_envelope_version", str(request.authority_policy.minimum_envelope_version)),
         ("key_epoch", str(request.authority.key_epoch)),
+        ("policy_minimum_key_epoch", str(request.authority_policy.minimum_key_epoch)),
         ("policy_version", str(request.policy_version)),
+        ("policy_requires_recovery_evidence", "1" if request.authority_policy.require_recovery_evidence else "0"),
         ("classical_algorithm_id", classical),
         ("pq_algorithm_id", pq),
+        ("classical_required_for_acceptance", "1" if request.authority.classical_required_for_acceptance else "0"),
+        ("pq_required_for_acceptance", "1" if request.authority.pq_required_for_acceptance else "0"),
         ("replay_domain", normalized["replay_domain"]),
         ("replay_sequence", str(request.replay_sequence)),
         ("payload_digest", request.authority.payload_digest),
