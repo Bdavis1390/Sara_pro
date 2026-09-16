@@ -22,6 +22,13 @@ from .provider_custody import (
     OpaqueProviderCustodyService,
     verify_opaque_provider_receipt,
 )
+from .unix_provider import (
+    OpaqueProviderUnixServer,
+    ProviderDescriptor,
+    ProviderRpcError,
+    UnixOpaqueSignerProviderClient,
+    serve_reference_provider,
+)
 
 __all__ = [
     "CustodyConflict",
@@ -34,10 +41,15 @@ __all__ = [
     "FailingAfterInvocationSigner",
     "OpaqueProviderCustodyService",
     "OpaqueProviderReleaseSigner",
+    "OpaqueProviderUnixServer",
     "ProviderAmbiguousOutcome",
+    "ProviderDescriptor",
     "ProviderResult",
+    "ProviderRpcError",
     "ProviderState",
     "ReferenceOpaqueMlDsa65Provider",
+    "UnixOpaqueSignerProviderClient",
+    "serve_reference_provider",
     "verify_opaque_provider_receipt",
     "verify_release_receipt",
 ]
