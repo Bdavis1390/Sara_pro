@@ -1,6 +1,6 @@
 # OCSF Agent Trust-Base Conformance Pilot
 
-**Status:** provisional / non-normative reference artifact
+**Status:** provisional / non-normative reference artifact; pilot CI validated
 
 **Upstream target:** `ocsf/ocsf-schema#1724` — *Discovery: agent trust-base inventory, applying record_integrity per emission*
 
@@ -90,7 +90,11 @@ OCSF's current `attestation` description states that canonical serialization cov
 - runtime-only constraint appearance
 - runtime binding represented as structurally unavailable
 
-The evidence-strength fixture expectations and all five sampling-delta scenarios were exercised locally before commit. The sampling analyzer is descriptive: a reported delta is not itself a failure.
+## CI gate
+
+`.github/workflows/ocsf-agent-trustbase-pilot.yml` provides a narrow GitHub Actions gate for this pilot. It compiles the Python tools, runs all expectation-based verifiers, executes the sampling/runtime analyzer, and validates its JSON output.
+
+The dedicated **OCSF Agent Trust-Base Pilot** workflow completed successfully on the branch after the evidence-strength and sampling layers were added. That result validates the pilot's executable expectations; it does **not** imply OCSF maintainer review, acceptance, or upstream schema conformance.
 
 ## Architectural boundary
 
