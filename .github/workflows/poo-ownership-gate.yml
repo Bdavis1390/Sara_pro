@@ -5,8 +5,9 @@ on:
     paths:
       - 'security/poo/**'
       - 'tests/test_poo_*.py'
-      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py'
-      - 'deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_*.py'
       - '.github/workflows/poo-ownership-gate.yml'
   push:
     branches:
@@ -15,8 +16,9 @@ on:
     paths:
       - 'security/poo/**'
       - 'tests/test_poo_*.py'
-      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py'
-      - 'deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/app.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_*.py'
       - '.github/workflows/poo-ownership-gate.yml'
 
 permissions:
@@ -35,17 +37,21 @@ jobs:
           python -m pip install --disable-pip-version-check
           -c deployments/sara_verified_local_v1/constraints-runtime.txt
           './deployments/sara_verified_local_v1[test]'
-      - name: Compile all PoO modules and SARA adapter
+      - name: Compile PoO and SARA integration modules
         run: |
           python -m compileall -q security/poo
-          python -m py_compile deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          python -m py_compile \
+            deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py \
+            deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py \
+            deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py \
+            deployments/sara_verified_local_v1/worldshepherd_sara/app.py
       - name: Run all PoO protocol and governance regressions
         run: python -m pytest -q tests/test_poo_*.py
-      - name: Run native SARA PoO audit adapter regression
+      - name: Run all native SARA PoO regressions
         env:
           PYTHONPATH: deployments/sara_verified_local_v1
-        run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py
-      - name: Enforce core claims and V3 governance boundaries
+        run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_*.py
+      - name: Enforce core claims, governance, and durable-commit boundaries
         run: |
           grep -q 'POO_SCHEMA = "WS-POO-V3"' security/poo/ownership_guard.py
           grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V3"' security/poo/transfer_guard.py
@@ -57,28 +63,22 @@ jobs:
           grep -q 'COMMIT_SCHEMA = "WS-POO-REGISTRY-COMMIT-V1"' security/poo/commit_guard.py
           grep -q 'STATE_GOVERNANCE_SCHEMA = "WS-POO-STATE-GOVERNANCE-V1"' security/poo/state_governance_guard.py
           grep -q 'REGISTRY_GOVERNANCE_SCHEMA = "WS-POO-REGISTRY-GOVERNANCE-V1"' security/poo/registry_governance_guard.py
+          grep -q 'BOOTSTRAP_GOVERNANCE_SCHEMA = "WS-POO-BOOTSTRAP-GOVERNANCE-V1"' security/poo/bootstrap_governance_guard.py
+          grep -q 'POO_BOOTSTRAP_AUDIT_SCHEMA = "WS-POO-BOOTSTRAP-COMMIT-DECISION-V1"' security/poo/bootstrap_audit_projection.py
           grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V3"' security/poo/audit_projection.py
-          grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V3"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V3"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'coc_reference' security/poo/ownership_guard.py
-          grep -q 'recipient_coc_reference' security/poo/transfer_guard.py
-          grep -q 'recovery_coc_reference' security/poo/recovery_guard.py
-          grep -q 'COC digest does not match semantic COC reference' security/poo/state_engine.py
-          grep -q 'STATE_LINEAGE_CONFLICT_BLOCKED' security/poo/state_governance_guard.py
-          grep -q 'STATE_TRANSFER_READY_WITH_LINEAGE_GUARD' security/poo/state_governance_guard.py
-          grep -q 'STATE_RECOVERY_READY_WITH_LINEAGE_GUARD' security/poo/state_governance_guard.py
+          grep -q 'POO_SARA_REGISTRY_SCHEMA = "WS-POO-SARA-TECHNICAL-REGISTRY-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'POO_DURABLE_COMMIT_REQUEST_SCHEMA = "WS-POO-DURABLE-COMMIT-REQUEST-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'POO_APPROVAL_INTENT = "COMMIT_INTERNAL_TECHNICAL_STATE"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'REGISTRY_BOOTSTRAP_COMMIT_READY_WITH_FULL_GOVERNANCE' security/poo/bootstrap_governance_guard.py
           grep -q 'REGISTRY_COMMIT_READY_WITH_FULL_GOVERNANCE' security/poo/registry_governance_guard.py
           grep -q 'REGISTRY_COMMIT_BLOCKED_STALE_SNAPSHOT' security/poo/registry_governance_guard.py
-          grep -q 'technical_state_committed=False' security/poo/state_engine.py
-          grep -q 'technical_registry_committed=False' security/poo/commit_guard.py
-          grep -q 'durable_registry_write_authorized=False' security/poo/registry_governance_guard.py
-          grep -q 'conflict_winner_selected=False' security/poo/state_governance_guard.py
-          grep -q 'lineage_auto_resolved=False' security/poo/state_governance_guard.py
-          grep -q 'conflict_winner_selected=False' security/poo/registry_governance_guard.py
-          grep -q 'lineage_auto_resolved=False' security/poo/registry_governance_guard.py
-          grep -q 'PRIME_POO_GOVERNED_STATE_TRANSITION_READY' security/poo/audit_projection.py
-          grep -q 'PRIME_POO_REGISTRY_COMMIT_CANDIDATE_READY' security/poo/audit_projection.py
-          grep -q 'SARA_POO_REGISTRY_COMMIT_REEVALUATION_REQUIRED' security/poo/audit_projection.py
-          grep -q 'registry_commit_ready' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'optimistic_concurrency_match' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'durable_registry_write_authorized' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'durable_internal_state_committed: Literal\[True\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'status: Literal\["COMMITTED", "ALREADY_COMMITTED"\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'legal_title_changed: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'live_value_moved: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'credential_rotated: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'external_transfer_executed: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py
+          grep -q 'POO_TECHNICAL_REGISTRY_KEY' deployments/sara_verified_local_v1/worldshepherd_sara/app.py
+          grep -q 'app.include_router(poo_registry_commit_router)' deployments/sara_verified_local_v1/worldshepherd_sara/app.py
+          grep -q '@router.post("/registry/commit")' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py

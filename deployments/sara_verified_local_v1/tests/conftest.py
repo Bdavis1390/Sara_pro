@@ -1,9 +1,21 @@
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi.testclient import TestClient
+
+# Deployment tests include a small set of intentional cross-layer parity checks
+# against the repository-level security.poo reference implementation. Pytest's
+# working directory for the Verified Local gate is this deployment directory,
+# so make the checked-out repository root explicit for tests only. The packaged
+# worldshepherd_sara runtime does not import or depend on security.poo.
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
 
 from worldshepherd_sara.app import app
 
