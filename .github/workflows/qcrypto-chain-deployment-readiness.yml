@@ -8,6 +8,7 @@ on:
       - 'security/qcrypto/production_transition_guard.py'
       - 'tests/test_qcrypto_chain_deployment_guard.py'
       - 'tests/test_qcrypto_chain_online_guard.py'
+      - 'tests/test_qcrypto_chain_online_lineage.py'
       - 'tests/test_qcrypto_production_transition_guard.py'
       - 'deployments/qcrypto_chain_testnets/**'
       - '.github/workflows/qcrypto-chain-deployment-readiness.yml'
@@ -32,9 +33,16 @@ jobs:
           pytest -q \
             tests/test_qcrypto_chain_deployment_guard.py \
             tests/test_qcrypto_chain_online_guard.py \
+            tests/test_qcrypto_chain_online_lineage.py \
             tests/test_qcrypto_production_transition_guard.py
           python -m py_compile deployments/qcrypto_chain_testnets/verify_online.py
           bash -n deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          grep -q 'DEPLOYMENT_REVISION' deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          grep -q 'COMPOSE_SHA256' deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          if grep -qE '^[[:space:]]*source[[:space:]]+.*\.env' deployments/qcrypto_chain_testnets/bootstrap_host.sh; then
+            echo 'bootstrap must not execute .env as shell code' >&2
+            exit 1
+          fi
 
       - name: Render observer deployment package
         env:
