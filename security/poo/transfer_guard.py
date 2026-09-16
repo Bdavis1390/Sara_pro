@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
 
-TRANSFER_SCHEMA = "WS-POO-TRANSFER-V2"
+TRANSFER_SCHEMA = "WS-POO-TRANSFER-V3"
 
 
 @dataclass(frozen=True)
@@ -26,6 +26,7 @@ class TransferEvidence:
     recipient_control_key_fingerprint: str
     recipient_work_reference: str
     recipient_concept_reference: str
+    recipient_coc_reference: str
     recipient_stake_reference: str
     initiated_at: str
     expires_at: str
@@ -88,6 +89,7 @@ def canonical_transfer_payload(evidence: TransferEvidence) -> Dict[str, object]:
         "recipient_control_key_fingerprint": evidence.recipient_control_key_fingerprint,
         "recipient_work_reference": evidence.recipient_work_reference,
         "recipient_concept_reference": evidence.recipient_concept_reference,
+        "recipient_coc_reference": evidence.recipient_coc_reference,
         "recipient_stake_reference": evidence.recipient_stake_reference,
         "initiated_at": evidence.initiated_at,
         "expires_at": evidence.expires_at,
@@ -105,6 +107,8 @@ def transfer_digest(evidence: TransferEvidence) -> str:
 
 def evaluate_transfer(evidence: TransferEvidence) -> TransferDecision:
     missing = [reason for field, reason in _REQUIRED.items() if not getattr(evidence, field)]
+    if not evidence.recipient_coc_reference:
+        missing.append("recipient COC reference must be non-empty")
     ready = not missing
 
     if not evidence.no_active_dispute:
@@ -139,11 +143,6 @@ def derive_recipient_ownership_evidence(
     *,
     recipient_title_reference: Optional[str] = None,
 ) -> OwnershipEvidence:
-    """Build the next PoO candidate after transfer readiness passes.
-
-    The returned record is a candidate technical attestation linked to the prior PoO.
-    It does not execute the transfer or revoke/supersede the prior record.
-    """
     decision = evaluate_transfer(transfer)
     if not decision.transfer_ready:
         raise ValueError("transfer is not ready for governed supersession")
@@ -155,6 +154,7 @@ def derive_recipient_ownership_evidence(
         control_key_fingerprint=transfer.recipient_control_key_fingerprint,
         work_reference=transfer.recipient_work_reference,
         concept_reference=transfer.recipient_concept_reference,
+        coc_reference=transfer.recipient_coc_reference,
         stake_reference=transfer.recipient_stake_reference,
         issued_at=transfer.initiated_at,
         expires_at=transfer.expires_at,
