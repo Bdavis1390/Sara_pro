@@ -65,6 +65,7 @@ class ChainCanonicalVectorDecision:
     chain_id: str
     vector_id: str
     vector_class: str
+    replay_sequence: int
     profile_verdict: str
     profile_evidence_as_of: str
     account_readiness: str
@@ -154,7 +155,10 @@ def _stable_digest(payload: dict) -> str:
     return sha256(encoded).hexdigest()
 
 
-def build_chain_canonical_vector(chain_id: str) -> ChainCanonicalVectorDecision:
+def build_chain_canonical_vector(
+    chain_id: str,
+    replay_sequence: int = 0,
+) -> ChainCanonicalVectorDecision:
     """Build one non-native canonical migration vector for a tracked chain."""
 
     try:
@@ -257,7 +261,7 @@ def build_chain_canonical_vector(chain_id: str) -> ChainCanonicalVectorDecision:
             adapter=adapter,
             policy_version=1,
             replay_domain=spec.replay_domain,
-            replay_sequence=0,
+            replay_sequence=replay_sequence,
             evidence_digest=evidence_digest,
             recovery_commitment_digest=recovery_digest,
         )
@@ -286,6 +290,7 @@ def build_chain_canonical_vector(chain_id: str) -> ChainCanonicalVectorDecision:
         chain_id=chain_id,
         vector_id=spec.vector_id,
         vector_class=spec.vector_class.value,
+        replay_sequence=replay_sequence,
         profile_verdict=profile_decision.verdict,
         profile_evidence_as_of=profile.evidence_as_of,
         account_readiness=account.readiness.name,
@@ -308,5 +313,10 @@ def build_chain_canonical_vector(chain_id: str) -> ChainCanonicalVectorDecision:
     )
 
 
-def build_all_chain_canonical_vectors() -> tuple[ChainCanonicalVectorDecision, ...]:
-    return tuple(build_chain_canonical_vector(chain_id) for chain_id in SPECS)
+def build_all_chain_canonical_vectors(
+    replay_sequence: int = 0,
+) -> tuple[ChainCanonicalVectorDecision, ...]:
+    return tuple(
+        build_chain_canonical_vector(chain_id, replay_sequence)
+        for chain_id in SPECS
+    )
