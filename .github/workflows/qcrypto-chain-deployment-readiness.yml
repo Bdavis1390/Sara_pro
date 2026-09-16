@@ -30,6 +30,7 @@ jobs:
           pytest -q \
             tests/test_qcrypto_chain_deployment_guard.py \
             tests/test_qcrypto_production_transition_guard.py
+          python -m py_compile deployments/qcrypto_chain_testnets/verify_online.py
 
       - name: Render observer deployment package
         env:
@@ -44,8 +45,13 @@ jobs:
             config > /tmp/qcrypto-chain-compose.rendered.yaml
           grep -q -- '-signet' /tmp/qcrypto-chain-compose.rendered.yaml
           grep -q -- '--hoodi' /tmp/qcrypto-chain-compose.rendered.yaml
+          grep -q -- '127.0.0.1:5052' /tmp/qcrypto-chain-compose.rendered.yaml
           if grep -q -- '--mainnet' /tmp/qcrypto-chain-compose.rendered.yaml; then
             echo 'mainnet flag found in public-testnet package' >&2
+            exit 1
+          fi
+          if grep -Eiq '(wallet.*(key|seed)|validator.*(key|keystore)|mnemonic)' /tmp/qcrypto-chain-compose.rendered.yaml; then
+            echo 'signing-key material surface found in observer package' >&2
             exit 1
           fi
 
