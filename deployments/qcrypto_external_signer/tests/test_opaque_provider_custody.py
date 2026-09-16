@@ -84,9 +84,12 @@ def test_changed_envelope_cannot_reconcile_committed_provider_operation(tmp_path
     with pytest.raises(CustodyIndeterminate):
         svc.execute_release(request, now=now + timedelta(seconds=1))
 
+    # Keep the request surface syntactically valid while changing its exact envelope.
+    # Reconciliation must fail at the durable envelope identity boundary before it can
+    # consult the provider or reinterpret the original authorization.
     changed = deepcopy(request)
-    changed["broadcast_requested"] = True
-    with pytest.raises((CustodyConflict, ValueError)):
+    changed["observed_network_identity_sha256"] = "f" * 64
+    with pytest.raises(CustodyConflict, match="exact committed envelope"):
         svc.reconcile_release(changed)
     assert provider.invocation_count == 1
 
