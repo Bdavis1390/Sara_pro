@@ -4,11 +4,11 @@ from security.qcrypto.canonical_authority_envelope import CanonicalAuthorityEnve
 from security.qcrypto.canonical_pq_signing_context import (
     U32_MAX,
     U64_MAX,
+    AuthoritySigningIntent,
     CanonicalSigningContextRequest,
     build_canonical_signing_context,
 )
 from security.qcrypto.hybrid_authority_migration import (
-    AuthorityEnvelope,
     AuthorityLayer,
     AuthorityPolicy,
     MigrationRequirement,
@@ -22,7 +22,7 @@ NETWORK = "testnet-fixture"
 DOMAIN = "WS-QCRYPTO-AUTH-V1"
 
 
-def authority(**overrides):
+def intent(**overrides):
     data = dict(
         network_id=NETWORK,
         domain_separator=DOMAIN,
@@ -34,8 +34,6 @@ def authority(**overrides):
         key_epoch=11,
         classical_algorithm_id="ECDSA",
         pq_algorithm_id="ML-DSA",
-        classical_signature_present=True,
-        pq_signature_present=True,
         classical_required_for_acceptance=True,
         pq_required_for_acceptance=True,
         recovery_evidence_present=True,
@@ -43,7 +41,7 @@ def authority(**overrides):
         live_value_authorized=False,
     )
     data.update(overrides)
-    return AuthorityEnvelope(**data)
+    return AuthoritySigningIntent(**data)
 
 
 def policy(**overrides):
@@ -82,7 +80,7 @@ def adapter(**overrides):
 
 def request(**overrides):
     data = dict(
-        authority=authority(),
+        intent=intent(),
         authority_policy=policy(),
         adapter=adapter(),
         policy_version=5,
@@ -102,6 +100,8 @@ def ready_result(req=None):
     assert result.context_digest is not None
     assert len(result.context_digest) == 64
     assert result.canonical_preimage_hex is not None
+    assert result.pre_sign_intent_only is True
+    assert result.signature_presence_assumed is False
     assert result.execution_authority is False
     assert result.live_value_authorized is False
     assert result.transaction_signed is False
@@ -116,6 +116,13 @@ def test_context_is_deterministic_for_identical_inputs():
     assert ready_digest() == ready_digest()
 
 
+def test_pre_sign_context_never_assumes_signature_presence():
+    result = ready_result()
+    assert result.pre_sign_intent_only is True
+    assert result.signature_presence_assumed is False
+    assert "signature_present" not in result.canonical_fields
+
+
 def test_context_records_effective_policy_semantics():
     result = ready_result()
     assert result.canonical_fields["authority_domain_separator"] == DOMAIN
@@ -127,31 +134,31 @@ def test_context_records_effective_policy_semantics():
 
 def test_network_binding_changes_context_digest():
     base = ready_digest()
-    alt_authority = replace(authority(), network_id="other-testnet")
+    alt_intent = replace(intent(), network_id="other-testnet")
     alt_policy = replace(policy(), network_id="other-testnet")
-    changed = ready_digest(request(authority=alt_authority, authority_policy=alt_policy))
+    changed = ready_digest(request(intent=alt_intent, authority_policy=alt_policy))
     assert changed != base
 
 
 def test_authority_domain_binding_changes_context_digest():
     base = ready_digest()
-    alt_authority = replace(authority(), domain_separator="WS-QCRYPTO-AUTH-V2")
+    alt_intent = replace(intent(), domain_separator="WS-QCRYPTO-AUTH-V2")
     alt_policy = replace(policy(), domain_separator="WS-QCRYPTO-AUTH-V2")
-    changed = ready_digest(request(authority=alt_authority, authority_policy=alt_policy))
+    changed = ready_digest(request(intent=alt_intent, authority_policy=alt_policy))
     assert changed != base
 
 
 def test_authority_role_binding_changes_context_digest():
     base = ready_digest()
     changed = ready_digest(
-        request(authority=replace(authority(), authority_layer=AuthorityLayer.CONSENSUS_VALIDATOR))
+        request(intent=replace(intent(), authority_layer=AuthorityLayer.CONSENSUS_VALIDATOR))
     )
     assert changed != base
 
 
 def test_algorithm_suite_binding_changes_context_digest():
     base = ready_digest()
-    changed = ready_digest(request(authority=replace(authority(), pq_algorithm_id="SLH-DSA")))
+    changed = ready_digest(request(intent=replace(intent(), pq_algorithm_id="SLH-DSA")))
     assert changed != base
 
 
@@ -168,7 +175,7 @@ def test_policy_floor_configuration_changes_context_digest_even_when_both_accept
 
 def test_key_epoch_binding_changes_context_digest_when_policy_allows_new_epoch():
     base = ready_digest()
-    changed = ready_digest(request(authority=replace(authority(), key_epoch=12)))
+    changed = ready_digest(request(intent=replace(intent(), key_epoch=12)))
     assert changed != base
 
 
@@ -178,14 +185,14 @@ def test_replay_sequence_binding_changes_context_digest():
 
 def test_payload_evidence_and_recovery_are_independently_bound():
     base = ready_digest()
-    assert ready_digest(request(authority=replace(authority(), payload_digest="d" * 64))) != base
+    assert ready_digest(request(intent=replace(intent(), payload_digest="d" * 64))) != base
     assert ready_digest(request(evidence_digest="e" * 64)) != base
     assert ready_digest(request(recovery_commitment_digest="f" * 64)) != base
 
 
 def test_policy_downgrade_blocks_context_generation():
-    downgraded = replace(authority(), declared_requirement=MigrationRequirement.CLASSICAL_ALLOWED)
-    result = build_canonical_signing_context(request(authority=downgraded))
+    downgraded = replace(intent(), declared_requirement=MigrationRequirement.CLASSICAL_ALLOWED)
+    result = build_canonical_signing_context(request(intent=downgraded))
     assert result.ready is False
     assert result.context_digest is None
     assert any("downgrade" in blocker.lower() for blocker in result.blockers)
@@ -193,12 +200,20 @@ def test_policy_downgrade_blocks_context_generation():
 
 def test_self_asserted_execution_authority_blocks_context_generation():
     result = build_canonical_signing_context(
-        request(authority=replace(authority(), execution_authority=True))
+        request(intent=replace(intent(), execution_authority=True))
     )
     assert result.ready is False
     assert result.execution_authority is False
     assert result.live_value_authorized is False
     assert result.transaction_signed is False
+
+
+def test_hybrid_intent_requires_both_algorithm_slots_without_claiming_signatures_exist():
+    result = build_canonical_signing_context(
+        request(intent=replace(intent(), pq_algorithm_id=None))
+    )
+    assert result.ready is False
+    assert any("Hybrid signing intent requires classical and PQ algorithm slots" in blocker for blocker in result.blockers)
 
 
 def test_missing_adapter_replay_binding_fails_closed():
@@ -227,7 +242,7 @@ def test_unsupported_identifier_characters_fail_closed():
 
 def test_uint32_version_fields_fail_closed_outside_portable_range():
     too_large_envelope = build_canonical_signing_context(
-        request(authority=replace(authority(), envelope_version=U32_MAX + 1))
+        request(intent=replace(intent(), envelope_version=U32_MAX + 1))
     )
     assert too_large_envelope.ready is False
     assert any("envelope_version must be" in blocker for blocker in too_large_envelope.blockers)
@@ -239,7 +254,7 @@ def test_uint32_version_fields_fail_closed_outside_portable_range():
 
 def test_uint64_epoch_and_replay_fields_fail_closed_outside_portable_range():
     oversized_epoch = build_canonical_signing_context(
-        request(authority=replace(authority(), key_epoch=U64_MAX + 1))
+        request(intent=replace(intent(), key_epoch=U64_MAX + 1))
     )
     assert oversized_epoch.ready is False
     assert any("key_epoch must be" in blocker for blocker in oversized_epoch.blockers)
