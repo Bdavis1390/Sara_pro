@@ -45,7 +45,7 @@ cleanup() {
   if [[ -n "${BTC_CLI:-}" && -x "${BTC_CLI:-}" ]]; then
     "$BTC_CLI" -signet -datadir="$BTC_DATA" stop >/dev/null 2>&1 || true
   fi
-  docker rm -f "$LIGHTHOUSE_CONTAINER" "$GETH_CONTAINER" >/dev/null 2>&1 || true
+  docker rm -fv "$LIGHTHOUSE_CONTAINER" "$GETH_CONTAINER" >/dev/null 2>&1 || true
   docker network rm "$DOCKER_NETWORK" >/dev/null 2>&1 || true
   rm -rf "$TMP"
   exit "$rc"
@@ -114,10 +114,12 @@ docker network create "$DOCKER_NETWORK" >/dev/null
 docker run -d \
   --name "$GETH_CONTAINER" \
   --network "$DOCKER_NETWORK" \
+  --mount type=volume,destination=/data \
   -v "$JWT:/run/engine-jwt.hex:ro" \
   --entrypoint geth \
   "$GETH_IMAGE" \
   --hoodi \
+  --datadir=/data \
   --syncmode=snap \
   --cache=256 \
   --maxpeers=20 \
@@ -130,12 +132,14 @@ docker run -d \
 docker run -d \
   --name "$LIGHTHOUSE_CONTAINER" \
   --network "$DOCKER_NETWORK" \
+  --mount type=volume,destination=/data \
   -p 127.0.0.1:15052:5052 \
   -v "$JWT:/run/engine-jwt.hex:ro" \
   --entrypoint lighthouse \
   "$LIGHTHOUSE_IMAGE" \
   bn \
   --network hoodi \
+  --datadir /data \
   --execution-endpoint "http://$GETH_CONTAINER:8551" \
   --execution-jwt /run/engine-jwt.hex \
   --checkpoint-sync-url https://hoodi.checkpoint.sigp.io \
@@ -149,10 +153,10 @@ docker run -d \
 GETH_PEERS=0
 GETH_CHAIN_ID=""
 for _ in $(seq 1 120); do
-  if GETH_PEERS_RAW="$(docker exec "$GETH_CONTAINER" geth attach /root/.ethereum/geth.ipc --exec 'admin.peers.length' 2>/dev/null)"; then
+  if GETH_PEERS_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'admin.peers.length' 2>/dev/null)"; then
     GETH_PEERS="$(printf '%s' "$GETH_PEERS_RAW" | tr -dc '0-9')"
     GETH_PEERS="${GETH_PEERS:-0}"
-    GETH_CHAIN_RAW="$(docker exec "$GETH_CONTAINER" geth attach /root/.ethereum/geth.ipc --exec 'eth.chainId' 2>/dev/null || true)"
+    GETH_CHAIN_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'eth.chainId' 2>/dev/null || true)"
     GETH_CHAIN_ID="$(printf '%s' "$GETH_CHAIN_RAW" | tr -d '"[:space:]')"
     [[ "$GETH_PEERS" -ge 1 ]] && break
   fi
