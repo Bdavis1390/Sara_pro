@@ -47,8 +47,12 @@ jobs:
           grep -q 'POO_SCHEMA = "WS-POO-V2"' security/poo/ownership_guard.py
           grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V2"' security/poo/transfer_guard.py
           grep -q 'RECOVERY_SCHEMA = "WS-POO-RECOVERY-V2"' security/poo/recovery_guard.py
+          grep -q 'COC_SCHEMA = "WS-POO-COC-V1"' security/poo/coc_guard.py
+          grep -q 'STATE_SCHEMA = "WS-POO-TECHNICAL-STATE-V1"' security/poo/state_engine.py
+          grep -q 'REGISTRY_SCHEMA = "WS-POO-TECHNICAL-REGISTRY-V1"' security/poo/registry_guard.py
           grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
           grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
+          grep -q 'legal_custody_established=False' security/poo/coc_guard.py
           grep -q 'PoC — Proof of Concept' security/poo/README.md
           grep -q 'COC — Control/Custody Verification' security/poo/README.md
           grep -q 'fail-closed AND semantics' security/poo/README.md
@@ -62,5 +66,7 @@ jobs:
           grep -q 'LINEAGE_INTERNALLY_CONSISTENT' security/poo/lineage_guard.py
           grep -q 'forked ownership lineage detected' security/poo/lineage_guard.py
           grep -q 'legal_title_established=False' security/poo/lineage_guard.py
+          grep -q 'technical_state_committed=False' security/poo/state_engine.py
+          grep -q 'legal_registry_authority=False' security/poo/registry_guard.py
           grep -q 'ownership_changed' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'legal_title_transferred' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
