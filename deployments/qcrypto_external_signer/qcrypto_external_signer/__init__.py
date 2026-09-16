@@ -7,10 +7,10 @@ from .custody import (
     CustodyLedger,
     CustodyPolicy,
     EphemeralMlDsa65ReleaseSigner,
-    ExternalCustodyService,
     FailingAfterInvocationSigner,
     verify_release_receipt,
 )
+from .strict_service import StrictExternalCustodyService as ExternalCustodyService
 
 __all__ = [
     "CustodyConflict",
