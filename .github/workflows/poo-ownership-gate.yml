@@ -44,10 +44,13 @@ jobs:
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py
       - name: Enforce core claims boundaries
         run: |
+          grep -q 'POO_SCHEMA = "WS-POO-V2"' security/poo/ownership_guard.py
+          grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V2"' security/poo/transfer_guard.py
+          grep -q 'RECOVERY_SCHEMA = "WS-POO-RECOVERY-V2"' security/poo/recovery_guard.py
           grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
           grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
           grep -q 'PoC — Proof of Concept' security/poo/README.md
-          grep -q 'COC = Control/Custody Verification' security/poo/README.md
+          grep -q 'COC — Control/Custody Verification' security/poo/README.md
           grep -q 'fail-closed AND semantics' security/poo/README.md
           grep -q 'transfer_executed=False' security/poo/transfer_guard.py
           grep -q 'live_value_authorized=False' security/poo/transfer_guard.py
