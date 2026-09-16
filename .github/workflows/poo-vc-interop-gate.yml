@@ -1,0 +1,48 @@
+name: PoO VC Mapping Review Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/poo/interop/vc_projection.py'
+      - 'tests/test_poo_vc_projection.py'
+      - '.github/workflows/poo-vc-interop-gate.yml'
+  push:
+    branches:
+      - 'worldshepherd-poo-vc-interop-*'
+    paths:
+      - 'security/poo/interop/vc_projection.py'
+      - 'tests/test_poo_vc_projection.py'
+      - '.github/workflows/poo-vc-interop-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  vc-mapping-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned SARA test environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          cd deployments/sara_verified_local_v1
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+      - name: Compile mapping module
+        run: python -m py_compile security/poo/interop/vc_projection.py
+      - name: Run mapping boundary regressions
+        run: python -m pytest -q tests/test_poo_vc_projection.py
+      - name: Enforce non-conformance boundary
+        run: |
+          grep -q 'MAPPING_SCHEMA = "WS-POO-VC20-MAPPING-DRAFT-V1"' security/poo/interop/vc_projection.py
+          grep -q 'vc20_conformance_established=False' security/poo/interop/vc_projection.py
+          grep -q 'did_conformance_established=False' security/poo/interop/vc_projection.py
+          grep -q 'openid4vp_conformance_established=False' security/poo/interop/vc_projection.py
+          grep -q 'credential_issued=False' security/poo/interop/vc_projection.py
+          grep -q 'credential_signed=False' security/poo/interop/vc_projection.py
+          grep -q 'issuer_authority_established=False' security/poo/interop/vc_projection.py
+          grep -q 'legal_ownership_established=False' security/poo/interop/vc_projection.py
+          grep -q 'credential_status_generated' security/poo/interop/vc_projection.py
