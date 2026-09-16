@@ -1,0 +1,136 @@
+{
+  "schema": "WS-POO-INTEROP-VECTORS-V1",
+  "claim_boundary": "INTERNAL_SECOND_LANGUAGE_REPRODUCTION_NOT_INDEPENDENT_EXTERNAL_VALIDATION",
+  "vectors": [
+    {
+      "name": "genesis-coc",
+      "kind": "coc",
+      "payload": {
+        "schema": "WS-POO-COC-V1",
+        "asset_id": "asset:vector:001",
+        "claimant_id": "claimant:vector:alice",
+        "control_key_fingerprint": "key:vector:alice",
+        "custody_reference": "custody:vector:001",
+        "custody_point_reference": "custody:point:vector:001",
+        "challenge_reference": "challenge:vector:001",
+        "observed_at": "2026-09-16T02:30:00Z",
+        "expires_at": "2026-09-17T02:30:00Z",
+        "previous_coc_digest": null
+      },
+      "expected_sha256": "280b71b564138903ef0b766c46c9e5a2a4b2a4bfbdb6a2ebf7984cdd287d07cb"
+    },
+    {
+      "name": "genesis-poo",
+      "kind": "poo",
+      "payload": {
+        "schema": "WS-POO-V3",
+        "asset_id": "asset:vector:001",
+        "claimant_id": "claimant:vector:alice",
+        "title_reference": "title:vector:001",
+        "control_key_fingerprint": "key:vector:alice",
+        "work_reference": "work:vector:001",
+        "concept_reference": "concept:vector:001",
+        "coc_reference": "280b71b564138903ef0b766c46c9e5a2a4b2a4bfbdb6a2ebf7984cdd287d07cb",
+        "stake_reference": "stake:vector:001",
+        "issued_at": "2026-09-16T02:30:00Z",
+        "expires_at": "2026-09-17T02:30:00Z",
+        "previous_poo_digest": null
+      },
+      "expected_sha256": "03a00f093084ea851339b342845ce7cd62ffc2ac9881671aa940ef4678f4b234"
+    },
+    {
+      "name": "transfer-coc",
+      "kind": "coc",
+      "payload": {
+        "schema": "WS-POO-COC-V1",
+        "asset_id": "asset:vector:001",
+        "claimant_id": "claimant:vector:bob",
+        "control_key_fingerprint": "key:vector:bob",
+        "custody_reference": "custody:vector:002",
+        "custody_point_reference": "custody:point:vector:002",
+        "challenge_reference": "challenge:vector:002",
+        "observed_at": "2026-09-16T03:00:00Z",
+        "expires_at": "2026-09-17T03:00:00Z",
+        "previous_coc_digest": "280b71b564138903ef0b766c46c9e5a2a4b2a4bfbdb6a2ebf7984cdd287d07cb"
+      },
+      "expected_sha256": "d982cc052936fefd843b6dde6fa6ac38d11e26cbd88ca8551b1008c4c9c6be27"
+    },
+    {
+      "name": "transfer-intent",
+      "kind": "transfer",
+      "payload": {
+        "schema": "WS-POO-TRANSFER-V3",
+        "asset_id": "asset:vector:001",
+        "prior_poo_digest": "03a00f093084ea851339b342845ce7cd62ffc2ac9881671aa940ef4678f4b234",
+        "current_owner_id": "claimant:vector:alice",
+        "recipient_id": "claimant:vector:bob",
+        "title_transition_reference": "title:vector:transfer:002",
+        "recipient_control_key_fingerprint": "key:vector:bob",
+        "recipient_work_reference": "work:vector:002",
+        "recipient_concept_reference": "concept:vector:002",
+        "recipient_coc_reference": "d982cc052936fefd843b6dde6fa6ac38d11e26cbd88ca8551b1008c4c9c6be27",
+        "recipient_stake_reference": "stake:vector:002",
+        "initiated_at": "2026-09-16T03:00:00Z",
+        "expires_at": "2026-09-17T03:00:00Z"
+      },
+      "expected_sha256": "c848c7ccec8ed4e9c8d864559e6989495a9d6b60d44ee9138f0cb64712a62c25"
+    },
+    {
+      "name": "transferred-poo",
+      "kind": "poo",
+      "payload": {
+        "schema": "WS-POO-V3",
+        "asset_id": "asset:vector:001",
+        "claimant_id": "claimant:vector:bob",
+        "title_reference": "title:vector:transfer:002",
+        "control_key_fingerprint": "key:vector:bob",
+        "work_reference": "work:vector:002",
+        "concept_reference": "concept:vector:002",
+        "coc_reference": "d982cc052936fefd843b6dde6fa6ac38d11e26cbd88ca8551b1008c4c9c6be27",
+        "stake_reference": "stake:vector:002",
+        "issued_at": "2026-09-16T03:00:00Z",
+        "expires_at": "2026-09-17T03:00:00Z",
+        "previous_poo_digest": "03a00f093084ea851339b342845ce7cd62ffc2ac9881671aa940ef4678f4b234"
+      },
+      "expected_sha256": "75e9e17851e53a058fafe1adb46892c4e37cc834e2f4008109def3dc37c8b0f1"
+    },
+    {
+      "name": "recovery-coc",
+      "kind": "coc",
+      "payload": {
+        "schema": "WS-POO-COC-V1",
+        "asset_id": "asset:vector:001",
+        "claimant_id": "claimant:vector:bob",
+        "control_key_fingerprint": "key:vector:bob-recovered",
+        "custody_reference": "custody:vector:003",
+        "custody_point_reference": "custody:point:vector:003",
+        "challenge_reference": "challenge:vector:003",
+        "observed_at": "2026-09-16T04:00:00Z",
+        "expires_at": "2026-09-17T04:00:00Z",
+        "previous_coc_digest": "d982cc052936fefd843b6dde6fa6ac38d11e26cbd88ca8551b1008c4c9c6be27"
+      },
+      "expected_sha256": "898cb65a8120616b3a18e88f1d03dd1564801566bee754965d052efb162822dc"
+    },
+    {
+      "name": "recovery-intent",
+      "kind": "recovery",
+      "payload": {
+        "schema": "WS-POO-RECOVERY-V3",
+        "asset_id": "asset:vector:001",
+        "prior_poo_digest": "75e9e17851e53a058fafe1adb46892c4e37cc834e2f4008109def3dc37c8b0f1",
+        "claimant_id": "claimant:vector:bob",
+        "recovery_reason": "COMPROMISED_CONTROL",
+        "title_reference": "title:vector:transfer:002",
+        "new_control_key_fingerprint": "key:vector:bob-recovered",
+        "recovery_work_reference": "work:vector:003",
+        "recovery_concept_reference": "concept:vector:003",
+        "recovery_coc_reference": "898cb65a8120616b3a18e88f1d03dd1564801566bee754965d052efb162822dc",
+        "recovery_stake_reference": "stake:vector:003",
+        "recovery_request_reference": "recovery:vector:003",
+        "issued_at": "2026-09-16T04:00:00Z",
+        "expires_at": "2026-09-17T04:00:00Z"
+      },
+      "expected_sha256": "1c8610016e240fceb81571a4c5e5431775fab3ad325f9e95e07fff9ec0d5a23b"
+    }
+  ]
+}
