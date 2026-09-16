@@ -8,7 +8,7 @@ import re
 import sys
 from typing import Any
 
-from .discord_connector import DiscordConnector, DiscordConnectorError
+from .discord_connector import DiscordConnector
 from .discord_webhook import DiscordNotification, DiscordWebhookError
 from .event_outbox import EVENT_OUTBOX_REGISTRY_KEY, EventOutboxError, outbox_status
 from .storage import DurableStore
@@ -215,14 +215,15 @@ def notification_for_delivered_event(
 ) -> DiscordNotification | None:
     if entry.get("status") != "DELIVERED":
         return None
+    safe_event_id = _safe_identifier(event_id, field="event_id")
     event = entry.get("event")
     payload = entry.get("payload")
     if not isinstance(event, str) or not isinstance(payload, dict):
         raise DiscordEventProjectionError("delivered outbox event is malformed")
     if event == "prime_custody_provenance":
-        return _project_custody(event_id, payload)
+        return _project_custody(safe_event_id, payload)
     if event == "prime_sentinel_authorization_rejected":
-        return _project_authorization_rejection(event_id, payload)
+        return _project_authorization_rejection(safe_event_id, payload)
     return None
 
 
@@ -281,6 +282,7 @@ def project_delivered_events(
         candidates.append((str(entry.get("delivered_at", "")), event_id, entry, notification))
 
     candidates.sort(key=lambda item: (item[0], item[1]))
+    mapped_count = len(candidates)
     candidates = candidates[:limit]
     results: list[DiscordProjectionRecord] = []
     receipts_written = 0
@@ -288,7 +290,7 @@ def project_delivered_events(
     for _delivered_at, event_id, entry, notification in candidates:
         try:
             delivery = connector.notify(notification, dry_run=dry_run)
-        except (DiscordConnectorError, DiscordWebhookError, ValueError) as exc:
+        except (DiscordWebhookError, ValueError) as exc:
             raise DiscordEventProjectionError(str(exc)) from exc
 
         receipt_written = False
@@ -331,7 +333,7 @@ def project_delivered_events(
     return DiscordProjectionBatchResult(
         dry_run=dry_run,
         scanned_delivered=scanned_delivered,
-        mapped=len(candidates),
+        mapped=mapped_count,
         already_receipted=already_receipted,
         unmapped=unmapped,
         projected=len(results),
