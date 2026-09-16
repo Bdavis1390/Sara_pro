@@ -44,9 +44,13 @@ jobs:
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py
       - name: Enforce core claims boundaries
         run: |
-          grep -q 'POO_SCHEMA = "WS-POO-V2"' security/poo/ownership_guard.py
-          grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V2"' security/poo/transfer_guard.py
-          grep -q 'RECOVERY_SCHEMA = "WS-POO-RECOVERY-V2"' security/poo/recovery_guard.py
+          grep -q 'POO_SCHEMA = "WS-POO-V3"' security/poo/ownership_guard.py
+          grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V3"' security/poo/transfer_guard.py
+          grep -q 'RECOVERY_SCHEMA = "WS-POO-RECOVERY-V3"' security/poo/recovery_guard.py
+          grep -q 'coc_reference' security/poo/ownership_guard.py
+          grep -q 'recipient_coc_reference' security/poo/transfer_guard.py
+          grep -q 'recovery_coc_reference' security/poo/recovery_guard.py
+          grep -q 'COC digest does not match semantic COC reference' security/poo/state_engine.py
           grep -q 'COC_SCHEMA = "WS-POO-COC-V1"' security/poo/coc_guard.py
           grep -q 'STATE_SCHEMA = "WS-POO-TECHNICAL-STATE-V1"' security/poo/state_engine.py
           grep -q 'STATE_LINEAGE_SCHEMA = "WS-POO-STATE-LINEAGE-V1"' security/poo/state_engine.py
@@ -56,7 +60,6 @@ jobs:
           grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
-          grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
           grep -q 'legal_custody_established=False' security/poo/coc_guard.py
           grep -q 'PoC — Proof of Concept' security/poo/README.md
           grep -q 'COC — Control/Custody Verification' security/poo/README.md
@@ -64,13 +67,10 @@ jobs:
           grep -q 'transfer_executed=False' security/poo/transfer_guard.py
           grep -q 'live_value_authorized=False' security/poo/transfer_guard.py
           grep -q 'legal_title_transferred=False' security/poo/transfer_guard.py
-          grep -q 'READY_FOR_GOVERNED_SUPERSESSION' security/poo/transfer_guard.py
           grep -q 'ownership_restored=False' security/poo/recovery_guard.py
           grep -q 'control_rotated=False' security/poo/recovery_guard.py
-          grep -q 'READY_FOR_GOVERNED_RECOVERY_SUPERSESSION' security/poo/recovery_guard.py
           grep -q 'LINEAGE_INTERNALLY_CONSISTENT' security/poo/lineage_guard.py
           grep -q 'forked ownership lineage detected' security/poo/lineage_guard.py
-          grep -q 'legal_title_established=False' security/poo/lineage_guard.py
           grep -q 'technical_state_committed=False' security/poo/state_engine.py
           grep -q 'COC: predecessor mismatch' security/poo/state_engine.py
           grep -q 'legal_registry_authority=False' security/poo/registry_guard.py
