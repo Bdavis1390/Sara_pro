@@ -47,7 +47,7 @@ jobs:
           grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
           grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
           grep -q 'PoC — Proof of Concept' security/poo/README.md
-          grep -q 'control/custody verification' security/poo/README.md
+          grep -q 'COC = Control/Custody Verification' security/poo/README.md
           grep -q 'fail-closed AND semantics' security/poo/README.md
           grep -q 'transfer_executed=False' security/poo/transfer_guard.py
           grep -q 'live_value_authorized=False' security/poo/transfer_guard.py
@@ -55,7 +55,9 @@ jobs:
           grep -q 'READY_FOR_GOVERNED_SUPERSESSION' security/poo/transfer_guard.py
           grep -q 'ownership_restored=False' security/poo/recovery_guard.py
           grep -q 'control_rotated=False' security/poo/recovery_guard.py
-          grep -q 'transfer_executed=False' security/poo/recovery_guard.py
           grep -q 'READY_FOR_GOVERNED_RECOVERY_SUPERSESSION' security/poo/recovery_guard.py
+          grep -q 'LINEAGE_INTERNALLY_CONSISTENT' security/poo/lineage_guard.py
+          grep -q 'forked ownership lineage detected' security/poo/lineage_guard.py
+          grep -q 'legal_title_established=False' security/poo/lineage_guard.py
           grep -q 'ownership_changed' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'legal_title_transferred' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
