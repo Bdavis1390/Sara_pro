@@ -36,17 +36,21 @@ jobs:
         run: |
           python -m compileall -q security/poo
           python -m py_compile deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-      - name: Run all PoO protocol regressions
+      - name: Run all PoO protocol and lineage-governance regressions
         run: python -m pytest -q tests/test_poo_*.py
       - name: Run native SARA PoO audit adapter regression
         env:
           PYTHONPATH: deployments/sara_verified_local_v1
         run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_audit_adapter.py
-      - name: Enforce core claims boundaries
+      - name: Enforce core claims and lineage-governance boundaries
         run: |
           grep -q 'POO_SCHEMA = "WS-POO-V2"' security/poo/ownership_guard.py
           grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V2"' security/poo/transfer_guard.py
           grep -q 'RECOVERY_SCHEMA = "WS-POO-RECOVERY-V2"' security/poo/recovery_guard.py
+          grep -q 'GOVERNANCE_SCHEMA = "WS-POO-LINEAGE-GOVERNANCE-V1"' security/poo/governance_guard.py
+          grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"' security/poo/audit_projection.py
+          grep -q 'POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V2"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
           grep -q 'legal_ownership_established=False' security/poo/ownership_guard.py
           grep -q 'transfer_execution_authority' security/poo/ownership_guard.py
           grep -q 'PoC — Proof of Concept' security/poo/README.md
@@ -61,6 +65,12 @@ jobs:
           grep -q 'READY_FOR_GOVERNED_RECOVERY_SUPERSESSION' security/poo/recovery_guard.py
           grep -q 'LINEAGE_INTERNALLY_CONSISTENT' security/poo/lineage_guard.py
           grep -q 'forked ownership lineage detected' security/poo/lineage_guard.py
-          grep -q 'legal_title_established=False' security/poo/lineage_guard.py
-          grep -q 'ownership_changed' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
-          grep -q 'legal_title_transferred' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'TRANSFER_READY_WITH_LINEAGE_GUARD' security/poo/governance_guard.py
+          grep -q 'RECOVERY_READY_WITH_LINEAGE_GUARD' security/poo/governance_guard.py
+          grep -q 'conflict_winner_selected=False' security/poo/governance_guard.py
+          grep -q 'lineage_auto_resolved=False' security/poo/governance_guard.py
+          grep -q 'PRIME_POO_LINEAGE_BLOCKED' security/poo/audit_projection.py
+          grep -q 'SARA_POO_LINEAGE_DISPUTE_BLOCK' security/poo/audit_projection.py
+          grep -q 'OVERWATCH_POO_LINEAGE_CONFLICT_ACTIVE' security/poo/audit_projection.py
+          grep -q 'conflict_winner_selected' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
+          grep -q 'lineage_auto_resolved' deployments/sara_verified_local_v1/worldshepherd_sara/poo_audit_adapter.py
