@@ -51,6 +51,7 @@ jobs:
         run: |
           python scripts/verify_external_custody.py --output external-custody-evidence.json
           python scripts/verify_opaque_provider_custody.py --output opaque-provider-custody-evidence.json
+          python scripts/verify_unix_provider_boundary.py --output unix-provider-boundary-evidence.json
 
       - name: Assert custody claims boundary
         run: |
@@ -108,12 +109,15 @@ jobs:
           assert p['durable_indeterminate_state']=='INDETERMINATE'
           assert p['provider_operation_id_retained_before_reconciliation'] is True
           assert p['release_binding_retained_before_reconciliation'] is True
+          assert p['provider_key_handle_in_signed_binding'] is True
+          assert p['provider_handle_and_operation_id_substitution_rejected'] is True
           assert p['provider_invocations_before_reconcile']==1
           assert p['provider_invocations_after_reconcile']==1
           assert p['reconciliation_did_not_reinvoke_signer'] is True
           assert p['receipt_verified'] is True
           assert p['receipt_provider_reconciled'] is True
           assert p['receipt_provider_operation_matches_ledger'] is True
+          assert p['receipt_provider_key_handle_matches_provider'] is True
           assert p['durable_final_state']=='SIGNED'
           assert p['durable_provider_reconciled'] is True
           assert p['post_expiry_retry_identical'] is True
@@ -134,6 +138,7 @@ jobs:
           assert pr['signature_context']=='WS-QCRYPTO-OPAQUE-PROVIDER-V1'
           assert pr['provider_reconciled'] is True
           assert pr['provider_operation_id']==p['provider_operation_id']
+          assert pr['provider_key_handle']==p['remote_key_handle'] if 'remote_key_handle' in p else pr['provider_key_handle']
           assert pr['chain_native_transaction_signature'] is False
           assert pr['transaction_broadcast'] is False
           assert pr['real_value_moved'] is False
@@ -141,6 +146,45 @@ jobs:
           assert pr['production_hsm_integrated'] is False
           assert len(pr['receipt_sha256'])==64
           assert len(p['evidence_sha256'])==64
+
+          u=json.loads(Path('unix-provider-boundary-evidence.json').read_text(encoding='utf-8'))
+          assert u['schema']=='WS-QCRYPTO-UNIX-SIGNER-BOUNDARY-EVIDENCE-V1'
+          assert u['status']=='PASS'
+          assert u['claim_state']=='SEPARATE_SIGNER_PROCESS_SOFTWARE_BEHAVIOR_ONLY'
+          assert u['synthetic_ci_only'] is True
+          assert u['signer_process_separate'] is True
+          assert u['transport']=='UNIX_DOMAIN_SOCKET_ONLY'
+          assert u['socket_is_unix_domain'] is True
+          assert u['socket_owner_read_write_only'] is True
+          assert u['socket_mode_octal']=='0o600'
+          assert u['socket_directory_not_group_world_accessible'] is True
+          assert u['private_key_export_attribute_absent'] is True
+          assert u['private_key_export_rpc_rejected'] is True
+          assert u['tcp_transport_surface_absent'] is True
+          assert u['remote_algorithm']=='ML-DSA-65'
+          assert u['provider_ack_loss_fail_stopped'] is True
+          assert u['outbound_begin_sign_calls_before_reconcile']==1
+          assert u['outbound_begin_sign_calls_after_reconcile']==1
+          assert u['outbound_reconcile_calls_before_reconcile']==0
+          assert u['outbound_reconcile_calls_after_reconcile']==1
+          assert u['reconciliation_did_not_issue_second_sign_call'] is True
+          assert u['receipt_verified'] is True
+          assert u['receipt_provider_reconciled'] is True
+          assert u['durable_state']=='SIGNED'
+          assert u['durable_provider_operation_id_matches_receipt'] is True
+          assert u['custody_side_restart_post_expiry_receipt_identical'] is True
+          assert u['restart_begin_sign_calls']==0
+          assert u['restart_reconcile_calls']==0
+          assert u['production_hsm_integrated'] is False
+          assert u['fips_validated_module_established'] is False
+          assert u['native_chain_transaction_signature'] is False
+          assert u['transaction_broadcast'] is False
+          assert u['mainnet_permitted'] is False
+          assert u['real_value_moved'] is False
+          assert u['federal_compliance_established'] is False
+          assert u['independent_validation_established'] is False
+          assert u['end_to_end_pq_chain_security_established'] is False
+          assert len(u['evidence_sha256'])==64
 
           forbidden_keys={
               'private_key_pem','private_key_bytes','secret_key','secret_key_bytes',
@@ -160,13 +204,16 @@ jobs:
                   assert 'mnemonic' not in lowered
           walk(e)
           walk(p)
+          walk(u)
 
           print('qcrypto_external_custody_gate: PASS')
           print('receipt_sha256:', r['receipt_sha256'])
           print('opaque_provider_receipt_sha256:', pr['receipt_sha256'])
           print('opaque_provider_operation_id:', p['provider_operation_id'])
+          print('unix_signer_process_id:', u['signer_process_id'])
           print('evidence_sha256:', e['evidence_sha256'])
           print('opaque_provider_evidence_sha256:', p['evidence_sha256'])
+          print('unix_provider_evidence_sha256:', u['evidence_sha256'])
           PY
 
       - name: Upload external custody evidence
@@ -176,4 +223,5 @@ jobs:
           path: |
             deployments/qcrypto_external_signer/external-custody-evidence.json
             deployments/qcrypto_external_signer/opaque-provider-custody-evidence.json
+            deployments/qcrypto_external_signer/unix-provider-boundary-evidence.json
           if-no-files-found: error
