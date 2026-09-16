@@ -30,6 +30,7 @@ _SECRET_KEY_FRAGMENTS = (
     "validator_key",
     "withdrawal_key",
 )
+_ALLOWED_SAFETY_MARKERS = {"private_key_material_present"}
 
 
 def _reject_secret_shaped_fields(value: Any, path: str = "request") -> None:
@@ -38,6 +39,10 @@ def _reject_secret_shaped_fields(value: Any, path: str = "request") -> None:
             if not isinstance(key, str):
                 raise CustodyError(f"{path} contains a non-string JSON key")
             lowered = key.lower()
+            if lowered in _ALLOWED_SAFETY_MARKERS:
+                if child is not False:
+                    raise CustodyError(f"{path}.{key} safety marker must remain false")
+                continue
             if any(fragment in lowered for fragment in _SECRET_KEY_FRAGMENTS):
                 raise CustodyError(f"secret/private-key-shaped field is forbidden at {path}.{key}")
             _reject_secret_shaped_fields(child, f"{path}.{key}")
@@ -50,7 +55,7 @@ class StrictExternalCustodyService(_CoreExternalCustodyService):
     """Only supported entry point for custody-release requests.
 
     The lower-level service exists to keep ledger/signing mechanics independently
-    testable.  This class supplies the public trust boundary: exact top-level schema,
+    testable. This class supplies the public trust boundary: exact top-level schema,
     recursive secret-field rejection, then all cryptographic and ledger checks.
     """
 
