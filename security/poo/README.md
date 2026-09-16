@@ -71,29 +71,56 @@ previous_poo_digest
 
 Evidence-verification booleans are deliberately excluded from the semantic digest. This allows the evidence state to be re-evaluated without changing the underlying ownership claim identity.
 
-## Transfer chain
+## Governed transfer and supersession
 
-`previous_poo_digest` supports a transfer/provenance chain. A future transfer protocol should require, at minimum:
+A transfer never edits or erases the prior PoO. It prepares a **new PoO candidate** whose `previous_poo_digest` points to the prior attestation.
 
-1. valid current PoO;
-2. current-owner transfer authorization;
-3. recipient control/custody verification;
-4. fresh recipient PoW;
-5. a recipient PoC demonstrating that the transfer/ownership mechanism performs as intended for the asset class;
-6. recipient PoS bond where policy requires it;
-7. title/provenance transition evidence;
-8. revocation/supersession of the prior PoO;
-9. ECHO provenance recording and PRIME/SARA policy approval.
+Transfer readiness is also fail-closed:
 
-A new PoO should reference the previous digest rather than overwriting history.
+```text
+Transfer_ready =
+    prior_PoO_valid
+    AND asset_continuity_verified
+    AND current_owner_authorized
+    AND recipient_identity_bound
+    AND recipient_PoC_concept_verified
+    AND recipient_control_or_custody_verified
+    AND recipient_PoW_verified
+    AND recipient_PoS_bond_verified
+    AND title_or_provenance_transition_bound
+    AND freshness_verified
+    AND no_active_dispute
+    AND transfer_not_revoked
+    AND human_approval_verified
+```
+
+When every predicate passes, Worldshepherd reports only:
+
+`READY_FOR_GOVERNED_SUPERSESSION`
+
+This means the evidence package is internally ready to produce the next technical PoO candidate. It does **not** mean a transfer has executed, funds/value moved, legal title changed, or a government/third-party registry accepted the transition.
+
+The transfer guard hard-codes:
+
+```text
+transfer_executed = false
+live_value_authorized = false
+legal_title_transferred = false
+```
+
+The derived recipient candidate must itself pass the ordinary PoO evaluator, and its `previous_poo_digest` must match the prior ownership record. A disputed, stale, revoked, unauthorized, or incomplete transfer cannot derive the next PoO candidate.
+
+## Disputes and recovery
+
+An active ownership dispute blocks ordinary supersession even when PoW, PoC, control/custody, and PoS evidence otherwise pass. Recovery or exceptional title correction should therefore be modeled as a separate, explicitly governed process with stronger provenance, human review, and ECHO evidence custody rather than as a hidden bypass in the transfer evaluator.
 
 ## Worldshepherd mapping
 
-- **ECHO:** stores provenance, claim events, evidence hashes, revocations, PoC evidence, and transfer lineage.
-- **PRIME:** enforces ownership policy, required predicates, PoC acceptance criteria, control/custody rules, stake rules, asset-class rules, and revocation policy.
-- **SARA:** orchestrates bounded workflows and required human approvals.
-- **OVERWATCH:** monitors expiration, revocation, stale control proofs, bond state, conflicts, and duplicate claims.
-- **QCRYPTO:** supplies crypto-agility and hybrid/PQ migration policy for signatures and control challenges.
+- **ECHO:** stores provenance, claim events, evidence hashes, revocations, PoC evidence, prior/new PoO lineage, disputes, and transfer evidence.
+- **PRIME:** enforces ownership policy, required predicates, PoC acceptance criteria, control/custody rules, stake rules, asset-class rules, revocation policy, and dispute policy.
+- **SARA:** orchestrates bounded claim/transfer workflows and required human approvals.
+- **OVERWATCH:** monitors expiration, revocation, stale control proofs, bond state, conflicts, duplicate claims, and unresolved disputes.
+- **QCRYPTO:** supplies crypto-agility and hybrid/PQ migration policy for signatures, control challenges, and transfer authorization evidence.
 
 ## Asset classes
 
@@ -119,6 +146,8 @@ For off-chain regulated or titled property, PoO remains an evidence layer and mu
 | compute-rich false claimant | insufficient alone | insufficient alone | blocks without control | neutral | blocks without provenance | fail closed |
 | replayed old claim | neutral | stale PoC can fail policy | freshness/control check | neutral | lineage helps | rejected when stale/revoked |
 | registry/provenance conflict | neutral | neutral | neutral | neutral | detects conflict | human/policy resolution |
+| unauthorized transfer | neutral | neutral | recipient proof insufficient | neutral | transition blocked | current-owner authorization required |
+| double-transfer/conflicting lineage | neutral | neutral | neutral | neutral | lineage/dispute check | blocked pending resolution |
 
 ## Claims boundary
 
@@ -126,9 +155,12 @@ PoO v1 does **not** claim:
 
 - legal title adjudication;
 - government registry authority;
-- transfer execution authority;
+- automatic transfer execution;
 - live-value movement authority;
 - external validation or certification;
 - that PoW, PoC, control/custody, or PoS alone proves ownership.
 
-Current status: **IMPLEMENTED IN SOFTWARE / validation pending** until exact-head tests pass.
+Validation record:
+
+- Ownership-attestation core with **PoC = Proof of Concept**: **PROVEN INTERNALLY — protocol logic only** at `4aa948fb98ff3f97bc2acc724326a2c984f31b51`.
+- Governed transfer/supersession extension: **IMPLEMENTED IN SOFTWARE / exact-head validation pending** until the transfer regressions pass on the current branch head.
