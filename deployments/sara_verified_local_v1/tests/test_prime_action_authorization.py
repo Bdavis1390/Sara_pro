@@ -103,7 +103,7 @@ def test_tampered_request_digest_fails_signature_verification():
 def test_human_review_disposition_cannot_be_issued_without_human_evidence():
     private, _ = _keys()
     now = datetime.now(timezone.utc)
-    with pytest.raises(ValueError, match="requires human approval"):
+    with pytest.raises(ValueError, match="must agree"):
         PrimeActionAuthorizationAssertion(
             key_id="PS-ACT-K1",
             authorization_id="ACT-AUTH-002",
@@ -125,5 +125,56 @@ def test_human_review_disposition_cannot_be_issued_without_human_evidence():
             issued_at=now,
             expires_at=now + timedelta(minutes=5),
             nonce="nonce-action-abcdefghijkl",
+            signature_b64url=_b64url(b"0" * 64),
+        )
+
+
+def test_consequential_execution_requires_human_review():
+    now = datetime.now(timezone.utc)
+    with pytest.raises(ValueError, match="requires human review"):
+        PrimeActionAuthorizationAssertion(
+            key_id="PS-ACT-K1",
+            authorization_id="ACT-AUTH-003",
+            action_id="ACTION-003",
+            prime_id="PRIME-001",
+            provider="OPENAI",
+            provider_operation="RESPONSES_CREATE",
+            model_allowlist=["gpt-test"],
+            requested_authority=10,
+            reversible=True,
+            side_effect_class="CONSEQUENTIAL",
+            policy_id="POLICY-001",
+            policy_sha256="sha256:" + "2" * 64,
+            policy_disposition="AUTO_ELIGIBLE",
+            request_sha256="sha256:" + "1" * 64,
+            human_approval_required=False,
+            issued_at=now,
+            expires_at=now + timedelta(minutes=5),
+            nonce="nonce-action-consequential",
+            signature_b64url=_b64url(b"0" * 64),
+        )
+
+
+def test_empty_model_identifier_is_rejected():
+    now = datetime.now(timezone.utc)
+    with pytest.raises(ValueError):
+        PrimeActionAuthorizationAssertion(
+            key_id="PS-ACT-K1",
+            authorization_id="ACT-AUTH-004",
+            action_id="ACTION-004",
+            prime_id="PRIME-001",
+            provider="OPENAI",
+            provider_operation="RESPONSES_CREATE",
+            model_allowlist=[""],
+            requested_authority=0,
+            reversible=True,
+            side_effect_class="READ_ONLY",
+            policy_id="POLICY-001",
+            policy_sha256="sha256:" + "2" * 64,
+            policy_disposition="AUTO_ELIGIBLE",
+            request_sha256="sha256:" + "1" * 64,
+            issued_at=now,
+            expires_at=now + timedelta(minutes=5),
+            nonce="nonce-action-empty-model",
             signature_b64url=_b64url(b"0" * 64),
         )
