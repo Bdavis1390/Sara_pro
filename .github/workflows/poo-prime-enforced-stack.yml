@@ -1,0 +1,114 @@
+name: PoO PRIME Enforced Stack Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime.yaml'
+      - 'deployments/sara_verified_local_v1/compose.poo-prime-enforced.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_enforced_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_*.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_prime_required_policy.py'
+      - '.github/workflows/poo-prime-enforced-stack.yml'
+  push:
+    branches:
+      - 'worldshepherd-proof-of-ownership-prime-enforced-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime.yaml'
+      - 'deployments/sara_verified_local_v1/compose.poo-prime-enforced.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_enforced_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_*.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_*.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_prime_required_policy.py'
+      - '.github/workflows/poo-prime-enforced-stack.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  enforced-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned test dependencies
+        run: >-
+          python -m pip install --disable-pip-version-check
+          -c deployments/sara_verified_local_v1/constraints-runtime.txt
+          './deployments/sara_verified_local_v1[test]'
+      - name: Run PRIME-required policy regressions
+        env:
+          PYTHONPATH: deployments/sara_verified_local_v1
+        run: python -m pytest -q deployments/sara_verified_local_v1/tests/test_poo_prime_required_policy.py
+      - name: Validate enforced-stack shell
+        run: bash -n deployments/sara_verified_local_v1/scripts/verify_poo_prime_enforced_stack.sh
+      - name: Validate enforced Compose overlay
+        working-directory: deployments/sara_verified_local_v1
+        env:
+          SARA_RELAY_TOKEN: ci-relay-token-that-is-independent-and-long
+          SARA_ADMIN_TOKEN: ci-admin-token-that-is-different-and-long
+          PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH: /tmp/nonexistent-prime-private-key
+          PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH: /tmp/nonexistent-prime-service-token
+        run: |
+          cp .env.example .env
+          docker compose -f compose.yaml -f compose.poo-prime.yaml -f compose.poo-prime-enforced.yaml --profile prime-sentinel config >/tmp/poo-prime-enforced-compose.yaml
+          grep -q 'worldshepherd_sara.prime_sentinel_poo_service:create_prime_sentinel_poo_app' /tmp/poo-prime-enforced-compose.yaml
+          grep -Eq 'POO_REQUIRE_PRIME_AUTHORIZATION:[[:space:]]*["'"']?1["'"']?' /tmp/poo-prime-enforced-compose.yaml
+          rm -f .env
+      - name: Run containerized PRIME-required exercise
+        env:
+          POO_PRIME_ENFORCED_EVIDENCE_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/poo_prime_enforced_evidence
+        run: bash deployments/sara_verified_local_v1/scripts/verify_poo_prime_enforced_stack.sh
+      - name: Validate enforced evidence contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path('deployments/sara_verified_local_v1/poo_prime_enforced_evidence/result.json')
+          r=json.loads(p.read_text(encoding='utf-8'))
+          assert r['schema']=='WS-POO-PRIME-ENFORCED-STACK-EVIDENCE-V1'
+          assert r['evidence_status']=='INTERNAL_CI_GENERATED_UNSIGNED'
+          assert r['result']=='PASS'
+          assert r['tested_head_sha']==os.environ['GITHUB_SHA']
+          assert r['prime_authorization_required'] is True
+          assert r['unsigned_commit_http_status']==403
+          assert r['unsigned_commit_blocked_before_mutation'] is True
+          assert r['unsigned_postcheck_poo_state_count']==0
+          assert r['unsigned_postcheck_consumed_authorization_count']==0
+          assert r['restart_policy_persisted'] is True
+          assert r['restart_unsigned_commit_http_status']==403
+          assert r['restart_unsigned_commit_blocked'] is True
+          assert r['signed_commit_status']=='COMMITTED'
+          assert r['restart_signed_commit_status']=='ALREADY_COMMITTED'
+          assert r['poo_state_count']==1 and r['poo_commit_count']==1
+          assert r['consumed_prime_authorization_count']==1
+          assert r['technical_commit_audit_count']==1
+          assert r['prime_authorization_audit_count']==1
+          assert r['restart_issuance_idempotent'] is True
+          assert r['restart_commit_idempotent'] is True
+          assert r['tampered_signed_replay_rejected'] is True
+          assert r['prime_cryptographic_authorization_verified'] is True
+          assert r['durable_internal_state_committed'] is True
+          assert r['sara_prime_private_material_exposed'] is False
+          assert r['legal_title_changed'] is False
+          assert r['live_value_moved'] is False
+          assert r['credential_rotated'] is False
+          assert r['external_transfer_executed'] is False
+          assert len(r['prime_signing_key_fingerprint_sha256'])==64
+          assert 'mandatory' in r['claims_boundary'].lower()
+          assert 'not legal title' in r['claims_boundary'].lower()
+          PY
+      - name: Upload enforced-stack evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: poo-prime-enforced-stack-evidence
+          path: deployments/sara_verified_local_v1/poo_prime_enforced_evidence
+          if-no-files-found: error
+          retention-days: 90
+      - name: Capture Docker state on failure
+        if: failure()
+        run: |
+          docker ps -a --no-trunc || true
+          docker volume ls || true
