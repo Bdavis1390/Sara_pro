@@ -14,14 +14,17 @@ from worldshepherd_sara.poo_registry_commit import (
 )
 
 
-def bootstrap_body():
+def bootstrap_body(*, suffix: str = "api"):
+    asset_id = f"asset:{suffix}"
+    claimant_id = f"claimant:{suffix}"
+    key = f"key:{suffix}"
     coc = COCEvidence(
-        asset_id="asset:api",
-        claimant_id="claimant:api",
-        control_key_fingerprint="key:api",
-        custody_reference="custody:api",
-        custody_point_reference="point:api",
-        challenge_reference="challenge:api",
+        asset_id=asset_id,
+        claimant_id=claimant_id,
+        control_key_fingerprint=key,
+        custody_reference=f"custody:{suffix}",
+        custody_point_reference=f"point:{suffix}",
+        challenge_reference=f"challenge:{suffix}",
         observed_at="2026-09-16T07:00:00Z",
         expires_at="2026-09-17T07:00:00Z",
         asset_binding_verified=True,
@@ -33,14 +36,14 @@ def bootstrap_body():
         not_revoked=True,
     )
     ownership = OwnershipEvidence(
-        asset_id="asset:api",
-        claimant_id="claimant:api",
-        title_reference="title:api",
-        control_key_fingerprint="key:api",
-        work_reference="work:api",
-        concept_reference="concept:api",
+        asset_id=asset_id,
+        claimant_id=claimant_id,
+        title_reference=f"title:{suffix}",
+        control_key_fingerprint=key,
+        work_reference=f"work:{suffix}",
+        concept_reference=f"concept:{suffix}",
         coc_reference=evaluate_coc(coc).digest,
-        stake_reference="stake:api",
+        stake_reference=f"stake:{suffix}",
         issued_at="2026-09-16T07:00:00Z",
         expires_at="2026-09-17T07:00:00Z",
         asset_fingerprint_bound=True,
@@ -60,14 +63,14 @@ def bootstrap_body():
         expected_registry_digest=registry_digest([]),
     )
     assert decision.ready is True
-    projection = bootstrap_commit_readiness_audit_projection(decision, asset_id="asset:api")
+    projection = bootstrap_commit_readiness_audit_projection(decision, asset_id=asset_id)
     assert decision.commit_decision is not None
     return {
         "schema": POO_DURABLE_COMMIT_REQUEST_SCHEMA,
         "governance_projection": projection,
         "candidate_states": [asdict(state) for state in decision.commit_decision.candidate_states],
         "approval_intent": POO_APPROVAL_INTENT,
-        "approval_reference": "approval:api:bootstrap:001",
+        "approval_reference": f"approval:{suffix}:bootstrap:001",
     }
 
 
@@ -151,13 +154,16 @@ def test_generic_registry_patch_cannot_touch_poo_namespace(client, tokens):
     assert POO_TECHNICAL_REGISTRY_KEY not in registry
 
 
-def test_bootstrap_is_permanently_closed_after_genesis(client, tokens):
+def test_different_second_genesis_is_permanently_blocked(client, tokens):
     _relay, admin = tokens
-    first = bootstrap_body()
+    first = bootstrap_body(suffix="first")
     assert client.post("/admin/poo/registry/commit", json=first, headers=auth(admin)).status_code == 200
 
-    second = bootstrap_body()
-    second["approval_reference"] = "approval:api:bootstrap:002"
+    second = bootstrap_body(suffix="second")
     response = client.post("/admin/poo/registry/commit", json=second, headers=auth(admin))
-    assert response.status_code == 200
-    assert response.json()["commit"]["status"] == "ALREADY_COMMITTED"
+    assert response.status_code == 409
+    assert "stale PoO registry snapshot" in response.json()["detail"]
+
+    registry = client.get("/admin/poo/registry", headers=auth(admin)).json()["registry"]
+    assert len(registry["states"]) == 1
+    assert registry["states"][0]["asset_id"] == "asset:first"
