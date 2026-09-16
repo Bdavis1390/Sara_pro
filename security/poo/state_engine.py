@@ -116,12 +116,15 @@ def _validate_coc_binding(
     asset_id: str,
     claimant_id: str,
     control_key_fingerprint: str,
+    expected_coc_reference: str,
     expected_previous_coc_digest: Optional[str],
 ) -> List[str]:
     issues: list[str] = []
     decision = evaluate_coc(coc)
     if not decision.coc_valid:
         issues.extend(decision.missing_predicates or ["COC not valid"])
+    if decision.digest != expected_coc_reference:
+        issues.append("COC digest does not match semantic COC reference")
     if coc.asset_id != asset_id:
         issues.append("COC asset does not match ownership asset")
     if coc.claimant_id != claimant_id:
@@ -149,6 +152,7 @@ def bootstrap_technical_state(
             asset_id=ownership.asset_id,
             claimant_id=ownership.claimant_id,
             control_key_fingerprint=ownership.control_key_fingerprint,
+            expected_coc_reference=ownership.coc_reference,
             expected_previous_coc_digest=None,
         )
     )
@@ -194,6 +198,7 @@ def prepare_transfer_transition(
             asset_id=transfer.asset_id,
             claimant_id=transfer.recipient_id,
             control_key_fingerprint=transfer.recipient_control_key_fingerprint,
+            expected_coc_reference=transfer.recipient_coc_reference,
             expected_previous_coc_digest=current.active_coc_digest,
         )
     )
@@ -241,6 +246,7 @@ def prepare_recovery_transition(
             asset_id=recovery.asset_id,
             claimant_id=recovery.claimant_id,
             control_key_fingerprint=recovery.new_control_key_fingerprint,
+            expected_coc_reference=recovery.recovery_coc_reference,
             expected_previous_coc_digest=current.active_coc_digest,
         )
     )
@@ -319,10 +325,11 @@ def evaluate_state_lineage(states: Iterable[TechnicalOwnershipState]) -> StateLi
 
     by_poo = {state.active_poo_digest: state for state in records}
     coc_digests = [state.active_coc_digest for state in records]
+    coc_valid = True
     if len(set(coc_digests)) != len(coc_digests):
+        coc_valid = False
         issues.append("COC: duplicate active COC digest")
 
-    coc_valid = True
     for state in records:
         if state.previous_poo_digest is None:
             if state.previous_coc_digest is not None:
@@ -336,11 +343,7 @@ def evaluate_state_lineage(states: Iterable[TechnicalOwnershipState]) -> StateLi
             continue
         if state.previous_coc_digest != parent.active_coc_digest:
             coc_valid = False
-            issues.append(
-                f"COC: predecessor mismatch at generation {state.generation}"
-            )
-    if len(set(coc_digests)) != len(coc_digests):
-        coc_valid = False
+            issues.append(f"COC: predecessor mismatch at generation {state.generation}")
 
     actual_generations = sorted(state.generation for state in records)
     expected_generations = list(range(len(records)))
