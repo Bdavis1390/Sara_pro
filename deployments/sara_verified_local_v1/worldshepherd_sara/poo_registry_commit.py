@@ -18,6 +18,7 @@ POO_REGISTRY_SCHEMA = "WS-POO-TECHNICAL-REGISTRY-V1"
 POO_STATE_SCHEMA = "WS-POO-TECHNICAL-STATE-V1"
 POO_DURABLE_COMMIT_REQUEST_SCHEMA = "WS-POO-DURABLE-COMMIT-REQUEST-V1"
 POO_DURABLE_COMMIT_RECORD_SCHEMA = "WS-POO-DURABLE-COMMIT-RECORD-V1"
+POO_BOOTSTRAP_AUDIT_SCHEMA = "WS-POO-BOOTSTRAP-COMMIT-DECISION-V1"
 POO_APPROVAL_INTENT = "COMMIT_INTERNAL_TECHNICAL_STATE"
 MAX_POO_STATES = 32
 MAX_POO_COMMIT_RECORDS = 32
@@ -185,7 +186,78 @@ def load_poo_registry_namespace(registry: dict[str, Any]) -> PoOTechnicalRegistr
     return namespace
 
 
+def _canonical_projection_digest(projection: dict[str, Any]) -> str:
+    raw = json.dumps(
+        projection,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(raw).hexdigest()
+
+
+def _validate_bootstrap_projection(projection: dict[str, Any]) -> str:
+    if projection.get("schema") != POO_BOOTSTRAP_AUDIT_SCHEMA:
+        raise PoODurableCommitError("unsupported PoO bootstrap projection schema")
+    expected_states = {
+        "operation": "REGISTRY_BOOTSTRAP_COMMIT_READINESS",
+        "source_status": "REGISTRY_BOOTSTRAP_COMMIT_READY_WITH_FULL_GOVERNANCE",
+        "echo_state": "ECHO_POO_BOOTSTRAP_EVIDENCE_ACCEPTED",
+        "prime_state": "PRIME_POO_BOOTSTRAP_COMMIT_CANDIDATE_READY",
+        "sara_state": "SARA_POO_BOOTSTRAP_HUMAN_REVIEW_READY",
+        "overwatch_state": "OVERWATCH_POO_BOOTSTRAP_PENDING",
+        "claim_boundary": "INTERNAL_POO_EMPTY_REGISTRY_BOOTSTRAP_ONLY",
+    }
+    for field, expected in expected_states.items():
+        if projection.get(field) != expected:
+            raise PoODurableCommitError(f"{field} is not the ready bootstrap commit state")
+
+    for field in (
+        "empty_registry_verified",
+        "ownership_evidence_ready",
+        "coc_valid",
+        "state_transition_ready",
+        "registry_commit_ready",
+        "optimistic_concurrency_checked",
+        "optimistic_concurrency_match",
+        "human_approval_required",
+    ):
+        if projection.get(field) is not True:
+            raise PoODurableCommitError(f"bootstrap projection requires {field}=true")
+
+    for field in (
+        "technical_registry_committed",
+        "durable_registry_write_authorized",
+        "legal_title_established",
+        "legal_title_changed",
+        "live_value_moved",
+        "credential_rotated",
+        "external_transfer_executed",
+    ):
+        if projection.get(field) is not False:
+            raise PoODurableCommitError(f"{field} must remain false before durable commit")
+
+    for field in (
+        "asset_id",
+        "source_digest",
+        "expected_registry_digest",
+        "current_registry_digest",
+        "candidate_registry_digest",
+        "candidate_state_digest",
+    ):
+        value = projection.get(field)
+        if not isinstance(value, str) or not value:
+            raise PoODurableCommitError(f"bootstrap projection {field} must be non-empty")
+
+    if projection["expected_registry_digest"] != projection["current_registry_digest"]:
+        raise PoODurableCommitError("bootstrap projection snapshot digests disagree")
+    return _canonical_projection_digest(projection)
+
+
 def _validated_ready_projection(projection: dict[str, Any]) -> str:
+    if projection.get("schema") == POO_BOOTSTRAP_AUDIT_SCHEMA:
+        return _validate_bootstrap_projection(projection)
+
     try:
         projection_digest = poo_decision_digest(projection)
     except PoOAuditAdapterError as exc:
@@ -224,7 +296,11 @@ def _deterministic_commit_id(projection: dict[str, Any], projection_digest: str)
     return "POO-COMMIT-" + hashlib.sha256(raw).hexdigest()[:32]
 
 
-def _result_from_record(record: PoODurableCommitRecord, *, status: Literal["COMMITTED", "ALREADY_COMMITTED"]) -> PoODurableCommitResult:
+def _result_from_record(
+    record: PoODurableCommitRecord,
+    *,
+    status: Literal["COMMITTED", "ALREADY_COMMITTED"],
+) -> PoODurableCommitResult:
     return PoODurableCommitResult(
         status=status,
         commit_id=record.commit_id,
@@ -330,6 +406,7 @@ def prepare_poo_durable_commit_patch(
         event_id=audit_event_id,
         payload={
             "commit_id": commit_id,
+            "projection_schema": projection.get("schema"),
             "projection_digest": projection_digest,
             "source_decision_digest": projection["source_digest"],
             "approval_reference": request.approval_reference,
