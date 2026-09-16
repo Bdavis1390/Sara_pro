@@ -67,10 +67,12 @@ jobs:
           assert e['receipt_verified'] is True
           assert e['exact_retry_identical'] is True
           assert e['restart_retry_identical'] is True
+          assert e['post_expiry_retry_identical'] is True
           assert e['signer_invocation_count']==1
           assert e['durable_signed_state']=='SIGNED'
+          assert e['durable_request_envelope_identity'] is True
           assert e['ambiguous_outcome_state']=='INDETERMINATE'
-          assert e['ambiguous_outcome_retry_blocked'] is True
+          assert e['ambiguous_outcome_post_expiry_retry_blocked'] is True
           assert e['ambiguous_signer_invocation_count']==1
           assert e['broadcast_request_blocked'] is True
           assert e['mainnet_permitted'] is False
@@ -94,8 +96,6 @@ jobs:
           assert len(r['receipt_sha256'])==64
           assert len(e['evidence_sha256'])==64
 
-          # Explicit negative markers are allowed and required; reject only actual
-          # secret-bearing field names or seed/mnemonic material in retained output.
           forbidden_keys={
               'private_key_pem','private_key_bytes','secret_key','secret_key_bytes',
               'seed_phrase','mnemonic','xprv','wallet_seed','validator_key','withdrawal_key',
