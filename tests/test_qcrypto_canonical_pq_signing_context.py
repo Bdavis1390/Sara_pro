@@ -2,6 +2,8 @@ from dataclasses import replace
 
 from security.qcrypto.canonical_authority_envelope import CanonicalAuthorityEnvelope
 from security.qcrypto.canonical_pq_signing_context import (
+    U32_MAX,
+    U64_MAX,
     CanonicalSigningContextRequest,
     build_canonical_signing_context,
 )
@@ -221,3 +223,33 @@ def test_unsupported_identifier_characters_fail_closed():
     result = build_canonical_signing_context(request(replay_domain="tx auth"))
     assert result.ready is False
     assert any("unsupported characters" in blocker for blocker in result.blockers)
+
+
+def test_uint32_version_fields_fail_closed_outside_portable_range():
+    too_large_envelope = build_canonical_signing_context(
+        request(authority=replace(authority(), envelope_version=U32_MAX + 1))
+    )
+    assert too_large_envelope.ready is False
+    assert any("envelope_version must be" in blocker for blocker in too_large_envelope.blockers)
+
+    zero_policy_version = build_canonical_signing_context(request(policy_version=0))
+    assert zero_policy_version.ready is False
+    assert any("policy_version must be" in blocker for blocker in zero_policy_version.blockers)
+
+
+def test_uint64_epoch_and_replay_fields_fail_closed_outside_portable_range():
+    oversized_epoch = build_canonical_signing_context(
+        request(authority=replace(authority(), key_epoch=U64_MAX + 1))
+    )
+    assert oversized_epoch.ready is False
+    assert any("key_epoch must be" in blocker for blocker in oversized_epoch.blockers)
+
+    oversized_replay = build_canonical_signing_context(request(replay_sequence=U64_MAX + 1))
+    assert oversized_replay.ready is False
+    assert any("replay_sequence must be" in blocker for blocker in oversized_replay.blockers)
+
+
+def test_boolean_is_not_accepted_as_integer_counter():
+    result = build_canonical_signing_context(request(policy_version=True))
+    assert result.ready is False
+    assert "policy_version must be an integer." in result.blockers
