@@ -110,17 +110,65 @@ legal_title_transferred = false
 
 The derived recipient candidate must itself pass the ordinary PoO evaluator, and its `previous_poo_digest` must match the prior ownership record. A disputed, stale, revoked, unauthorized, or incomplete transfer cannot derive the next PoO candidate.
 
-## Disputes and recovery
+## Recovery and disputes
 
-An active ownership dispute blocks ordinary supersession even when PoW, PoC, control/custody, and PoS evidence otherwise pass. Recovery or exceptional title correction should therefore be modeled as a separate, explicitly governed process with stronger provenance, human review, and ECHO evidence custody rather than as a hidden bypass in the transfer evaluator.
+Recovery is a separate **same-owner** path for lost control, compromised control, custody failure, or a technical record correction. It is not an alternate transfer mechanism and cannot silently change the claimant.
+
+Recovery readiness requires stronger re-verification:
+
+```text
+Recovery_ready =
+    prior_PoO_valid
+    AND asset_continuity_verified
+    AND claimant_continuity_verified
+    AND claimant_identity_reverified
+    AND title_or_provenance_reverified
+    AND compromise_or_loss_evidence_bound
+    AND recovery_PoW_verified
+    AND recovery_PoC_concept_verified
+    AND alternate_control_or_custody_verified
+    AND recovery_PoS_bond_verified
+    AND multisource_or_quorum_verified
+    AND freshness_verified
+    AND recovery_not_revoked
+    AND human_approval_verified
+    AND (NOT active_dispute OR dispute_resolution_verified)
+```
+
+Only the following recovery reasons are accepted by v1:
+
+- `LOST_CONTROL`
+- `COMPROMISED_CONTROL`
+- `CUSTODY_FAILURE`
+- `TECHNICAL_RECORD_CORRECTION`
+
+`OWNER_CHANGE` is intentionally not a recovery reason; ownership change belongs in the governed transfer lane.
+
+When all recovery predicates pass, the state is only:
+
+`READY_FOR_GOVERNED_RECOVERY_SUPERSESSION`
+
+The recovery guard hard-codes:
+
+```text
+ownership_restored = false
+control_rotated = false
+transfer_executed = false
+live_value_authorized = false
+legal_title_changed = false
+```
+
+A ready recovery may derive a **same-claimant replacement PoO candidate** using a newly verified control surface and linking back to `previous_poo_digest`. It does not rotate credentials, revoke the prior control surface, modify ECHO records, or execute any transfer by itself.
+
+An active dispute blocks recovery unless `dispute_resolution_verified` is explicitly present. This keeps dispute resolution visible and prevents recovery from becoming a hidden bypass around transfer/title conflicts.
 
 ## Worldshepherd mapping
 
-- **ECHO:** stores provenance, claim events, evidence hashes, revocations, PoC evidence, prior/new PoO lineage, disputes, and transfer evidence.
-- **PRIME:** enforces ownership policy, required predicates, PoC acceptance criteria, control/custody rules, stake rules, asset-class rules, revocation policy, and dispute policy.
-- **SARA:** orchestrates bounded claim/transfer workflows and required human approvals.
-- **OVERWATCH:** monitors expiration, revocation, stale control proofs, bond state, conflicts, duplicate claims, and unresolved disputes.
-- **QCRYPTO:** supplies crypto-agility and hybrid/PQ migration policy for signatures, control challenges, and transfer authorization evidence.
+- **ECHO:** stores provenance, claim events, evidence hashes, revocations, PoC evidence, prior/new PoO lineage, disputes, recovery evidence, and transfer evidence.
+- **PRIME:** enforces ownership policy, required predicates, PoC acceptance criteria, control/custody rules, stake rules, asset-class rules, revocation policy, transfer policy, and dispute/recovery policy.
+- **SARA:** orchestrates bounded claim, transfer, recovery, and dispute workflows with required human approvals.
+- **OVERWATCH:** monitors expiration, revocation, stale control proofs, bond state, conflicts, duplicate claims, recovery state, and unresolved disputes.
+- **QCRYPTO:** supplies crypto-agility and hybrid/PQ migration policy for signatures, control challenges, transfer authorization, and recovery evidence.
 
 ## Asset classes
 
@@ -141,13 +189,15 @@ For off-chain regulated or titled property, PoO remains an evidence layer and mu
 |---|---:|---:|---:|---:|---:|---|
 | cheap Sybil claims | helps | neutral | helps | helps | neutral | harder |
 | broken/fake ownership mechanism | neutral | detects failed concept | neutral | neutral | neutral | blocked |
-| stolen key | weak | may still pass | may pass until revoked | neutral | helps | revocation/recovery required |
+| stolen key | weak | may still pass | may pass until revoked | neutral | helps | recovery/revocation required |
 | wealthy false claimant | weak | insufficient alone | blocks without control | insufficient alone | blocks without provenance | fail closed |
 | compute-rich false claimant | insufficient alone | insufficient alone | blocks without control | neutral | blocks without provenance | fail closed |
 | replayed old claim | neutral | stale PoC can fail policy | freshness/control check | neutral | lineage helps | rejected when stale/revoked |
 | registry/provenance conflict | neutral | neutral | neutral | neutral | detects conflict | human/policy resolution |
 | unauthorized transfer | neutral | neutral | recipient proof insufficient | neutral | transition blocked | current-owner authorization required |
 | double-transfer/conflicting lineage | neutral | neutral | neutral | neutral | lineage/dispute check | blocked pending resolution |
+| compromised current key recovery | fresh work required | recovery mechanism demonstrated | alternate control required | fresh bond required | reverified | governed recovery only |
+| disputed recovery | insufficient | insufficient | insufficient | insufficient | dispute resolution required | blocked until resolved |
 
 ## Claims boundary
 
@@ -156,6 +206,8 @@ PoO v1 does **not** claim:
 - legal title adjudication;
 - government registry authority;
 - automatic transfer execution;
+- automatic credential/key rotation;
+- automatic prior-control revocation;
 - live-value movement authority;
 - external validation or certification;
 - that PoW, PoC, control/custody, or PoS alone proves ownership.
@@ -163,4 +215,5 @@ PoO v1 does **not** claim:
 Validation record:
 
 - Ownership-attestation core with **PoC = Proof of Concept**: **PROVEN INTERNALLY — protocol logic only** at `4aa948fb98ff3f97bc2acc724326a2c984f31b51`.
-- Governed transfer/supersession extension: **IMPLEMENTED IN SOFTWARE / exact-head validation pending** until the transfer regressions pass on the current branch head.
+- Governed transfer/supersession extension: **IMPLEMENTED IN SOFTWARE / exact-head validation pending**.
+- Same-owner recovery/dispute extension: **IMPLEMENTED IN SOFTWARE / exact-head validation pending**.
