@@ -23,13 +23,13 @@ sentinel_url="http://127.0.0.1:${sentinel_port}"
 sentinel_uid="${PRIME_SENTINEL_CONTAINER_UID:-10001}"
 short_sha="${GITHUB_SHA:-LOCAL}"
 short_sha="${short_sha:0:12}"
-key_id="PS-CI-${short_sha}"
+key_id="PS-PQ-CI-${short_sha}"
 prime_id="PRIME-CI-${GITHUB_RUN_ID:-LOCAL}-${GITHUB_RUN_ATTEMPT:-0}-${short_sha}"
 request_id="PSREQ-CI-${GITHUB_RUN_ID:-LOCAL}-${GITHUB_RUN_ATTEMPT:-0}-${short_sha}"
 evidence_file="${PRIME_SENTINEL_EVIDENCE_FILE:-prime-sentinel-integration.json}"
 
 secret_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/prime-sentinel-ci.XXXXXX")"
-key_file="${secret_dir}/ed25519-private.pem"
+key_file="${secret_dir}/mldsa65-private.pem"
 token_file="${secret_dir}/service-token"
 env_backup="${secret_dir}/sara.env.original"
 cp .env "$env_backup"
@@ -42,7 +42,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
-openssl genpkey -algorithm ED25519 -out "$key_file"
+python3 - "$key_file" <<'PY'
+import sys
+from pathlib import Path
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
+key=MLDSA65PrivateKey.generate()
+Path(sys.argv[1]).write_bytes(
+    key.private_bytes(
+        serialization.Encoding.PEM,
+        serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption(),
+    )
+)
+PY
 service_token="$(openssl rand -hex 32)"
 printf '%s\n' "$service_token" > "$token_file"
 chmod 600 "$key_file" "$token_file"
@@ -56,6 +69,7 @@ else
   exit 1
 fi
 
+export PRIME_SENTINEL_SIGNING_ALGORITHM="ML-DSA-65"
 export PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH="$key_file"
 export PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH="$token_file"
 export PRIME_SENTINEL_SIGNING_KEY_ID="$key_id"
@@ -80,20 +94,31 @@ if ! wait_for_sentinel; then
   exit 1
 fi
 
-curl --fail --silent --show-error "${sentinel_url}/v1/public-key" \
-  > "${secret_dir}/public-key.json"
+python3 - "${secret_dir}/sentinel-ready.json" <<'PY'
+import json,sys
+from pathlib import Path
+body=json.loads(Path(sys.argv[1]).read_text())
+assert body['ok'] is True
+assert body['algorithm']=='ML-DSA-65'
+assert body['signature_context']=='WS-PRIME-SENTINEL-AUTHZ-V2'
+assert body['post_quantum_signature_protection'] is True
+assert body['issuance_ledger']=='HEALTHY'
+PY
+
+curl --fail --silent --show-error "${sentinel_url}/v1/public-key" > "${secret_dir}/public-key.json"
 
 public_key="$(python3 - "${secret_dir}/public-key.json" "$key_id" <<'PY'
-import json
-import sys
+import base64,json,sys
 from pathlib import Path
-record = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
-assert record['schema'] == 'WS-PRIME-SENTINEL-PUBLIC-KEY-V1'
-assert record['issuer'] == 'PRIME_SENTINEL'
-assert record['algorithm'] == 'Ed25519'
-assert record['key_id'] == sys.argv[2]
-assert len(record['public_key_b64url']) >= 40
-assert len(record['fingerprint_sha256']) == 64
+record=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+assert record['schema']=='WS-PRIME-SENTINEL-PUBLIC-KEY-V2'
+assert record['issuer']=='PRIME_SENTINEL'
+assert record['algorithm']=='ML-DSA-65'
+assert record['key_id']==sys.argv[2]
+assert record['signature_context']=='WS-PRIME-SENTINEL-AUTHZ-V2'
+padded=record['public_key_b64url'] + '=' * (-len(record['public_key_b64url']) % 4)
+assert len(base64.urlsafe_b64decode(padded))==1952
+assert len(record['fingerprint_sha256'])==64
 print(record['public_key_b64url'])
 PY
 )"
@@ -102,34 +127,38 @@ sentinel_container="$(docker compose --profile prime-sentinel ps -q prime-sentin
 [[ -n "$sentinel_container" ]] || { echo "ERROR: PRIME SENTINEL container not found." >&2; exit 1; }
 docker inspect "$sentinel_container" > "${secret_dir}/sentinel-inspect.json"
 python3 - "${secret_dir}/sentinel-inspect.json" <<'PY'
-import json
-import sys
+import json,sys
 from pathlib import Path
-record = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))[0]
-env = record['Config'].get('Env') or []
+record=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))[0]
+env=set(record['Config'].get('Env') or [])
 assert not any(item.startswith('SARA_ADMIN_TOKEN=') for item in env)
 assert not any(item.startswith('SARA_RELAY_TOKEN=') for item in env)
 assert not any(item.startswith('PRIME_SENTINEL_SERVICE_TOKEN=') for item in env)
-assert any(item == 'PRIME_SENTINEL_SERVICE_TOKEN_FILE=/run/worldshepherd-prime-sentinel/service-token' for item in env)
-assert any(item == 'PRIME_SENTINEL_DATA_DIR=/var/lib/prime-sentinel' for item in env)
-mount_targets = {item['Destination'] for item in record.get('Mounts', [])}
-assert '/run/worldshepherd-prime-sentinel/ed25519-private.pem' in mount_targets
+assert 'PRIME_SENTINEL_SIGNING_ALGORITHM=ML-DSA-65' in env
+assert 'PRIME_SENTINEL_PRIVATE_KEY_FILE=/run/worldshepherd-prime-sentinel/mldsa65-private.pem' in env
+assert 'PRIME_SENTINEL_SERVICE_TOKEN_FILE=/run/worldshepherd-prime-sentinel/service-token' in env
+assert 'PRIME_SENTINEL_DATA_DIR=/var/lib/prime-sentinel' in env
+mount_targets={item['Destination'] for item in record.get('Mounts',[])}
+assert '/run/worldshepherd-prime-sentinel/mldsa65-private.pem' in mount_targets
 assert '/run/worldshepherd-prime-sentinel/service-token' in mount_targets
 assert '/var/lib/prime-sentinel' in mount_targets
 PY
 
 python3 - .env "$key_id" "$public_key" <<'PY'
-import json
-import sys
+import json,sys
 from pathlib import Path
-path = Path(sys.argv[1])
-key_id = sys.argv[2]
-public_key = sys.argv[3]
-value = json.dumps({key_id: public_key}, separators=(',', ':'))
-lines = path.read_text(encoding='utf-8').splitlines()
-lines = [line for line in lines if not line.startswith('PRIME_SENTINEL_PUBLIC_KEYS_JSON=')]
+path=Path(sys.argv[1]); key_id=sys.argv[2]; public_key=sys.argv[3]
+value=json.dumps({
+    key_id:{
+        'algorithm':'ML-DSA-65',
+        'public_key_b64url':public_key,
+        'signature_context':'WS-PRIME-SENTINEL-AUTHZ-V2',
+    }
+},separators=(',',':'))
+lines=path.read_text(encoding='utf-8').splitlines()
+lines=[line for line in lines if not line.startswith('PRIME_SENTINEL_PUBLIC_KEYS_JSON=')]
 lines.append("PRIME_SENTINEL_PUBLIC_KEYS_JSON='" + value + "'")
-path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+path.write_text('\n'.join(lines)+'\n',encoding='utf-8')
 path.chmod(0o600)
 PY
 
@@ -141,11 +170,11 @@ for attempt in $(seq 1 30); do
     sara_ready=1
     break
   fi
-  echo "SARA readiness after verifier-key injection ${attempt}/30..."
+  echo "SARA readiness after PQ verifier-key injection ${attempt}/30..."
   sleep 2
 done
 if [[ "$sara_ready" -ne 1 ]]; then
-  echo "ERROR: SARA did not become ready with PRIME SENTINEL public verification key." >&2
+  echo "ERROR: SARA did not become ready with PRIME SENTINEL ML-DSA verification key." >&2
   docker compose logs --no-color --tail=100 sara >&2 || true
   exit 1
 fi
@@ -154,18 +183,18 @@ sara_container="$(docker compose ps -q sara)"
 [[ -n "$sara_container" ]] || { echo "ERROR: SARA container not found." >&2; exit 1; }
 docker inspect "$sara_container" > "${secret_dir}/sara-inspect.json"
 python3 - "${secret_dir}/sara-inspect.json" <<'PY'
-import json
-import sys
+import json,sys
 from pathlib import Path
-record = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))[0]
-env = record['Config'].get('Env') or []
+record=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))[0]
+env=set(record['Config'].get('Env') or [])
+assert 'PRIME_SENTINEL_SIGNING_ALGORITHM=' in env
 assert 'PRIME_SENTINEL_PRIVATE_KEY_FILE=' in env
 assert 'PRIME_SENTINEL_SERVICE_TOKEN_FILE=' in env
 assert 'PRIME_SENTINEL_SERVICE_TOKEN=' in env
 assert 'PRIME_SENTINEL_SIGNING_KEY_ID=' in env
 assert 'PRIME_SENTINEL_DATA_DIR=' in env
-mount_targets = {item['Destination'] for item in record.get('Mounts', [])}
-assert '/run/worldshepherd-prime-sentinel/ed25519-private.pem' not in mount_targets
+mount_targets={item['Destination'] for item in record.get('Mounts',[])}
+assert '/run/worldshepherd-prime-sentinel/mldsa65-private.pem' not in mount_targets
 assert '/run/worldshepherd-prime-sentinel/service-token' not in mount_targets
 assert '/var/lib/prime-sentinel' not in mount_targets
 PY
@@ -183,10 +212,10 @@ curl --fail --silent --show-error -X POST "${sara_url}/admin/prime/${prime_id}/m
   > "${secret_dir}/mission.json"
 
 python3 - "${secret_dir}/mission.json" <<'PY'
-import json, sys
+import json,sys
 from pathlib import Path
 record=json.loads(Path(sys.argv[1]).read_text())
-assert record['passport']['custody']['state'] == 'QUARANTINED_FOR_REQUALIFICATION'
+assert record['passport']['custody']['state']=='QUARANTINED_FOR_REQUALIFICATION'
 PY
 
 curl --fail --silent --show-error -X PATCH "${sara_url}/admin/prime/${prime_id}/requalification" \
@@ -208,14 +237,10 @@ issue_release "${secret_dir}/issued.json"
 issue_release "${secret_dir}/issued.retry.json"
 cmp "${secret_dir}/issued.json" "${secret_dir}/issued.retry.json"
 
-curl --fail --silent --show-error \
-  -H "Authorization: Bearer ${service_token}" \
-  "${sentinel_url}/v1/issuance/${request_id}" \
-  > "${secret_dir}/issuance.before-restart.json"
-curl --fail --silent --show-error \
-  -H "Authorization: Bearer ${service_token}" \
-  "${sentinel_url}/v1/ledger-status" \
-  > "${secret_dir}/ledger.before-restart.json"
+curl --fail --silent --show-error -H "Authorization: Bearer ${service_token}" \
+  "${sentinel_url}/v1/issuance/${request_id}" > "${secret_dir}/issuance.before-restart.json"
+curl --fail --silent --show-error -H "Authorization: Bearer ${service_token}" \
+  "${sentinel_url}/v1/ledger-status" > "${secret_dir}/ledger.before-restart.json"
 
 conflict_status="$(curl --silent --output "${secret_dir}/issuance-conflict.json" --write-out '%{http_code}' \
   -X POST "${sentinel_url}/v1/requalification-release" \
@@ -223,10 +248,10 @@ conflict_status="$(curl --silent --output "${secret_dir}/issuance-conflict.json"
   -H "X-Prime-Sentinel-Request-Id: ${request_id}" \
   -H 'Content-Type: application/json' \
   --data '{"prime_id":"DIFFERENT-PRIME","target_environment":"SPACE","lifetime_seconds":300}')"
-if [[ "$conflict_status" != "409" ]]; then
+[[ "$conflict_status" == "409" ]] || {
   echo "ERROR: conflicting signer request-id reuse was not rejected; HTTP ${conflict_status}." >&2
   exit 1
-fi
+}
 
 docker compose --profile prime-sentinel restart prime-sentinel
 if ! wait_for_sentinel; then
@@ -236,14 +261,10 @@ fi
 issue_release "${secret_dir}/issued.after-restart.json"
 cmp "${secret_dir}/issued.json" "${secret_dir}/issued.after-restart.json"
 
-curl --fail --silent --show-error \
-  -H "Authorization: Bearer ${service_token}" \
-  "${sentinel_url}/v1/issuance/${request_id}" \
-  > "${secret_dir}/issuance.after-restart.json"
-curl --fail --silent --show-error \
-  -H "Authorization: Bearer ${service_token}" \
-  "${sentinel_url}/v1/ledger-status" \
-  > "${secret_dir}/ledger.after-restart.json"
+curl --fail --silent --show-error -H "Authorization: Bearer ${service_token}" \
+  "${sentinel_url}/v1/issuance/${request_id}" > "${secret_dir}/issuance.after-restart.json"
+curl --fail --silent --show-error -H "Authorization: Bearer ${service_token}" \
+  "${sentinel_url}/v1/ledger-status" > "${secret_dir}/ledger.after-restart.json"
 
 python3 - \
   "${secret_dir}/issued.json" \
@@ -251,53 +272,45 @@ python3 - \
   "${secret_dir}/issuance.after-restart.json" \
   "${secret_dir}/ledger.after-restart.json" \
   "$key_id" "$prime_id" "$request_id" <<'PY'
-import json, sys
+import base64,json,sys
 from pathlib import Path
-issued=json.loads(Path(sys.argv[1]).read_text())
-before=json.loads(Path(sys.argv[2]).read_text())
-after=json.loads(Path(sys.argv[3]).read_text())
-ledger=json.loads(Path(sys.argv[4]).read_text())
-key_id, prime_id, request_id = sys.argv[5:8]
-assert issued['schema'] == 'WS-PRIME-SENTINEL-ISSUE-RESPONSE-V1'
+issued=json.loads(Path(sys.argv[1]).read_text()); before=json.loads(Path(sys.argv[2]).read_text())
+after=json.loads(Path(sys.argv[3]).read_text()); ledger=json.loads(Path(sys.argv[4]).read_text())
+key_id,prime_id,request_id=sys.argv[5:8]
+assert issued['schema']=='WS-PRIME-SENTINEL-ISSUE-RESPONSE-V1'
 a=issued['assertion']
-assert a['issuer'] == 'PRIME_SENTINEL'
-assert a['key_id'] == key_id
-assert a['prime_id'] == prime_id
-assert a['action'] == 'REQUALIFICATION_RELEASE'
-assert a['target_environment'] == 'SPACE'
-assert len(a['nonce']) >= 16
-assert len(a['signature_b64url']) >= 80
-assert before['request_id'] == request_id and after['request_id'] == request_id
-assert before['state'] == 'SIGNED' and after['state'] == 'SIGNED'
-assert before['authorization_id'] == a['authorization_id'] == after['authorization_id']
-assert ledger['ok'] is True
-assert ledger['records'] == 1
-assert ledger['signed'] == 1
-assert ledger['prepared'] == 0
-assert ledger['events'] == 2
-assert ledger['event_chain_ok'] is True
+assert a['issuer']=='PRIME_SENTINEL' and a['key_id']==key_id and a['prime_id']==prime_id
+assert a['action']=='REQUALIFICATION_RELEASE' and a['target_environment']=='SPACE'
+padded=a['signature_b64url'] + '=' * (-len(a['signature_b64url']) % 4)
+assert len(base64.urlsafe_b64decode(padded))==3309
+assert before['request_id']==request_id and after['request_id']==request_id
+assert before['state']=='SIGNED' and after['state']=='SIGNED'
+assert before['authorization_id']==a['authorization_id']==after['authorization_id']
+assert before['signing_algorithm']=='ML-DSA-65' and after['signing_algorithm']=='ML-DSA-65'
+assert before['post_quantum_signature_protection'] is True
+assert ledger['ok'] is True and ledger['records']==1 and ledger['signed']==1
+assert ledger['prepared']==0 and ledger['events']==2 and ledger['event_chain_ok'] is True
+assert ledger['signing_algorithm']=='ML-DSA-65'
+assert ledger['post_quantum_signature_protection'] is True
 PY
 
 python3 - "${secret_dir}/issued.json" "${secret_dir}/assertion.json" <<'PY'
-import json, sys
+import json,sys
 from pathlib import Path
 record=json.loads(Path(sys.argv[1]).read_text())
-Path(sys.argv[2]).write_text(json.dumps(record['assertion'], separators=(',', ':')) + '\n')
+Path(sys.argv[2]).write_text(json.dumps(record['assertion'],separators=(',',':'))+'\n')
 PY
 
 curl --fail --silent --show-error -X POST "${sara_url}/admin/prime/${prime_id}/requalification/authorize" \
-  "${admin_header[@]}" \
-  --data @"${secret_dir}/assertion.json" \
-  > "${secret_dir}/authorized.json"
+  "${admin_header[@]}" --data @"${secret_dir}/assertion.json" > "${secret_dir}/authorized.json"
 
 replay_status="$(curl --silent --output "${secret_dir}/replay.json" --write-out '%{http_code}' \
   -X POST "${sara_url}/admin/prime/${prime_id}/requalification/authorize" \
-  "${admin_header[@]}" \
-  --data @"${secret_dir}/assertion.json")"
-if [[ "$replay_status" != "403" ]]; then
+  "${admin_header[@]}" --data @"${secret_dir}/assertion.json")"
+[[ "$replay_status" == "403" ]] || {
   echo "ERROR: PRIME SENTINEL assertion replay was not rejected; HTTP ${replay_status}." >&2
   exit 1
-fi
+}
 
 curl --fail --silent --show-error -X POST "${sara_url}/admin/prime/${prime_id}/activate-pack" \
   "${admin_header[@]}" \
@@ -305,71 +318,62 @@ curl --fail --silent --show-error -X POST "${sara_url}/admin/prime/${prime_id}/a
   > "${secret_dir}/activated.json"
 
 curl --fail --silent --show-error "${sara_url}/admin/registry" \
-  -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" \
-  > "${secret_dir}/registry.json"
+  -H "Authorization: Bearer ${SARA_ADMIN_TOKEN}" > "${secret_dir}/registry.json"
 
 python3 - \
-  "${secret_dir}/public-key.json" \
-  "${secret_dir}/issued.json" \
-  "${secret_dir}/authorized.json" \
-  "${secret_dir}/activated.json" \
-  "${secret_dir}/registry.json" \
-  "${secret_dir}/issuance.after-restart.json" \
-  "${secret_dir}/ledger.after-restart.json" \
+  "${secret_dir}/public-key.json" "${secret_dir}/issued.json" "${secret_dir}/authorized.json" \
+  "${secret_dir}/activated.json" "${secret_dir}/registry.json" \
+  "${secret_dir}/issuance.after-restart.json" "${secret_dir}/ledger.after-restart.json" \
   "$prime_id" "$request_id" "$evidence_file" <<'PY'
-import json
-import sys
+import json,sys
 from pathlib import Path
-public = json.loads(Path(sys.argv[1]).read_text())
-issued = json.loads(Path(sys.argv[2]).read_text())
-authorized = json.loads(Path(sys.argv[3]).read_text())
-activated = json.loads(Path(sys.argv[4]).read_text())
-registry = json.loads(Path(sys.argv[5]).read_text())['registry']
-issuance = json.loads(Path(sys.argv[6]).read_text())
-ledger = json.loads(Path(sys.argv[7]).read_text())
-prime_id = sys.argv[8]
-request_id = sys.argv[9]
-out = Path(sys.argv[10])
-assert authorized['passport']['custody']['requalification_release_authorization_id'] == issued['assertion']['authorization_id']
-assert authorized['passport']['custody']['requalification_release_key_id'] == public['key_id']
-assert activated['disposition'] == 'ACTIVATION_ALLOWED'
-assert activated['passport']['custody']['state'] == 'READY'
-auth_id = issued['assertion']['authorization_id']
-auth_record = registry['PRIME_SENTINEL_AUTHORIZATIONS'][auth_id]
-assert auth_record['status'] == 'CONSUMED'
-assert issuance['state'] == 'SIGNED'
-assert issuance['authorization_id'] == auth_id
-summary = {
-    'schema': 'WS-PRIME-SENTINEL-TWO-CONTAINER-INTEGRATION-V2',
-    'status': 'PASS',
-    'prime_id': prime_id,
-    'request_id': request_id,
-    'signing_key_id': public['key_id'],
-    'public_key_fingerprint_sha256': public['fingerprint_sha256'],
-    'authorization_id': auth_id,
-    'signer_issuance_state': issuance['state'],
-    'signer_ledger_event_chain_ok': ledger['event_chain_ok'],
-    'same_request_retry_identical_before_restart': True,
-    'same_request_retry_identical_after_restart': True,
-    'conflicting_request_rejected_http_status': 409,
-    'assertion_replay_rejected_http_status': 403,
-    'activation_disposition': activated['disposition'],
-    'authorization_registry_status': auth_record['status'],
-    'reconciliation_classification': auth_record['status'],
-    'separation_checks': {
-        'sara_has_no_signer_secret_or_ledger_mounts': True,
-        'sentinel_has_no_sara_bearer_credentials': True,
-        'sentinel_bearer_not_in_container_environment': True,
-        'signer_ledger_persisted_across_container_restart': True,
+public=json.loads(Path(sys.argv[1]).read_text()); issued=json.loads(Path(sys.argv[2]).read_text())
+authorized=json.loads(Path(sys.argv[3]).read_text()); activated=json.loads(Path(sys.argv[4]).read_text())
+registry=json.loads(Path(sys.argv[5]).read_text())['registry']; issuance=json.loads(Path(sys.argv[6]).read_text())
+ledger=json.loads(Path(sys.argv[7]).read_text()); prime_id=sys.argv[8]; request_id=sys.argv[9]; out=Path(sys.argv[10])
+assert public['algorithm']=='ML-DSA-65' and public['signature_context']=='WS-PRIME-SENTINEL-AUTHZ-V2'
+assert authorized['passport']['custody']['requalification_release_authorization_id']==issued['assertion']['authorization_id']
+assert authorized['passport']['custody']['requalification_release_key_id']==public['key_id']
+assert activated['disposition']=='ACTIVATION_ALLOWED' and activated['passport']['custody']['state']=='READY'
+auth_id=issued['assertion']['authorization_id']; auth_record=registry['PRIME_SENTINEL_AUTHORIZATIONS'][auth_id]
+assert auth_record['status']=='CONSUMED'
+assert auth_record['signing_algorithm']=='ML-DSA-65'
+assert auth_record['signature_context']=='WS-PRIME-SENTINEL-AUTHZ-V2'
+assert issuance['state']=='SIGNED' and issuance['authorization_id']==auth_id
+summary={
+    'schema':'WS-PRIME-SENTINEL-TWO-CONTAINER-INTEGRATION-V3',
+    'status':'PASS',
+    'prime_id':prime_id,
+    'request_id':request_id,
+    'signing_key_id':public['key_id'],
+    'signing_algorithm':public['algorithm'],
+    'signature_context':public['signature_context'],
+    'post_quantum_signature_protection':True,
+    'public_key_fingerprint_sha256':public['fingerprint_sha256'],
+    'authorization_id':auth_id,
+    'signer_issuance_state':issuance['state'],
+    'signer_ledger_event_chain_ok':ledger['event_chain_ok'],
+    'same_request_retry_identical_before_restart':True,
+    'same_request_retry_identical_after_restart':True,
+    'conflicting_request_rejected_http_status':409,
+    'assertion_replay_rejected_http_status':403,
+    'activation_disposition':activated['disposition'],
+    'authorization_registry_status':auth_record['status'],
+    'separation_checks':{
+        'sara_has_no_signer_secret_or_ledger_mounts':True,
+        'sentinel_has_no_sara_bearer_credentials':True,
+        'sentinel_bearer_not_in_container_environment':True,
+        'signer_ledger_persisted_across_container_restart':True,
     },
-    'claims_boundary': (
-        'Internal CI software evidence only; integrity-checked local SQLite persistence is not '
-        'immutable/WORM or HSM custody and does not establish external certification, partner '
-        'validation, government acceptance, or physical PRIME qualification.'
+    'end_to_end_pq_security_established':False,
+    'claims_boundary':(
+        'Internal CI software evidence demonstrates ML-DSA-65 post-quantum signature protection for '
+        'PRIME authorization assertions and SARA verification. PQ-secure transport, external/HSM key '
+        'custody, FIPS 140 validation, and end-to-end post-quantum security are not established.'
     ),
 }
-out.parent.mkdir(parents=True, exist_ok=True)
-out.write_text(json.dumps(summary, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+out.parent.mkdir(parents=True,exist_ok=True)
+out.write_text(json.dumps(summary,sort_keys=True,indent=2)+'\n',encoding='utf-8')
 PY
 
-echo "PRIME SENTINEL durable two-container integration: PASS (${evidence_file})"
+echo "PRIME SENTINEL ML-DSA-65 durable two-container integration: PASS (${evidence_file})"
