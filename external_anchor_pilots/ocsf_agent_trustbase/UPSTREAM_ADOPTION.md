@@ -39,10 +39,12 @@ See `CROSS_PLANE_MAPPING.md` for the current mapping discipline.
 
 What is ready now:
 
-1. Six semantic pass/fail vectors covering session baseline, mid-session dependency change, adapter digest divergence, missing closure, broken chain linkage, and unsafe credential material.
-2. A standalone verifier for the provisional invariants discussed in issue #1724.
-3. A separate checker that confirms an OCSF checkout still exposes the existing semantic anchors used by this pilot.
-4. A cross-plane mapping that keeps activity semantics, `ai_status`, and trust-base evidence separated but correlatable.
+1. Six semantic trust-base pass/fail vectors covering session baseline, mid-session dependency change, adapter digest divergence, missing closure, broken chain linkage, and unsafe credential material.
+2. Three additional plane-separation vectors proving that behavior/outcome fields can be rejected when duplicated inside trust-base evidence.
+3. A standalone verifier for the provisional invariants discussed in issue #1724.
+4. A separate plane-separation checker that protects the behavior-vs-configuration boundary without claiming final OCSF field names.
+5. A checker that confirms an OCSF checkout still exposes the existing semantic anchors used by this pilot.
+6. A cross-plane mapping that keeps activity semantics, `ai_status`, and trust-base evidence separated but correlatable.
 
 What is **not** ready to claim:
 
@@ -65,25 +67,33 @@ Once the class PR for #1724 is available:
 5. Translate the admission/closure vectors into the accepted activity/emission mapping, if maintainers retain that design.
 6. Recheck `#1754` and `#1704`; remove any fixture or field that would duplicate accepted `AI Agent Activity`, existing OCSF activity classes, `security_control`, or `ai_status` semantics.
 7. Add only the minimum correlation mechanism needed to join trust-base state to relevant activity events, using accepted OCSF attributes rather than inventing a parallel correlation model.
-8. Run the OCSF schema compiler against the full fork.
-9. Run OCSF compatibility validation where classification IDs or existing attributes are affected.
-10. Run OCSF server validation to ensure the schema can be consumed by `ocsf-server`.
-11. Add an `Unreleased` changelog entry and DCO-sign all commits before opening the upstream PR.
-12. Keep the PR focused on one coherent class/test contribution and respond to CI/reviewer findings until clean.
+8. Run both semantic harnesses and require their declared pass/fail expectations to match actual results.
+9. Run the OCSF schema compiler against the full fork.
+10. Run OCSF compatibility validation where classification IDs or existing attributes are affected.
+11. Run OCSF server validation to ensure the schema can be consumed by `ocsf-server`.
+12. Add an `Unreleased` changelog entry and DCO-sign all commits before opening the upstream PR.
+13. Keep the PR focused on one coherent class/test contribution and respond to CI/reviewer findings until clean.
 
 ## Suggested maintainer handoff
 
 A concise offer to OCSF maintainers:
 
-> I can take the conformance-test/fixture slice for the agent trust-base inventory proposal. I have a provisional harness with semantic vectors covering per-emission chain continuity, declared-vs-observed state, admission/closure pairing, content fingerprints, remote-model identity handling, and credential hygiene. I have also separated those checks from the activity semantics emerging in #1754 and the `ai_status` work in #1704 so this does not create a parallel AI event taxonomy. Once the #1724 class fields stabilize, I can translate the fixtures to the accepted OCSF shape and run them alongside the existing compiler/server validation path.
+> I can take the conformance-test/fixture slice for the agent trust-base inventory proposal. I have a provisional harness with semantic vectors covering per-emission chain continuity, declared-vs-observed state, admission/closure pairing, content fingerprints, remote-model identity handling, credential hygiene, and a separate non-duplication check against the activity/`ai_status` semantics emerging in #1754 and #1704. Once the #1724 class fields stabilize, I can translate the fixtures to the accepted OCSF shape and run them alongside the existing compiler/server validation path.
 
 ## Commands
 
-Run the current semantic fixtures:
+Run the current trust-base semantic fixtures:
 
 ```bash
 python external_anchor_pilots/ocsf_agent_trustbase/verify_trustbase.py \
   external_anchor_pilots/ocsf_agent_trustbase/fixtures.json
+```
+
+Run the plane-separation fixtures:
+
+```bash
+python external_anchor_pilots/ocsf_agent_trustbase/verify_plane_separation.py \
+  external_anchor_pilots/ocsf_agent_trustbase/plane_separation_fixtures.json
 ```
 
 Check an OCSF checkout for the current anchors this pilot depends on:
