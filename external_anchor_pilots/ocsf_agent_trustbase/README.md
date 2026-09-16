@@ -4,7 +4,7 @@
 
 **Upstream target:** `ocsf/ocsf-schema#1724` — *Discovery: agent trust-base inventory, applying record_integrity per emission*
 
-This pilot turns the semantic requirements being discussed in OCSF issue #1724 into executable structural test vectors. It is deliberately **not** an alternate OCSF schema and does not claim that the proposed class has been accepted.
+This pilot turns semantic requirements being discussed in OCSF issue #1724 into executable structural test vectors and analyzers. It is deliberately **not** an alternate OCSF schema and does not claim that the proposed class has been accepted.
 
 The pilot is grounded in concepts already present on OCSF `main`, including:
 
@@ -19,9 +19,9 @@ The pilot is grounded in concepts already present on OCSF `main`, including:
 It also tracks adjacent upstream AI work so the trust-base contribution does not duplicate behavior telemetry:
 
 - `ocsf/ocsf-schema#1754` — draft `AI Agent Activity`
-- `ocsf/ocsf-schema#1704` — `ai_status` outcome container under `ai_operation`
+- `ocsf/ocsf-schema#1704` — shared AI outcome/status work under `ai_operation`
 
-See `CROSS_PLANE_MAPPING.md` for the behavior-vs-configuration separation and `ISSUE_1724_CONVERGENCE.md` for a current discussion-state matrix.
+See `CROSS_PLANE_MAPPING.md` for behavior-vs-configuration separation, `ISSUE_1724_CONVERGENCE.md` for a discussion-state matrix, and `EVIDENCE_STRENGTH_AND_SAMPLING.md` for the current non-normative treatment of evidence strength and sampling/runtime drift.
 
 ## What it checks
 
@@ -39,11 +39,15 @@ The main trust-base verifier enforces these provisional invariants:
 10. Remotely hosted models use an identity tuple (`ai_provider`, `name`, `version`) rather than pretending the producer can hash unavailable weights.
 11. Credential references and scopes may be represented, but raw credential material keys are rejected.
 
-A second checker, `verify_plane_separation.py`, enforces the harness-level non-duplication boundary: behavior/outcome keys under discussion in adjacent OCSF work are rejected if copied into the provisional `trust_base` payload.
+`verify_plane_separation.py` enforces the harness-level non-duplication boundary: behavior/outcome keys under discussion in adjacent OCSF work are rejected if copied into the provisional `trust_base` payload.
 
-A third checker, `verify_evidence_join.py`, exercises the evidence-grade join discussed in #1724: the trust-base closure and correlated activity event must carry the same `metadata.correlation_uid`, and both records must carry an integrity attestation fingerprint. This is intentionally stronger than ordinary schema validity. It models the thread's principle that the join key should live inside the integrity-protected event rather than exist only as advisory external metadata.
+`verify_evidence_join.py` exercises the evidence-grade join discussed in #1724: the trust-base closure and correlated activity event must carry the same `metadata.correlation_uid`, and both records must carry an integrity attestation fingerprint. This is intentionally stronger than ordinary schema validity. It models the thread's principle that the join key should live inside the integrity-protected event rather than exist only as advisory external metadata.
 
-OCSF's current `attestation` description states that the canonical serialization covers the entire event except the attestation's own `fingerprint` and `signatures`; therefore, a present `metadata.correlation_uid` is within the attested event content.
+`verify_evidence_strength.py` checks only internally testable consistency for the discussion-level `verification_id` vocabulary. It does **not** rank evidence or decide whether any evidence strength is sufficient for a security control.
+
+`analyze_sampling_delta.py` reports structural differences between declared and observed sampling/runtime configuration. It preserves changed, declared-only, and observed-only states without filling defaults or assigning a security verdict.
+
+OCSF's current `attestation` description states that canonical serialization covers the entire event except the attestation's own `fingerprint` and `signatures`; therefore, a present `metadata.correlation_uid` is within the attested event content.
 
 ## Test vectors
 
@@ -69,17 +73,34 @@ OCSF's current `attestation` description states that the canonical serialization
 - mismatched closure/activity correlation — expected fail
 - activity-side correlation not protected by an attestation fingerprint — expected fail
 
-All four evidence-join expectations were exercised successfully before this documentation update.
+`evidence_strength_fixtures.json` adds six evidence-strength consistency scenarios:
+
+- local adapter digest — expected pass
+- provider-asserted hosted-model tuple — expected pass
+- not-observable hosted-model tuple — expected pass
+- locally computed claim without a digest — expected fail
+- not-observable claim that also asserts a local fingerprint — expected fail
+- unsupported verification ID — expected fail
+
+`sampling_delta_fixtures.json` adds five reporting scenarios:
+
+- stable sampling configuration
+- gateway token-cap rewrite
+- caller temperature override
+- runtime-only constraint appearance
+- runtime binding represented as structurally unavailable
+
+The evidence-strength fixture expectations and all five sampling-delta scenarios were exercised locally before commit. The sampling analyzer is descriptive: a reported delta is not itself a failure.
 
 ## Architectural boundary
 
 The pilot is a **configuration/evidence-plane** contribution.
 
-It should not become a second event taxonomy for actions already represented by OCSF. File operations, process launches, API calls, and other existing activities should stay in their native OCSF classes with AI context attached where appropriate. Agent-specific lifecycle/action semantics belong with the emerging `AI Agent Activity` work, while shared outcome scalars such as stop reason should reuse `ai_status` if that architecture is accepted upstream.
+It should not become a second event taxonomy for actions already represented by OCSF. File operations, process launches, API calls, and other existing activities should stay in their native OCSF classes with AI context attached where appropriate. Agent-specific lifecycle/action semantics belong with the emerging `AI Agent Activity` work, while shared outcome/status semantics should be reused rather than redefined if that architecture is accepted upstream.
 
 The trust-base contribution instead answers the complementary question:
 
-> What discrete agent configuration and dependency state was in force when an activity occurred, and is the evidence chain complete?
+> What discrete agent configuration and dependency state was in force when an activity occurred, what strength of evidence supports each element, and is the evidence chain complete?
 
 The exact final class mapping is still upstream design work, but the #1724 discussion now favors a join over an overlay, with closure correlated to the relevant activity event rather than importing activity semantics into the trust-base class.
 
@@ -106,10 +127,24 @@ python external_anchor_pilots/ocsf_agent_trustbase/verify_evidence_join.py \
   external_anchor_pilots/ocsf_agent_trustbase/evidence_join_fixtures.json
 ```
 
-The commands exit non-zero only when an actual result disagrees with a fixture's declared expectation.
+Run the evidence-strength consistency fixtures:
+
+```bash
+python external_anchor_pilots/ocsf_agent_trustbase/verify_evidence_strength.py \
+  external_anchor_pilots/ocsf_agent_trustbase/evidence_strength_fixtures.json
+```
+
+Report declared-versus-observed sampling/runtime differences:
+
+```bash
+python external_anchor_pilots/ocsf_agent_trustbase/analyze_sampling_delta.py \
+  external_anchor_pilots/ocsf_agent_trustbase/sampling_delta_fixtures.json
+```
+
+Use `--json` on the sampling analyzer for machine-readable output.
 
 ## Important boundary
 
-These verifiers do **not** implement OCSF canonical serialization, cryptographic signature verification, or final field names for the proposed trust-base inventory class. Those should remain aligned to upstream OCSF decisions and existing validator/compiler behavior.
+These tools do **not** implement OCSF canonical serialization, cryptographic signature verification, final field names for the proposed trust-base inventory class, or policy sufficiency decisions. Those should remain aligned to upstream OCSF decisions and existing validator/compiler behavior.
 
-The intended upstream contribution is the **conformance-test slice**: once the class PR stabilizes, translate these invariants and vectors into the exact accepted OCSF fields, preserve separation from existing activity/`ai_status` semantics, and where maintainers agree integrate suitable checks into the existing validator/CI path.
+The intended upstream contribution is the **conformance-test and evidence-analysis slice**: once the class PR stabilizes, translate suitable invariants and vectors into the exact accepted OCSF fields, preserve separation from existing activity/outcome semantics, and where maintainers agree integrate appropriate checks into the existing validator/CI path.
