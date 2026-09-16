@@ -13,6 +13,22 @@ from worldshepherd_sara.mbse_file_pipeline import run_file_backed_conversion
 ROOT = Path(__file__).resolve().parents[1]
 CORPUS = ROOT / "fixtures" / "mbse_file_corpus_v1"
 MANIFEST = CORPUS / "manifest.json"
+PARAPHRASE_MANIFEST = CORPUS / "manifest_paraphrase.json"
+
+
+def _assert_perfect_bounded_score(result: dict) -> None:
+    assert result["metrics"] == {
+        "entity_precision": 1.0,
+        "entity_recall": 1.0,
+        "relationship_precision": 1.0,
+        "relationship_recall": 1.0,
+    }
+    assert result["negative_evidence"] == {
+        "unsupported_entities": [],
+        "unsupported_relationships": [],
+        "missed_entities": [],
+        "missed_relationships": [],
+    }
 
 
 def test_file_backed_corpus_loads_distinct_sources_with_expected_hashes():
@@ -30,21 +46,26 @@ def test_file_backed_corpus_loads_distinct_sources_with_expected_hashes():
 def test_file_backed_conversion_recovers_frozen_graph_without_unsupported_inference():
     result = run_file_backed_conversion(MANIFEST)
     assert result["schema"] == "WS-MBSE-FILE-CONVERSION-V1"
-    assert result["metrics"] == {
-        "entity_precision": 1.0,
-        "entity_recall": 1.0,
-        "relationship_precision": 1.0,
-        "relationship_recall": 1.0,
-    }
-    assert result["negative_evidence"] == {
-        "unsupported_entities": [],
-        "unsupported_relationships": [],
-        "missed_entities": [],
-        "missed_relationships": [],
-    }
+    _assert_perfect_bounded_score(result)
     assert len(result["candidate_graph"]["nodes"]) == 5
     assert len(result["candidate_graph"]["edges"]) == 5
     assert len(result["output_digest"]) == 64
+
+
+def test_held_out_paraphrase_recovers_same_graph_without_unsupported_inference():
+    original = run_file_backed_conversion(MANIFEST)
+    paraphrase = run_file_backed_conversion(PARAPHRASE_MANIFEST)
+    _assert_perfect_bounded_score(paraphrase)
+    original_edges = {
+        (edge["source_node_id"], edge["target_node_id"], edge["relation"])
+        for edge in original["candidate_graph"]["edges"]
+    }
+    paraphrase_edges = {
+        (edge["source_node_id"], edge["target_node_id"], edge["relation"])
+        for edge in paraphrase["candidate_graph"]["edges"]
+    }
+    assert original_edges == paraphrase_edges
+    assert original["fixture_id"] != paraphrase["fixture_id"]
 
 
 def test_candidate_graph_retains_file_provenance_on_nodes_and_edges():
