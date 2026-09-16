@@ -12,6 +12,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from . import __version__
 from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
+from .discord_event_projection import DISCORD_RECEIPTS_REGISTRY_KEY
 from .event_outbox import (
     EVENT_OUTBOX_REGISTRY_KEY,
     MAX_PENDING_OUTBOX_EVENTS,
@@ -35,6 +36,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         PRIME_PASSPORTS_REGISTRY_KEY,
         PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
         EVENT_OUTBOX_REGISTRY_KEY,
+        DISCORD_RECEIPTS_REGISTRY_KEY,
     }
 )
 
