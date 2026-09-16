@@ -31,6 +31,8 @@ from security.qcrypto.hybrid_authority_migration import (
 CONTEXT_SCHEMA = "WS-QCRYPTO-CANONICAL-SIGNING-CONTEXT-V1"
 DOMAIN_TAG = b"WS-QCRYPTO-AUTH-BINDING-V1\x00"
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._:/-]{1,128}$")
+U32_MAX = (1 << 32) - 1
+U64_MAX = (1 << 64) - 1
 
 
 @dataclass(frozen=True)
@@ -92,6 +94,14 @@ def _validate_digest(name: str, value: str | None, *, required: bool) -> str | N
     return None
 
 
+def _validate_uint(name: str, value: int, *, minimum: int, maximum: int) -> str | None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        return f"{name} must be an integer."
+    if value < minimum or value > maximum:
+        return f"{name} must be in the inclusive range {minimum}..{maximum}."
+    return None
+
+
 def _frame_text(value: str) -> bytes:
     encoded = value.encode("utf-8")
     return struct.pack(">I", len(encoded)) + encoded
@@ -141,10 +151,22 @@ def build_canonical_signing_context(
     if not adapter.explicit_human_approval_required:
         blockers.append("Canonical adapter must preserve explicit human approval.")
 
-    if request.policy_version < 1:
-        blockers.append("Policy version must be at least 1.")
-    if request.replay_sequence < 0:
-        blockers.append("Replay sequence cannot be negative.")
+    for name, value, minimum, maximum in (
+        ("envelope_version", request.authority.envelope_version, 1, U32_MAX),
+        (
+            "policy_minimum_envelope_version",
+            request.authority_policy.minimum_envelope_version,
+            1,
+            U32_MAX,
+        ),
+        ("policy_version", request.policy_version, 1, U32_MAX),
+        ("key_epoch", request.authority.key_epoch, 0, U64_MAX),
+        ("policy_minimum_key_epoch", request.authority_policy.minimum_key_epoch, 0, U64_MAX),
+        ("replay_sequence", request.replay_sequence, 0, U64_MAX),
+    ):
+        error = _validate_uint(name, value, minimum=minimum, maximum=maximum)
+        if error:
+            blockers.append(error)
 
     identifiers = {
         "network_id": request.authority.network_id,
