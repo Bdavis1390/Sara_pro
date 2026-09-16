@@ -5,10 +5,12 @@ on:
     paths:
       - 'security/qcrypto/chain_deployment_guard.py'
       - 'security/qcrypto/chain_online_guard.py'
+      - 'security/qcrypto/hoodi_checkpoint_quorum.py'
       - 'security/qcrypto/production_transition_guard.py'
       - 'tests/test_qcrypto_chain_deployment_guard.py'
       - 'tests/test_qcrypto_chain_online_guard.py'
       - 'tests/test_qcrypto_chain_online_lineage.py'
+      - 'tests/test_qcrypto_hoodi_checkpoint_quorum.py'
       - 'tests/test_qcrypto_production_transition_guard.py'
       - 'deployments/qcrypto_chain_testnets/**'
       - '.github/workflows/qcrypto-chain-deployment-readiness.yml'
@@ -20,6 +22,8 @@ permissions:
 jobs:
   chain-deployment-readiness:
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
 
@@ -34,11 +38,15 @@ jobs:
             tests/test_qcrypto_chain_deployment_guard.py \
             tests/test_qcrypto_chain_online_guard.py \
             tests/test_qcrypto_chain_online_lineage.py \
+            tests/test_qcrypto_hoodi_checkpoint_quorum.py \
             tests/test_qcrypto_production_transition_guard.py
-          python -m py_compile deployments/qcrypto_chain_testnets/verify_online.py
+          python -m py_compile \
+            deployments/qcrypto_chain_testnets/verify_online.py \
+            deployments/qcrypto_chain_testnets/verify_hoodi_checkpoint_quorum.py
           bash -n deployments/qcrypto_chain_testnets/bootstrap_host.sh
           grep -q 'DEPLOYMENT_REVISION' deployments/qcrypto_chain_testnets/bootstrap_host.sh
           grep -q 'COMPOSE_SHA256' deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          grep -q 'CHECKPOINT_QUORUM_SHA256' deployments/qcrypto_chain_testnets/bootstrap_host.sh
           if grep -qE '^[[:space:]]*source[[:space:]]+.*\.env' deployments/qcrypto_chain_testnets/bootstrap_host.sh; then
             echo 'bootstrap must not execute .env as shell code' >&2
             exit 1
@@ -49,6 +57,7 @@ jobs:
           BITCOIN_CORE_IMAGE: example.invalid/bitcoin-core@sha256:0000000000000000000000000000000000000000000000000000000000000000
           ETHEREUM_EXECUTION_IMAGE: example.invalid/ethereum-execution@sha256:1111111111111111111111111111111111111111111111111111111111111111
           ETHEREUM_CONSENSUS_IMAGE: example.invalid/ethereum-consensus@sha256:2222222222222222222222222222222222222222222222222222222222222222
+          ETHEREUM_CHECKPOINT_SYNC_URL: https://hoodi.checkpoint.sigp.io
         run: |
           mkdir -p deployments/qcrypto_chain_testnets/secrets
           printf '%064d\n' 0 > deployments/qcrypto_chain_testnets/secrets/engine-jwt.hex
@@ -57,6 +66,8 @@ jobs:
             config > /tmp/qcrypto-chain-compose.rendered.yaml
           grep -q -- '-signet' /tmp/qcrypto-chain-compose.rendered.yaml
           grep -q -- '--hoodi' /tmp/qcrypto-chain-compose.rendered.yaml
+          grep -q -- '--checkpoint-sync-url' /tmp/qcrypto-chain-compose.rendered.yaml
+          grep -q -- 'https://hoodi.checkpoint.sigp.io' /tmp/qcrypto-chain-compose.rendered.yaml
           grep -q -- '127.0.0.1:5052' /tmp/qcrypto-chain-compose.rendered.yaml
           if grep -q -- '--mainnet' /tmp/qcrypto-chain-compose.rendered.yaml; then
             echo 'mainnet flag found in public-testnet package' >&2
