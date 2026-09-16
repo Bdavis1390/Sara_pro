@@ -9,13 +9,19 @@ from typing import Any
 from .event_outbox import queue_events_outbox_patch
 
 
-POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V1"
-POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V1"
+POO_AUDIT_SCHEMA = "WS-POO-GOVERNANCE-DECISION-V2"
+POO_EVENT_SCHEMA = "WS-POO-SARA-AUDIT-EVENT-V2"
 AUDIT_INSTANCE_PREFIX = "POO-AUDIT-"
 _AUDIT_INSTANCE_PATTERN = re.compile(r"^POO-AUDIT-[0-9a-f]{32}$")
 _VALID_OPERATIONS = frozenset(
-    {"OWNERSHIP_ATTESTATION", "TRANSFER_READINESS", "RECOVERY_READINESS"}
+    {
+        "OWNERSHIP_ATTESTATION",
+        "TRANSFER_READINESS",
+        "RECOVERY_READINESS",
+        "LINEAGE_INTEGRITY",
+    }
 )
+_VALID_LINEAGE_CONFLICT_TYPES = frozenset({"NONE", "FORK", "CYCLE", "STRUCTURAL", "MULTIPLE"})
 _FORBIDDEN_TRUE_FIELDS = (
     "ownership_changed",
     "transfer_executed",
@@ -23,6 +29,8 @@ _FORBIDDEN_TRUE_FIELDS = (
     "legal_title_established",
     "legal_title_transferred",
     "control_rotated",
+    "conflict_winner_selected",
+    "lineage_auto_resolved",
 )
 _STAGE_FIELDS = (
     ("ECHO", "echo_state", "poo_echo_state"),
@@ -45,6 +53,13 @@ _REQUIRED_FIELDS = frozenset(
         "technical_attestation_ready",
         "transfer_ready",
         "recovery_ready",
+        "lineage_checked",
+        "lineage_valid",
+        "fork_detected",
+        "cycle_detected",
+        "active_tip_digest",
+        "lineage_issue_count",
+        "lineage_conflict_type",
         "human_approval_required",
         "ownership_changed",
         "transfer_executed",
@@ -52,6 +67,8 @@ _REQUIRED_FIELDS = frozenset(
         "legal_title_established",
         "legal_title_transferred",
         "control_rotated",
+        "conflict_winner_selected",
+        "lineage_auto_resolved",
         "claim_boundary",
     }
 )
@@ -71,6 +88,69 @@ def validate_poo_audit_instance_id(value: str) -> str:
             "audit_instance_id must be a server-format PoO audit instance ID"
         )
     return value
+
+
+def _validate_lineage_semantics(projection: dict[str, Any], operation: str) -> None:
+    bool_fields = (
+        "lineage_checked",
+        "lineage_valid",
+        "fork_detected",
+        "cycle_detected",
+    )
+    for field in bool_fields:
+        if not isinstance(projection.get(field), bool):
+            raise PoOAuditAdapterError(f"{field} must be boolean")
+
+    issue_count = projection.get("lineage_issue_count")
+    if not isinstance(issue_count, int) or isinstance(issue_count, bool) or issue_count < 0:
+        raise PoOAuditAdapterError("lineage_issue_count must be a non-negative integer")
+
+    conflict_type = projection.get("lineage_conflict_type")
+    if conflict_type not in _VALID_LINEAGE_CONFLICT_TYPES:
+        raise PoOAuditAdapterError("unsupported lineage_conflict_type")
+
+    active_tip = projection.get("active_tip_digest")
+    if active_tip is not None and (not isinstance(active_tip, str) or not active_tip):
+        raise PoOAuditAdapterError("active_tip_digest must be null or a non-empty string")
+
+    if operation != "LINEAGE_INTEGRITY":
+        if projection["lineage_checked"]:
+            raise PoOAuditAdapterError("lineage_checked mismatches operation")
+        if any((projection["lineage_valid"], projection["fork_detected"], projection["cycle_detected"])):
+            raise PoOAuditAdapterError("lineage state must remain false outside lineage operation")
+        if active_tip is not None or issue_count != 0 or conflict_type != "NONE":
+            raise PoOAuditAdapterError("lineage detail must be empty outside lineage operation")
+        return
+
+    if projection["lineage_checked"] is not True:
+        raise PoOAuditAdapterError("LINEAGE_INTEGRITY requires lineage_checked=true")
+    if any(
+        (
+            projection["technical_attestation_ready"],
+            projection["transfer_ready"],
+            projection["recovery_ready"],
+        )
+    ):
+        raise PoOAuditAdapterError("lineage operation cannot grant ownership/transfer/recovery readiness")
+
+    if projection["lineage_valid"]:
+        if projection["fork_detected"] or projection["cycle_detected"]:
+            raise PoOAuditAdapterError("valid lineage cannot report fork/cycle conflict")
+        if active_tip is None:
+            raise PoOAuditAdapterError("valid lineage requires one active_tip_digest")
+        if issue_count != 0 or conflict_type != "NONE":
+            raise PoOAuditAdapterError("valid lineage requires zero issues and conflict type NONE")
+    else:
+        if active_tip is not None:
+            raise PoOAuditAdapterError("invalid lineage cannot expose an active technical tip")
+        if issue_count < 1:
+            raise PoOAuditAdapterError("invalid lineage requires at least one issue")
+        if conflict_type == "NONE":
+            raise PoOAuditAdapterError("invalid lineage requires a conflict type")
+        if projection["fork_detected"] and conflict_type not in {"FORK", "MULTIPLE"}:
+            raise PoOAuditAdapterError("fork_detected conflicts with lineage_conflict_type")
+        if projection["cycle_detected"] and conflict_type not in {"CYCLE", "MULTIPLE"}:
+            raise PoOAuditAdapterError("cycle_detected conflicts with lineage_conflict_type")
 
 
 def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
@@ -116,6 +196,8 @@ def _validated_projection(projection: dict[str, Any]) -> dict[str, Any]:
         raise PoOAuditAdapterError("transfer_ready mismatches operation")
     if operation != "RECOVERY_READINESS" and projection["recovery_ready"]:
         raise PoOAuditAdapterError("recovery_ready mismatches operation")
+
+    _validate_lineage_semantics(projection, str(operation))
 
     for _stage, state_field, _event_name in _STAGE_FIELDS:
         state = projection.get(state_field)
@@ -163,6 +245,13 @@ def poo_outbox_events(
         "technical_attestation_ready": record["technical_attestation_ready"],
         "transfer_ready": record["transfer_ready"],
         "recovery_ready": record["recovery_ready"],
+        "lineage_checked": record["lineage_checked"],
+        "lineage_valid": record["lineage_valid"],
+        "fork_detected": record["fork_detected"],
+        "cycle_detected": record["cycle_detected"],
+        "active_tip_digest": record["active_tip_digest"],
+        "lineage_issue_count": record["lineage_issue_count"],
+        "lineage_conflict_type": record["lineage_conflict_type"],
         "human_approval_required": True,
         "ownership_changed": False,
         "transfer_executed": False,
@@ -170,6 +259,8 @@ def poo_outbox_events(
         "legal_title_established": False,
         "legal_title_transferred": False,
         "control_rotated": False,
+        "conflict_winner_selected": False,
+        "lineage_auto_resolved": False,
         "claim_boundary": record["claim_boundary"],
     }
 
