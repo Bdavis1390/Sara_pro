@@ -23,6 +23,7 @@ ASSURANCE_DIMENSIONS: Tuple[str, ...] = (
     "revocation",
     "ownership_lineage",
     "custody_lineage",
+    "coupled_ownership_custody_lineage",
     "conflict_detection",
     "stale_writer_protection",
     "durable_audit_provenance",
@@ -92,12 +93,7 @@ def compare_profiles(
     *,
     selected_dimensions: Iterable[str],
 ) -> ComparativeDecision:
-    """Compare two profiles only on explicitly selected dimensions.
-
-    A candidate is stronger on the selected set only when it is never weaker on any
-    selected dimension and is strictly stronger on at least one. This is intentionally
-    not a weighted score and cannot be promoted into a global superiority claim.
-    """
+    """Compare two profiles only on explicitly selected dimensions."""
     _validate_profile(candidate)
     _validate_profile(baseline)
     selected = tuple(dict.fromkeys(selected_dimensions))
@@ -160,6 +156,7 @@ def poo_v3_internal_profile() -> AssuranceProfile:
             "revocation": True,
             "ownership_lineage": True,
             "custody_lineage": True,
+            "coupled_ownership_custody_lineage": True,
             "conflict_detection": True,
             "stale_writer_protection": True,
             "durable_audit_provenance": True,
@@ -170,6 +167,42 @@ def poo_v3_internal_profile() -> AssuranceProfile:
             "formal_verification": False,
             "production_deployment": False,
             "legal_recognition": False,
+        },
+    )
+
+
+def modeled_current_practice_composite_profile() -> AssuranceProfile:
+    """Return a deliberately generous upper-bound model of current practice.
+
+    This is not one deployed system. It gives today's ecosystem collective credit for
+    capabilities supplied across mature wallet authentication, on-chain asset state,
+    verifiable credentials/identifiers, institutional custody controls, audit systems,
+    and authoritative legal registries. It therefore prevents a strawman comparison.
+    """
+    return AssuranceProfile(
+        name="modeled current-practice composite upper bound",
+        dimensions={
+            "identity_binding": True,
+            "asset_binding": True,
+            "challenge_response_control": True,
+            "custody_evidence_binding": True,
+            "exact_coc_digest_binding": False,
+            "provenance_binding": True,
+            "freshness": True,
+            "revocation": True,
+            "ownership_lineage": True,
+            "custody_lineage": True,
+            "coupled_ownership_custody_lineage": False,
+            "conflict_detection": True,
+            "stale_writer_protection": True,
+            "durable_audit_provenance": True,
+            "human_approval_boundary": True,
+            "legal_title_nonclaim": True,
+            "standard_interoperability": True,
+            "independent_implementation": True,
+            "formal_verification": False,
+            "production_deployment": True,
+            "legal_recognition": True,
         },
     )
 
