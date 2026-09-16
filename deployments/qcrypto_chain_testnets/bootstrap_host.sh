@@ -21,7 +21,7 @@ command -v python3 >/dev/null 2>&1 || fail "python3 is required for evidence rec
 
 # Never source .env as shell code. Accept only the deployment keys defined by
 # this package, each exactly once, and treat the right-hand side as data.
-allowed_keys='^(BITCOIN_CORE_IMAGE|ETHEREUM_EXECUTION_IMAGE|ETHEREUM_CONSENSUS_IMAGE|BITCOIN_NETWORK|ETHEREUM_NETWORK|ETHEREUM_CHAIN_ID|BITCOIN_MAINNET_ENABLED|ETHEREUM_MAINNET_ENABLED|LIVE_BITCOIN_BROADCAST_ENABLED|ETHEREUM_VALIDATOR_ACTIVATION_ENABLED)$'
+allowed_keys='^(BITCOIN_CORE_IMAGE|ETHEREUM_EXECUTION_IMAGE|ETHEREUM_CONSENSUS_IMAGE|BITCOIN_NETWORK|ETHEREUM_NETWORK|ETHEREUM_CHAIN_ID|ETHEREUM_CHECKPOINT_SYNC_URL|BITCOIN_MAINNET_ENABLED|ETHEREUM_MAINNET_ENABLED|LIVE_BITCOIN_BROADCAST_ENABLED|ETHEREUM_VALIDATOR_ACTIVATION_ENABLED)$'
 while IFS= read -r line; do
   [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
   key="${line%%=*}"
@@ -45,12 +45,13 @@ ETHEREUM_CONSENSUS_IMAGE="$(read_env ETHEREUM_CONSENSUS_IMAGE)"
 BITCOIN_NETWORK="$(read_env BITCOIN_NETWORK)"
 ETHEREUM_NETWORK="$(read_env ETHEREUM_NETWORK)"
 ETHEREUM_CHAIN_ID="$(read_env ETHEREUM_CHAIN_ID)"
+ETHEREUM_CHECKPOINT_SYNC_URL="$(read_env ETHEREUM_CHECKPOINT_SYNC_URL)"
 BITCOIN_MAINNET_ENABLED="$(read_env BITCOIN_MAINNET_ENABLED)"
 ETHEREUM_MAINNET_ENABLED="$(read_env ETHEREUM_MAINNET_ENABLED)"
 LIVE_BITCOIN_BROADCAST_ENABLED="$(read_env LIVE_BITCOIN_BROADCAST_ENABLED)"
 ETHEREUM_VALIDATOR_ACTIVATION_ENABLED="$(read_env ETHEREUM_VALIDATOR_ACTIVATION_ENABLED)"
 export BITCOIN_CORE_IMAGE ETHEREUM_EXECUTION_IMAGE ETHEREUM_CONSENSUS_IMAGE
-export BITCOIN_NETWORK ETHEREUM_NETWORK ETHEREUM_CHAIN_ID
+export BITCOIN_NETWORK ETHEREUM_NETWORK ETHEREUM_CHAIN_ID ETHEREUM_CHECKPOINT_SYNC_URL
 export BITCOIN_MAINNET_ENABLED ETHEREUM_MAINNET_ENABLED
 export LIVE_BITCOIN_BROADCAST_ENABLED ETHEREUM_VALIDATOR_ACTIVATION_ENABLED
 
@@ -63,6 +64,7 @@ done
 [[ "$BITCOIN_NETWORK" == "signet" ]] || fail "BITCOIN_NETWORK must be signet"
 [[ "$ETHEREUM_NETWORK" == "hoodi" ]] || fail "ETHEREUM_NETWORK must be hoodi"
 [[ "$ETHEREUM_CHAIN_ID" == "560048" ]] || fail "ETHEREUM_CHAIN_ID must be 560048"
+[[ "$ETHEREUM_CHECKPOINT_SYNC_URL" == https://* ]] || fail "ETHEREUM_CHECKPOINT_SYNC_URL must use HTTPS"
 [[ "$BITCOIN_MAINNET_ENABLED" == "false" ]] || fail "Bitcoin mainnet is forbidden in this package"
 [[ "$ETHEREUM_MAINNET_ENABLED" == "false" ]] || fail "Ethereum mainnet is forbidden in this package"
 [[ "$LIVE_BITCOIN_BROADCAST_ENABLED" == "false" ]] || fail "Bitcoin broadcast must remain disabled"
@@ -75,6 +77,16 @@ export DEPLOYMENT_REVISION COMPOSE_SHA256
 
 mkdir -p secrets artifacts
 chmod 700 secrets
+
+# Reduce weak-subjectivity bootstrap dependence on a single provider. The
+# configured endpoint must agree on the current finalized root with at least
+# one other reviewed independent Hoodi checkpoint provider before node startup.
+python3 verify_hoodi_checkpoint_quorum.py \
+  --configured-url "$ETHEREUM_CHECKPOINT_SYNC_URL" \
+  --output artifacts/qcrypto_hoodi_checkpoint_quorum.json \
+  || fail "Hoodi checkpoint-provider quorum verification failed"
+CHECKPOINT_QUORUM_SHA256="$(sha256sum artifacts/qcrypto_hoodi_checkpoint_quorum.json | awk '{print $1}')"
+export CHECKPOINT_QUORUM_SHA256
 
 if [[ ! -s secrets/engine-jwt.hex ]]; then
   umask 077
@@ -95,8 +107,13 @@ import json
 import os
 from pathlib import Path
 
+quorum_path = Path("artifacts/qcrypto_hoodi_checkpoint_quorum.json")
+quorum = json.loads(quorum_path.read_text(encoding="utf-8"))
+if quorum.get("state") != "HOODI_CHECKPOINT_QUORUM_ACCEPTED" or quorum.get("accepted") is not True:
+    raise SystemExit("checkpoint quorum receipt is not accepted")
+
 receipt = {
-    "schema": "WS-QCRYPTO-CHAIN-START-RECEIPT-V2",
+    "schema": "WS-QCRYPTO-CHAIN-START-RECEIPT-V3",
     "state": "PUBLIC_TESTNET_NODES_STARTED_SYNC_NOT_YET_ATTESTED",
     "deployment_revision": os.environ["DEPLOYMENT_REVISION"],
     "compose_sha256": os.environ["COMPOSE_SHA256"],
@@ -108,6 +125,15 @@ receipt = {
     "bitcoin_network": "SIGNET",
     "ethereum_network": "HOODI",
     "ethereum_chain_id": 560048,
+    "hoodi_checkpoint_bootstrap": {
+        "configured_url": os.environ["ETHEREUM_CHECKPOINT_SYNC_URL"],
+        "quorum_root": quorum.get("quorum_root"),
+        "agreeing_providers": quorum.get("agreeing_providers", []),
+        "quorum_count": quorum.get("quorum_count"),
+        "provider_count": quorum.get("provider_count"),
+        "quorum_receipt_sha256": os.environ["CHECKPOINT_QUORUM_SHA256"],
+        "consensus_verification_replaced": False,
+    },
     "claims": {
         "mainnet_permitted": False,
         "live_value_authorized": False,
