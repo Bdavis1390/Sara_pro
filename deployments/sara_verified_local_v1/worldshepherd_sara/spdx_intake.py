@@ -8,6 +8,10 @@ from typing import Any
 SPDX_INTAKE_SCHEMA = "WS-SPDX-INTAKE-EVIDENCE-V1"
 SPDX_CONTEXT_301 = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld"
 SPDX_SPEC_VERSION = "3.0.1"
+SOFTWARE_SBOM_TYPE = "software_Sbom"
+SOFTWARE_PACKAGE_TYPE = "software_Package"
+SOFTWARE_PACKAGE_VERSION = "software_packageVersion"
+SOFTWARE_PACKAGE_URL = "software_packageUrl"
 
 CLAIMS_BOUNDARY = (
     "This adapter performs bounded local integrity, shape, identifier, and reference checks over an input SPDX 3.0.1 "
@@ -112,17 +116,17 @@ def evaluate_spdx301_document(document: dict[str, Any]) -> SPDXIntakeDecision:
         typed_graph.append((raw, _type_values(raw)))
 
     spdx_documents = [item for item, types in typed_graph if "SpdxDocument" in types]
-    sboms = [item for item, types in typed_graph if "Sbom" in types]
-    packages = [item for item, types in typed_graph if "Package" in types]
+    sboms = [item for item, types in typed_graph if SOFTWARE_SBOM_TYPE in types]
+    packages = [item for item, types in typed_graph if SOFTWARE_PACKAGE_TYPE in types]
     relationships = [item for item, types in typed_graph if "Relationship" in types]
     creation_infos = [item for item, types in typed_graph if "CreationInfo" in types]
 
     if len(spdx_documents) != 1:
         reasons.append(f"expected exactly one SpdxDocument, found {len(spdx_documents)}")
     if not sboms:
-        reasons.append("no Sbom element found")
+        reasons.append(f"no {SOFTWARE_SBOM_TYPE} element found")
     if not packages:
-        reasons.append("no Package element found")
+        reasons.append(f"no {SOFTWARE_PACKAGE_TYPE} element found")
     if not creation_infos:
         reasons.append("no CreationInfo element found")
     elif not any(info.get("specVersion") == SPDX_SPEC_VERSION for info in creation_infos):
@@ -133,11 +137,16 @@ def evaluate_spdx301_document(document: dict[str, Any]) -> SPDXIntakeDecision:
         element_id = _element_id(element)
         if element_id:
             ids.append(element_id)
-        for element_type in ("SpdxDocument", "Sbom", "Package", "Relationship"):
-            if element_type in types:
-                _require_element_fields(element, element_type, reasons)
-        if "Package" in types and not isinstance(element.get("name"), str):
-            reasons.append(f"Package missing name: {element_id or '<missing-id>'}")
+        if "SpdxDocument" in types:
+            _require_element_fields(element, "SpdxDocument", reasons)
+        if SOFTWARE_SBOM_TYPE in types:
+            _require_element_fields(element, SOFTWARE_SBOM_TYPE, reasons)
+        if SOFTWARE_PACKAGE_TYPE in types:
+            _require_element_fields(element, SOFTWARE_PACKAGE_TYPE, reasons)
+            if not isinstance(element.get("name"), str):
+                reasons.append(f"{SOFTWARE_PACKAGE_TYPE} missing name: {element_id or '<missing-id>'}")
+        if "Relationship" in types:
+            _require_element_fields(element, "Relationship", reasons)
 
     seen: set[str] = set()
     duplicates: set[str] = set()
@@ -162,8 +171,16 @@ def evaluate_spdx301_document(document: dict[str, Any]) -> SPDXIntakeDecision:
             {
                 "spdx_id": _element_id(package),
                 "name": package.get("name") if isinstance(package.get("name"), str) else None,
-                "version": package.get("packageVersion") if isinstance(package.get("packageVersion"), str) else None,
-                "purl": package.get("packageUrl") if isinstance(package.get("packageUrl"), str) else None,
+                "version": (
+                    package.get(SOFTWARE_PACKAGE_VERSION)
+                    if isinstance(package.get(SOFTWARE_PACKAGE_VERSION), str)
+                    else None
+                ),
+                "purl": (
+                    package.get(SOFTWARE_PACKAGE_URL)
+                    if isinstance(package.get(SOFTWARE_PACKAGE_URL), str)
+                    else None
+                ),
             }
         )
     package_refs.sort(key=lambda item: (item.get("name") or "", item.get("version") or "", item.get("spdx_id") or ""))
