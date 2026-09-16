@@ -13,6 +13,8 @@ def test_all_tracked_chain_vectors_build_unique_canonical_contexts():
     digests = {v.canonical_context_digest for v in vectors}
     assert None not in digests
     assert len(digests) == 3
+    for vector in vectors:
+        assert not any("signature_present" in key for key in vector.canonical_fields)
 
 
 def test_replay_sequence_changes_each_chain_commitment_without_changing_profile_identity():
@@ -88,6 +90,7 @@ def test_all_vectors_preserve_source_provenance_and_zero_value_boundary():
         assert vector.canonical_context_digest is not None
         assert len(vector.canonical_context_digest) == 64
         assert vector.canonical_preimage_hex is not None
+        assert not any("signature_present" in key for key in vector.canonical_fields)
         assert vector.live_value_authorized is False
         assert vector.execution_authority is False
         assert vector.native_transaction_format_implemented is False
