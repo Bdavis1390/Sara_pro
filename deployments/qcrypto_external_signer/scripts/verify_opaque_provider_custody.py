@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import tempfile
+from copy import deepcopy
 from datetime import timedelta
 from pathlib import Path
 
@@ -13,6 +14,8 @@ from qcrypto_external_signer.custody import (
     CustodyIndeterminate,
     CustodyLedger,
     CustodyPolicy,
+    _canonical,
+    _sha,
 )
 from qcrypto_external_signer.opaque_provider import (
     OpaqueProviderReleaseSigner,
@@ -20,6 +23,7 @@ from qcrypto_external_signer.opaque_provider import (
     ProviderResult,
     ProviderState,
     ReferenceOpaqueMlDsa65Provider,
+    provider_operation_id,
 )
 from qcrypto_external_signer.provider_custody import (
     OpaqueProviderCustodyService,
@@ -60,6 +64,37 @@ def canonical_sha(value: dict) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _handle_substitution_is_rejected(receipt: dict, signer: OpaqueProviderReleaseSigner) -> bool:
+    """Model a ledger editor recomputing every unkeyed identifier after handle substitution."""
+    tampered = deepcopy(receipt)
+    tampered["provider_key_handle"] = "ref-hsm://qcrypto/ml-dsa-65/substituted-key"
+    binding = {
+        key: value
+        for key, value in tampered.items()
+        if key
+        not in {
+            "state",
+            "signature_b64url",
+            "provider_operation_id",
+            "provider_reconciled",
+            "claims_boundary",
+            "receipt_sha256",
+        }
+    }
+    tampered["provider_operation_id"] = provider_operation_id(
+        key_handle=tampered["provider_key_handle"],
+        message=_canonical(binding),
+        context=signer.context,
+    )
+    unsigned_receipt = dict(tampered)
+    unsigned_receipt.pop("receipt_sha256", None)
+    tampered["receipt_sha256"] = _sha(unsigned_receipt)
+    return not verify_opaque_provider_receipt(
+        tampered,
+        public_key_bytes=signer.public_key_bytes,
+    )
+
+
 def build_evidence() -> dict:
     with tempfile.TemporaryDirectory(prefix="qcrypto-opaque-provider-") as tmp:
         root = Path(tmp)
@@ -78,6 +113,10 @@ def build_evidence() -> dict:
         entry = after_ambiguous["requests"][request["request_id"]]
         operation_id = entry["provider_operation_id"]
         release_binding_retained = isinstance(entry.get("release_binding"), dict)
+        signed_handle_retained = (
+            isinstance(entry.get("release_binding"), dict)
+            and entry["release_binding"].get("provider_key_handle") == provider.key_handle
+        )
         indeterminate_state = entry.get("state")
         invocations_before_reconcile = provider.invocation_count
 
@@ -86,6 +125,7 @@ def build_evidence() -> dict:
             receipt,
             public_key_bytes=signer.public_key_bytes,
         )
+        handle_substitution_rejected = _handle_substitution_is_rejected(receipt, signer)
         invocations_after_reconcile = provider.invocation_count
 
         restarted = service(root, OpaqueProviderReleaseSigner(provider), human_public)
@@ -140,12 +180,15 @@ def build_evidence() -> dict:
         "provider_operation_id": operation_id,
         "provider_operation_id_retained_before_reconciliation": operation_id.startswith("QCRYPTO-PROVIDER-"),
         "release_binding_retained_before_reconciliation": release_binding_retained,
+        "provider_key_handle_in_signed_binding": signed_handle_retained,
+        "provider_handle_and_operation_id_substitution_rejected": handle_substitution_rejected,
         "provider_invocations_before_reconcile": invocations_before_reconcile,
         "provider_invocations_after_reconcile": invocations_after_reconcile,
         "reconciliation_did_not_reinvoke_signer": invocations_before_reconcile == invocations_after_reconcile == 1,
         "receipt_verified": receipt_verified,
         "receipt_provider_reconciled": receipt.get("provider_reconciled") is True,
         "receipt_provider_operation_matches_ledger": receipt.get("provider_operation_id") == operation_id,
+        "receipt_provider_key_handle_matches_provider": receipt.get("provider_key_handle") == provider.key_handle,
         "durable_final_state": final_entry.get("state"),
         "durable_provider_reconciled": final_entry.get("provider_reconciled") is True,
         "post_expiry_retry_identical": post_expiry_retry_identical,
@@ -159,10 +202,10 @@ def build_evidence() -> dict:
         "receipt": receipt,
         "claims_boundary": (
             "Synthetic software evidence only. Demonstrates opaque-key custody state-machine behavior, "
-            "provider operation reconciliation, and no-double-sign recovery semantics. It does not "
-            "establish production HSM/KMS integration, FIPS validation, native-chain signing, "
-            "transaction broadcast, mainnet authorization, movement of real value, Federal compliance, "
-            "or independent validation."
+            "signed provider-handle binding, provider operation reconciliation, and no-double-sign "
+            "recovery semantics. It does not establish production HSM/KMS integration, FIPS validation, "
+            "native-chain signing, transaction broadcast, mainnet authorization, movement of real value, "
+            "Federal compliance, or independent validation."
         ),
     }
     evidence["evidence_sha256"] = canonical_sha(evidence)
