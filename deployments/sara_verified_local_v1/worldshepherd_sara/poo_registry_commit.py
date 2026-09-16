@@ -151,6 +151,69 @@ def poo_registry_digest(states: list[PoOTechnicalStateRecord]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _validate_internal_registry_structure(states: list[PoOTechnicalStateRecord]) -> None:
+    poo_digests = [state.active_poo_digest for state in states]
+    if len(poo_digests) != len(set(poo_digests)):
+        raise PoODurableCommitError("PoO digest reused across durable technical states")
+
+    grouped: dict[str, list[PoOTechnicalStateRecord]] = {}
+    for state in states:
+        grouped.setdefault(state.asset_id, []).append(state)
+
+    for asset_id, asset_states in grouped.items():
+        coc_digests = [state.active_coc_digest for state in asset_states]
+        if len(coc_digests) != len(set(coc_digests)):
+            raise PoODurableCommitError(f"{asset_id}: COC digest reused across durable states")
+
+        by_poo = {state.active_poo_digest: state for state in asset_states}
+        genesis = [state for state in asset_states if state.previous_poo_digest is None]
+        if len(genesis) != 1:
+            raise PoODurableCommitError(f"{asset_id}: durable lineage requires exactly one genesis")
+        root = genesis[0]
+        if root.source_event_type != "CLAIM":
+            raise PoODurableCommitError(f"{asset_id}: durable genesis must be a CLAIM")
+        if root.generation != 0:
+            raise PoODurableCommitError(f"{asset_id}: durable genesis generation must be zero")
+        if root.previous_coc_digest is not None:
+            raise PoODurableCommitError(f"{asset_id}: durable genesis must have no previous COC")
+
+        children: dict[str, list[PoOTechnicalStateRecord]] = {}
+        for state in asset_states:
+            if state is root:
+                continue
+            previous = state.previous_poo_digest
+            if previous is None:
+                raise PoODurableCommitError(f"{asset_id}: non-genesis state is missing PoO predecessor")
+            parent = by_poo.get(previous)
+            if parent is None:
+                raise PoODurableCommitError(f"{asset_id}: durable PoO predecessor is missing")
+            if state.previous_coc_digest != parent.active_coc_digest:
+                raise PoODurableCommitError(f"{asset_id}: durable COC predecessor mismatch")
+            if state.generation != parent.generation + 1:
+                raise PoODurableCommitError(f"{asset_id}: durable generation does not advance parent by one")
+            if state.source_event_type == "CLAIM":
+                raise PoODurableCommitError(f"{asset_id}: CLAIM is only valid for genesis")
+            children.setdefault(previous, []).append(state)
+
+        if any(len(items) > 1 for items in children.values()):
+            raise PoODurableCommitError(f"{asset_id}: durable technical lineage fork detected")
+
+        visited: set[str] = set()
+        cursor = root
+        while True:
+            digest = cursor.active_poo_digest
+            if digest in visited:
+                raise PoODurableCommitError(f"{asset_id}: durable technical lineage cycle detected")
+            visited.add(digest)
+            next_states = children.get(digest, [])
+            if not next_states:
+                break
+            cursor = next_states[0]
+
+        if len(visited) != len(asset_states):
+            raise PoODurableCommitError(f"{asset_id}: durable technical lineage is disconnected or cyclic")
+
+
 def _new_namespace() -> PoOTechnicalRegistryNamespace:
     return PoOTechnicalRegistryNamespace(
         registry_digest=poo_registry_digest([]),
@@ -177,6 +240,7 @@ def load_poo_registry_namespace(registry: dict[str, Any]) -> PoOTechnicalRegistr
     state_digests = [poo_state_digest(state) for state in namespace.states]
     if len(state_digests) != len(set(state_digests)):
         raise PoODurableCommitError("PoO technical registry contains duplicate states")
+    _validate_internal_registry_structure(namespace.states)
 
     if len(namespace.commits) > MAX_POO_COMMIT_RECORDS:
         raise PoODurableCommitError("PoO commit record capacity exceeded")
@@ -333,6 +397,7 @@ def prepare_poo_durable_commit_patch(
     candidate_registry_digest = poo_registry_digest(candidate_states)
     if candidate_registry_digest != projection.get("candidate_registry_digest"):
         raise PoODurableCommitError("candidate states do not match governance candidate registry digest")
+    _validate_internal_registry_structure(candidate_states)
 
     candidate_state_digest = str(projection.get("candidate_state_digest") or "")
     if not candidate_state_digest:
@@ -346,8 +411,9 @@ def prepare_poo_durable_commit_patch(
             or existing.candidate_state_digest != candidate_state_digest
         ):
             raise PoODurableCommitError("commit_id collision with different PoO commit material")
-        if namespace.registry_digest != existing.registry_digest:
-            raise PoODurableCommitError("recorded PoO commit no longer matches active registry digest")
+        current_state_digests = {poo_state_digest(state) for state in namespace.states}
+        if existing.candidate_state_digest not in current_state_digests:
+            raise PoODurableCommitError("recorded PoO commit candidate state is missing from active registry")
         return None, _result_from_record(existing, status="ALREADY_COMMITTED")
 
     expected_registry_digest = str(projection.get("expected_registry_digest") or "")
