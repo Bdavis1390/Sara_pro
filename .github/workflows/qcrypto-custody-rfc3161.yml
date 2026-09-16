@@ -15,7 +15,8 @@ env:
   TSA_URL: http://timestamp.digicert.com
   DIGICERT_RESPONDER_URL: https://knowledge.digicert.com/content/dam/kb/attachments/time-stamp/DigiCertSHA256RSA4096TimestampResponder20251.cer
   DIGICERT_INTERMEDIATE_URL: https://knowledge.digicert.com/content/dam/kb/attachments/time-stamp/DigiCertTrustedG4TimeStampingRSA4096SHA2562025CA1.pem
-  DIGICERT_ROOT_URL: https://knowledge.digicert.com/content/dam/kb/attachments/time-stamp/DigiCertTrustedRootG4.cer
+  DIGICERT_ROOT_URL: https://cacerts.digicert.com/DigiCertTrustedRootG4.crt.pem
+  DIGICERT_ROOT_SHA256: 552F7BDCF1A7AF9E6CE672017F4F12ABF77240C78E761AC203D1D9D20AC89988
 
 jobs:
   rfc3161-timestamp:
@@ -59,7 +60,7 @@ jobs:
           grep -Eq 'Status: Granted|Status: Granted with mods' rfc3161-evidence/response.txt
           grep -F 'Hash Algorithm: sha256' rfc3161-evidence/response.txt
 
-      - name: Download and normalize DigiCert published timestamping chain
+      - name: Download, pin, and verify DigiCert published timestamping chain
         run: |
           set -euo pipefail
           curl --fail --show-error --silent "$DIGICERT_RESPONDER_URL" \
@@ -82,17 +83,29 @@ jobs:
           normalize_cert rfc3161-evidence/intermediate.download rfc3161-evidence/intermediate.pem
           normalize_cert rfc3161-evidence/root.download rfc3161-evidence/root.pem
 
-          openssl x509 -in rfc3161-evidence/responder.pem -noout -subject -issuer -serial \
+          openssl x509 -in rfc3161-evidence/responder.pem -noout -subject -issuer -serial -fingerprint -sha256 \
             > rfc3161-evidence/responder-cert.txt
-          openssl x509 -in rfc3161-evidence/intermediate.pem -noout -subject -issuer -serial \
+          openssl x509 -in rfc3161-evidence/intermediate.pem -noout -subject -issuer -serial -fingerprint -sha256 \
             > rfc3161-evidence/intermediate-cert.txt
-          openssl x509 -in rfc3161-evidence/root.pem -noout -subject -issuer -serial \
+          openssl x509 -in rfc3161-evidence/root.pem -noout -subject -issuer -serial -fingerprint -sha256 \
             > rfc3161-evidence/root-cert.txt
 
+          actual_root_sha256="$(openssl x509 -in rfc3161-evidence/root.pem -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':')"
+          test "$actual_root_sha256" = "$DIGICERT_ROOT_SHA256"
+
+          root_subject="$(openssl x509 -in rfc3161-evidence/root.pem -noout -subject -nameopt RFC2253 | sed 's/^subject=//')"
+          root_issuer="$(openssl x509 -in rfc3161-evidence/root.pem -noout -issuer -nameopt RFC2253 | sed 's/^issuer=//')"
+          test "$root_subject" = "$root_issuer"
+
           # The TSA response carries the responder leaf certificate. OpenSSL's
-          # -untrusted input should therefore contain only the issuing CA chain,
-          # not the non-CA responder leaf.
+          # -untrusted input contains only the issuing CA certificate.
           cp rfc3161-evidence/intermediate.pem rfc3161-evidence/untrusted-chain.pem
+
+          openssl verify \
+            -CAfile rfc3161-evidence/root.pem \
+            rfc3161-evidence/root.pem \
+            | tee rfc3161-evidence/root-verify.txt
+          grep -F ': OK' rfc3161-evidence/root-verify.txt
 
           openssl verify \
             -CAfile rfc3161-evidence/root.pem \
@@ -169,6 +182,7 @@ jobs:
               'responder_certificate_sha256': sha256(evidence / 'responder.pem'),
               'intermediate_certificate_sha256': sha256(evidence / 'intermediate.pem'),
               'root_certificate_sha256': sha256(evidence / 'root.pem'),
+              'root_certificate_expected_sha256_fingerprint': os.environ['DIGICERT_ROOT_SHA256'],
               'github_repository': os.environ['GITHUB_REPOSITORY_VALUE'],
               'workflow_commit': os.environ['GITHUB_SHA_VALUE'],
               'workflow_run_id': int(os.environ['GITHUB_RUN_ID_VALUE']),
@@ -200,6 +214,7 @@ jobs:
           assert receipt['frozen_bundle_sha256']=='3ac4b9d6a94c50dad951ed5c33446ccaaffc876b9d9ad398aefe2a6b7e472522'
           assert receipt['tsa_provider']=='DigiCert'
           assert receipt['verification']=='OPENSSL_TS_VERIFY_OK'
+          assert receipt['root_certificate_expected_sha256_fingerprint']=='552F7BDCF1A7AF9E6CE672017F4F12ABF77240C78E761AC203D1D9D20AC89988'
           boundary=receipt['claims_boundary'].lower()
           for phrase in ('does not constitute a personal signature','does not retroactively sign','patent priority','third-party technical validation'):
               assert phrase in boundary
