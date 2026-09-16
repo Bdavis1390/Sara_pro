@@ -36,7 +36,7 @@ jobs:
       - name: Run live public-testnet observer handshake
         run: |
           mkdir -p artifacts/qcrypto-public-testnet-handshake
-          deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh \
+          bash deployments/qcrypto_chain_testnets/run_public_testnet_handshake.sh \
             artifacts/qcrypto-public-testnet-handshake
 
       - name: Validate bounded live-network receipt
