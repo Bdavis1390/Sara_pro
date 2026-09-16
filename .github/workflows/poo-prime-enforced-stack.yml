@@ -56,7 +56,16 @@ jobs:
           cp .env.example .env
           docker compose -f compose.yaml -f compose.poo-prime.yaml -f compose.poo-prime-enforced.yaml --profile prime-sentinel config >/tmp/poo-prime-enforced-compose.yaml
           grep -q 'worldshepherd_sara.prime_sentinel_poo_service:create_prime_sentinel_poo_app' /tmp/poo-prime-enforced-compose.yaml
-          grep -Eq 'POO_REQUIRE_PRIME_AUTHORIZATION:[[:space:]]*["'"']?1["'"']?' /tmp/poo-prime-enforced-compose.yaml
+          python - <<'PY'
+          from pathlib import Path
+          lines=Path('/tmp/poo-prime-enforced-compose.yaml').read_text(encoding='utf-8').splitlines()
+          values=[]
+          for line in lines:
+              stripped=line.strip()
+              if stripped.startswith('POO_REQUIRE_PRIME_AUTHORIZATION:'):
+                  values.append(stripped.split(':',1)[1].strip().strip("'\""))
+          assert values == ['1'], values
+          PY
           rm -f .env
       - name: Run containerized PRIME-required exercise
         env:
