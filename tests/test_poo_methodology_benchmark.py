@@ -5,6 +5,7 @@ from security.poo.methodology_benchmark import (
     TripleCheckEvidence,
     compare_profiles,
     evaluate_triple_check,
+    modeled_current_practice_composite_profile,
     poo_v3_internal_profile,
 )
 from security.poo.ownership_guard import OwnershipEvidence, evaluate_ownership
@@ -24,6 +25,7 @@ def modeled_account_authentication_baseline():
             "provenance_binding": False,
             "ownership_lineage": False,
             "custody_lineage": False,
+            "coupled_ownership_custody_lineage": False,
             "conflict_detection": False,
             "stale_writer_protection": False,
             "durable_audit_provenance": False,
@@ -86,6 +88,7 @@ def test_poo_is_stronger_only_on_explicit_selected_assurance_dimensions():
         "provenance_binding",
         "ownership_lineage",
         "custody_lineage",
+        "coupled_ownership_custody_lineage",
         "conflict_detection",
         "stale_writer_protection",
         "durable_audit_provenance",
@@ -103,6 +106,59 @@ def test_poo_is_stronger_only_on_explicit_selected_assurance_dimensions():
     assert d.standards_compliance_established is False
     assert d.legal_superiority_established is False
     assert d.external_validation_established is False
+
+
+def test_generous_current_practice_composite_limits_advantage_to_poo_specific_constructions():
+    current = modeled_current_practice_composite_profile()
+    d = compare_profiles(
+        poo_v3_internal_profile(),
+        current,
+        selected_dimensions=(
+            "custody_evidence_binding",
+            "exact_coc_digest_binding",
+            "custody_lineage",
+            "coupled_ownership_custody_lineage",
+            "conflict_detection",
+            "stale_writer_protection",
+        ),
+    )
+    assert d.stronger_on_selected_dimensions is True
+    assert set(d.stronger_dimensions) == {
+        "exact_coc_digest_binding",
+        "coupled_ownership_custody_lineage",
+    }
+    assert set(d.equal_dimensions) == {
+        "custody_evidence_binding",
+        "custody_lineage",
+        "conflict_detection",
+        "stale_writer_protection",
+    }
+    assert d.weaker_dimensions == ()
+    assert d.global_superiority_established is False
+
+
+def test_current_practice_composite_is_stronger_on_maturity_and_recognition_dimensions():
+    d = compare_profiles(
+        poo_v3_internal_profile(),
+        modeled_current_practice_composite_profile(),
+        selected_dimensions=(
+            "exact_coc_digest_binding",
+            "standard_interoperability",
+            "independent_implementation",
+            "production_deployment",
+            "legal_recognition",
+        ),
+    )
+    assert d.stronger_on_selected_dimensions is False
+    assert "exact_coc_digest_binding" in d.stronger_dimensions
+    assert set(d.weaker_dimensions) == {
+        "standard_interoperability",
+        "independent_implementation",
+        "production_deployment",
+        "legal_recognition",
+    }
+    assert d.status == "MIXED_OR_WEAKER_ON_SELECTED_DIMENSIONS"
+    assert d.global_superiority_established is False
 
 
 def test_standard_interoperability_prevents_global_or_selected_superiority_claim():
