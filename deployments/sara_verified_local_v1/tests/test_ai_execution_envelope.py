@@ -96,3 +96,40 @@ def test_human_review_requires_exact_approved_digest_and_decision_hash():
     changed = decision.model_copy(update={"rationale": "tampered"})
     with pytest.raises(AIExecutionEnvelopeError, match="integrity"):
         assert_execution_authorized(envelope, auth, human_decision=changed)
+
+
+def test_expired_authorization_is_blocked_at_execution_time():
+    envelope = _envelope()
+    auth = _authorization(envelope)
+    with pytest.raises(AIExecutionEnvelopeError, match="expired"):
+        assert_execution_authorized(
+            envelope,
+            auth,
+            now=auth.expires_at + timedelta(seconds=1),
+        )
+
+
+def test_tool_resource_authority_and_policy_are_fail_closed():
+    envelope = _envelope()
+    auth = _authorization(envelope)
+
+    with pytest.raises(AIExecutionEnvelopeError, match="tool"):
+        assert_execution_authorized(
+            envelope,
+            auth.model_copy(update={"tool_allowlist": []}),
+        )
+    with pytest.raises(AIExecutionEnvelopeError, match="resource"):
+        assert_execution_authorized(
+            envelope,
+            auth.model_copy(update={"resource_scope": []}),
+        )
+    with pytest.raises(AIExecutionEnvelopeError, match="authority"):
+        assert_execution_authorized(
+            envelope,
+            auth.model_copy(update={"requested_authority": 0}),
+        )
+    with pytest.raises(AIExecutionEnvelopeError, match="policy digest"):
+        assert_execution_authorized(
+            envelope,
+            auth.model_copy(update={"policy_sha256": "sha256:" + "9" * 64}),
+        )
