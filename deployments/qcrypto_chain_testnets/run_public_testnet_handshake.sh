@@ -9,6 +9,8 @@ ARTIFACT_DIR="$(cd "$ARTIFACT_DIR" && pwd)"
 BITCOIN_VERSION="${BITCOIN_VERSION:-31.1}"
 GETH_IMAGE="${GETH_IMAGE:-ethereum/client-go:v1.17.5}"
 LIGHTHOUSE_IMAGE="${LIGHTHOUSE_IMAGE:-sigp/lighthouse:v8.2.2}"
+HOODI_NETWORK_ID="560048"
+HOODI_GENESIS_HASH="0xbbe312868b376a3001692a646dd2d7d1e4406380dfd86b98aa8a34d1557c971b"
 
 fail() {
   printf 'PUBLIC_TESTNET_HANDSHAKE_FAILED: %s\n' "$*" >&2
@@ -99,8 +101,7 @@ cat > "$ARTIFACT_DIR/qcrypto_public_testnet_progress.json" <<JSON
 JSON
 
 openssl rand -hex 32 > "$JWT"
-chmod 644 "$JWT" # ephemeral Engine API secret; never a signing key and deleted by trap
-
+chmod 644 "$JWT"
 docker pull "$GETH_IMAGE" >/dev/null
 docker pull "$LIGHTHOUSE_IMAGE" >/dev/null
 GETH_DIGEST="$(docker image inspect --format '{{json .RepoDigests}}' "$GETH_IMAGE" | jq -r '.[0]')"
@@ -111,67 +112,42 @@ LIGHTHOUSE_DIGEST="$(docker image inspect --format '{{json .RepoDigests}}' "$LIG
 docker network create "$DOCKER_NETWORK" >/dev/null
 
 docker run -d \
-  --name "$GETH_CONTAINER" \
-  --network "$DOCKER_NETWORK" \
+  --name "$GETH_CONTAINER" --network "$DOCKER_NETWORK" \
   --mount type=volume,destination=/data \
-  -v "$JWT:/run/engine-jwt.hex:ro" \
-  --entrypoint geth \
-  "$GETH_IMAGE" \
-  --hoodi \
-  --datadir=/data \
-  --syncmode=snap \
-  --cache=256 \
-  --maxpeers=20 \
-  --http=false \
-  --ws=false \
-  --authrpc.addr=0.0.0.0 \
-  --authrpc.port=8551 \
-  --authrpc.vhosts="$GETH_CONTAINER" \
-  --authrpc.jwtsecret=/run/engine-jwt.hex >/dev/null
+  -v "$JWT:/run/engine-jwt.hex:ro" --entrypoint geth "$GETH_IMAGE" \
+  --hoodi --datadir=/data --syncmode=snap --cache=256 --maxpeers=20 \
+  --http=false --ws=false --authrpc.addr=0.0.0.0 --authrpc.port=8551 \
+  --authrpc.vhosts="$GETH_CONTAINER" --authrpc.jwtsecret=/run/engine-jwt.hex >/dev/null
 
 docker run -d \
-  --name "$LIGHTHOUSE_CONTAINER" \
-  --network "$DOCKER_NETWORK" \
-  --mount type=volume,destination=/data \
-  -p 127.0.0.1:15052:5052 \
-  -v "$JWT:/run/engine-jwt.hex:ro" \
-  --entrypoint lighthouse \
-  "$LIGHTHOUSE_IMAGE" \
-  bn \
-  --network hoodi \
-  --datadir /data \
-  --execution-endpoint "http://$GETH_CONTAINER:8551" \
-  --execution-jwt /run/engine-jwt.hex \
-  --checkpoint-sync-url https://hoodi.checkpoint.sigp.io \
-  --checkpoint-sync-url-timeout 180 \
-  --disable-upnp \
-  --http \
-  --http-address 0.0.0.0 \
-  --http-port 5052 \
-  --target-peers 20 >/dev/null
+  --name "$LIGHTHOUSE_CONTAINER" --network "$DOCKER_NETWORK" \
+  --mount type=volume,destination=/data -p 127.0.0.1:15052:5052 \
+  -v "$JWT:/run/engine-jwt.hex:ro" --entrypoint lighthouse "$LIGHTHOUSE_IMAGE" \
+  bn --network hoodi --datadir /data \
+  --execution-endpoint "http://$GETH_CONTAINER:8551" --execution-jwt /run/engine-jwt.hex \
+  --checkpoint-sync-url https://hoodi.checkpoint.sigp.io --checkpoint-sync-url-timeout 180 \
+  --disable-upnp --http --http-address 0.0.0.0 --http-port 5052 --target-peers 20 >/dev/null
 
-# First prove the execution client is alive and configured for Hoodi. Do not
-# spend the EL peer window while Lighthouse is still downloading its checkpoint.
-GETH_CHAIN_ID=""
+# Prove execution-chain identity from two independently readable properties:
+# the network id and immutable genesis hash. This avoids relying on a non-portable
+# JavaScript-console `eth.chainId` property.
+GETH_NETWORK_ID=""
+GETH_GENESIS=""
 for _ in $(seq 1 60); do
-  if GETH_CHAIN_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'eth.chainId' 2>/dev/null)"; then
-    GETH_CHAIN_ID="$(printf '%s' "$GETH_CHAIN_RAW" | tr -d '"[:space:]')"
-    [[ -n "$GETH_CHAIN_ID" ]] && break
+  if GETH_NETWORK_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'net.version' 2>/dev/null)"; then
+    GETH_NETWORK_ID="$(printf '%s' "$GETH_NETWORK_RAW" | tr -d '"[:space:]')"
+    GETH_GENESIS_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'eth.getBlock(0).hash' 2>/dev/null || true)"
+    GETH_GENESIS="$(printf '%s' "$GETH_GENESIS_RAW" | tr -d '"[:space:]' | tr '[:upper:]' '[:lower:]')"
+    [[ -n "$GETH_NETWORK_ID" && -n "$GETH_GENESIS" ]] && break
   fi
   if [[ "$(docker inspect -f '{{.State.Running}}' "$GETH_CONTAINER" 2>/dev/null || true)" != "true" ]]; then
     fail "Geth Hoodi container exited before IPC became ready"
   fi
   sleep 2
 done
-[[ -n "$GETH_CHAIN_ID" ]] || fail "Geth Hoodi IPC/chain identity did not become available"
-python3 - "$GETH_CHAIN_ID" <<'PY'
-import sys
-value=sys.argv[1]
-if int(value, 0) != 560048:
-    raise SystemExit(f"unexpected Hoodi chain id: {value}")
-PY
+[[ "$GETH_NETWORK_ID" == "$HOODI_NETWORK_ID" ]] || fail "Geth network id mismatch: ${GETH_NETWORK_ID:-unavailable}"
+[[ "$GETH_GENESIS" == "$HOODI_GENESIS_HASH" ]] || fail "Geth Hoodi genesis hash mismatch: ${GETH_GENESIS:-unavailable}"
 
-# Then wait for the beacon node to complete checkpoint bootstrap and join Hoodi.
 LIGHTHOUSE_PEERS=0
 LIGHTHOUSE_SYNC_JSON=""
 for _ in $(seq 1 150); do
@@ -189,9 +165,6 @@ done
 [[ "$LIGHTHOUSE_PEERS" -ge 1 ]] || fail "Lighthouse Hoodi node did not establish a peer within the bounded handshake window"
 [[ -n "$LIGHTHOUSE_SYNC_JSON" ]] || fail "Lighthouse Hoodi sync API did not become available"
 
-# Finally require an execution-layer peer after the consensus client has begun
-# following Hoodi and can drive the Engine API. This is real P2P evidence, not a
-# local chain-config check.
 GETH_PEERS=0
 for _ in $(seq 1 120); do
   GETH_PEERS_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'admin.peers.length' 2>/dev/null || true)"
@@ -205,51 +178,20 @@ done
 DEPLOYMENT_REVISION="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 export DEPLOYMENT_REVISION TIMESTAMP BITCOIN_VERSION BTC_ARCHIVE_SHA256 GOOD_SIGS BTC_PEERS BTC_BLOCKS BTC_HEADERS
-export GETH_IMAGE GETH_DIGEST GETH_PEERS GETH_CHAIN_ID LIGHTHOUSE_IMAGE LIGHTHOUSE_DIGEST LIGHTHOUSE_PEERS LIGHTHOUSE_SYNC_JSON
+export GETH_IMAGE GETH_DIGEST GETH_PEERS GETH_NETWORK_ID GETH_GENESIS LIGHTHOUSE_IMAGE LIGHTHOUSE_DIGEST LIGHTHOUSE_PEERS LIGHTHOUSE_SYNC_JSON
 
 python3 - "$ARTIFACT_DIR/qcrypto_public_testnet_handshake.json" <<'PY'
-import json
-import os
-import sys
+import json, os, sys
 from pathlib import Path
-
 sync=json.loads(os.environ["LIGHTHOUSE_SYNC_JSON"])
 receipt={
-    "schema":"WS-QCRYPTO-PUBLIC-TESTNET-HANDSHAKE-V1",
-    "status":"LIVE_PUBLIC_TESTNET_HANDSHAKE_PASS",
-    "captured_at":os.environ["TIMESTAMP"],
-    "deployment_revision":os.environ["DEPLOYMENT_REVISION"],
-    "bitcoin":{
-        "network":"SIGNET",
-        "core_version":os.environ["BITCOIN_VERSION"],
-        "archive_sha256":os.environ["BTC_ARCHIVE_SHA256"],
-        "verified_release_signature_count":int(os.environ["GOOD_SIGS"]),
-        "connected_peers":int(os.environ["BTC_PEERS"]),
-        "blocks":int(os.environ["BTC_BLOCKS"]),
-        "headers":int(os.environ["BTC_HEADERS"]),
-        "wallet_disabled":True,
-    },
-    "ethereum":{
-        "network":"HOODI",
-        "chain_id":560048,
-        "geth_image":os.environ["GETH_IMAGE"],
-        "geth_image_digest":os.environ["GETH_DIGEST"],
-        "geth_connected_peers":int(os.environ["GETH_PEERS"]),
-        "lighthouse_image":os.environ["LIGHTHOUSE_IMAGE"],
-        "lighthouse_image_digest":os.environ["LIGHTHOUSE_DIGEST"],
-        "lighthouse_connected_peers":int(os.environ["LIGHTHOUSE_PEERS"]),
-        "consensus_sync":sync.get("data",{}),
-        "validator_client_started":False,
-    },
-    "claims":{
-        "mainnet_permitted":False,
-        "live_value_authorized":False,
-        "private_key_operations_permitted":False,
-        "bitcoin_transaction_created":False,
-        "bitcoin_transaction_broadcast":False,
-        "ethereum_validator_activated":False,
-        "end_to_end_post_quantum_security_established":False,
-    },
+ "schema":"WS-QCRYPTO-PUBLIC-TESTNET-HANDSHAKE-V1",
+ "status":"LIVE_PUBLIC_TESTNET_HANDSHAKE_PASS",
+ "captured_at":os.environ["TIMESTAMP"],
+ "deployment_revision":os.environ["DEPLOYMENT_REVISION"],
+ "bitcoin":{"network":"SIGNET","core_version":os.environ["BITCOIN_VERSION"],"archive_sha256":os.environ["BTC_ARCHIVE_SHA256"],"verified_release_signature_count":int(os.environ["GOOD_SIGS"]),"connected_peers":int(os.environ["BTC_PEERS"]),"blocks":int(os.environ["BTC_BLOCKS"]),"headers":int(os.environ["BTC_HEADERS"]),"wallet_disabled":True},
+ "ethereum":{"network":"HOODI","chain_id":560048,"network_id":int(os.environ["GETH_NETWORK_ID"]),"genesis_hash":os.environ["GETH_GENESIS"],"geth_image":os.environ["GETH_IMAGE"],"geth_image_digest":os.environ["GETH_DIGEST"],"geth_connected_peers":int(os.environ["GETH_PEERS"]),"lighthouse_image":os.environ["LIGHTHOUSE_IMAGE"],"lighthouse_image_digest":os.environ["LIGHTHOUSE_DIGEST"],"lighthouse_connected_peers":int(os.environ["LIGHTHOUSE_PEERS"]),"consensus_sync":sync.get("data",{}),"validator_client_started":False},
+ "claims":{"mainnet_permitted":False,"live_value_authorized":False,"private_key_operations_permitted":False,"bitcoin_transaction_created":False,"bitcoin_transaction_broadcast":False,"ethereum_validator_activated":False,"end_to_end_post_quantum_security_established":False},
 }
 Path(sys.argv[1]).write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n",encoding="utf-8")
 print(json.dumps(receipt,sort_keys=True))
