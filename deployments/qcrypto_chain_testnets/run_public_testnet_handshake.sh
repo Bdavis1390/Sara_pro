@@ -34,13 +34,21 @@ mkdir -p "$ARTIFACT_DIR" "$BTC_DATA" "$GPG_HOME"
 chmod 700 "$GPG_HOME"
 
 cleanup() {
+  rc=$?
   set +e
+  mkdir -p "$ARTIFACT_DIR"
+  if [[ -f "$BTC_DATA/debug.log" ]]; then
+    tail -n 500 "$BTC_DATA/debug.log" > "$ARTIFACT_DIR/bitcoin-signet-debug.tail.log" 2>/dev/null || true
+  fi
+  docker logs --tail 500 "$GETH_CONTAINER" > "$ARTIFACT_DIR/geth-hoodi.tail.log" 2>&1 || true
+  docker logs --tail 500 "$LIGHTHOUSE_CONTAINER" > "$ARTIFACT_DIR/lighthouse-hoodi.tail.log" 2>&1 || true
   if [[ -n "${BTC_CLI:-}" && -x "${BTC_CLI:-}" ]]; then
     "$BTC_CLI" -signet -datadir="$BTC_DATA" stop >/dev/null 2>&1 || true
   fi
   docker rm -f "$LIGHTHOUSE_CONTAINER" "$GETH_CONTAINER" >/dev/null 2>&1 || true
   docker network rm "$DOCKER_NETWORK" >/dev/null 2>&1 || true
   rm -rf "$TMP"
+  exit "$rc"
 }
 trap cleanup EXIT
 
