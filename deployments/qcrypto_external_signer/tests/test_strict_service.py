@@ -44,3 +44,13 @@ def test_public_service_rejects_nested_private_key_shaped_fields(tmp_path):
         strict_service(tmp_path, signer, human_public).execute_release(
             request, now=now + timedelta(seconds=1)
         )
+
+
+def test_private_key_authority_safety_marker_is_allowed_only_when_false(tmp_path):
+    request, signer, human_public, now = fixture()
+    assert request["handoff"]["qcrypto_private_key_operations_permitted"] is False
+    request["handoff"]["qcrypto_private_key_operations_permitted"] = True
+    with pytest.raises(CustodyError, match="safety marker must remain false"):
+        strict_service(tmp_path, signer, human_public).execute_release(
+            request, now=now + timedelta(seconds=1)
+        )
