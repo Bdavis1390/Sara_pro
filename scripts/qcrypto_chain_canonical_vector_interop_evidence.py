@@ -23,6 +23,8 @@ from security.qcrypto.pq_signature_interop import SCHEMES
 def _as_context(vector) -> CanonicalSigningContextDecision:
     if not vector.canonical_context_ready:
         raise ValueError(f"chain vector is not canonical-context ready: {vector.chain_id}")
+    if any("signature_present" in key for key in vector.canonical_fields):
+        raise ValueError(f"chain vector leaked signature-presence state: {vector.chain_id}")
     return CanonicalSigningContextDecision(
         verdict="CANONICAL_SIGNING_CONTEXT_READY",
         ready=True,
@@ -31,6 +33,8 @@ def _as_context(vector) -> CanonicalSigningContextDecision:
         context_digest=vector.canonical_context_digest,
         canonical_preimage_hex=vector.canonical_preimage_hex,
         canonical_fields=vector.canonical_fields,
+        pre_sign_intent_only=True,
+        signature_presence_assumed=False,
     )
 
 
@@ -43,6 +47,13 @@ def main() -> int:
     alternate = {item.chain_id: item for item in build_all_chain_canonical_vectors(1)}
     if set(primary) != set(SPECS) or set(alternate) != set(SPECS):
         raise SystemExit("chain vector set does not match controlled specification set")
+
+    pre_sign_vectors = all(
+        not any("signature_present" in key for key in vector.canonical_fields)
+        for vector in tuple(primary.values()) + tuple(alternate.values())
+    )
+    if not pre_sign_vectors:
+        raise SystemExit("one or more chain vectors contain preexisting signature state")
 
     interop_results = []
     for chain_id in SPECS:
@@ -80,6 +91,8 @@ def main() -> int:
         "alternate_vectors": {key: value.to_dict() for key, value in alternate.items()},
         "interop_results": interop_results,
         "summary": {
+            "pre_sign_intent_vectors": pre_sign_vectors,
+            "signature_presence_assumed": False,
             "bitcoin_vector_class": bitcoin.vector_class,
             "bitcoin_native_pq_algorithm": bitcoin.native_pq_algorithm,
             "ethereum_vector_class": ethereum.vector_class,
