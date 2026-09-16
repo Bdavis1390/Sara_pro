@@ -31,6 +31,7 @@ jobs:
             tests/test_qcrypto_chain_deployment_guard.py \
             tests/test_qcrypto_production_transition_guard.py
           python -m py_compile deployments/qcrypto_chain_testnets/verify_online.py
+          bash -n deployments/qcrypto_chain_testnets/bootstrap_host.sh
 
       - name: Render observer deployment package
         env:
