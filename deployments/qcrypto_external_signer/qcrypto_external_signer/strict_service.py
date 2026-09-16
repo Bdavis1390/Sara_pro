@@ -30,7 +30,12 @@ _SECRET_KEY_FRAGMENTS = (
     "validator_key",
     "withdrawal_key",
 )
-_ALLOWED_SAFETY_MARKERS = {"private_key_material_present"}
+# These are explicit negative authority/safety assertions in the governed handoff.
+# They are accepted only when literally false; any true/non-boolean value fails closed.
+_ALLOWED_SAFETY_MARKERS = {
+    "private_key_material_present",
+    "qcrypto_private_key_operations_permitted",
+}
 
 
 def _reject_secret_shaped_fields(value: Any, path: str = "request") -> None:
