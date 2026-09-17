@@ -21,6 +21,7 @@ from worldshepherd_sara.restriction_provenance import (
 
 
 KEY = b"worldshepherd-10x-security-test-key-32-bytes-minimum"
+KEY_ID = "ws-restriction-key-epoch-2026-09"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 BASELINE_RESIDUAL_RISK_UNITS = 5
 MAX_RESIDUAL_RATIO = 0.10
@@ -29,6 +30,7 @@ MAX_RESIDUAL_RATIO = 0.10
 def evidence():
     return capture_restriction(
         fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
         action="BLOCK",
         reason_code="POLICY.TEN_X_GATE",
         source_system="CHAT_ASSISTANT",
@@ -121,6 +123,7 @@ def test_g3_zero_tolerance_context_controls_do_not_regress():
     with pytest.raises(RestrictionProvenanceError):
         capture_restriction(
             fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
             action="BLOCK",
             reason_code="POLICY.TEN_X_GATE",
             source_system="CHAT_ASSISTANT",
@@ -137,6 +140,7 @@ def test_g3_zero_tolerance_context_controls_do_not_regress():
     with pytest.raises(RestrictionProvenanceError):
         capture_restriction(
             fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
             action="BLOCK",
             reason_code="POLICY.TEN_X_GATE",
             source_system="UNKNOWN_PROVIDER",
