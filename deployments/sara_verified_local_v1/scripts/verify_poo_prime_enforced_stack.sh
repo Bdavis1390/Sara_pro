@@ -129,15 +129,28 @@ docker inspect "$sara_container" > "${secret_dir}/sara-inspect.json"
 python3 - "${secret_dir}/sara-inspect.json" <<'PY'
 import json,sys
 r=json.load(open(sys.argv[1],encoding='utf-8'))[0]
-env=r['Config'].get('Env') or []
-assert 'POO_REQUIRE_PRIME_AUTHORIZATION=1' in env
-assert 'PRIME_SENTINEL_PRIVATE_KEY_FILE=' in env
-assert 'PRIME_SENTINEL_SERVICE_TOKEN_FILE=' in env
-assert 'PRIME_SENTINEL_SERVICE_TOKEN=' in env
+env_items=r['Config'].get('Env') or []
+env={}
+for item in env_items:
+    key, sep, value = item.partition('=')
+    if sep:
+        env[key]=value
+assert env.get('POO_REQUIRE_PRIME_AUTHORIZATION') == '1', env.get('POO_REQUIRE_PRIME_AUTHORIZATION')
+for name in (
+    'PRIME_SENTINEL_PRIVATE_KEY_FILE',
+    'PRIME_SENTINEL_SERVICE_TOKEN_FILE',
+    'PRIME_SENTINEL_SERVICE_TOKEN',
+    'PRIME_SENTINEL_SIGNING_KEY_ID',
+    'PRIME_SENTINEL_DATA_DIR',
+):
+    assert env.get(name, '') == '', (name, env.get(name))
 mounts={m['Destination'] for m in r.get('Mounts',[])}
-assert '/run/worldshepherd-prime-sentinel/ed25519-private.pem' not in mounts
-assert '/run/worldshepherd-prime-sentinel/service-token' not in mounts
-assert '/var/lib/prime-sentinel' not in mounts
+for forbidden in (
+    '/run/worldshepherd-prime-sentinel/ed25519-private.pem',
+    '/run/worldshepherd-prime-sentinel/service-token',
+    '/var/lib/prime-sentinel',
+):
+    assert forbidden not in mounts, forbidden
 PY
 
 admin_header=( -H "Authorization: Bearer ${admin_token}" -H 'Content-Type: application/json' )
