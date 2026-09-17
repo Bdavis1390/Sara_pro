@@ -314,15 +314,27 @@ def test_trust_root_admission_precedes_outbox_replay(monkeypatch, tmp_path):
             "material_sha256": None,
         }
 
+    class FakeVerifier:
+        configured = False
+
+    def fake_verifier_from_environment():
+        order.append("verifier")
+        return FakeVerifier()
+
     def fake_drain(store, *, limit):
         order.append("drain")
         return 0
 
     monkeypatch.setattr(app_module, "guard_prime_trust_root", fake_guard)
+    monkeypatch.setattr(
+        app_module.PrimeSentinelVerifier,
+        "from_environment",
+        fake_verifier_from_environment,
+    )
     monkeypatch.setattr(app_module, "drain_event_outbox", fake_drain)
 
     with TestClient(app_module.app):
-        assert order[:2] == ["guard", "drain"]
+        assert order[:3] == ["guard", "verifier", "drain"]
 
 
 
