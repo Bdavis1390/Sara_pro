@@ -31,6 +31,16 @@ class DeploymentProfileTests(unittest.TestCase):
         data["physical_boundary"]["generic_qpu_evidence_counts_as_phononic_evidence"] = True
         self.assertTrue(validate(data))
 
+    def test_external_published_lab_evidence_must_remain_acknowledged(self) -> None:
+        data = copy.deepcopy(PROFILE)
+        data["physical_boundary"]["external_published_phononic_lab_evidence_ingested"] = False
+        self.assertTrue(validate(data))
+
+    def test_partner_lab_evidence_cannot_be_self_promoted(self) -> None:
+        data = copy.deepcopy(PROFILE)
+        data["physical_boundary"]["worldshepherd_partner_phononic_lab_evidence_obtained"] = True
+        self.assertTrue(validate(data))
+
 
 if __name__ == "__main__":
     unittest.main()
