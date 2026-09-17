@@ -31,6 +31,7 @@ from .models import AuditRecord
 CHECKPOINT_SCHEMA = "WS-ECHO-CHECKPOINT-V1"
 CHECKPOINT_BUNDLE_SCHEMA = "WS-ECHO-CHECKPOINT-BUNDLE-V1"
 CHECKPOINT_DB_SCHEMA = "WS-ECHO-CHECKPOINT-LEDGER-V1"
+CHECKPOINT_SIGNATURE_INPUT_SCHEMA = "WS-ECHO-CHECKPOINT-SIGNATURE-DIGEST-V1"
 CHECKPOINT_PRIVATE_KEY_FILE_ENV = "ECHO_CHECKPOINT_PRIVATE_KEY_FILE"
 CHECKPOINT_KEY_ID_ENV = "ECHO_CHECKPOINT_KEY_ID"
 CHECKPOINT_SIGNER_MODE_ENV = "ECHO_CHECKPOINT_SIGNER_MODE"
@@ -59,6 +60,17 @@ def _canonical(value: Any) -> bytes:
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def checkpoint_signature_input(checkpoint_sha256: str) -> bytes:
+    if not isinstance(checkpoint_sha256, str) or not _SHA256_PATTERN.fullmatch(
+        checkpoint_sha256
+    ):
+        raise EchoCheckpointError("checkpoint signature input digest is invalid")
+    return (
+        b"WS-ECHO-CHECKPOINT-SIGNATURE-DIGEST-V1\0"
+        + bytes.fromhex(checkpoint_sha256)
+    )
 
 
 def _read_private_key(path_value: str) -> Ed25519PrivateKey:
@@ -385,8 +397,9 @@ class EchoCheckpointManager:
             }
             manifest_bytes = _canonical(manifest)
             checkpoint_digest = hashlib.sha256(manifest_bytes).hexdigest()
+            signing_input = checkpoint_signature_input(checkpoint_digest)
             try:
-                signature_bytes = self._signer.sign(manifest_bytes)
+                signature_bytes = self._signer.sign(signing_input)
             except EchoCheckpointSignerError as exc:
                 raise EchoCheckpointError("ECHO checkpoint signer rejected request") from exc
             except Exception as exc:
@@ -396,7 +409,7 @@ class EchoCheckpointManager:
                     "ECHO checkpoint signer returned an invalid Ed25519 signature"
                 )
             try:
-                self._public_key.verify(signature_bytes, manifest_bytes)
+                self._public_key.verify(signature_bytes, signing_input)
             except InvalidSignature as exc:
                 raise EchoCheckpointError(
                     "ECHO checkpoint signer returned an unverifiable signature"
@@ -406,6 +419,7 @@ class EchoCheckpointManager:
                 "schema": CHECKPOINT_BUNDLE_SCHEMA,
                 "manifest": manifest,
                 "checkpoint_sha256": checkpoint_digest,
+                "signature_input_schema": CHECKPOINT_SIGNATURE_INPUT_SCHEMA,
                 "signature_b64url": signature,
                 "public_key": self.public_key_record(),
             }
