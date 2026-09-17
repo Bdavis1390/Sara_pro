@@ -18,6 +18,7 @@ from worldshepherd_sara.restriction_provenance import (
 
 
 KEY = b"worldshepherd-observability-test-key-32-bytes-minimum"
+KEY_ID = "ws-restriction-key-epoch-2026-09"
 OCCURRED_AT = "2026-09-17T20:14:00+00:00"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 
@@ -25,6 +26,7 @@ APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 def valid_restriction_record() -> dict:
     evidence = capture_restriction(
         fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
         action="BLOCK",
         reason_code="POLICY.TEST_BLOCK",
         source_system="CHAT_ASSISTANT",
