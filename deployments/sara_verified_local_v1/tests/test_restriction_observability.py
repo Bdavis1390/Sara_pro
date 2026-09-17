@@ -10,7 +10,9 @@ from worldshepherd_sara.restriction_observability import (
     restriction_observability,
 )
 from worldshepherd_sara.restriction_provenance import (
+    RESTRICTION_AUTHORITY,
     RESTRICTION_EVENT,
+    RESTRICTION_SCHEMA,
     capture_restriction,
 )
 
@@ -47,7 +49,7 @@ def valid_restriction_record() -> dict:
     return AuditRecord(
         timestamp="2026-09-17T20:14:01+00:00",
         event=RESTRICTION_EVENT,
-        actor="PRIME_SENTINEL",
+        actor=RESTRICTION_AUTHORITY,
         payload=payload,
     ).model_dump(mode="json")
 
@@ -79,11 +81,17 @@ def test_strict_projection_never_returns_summary_metadata_or_unknown_fields():
 
     projected = project_restriction_audit_record(record)
 
+    assert projected["provenance_schema"] == RESTRICTION_SCHEMA
+    assert projected["authority"] == RESTRICTION_AUTHORITY
+    assert projected["authority_bound_in_payload"] is True
     assert "safe_summary" not in projected
     assert "metadata" not in projected
     assert set(projected) == {
+        "provenance_schema",
         "restriction_id",
         "event_id",
+        "authority",
+        "authority_bound_in_payload",
         "audit_timestamp",
         "occurred_at",
         "action",

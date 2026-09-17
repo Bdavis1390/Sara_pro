@@ -18,7 +18,9 @@ from .restriction_context_policy import (
 )
 
 
-RESTRICTION_SCHEMA = "WS-RESTRICTION-PROVENANCE-V1"
+RESTRICTION_SCHEMA_V1 = "WS-RESTRICTION-PROVENANCE-V1"
+RESTRICTION_SCHEMA = "WS-RESTRICTION-PROVENANCE-V2"
+RESTRICTION_AUTHORITY = "PRIME_SENTINEL"
 REMEDIATION_SCHEMA = "WS-RESTRICTION-REMEDIATION-V1"
 RESTRICTION_EVENT = "content_restriction_recorded"
 MIN_FINGERPRINT_KEY_BYTES = 32
@@ -164,6 +166,7 @@ def _canonical_json(value: dict[str, Any]) -> str:
 @dataclass(frozen=True)
 class RestrictionEvidence:
     restriction_id: str
+    authority: str
     occurred_at: str
     action: RestrictionAction
     reason_code: str
@@ -183,6 +186,7 @@ class RestrictionEvidence:
         return {
             "schema": RESTRICTION_SCHEMA,
             "restriction_id": self.restriction_id,
+            "authority": self.authority,
             "occurred_at": self.occurred_at,
             "action": self.action,
             "reason_code": self.reason_code,
@@ -226,10 +230,11 @@ def capture_restriction(
     metadata: dict[str, Any] | None = None,
     occurred_at: str | None = None,
 ) -> RestrictionEvidence:
-    """Convert a restriction into non-content provenance.
+    """Convert a restriction into authority-bound non-content provenance.
 
     Raw text is accepted only long enough to compute domain-separated HMAC-SHA256
     fingerprints. It is never included in the returned object or its JSON form.
+    The authority is system-controlled and cannot be supplied by the caller.
     """
     _validate_fingerprint_key(fingerprint_key)
     if action not in _ALLOWED_RESTRICTION_ACTIONS:
@@ -281,6 +286,7 @@ def capture_restriction(
 
     identity_document = {
         "schema": RESTRICTION_SCHEMA,
+        "authority": RESTRICTION_AUTHORITY,
         "occurred_at": timestamp,
         "action": action,
         "reason_code": reason_code,
@@ -301,6 +307,7 @@ def capture_restriction(
 
     return RestrictionEvidence(
         restriction_id=restriction_id,
+        authority=RESTRICTION_AUTHORITY,
         occurred_at=timestamp,
         action=action,
         reason_code=reason_code,
@@ -321,8 +328,6 @@ def capture_restriction(
 def queue_restriction_event(
     registry: dict[str, Any],
     evidence: RestrictionEvidence,
-    *,
-    actor: str = "PRIME_SENTINEL",
 ) -> tuple[dict[str, Any], str]:
     """Queue restriction evidence through the normal SARA -> ECHO outbox path."""
     payload = evidence.semantic_document()
@@ -330,7 +335,7 @@ def queue_restriction_event(
     return queue_event_outbox_patch(
         registry,
         event=RESTRICTION_EVENT,
-        actor=actor,
+        actor=evidence.authority,
         payload=payload,
         event_id=evidence.outbox_event_id,
     )
