@@ -84,6 +84,8 @@ def test_strict_projection_never_returns_summary_metadata_or_unknown_fields():
     assert projected["provenance_schema"] == RESTRICTION_SCHEMA
     assert projected["authority"] == RESTRICTION_AUTHORITY
     assert projected["authority_bound_in_payload"] is True
+    assert projected["fingerprint_epoch_bound_in_payload"] is True
+    assert projected["fingerprint_key_epoch_id"] == record["payload"]["fingerprint_key_epoch_id"]
     assert "safe_summary" not in projected
     assert "metadata" not in projected
     assert set(projected) == {
@@ -92,6 +94,8 @@ def test_strict_projection_never_returns_summary_metadata_or_unknown_fields():
         "event_id",
         "authority",
         "authority_bound_in_payload",
+        "fingerprint_key_epoch_id",
+        "fingerprint_epoch_bound_in_payload",
         "audit_timestamp",
         "occurred_at",
         "action",
