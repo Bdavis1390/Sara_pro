@@ -1,0 +1,98 @@
+schema: WS-SKILLS-vNext
+project: Worldshepherd
+purpose: "Claims-controlled capability catalog for SARA workflows"
+governance:
+  doctrine: "AI proposes -> human approves -> automation bounded -> actions and evidence logged"
+  maturity_labels:
+    - PROVEN_INTERNALLY
+    - IMPLEMENTED_IN_SOFTWARE
+    - SUPPORTED_BY_LITERATURE
+    - SIMULATED_ONLY
+    - HYPOTHESIS
+    - REQUIRES_LAB_VALIDATION
+    - REQUIRES_PARTNER_VALIDATION
+    - REQUIRES_LEGAL_REVIEW
+    - NOT_CURRENTLY_CLAIMED
+
+skill_domains:
+  governance_orchestration:
+    maturity: PROVEN_INTERNALLY
+    skills:
+      - bounded_workflow_orchestration
+      - human_authorization_gating
+      - provenance_and_audit_logging
+      - operator_admin_role_separation
+      - claims_control_enforcement
+
+  sara_platform:
+    maturity: PROVEN_INTERNALLY
+    skills:
+      - local_admin_console_operation
+      - relay_and_registry_management
+      - admin_smoke_validation
+      - payload_schema_validation
+      - evidence_logged_workflow_execution
+
+  opportunity_intelligence:
+    maturity: IMPLEMENTED_IN_SOFTWARE
+    skills:
+      - opportunity_discovery
+      - partner_gap_analysis
+      - prime_vs_sub_positioning
+      - source_evidence_classification
+      - predictive_requirements_engine
+
+  advanced_engineering_research:
+    maturity: REQUIRES_LAB_VALIDATION
+    skills:
+      - programmable_materials_research
+      - electromagnetic_surface_modeling
+      - multiphysics_modeling
+      - autonomy_test_planning
+      - digital_twin_readiness
+
+  digital_engineering:
+    maturity: IMPLEMENTED_IN_SOFTWARE
+    skills:
+      - requirements_to_evidence_traceability
+      - verification_matrix_generation
+      - configuration_custody
+      - sbom_provenance
+      - interface_adapter_planning
+
+  resilience_and_security:
+    maturity: IMPLEMENTED_IN_SOFTWARE
+    skills:
+      - role_based_authorization
+      - audit_provenance
+      - degraded_connectivity_test_planning
+      - crypto_agility_planning
+      - supply_chain_evidence_control
+
+promotion_gates:
+  software_to_proven:
+    - repeatable_test
+    - recorded_evidence
+    - negative_test
+    - rollback_or_failure_path
+  simulation_to_lab:
+    - model_verification
+    - sensitivity_analysis
+    - uncertainty_bounds
+    - hardware_test_plan
+  hypothesis_to_lab:
+    - falsifiable_claim
+    - baseline_comparator
+    - measurable_success_metric
+    - safety_review
+  lab_to_partner_ready:
+    - independent_reproduction_or_witness
+    - calibration_record
+    - test_artifacts
+    - traceable_configuration
+    - claims_review
+
+definition_of_done:
+  - "Every skill has a maturity label, evidence reference, test method, failure condition, and next promotion gate."
+  - "Simulation and physical demonstration are explicitly separated."
+  - "Speculative concepts are never promoted by naming or repetition alone."
