@@ -1,0 +1,70 @@
+domain_profiles:
+  science:
+    event_sources:
+      - Crossmark correction/update/retraction
+      - PubMed retraction linkage
+      - corrected dataset or analysis release
+    default_initial_state: POTENTIALLY_AFFECTED
+    affected_examples:
+      - mechanistic claim rests on retracted experiment
+      - numerical result uses corrected dataset field
+    not_affected_examples:
+      - historical publication-date statement independent of retracted experiment
+
+  medicine:
+    event_sources:
+      - FDA safety-related labeling change
+      - safety communication
+      - ClinVar classification/version update
+    default_initial_state: POTENTIALLY_AFFECTED
+    affected_examples:
+      - contraindication or risk claim changed by label update
+    not_affected_examples:
+      - stable chemical identity unrelated to safety section
+    caution: "No patient-specific decision may be inferred from aggregate status alone."
+
+  law:
+    event_sources:
+      - revised slip opinion
+      - superseding official publication
+      - amended statute/regulation
+    default_initial_state: POTENTIALLY_AFFECTED
+    affected_examples:
+      - quotation or proposition whose text changed
+    not_affected_examples:
+      - docket/date metadata unchanged by textual revision
+
+  intelligence:
+    event_sources:
+      - source contradiction
+      - assumption invalidation
+      - defined indicator observed
+    default_initial_state: UNDER_REVIEW
+    affected_examples:
+      - judgment materially depends on invalidated linchpin assumption
+    not_affected_examples:
+      - independently supported judgment with documented alternate evidence
+
+  software_security:
+    event_sources:
+      - CISA KEV addition
+      - CVE update
+      - API deprecation/removal
+      - schema change
+    default_initial_state: POTENTIALLY_AFFECTED
+    affected_examples:
+      - deployed vulnerable component/version exposed to attack path
+      - integration calls removed API
+    not_affected_examples:
+      - VEX-style evidence shows component or configuration is not affected
+
+  historical_archives:
+    event_sources:
+      - catalog correction
+      - attribution/date revision
+      - newly digitized primary evidence
+    default_initial_state: POTENTIALLY_AFFECTED
+    affected_examples:
+      - narrative depends on revised creator/date attribution
+    not_affected_examples:
+      - direct visual feature of artifact unaffected by metadata correction
