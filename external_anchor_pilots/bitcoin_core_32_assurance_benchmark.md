@@ -20,8 +20,8 @@ As of 2026-09-17:
 - Bitcoin Core `v32.0rc1` is the current release candidate.
 - The project release schedule targets `v32.0` tagging on 2026-10-10; this is an aim, not a guarantee.
 - The official 32.0 RC testing guide is explicitly work in progress and encourages independent additional testing.
-- Block validation can prefetch prevouts from chainstate in parallel. `-prevoutfetchthreads` defaults to 8 and permits up to 16 workers. Upstream: PR #35295.
-- `createpsbt`, `walletcreatepsbt`, `converttopsbt`, and `psbtbumpfee` default to PSBT v2 and accept `psbt_version` to request a specific version. Upstream: PR #21283 / BIP 370.
+- Block validation can prefetch input prevouts from chainstate in parallel. `-prevoutfetchthreads` defaults to 8 and permits up to 16 workers. Upstream: PR #35295.
+- Upstream executable code and `test/functional/rpc_psbt.py` show `createpsbt`, `walletcreatefundedpsbt`, `converttopsbt`, and `psbtbumpfee` defaulting to PSBT v2 and accepting `psbt_version` to request a specific version. The draft release-notes page currently says `walletcreatepsbt`; this benchmark follows the executable RPC name `walletcreatefundedpsbt`. Upstream: PR #21283 / BIP 370.
 - `estimatesmartfee` combines block-policy and mempool-policy estimators. Upstream: PR #34075.
 - Non-Windows `-walletnotify` placeholder handling was hardened because a suitably authorized RPC caller able to create wallets could craft a wallet name that resulted in arbitrary command execution when `-walletnotify` was configured. Upstream: PR #36048.
 - The HTTP server was rewritten for v32, enforces an 8192-byte maximum header size, adds `-rpcmaxconnections` defaulting to 16, and immediately disconnects clients outside `rpcallowip`. Upstream: PRs #35182 and #35592.
@@ -32,6 +32,7 @@ Primary references:
 - https://github.com/bitcoin/bitcoin/issues/35122
 - https://github.com/bitcoin-core/bitcoin-devwiki/wiki/32.0-Release-Candidate-Testing-Guide
 - https://github.com/bitcoin-core/bitcoin-devwiki/wiki/32.0-Release-Notes-Draft
+- https://github.com/bitcoin/bitcoin/blob/master/test/functional/rpc_psbt.py
 
 ## Benchmark architecture
 
@@ -114,16 +115,18 @@ OVERWATCH must distinguish a process being alive from the target behavior being 
 
 - start `v32.0rc1` in regtest;
 - create a disposable descriptor wallet;
-- exercise the four RPCs documented as changing default behavior;
+- exercise `createpsbt`, `walletcreatefundedpsbt`, `converttopsbt`, and `psbtbumpfee`;
 - decode the resulting PSBTs and record version;
-- repeat while explicitly requesting the legacy version;
+- repeat while explicitly requesting PSBT v0;
 - compare JSON/RPC error shapes with v31.1 where relevant.
 
-**PASS:** all documented v32 defaults and explicit-version overrides match upstream behavior.
+**PASS:** each tested v32 default decodes as PSBT v2 and each explicit legacy request decodes as PSBT v0.
 
 **Failure classes:** `DEFAULT_VERSION_MISMATCH`, `OVERRIDE_MISMATCH`, `RPC_SCHEMA_MISMATCH`.
 
 **Claims boundary:** a pass demonstrates only the tested RPC behavior on the pinned build; it does not prove compatibility with third-party wallets.
+
+**Executable probe:** `external_anchor_pilots/bitcoin_core_32_psbt_probe.py`.
 
 ### BC32-002 — fee-estimator selection semantics
 
@@ -263,7 +266,7 @@ Claim: **SUPPORTED BY LITERATURE** or **PARTNER VALIDATION** only where the exte
 
 1. Keep this benchmark on a review branch until the harness exists.
 2. Add an isolated Bitcoin Core RC runner (container or disposable VM).
-3. Implement BC32-001 first: low risk, deterministic, fast, and directly relevant to integration breakage.
+3. Execute BC32-001 first: low risk, deterministic, fast, and directly relevant to integration breakage.
 4. Implement BC32-004 second: validates Worldshepherd resource-boundary monitoring against a real network service rewrite.
 5. Implement BC32-003 using upstream regression coverage, not an improvised exploit payload.
 6. Implement BC32-005 after the environment can reliably capture storage/cache/performance metadata.
@@ -271,7 +274,8 @@ Claim: **SUPPORTED BY LITERATURE** or **PARTNER VALIDATION** only where the exte
 
 ## Current claim state
 
-- Benchmark design: **IMPLEMENTED IN SOFTWARE** only insofar as this repository now contains the governed test specification.
+- Benchmark specification: **IMPLEMENTED IN SOFTWARE** as repository test design.
+- BC32-001 executable probe: **IMPLEMENTED IN SOFTWARE / NOT YET EXECUTED**.
 - Bitcoin Core defect reproduction by Worldshepherd: **NOT CURRENTLY CLAIMED**.
 - Bitcoin Core fix validation by Worldshepherd: **NOT CURRENTLY CLAIMED**.
 - Worldshepherd performance measurement of v32: **NOT CURRENTLY CLAIMED**.
