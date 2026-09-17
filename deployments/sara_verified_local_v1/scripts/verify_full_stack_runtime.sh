@@ -77,6 +77,7 @@ health = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
 public = json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))
 trust = json.loads(env["PRIME_SENTINEL_PUBLIC_KEYS_JSON"])
 assert health["prime_sentinel_public_keys_configured"] is True
+assert health["prime_signer_isolation"] == "verification_only"
 assert public["key_id"] == env["PRIME_SENTINEL_SIGNING_KEY_ID"]
 assert trust[public["key_id"]] == public["public_key_b64url"]
 assert len(public["fingerprint_sha256"]) == 64
@@ -287,6 +288,7 @@ receipt={
         "selftest":True,
         "relay_admin_separation":True,
         "prime_trust_configured":True,
+        "prime_signer_isolation":"verification_only",
     },
     "prime_sentinel":{
         "ready":True,
@@ -301,6 +303,7 @@ receipt={
         "key_id":echo_public["key_id"],
         "key_fingerprint_sha256":echo_public["fingerprint_sha256"],
         "signature_input_schema":echo_verified["signature_input_schema"],
+        "signer_mode":preflight["echo_signer_mode"],
     },
     "sanitized_config_sha256":preflight["sanitized_config_sha256"],
     "claims_boundary":(
