@@ -55,6 +55,33 @@ def test_prime_private_pem_markers_fail_even_under_unexpected_prime_variable(mar
         reject_prime_private_signing_material(env)
 
 
+def test_recognized_prime_private_ingress_acceptance_drops_to_zero():
+    names = [
+        "PRIME_SENTINEL_PRIVATE_KEY",
+        "PRIME_SENTINEL_PRIVATE_KEY_FILE",
+        "PRIME_SENTINEL_SIGNING_KEY",
+        "PRIME_SENTINEL_SIGNING_KEY_FILE",
+        "PRIME_SENTINEL_ED25519_PRIVATE_KEY",
+        "PRIME_SENTINEL_ED25519_PRIVATE_KEY_FILE",
+        "PRIME_SENTINEL_SECRET_KEY",
+        "PRIME_SENTINEL_SEED",
+    ]
+    baseline_accepted = len(names)
+    residual_accepted = 0
+    for name in names:
+        env = _base_env()
+        env[name] = "private-material"
+        try:
+            reject_prime_private_signing_material(env)
+            residual_accepted += 1
+        except RuntimeError:
+            pass
+
+    assert baseline_accepted == 8
+    assert residual_accepted / baseline_accepted <= 0.10
+    assert residual_accepted == 0
+
+
 def test_public_verification_and_revocation_configuration_remain_allowed():
     env = _base_env()
     env["PRIME_SENTINEL_PUBLIC_KEYS_JSON"] = json.dumps(
