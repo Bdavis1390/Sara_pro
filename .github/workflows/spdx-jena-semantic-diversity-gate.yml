@@ -1,0 +1,248 @@
+name: SPDX Jena Semantic Diversity Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_JENA_SEMANTIC_DIVERSITY.md'
+      - '.github/workflows/spdx-jena-semantic-diversity-gate.yml'
+  push:
+    branches:
+      - 'worldshepherd-spdx-jena-semantic-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_JENA_SEMANTIC_DIVERSITY.md'
+      - '.github/workflows/spdx-jena-semantic-diversity-gate.yml'
+
+permissions:
+  contents: read
+
+env:
+  JENA_VERSION: '6.2.0'
+  PYSHACL_VERSION: '0.40.1'
+  EXPECTED_MODEL_SHA256: '30ebb4af2d70a9809044ef46f44cc3dc5125226d70f818a50ed2e1d5f404c593'
+  PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  prove-semantic-engine-diversity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned pySHACL comparison engine
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/ws-pyshacl
+          /tmp/ws-pyshacl/bin/python -m pip install --disable-pip-version-check "pyshacl==$PYSHACL_VERSION" >/dev/null
+          /tmp/ws-pyshacl/bin/python -m pip check
+          actual=$(/tmp/ws-pyshacl/bin/python - <<'PY'
+          from importlib.metadata import version
+          print(version('pyshacl'))
+          PY
+          )
+          test "$actual" = "$PYSHACL_VERSION"
+
+      - name: Download and checksum-verify Apache Jena binary distribution
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ws-jena-download
+          cd /tmp/ws-jena-download
+          base="https://downloads.apache.org/jena/binaries/apache-jena-${JENA_VERSION}.tar.gz"
+          curl --fail --silent --show-error --location "$base" -o "apache-jena-${JENA_VERSION}.tar.gz"
+          curl --fail --silent --show-error --location "${base}.sha512" -o "apache-jena-${JENA_VERSION}.tar.gz.sha512"
+          sha512sum --check "apache-jena-${JENA_VERSION}.tar.gz.sha512"
+          tar -xzf "apache-jena-${JENA_VERSION}.tar.gz" -C /tmp
+          test -x "/tmp/apache-jena-${JENA_VERSION}/bin/riot"
+          test -x "/tmp/apache-jena-${JENA_VERSION}/bin/shacl"
+          sha512sum "apache-jena-${JENA_VERSION}.tar.gz" > /tmp/jena-archive.sha512
+          java -version 2> /tmp/java-version.txt
+
+      - name: Fetch and pin canonical SPDX 3.0.1 SHACL model
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            'https://spdx.org/rdf/3.0.1/spdx-model.ttl' \
+            --output /tmp/spdx-3.0.1-model.ttl
+          actual=$(sha256sum /tmp/spdx-3.0.1-model.ttl | awk '{print $1}')
+          test "$actual" = "$EXPECTED_MODEL_SHA256"
+
+      - name: Build exact semantic mutation
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          src = Path('deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json')
+          baseline = json.loads(src.read_text(encoding='utf-8'))
+          mutation = json.loads(json.dumps(baseline))
+          package_id = next(
+              element['spdxId']
+              for element in mutation['@graph']
+              if element.get('type') == 'software_Package'
+          )
+          creation_info = next(
+              element
+              for element in mutation['@graph']
+              if element.get('type') == 'CreationInfo'
+          )
+          creation_info['createdBy'] = [package_id]
+          Path('/tmp/spdx-baseline.jsonld').write_text(
+              json.dumps(baseline, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          Path('/tmp/spdx-semantic-invalid.jsonld').write_text(
+              json.dumps(mutation, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          PY
+
+      - name: Parse JSON-LD independently through Jena RIOT
+        run: |
+          set -euo pipefail
+          JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
+          "$JENA_HOME/bin/riot" --syntax=JSONLD11 --output=TTL /tmp/spdx-baseline.jsonld > /tmp/spdx-baseline.ttl
+          "$JENA_HOME/bin/riot" --syntax=JSONLD11 --output=TTL /tmp/spdx-semantic-invalid.jsonld > /tmp/spdx-semantic-invalid.ttl
+          test -s /tmp/spdx-baseline.ttl
+          test -s /tmp/spdx-semantic-invalid.ttl
+
+      - name: Require Jena baseline conformance and semantic rejection
+        run: |
+          set -euo pipefail
+          JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
+          "$JENA_HOME/bin/shacl" validate --text \
+            --shapes /tmp/spdx-3.0.1-model.ttl \
+            --data /tmp/spdx-baseline.ttl \
+            > /tmp/jena-baseline.log
+          grep -qx 'Conforms' /tmp/jena-baseline.log
+
+          "$JENA_HOME/bin/shacl" validate --text \
+            --shapes /tmp/spdx-3.0.1-model.ttl \
+            --data /tmp/spdx-semantic-invalid.ttl \
+            > /tmp/jena-semantic-invalid.log
+          if grep -qx 'Conforms' /tmp/jena-semantic-invalid.log; then
+            echo 'Apache Jena unexpectedly accepted the semantic negative control' >&2
+            exit 1
+          fi
+          grep -Eq 'createdBy|Agent|class' /tmp/jena-semantic-invalid.log
+
+      - name: Require pySHACL agreement on same JSON-LD inputs
+        run: |
+          set -euo pipefail
+          /tmp/ws-pyshacl/bin/pyshacl \
+            -f human -df json-ld \
+            --shacl /tmp/spdx-3.0.1-model.ttl \
+            --ont-graph /tmp/spdx-3.0.1-model.ttl \
+            /tmp/spdx-baseline.jsonld \
+            > /tmp/pyshacl-baseline.log
+          grep -q 'Conforms: True' /tmp/pyshacl-baseline.log
+
+          set +e
+          /tmp/ws-pyshacl/bin/pyshacl \
+            -f human -df json-ld \
+            --shacl /tmp/spdx-3.0.1-model.ttl \
+            --ont-graph /tmp/spdx-3.0.1-model.ttl \
+            /tmp/spdx-semantic-invalid.jsonld \
+            > /tmp/pyshacl-semantic-invalid.log 2>&1
+          status=$?
+          set -e
+          test "$status" -eq 1
+          grep -q 'Conforms: False' /tmp/pyshacl-semantic-invalid.log
+          grep -q 'Value does not have class' /tmp/pyshacl-semantic-invalid.log
+
+      - name: Build claims-bounded engine-diversity evidence
+        run: |
+          set -euo pipefail
+          mkdir -p spdx_jena_semantic_evidence_ci
+          cp /tmp/jena-baseline.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/jena-semantic-invalid.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/pyshacl-baseline.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/pyshacl-semantic-invalid.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/jena-archive.sha512 spdx_jena_semantic_evidence_ci/
+          cp /tmp/java-version.txt spdx_jena_semantic_evidence_ci/
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          def digest(path):
+              return 'sha256:' + hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+          record = {
+              'schema': 'WS-SPDX-SEMANTIC-ENGINE-DIVERSITY-EVIDENCE-V1',
+              'source_head_sha': os.environ['PR_HEAD_SHA'],
+              'spdx_version': '3.0.1',
+              'canonical_model_sha256': digest('/tmp/spdx-3.0.1-model.ttl'),
+              'baseline_jsonld_sha256': digest('/tmp/spdx-baseline.jsonld'),
+              'semantic_negative_jsonld_sha256': digest('/tmp/spdx-semantic-invalid.jsonld'),
+              'engines': [
+                  {
+                      'name': 'Apache Jena SHACL',
+                      'version': os.environ['JENA_VERSION'],
+                      'language_lineage': 'Java / Apache Jena',
+                      'baseline': 'CONFORMS',
+                      'semantic_negative': 'REJECTED',
+                  },
+                  {
+                      'name': 'pySHACL',
+                      'version': os.environ['PYSHACL_VERSION'],
+                      'language_lineage': 'Python / RDFLib',
+                      'baseline': 'CONFORMS',
+                      'semantic_negative': 'REJECTED',
+                  },
+              ],
+              'evidence_state': 'EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT',
+              'semantic_engine_diversity_established_for_exact_control': True,
+              'jena_is_spdx_recommended_validator': False,
+              'general_spdx_conformance_established': False,
+              'arbitrary_input_conformance_established': False,
+              'independent_external_validation_established': False,
+              'community_endorsement_established': False,
+              'release_artifact_pgp_signature_verified': False,
+              'admission_authorized': False,
+              'release_approved': False,
+              'claims_boundary': (
+                  'Apache Jena and pySHACL are independent semantic engine lineages and agreed on this exact '
+                  'baseline/createdBy wrong-range control. SPDX validation guidance names pySHACL, not Jena, '
+                  'as its known SHACL CLI path. The Jena archive was checksum-verified but its PGP signature '
+                  'was not verified in this gate. This does not establish general SPDX conformance, independent '
+                  'external validation, or community endorsement.'
+              ),
+          }
+          out = Path('spdx_jena_semantic_evidence_ci/jena-semantic-diversity.json')
+          out.write_text(json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+          python -m json.tool spdx_jena_semantic_evidence_ci/jena-semantic-diversity.json >/dev/null
+
+      - name: Enforce diversity and claims boundaries
+        run: |
+          set -euo pipefail
+          evidence='spdx_jena_semantic_evidence_ci/jena-semantic-diversity.json'
+          grep -q 'EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT' "$evidence"
+          grep -q '"semantic_engine_diversity_established_for_exact_control": true' "$evidence"
+          grep -q '"jena_is_spdx_recommended_validator": false' "$evidence"
+          grep -q '"general_spdx_conformance_established": false' "$evidence"
+          grep -q '"arbitrary_input_conformance_established": false' "$evidence"
+          grep -q '"independent_external_validation_established": false' "$evidence"
+          grep -q '"community_endorsement_established": false' "$evidence"
+          grep -q '"release_artifact_pgp_signature_verified": false' "$evidence"
+          grep -q '"admission_authorized": false' "$evidence"
+          grep -q '"release_approved": false' "$evidence"
+
+      - name: Upload Jena semantic-diversity evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: spdx-jena-semantic-diversity-evidence
+          path: spdx_jena_semantic_evidence_ci
+          if-no-files-found: error
