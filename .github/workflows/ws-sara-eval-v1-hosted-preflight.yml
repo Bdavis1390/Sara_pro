@@ -1,0 +1,169 @@
+name: WS-SARA-EVAL-v1 Hosted Preflight
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/ws-sara-eval-v1-hosted-preflight.yml'
+      - 'evaluation/WS-SARA-EVAL-v1/**'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/ws-sara-eval-v1-hosted-preflight.yml'
+      - 'evaluation/WS-SARA-EVAL-v1/**'
+
+permissions:
+  contents: read
+
+env:
+  CANDIDATE_SHA: baf10ed485440da0ca7c9d3369bfe9a82e6b80b6
+  CANDIDATE_REF: refs/heads/freeze/WS-SARA-EVAL-v1
+
+jobs:
+  hosted-preflight:
+    name: Hosted preflight — internal evidence only
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out handoff controller
+        uses: actions/checkout@v4
+        with:
+          path: controller
+
+      - name: Check out exact frozen candidate
+        uses: actions/checkout@v4
+        with:
+          ref: baf10ed485440da0ca7c9d3369bfe9a82e6b80b6
+          path: candidate
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify candidate identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git -C candidate rev-parse HEAD)"
+          test "$actual" = "$CANDIDATE_SHA"
+          test "$(git -C candidate status --porcelain)" = ""
+          printf 'candidate_sha=%s\n' "$actual"
+          printf 'candidate_ref=%s\n' "$CANDIDATE_REF"
+
+      - name: Bootstrap exact frozen candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd candidate
+          bash scripts/sara.sh check
+          PYTHON=python3 bash scripts/sara.sh setup
+
+      - name: Run canonical frozen test suite
+        id: candidate_tests
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd candidate
+          bash scripts/sara.sh test -q --junitxml=hosted-preflight-junit.xml
+
+      - name: Build environment fingerprint
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="controller/evaluation/WS-SARA-EVAL-v1/build"
+          mkdir -p "$out"
+          {
+            printf 'evidence_status=WORLDSHEPHERD_CONTROLLED_HOSTED_PREFLIGHT\n'
+            printf 'independent_reproduction=false\n'
+            printf 'candidate_sha=%s\n' "$CANDIDATE_SHA"
+            printf 'candidate_ref=%s\n' "$CANDIDATE_REF"
+            printf 'controller_sha=%s\n' "$(git -C controller rev-parse HEAD)"
+            printf 'runner_os=%s\n' "${RUNNER_OS:-unknown}"
+            printf 'runner_arch=%s\n' "${RUNNER_ARCH:-unknown}"
+            printf 'python=%s\n' "$(python3 --version 2>&1)"
+            printf 'git=%s\n' "$(git --version)"
+            printf 'docker=%s\n' "$(docker --version 2>/dev/null || printf unavailable)"
+            printf 'test_step_outcome=%s\n' "${{ steps.candidate_tests.outcome }}"
+          } > "$out/environment.txt"
+          if [[ -x candidate/deployments/sara_verified_local_v1/.venv/bin/python ]]; then
+            candidate/deployments/sara_verified_local_v1/.venv/bin/python -m pip freeze --all | sort > "$out/dependency-freeze.txt"
+            sha256sum "$out/dependency-freeze.txt" > "$out/dependency-freeze.sha256"
+          fi
+          if [[ -f candidate/deployments/sara_verified_local_v1/hosted-preflight-junit.xml ]]; then
+            cp candidate/deployments/sara_verified_local_v1/hosted-preflight-junit.xml "$out/"
+          fi
+
+      - name: Generate exact-commit evaluator handoff manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          py="candidate/deployments/sara_verified_local_v1/.venv/bin/python"
+          test -x "$py"
+          out="controller/evaluation/WS-SARA-EVAL-v1/build"
+          mkdir -p "$out"
+          "$py" -m worldshepherd_sara.evaluator_handoff \
+            --package-root candidate/deployments/sara_verified_local_v1 \
+            --artifact-id WS-SARA-EVAL-v1 \
+            --repository Bdavis1390/Sara_pro \
+            --release-ref "$CANDIDATE_REF" \
+            --release-commit "$CANDIDATE_SHA" \
+            --hardware-requirement "Evaluator-selected general-purpose host capable of Python 3.12 and the committed test dependencies; no physical sensor, accelerator, clinical device, mission hardware, or specialized hardware is included in this software-only evaluation scope." \
+            --delivery-method "Public Git checkout pinned to the declared 40-character candidate commit, accompanied by the separately versioned evaluator protocol/challenge controller." \
+            --fixture evaluation/WS-SARA-EVAL-v1/challenges.json \
+            --expected-results-ref evaluation/WS-SARA-EVAL-v1/EXPECTED_RESULTS.md \
+            --claims-boundary-ref deployments/sara_verified_local_v1/docs/COMPLIANCE_BOUNDARY.md \
+            --claims-boundary-ref docs/CLAIMS_AND_EVIDENCE_POLICY.md \
+            --claims-boundary-ref evaluation/WS-SARA-EVAL-v1/EXPECTED_RESULTS.md \
+            --run-instruction "bash scripts/sara.sh check" \
+            --run-instruction "PYTHON=python3 bash scripts/sara.sh setup" \
+            --run-instruction "bash scripts/sara.sh test -q" \
+            --evaluation-scope "Software-only reproduction of the frozen canonical local SARA administration, authorization, audit, registry, bounded local relay-recording, input/resource-limit, fail-closed, and recovery-related behavior represented by the frozen tests and public challenge classes. External networking, physical systems, clinical use, classified/CUI processing, certification, government/customer acceptance, and operational effectiveness are outside scope." \
+            --evaluation-window TO_BE_AGREED_WITH_EVALUATOR \
+            --contract-status UNKNOWN_REQUIRES_REVIEW \
+            --conflict-note "This Worldshepherd-controlled hosted preflight does not determine evaluator independence or contractual conflict; an external evaluator must review those facts independently." \
+            --output "$out/evaluator-handoff.json"
+          python3 -m json.tool "$out/evaluator-handoff.json" >/dev/null
+          sha256sum "$out/evaluator-handoff.json" > "$out/evaluator-handoff-file.sha256"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('controller/evaluation/WS-SARA-EVAL-v1/build/evaluator-handoff.json')
+          record=json.loads(p.read_text(encoding='utf-8'))
+          assert record['manifest']['artifact_id'] == 'WS-SARA-EVAL-v1'
+          assert record['manifest']['release_commit'] == 'baf10ed485440da0ca7c9d3369bfe9a82e6b80b6'
+          assert record['manifest']['release_ref'] == 'refs/heads/freeze/WS-SARA-EVAL-v1'
+          assert len(record['manifest_sha256']) == 64
+          PY
+
+      - name: Write hosted-preflight claims boundary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="controller/evaluation/WS-SARA-EVAL-v1/build"
+          cat > "$out/CLAIMS_BOUNDARY.txt" <<'EOF'
+          EVIDENCE STATUS: WORLDSHEPHERD-CONTROLLED HOSTED PREFLIGHT ONLY.
+          This artifact is NOT independent reproduction, evaluator acceptance, customer adoption, government acceptance, certification, CMMC/NIST/DFARS conformity, classified/CUI authorization, physical capability, clinical capability, or operational-effectiveness evidence.
+          The exact candidate SHA is authoritative. Failures and discrepancies must be retained.
+          EOF
+
+      - name: Upload hosted preflight evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-sara-eval-v1-hosted-preflight-${{ github.run_id }}
+          path: controller/evaluation/WS-SARA-EVAL-v1/build
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce frozen candidate test result
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.candidate_tests.outcome }}" = "success"
