@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import unittest
 from pathlib import Path
 
@@ -42,10 +43,11 @@ SYNTHETIC_PARAMETERS = {
 
 
 class PrimeGateTests(unittest.TestCase):
-    def test_passing_evidence_authorizes(self) -> None:
+    def test_passing_evidence_requires_human_approval(self) -> None:
         decision = evaluate(CONFIG, PASSING_EVIDENCE)
         self.assertTrue(decision.authorized)
-        self.assertEqual(decision.disposition, "AUTHORIZE_EXPERIMENT")
+        self.assertEqual(decision.disposition, "READY_FOR_HUMAN_APPROVAL")
+        self.assertTrue(decision.requires_human_approval)
         self.assertEqual(decision.reasons, [])
 
     def test_temperature_posterior_risk_blocks(self) -> None:
@@ -76,6 +78,38 @@ class PrimeGateTests(unittest.TestCase):
         self.assertFalse(decision.authorized)
         self.assertIn("CLAIMS_STATE_BLOCKS_EXPERIMENT", decision.reasons)
 
+    def test_nonfinite_cooperativity_blocks(self) -> None:
+        for value in (math.nan, math.inf, -math.inf):
+            evidence = copy.deepcopy(PASSING_EVIDENCE)
+            evidence["cooperativity_ct2"] = value
+            decision = evaluate(CONFIG, evidence)
+            self.assertFalse(decision.authorized)
+            self.assertIn("COOPERATIVITY_INVALID", decision.reasons)
+
+    def test_nonfinite_temperature_blocks(self) -> None:
+        for value in (math.nan, math.inf, -math.inf):
+            evidence = copy.deepcopy(PASSING_EVIDENCE)
+            evidence["device_temperature_k_mean"] = value
+            decision = evaluate(CONFIG, evidence)
+            self.assertFalse(decision.authorized)
+            self.assertIn("TEMPERATURE_INVALID", decision.reasons)
+
+    def test_wrong_type_probability_blocks(self) -> None:
+        for value in ("0.001", True, None):
+            evidence = copy.deepcopy(PASSING_EVIDENCE)
+            evidence["temperature_violation_probability"] = value
+            decision = evaluate(CONFIG, evidence)
+            self.assertFalse(decision.authorized)
+            self.assertIn("TEMPERATURE_POSTERIOR_RISK_INVALID", decision.reasons)
+
+    def test_probability_outside_unit_interval_blocks(self) -> None:
+        for value in (-0.1, 1.1):
+            evidence = copy.deepcopy(PASSING_EVIDENCE)
+            evidence["orbital_leakage_violation_probability"] = value
+            decision = evaluate(CONFIG, evidence)
+            self.assertFalse(decision.authorized)
+            self.assertIn("ORBITAL_LEAKAGE_POSTERIOR_RISK_INVALID", decision.reasons)
+
     def test_synthetic_registry_to_prime_nominal_path(self) -> None:
         record = build_record(
             CONFIG,
@@ -88,7 +122,7 @@ class PrimeGateTests(unittest.TestCase):
 
         decision = evaluate(CONFIG, PASSING_EVIDENCE)
         self.assertTrue(decision.authorized)
-        self.assertEqual(decision.disposition, "AUTHORIZE_EXPERIMENT")
+        self.assertEqual(decision.disposition, "READY_FOR_HUMAN_APPROVAL")
 
     def test_synthetic_drifted_case_fails_safe(self) -> None:
         record = build_record(
