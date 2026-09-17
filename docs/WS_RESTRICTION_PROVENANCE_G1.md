@@ -65,6 +65,8 @@ This preserves the existing architecture:
 PRIME decides -> SARA routes -> ECHO persists/reconciles -> OVERWATCH reports
 ```
 
+The end-to-end regression path exercises the real persistence chain: a restriction is queued into `DurableStore`, drained into the SARA audit log, reconstructed as an `AuditRecord`, ingested twice into `EchoEventStore` to prove store/deduplicate behavior, reconciled as `MATCHED`, and then checked at both serialized-audit and SQLite-byte levels to prove the raw input, raw generated candidate, and safe replacement text were never persisted.
+
 ## Bounded remediation
 
 A remediation directive may request only:
@@ -87,13 +89,14 @@ The regression suite proves:
 3. nested raw/secret metadata keys are rejected through mapping and sequence containers;
 4. a safe summary cannot simply equal the raw input or generated restricted candidate;
 5. restriction evidence enters the normal SARA outbox contract;
-6. allowed remediation is cryptographically bound to the restriction fingerprints;
-7. remediation rationale is identifier-only, not free-form text;
-8. raw replay and policy-bypass remediations fail closed;
-9. unknown remediation actions fail closed;
-10. malformed reason codes and naive timestamps fail closed;
-11. weak content-fingerprint keys are rejected even when no content value is supplied;
-12. deployment-key changes produce different content fingerprints.
+6. the real SARA outbox -> audit -> ECHO persistence/replay/reconciliation path retains the evidence while raw content remains absent from both audit serialization and the ECHO SQLite file;
+7. allowed remediation is cryptographically bound to the restriction fingerprints;
+8. remediation rationale is identifier-only, not free-form text;
+9. raw replay and policy-bypass remediations fail closed;
+10. unknown remediation actions fail closed;
+11. malformed reason codes and naive timestamps fail closed;
+12. weak content-fingerprint keys are rejected even when no content value is supplied;
+13. deployment-key changes produce different content fingerprints.
 
 ## Claims boundary
 
