@@ -1,0 +1,74 @@
+name: Boeing Spirit Public Cybersecurity Crosswalk
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'boeing_spirit/public_cybersecurity_crosswalk.v1.json'
+      - 'boeing_spirit/validate_public_cybersecurity_crosswalk.py'
+      - '.github/workflows/boeing-spirit-cyber-crosswalk.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'boeing_spirit/public_cybersecurity_crosswalk.v1.json'
+      - 'boeing_spirit/validate_public_cybersecurity_crosswalk.py'
+      - '.github/workflows/boeing-spirit-cyber-crosswalk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-cyber-crosswalk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile validator
+        run: python -m py_compile boeing_spirit/validate_public_cybersecurity_crosswalk.py
+
+      - name: Validate public cybersecurity applicability crosswalk
+        run: >-
+          python boeing_spirit/validate_public_cybersecurity_crosswalk.py
+          --input boeing_spirit/public_cybersecurity_crosswalk.v1.json
+          --output boeing_spirit/evidence/public-cybersecurity-crosswalk-report.json
+
+      - name: Verify gate remains fail-closed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('boeing_spirit/evidence/public-cybersecurity-crosswalk-report.json').read_text())
+          assert r['result'] == 'PASS'
+          assert r['contact_gate_effect'] == 'NONE'
+          assert r['security_compliance_fit'] == 'partial'
+          assert r['official_source_count'] >= 5
+          assert r['applicability_condition_count'] >= 6
+          assert 'does not establish contractual applicability' in r['claims_boundary']
+          print(json.dumps(r, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: |
+          sha256sum boeing_spirit/evidence/public-cybersecurity-crosswalk-report.json > boeing_spirit/evidence/CYBER_CROSSWALK_SHA256SUMS.txt
+          cat boeing_spirit/evidence/CYBER_CROSSWALK_SHA256SUMS.txt
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: boeing-spirit-public-cybersecurity-crosswalk
+          path: |
+            boeing_spirit/evidence/public-cybersecurity-crosswalk-report.json
+            boeing_spirit/evidence/CYBER_CROSSWALK_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

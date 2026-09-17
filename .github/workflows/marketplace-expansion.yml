@@ -1,0 +1,75 @@
+name: Marketplace Expansion Validation
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+    paths:
+      - 'marketplace/market_scan_round2_20260903.json'
+      - 'marketplace/reusable_solution_patterns.v1.json'
+      - 'marketplace/validate_marketplace_expansion.py'
+      - '.github/workflows/marketplace-expansion.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'marketplace/market_scan_round2_20260903.json'
+      - 'marketplace/reusable_solution_patterns.v1.json'
+      - 'marketplace/validate_marketplace_expansion.py'
+      - '.github/workflows/marketplace-expansion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-expansion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile validator
+        run: python -m py_compile marketplace/validate_marketplace_expansion.py
+
+      - name: Validate expansion and reusable solution patterns
+        run: >-
+          python marketplace/validate_marketplace_expansion.py
+          --round2 marketplace/market_scan_round2_20260903.json
+          --patterns marketplace/reusable_solution_patterns.v1.json
+          --output marketplace/evidence/marketplace-expansion-report.json
+
+      - name: Verify fail-closed state
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('marketplace/evidence/marketplace-expansion-report.json').read_text())
+          assert r['result'] == 'PASS'
+          assert r['round2_target_count'] >= 3
+          assert r['reusable_solution_pattern_count'] >= 5
+          assert r['new_contact_authorizations'] == 0
+          assert r['default_contact_threshold_pct'] == 98.7
+          assert r['default_precontact_cap_pct'] == 55.0
+          print(json.dumps(r, indent=2))
+          PY
+
+      - name: Hash evidence
+        run: sha256sum marketplace/evidence/marketplace-expansion-report.json > marketplace/evidence/MARKETPLACE_EXPANSION_SHA256SUMS.txt
+
+      - name: Upload marketplace expansion evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: marketplace-expansion-validation
+          path: |
+            marketplace/evidence/marketplace-expansion-report.json
+            marketplace/evidence/MARKETPLACE_EXPANSION_SHA256SUMS.txt
+          retention-days: 90
+          if-no-files-found: error

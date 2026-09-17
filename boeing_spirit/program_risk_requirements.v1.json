@@ -1,0 +1,53 @@
+{
+  "schema": "WS-BOEING-SPIRIT-PROGRAM-RISK-REQUIREMENTS-V1",
+  "as_of": "2026-09-03",
+  "scope": "Public financial/integration signals translated into bounded operational evidence-control requirements. This is not accounting, valuation, legal, contract-pricing, or Boeing-approved requirements work.",
+  "public_basis": [
+    {
+      "source": "Boeing 2026 Q2 Form 10-Q, Note 2 - Spirit Acquisition",
+      "bounded_signal": "Spirit acquisition consideration was $8.389 billion; preliminary purchase-price allocation included $10.278 billion provisional goodwill, $2.202 billion accrued liabilities and $1.520 billion of off-market customer-contract liabilities as of June 30, 2026. Boeing states these amounts remain preliminary."
+    },
+    {
+      "source": "Boeing 2026 Q2 Form 10-Q long-term contract estimate disclosures",
+      "bounded_signal": "Changes in estimated revenues and costs at completion affected reported revenue and operating earnings/loss, reinforcing the need for traceable program assumptions and estimate revisions."
+    }
+  ],
+  "requirements": [
+    {
+      "id": "BS-I-009",
+      "need": "Maintain contract-to-program-baseline revision lineage for operational planning.",
+      "worldshepherd_components": ["SARA", "PRE", "OVERWATCH-ECHO"],
+      "solution": "Bind each operational contract revision to the active program baseline, production-rate assumption, supplier/work-transfer state, quality state and approved forecast revision.",
+      "acceptance": ["contract/baseline mismatches are visible", "superseded assumptions are retained", "revision owner and approval are explicit", "no operational record is presented as an accounting conclusion"]
+    },
+    {
+      "id": "BS-I-010",
+      "need": "Prevent stale cost-to-complete assumptions after production-rate, supplier, work-transfer or material process changes.",
+      "worldshepherd_components": ["SARA", "PRE", "REVENUE-E2E"],
+      "solution": "Trigger evidence-backed re-evaluation when defined program drivers change and retain estimate rationale, source evidence, approval and variance explanation.",
+      "acceptance": ["driver changes trigger review", "cost-to-complete evidence is linked", "unexplained estimate variance is flagged", "negative/null findings remain retained"]
+    },
+    {
+      "id": "BS-I-011",
+      "need": "Connect preventable quality/rework signals to bounded program-impact metrics without claiming causation prematurely.",
+      "worldshepherd_components": ["OVERWATCH-ECHO", "REVENUE-E2E", "PRE"],
+      "solution": "Create a measurement layer linking quality events to rework hours, inspection latency, schedule impact and agreed cost proxies, with baseline/intervention periods and uncertainty.",
+      "acceptance": ["metric definitions predeclared", "quality events retain source/revision provenance", "correlation and causal attribution are separated", "financial savings are not claimed without partner-approved measurement"]
+    },
+    {
+      "id": "BS-I-012",
+      "need": "Ensure work transfers and process changes propagate into supplier-risk, quality-readiness and program-assumption reviews.",
+      "worldshepherd_components": ["SARA", "OVERWATCH-ECHO", "AEROSHEPHERD"],
+      "solution": "Use dependency invalidation so a material work-transfer/process change automatically reopens affected supplier surveillance, APQP, configuration, quality-readiness and operational forecast reviews.",
+      "acceptance": ["affected dependencies reopen automatically", "approval authority is explicit", "stale downstream evidence cannot support readiness", "audit lineage is exportable"]
+    },
+    {
+      "id": "BS-I-013",
+      "need": "Track public off-market-contract risk as an integration signal while keeping accounting judgments outside Worldshepherd scope.",
+      "worldshepherd_components": ["PRE", "SARA", "REVENUE-E2E"],
+      "solution": "Maintain an operational-risk review state for contracts identified by the partner as economically constrained, linking only partner-approved operational assumptions, quality/schedule drivers and remediation experiments.",
+      "acceptance": ["risk-review status is explicit", "partner supplies authoritative contract/accounting classification", "Worldshepherd does not calculate fair value or issue accounting opinions", "pilot effects are reported only against agreed operational metrics"]
+    }
+  ],
+  "claims_boundary": "The SEC filing establishes public financial and acquisition signals, not Boeing-specific operational root causes. Worldshepherd may use those signals to design operational evidence controls, but accounting treatment, valuation, legal interpretation, contract pricing, internal controls over financial reporting, and Boeing production decisions remain outside the claim unless qualified partner evidence and authority are supplied."
+}

@@ -1,0 +1,50 @@
+name: PALACE VNA Correlation Protocol
+
+on:
+  push:
+    paths:
+      - 'palace/vna_correlation_protocol.v1.json'
+      - 'palace/compare_vna_correlation.py'
+      - '.github/workflows/palace-vna-correlation.yml'
+  pull_request:
+    paths:
+      - 'palace/vna_correlation_protocol.v1.json'
+      - 'palace/compare_vna_correlation.py'
+      - '.github/workflows/palace-vna-correlation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-vna-correlation-protocol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile comparator
+        run: python -m py_compile palace/compare_vna_correlation.py
+      - name: Run fail-closed self-test
+        run: python palace/compare_vna_correlation.py --self-test
+      - name: Validate frozen thresholds and evidence boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('palace/vna_correlation_protocol.v1.json').read_text())
+          assert p['schema']=='WS-PALACE-VNA-CORRELATION-PROTOCOL-V1'
+          assert p['minimum_requirements']['common_frequency_points']==101
+          assert p['minimum_requirements']['remove_replace_repeats']==3
+          t=p['frozen_acceptance_thresholds']
+          assert t=={
+            'magnitude_rmse_db_max':1.5,
+            'phase_rmse_deg_max':15.0,
+            'resonance_shift_percent_max':1.0,
+            'complex_normalized_rmse_max':0.2
+          }
+          assert p['external_gate_effect']=='NONE_UNTIL_REAL_AUTHORIZED_MEASUREMENT_EVIDENCE_EXISTS'
+          assert p['boeing_spirit_contact_effect']=='NONE'
+          print('PALACE VNA frozen protocol: PASS')
+          PY

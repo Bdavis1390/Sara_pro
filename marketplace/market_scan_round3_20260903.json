@@ -1,0 +1,142 @@
+{
+  "schema": "WS-MARKETPLACE-SCAN-ROUND3-V1",
+  "as_of": "2026-09-03",
+  "score_kind": "market_prioritization_not_probability_of_remediation_or_award",
+  "task_routing": "Fold into the same five existing active Worldshepherd task lanes; do not create a sixth ChatGPT automation.",
+  "default_contact_threshold_pct": 98.7,
+  "default_precontact_cap_pct": 55.0,
+  "new_targets": [
+    {
+      "id": "WS-MKT-019",
+      "organization": "Kopin Corporation",
+      "sector": "defense_industrial_microdisplays_electronics",
+      "signal_class": "DEFENSE_MANUFACTURING_PLUS_UNREMEDIATED_CONTROL_STRESS",
+      "market_priority_score": 96,
+      "observed_signal": "Kopin's 2025 Form 10-K states previously identified material weaknesses were not fully remediated and an additional material weakness was identified. The filing identifies IT general-control deficiencies involving user access and program change management, segregation-of-duties and data-validation effects, plus review/evidence and business-process control weaknesses. The same filing describes defense/industrial microdisplay manufacturing, complex supply chains, multiple new products/configurations entering production, and a U.S. defense-funded MicroLED manufacturing-capability program.",
+      "solution_wedge": [
+        "SARA requirement-to-configuration-to-production evidence graph",
+        "PRIME access/change/segregation-of-duties governance",
+        "ECHO production and supplier provenance",
+        "OVERWATCH evidence-quality and change-control observability",
+        "AEROSHEPHERD defense-display configuration and acceptance lineage"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/771266/000149315226016338/form10-k.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "High overlap with Worldshepherd access/change/provenance, defense manufacturing and configuration controls. Financial-reporting conclusions remain out of scope; production/quality effect requires partner evidence."
+    },
+    {
+      "id": "WS-MKT-020",
+      "organization": "Serve Robotics / Diligent Robotics / Vayu / Vebu",
+      "sector": "physical_ai_autonomous_robotics",
+      "signal_class": "MULTI_ACQUISITION_PHYSICAL_AI_PLUS_CONTROL_STRESS",
+      "market_priority_score": 95,
+      "observed_signal": "Serve expanded through multiple robotics/AI acquisitions, including Vayu in 2025 and Diligent and Vebu in early 2026, while scaling a multi-domain physical-AI platform. Its 2026 filings state material weaknesses remain and describe ERP implementation, segregation-of-duties remediation, evidence-of-review workflows and IT-general-control work. This is an integration/governance signal, not evidence that Serve's autonomous systems are unsafe or ineffective.",
+      "solution_wedge": [
+        "SARA cross-acquisition autonomy/software/hardware evidence lineage",
+        "PRIME role/access/change governance",
+        "ECHO robot-fleet software/configuration provenance",
+        "OVERWATCH cross-domain operational evidence observability",
+        "bounded simulation-to-real evidence custody without autonomous safety authority"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1832483/000183248326000035/serv-20260630.htm",
+        "https://www.sec.gov/Archives/edgar/data/1832483/000183248326000019/serv-20260331.htm",
+        "https://ir.serverobotics.com/news-releases/news-release-details/serve-robotics-acquire-diligent-robotics-expanding-physical-ai"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Strong Worldshepherd physical-AI integration analog. Healthcare deployments add regulatory/privacy boundaries; no clinical, safety, autonomy-performance or hospital-workflow claims without qualified evidence."
+    },
+    {
+      "id": "WS-MKT-021",
+      "organization": "Pioneer Power Solutions",
+      "sector": "electrical_power_generation_storage_distribution",
+      "signal_class": "ERP_TRANSFORMATION_PLUS_UNREMEDIATED_CONTROL_STRESS",
+      "market_priority_score": 94,
+      "observed_signal": "Pioneer's June 30, 2026 Form 10-Q says material weaknesses continued to exist, including insufficient skilled accounting personnel/segregation-of-duties and IT general controls around user and privileged access. The company is implementing a new ERP that replaces multiple legacy systems and manual workflows and has changed operational processes, transaction workflows, system controls and data interfaces while controls continue to be refined and tested.",
+      "solution_wedge": [
+        "SARA ERP/source-system evidence and workflow lineage",
+        "PRIME privileged-access and segregation-of-duties governance",
+        "ECHO operational/data-interface provenance",
+        "OVERWATCH automated monitoring and exception evidence",
+        "energy-equipment production/supply-chain traceability where partner-authorized"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1449792/000149315226038515/form10-q.htm",
+        "https://www.sec.gov/Archives/edgar/data/1449792/000149315226015715/form10-k.htm"
+      ],
+      "contact_state": "DO_NOT_CONTACT_NEW_LANE",
+      "precontact_cap_pct": 55.0,
+      "notes": "Direct ERP/access/change/evidence-governance fit. Worldshepherd scope is operational/control evidence support only, not accounting/audit assurance."
+    },
+    {
+      "id": "WS-MKT-022",
+      "organization": "Astronics / Envoy Aerospace / Bühler Motor Aviation",
+      "sector": "aerospace_electronics_oda_seat_actuation",
+      "signal_class": "AEROSPACE_ACQUISITION_INTEGRATION_WATCH",
+      "market_priority_score": 88,
+      "observed_signal": "Astronics acquired Envoy Aerospace, an FAA ODA services provider, in June 2025 and Bühler Motor Aviation, an aircraft seat-actuation systems manufacturer, in October 2025. Astronics reported effective internal control over financial reporting for 2025, while its assessment and auditor scope excluded the newly acquired entities for that year. The signal is bounded integration and configuration/authority complexity, not control failure.",
+      "solution_wedge": [
+        "AEROSHEPHERD design/configuration/approval-authority lineage",
+        "SARA acquired-entity requirements and evidence federation",
+        "ECHO engineering/manufacturing provenance",
+        "OVERWATCH acquisition-integration exception tracking",
+        "PRIME explicit authority boundaries around ODA and product release"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/8063/000000806326000021/atro-20251231.htm",
+        "https://www.sec.gov/Archives/edgar/data/8063/000000806326000043/atro-20260704.htm"
+      ],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "Predictive aerospace integration target. Do not imply Astronics has deficient controls or that Worldshepherd has ODA/design/release authority."
+    },
+    {
+      "id": "WS-MKT-023",
+      "organization": "BWX Technologies / Precision Components Group / Kinectrics",
+      "sector": "nuclear_heavy_manufacturing_engineering",
+      "signal_class": "REGULATED_HEAVY_MANUFACTURING_ACQUISITION_WATCH",
+      "market_priority_score": 87,
+      "observed_signal": "BWXT announced a 2026 agreement to acquire Precision Components Group, adding more than 500,000 square feet of heavy-manufacturing capacity for pressure vessels, heat exchangers, heavy weldments and ASME-certified fabrication. BWXT's 2025 controls audit was effective overall; its 2025 assessment excluded Kinectrics, acquired in May 2025. This is a regulated manufacturing integration/capacity signal, not a control-failure claim.",
+      "solution_wedge": [
+        "SARA regulated requirement/evidence federation",
+        "ECHO material/weld/process/inspection provenance",
+        "OVERWATCH multi-site manufacturing-readiness evidence",
+        "PRIME release/approval authority boundaries",
+        "configuration/change dependency governance for acquired manufacturing capacity"
+      ],
+      "public_sources": [
+        "https://investors.bwxt.com/news-releases/news-release-details/bwxt-bolsters-american-nuclear-manufacturing-capability",
+        "https://www.sec.gov/Archives/edgar/data/1486957/000148695726000007/bwxt-20251231.htm"
+      ],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "High strategic fit but nuclear quality/regulatory/security requirements are stringent. No nuclear-safety, ASME, NQA-1, NRC or qualification claim is inherited."
+    },
+    {
+      "id": "WS-MKT-024",
+      "organization": "Mercury Systems / specialized manufacturing-process assets / Star Lab",
+      "sector": "aerospace_defense_electronics_secure_processing",
+      "signal_class": "DEFENSE_PRODUCTION_RAMP_ACQUISITION_WATCH",
+      "market_priority_score": 86,
+      "observed_signal": "Mercury Systems acquired specialized manufacturing-process assets in March 2026 to support key programs ramping into production and previously acquired Star Lab anti-tamper/cybersecurity technology. Its 2026 audited internal control over financial reporting was effective. The signal is production-ramp, acquired-technology and secure-manufacturing integration complexity rather than a control weakness.",
+      "solution_wedge": [
+        "SARA program-to-manufacturing evidence lineage",
+        "PRIME secure change/access governance",
+        "ECHO hardware/software/configuration provenance",
+        "OVERWATCH ramp/readiness exception evidence",
+        "PRE defense requirement and controlled-information applicability mapping"
+      ],
+      "public_sources": [
+        "https://www.sec.gov/Archives/edgar/data/1049521/000104952126000045/mrcy-20260703.htm"
+      ],
+      "contact_state": "WATCH_ONLY",
+      "precontact_cap_pct": 55.0,
+      "notes": "Predictive defense-production integration target. Effective ICFR is disconfirming evidence against portraying Mercury as a control-stress account."
+    }
+  ],
+  "claims_boundary": "Round 3 is public-source market intelligence. Market-priority scores rank attention only and are not remediation, contracting, adoption or award probabilities. Control weaknesses cited from financial reporting do not establish production or product-quality root causes. Acquisition/integration watches do not imply distress. No new target is contact-authorized by this artifact."
+}

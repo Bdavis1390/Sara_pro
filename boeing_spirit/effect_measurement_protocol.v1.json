@@ -1,0 +1,127 @@
+{
+  "schema": "WS-BOEING-SPIRIT-EFFECT-MEASUREMENT-PROTOCOL-V1",
+  "as_of": "2026-09-03",
+  "status": "INTERNAL PREPARATION ONLY — NO BOEING/SPIRIT EFFECT MEASURED",
+  "purpose": "Predeclare how a future partner-authorized pilot would measure operational effect without converting synthetic/public-analog performance into Boeing/Spirit outcome claims.",
+  "primary_measurement_principles": [
+    "freeze metric definitions before intervention",
+    "freeze the comparison design and exclusions before intervention",
+    "retain denominators, missingness and adverse/null results",
+    "separate detection quality from operational outcome",
+    "separate correlation from causal attribution",
+    "report uncertainty and practical materiality, not only point estimates",
+    "record concurrent process, staffing, rate, supplier, design and tooling changes as potential confounders",
+    "do not convert time saved or defects detected into financial savings without partner-approved costing/attribution",
+    "do not extrapolate beyond the evaluated site/process/supplier/configuration population"
+  ],
+  "candidate_primary_endpoints": [
+    {
+      "id": "E1",
+      "name": "stale_or_missing_quality_evidence_escape_rate",
+      "unit": "events per reviewed item",
+      "direction": "lower_is_better",
+      "required_ground_truth": "partner quality authority adjudication",
+      "minimum_reporting": ["numerator", "denominator", "baseline rate", "pilot rate", "absolute difference", "relative difference", "confidence interval or appropriate uncertainty"]
+    },
+    {
+      "id": "E2",
+      "name": "repeat_nonconformance_rate",
+      "unit": "repeat events per partner-defined denominator",
+      "direction": "lower_is_better",
+      "required_ground_truth": "partner NCR/RCCA taxonomy and repeat-event linkage",
+      "minimum_reporting": ["baseline period", "pilot period", "case-mix notes", "absolute difference", "relative difference", "uncertainty"]
+    },
+    {
+      "id": "E3",
+      "name": "quality_action_closure_latency",
+      "unit": "elapsed time",
+      "direction": "lower_is_better",
+      "required_ground_truth": "partner authoritative open/close timestamps and closure criteria",
+      "minimum_reporting": ["distribution", "median", "tail metric", "censoring/missingness", "baseline/pilot comparison"]
+    },
+    {
+      "id": "E4",
+      "name": "evidence_retrieval_latency",
+      "unit": "elapsed time",
+      "direction": "lower_is_better",
+      "required_ground_truth": "predefined retrieval tasks and authoritative evidence target",
+      "minimum_reporting": ["task set", "baseline distribution", "pilot distribution", "failure rate", "uncertainty"]
+    },
+    {
+      "id": "E5",
+      "name": "false_negative_rate_for_predeclared_quality_flags",
+      "unit": "rate",
+      "direction": "lower_is_better",
+      "required_ground_truth": "partner-adjudicated labeled cases",
+      "minimum_reporting": ["confusion matrix", "sensitivity/recall", "specificity", "precision", "class prevalence", "threshold/rule revision"]
+    }
+  ],
+  "secondary_endpoints_requiring_stricter_attribution": [
+    {
+      "id": "S1",
+      "name": "preventable_rework_or_inspection_hours",
+      "constraint": "May be reported only if partner predefines what counts as preventable, supplies authoritative time data and approves attribution logic."
+    },
+    {
+      "id": "S2",
+      "name": "schedule_impact",
+      "constraint": "May be reported only with partner-defined schedule baseline, event linkage and confounder handling."
+    },
+    {
+      "id": "S3",
+      "name": "financial_savings_or_cost_avoidance",
+      "constraint": "Not a default endpoint. Requires partner finance/program authority, approved costing inputs and causal attribution; otherwise prohibited."
+    }
+  ],
+  "comparison_design_options": [
+    {
+      "design": "historical_replay",
+      "strength": "method/detection validation",
+      "limitation": "cannot establish prospective operational effect by itself"
+    },
+    {
+      "design": "prospective_shadow_mode",
+      "strength": "tests live timeliness and ground-truth agreement without controlling production",
+      "limitation": "cannot establish intervention effect if workflow is unchanged"
+    },
+    {
+      "design": "controlled_before_after",
+      "strength": "can estimate operational change when baseline is stable and confounders are tracked",
+      "limitation": "vulnerable to time-varying confounding"
+    },
+    {
+      "design": "parallel_or_staggered_comparator",
+      "strength": "preferred when partner can support a comparable untreated workflow/site/supplier/time block",
+      "limitation": "requires comparability assessment and sufficient sample size"
+    }
+  ],
+  "preanalysis_record_required": [
+    "partner sponsor and metric owner",
+    "pilot population and exclusions",
+    "baseline and pilot time windows",
+    "endpoint definitions",
+    "ground-truth adjudication process",
+    "materiality threshold for each primary endpoint",
+    "sample-size/precision rationale appropriate to available data",
+    "missing-data handling",
+    "outlier handling",
+    "confounder list",
+    "planned subgroup analyses",
+    "stopping rules",
+    "software/configuration revision",
+    "data and analysis digests"
+  ],
+  "effect_gate_closure_requirements": [
+    "partner-authorized real data",
+    "controlled partner pilot completed",
+    "at least one predeclared primary endpoint measured against an agreed baseline/comparator",
+    "effect estimate and uncertainty retained",
+    "ground truth and denominator verified",
+    "material confounders assessed",
+    "adverse/null results retained",
+    "independent reviewer verifies the effect analysis",
+    "claim wording does not exceed measured scope"
+  ],
+  "contact_gate_effect": "NONE. This protocol prepares measured_effect_size evidence but does not satisfy it; measured_effect_size remains missing until a real authorized pilot produces an independently reviewed effect estimate against a predeclared baseline/comparator.",
+  "claims_boundary": "This is an internal measurement protocol, not measured effect evidence. It does not establish Boeing/Spirit defect reduction, quality improvement, schedule improvement, rework reduction, savings, production effectiveness, adoption, causality, or remediation probability."
+}

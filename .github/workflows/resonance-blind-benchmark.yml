@@ -1,0 +1,51 @@
+name: Resonance Blind Diagnostic Benchmark
+
+on:
+  push:
+    paths:
+      - 'resonance/blind_benchmark.py'
+      - '.github/workflows/resonance-blind-benchmark.yml'
+  pull_request:
+    paths:
+      - 'resonance/blind_benchmark.py'
+      - '.github/workflows/resonance-blind-benchmark.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  blind-diagnostic:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run blind conventional benchmark
+        run: python resonance/blind_benchmark.py
+      - name: Validate claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('resonance/evidence/blind-benchmark-report.json')
+          r=json.loads(p.read_text())
+          assert r['result']=='PASS'
+          assert r['case_count']==5
+          assert r['pass_count']==5
+          assert r['evidence_class']=='INTERNAL_TEST_ON_SYNTHETIC_DATA'
+          assert 'not a five-repeat instrumented physical test' in r['claims_boundary']
+          PY
+      - name: Hash evidence
+        run: |
+          sha256sum resonance/blind_benchmark.py resonance/evidence/blind-benchmark-report.json | sort > resonance/evidence/SHA256SUMS.txt
+          cat resonance/evidence/SHA256SUMS.txt
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: resonance-blind-diagnostic-evidence
+          path: resonance/evidence/
+          retention-days: 90

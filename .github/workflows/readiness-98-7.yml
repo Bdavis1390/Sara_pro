@@ -1,0 +1,66 @@
+name: Worldshepherd 98.7 Readiness Report
+
+on:
+  push:
+    branches:
+      - main
+      - 'readiness/**'
+      - 'pre/**'
+    paths:
+      - 'readiness/**'
+      - 'deployments/sara_verified_local_v1/scripts/validate_portfolio_readiness.py'
+      - '.github/workflows/readiness-98-7.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'readiness/**'
+      - 'deployments/sara_verified_local_v1/scripts/validate_portfolio_readiness.py'
+      - '.github/workflows/readiness-98-7.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact tested source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Compile validator
+        run: python -m py_compile deployments/sara_verified_local_v1/scripts/validate_portfolio_readiness.py
+
+      - name: Validate registry and generate readiness report
+        run: >-
+          python deployments/sara_verified_local_v1/scripts/validate_portfolio_readiness.py
+          --registry readiness/portfolio.v1.json
+          --output readiness/portfolio-report.json
+
+      - name: Verify claims boundary in generated report
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p = pathlib.Path('readiness/portfolio-report.json')
+          d = json.loads(p.read_text())
+          assert d['schema'] == 'WS-READINESS-REPORT-V1'
+          assert d['target_internal_partner_readiness_pct'] == 98.7
+          assert d['errors'] == []
+          assert d['workstream_count'] >= 15
+          assert 'never upgrades physical' in d['claims_boundary']
+          for row in d['workstreams']:
+              assert 0 <= row['internal_partner_readiness_pct'] <= 100
+              assert row['external_maturity_cap_pct'] <= 100
+          PY
+
+      - name: Upload readiness report
+        uses: actions/upload-artifact@v4
+        with:
+          name: worldshepherd-readiness-98-7-report
+          path: readiness/portfolio-report.json
+          if-no-files-found: error
+          retention-days: 90

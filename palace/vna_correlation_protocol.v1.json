@@ -1,0 +1,55 @@
+{
+  "schema": "WS-PALACE-VNA-CORRELATION-PROTOCOL-V1",
+  "as_of": "2026-09-04",
+  "source": "Worldshepherd_RF_3D_Solver_VNA_Correlation_Plan_v2_7.xlsx",
+  "purpose": "Predeclare the physical S-parameter correlation gate so analysis design is frozen before external measurement data arrive.",
+  "required_measurement_metadata": [
+    "dataset_id",
+    "measurement_authority",
+    "instrument_make_model",
+    "instrument_serial_or_asset_id",
+    "calibration_method",
+    "calibration_date_utc",
+    "reference_plane",
+    "polarization",
+    "angle_deg",
+    "control_state",
+    "frequency_min_ghz",
+    "frequency_max_ghz",
+    "frequency_point_count",
+    "remove_replace_repeat_count",
+    "uncertainty_statement",
+    "raw_data_sha256"
+  ],
+  "minimum_requirements": {
+    "common_frequency_points": 101,
+    "remove_replace_repeats": 3,
+    "explicit_reference_plane": true,
+    "explicit_calibration": true,
+    "explicit_uncertainty": true
+  },
+  "frozen_acceptance_thresholds": {
+    "magnitude_rmse_db_max": 1.5,
+    "phase_rmse_deg_max": 15.0,
+    "resonance_shift_percent_max": 1.0,
+    "complex_normalized_rmse_max": 0.2
+  },
+  "analysis_rules": {
+    "frequency_alignment": "exact common frequency points after GHz normalization; no hidden interpolation",
+    "phase_error": "principal wrapped angular difference in degrees",
+    "resonance_definition": "frequency of minimum |S11| over common frequency support",
+    "complex_normalized_rmse": "sqrt(mean(|model-measurement|^2)) / max(sqrt(mean(|measurement|^2)), 1e-15)",
+    "retain_failed_null_and_adverse_results": true,
+    "threshold_change_after_measurement": "PROHIBITED"
+  },
+  "evidence_boundary": {
+    "protocol_only": "PREPARATION_ONLY",
+    "real_calibrated_vna_data": "PHYSICAL_MEASUREMENT",
+    "correlation_pass": "BOUNDED_MODEL_TO_MEASUREMENT_CORRELATION_ONLY",
+    "partner_test": "NOT_CREATED_AUTOMATICALLY",
+    "independent_replication": "NOT_CREATED_AUTOMATICALLY",
+    "qualification_or_certification": "NOT_CREATED"
+  },
+  "external_gate_effect": "NONE_UNTIL_REAL_AUTHORIZED_MEASUREMENT_EVIDENCE_EXISTS",
+  "boeing_spirit_contact_effect": "NONE"
+}

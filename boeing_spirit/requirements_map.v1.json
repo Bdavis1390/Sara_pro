@@ -1,0 +1,72 @@
+{
+  "schema": "WS-BOEING-SPIRIT-REQUIREMENTS-MAP-V1",
+  "as_of": "2026-09-03",
+  "scope": "Public-source requirements and problem signals mapped to Worldshepherd internal solution components. This is not a Boeing-approved requirements baseline.",
+  "requirements": [
+    {
+      "id": "BS-Q-001",
+      "need": "Govern APQP/PPAP across launches, work transfers, and process changes.",
+      "public_basis": "Spirit Commercial APQP supplier-quality role",
+      "worldshepherd_components": ["SARA", "OVERWATCH-ECHO", "REVENUE-E2E"],
+      "solution": "Versioned APQP project graph with milestone, owner, evidence, dependency, schedule, exception, and approval state.",
+      "acceptance": ["all mandatory APQP artifacts linked", "change triggers re-evaluation", "late/missing dependencies block readiness", "audit lineage exportable"]
+    },
+    {
+      "id": "BS-Q-002",
+      "need": "Preserve Process Flow, PFMEA, Control Plan, SPC, MSA, and FAI consistency.",
+      "public_basis": "Spirit Commercial APQP supplier-quality role",
+      "worldshepherd_components": ["SARA", "OVERWATCH-ECHO"],
+      "solution": "Cross-document revision and evidence dependency checks with stale-state invalidation.",
+      "acceptance": ["process change invalidates stale downstream artifacts", "expired calibration/MSA cannot support release", "SPC signals generate traceable alerts", "FAI status remains configuration-specific"]
+    },
+    {
+      "id": "BS-Q-003",
+      "need": "Support proactive and risk-based supplier surveillance.",
+      "public_basis": "Boeing Supplier Quality Surveillance",
+      "worldshepherd_components": ["OVERWATCH-ECHO", "SARA", "PRE"],
+      "solution": "Risk-ranked surveillance workspace using bounded supplier/process evidence, finding history, open actions, and source freshness.",
+      "acceptance": ["risk inputs retain provenance", "surveillance rationale is auditable", "missing/stale data is visible", "no risk score silently becomes product acceptance"]
+    },
+    {
+      "id": "BS-Q-004",
+      "need": "Manage nonconformance, root-cause, corrective action, and recurrence evidence.",
+      "public_basis": "Boeing supplier-quality roles and published quality resources",
+      "worldshepherd_components": ["SARA", "OVERWATCH-ECHO", "REVENUE-E2E"],
+      "solution": "NCR -> containment -> root cause -> corrective action -> verification -> recurrence monitoring lineage.",
+      "acceptance": ["open NCRs cannot close without required evidence", "overdue CAPA alerts", "repeat issue linkage", "effectiveness verification retained"]
+    },
+    {
+      "id": "BS-Q-005",
+      "need": "Protect digital product definition and configuration lineage.",
+      "public_basis": "Boeing Supplier Quality digital product definition requirements",
+      "worldshepherd_components": ["AEROSHEPHERD", "SARA", "OVERWATCH-ECHO"],
+      "solution": "Configuration baseline and revision lineage for drawing/model/work instruction/process/inspection evidence.",
+      "acceptance": ["production/inspection evidence tied to exact revision", "revision mismatch blocks release state", "superseded evidence remains retained", "approval authority explicit"]
+    },
+    {
+      "id": "BS-Q-006",
+      "need": "Operate within AS9100-based quality-management expectations without claiming certification.",
+      "public_basis": "Boeing Quality page",
+      "worldshepherd_components": ["SARA", "REVENUE-E2E"],
+      "solution": "Control/evidence mapping to applicable quality clauses with explicit assessed/not-assessed state.",
+      "acceptance": ["no certification claim from mapping alone", "control owner/evidence/status explicit", "gaps fail closed", "partner-defined requirements override generic mapping"]
+    },
+    {
+      "id": "BS-Q-007",
+      "need": "Measure whether a quality intervention improves outcomes rather than merely producing documentation.",
+      "public_basis": "Worldshepherd evidence doctrine plus Boeing quality/supplier-performance emphasis",
+      "worldshepherd_components": ["REVENUE-E2E", "PRE", "OVERWATCH-ECHO"],
+      "solution": "Partner pilot with predeclared baseline, intervention, metrics, effect calculation, uncertainty, and independent review.",
+      "acceptance": ["baseline frozen before intervention", "metric definitions agreed", "raw/derived evidence retained", "effect and uncertainty reported", "negative/null results retained"]
+    },
+    {
+      "id": "BS-Q-008",
+      "need": "Keep supplier engagement and contracting through authorized Boeing channels.",
+      "public_basis": "Become a Boeing Supplier / ESLC process",
+      "worldshepherd_components": ["PRE", "REVENUE-E2E", "SARA"],
+      "solution": "Partner-safe capability package and contact gate tied to official supplier registration/procurement route.",
+      "acceptance": ["contact package passes claims gate", "protected IP excluded", "official route verified", "no contract/adoption claim before authorized procurement action"]
+    }
+  ],
+  "claims_boundary": "This map is an internal hypothesis-to-validation requirements map based on public sources. Boeing or Spirit must confirm actual requirements, data definitions, acceptance criteria, compliance obligations, and pilot scope before any production use."
+}

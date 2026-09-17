@@ -1,0 +1,107 @@
+{
+  "schema": "WS-BOEING-SPIRIT-PARTNER-PILOT-PROTOCOL-V1",
+  "as_of": "2026-09-03",
+  "status": "INTERNAL PREPARATION ONLY — NO PARTNER PILOT AUTHORIZED OR PERFORMED",
+  "purpose": "Define a bounded, reversible, evidence-bearing pilot that could test Worldshepherd quality/integration controls if Boeing or Spirit later authorizes a scoped evaluation.",
+  "entry_prerequisites": [
+    "named authorized partner sponsor and technical/quality owner",
+    "written pilot scope and decision authority",
+    "partner-authorized dataset or sandbox with provenance and use rights",
+    "data classification and handling determination",
+    "export-control/CUI/proprietary-data boundary established before transfer",
+    "applicable Boeing/Spirit quality requirements supplied by the partner",
+    "baseline metric definitions agreed before intervention",
+    "read-only or isolated sandbox first unless partner explicitly authorizes a higher-impact mode",
+    "rollback/termination procedure approved",
+    "independent reviewer identified before effect claims are accepted"
+  ],
+  "initial_scope": {
+    "included": [
+      "APQP/PPAP evidence lineage",
+      "Process Flow/PFMEA/Control Plan revision consistency",
+      "SPC/MSA/FAI evidence state",
+      "NCR/RCCA/CAPA lineage and overdue-action detection",
+      "supplier surveillance evidence provenance",
+      "configuration/work-instruction/inspection revision consistency",
+      "work-transfer/process-change dependency invalidation",
+      "quality-event evidence retrieval and audit lineage",
+      "bounded operational program-assumption traceability"
+    ],
+    "excluded": [
+      "airworthiness decisions",
+      "design approval authority",
+      "production release authority",
+      "MRB disposition authority",
+      "accounting or valuation opinions",
+      "contract pricing decisions",
+      "legal conclusions",
+      "CMMC/AS9100/FAA certification claims",
+      "autonomous modification of partner production systems"
+    ]
+  },
+  "phases": [
+    {
+      "id": "P0",
+      "name": "Scope and data contract",
+      "actions": ["freeze use case", "freeze data dictionary", "classify data", "record authoritative requirements", "define success/failure metrics", "record stop conditions"],
+      "exit": ["all entry prerequisites satisfied", "no unresolved prohibited-data path", "baseline metrics approved"]
+    },
+    {
+      "id": "P1",
+      "name": "Historical/read-only replay",
+      "actions": ["ingest authorized historical or synthetic-mirrored records", "run evidence dependency checks", "compare flags to partner ground truth", "measure false positives/false negatives", "measure evidence retrieval latency"],
+      "exit": ["ground-truth reconciliation complete", "no unauthorized write path", "error taxonomy retained"]
+    },
+    {
+      "id": "P2",
+      "name": "Shadow-mode prospective observation",
+      "actions": ["observe selected live workflow without controlling it", "generate non-authoritative alerts", "compare to normal partner process", "measure timeliness and provenance completeness"],
+      "exit": ["partner accepts shadow results for analysis", "no safety/quality authority confusion", "measurement uncertainty reported"]
+    },
+    {
+      "id": "P3",
+      "name": "Controlled intervention",
+      "actions": ["apply only approved workflow/evidence changes", "retain change log", "maintain rollback", "measure agreed operational effects", "retain adverse/null results"],
+      "exit": ["intervention period complete", "rollback verified", "raw and derived evidence retained"]
+    },
+    {
+      "id": "P4",
+      "name": "Independent review and closeout",
+      "actions": ["freeze analysis", "calculate effect and uncertainty", "review confounders", "independent reproduction/review", "issue bounded closeout report"],
+      "exit": ["review disposition recorded", "claims approved/rejected explicitly", "no broader maturity inferred"]
+    }
+  ],
+  "candidate_metrics": [
+    {"id": "M1", "name": "APQP milestone evidence completeness", "unit": "percent", "claim_limit": "process evidence completeness only"},
+    {"id": "M2", "name": "stale revision escape rate", "unit": "events per reviewed item", "claim_limit": "scope-specific detection only"},
+    {"id": "M3", "name": "FAI readiness discrepancy rate", "unit": "events per reviewed item", "claim_limit": "configuration-scoped evidence discrepancy only"},
+    {"id": "M4", "name": "NCR/RCCA/CAPA closure latency", "unit": "time", "claim_limit": "workflow latency; not root-cause correctness by itself"},
+    {"id": "M5", "name": "repeat nonconformance rate", "unit": "events per agreed denominator", "claim_limit": "partner defines truth and denominator"},
+    {"id": "M6", "name": "quality evidence retrieval latency", "unit": "time", "claim_limit": "retrieval performance only"},
+    {"id": "M7", "name": "preventable rework/inspection hours in pilot scope", "unit": "hours", "claim_limit": "requires partner-approved attribution method"},
+    {"id": "M8", "name": "schedule impact in pilot scope", "unit": "time", "claim_limit": "requires partner-approved causal model"},
+    {"id": "M9", "name": "false-positive and false-negative rates", "unit": "rate", "claim_limit": "only against partner-authorized ground truth"}
+  ],
+  "analysis_requirements": [
+    "freeze baseline before intervention",
+    "record denominator and missingness",
+    "retain raw/derived digests and software revision",
+    "report confidence intervals or appropriate uncertainty where meaningful",
+    "separate correlation from causal attribution",
+    "retain negative and null results",
+    "document process/production-rate/work-transfer confounders",
+    "predeclare materiality threshold before success is declared"
+  ],
+  "stop_conditions": [
+    "data classification or use rights are unresolved",
+    "CUI/export-controlled/proprietary information would enter an unapproved environment",
+    "pilot would make an airworthiness, release, MRB, or safety decision without authorized personnel",
+    "production write access is required before shadow-mode evidence supports escalation",
+    "audit/evidence integrity is uncertain",
+    "rollback cannot be demonstrated",
+    "partner ground truth is unavailable for a claimed detection metric",
+    "external language exceeds retained evidence"
+  ],
+  "contact_gate_effect": "NONE. A prepared pilot protocol does not satisfy partner_data_access, partner_pilot, measured_effect_size, security_compliance_fit, or independent_review. Those gates remain open until real authorized evidence exists.",
+  "claims_boundary": "This document is an internal protocol template, not evidence of Boeing/Spirit engagement, authorization, data access, pilot performance, defect reduction, savings, compliance, certification, airworthiness, adoption, or a probability of successful remediation."
+}
