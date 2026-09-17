@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -37,6 +38,8 @@ from worldshepherd_sara.registry_monotonic_witness import (
     RegistryWitnessCoordinates,
 )
 from worldshepherd_sara.registry_witness_gate import (
+    RegistryWitnessGateError,
+    RegistryWitnessPrecondition,
     RegistryWitnessPreconditionStale,
     assert_registry_witness_precondition,
     prepare_registry_witness_precondition,
@@ -188,14 +191,18 @@ def test_exact_witness_precondition_allows_release_and_is_bound_into_evidence(tm
     store, verifier, assertion, witness_client = _setup(tmp_path)
     precondition = _witness_current(store, witness_client)
     assert precondition.witness_mode == REMOTE_WITNESS_MODE
-    assert_registry_witness_precondition(store.get_registry(), precondition)
+    assert_registry_witness_precondition(
+        store.get_registry(),
+        precondition,
+        verifier=witness_client.verifier,
+    )
 
     result = _execute(
         store,
         verifier,
         assertion,
-        require_registry_witness=True,
         registry_witness_precondition=precondition,
+        registry_witness_verifier=witness_client.verifier,
     )
 
     assert result.disposition == PrimeMag1TransitionDisposition.APPLIED
@@ -233,8 +240,8 @@ def test_intervening_registry_change_makes_precondition_stale_and_preserves_auth
             store,
             verifier,
             assertion,
-            require_registry_witness=True,
             registry_witness_precondition=precondition,
+            registry_witness_verifier=witness_client.verifier,
         )
 
     after = store.get_registry()
@@ -246,19 +253,65 @@ def test_intervening_registry_change_makes_precondition_stale_and_preserves_auth
     ).state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
 
 
-def test_required_witness_missing_fails_before_consumption_or_release(tmp_path):
+def test_witness_is_mandatory_without_caller_selectable_opt_out(tmp_path):
     store, verifier, assertion, _witness_client = _setup(tmp_path)
     before = store.get_registry()
 
     with pytest.raises(
         PrimeMag1TransitionError,
-        match="witness precondition is required",
+        match="witness precondition is mandatory",
+    ):
+        _execute(store, verifier, assertion)
+
+    assert store.get_registry() == before
+    assert store.get_registry()[PRIME_SENTINEL_AUTHZ_REGISTRY_KEY][AUTH_ID]["status"] == "VERIFIED"
+
+
+def test_precondition_requires_pinned_verifier_even_when_receipt_is_present(tmp_path):
+    store, verifier, assertion, witness_client = _setup(tmp_path)
+    precondition = _witness_current(store, witness_client)
+    before = store.get_registry()
+
+    with pytest.raises(
+        PrimeMag1TransitionError,
+        match="pinned registry witness verifier is mandatory",
     ):
         _execute(
             store,
             verifier,
             assertion,
-            require_registry_witness=True,
+            registry_witness_precondition=precondition,
+        )
+
+    assert store.get_registry() == before
+
+
+def test_tampered_embedded_signed_receipt_fails_closed(tmp_path):
+    store, verifier, assertion, witness_client = _setup(tmp_path)
+    precondition = _witness_current(store, witness_client)
+    receipt = precondition.receipt()
+    receipt["state_root_sha256"] = "f" * 64
+    tampered = RegistryWitnessPrecondition(
+        generation=precondition.generation,
+        state_root_sha256=precondition.state_root_sha256,
+        commit_hash=precondition.commit_hash,
+        witness_id=precondition.witness_id,
+        witness_mode=precondition.witness_mode,
+        witness_receipt_sha256=precondition.witness_receipt_sha256,
+        witness_receipt_json=json.dumps(receipt, sort_keys=True, separators=(",", ":")),
+    )
+    before = store.get_registry()
+
+    with pytest.raises(
+        RegistryWitnessGateError,
+        match="pinned-key verification",
+    ):
+        _execute(
+            store,
+            verifier,
+            assertion,
+            registry_witness_precondition=tampered,
+            registry_witness_verifier=witness_client.verifier,
         )
 
     assert store.get_registry() == before
@@ -270,8 +323,8 @@ def test_precondition_evidence_never_claims_independence_or_post_transition_cove
     precondition = _witness_current(store, witness_client)
     evidence = precondition.evidence()
 
-    assert evidence["signature_verified"] is True
-    assert evidence["monotonic_match"] is True
+    assert evidence["signed_receipt_embedded"] is True
+    assert evidence["verification_required_at_use"] is True
     assert evidence["external_witnessed"] is False
     assert evidence["independence_verified"] is False
-    assert "later post-transition checkpoint" in evidence["claims_boundary"]
+    assert "post-transition checkpoint coverage" in evidence["claims_boundary"]
