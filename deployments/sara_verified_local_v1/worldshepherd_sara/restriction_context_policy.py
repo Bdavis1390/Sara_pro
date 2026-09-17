@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any, Literal
 
 
@@ -24,7 +26,7 @@ class MetadataRule:
 @dataclass(frozen=True)
 class RestrictionContextProfile:
     profile_id: str
-    metadata_rules: dict[str, MetadataRule]
+    metadata_rules: Mapping[str, MetadataRule]
     allowed_summaries: frozenset[str]
 
 
@@ -45,35 +47,39 @@ _CLAIMS_STATES = frozenset(
 
 _CHAT_ASSISTANT_PROFILE = RestrictionContextProfile(
     profile_id=CHAT_ASSISTANT_PROFILE_ID,
-    metadata_rules={
-        "stage": MetadataRule(
-            kind="enum",
-            allowed_values=frozenset(
-                {
-                    "pre_generation_policy_check",
-                    "post_generation_policy_check",
-                    "connector_policy_check",
-                }
+    metadata_rules=MappingProxyType(
+        {
+            "stage": MetadataRule(
+                kind="enum",
+                allowed_values=frozenset(
+                    {
+                        "pre_generation_policy_check",
+                        "post_generation_policy_check",
+                        "connector_policy_check",
+                    }
+                ),
             ),
-        ),
-        "claims_state": MetadataRule(
-            kind="enum",
-            allowed_values=_CLAIMS_STATES,
-        ),
-        "attempt": MetadataRule(
-            kind="integer",
-            minimum=1,
-            maximum=1000,
-        ),
-    },
+            "claims_state": MetadataRule(
+                kind="enum",
+                allowed_values=_CLAIMS_STATES,
+            ),
+            "attempt": MetadataRule(
+                kind="integer",
+                minimum=1,
+                maximum=1000,
+            ),
+        }
+    ),
     allowed_summaries=frozenset(
         {"Output was restricted; only bounded provenance is retained."}
     ),
 )
 
-_PROFILES: dict[tuple[str, str], RestrictionContextProfile] = {
-    ("CHAT_ASSISTANT", "POLICY_GATE"): _CHAT_ASSISTANT_PROFILE,
-}
+_PROFILES: Mapping[tuple[str, str], RestrictionContextProfile] = MappingProxyType(
+    {
+        ("CHAT_ASSISTANT", "POLICY_GATE"): _CHAT_ASSISTANT_PROFILE,
+    }
+)
 
 
 def _validate_rule(name: str, value: Any, rule: MetadataRule) -> Any:
