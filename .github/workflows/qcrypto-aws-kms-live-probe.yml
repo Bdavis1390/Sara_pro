@@ -8,11 +8,16 @@ on:
 #   secret QCRYPTO_AWS_ROLE_ARN
 #   variable QCRYPTO_AWS_REGION
 #   variable QCRYPTO_AWS_KMS_KEY_ID
-# The AWS role should be scoped only to DescribeKey, GetPublicKey, and Sign for
-# the designated ML_DSA_65 key. No static AWS access key is accepted here.
+# The AWS role should be scoped only to DescribeKey, GetPublicKey, Sign, and Verify
+# for the designated ML_DSA_65 key. No static AWS access key is accepted here.
 permissions:
   contents: read
   id-token: write
+
+env:
+  AWS_USE_FIPS_ENDPOINT: "true"
+  AWS_MAX_ATTEMPTS: "1"
+  AWS_RETRY_MODE: standard
 
 jobs:
   live-kms-non-transaction-probe:
@@ -71,11 +76,17 @@ jobs:
           assert e['claim_state']=='LIVE_AWS_KMS_ML_DSA_65_PROVIDER_CALL_OBSERVED'
           assert e['aws_live_api_called'] is True
           assert e['non_transaction_probe_only'] is True
+          assert e['aws_fips_endpoint_enforced'] is True
+          assert len(e['aws_fips_endpoint_host_sha256'])==64
+          assert e['sdk_total_max_attempts']==1
+          assert e['sdk_automatic_sign_retry_permitted'] is False
+          assert e['provider_side_verify_count']==1
           assert e['algorithm']=='ML-DSA-65'
           assert e['message_type']=='EXTERNAL_MU'
           assert e['signing_algorithm']=='ML_DSA_SHAKE_256'
           assert e['fips204_nonempty_context_preserved'] is True
           assert e['signature_verified_locally'] is True
+          assert e['cmvp_algorithm_scope_verified_for_mldsa'] is False
           assert e['worldshepherd_fips_validation_established'] is False
           assert e['federal_compliance_established'] is False
           assert e['independent_validation_established'] is False
