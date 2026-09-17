@@ -18,7 +18,6 @@ from worldshepherd_sara.restriction_provenance import (
     RESTRICTION_EVENT,
     RESTRICTION_SCHEMA,
     RESTRICTION_SCHEMA_V1,
-    RESTRICTION_SCHEMA_V2,
     capture_restriction,
     queue_restriction_event,
 )
