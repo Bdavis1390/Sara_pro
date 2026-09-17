@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+MAX_AUTHORIZATION_LIFETIME = timedelta(minutes=15)
 
 
 class AuthorizationDisposition(str, Enum):
@@ -38,6 +41,8 @@ class AuthorizationEnvelope(BaseModel):
             raise ValueError("issued_at and expires_at must be timezone-aware")
         if self.expires_at <= self.issued_at:
             raise ValueError("expires_at must be after issued_at")
+        if self.expires_at - self.issued_at > MAX_AUTHORIZATION_LIFETIME:
+            raise ValueError("authorization lifetime exceeds 15 minutes")
         if self.delegation_depth > self.maximum_delegation_depth:
             raise ValueError("delegation depth exceeds authorization ceiling")
         return self
