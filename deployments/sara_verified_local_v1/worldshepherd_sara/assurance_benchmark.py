@@ -25,7 +25,7 @@ class DimensionScore(BaseModel):
     notes: str | None = None
 
     @model_validator(mode="after")
-    def require_all_or_none(self) -> "DimensionScore":
+    def validate_score_dependencies(self) -> "DimensionScore":
         values = [
             self.functional_capability,
             self.evidence_strength,
@@ -38,8 +38,64 @@ class DimensionScore(BaseModel):
                 "a dimension must be fully scored or fully NOT_EVALUATED; "
                 "partial scoring is not allowed"
             )
-        if populated == 4 and not self.evidence_refs:
+        if populated == 0:
+            if self.evidence_refs:
+                raise ValueError("NOT_EVALUATED dimensions must not carry evidence_refs")
+            return self
+
+        if not self.evidence_refs:
             raise ValueError("a scored dimension requires at least one evidence_ref")
+
+        assert self.functional_capability is not None
+        assert self.evidence_strength is not None
+        assert self.interoperability is not None
+        assert self.external_use is not None
+
+        functional = self.functional_capability
+        evidence = self.evidence_strength
+        interoperability = self.interoperability
+        external = self.external_use
+
+        # Prevent additive-score gaming. Evidence, interoperability and external-use
+        # credit depend on a real capability being present at an appropriate level.
+        if functional == 0 and any((evidence, interoperability, external)):
+            raise ValueError(
+                "absent capability (functional_capability=0) cannot receive evidence, "
+                "interoperability, or external-use credit"
+            )
+        if functional == 1:
+            if evidence > 1:
+                raise ValueError(
+                    "documented/design-only capability cannot receive reproducible or "
+                    "independent evidence credit"
+                )
+            if interoperability > 1:
+                raise ValueError(
+                    "documented/design-only capability cannot receive executable/native "
+                    "interoperability credit"
+                )
+            if external > 0:
+                raise ValueError(
+                    "documented/design-only capability cannot receive external-use credit"
+                )
+        if interoperability > 0 and functional < 1:
+            raise ValueError("interoperability credit requires a documented capability")
+        if interoperability == 2 and functional < 2:
+            raise ValueError(
+                "native/executable interoperability credit requires implemented capability"
+            )
+        if evidence >= 2 and functional < 2:
+            raise ValueError(
+                "reproducible/independent evidence credit requires implemented capability"
+            )
+        if external > 0 and (functional < 2 or evidence < 1):
+            raise ValueError(
+                "external-use credit requires implemented capability and attributable evidence"
+            )
+        if external == 2 and evidence < 2:
+            raise ValueError(
+                "accepted/upstream/customer-use credit requires reproducible evidence strength"
+            )
         return self
 
     @property
@@ -68,8 +124,12 @@ class CandidateScore(BaseModel):
 class BenchmarkRun(BaseModel):
     schema_version: str = SCHEMA_VERSION
     benchmark_version: str = Field(min_length=1, max_length=80)
+    benchmark_protocol_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     declared_dimensions: list[str] = Field(min_length=1)
     candidates: list[CandidateScore] = Field(min_length=2)
+    comparison_set_rationale: str | None = Field(default=None, max_length=8000)
     external_evaluator_record: str | None = None
     raw_results_sha256: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
@@ -143,9 +203,15 @@ def evaluate_run(run: BenchmarkRun) -> dict[str, Any]:
         if ordered[0]["comparable_total"] > ordered[1]["comparable_total"]:
             winner = str(ordered[0]["candidate_id"])
 
+    all_candidates_frozen = all(
+        bool(candidate.artifact_digest) for candidate in run.candidates
+    )
     claim_ready = bool(
         full_comparison
         and winner
+        and all_candidates_frozen
+        and run.benchmark_protocol_sha256
+        and run.comparison_set_rationale
         and run.external_evaluator_record
         and run.raw_results_sha256
     )
@@ -153,10 +219,12 @@ def evaluate_run(run: BenchmarkRun) -> dict[str, Any]:
     return {
         "schema_version": run.schema_version,
         "benchmark_version": run.benchmark_version,
+        "benchmark_protocol_sha256": run.benchmark_protocol_sha256,
         "declared_dimensions": run.declared_dimensions,
         "common_comparable_dimensions": common_dimensions,
         "not_evaluated": not_evaluated,
         "full_comparison": full_comparison,
+        "all_candidates_frozen": all_candidates_frozen,
         "candidate_results": candidate_results,
         "winner": winner,
         "claim_ready": claim_ready,
