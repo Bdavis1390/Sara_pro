@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
 from fastapi.testclient import TestClient
 
 from worldshepherd_sara.app import app
@@ -10,9 +10,9 @@ from worldshepherd_sara.app import app
 
 @pytest.fixture(autouse=True)
 def echo_checkpoint_key(monkeypatch: pytest.MonkeyPatch, tmp_path_factory):
-    key = Ed25519PrivateKey.generate()
+    key = MLDSA65PrivateKey.generate()
     key_dir = tmp_path_factory.mktemp("echo-checkpoint-key")
-    path = key_dir / "echo-checkpoint-ed25519-private.pem"
+    path = key_dir / "echo-checkpoint-mldsa65-private.pem"
     path.write_bytes(
         key.private_bytes(
             encoding=serialization.Encoding.PEM,
@@ -21,8 +21,9 @@ def echo_checkpoint_key(monkeypatch: pytest.MonkeyPatch, tmp_path_factory):
         )
     )
     path.chmod(0o600)
+    monkeypatch.setenv("ECHO_CHECKPOINT_ALGORITHM", "ML-DSA-65")
     monkeypatch.setenv("ECHO_CHECKPOINT_PRIVATE_KEY_FILE", str(path.resolve()))
-    monkeypatch.setenv("ECHO_CHECKPOINT_KEY_ID", "ECHO-CHECKPOINT-PYTEST-V1")
+    monkeypatch.setenv("ECHO_CHECKPOINT_KEY_ID", "ECHO-CHECKPOINT-PYTEST-MLDSA65-V1")
     return key, path
 
 

@@ -1,0 +1,131 @@
+name: QCRYPTO ECHO Checkpoint Agility Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_signer.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_verify.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_integrity.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_persistence_service.py'
+      - 'deployments/sara_verified_local_v1/tests/conftest.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint_signer_agility.py'
+      - '.github/workflows/qcrypto-echo-checkpoint-agility.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_signer.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_verify.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_checkpoint_integrity.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/echo_persistence_service.py'
+      - 'deployments/sara_verified_local_v1/tests/conftest.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint.py'
+      - 'deployments/sara_verified_local_v1/tests/test_echo_checkpoint_signer_agility.py'
+      - '.github/workflows/qcrypto-echo-checkpoint-agility.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  checkpoint-agility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned test environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile checkpoint runtime
+        run: |
+          python -m compileall \
+            worldshepherd_sara/echo_checkpoint.py \
+            worldshepherd_sara/echo_checkpoint_signer.py \
+            worldshepherd_sara/echo_checkpoint_verify.py \
+            worldshepherd_sara/echo_checkpoint_integrity.py \
+            worldshepherd_sara/echo_persistence_service.py
+
+      - name: Run checkpoint and signer regressions
+        run: |
+          pytest -q \
+            tests/test_echo_checkpoint.py \
+            tests/test_echo_checkpoint_signer_agility.py
+
+      - name: Generate checkpoint runtime evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from worldshepherd_sara.echo_checkpoint_signer import runtime_capabilities
+
+          state=runtime_capabilities()
+          assert state['current_executable_algorithm']=='ML-DSA-65'
+          assert state['legacy_executable_algorithm']=='Ed25519'
+          assert set(state['recognized_pq_targets'])=={'ML-DSA','ML-DSA-65','SLH-DSA'}
+          assert state['pq_runtime_signer_installed'] is True
+          assert state['default_runtime_is_post_quantum'] is True
+          assert state['classical_fallback_on_pq_request'] is False
+          assert state['signature_context']=='WS-ECHO-CHECKPOINT-V2'
+          evidence={
+              'schema':'WS-ECHO-CHECKPOINT-AGILITY-EVIDENCE-V2',
+              'status':'PASS',
+              'runtime':state,
+              'mldsa65_runtime_implemented':True,
+              'mldsa65_default_runtime':True,
+              'legacy_ed25519_explicit_only':True,
+              'classical_fallback_on_pq_request':False,
+              'production_deployment_established':False,
+              'transport_pq_security_established':False,
+              'end_to_end_pq_security_established':False,
+              'claim_boundary':(
+                  'ML-DSA-65 checkpoint signature runtime is implemented and tested. '
+                  'This gate does not establish deployment of the key material, PQ-secure transport, '
+                  'external key custody, FIPS 140 module validation, or end-to-end PQ security.'
+              ),
+          }
+          Path('echo-checkpoint-agility-evidence.json').write_text(
+              json.dumps(evidence,sort_keys=True,indent=2)+'\n',encoding='utf-8'
+          )
+          print('echo_checkpoint_agility_status: PASS')
+          PY
+
+      - name: Assert claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path('echo-checkpoint-agility-evidence.json').read_text())
+          assert e['status']=='PASS'
+          assert e['mldsa65_runtime_implemented'] is True
+          assert e['mldsa65_default_runtime'] is True
+          assert e['legacy_ed25519_explicit_only'] is True
+          assert e['classical_fallback_on_pq_request'] is False
+          assert e['production_deployment_established'] is False
+          assert e['transport_pq_security_established'] is False
+          assert e['end_to_end_pq_security_established'] is False
+          PY
+
+      - name: Upload checkpoint agility evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-echo-checkpoint-agility-evidence
+          path: deployments/sara_verified_local_v1/echo-checkpoint-agility-evidence.json
+          if-no-files-found: error

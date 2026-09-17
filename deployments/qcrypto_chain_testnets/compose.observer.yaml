@@ -1,0 +1,102 @@
+services:
+  bitcoin-signet:
+    image: ${BITCOIN_CORE_IMAGE:?set a digest-pinned Bitcoin Core image}
+    entrypoint: ["bitcoind"]
+    command:
+      - -signet
+      - -server=1
+      - -disablewallet=1
+      - -rpcbind=127.0.0.1
+      - -printtoconsole=1
+    restart: unless-stopped
+    volumes:
+      - bitcoin-signet-data:/home/bitcoin/.bitcoin
+    networks:
+      - qcrypto-chain
+    healthcheck:
+      test: ["CMD-SHELL", "bitcoin-cli -signet getblockchaininfo >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  ethereum-execution:
+    image: ${ETHEREUM_EXECUTION_IMAGE:?set a digest-pinned Hoodi-capable execution image}
+    entrypoint: ["geth"]
+    command:
+      - --hoodi
+      - --datadir=/data
+      - --http=false
+      - --ws=false
+      - --authrpc.addr=0.0.0.0
+      - --authrpc.port=8551
+      - --authrpc.vhosts=ethereum-execution
+      - --authrpc.jwtsecret=/run/secrets/engine-jwt
+    restart: unless-stopped
+    volumes:
+      - ethereum-execution-data:/data
+    secrets:
+      - engine-jwt
+    networks:
+      - qcrypto-chain
+    healthcheck:
+      test: ["CMD-SHELL", "geth attach /data/geth.ipc --exec 'eth.blockNumber' >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+
+  ethereum-consensus:
+    image: ${ETHEREUM_CONSENSUS_IMAGE:?set a digest-pinned Hoodi-capable consensus image}
+    entrypoint: ["lighthouse"]
+    command:
+      - bn
+      - --network
+      - hoodi
+      - --datadir
+      - /data
+      - --execution-endpoint
+      - http://ethereum-execution:8551
+      - --execution-jwt
+      - /run/secrets/engine-jwt
+      - --checkpoint-sync-url
+      - ${ETHEREUM_CHECKPOINT_SYNC_URL:?set a reviewed Hoodi checkpoint sync URL}
+      - --checkpoint-sync-url-timeout
+      - "180"
+      - --disable-upnp
+      - --http
+      - --http-address
+      - 0.0.0.0
+      - --http-port
+      - "5052"
+    restart: unless-stopped
+    depends_on:
+      ethereum-execution:
+        condition: service_healthy
+    volumes:
+      - ethereum-consensus-data:/data
+    secrets:
+      - engine-jwt
+    networks:
+      - qcrypto-chain
+    ports:
+      - "127.0.0.1:5052:5052"
+    healthcheck:
+      test: ["CMD-SHELL", "lighthouse --version >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+networks:
+  qcrypto-chain:
+    internal: false
+
+volumes:
+  bitcoin-signet-data:
+  ethereum-execution-data:
+  ethereum-consensus-data:
+
+secrets:
+  engine-jwt:
+    file: ./secrets/engine-jwt.hex

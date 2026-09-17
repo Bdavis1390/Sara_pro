@@ -12,6 +12,7 @@ services:
       SARA_BIND_HOST: 0.0.0.0
       SARA_DATA_DIR: /var/lib/sara
       SARA_MODE: docker-local-verified
+      PRIME_SENTINEL_SIGNING_ALGORITHM: ""
       PRIME_SENTINEL_PRIVATE_KEY_FILE: ""
       PRIME_SENTINEL_SERVICE_TOKEN_FILE: ""
       PRIME_SENTINEL_SERVICE_TOKEN: ""
@@ -19,6 +20,7 @@ services:
       PRIME_SENTINEL_DATA_DIR: ""
       ECHO_INGEST_TOKEN_FILE: ""
       ECHO_DATA_DIR: ""
+      ECHO_CHECKPOINT_ALGORITHM: ""
       ECHO_CHECKPOINT_PRIVATE_KEY_FILE: ""
       ECHO_CHECKPOINT_KEY_ID: ""
     ports:
@@ -56,20 +58,22 @@ services:
       - --port
       - "9540"
     environment:
-      PRIME_SENTINEL_PRIVATE_KEY_FILE: /run/worldshepherd-prime-sentinel/ed25519-private.pem
+      PRIME_SENTINEL_SIGNING_ALGORITHM: ${PRIME_SENTINEL_SIGNING_ALGORITHM:-ML-DSA-65}
+      PRIME_SENTINEL_PRIVATE_KEY_FILE: /run/worldshepherd-prime-sentinel/mldsa65-private.pem
       PRIME_SENTINEL_SERVICE_TOKEN_FILE: /run/worldshepherd-prime-sentinel/service-token
       PRIME_SENTINEL_SIGNING_KEY_ID: ${PRIME_SENTINEL_SIGNING_KEY_ID:-UNCONFIGURED}
       PRIME_SENTINEL_DATA_DIR: /var/lib/prime-sentinel
       ECHO_INGEST_TOKEN_FILE: ""
       ECHO_DATA_DIR: ""
+      ECHO_CHECKPOINT_ALGORITHM: ""
       ECHO_CHECKPOINT_PRIVATE_KEY_FILE: ""
       ECHO_CHECKPOINT_KEY_ID: ""
     ports:
       - "127.0.0.1:${PRIME_SENTINEL_HOST_PORT:-9540}:9540"
     volumes:
       - type: bind
-        source: ${PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel/ed25519-private.pem}
-        target: /run/worldshepherd-prime-sentinel/ed25519-private.pem
+        source: ${PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel/mldsa65-private.pem}
+        target: /run/worldshepherd-prime-sentinel/mldsa65-private.pem
         read_only: true
       - type: bind
         source: ${PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel/service-token}
@@ -111,10 +115,12 @@ services:
     environment:
       ECHO_INGEST_TOKEN_FILE: /run/worldshepherd-echo/ingest-token
       ECHO_DATA_DIR: /var/lib/echo
-      ECHO_CHECKPOINT_PRIVATE_KEY_FILE: /run/worldshepherd-echo/checkpoint-ed25519-private.pem
+      ECHO_CHECKPOINT_ALGORITHM: ${ECHO_CHECKPOINT_ALGORITHM:-ML-DSA-65}
+      ECHO_CHECKPOINT_PRIVATE_KEY_FILE: /run/worldshepherd-echo/checkpoint-mldsa65-private.pem
       ECHO_CHECKPOINT_KEY_ID: ${ECHO_CHECKPOINT_KEY_ID:-UNCONFIGURED}
       SARA_ADMIN_TOKEN: ""
       SARA_RELAY_TOKEN: ""
+      PRIME_SENTINEL_SIGNING_ALGORITHM: ""
       PRIME_SENTINEL_PRIVATE_KEY_FILE: ""
       PRIME_SENTINEL_SERVICE_TOKEN_FILE: ""
       PRIME_SENTINEL_SERVICE_TOKEN: ""
@@ -128,8 +134,8 @@ services:
         target: /run/worldshepherd-echo/ingest-token
         read_only: true
       - type: bind
-        source: ${ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/echo/checkpoint-ed25519-private.pem}
-        target: /run/worldshepherd-echo/checkpoint-ed25519-private.pem
+        source: ${ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/echo/checkpoint-mldsa65-private.pem}
+        target: /run/worldshepherd-echo/checkpoint-mldsa65-private.pem
         read_only: true
       - echo_data:/var/lib/echo
     read_only: true

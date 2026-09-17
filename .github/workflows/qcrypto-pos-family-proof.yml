@@ -1,0 +1,79 @@
+name: QCRYPTO Multi-PoS Preservation Gate
+
+on:
+  pull_request:
+    paths:
+      - "security/qcrypto/pos_family_preservation.py"
+      - "scripts/qcrypto_pos_family_proof.py"
+      - "tests/test_qcrypto_pos_family_preservation.py"
+      - ".github/workflows/qcrypto-pos-family-proof.yml"
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - "security/qcrypto/pos_family_preservation.py"
+      - "scripts/qcrypto_pos_family_proof.py"
+      - "tests/test_qcrypto_pos_family_preservation.py"
+      - ".github/workflows/qcrypto-pos-family-proof.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  multi-pos-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile multi-PoS proof lane
+        run: python -m compileall security/qcrypto/pos_family_preservation.py scripts/qcrypto_pos_family_proof.py
+
+      - name: Run multi-PoS preservation regressions
+        env:
+          PYTHONPATH: .
+        run: pytest -q tests/test_qcrypto_pos_family_preservation.py
+
+      - name: Generate machine-readable family proof
+        env:
+          PYTHONPATH: .
+        run: python scripts/qcrypto_pos_family_proof.py --output qpos-family-proof.json
+
+      - name: Assert bounded family proof and claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          proof = json.loads(Path("qpos-family-proof.json").read_text())
+          report = proof["report"]
+          assert proof["schema"] == "WS-QPOS-FAMILY-PRESERVATION-PROOF-V1"
+          assert proof["proof_scope"] == "BOUNDED_MULTI_POS_ADAPTER_MODEL_ONLY"
+          assert proof["production_chain_security"] == "NOT_PROVEN_HERE"
+          assert proof["live_network_actions"] is False
+          assert report["status"] == "PASS"
+          assert report["claim_state"] == "BOUNDED_MULTI_POS_MIGRATION_PRESERVATION_PROVEN_IN_SOFTWARE"
+          assert report["profiles_checked"] == 19
+          assert report["transition_cases"] == 152
+          assert report["invalid_order_cases"] == 38
+          assert report["duplicate_weight_cases"] == 19
+          assert len(proof["evidence_sha256"]) == 64
+          print("multi_pos_status: PASS")
+          print("profiles_checked:", report["profiles_checked"])
+          print("evidence_sha256:", proof["evidence_sha256"])
+          PY
+
+      - name: Upload multi-PoS proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qpos-multi-pos-preservation-proof
+          path: qpos-family-proof.json
+          if-no-files-found: error

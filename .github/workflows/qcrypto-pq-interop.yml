@@ -1,0 +1,101 @@
+name: QCRYPTO Concrete PQ Interop Gate
+
+on:
+  pull_request:
+    paths:
+      - "security/qcrypto/pq_signature_interop.py"
+      - "security/qcrypto/pos_family_preservation.py"
+      - "security/qcrypto/pos_pq_benchmarks.py"
+      - "scripts/qcrypto_pq_interop_evidence.py"
+      - "tests/test_qcrypto_pq_signature_interop.py"
+      - ".github/workflows/qcrypto-pq-interop.yml"
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - "security/qcrypto/pq_signature_interop.py"
+      - "security/qcrypto/pos_family_preservation.py"
+      - "security/qcrypto/pos_pq_benchmarks.py"
+      - "scripts/qcrypto_pq_interop_evidence.py"
+      - "tests/test_qcrypto_pq_signature_interop.py"
+      - ".github/workflows/qcrypto-pq-interop.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pq-interop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned PQ backend and test dependency
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: "pqcrypto==1.0.0" pytest
+
+      - name: Compile WS-QPOS-2 interop lane
+        run: python -m compileall security/qcrypto/pq_signature_interop.py security/qcrypto/pos_family_preservation.py security/qcrypto/pos_pq_benchmarks.py scripts/qcrypto_pq_interop_evidence.py
+
+      - name: Run concrete PQ interop regressions
+        env:
+          PYTHONPATH: .
+        run: pytest -q tests/test_qcrypto_pq_signature_interop.py
+
+      - name: Generate machine-readable PQ evidence
+        env:
+          PYTHONPATH: .
+        run: python scripts/qcrypto_pq_interop_evidence.py --output qpos-pq-interop.json
+
+      - name: Assert concrete PQ claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = json.loads(Path("qpos-pq-interop.json").read_text())
+          assert evidence["schema"] == "WS-QPOS-2-CONCRETE-PQ-INTEROP-V2"
+          assert evidence["status"] == "PASS"
+          assert evidence["claim_state"] == "STANDARDS_BACKED_PQ_SIGNATURE_INTEROPERABILITY_PROVEN_IN_CI"
+          assert evidence["family_binding_state"] == "19_TARGET_POS_PROFILES_PLUS_QRL2_EXTERNAL_PQ_POS_BENCHMARK_INTEROPERABLE_IN_CI"
+          assert evidence["proof_scope"] == "EPHEMERAL_ZERO_VALUE_INTEROPERABILITY_ONLY"
+          assert evidence["backend"]["pinned_version"] == "1.0.0"
+          assert evidence["target_profile_count"] == 19
+          assert evidence["benchmark_profile_count"] == 1
+          assert evidence["scheme_count"] == 3
+          assert evidence["family_probe_count"] == 57
+          assert evidence["benchmark_probe_count"] == 1
+          assert len(evidence["baseline_results"]) == 3
+          assert len(evidence["family_results"]) == 57
+          assert len(evidence["benchmark_results"]) == 1
+          assert evidence["external_benchmark_environment"] == "TESTNET_NOT_MAINNET"
+          assert evidence["benchmarks"]["QRL2_TESTNET"]["production_mainnet_pq_consensus"] is False
+          assert evidence["benchmark_results"][0]["chain_family"] == "QRL2_TESTNET"
+          assert evidence["benchmark_results"][0]["scheme"] == "ML-DSA-87"
+          assert evidence["secret_material_in_evidence"] is False
+          assert evidence["production_consensus_security"] == "NOT_PROVEN_HERE"
+          for result in evidence["baseline_results"] + evidence["family_results"] + evidence["benchmark_results"]:
+              assert result["valid_signature_verified"] is True
+              assert result["tampered_message_rejected"] is True
+              assert result["wrong_key_rejected"] is True
+              assert result["secret_material_retained"] is False
+          assert len({r["chain_family"] for r in evidence["family_results"]}) == 19
+          assert len(evidence["evidence_sha256"]) == 64
+          print("pq_interop_status: PASS")
+          print("family_probe_count:", evidence["family_probe_count"])
+          print("benchmark_probe_count:", evidence["benchmark_probe_count"])
+          print("claim_state:", evidence["claim_state"])
+          print("evidence_sha256:", evidence["evidence_sha256"])
+          PY
+
+      - name: Upload concrete PQ interop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qpos-2-concrete-pq-interop
+          path: qpos-pq-interop.json
+          if-no-files-found: error

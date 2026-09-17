@@ -1,0 +1,94 @@
+name: QCRYPTO Worldshepherd Transition Profile Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'security/qcrypto/worldshepherd_pqc_transition_profile.py'
+      - 'tests/test_qcrypto_worldshepherd_pqc_transition_profile.py'
+      - 'scripts/qcrypto_worldshepherd_transition_evidence.py'
+      - '.github/workflows/qcrypto-worldshepherd-transition-profile.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'security/qcrypto/worldshepherd_pqc_transition_profile.py'
+      - 'tests/test_qcrypto_worldshepherd_pqc_transition_profile.py'
+      - 'scripts/qcrypto_worldshepherd_transition_evidence.py'
+      - '.github/workflows/qcrypto-worldshepherd-transition-profile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  component-transition-profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile transition profile
+        run: |
+          python -m compileall \
+            security/qcrypto/pqc_algorithm_policy.py \
+            security/qcrypto/worldshepherd_pqc_transition_profile.py \
+            scripts/qcrypto_worldshepherd_transition_evidence.py
+
+      - name: Run component transition regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_pqc_algorithm_policy.py \
+            tests/test_qcrypto_worldshepherd_pqc_transition_profile.py
+
+      - name: Generate component transition evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_worldshepherd_transition_evidence.py \
+            --output worldshepherd-pqc-transition-evidence.json
+
+      - name: Assert fail-closed component posture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e=json.loads(Path('worldshepherd-pqc-transition-evidence.json').read_text())
+          assert e['schema']=='WS-COMPONENT-PQC-TRANSITION-EVIDENCE-V1'
+          assert e['status']=='PASS'
+          s=e['summary']
+          assert s['echo_checkpoint_current_algorithm']=='ED25519'
+          assert s['echo_checkpoint_target_algorithm']=='ML-DSA'
+          assert s['echo_checkpoint_transition_phase']=='TARGET_SELECTED_IMPLEMENTATION_BLOCKED'
+          assert s['sara_echo_transport_transition_phase']=='INVENTORY_REQUIRED'
+          assert s['pos_validator_reference_testnet_phase']=='PUBLIC_TESTNET_CANDIDATE'
+          assert s['production_pq_ready_component_count']==0
+          assert s['end_to_end_pq_security_component_count']==0
+          assert s['execution_authority_component_count']==0
+          assert s['human_approval_required_for_all'] is True
+          assert s['rollback_evidence_required_for_all'] is True
+          assert len(e['evidence_sha256'])==64
+          print('worldshepherd_component_transition_status: PASS')
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload component transition evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-component-pqc-transition-evidence
+          path: worldshepherd-pqc-transition-evidence.json
+          if-no-files-found: error

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import sqlite3
@@ -7,6 +8,7 @@ import sqlite3
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
 from fastapi.testclient import TestClient
 
 from worldshepherd_sara.echo_checkpoint import (
@@ -15,6 +17,7 @@ from worldshepherd_sara.echo_checkpoint import (
     EchoCheckpointManager,
 )
 from worldshepherd_sara.echo_checkpoint_integrity import check_checkpoint_integrity
+from worldshepherd_sara.echo_checkpoint_signer import CHECKPOINT_SIGNATURE_CONTEXT
 from worldshepherd_sara.echo_checkpoint_verify import (
     EchoCheckpointVerificationError,
     verify_bundle,
@@ -39,14 +42,21 @@ def record(event_id: str, value: int) -> AuditRecord:
     )
 
 
-def manager(tmp_path, key: Ed25519PrivateKey) -> tuple[EchoEventStore, EchoCheckpointManager]:
+def manager(tmp_path, key: MLDSA65PrivateKey) -> tuple[EchoEventStore, EchoCheckpointManager]:
     root = tmp_path / "echo-checkpoint-data"
     root.mkdir(mode=0o700)
     store = EchoEventStore(root.resolve())
-    return store, EchoCheckpointManager(store, private_key=key, key_id="ECHO-CHECKPOINT-TEST-V1")
+    return store, EchoCheckpointManager(
+        store,
+        private_key=key,
+        key_id="ECHO-CHECKPOINT-MLDSA65-TEST-V1",
+    )
 
 
-def test_two_checkpoint_chain_verifies_and_survives_manager_restart(tmp_path, echo_checkpoint_key):
+def test_two_checkpoint_chain_verifies_as_post_quantum_and_survives_restart(
+    tmp_path,
+    echo_checkpoint_key,
+):
     key, _path = echo_checkpoint_key
     store, checkpoints = manager(tmp_path, key)
     store.ingest(record("SARA-EVENT-11111111-1111-1111-1111-111111111111", 1))
@@ -59,12 +69,24 @@ def test_two_checkpoint_chain_verifies_and_survives_manager_restart(tmp_path, ec
     assert summary["status"] == "PASS"
     assert summary["checkpoint_count"] == 2
     assert summary["last_sequence"] == 2
+    assert summary["latest_algorithm"] == "ML-DSA-65"
+    assert summary["post_quantum_signature_protection"] is True
+    assert summary["pq_anchor_sequence"] == 1
     assert second["manifest"]["previous_checkpoint_sha256"] == first["checkpoint_sha256"]
+    assert second["manifest"]["signature_context"] == CHECKPOINT_SIGNATURE_CONTEXT.decode("ascii")
+    assert first["public_key"]["algorithm"] == "ML-DSA-65"
     assert check_checkpoint_integrity(checkpoints)["ok"] is True
 
-    restarted = EchoCheckpointManager(store, private_key=key, key_id="ECHO-CHECKPOINT-TEST-V1")
+    restarted = EchoCheckpointManager(
+        store,
+        private_key=key,
+        key_id="ECHO-CHECKPOINT-MLDSA65-TEST-V1",
+    )
     status = check_checkpoint_integrity(restarted)
     assert status["checkpoint_count"] == 2
+    assert status["algorithm"] == "ML-DSA-65"
+    assert status["post_quantum_signature_protection"] is True
+    assert status["pq_anchor_sequence"] == 1
     assert restarted.get_checkpoint(2) == second
 
 
@@ -75,7 +97,10 @@ def test_bundle_tampering_and_unpinned_key_are_rejected(tmp_path, echo_checkpoin
     store.ingest(record("SARA-EVENT-22222222-2222-2222-2222-222222222222", 2))
     bundle = checkpoints.create_checkpoint()
     fingerprint = checkpoints.fingerprint_sha256
-    assert verify_bundle(bundle, fingerprint)["event_count"] == 2
+    verified = verify_bundle(bundle, fingerprint)
+    assert verified["event_count"] == 2
+    assert verified["algorithm"] == "ML-DSA-65"
+    assert verified["post_quantum_signature_protection"] is True
 
     mutations = []
     deleted = copy.deepcopy(bundle)
@@ -91,20 +116,24 @@ def test_bundle_tampering_and_unpinned_key_are_rejected(tmp_path, echo_checkpoin
     substituted["manifest"]["events"][0]["semantic_sha256"] = "0" * 64
     mutations.append(substituted)
 
+    wrong_context = copy.deepcopy(bundle)
+    wrong_context["manifest"]["signature_context"] = "WS-ECHO-CHECKPOINT-TAMPERED"
+    mutations.append(wrong_context)
+
     bad_signature = copy.deepcopy(bundle)
-    bad_signature["signature_b64url"] = "A" * 86
+    bad_signature["signature_b64url"] = base64.urlsafe_b64encode(b"\x00" * 3309).rstrip(b"=").decode()
     mutations.append(bad_signature)
 
     for mutated in mutations:
         with pytest.raises(EchoCheckpointVerificationError):
             verify_bundle(mutated, fingerprint)
 
-    other = Ed25519PrivateKey.generate().public_key().public_bytes(
+    other = MLDSA65PrivateKey.generate().public_key().public_bytes(
         encoding=serialization.Encoding.Raw,
         format=serialization.PublicFormat.Raw,
     )
     swapped = copy.deepcopy(bundle)
-    swapped["public_key"]["public_key_b64url"] = __import__("base64").urlsafe_b64encode(other).rstrip(b"=").decode()
+    swapped["public_key"]["public_key_b64url"] = base64.urlsafe_b64encode(other).rstrip(b"=").decode()
     swapped["public_key"]["fingerprint_sha256"] = hashlib.sha256(other).hexdigest()
     with pytest.raises(EchoCheckpointVerificationError, match="not trusted"):
         verify_bundle(swapped, fingerprint)
@@ -152,12 +181,36 @@ def test_key_id_cannot_be_rebound_to_new_key(tmp_path, echo_checkpoint_key):
     with pytest.raises(EchoCheckpointConfigError, match="different key material"):
         EchoCheckpointManager(
             store,
-            private_key=Ed25519PrivateKey.generate(),
-            key_id="ECHO-CHECKPOINT-TEST-V1",
+            private_key=MLDSA65PrivateKey.generate(),
+            key_id="ECHO-CHECKPOINT-MLDSA65-TEST-V1",
         )
 
 
-def test_service_creates_exports_and_reports_signed_checkpoint(tmp_path, monkeypatch, echo_checkpoint_key):
+def test_legacy_ed25519_checkpoint_remains_verifiable_but_is_not_pq(tmp_path):
+    root = tmp_path / "echo-legacy-data"
+    root.mkdir(mode=0o700)
+    store = EchoEventStore(root.resolve())
+    key = Ed25519PrivateKey.generate()
+    checkpoints = EchoCheckpointManager(
+        store,
+        private_key=key,
+        key_id="ECHO-CHECKPOINT-LEGACY-ED25519-V1",
+    )
+    store.ingest(record("SARA-EVENT-33333333-3333-3333-3333-333333333333", 3))
+    bundle = checkpoints.create_checkpoint()
+    verified = verify_bundle(bundle, checkpoints.fingerprint_sha256)
+    assert verified["algorithm"] == "Ed25519"
+    assert verified["post_quantum_signature_protection"] is False
+    summary = verify_chain([bundle], checkpoints.fingerprint_sha256)
+    assert summary["post_quantum_signature_protection"] is False
+    assert summary["pq_anchor_sequence"] is None
+
+
+def test_service_creates_exports_and_reports_pq_checkpoint(
+    tmp_path,
+    monkeypatch,
+    echo_checkpoint_key,
+):
     data_dir = tmp_path / "service-echo-data"
     data_dir.mkdir(mode=0o700)
     token = "echo-checkpoint-service-token-0123456789abcdef"
@@ -176,14 +229,19 @@ def test_service_creates_exports_and_reports_signed_checkpoint(tmp_path, monkeyp
         assert client.post("/v1/ingest", headers=headers, json=body).status_code == 200
         created = client.post("/v1/checkpoint", headers=headers)
         assert created.status_code == 201
+        assert created.json()["manifest"]["algorithm"] == "ML-DSA-65"
         public = client.get("/v1/checkpoint/public-key", headers=headers)
         status = client.get("/v1/checkpoint/status", headers=headers)
         exported = client.get("/v1/checkpoint/1", headers=headers)
         assert public.status_code == status.status_code == exported.status_code == 200
+        assert public.json()["algorithm"] == "ML-DSA-65"
         assert status.json()["checkpoint_count"] == 1
+        assert status.json()["post_quantum_signature_protection"] is True
         assert exported.json() == created.json()
         assert "private" not in public.text.lower()
 
         ready = client.get("/readyz")
         assert ready.status_code == 200
         assert ready.json()["checkpoint_integrity"] == "HEALTHY"
+        assert ready.json()["checkpoint_signing_algorithm"] == "ML-DSA-65"
+        assert ready.json()["checkpoint_post_quantum_signature_protection"] is True

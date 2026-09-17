@@ -357,10 +357,15 @@ class EchoEventStore:
         for event_id in sorted(set(stored) - set(source)):
             entries.append({"event_id": event_id, "classification": "ECHO_ONLY"})
 
-        counts: dict[str, int] = {}
+        counts: dict[str, int] = {
+            "MATCHED": 0,
+            "SARA_ONLY": 0,
+            "ECHO_ONLY": 0,
+            "PAYLOAD_MISMATCH": 0,
+        }
         for entry in entries:
             name = str(entry["classification"])
-            counts[name] = counts.get(name, 0) + 1
+            counts[name] += 1
         return {
             "schema": "WS-ECHO-SARA-RECONCILIATION-V1",
             "scope": "PROVIDED_SARA_AUDIT_WINDOW",

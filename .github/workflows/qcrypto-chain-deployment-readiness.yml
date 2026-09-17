@@ -1,0 +1,146 @@
+name: QCRYPTO Chain Deployment Readiness Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/chain_deployment_guard.py'
+      - 'security/qcrypto/chain_online_guard.py'
+      - 'security/qcrypto/hoodi_checkpoint_quorum.py'
+      - 'security/qcrypto/production_transition_guard.py'
+      - 'tests/test_qcrypto_chain_deployment_guard.py'
+      - 'tests/test_qcrypto_chain_online_guard.py'
+      - 'tests/test_qcrypto_chain_online_lineage.py'
+      - 'tests/test_qcrypto_hoodi_checkpoint_quorum.py'
+      - 'tests/test_qcrypto_production_transition_guard.py'
+      - 'deployments/qcrypto_chain_testnets/**'
+      - '.github/workflows/qcrypto-chain-deployment-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chain-deployment-readiness:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run fail-closed deployment tests
+        run: |
+          python -m pip install --upgrade pip pytest
+          pytest -q \
+            tests/test_qcrypto_chain_deployment_guard.py \
+            tests/test_qcrypto_chain_online_guard.py \
+            tests/test_qcrypto_chain_online_lineage.py \
+            tests/test_qcrypto_hoodi_checkpoint_quorum.py \
+            tests/test_qcrypto_production_transition_guard.py
+          python -m py_compile \
+            deployments/qcrypto_chain_testnets/verify_online.py \
+            deployments/qcrypto_chain_testnets/verify_hoodi_checkpoint_quorum.py
+          bash -n deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          grep -q 'DEPLOYMENT_REVISION' deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          grep -q 'COMPOSE_SHA256' deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          grep -q 'CHECKPOINT_QUORUM_SHA256' deployments/qcrypto_chain_testnets/bootstrap_host.sh
+          if grep -qE '^[[:space:]]*source[[:space:]]+.*\.env' deployments/qcrypto_chain_testnets/bootstrap_host.sh; then
+            echo 'bootstrap must not execute .env as shell code' >&2
+            exit 1
+          fi
+
+      - name: Render observer deployment package
+        env:
+          BITCOIN_CORE_IMAGE: example.invalid/bitcoin-core@sha256:0000000000000000000000000000000000000000000000000000000000000000
+          ETHEREUM_EXECUTION_IMAGE: example.invalid/ethereum-execution@sha256:1111111111111111111111111111111111111111111111111111111111111111
+          ETHEREUM_CONSENSUS_IMAGE: example.invalid/ethereum-consensus@sha256:2222222222222222222222222222222222222222222222222222222222222222
+          ETHEREUM_CHECKPOINT_SYNC_URL: https://hoodi.checkpoint.sigp.io
+        run: |
+          mkdir -p deployments/qcrypto_chain_testnets/secrets
+          printf '%064d\n' 0 > deployments/qcrypto_chain_testnets/secrets/engine-jwt.hex
+          docker compose \
+            -f deployments/qcrypto_chain_testnets/compose.observer.yaml \
+            config --format json > /tmp/qcrypto-chain-compose.rendered.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path('/tmp/qcrypto-chain-compose.rendered.json').read_text())
+          services = data['services']
+          btc = services['bitcoin-signet']
+          geth = services['ethereum-execution']
+          lighthouse = services['ethereum-consensus']
+
+          btc_cmd = [str(x) for x in btc.get('command', [])]
+          geth_cmd = [str(x) for x in geth.get('command', [])]
+          lh_cmd = [str(x) for x in lighthouse.get('command', [])]
+          assert '-signet' in btc_cmd
+          assert '-disablewallet=1' in btc_cmd
+          assert '--hoodi' in geth_cmd
+          assert '--mainnet' not in geth_cmd
+          assert '--network' in lh_cmd and 'hoodi' in lh_cmd
+          assert '--checkpoint-sync-url' in lh_cmd
+          assert 'https://hoodi.checkpoint.sigp.io' in lh_cmd
+          assert '--mainnet' not in lh_cmd
+
+          ports = lighthouse.get('ports') or []
+          assert any(
+              str(p.get('host_ip')) == '127.0.0.1'
+              and int(p.get('target')) == 5052
+              and int(p.get('published')) == 5052
+              for p in ports
+          ), ports
+
+          rendered = json.dumps(data, sort_keys=True).lower()
+          for forbidden in ('mnemonic', 'validator-key', 'walletpassphrase', 'importprivkey'):
+              assert forbidden not in rendered, forbidden
+          PY
+
+      - name: Emit bounded readiness receipt
+        run: |
+          mkdir -p artifacts
+          python - <<'PY'
+          import json
+          from security.qcrypto.chain_deployment_guard import ChainDeploymentEvidence, assess_chain_deployment
+
+          evidence = ChainDeploymentEvidence(
+              bitcoin_network='SIGNET',
+              ethereum_network='HOODI',
+              ethereum_chain_id=560048,
+              bitcoin_image_digest_pinned=True,
+              ethereum_execution_image_digest_pinned=True,
+              ethereum_consensus_image_digest_pinned=True,
+              bitcoin_persistent_storage=True,
+              ethereum_execution_persistent_storage=True,
+              ethereum_consensus_persistent_storage=True,
+              bitcoin_healthcheck_defined=True,
+              ethereum_execution_healthcheck_defined=True,
+              ethereum_consensus_healthcheck_defined=True,
+              bitcoin_rpc_private_only=True,
+              ethereum_engine_api_private_only=True,
+              ethereum_beacon_admin_private_only=True,
+              external_signer_boundary_defined=True,
+              rollback_plan_defined=True,
+              monitoring_plan_defined=True,
+              evidence_receipt_enabled=True,
+          )
+          result = assess_chain_deployment(evidence).to_dict()
+          assert result['state'] == 'PUBLIC_TESTNET_CHAIN_DEPLOYMENT_HOST_READY'
+          assert result['mainnet_permitted'] is False
+          assert result['private_key_operations_permitted'] is False
+          assert result['live_value_authorized'] is False
+          with open('artifacts/qcrypto_chain_deployment_readiness.json', 'w', encoding='utf-8') as f:
+              json.dump(result, f, sort_keys=True, indent=2)
+              f.write('\n')
+          print(json.dumps(result, sort_keys=True))
+          PY
+
+      - name: Upload readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-chain-deployment-readiness
+          path: artifacts/qcrypto_chain_deployment_readiness.json
+          if-no-files-found: error

@@ -1,0 +1,137 @@
+name: QCRYPTO Live-Value Execution Handoff Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/live_value_canary_gate.py'
+      - 'security/qcrypto/production_transition_guard.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_handoff_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_verifier.py'
+      - 'deployments/sara_verified_local_v1/tests/test_live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/tests/test_live_value_handoff_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/scripts/verify_live_value_execution_handoff.py'
+      - '.github/workflows/qcrypto-live-value-execution-handoff.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/live_value_canary_gate.py'
+      - 'security/qcrypto/production_transition_guard.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/live_value_handoff_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/qcrypto_audit_verifier.py'
+      - 'deployments/sara_verified_local_v1/tests/test_live_value_execution_handoff.py'
+      - 'deployments/sara_verified_local_v1/tests/test_live_value_handoff_audit_adapter.py'
+      - 'deployments/sara_verified_local_v1/scripts/verify_live_value_execution_handoff.py'
+      - '.github/workflows/qcrypto-live-value-execution-handoff.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  live-value-execution-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned SARA environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile last-mile handoff and custody controls
+        run: |
+          python -m compileall -q \
+            worldshepherd_sara/live_value_execution_handoff.py \
+            worldshepherd_sara/live_value_handoff_audit_adapter.py \
+            scripts/verify_live_value_execution_handoff.py
+
+      - name: Run last-mile handoff and native custody regressions
+        run: |
+          pytest -q \
+            tests/test_live_value_execution_handoff.py \
+            tests/test_live_value_handoff_audit_adapter.py
+
+      - name: Generate synthetic bounded handoff evidence
+        run: |
+          python scripts/verify_live_value_execution_handoff.py \
+            --output live-value-execution-handoff-evidence.json
+
+      - name: Assert execution boundary and negative controls
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e=json.loads(Path('live-value-execution-handoff-evidence.json').read_text(encoding='utf-8'))
+          assert e['schema']=='WS-LIVE-VALUE-EXECUTION-HANDOFF-EVIDENCE-V1'
+          assert e['status']=='PASS'
+          assert e['synthetic_ci_only'] is True
+          assert e['real_wallet_used'] is False
+          assert e['real_destination_used'] is False
+          assert e['real_network_used'] is False
+          assert e['real_value_moved'] is False
+          assert e['private_key_exported'] is False
+          assert e['signed_transaction_created'] is False
+          assert e['transaction_broadcast'] is False
+          assert e['human_approval_scheme']=='ML-DSA-65'
+          assert e['human_approval_context']=='WS-LIVE-VALUE-HUMAN-APPROVAL-V1'
+
+          h=e['handoff']
+          assert h['state']=='READY_FOR_EXTERNAL_SIGNER_VALUE_EXECUTION_HANDOFF'
+          assert h['human_live_value_approval_verified'] is True
+          assert h['external_signer_handoff_ready'] is True
+          assert h['point_of_value_moving_execution_reached'] is True
+          assert len(h['handoff_package_sha256'])==64
+          assert h['qcrypto_execution_authority'] is False
+          assert h['qcrypto_live_value_authorized'] is False
+          assert h['qcrypto_private_key_operations_permitted'] is False
+          assert h['qcrypto_broadcast_permitted'] is False
+
+          negatives=e['negative_controls']
+          for key in (
+              'broadcast_request_blocked',
+              'consumed_approval_replay_blocked',
+              'signer_mismatch_blocked',
+          ):
+              assert negatives[key]['state']=='VALUE_EXECUTION_HANDOFF_BLOCKED'
+              assert negatives[key]['external_signer_handoff_ready'] is False
+              assert negatives[key]['qcrypto_execution_authority'] is False
+              assert negatives[key]['qcrypto_broadcast_permitted'] is False
+
+          assert len(e['evidence_sha256'])==64
+          boundary=e['claims_boundary'].lower()
+          for phrase in (
+              'synthetic ci evidence only',
+              'does not record a real human live-value approval',
+              'create a signed transaction',
+              'broadcast a transaction',
+              'move value',
+              'grant qcrypto execution authority',
+          ):
+              assert phrase in boundary
+          PY
+
+      - name: Upload bounded execution-handoff evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-live-value-execution-handoff-evidence
+          path: deployments/sara_verified_local_v1/live-value-execution-handoff-evidence.json
+          if-no-files-found: error

@@ -3,17 +3,22 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-import os
 import re
 import sqlite3
-import stat
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
 
+from .echo_checkpoint_signer import (
+    CHECKPOINT_SIGNATURE_CONTEXT,
+    CheckpointSigner,
+    Ed25519CheckpointSigner,
+    EchoCheckpointSignerConfigError,
+    MLDSA65CheckpointSigner,
+    signer_from_environment,
+)
 from .echo_event_store import EchoEventStore, EchoEventStoreError, semantic_sha256
 from .models import AuditRecord
 
@@ -21,10 +26,6 @@ from .models import AuditRecord
 CHECKPOINT_SCHEMA = "WS-ECHO-CHECKPOINT-V1"
 CHECKPOINT_BUNDLE_SCHEMA = "WS-ECHO-CHECKPOINT-BUNDLE-V1"
 CHECKPOINT_DB_SCHEMA = "WS-ECHO-CHECKPOINT-LEDGER-V1"
-CHECKPOINT_PRIVATE_KEY_FILE_ENV = "ECHO_CHECKPOINT_PRIVATE_KEY_FILE"
-CHECKPOINT_KEY_ID_ENV = "ECHO_CHECKPOINT_KEY_ID"
-MAX_CHECKPOINT_KEY_FILE_BYTES = 16 * 1024
-_KEY_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -46,67 +47,6 @@ def _canonical(value: Any) -> bytes:
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-
-def _read_private_key(path_value: str) -> Ed25519PrivateKey:
-    if not path_value:
-        raise EchoCheckpointConfigError(f"{CHECKPOINT_PRIVATE_KEY_FILE_ENV} is required")
-    path = Path(path_value)
-    if not path.is_absolute():
-        raise EchoCheckpointConfigError(
-            f"{CHECKPOINT_PRIVATE_KEY_FILE_ENV} must be an absolute path"
-        )
-    try:
-        link_status = path.lstat()
-    except OSError as exc:
-        raise EchoCheckpointConfigError("unable to inspect ECHO checkpoint private key") from exc
-    if stat.S_ISLNK(link_status.st_mode):
-        raise EchoCheckpointConfigError("ECHO checkpoint private key must not be a symbolic link")
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-    try:
-        descriptor = os.open(path, flags)
-    except OSError as exc:
-        raise EchoCheckpointConfigError("unable to open ECHO checkpoint private key securely") from exc
-    try:
-        status = os.fstat(descriptor)
-        if not stat.S_ISREG(status.st_mode):
-            raise EchoCheckpointConfigError("ECHO checkpoint private key must be a regular file")
-        if (link_status.st_dev, link_status.st_ino) != (status.st_dev, status.st_ino):
-            raise EchoCheckpointConfigError("ECHO checkpoint private key changed during secure open")
-        if status.st_uid != os.geteuid():
-            raise EchoCheckpointConfigError("ECHO checkpoint private key must be owned by the service UID")
-        if stat.S_IMODE(status.st_mode) & 0o077:
-            raise EchoCheckpointConfigError(
-                "ECHO checkpoint private key must not grant group/other permissions"
-            )
-        if status.st_size < 1 or status.st_size > MAX_CHECKPOINT_KEY_FILE_BYTES:
-            raise EchoCheckpointConfigError("ECHO checkpoint private key size is invalid")
-        with os.fdopen(descriptor, "rb") as handle:
-            descriptor = -1
-            data = handle.read(MAX_CHECKPOINT_KEY_FILE_BYTES + 1)
-    finally:
-        if descriptor >= 0:
-            os.close(descriptor)
-    if len(data) > MAX_CHECKPOINT_KEY_FILE_BYTES:
-        raise EchoCheckpointConfigError("ECHO checkpoint private key is too large")
-    try:
-        key = serialization.load_pem_private_key(data, password=None)
-    except (TypeError, ValueError) as exc:
-        raise EchoCheckpointConfigError(
-            "ECHO checkpoint private key must be an unencrypted PEM private key"
-        ) from exc
-    if not isinstance(key, Ed25519PrivateKey):
-        raise EchoCheckpointConfigError("ECHO checkpoint private key must contain Ed25519 material")
-    return key
-
-
-def _load_key_id() -> str:
-    value = os.getenv(CHECKPOINT_KEY_ID_ENV, "").strip()
-    if not _KEY_ID_PATTERN.fullmatch(value):
-        raise EchoCheckpointConfigError(
-            f"{CHECKPOINT_KEY_ID_ENV} must be 1-128 safe identifier characters"
-        )
-    return value
 
 
 def checkpoint_leaf_hash(event_id: str, semantic_digest: str) -> bytes:
@@ -142,27 +82,38 @@ class EchoCheckpointManager:
         self,
         store: EchoEventStore,
         *,
-        private_key: Ed25519PrivateKey,
-        key_id: str,
+        private_key: Ed25519PrivateKey | MLDSA65PrivateKey | None = None,
+        key_id: str | None = None,
+        signer: CheckpointSigner | None = None,
     ) -> None:
         self.store = store
-        self._private_key = private_key
-        self.key_id = key_id
-        public_bytes = private_key.public_key().public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
-        )
-        self.public_key_b64url = _b64url(public_bytes)
-        self.fingerprint_sha256 = hashlib.sha256(public_bytes).hexdigest()
+        if signer is not None and (private_key is not None or key_id is not None):
+            raise EchoCheckpointConfigError(
+                "provide either a checkpoint signer or private_key/key_id, not both"
+            )
+        if signer is None:
+            if private_key is None or not key_id:
+                raise EchoCheckpointConfigError("checkpoint private key and key ID are required")
+            if isinstance(private_key, MLDSA65PrivateKey):
+                signer = MLDSA65CheckpointSigner(private_key=private_key, key_id=key_id)
+            elif isinstance(private_key, Ed25519PrivateKey):
+                signer = Ed25519CheckpointSigner(private_key=private_key, key_id=key_id)
+            else:
+                raise EchoCheckpointConfigError("unsupported ECHO checkpoint private-key type")
+        self._signer = signer
+        self.key_id = signer.key_id
+        self.algorithm = signer.algorithm
+        self.public_key_b64url = signer.public_key_b64url
+        self.fingerprint_sha256 = signer.fingerprint_sha256
         self._initialize()
 
     @classmethod
     def from_environment(cls, store: EchoEventStore) -> "EchoCheckpointManager":
-        return cls(
-            store,
-            private_key=_read_private_key(os.getenv(CHECKPOINT_PRIVATE_KEY_FILE_ENV, "")),
-            key_id=_load_key_id(),
-        )
+        try:
+            signer = signer_from_environment()
+        except EchoCheckpointSignerConfigError as exc:
+            raise EchoCheckpointConfigError(str(exc)) from exc
+        return cls(store, signer=signer)
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.store.db_path, timeout=5.0, isolation_level=None)
@@ -228,6 +179,19 @@ class EchoCheckpointManager:
                 raise EchoCheckpointConfigError(
                     "ECHO checkpoint key ID is already bound to different key material"
                 )
+            algorithm_binding = f"checkpoint_key_algorithm:{self.key_id}"
+            algorithm_row = connection.execute(
+                "SELECT value FROM echo_checkpoint_metadata WHERE name=?", (algorithm_binding,)
+            ).fetchone()
+            if algorithm_row is None:
+                connection.execute(
+                    "INSERT INTO echo_checkpoint_metadata(name,value) VALUES(?,?)",
+                    (algorithm_binding, self.algorithm),
+                )
+            elif algorithm_row["value"] != self.algorithm:
+                raise EchoCheckpointConfigError(
+                    "ECHO checkpoint key ID is already bound to a different signing algorithm"
+                )
             connection.commit()
         except (sqlite3.Error, EchoCheckpointError):
             if connection.in_transaction:
@@ -237,15 +201,7 @@ class EchoCheckpointManager:
             connection.close()
 
     def public_key_record(self) -> dict[str, str]:
-        return {
-            "schema": "WS-ECHO-CHECKPOINT-PUBLIC-KEY-V1",
-            "issuer": "ECHO_SENTINEL_LINK",
-            "purpose": "PROVENANCE_CHECKPOINT_SIGNING",
-            "algorithm": "Ed25519",
-            "key_id": self.key_id,
-            "public_key_b64url": self.public_key_b64url,
-            "fingerprint_sha256": self.fingerprint_sha256,
-        }
+        return self._signer.public_key_record()
 
     def _validated_current_items(self, connection: sqlite3.Connection) -> list[dict[str, Any]]:
         rows = connection.execute(
@@ -320,17 +276,25 @@ class EchoCheckpointManager:
                 "event_count": len(items),
                 "events": items,
                 "merkle_root_sha256": root,
-                "algorithm": "Ed25519",
+                "algorithm": self.algorithm,
                 "key_id": self.key_id,
                 "key_fingerprint_sha256": self.fingerprint_sha256,
                 "claims_boundary": (
-                    "Local signed checkpoint evidence only; no immutable/WORM retention, "
-                    "external anchoring, third-party attestation, or exactly-once transport is claimed."
+                    "Local signed checkpoint evidence only. ML-DSA-65 checkpoints provide "
+                    "post-quantum signature protection for this checkpoint layer; immutable/WORM "
+                    "retention, external anchoring, third-party attestation, transport PQ security, "
+                    "and exactly-once transport are separate properties."
+                    if self.algorithm == "ML-DSA-65"
+                    else
+                    "Legacy classical local signed checkpoint evidence only; this checkpoint is not "
+                    "post-quantum signature protected."
                 ),
             }
+            if self.algorithm == "ML-DSA-65":
+                manifest["signature_context"] = CHECKPOINT_SIGNATURE_CONTEXT.decode("ascii")
             manifest_bytes = _canonical(manifest)
             checkpoint_digest = hashlib.sha256(manifest_bytes).hexdigest()
-            signature = _b64url(self._private_key.sign(manifest_bytes))
+            signature = _b64url(self._signer.sign(manifest_bytes))
             bundle = {
                 "schema": CHECKPOINT_BUNDLE_SCHEMA,
                 "manifest": manifest,
@@ -418,6 +382,8 @@ class EchoCheckpointManager:
                 "latest_checkpoint_sha256": None,
                 "latest_event_count": None,
                 "latest_created_at": None,
+                "algorithm": self.algorithm,
+                "post_quantum_signature_protection": self.algorithm == "ML-DSA-65",
             }
         return {
             "checkpoint_count": count,
@@ -426,4 +392,6 @@ class EchoCheckpointManager:
             "latest_checkpoint_sha256": row["checkpoint_sha256"],
             "latest_event_count": row["event_count"],
             "latest_created_at": row["created_at"],
+            "algorithm": self.algorithm,
+            "post_quantum_signature_protection": self.algorithm == "ML-DSA-65",
         }

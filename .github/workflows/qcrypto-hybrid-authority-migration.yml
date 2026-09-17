@@ -1,0 +1,101 @@
+name: QCRYPTO Hybrid Authority Migration Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'tests/test_qcrypto_hybrid_authority_migration.py'
+      - 'tests/test_qcrypto_pqc_algorithm_policy.py'
+      - 'scripts/qcrypto_hybrid_authority_evidence.py'
+      - '.github/workflows/qcrypto-hybrid-authority-migration.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'tests/test_qcrypto_hybrid_authority_migration.py'
+      - 'tests/test_qcrypto_pqc_algorithm_policy.py'
+      - 'scripts/qcrypto_hybrid_authority_evidence.py'
+      - '.github/workflows/qcrypto-hybrid-authority-migration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hybrid-authority-migration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile migration controls
+        run: |
+          python -m compileall \
+            security/qcrypto/pqc_algorithm_policy.py \
+            security/qcrypto/hybrid_authority_migration.py \
+            scripts/qcrypto_hybrid_authority_evidence.py
+
+      - name: Run algorithm-policy and hybrid-authority regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_pqc_algorithm_policy.py \
+            tests/test_qcrypto_hybrid_authority_migration.py
+
+      - name: Generate bounded migration evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_hybrid_authority_evidence.py \
+            --output hybrid-authority-migration-evidence.json
+
+      - name: Assert fail-closed cross-layer posture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          evidence = json.loads(Path('hybrid-authority-migration-evidence.json').read_text())
+          assert evidence['schema'] == 'WS-QCRYPTO-HYBRID-AUTHORITY-MIGRATION-EVIDENCE-V1'
+          assert evidence['status'] == 'PASS'
+          a = evidence['authorities']
+          s = evidence['systems']
+          assert a['ACCOUNT_HYBRID']['verdict'] == 'HYBRID_AUTHORITY_MIGRATION_ACCEPTED'
+          assert a['VALIDATOR_PQ_REQUIRED']['verdict'] == 'PQ_AUTHORITY_MIGRATION_ACCEPTED'
+          assert a['BRIDGE_HYBRID_WITH_RECOVERY']['accepted'] is True
+          assert a['GOVERNANCE_PQ_WITH_RECOVERY']['accepted'] is True
+          assert a['DOWNGRADE_ATTEMPT']['verdict'] == 'DOWNGRADE_REJECTED'
+          assert s['PQ_ACCOUNTS_CLASSICAL_CONSENSUS']['verdict'] == 'BLOCKED_BY_CLASSICAL_LAYER'
+          assert s['PQ_CORE_HYBRID_BRIDGE']['verdict'] == 'HYBRID_MIGRATION_READY'
+          assert s['ALL_TRACKED_LAYERS_PQ_CAPABLE']['verdict'] == 'PQ_MIGRATION_READY'
+          assert s['ALL_TRACKED_LAYERS_PQ_CAPABLE']['whole_chain_pq_security_established'] is False
+          summary = evidence['summary']
+          assert summary['execution_authority'] is False
+          assert summary['live_value_authorized'] is False
+          assert summary['whole_chain_pq_security_established'] is False
+          assert summary['production_deployment_established'] is False
+          assert len(evidence['evidence_sha256']) == 64
+          print('hybrid_authority_migration_gate: PASS')
+          print('evidence_sha256:', evidence['evidence_sha256'])
+          PY
+
+      - name: Upload hybrid authority migration evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qcrypto-hybrid-authority-migration-evidence
+          path: hybrid-authority-migration-evidence.json
+          if-no-files-found: error

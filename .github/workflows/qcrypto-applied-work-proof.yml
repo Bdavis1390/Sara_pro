@@ -1,0 +1,109 @@
+name: QCRYPTO Applied Work Proof Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/applied_work_proof.py'
+      - 'security/qcrypto/applied_work_postwork.py'
+      - 'tests/test_qcrypto_applied_work_proof.py'
+      - 'scripts/qcrypto_applied_work_proof_evidence.py'
+      - '.github/workflows/qcrypto-applied-work-proof.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/applied_work_proof.py'
+      - 'security/qcrypto/applied_work_postwork.py'
+      - 'tests/test_qcrypto_applied_work_proof.py'
+      - 'scripts/qcrypto_applied_work_proof_evidence.py'
+      - '.github/workflows/qcrypto-applied-work-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  applied-work-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile applied-work proof modules
+        run: |
+          python -m compileall \
+            security/qcrypto/applied_work_proof.py \
+            security/qcrypto/applied_work_postwork.py \
+            scripts/qcrypto_applied_work_proof_evidence.py
+
+      - name: Run executed applied-work regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_applied_work_proof.py \
+            tests/test_qcrypto_applied_work_postwork.py
+
+      - name: Generate machine-readable applied-work evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_applied_work_proof_evidence.py \
+            --workflow-run-id "$GITHUB_RUN_ID" \
+            --output applied-work-proof-evidence.json
+
+      - name: Assert applied-work proof boundaries
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          evidence=json.loads(Path('applied-work-proof-evidence.json').read_text(encoding='utf-8'))
+          assert evidence['schema']=='WS-APPLIED-WORK-PROOF-EVIDENCE-V1'
+          assert evidence['status']=='PASS'
+          cert=evidence['certificate']
+          assert cert['implementation_commit']=='${{ github.sha }}'
+          assert cert['workflow_run_id']==${{ github.run_id }}
+          assert cert['proof_state']=='PRESERVED_APPLIED_WORK'
+          assert cert['measured_work_units'] > 0
+          assert cert['negative_test_count'] >= 1
+          assert cert['tamper_test_count'] >= 1
+          assert cert['retained'] is True
+          assert cert['reproducible'] is True
+          assert cert['safety_authorized'] is True
+          assert evidence['downstream_receipt']['validated_work_units']==cert['measured_work_units']
+          assert evidence['downstream_receipt']['evidence_digest']==cert['evidence_digest']
+          boundary=evidence['applied_work_theory_boundary']
+          assert boundary['units_are_measured_quantity_not_economic_value'] is True
+          assert boundary['post_work_consumes_but_does_not_create_work_proof'] is True
+          assert boundary['legal_ownership_established'] is False
+          assert boundary['economic_value_established'] is False
+          assert boundary['post_quantum_primitive_security_established'] is False
+          assert boundary['production_consensus_adoption_established'] is False
+          assert boundary['independent_reproduction_established'] is False
+          claimed=evidence.pop('evidence_sha256')
+          actual=hashlib.sha256(json.dumps(evidence,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          assert actual==claimed
+          print('applied_work_proof_status: PASS')
+          print('evidence_sha256:', claimed)
+          PY
+
+      - name: Upload applied-work proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-applied-work-proof-evidence
+          path: applied-work-proof-evidence.json
+          if-no-files-found: error

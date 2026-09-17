@@ -1,0 +1,79 @@
+{
+  "schema": "WS-CAE-1-EVIDENCE-v0.1",
+  "date": "2026-09-13",
+  "claims_state": [
+    "IMPLEMENTED IN SOFTWARE",
+    "SUPPORTED BY LITERATURE",
+    "REQUIRES INDEPENDENT REVIEW",
+    "REQUIRES PARTNER VALIDATION"
+  ],
+  "specification": {
+    "id": "WS-CAE-1",
+    "status": "DRAFT",
+    "purpose": "Cross-chain authority abstraction and post-quantum migration interoperability",
+    "industry_standard_claimed": false
+  },
+  "external_alignment": [
+    {
+      "source": "NIST CSWP 39upd1",
+      "role": "crypto-agility principles",
+      "url": "https://csrc.nist.gov/pubs/cswp/39/upd1/considerations-for-achieving-crypto-agility/final"
+    },
+    {
+      "source": "NIST NCCoE Migration to PQC",
+      "role": "interoperability and benchmarking model",
+      "url": "https://www.nccoe.nist.gov/applied-cryptography/migration-to-pqc"
+    },
+    {
+      "source": "RFC 9881",
+      "role": "ML-DSA X.509 algorithm identifiers",
+      "url": "https://datatracker.ietf.org/doc/rfc9881/"
+    },
+    {
+      "source": "RFC 9909",
+      "role": "SLH-DSA X.509 algorithm identifiers",
+      "url": "https://datatracker.ietf.org/doc/rfc9909/"
+    },
+    {
+      "source": "IETF COSE SLH-DSA draft",
+      "role": "JOSE/COSE serialization direction",
+      "url": "https://datatracker.ietf.org/doc/draft-ietf-cose-sphincs-plus/10/"
+    }
+  ],
+  "ecosystem_convergence": [
+    {
+      "ecosystem": "Algorand",
+      "adapter_class": "NATIVE_REKEY",
+      "stable_authority_pattern": "LIVE",
+      "pq_account_authorization": "LIVE",
+      "multi_crypto_policy": "ROADMAP",
+      "consensus_pq": "NOT YET COMPLETE",
+      "source": "https://algorand.co/blog/algorand-post-quantum-cryptography-roadmap"
+    },
+    {
+      "ecosystem": "Sui",
+      "adapter_class": "ADDRESS_ALIAS",
+      "stable_authority_pattern": "LIVE",
+      "pq_account_authorization": "ROADMAP_OR_DEPLOYMENT_TRACKED_SEPARATELY",
+      "algorithm_diversity_design": "ML-DSA + SLH-DSA",
+      "source": "https://www.sui.io/blog/suis-post-quantum-signature-schemes"
+    },
+    {
+      "ecosystem": "Ethereum",
+      "adapter_class": "PROGRAMMABLE_VALIDATOR / NATIVE_ACCOUNT_ABSTRACTION",
+      "application_account_abstraction": "LIVE",
+      "native_key_rotation_direction": "EIP-8141 / ROADMAP",
+      "pq_execution_migration": "INCREMENTAL",
+      "consensus_pq": "SEPARATE ROADMAP",
+      "source": "https://ethereum.org/roadmap/security/quantum-resistance/"
+    }
+  ],
+  "review_questions": [
+    "Can independent implementations reproduce the same conformance result from the same evidence bundle?",
+    "Does the envelope preserve stable authority identity across authenticator rotation?",
+    "Are policy version and authenticator-set version independent?",
+    "Are recovery, replay-domain binding, and evidence binding explicit?",
+    "Are roadmap capabilities prevented from being promoted to live capability?",
+    "Is account-level PQ readiness kept separate from consensus-level PQ readiness?"
+  ]
+}

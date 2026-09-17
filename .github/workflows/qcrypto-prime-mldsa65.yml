@@ -1,0 +1,122 @@
+name: QCRYPTO PRIME ML-DSA-65 Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_authorization.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_service.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_issuance_store.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_ledger_integrity.py'
+      - 'deployments/sara_verified_local_v1/tests/test_prime_sentinel_*.py'
+      - 'deployments/sara_verified_local_v1/compose.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_prime_sentinel_integration.sh'
+      - '.github/workflows/qcrypto-prime-mldsa65.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_authorization.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_service.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_issuance_store.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_ledger_integrity.py'
+      - 'deployments/sara_verified_local_v1/tests/test_prime_sentinel_*.py'
+      - 'deployments/sara_verified_local_v1/compose.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_prime_sentinel_integration.sh'
+      - '.github/workflows/qcrypto-prime-mldsa65.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: deployments/sara_verified_local_v1
+
+jobs:
+  prime-mldsa65:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned test environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Compile PRIME PQ runtime
+        run: |
+          python -m compileall -q \
+            worldshepherd_sara/prime_sentinel_authorization.py \
+            worldshepherd_sara/prime_sentinel_service.py \
+            worldshepherd_sara/prime_sentinel_issuance_store.py \
+            worldshepherd_sara/prime_sentinel_ledger_integrity.py
+          bash -n scripts/verify_prime_sentinel_integration.sh
+
+      - name: Run PRIME authorization regressions
+        run: |
+          pytest -q \
+            tests/test_prime_sentinel_authorization.py \
+            tests/test_prime_sentinel_pq_authorization.py \
+            tests/test_prime_sentinel_service.py \
+            tests/test_prime_sentinel_issuance_store.py \
+            tests/test_prime_sentinel_ledger_integrity.py
+
+      - name: Create isolated deployment environment
+        run: |
+          printf 'SARA_RELAY_TOKEN=%s\nSARA_ADMIN_TOKEN=%s\nSARA_PORT=9530\nSARA_HOST_PORT=19530\nSARA_BUILD_COMMIT=%s\nSARA_RELEASE_ID=%s\n' \
+            "$(openssl rand -hex 32)" \
+            "$(openssl rand -hex 32)" \
+            "$GITHUB_SHA" \
+            "prime-pq-ci-${GITHUB_SHA}" > .env
+          chmod 600 .env
+          docker compose up -d --build sara
+
+      - name: Run deployed PRIME ML-DSA-65 integration
+        env:
+          PRIME_SENTINEL_EVIDENCE_FILE: ${{ github.workspace }}/deployments/sara_verified_local_v1/prime-sentinel-pq-evidence.json
+        run: bash scripts/verify_prime_sentinel_integration.sh
+
+      - name: Validate PRIME PQ evidence boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('prime-sentinel-pq-evidence.json')
+          evidence=json.loads(p.read_text(encoding='utf-8'))
+          assert evidence['schema']=='WS-PRIME-SENTINEL-TWO-CONTAINER-INTEGRATION-V3'
+          assert evidence['status']=='PASS'
+          assert evidence['signing_algorithm']=='ML-DSA-65'
+          assert evidence['signature_context']=='WS-PRIME-SENTINEL-AUTHZ-V2'
+          assert evidence['post_quantum_signature_protection'] is True
+          assert evidence['same_request_retry_identical_before_restart'] is True
+          assert evidence['same_request_retry_identical_after_restart'] is True
+          assert evidence['conflicting_request_rejected_http_status']==409
+          assert evidence['assertion_replay_rejected_http_status']==403
+          assert evidence['activation_disposition']=='ACTIVATION_ALLOWED'
+          assert evidence['authorization_registry_status']=='CONSUMED'
+          assert evidence['end_to_end_pq_security_established'] is False
+          boundary=evidence['claims_boundary'].lower()
+          for phrase in (
+              'ml-dsa-65 post-quantum signature protection',
+              'pq-secure transport',
+              'fips 140',
+              'end-to-end post-quantum security',
+          ):
+              assert phrase in boundary
+          PY
+
+      - name: Upload PRIME PQ evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-prime-mldsa65-integration-evidence
+          path: deployments/sara_verified_local_v1/prime-sentinel-pq-evidence.json
+          if-no-files-found: error

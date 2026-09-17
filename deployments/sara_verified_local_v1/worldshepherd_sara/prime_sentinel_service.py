@@ -8,15 +8,20 @@ import re
 import sqlite3
 import stat
 from pathlib import Path
+from typing import Any
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from .prime_configuration_custody import PrimeEnvironment
 from .prime_sentinel_authorization import (
     PRIME_SENTINEL_AUTHZ_SCHEMA,
+    PRIME_SENTINEL_DEFAULT_ALGORITHM,
+    PRIME_SENTINEL_LEGACY_ALGORITHM,
+    PRIME_SENTINEL_MLDSA65_CONTEXT,
     PrimeSentinelAuthorizationAssertion,
     canonical_authorization_message,
 )
@@ -35,8 +40,9 @@ from .prime_sentinel_ledger_integrity import verify_issuance_ledger_integrity
 
 KEY_FILE_ENV = "PRIME_SENTINEL_PRIVATE_KEY_FILE"
 KEY_ID_ENV = "PRIME_SENTINEL_SIGNING_KEY_ID"
+SIGNING_ALGORITHM_ENV = "PRIME_SENTINEL_SIGNING_ALGORITHM"
 SERVICE_TOKEN_FILE_ENV = "PRIME_SENTINEL_SERVICE_TOKEN_FILE"
-MAX_KEY_FILE_BYTES = 16 * 1024
+MAX_KEY_FILE_BYTES = 64 * 1024
 MAX_SERVICE_TOKEN_FILE_BYTES = 4 * 1024
 MIN_SERVICE_TOKEN_CHARS = 32
 _KEY_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
@@ -55,12 +61,13 @@ class PrimeSentinelIssueRequest(BaseModel):
 
 
 class PrimeSentinelPublicKey(BaseModel):
-    schema: str = "WS-PRIME-SENTINEL-PUBLIC-KEY-V1"
+    schema: str = "WS-PRIME-SENTINEL-PUBLIC-KEY-V2"
     issuer: str = "PRIME_SENTINEL"
-    algorithm: str = "Ed25519"
+    algorithm: str
     key_id: str
     public_key_b64url: str
     fingerprint_sha256: str
+    signature_context: str | None = None
 
 
 class PrimeSentinelIssueResponse(BaseModel):
@@ -69,7 +76,7 @@ class PrimeSentinelIssueResponse(BaseModel):
 
 
 class PrimeSentinelIssuanceStatus(BaseModel):
-    schema: str = "WS-PRIME-SENTINEL-ISSUANCE-STATUS-V1"
+    schema: str = "WS-PRIME-SENTINEL-ISSUANCE-STATUS-V2"
     request_id: str
     state: str
     authorization_id: str
@@ -77,6 +84,8 @@ class PrimeSentinelIssuanceStatus(BaseModel):
     target_environment: PrimeEnvironment
     key_id: str
     key_fingerprint_sha256: str
+    signing_algorithm: str
+    post_quantum_signature_protection: bool
     issued_at: str
     expires_at: str
     prepared_at: str
@@ -99,28 +108,22 @@ def _read_owned_secret_file(
     path = Path(path_value)
     if not path.is_absolute():
         raise PrimeSentinelServiceConfigError(f"{env_name} must be an absolute path")
-
     try:
         link_status = path.lstat()
     except OSError as exc:
         raise PrimeSentinelServiceConfigError(f"unable to inspect {label}") from exc
     if stat.S_ISLNK(link_status.st_mode):
         raise PrimeSentinelServiceConfigError(f"{label} must not be a symbolic link")
-
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
         descriptor = os.open(path, flags)
     except OSError as exc:
         raise PrimeSentinelServiceConfigError(f"unable to open {label} securely") from exc
-
     try:
         file_status = os.fstat(descriptor)
         if not stat.S_ISREG(file_status.st_mode):
             raise PrimeSentinelServiceConfigError(f"{label} must be a regular file")
-        if (link_status.st_dev, link_status.st_ino) != (
-            file_status.st_dev,
-            file_status.st_ino,
-        ):
+        if (link_status.st_dev, link_status.st_ino) != (file_status.st_dev, file_status.st_ino):
             raise PrimeSentinelServiceConfigError(f"{label} changed during secure open")
         if file_status.st_uid != os.geteuid():
             raise PrimeSentinelServiceConfigError(f"{label} must be owned by the service UID")
@@ -136,13 +139,23 @@ def _read_owned_secret_file(
     finally:
         if descriptor >= 0:
             os.close(descriptor)
-
     if len(data) > max_bytes:
         raise PrimeSentinelServiceConfigError(f"{label} is too large")
     return data
 
 
-def _load_private_key_file(path_value: str) -> Ed25519PrivateKey:
+def _load_signing_algorithm() -> str:
+    algorithm = os.getenv(SIGNING_ALGORITHM_ENV, PRIME_SENTINEL_DEFAULT_ALGORITHM).strip()
+    if algorithm == "ML-DSA":
+        algorithm = PRIME_SENTINEL_DEFAULT_ALGORITHM
+    if algorithm not in {PRIME_SENTINEL_DEFAULT_ALGORITHM, PRIME_SENTINEL_LEGACY_ALGORITHM}:
+        raise PrimeSentinelServiceConfigError(
+            f"unsupported PRIME SENTINEL signing algorithm: {algorithm}"
+        )
+    return algorithm
+
+
+def _load_private_key_file(path_value: str, *, algorithm: str):
     data = _read_owned_secret_file(
         path_value,
         env_name=KEY_FILE_ENV,
@@ -155,11 +168,19 @@ def _load_private_key_file(path_value: str) -> Ed25519PrivateKey:
         raise PrimeSentinelServiceConfigError(
             "PRIME SENTINEL private-key file must contain an unencrypted PEM private key"
         ) from exc
-    if not isinstance(key, Ed25519PrivateKey):
-        raise PrimeSentinelServiceConfigError(
-            "PRIME SENTINEL private-key file must contain an Ed25519 private key"
-        )
-    return key
+    if algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM:
+        if not isinstance(key, MLDSA65PrivateKey):
+            raise PrimeSentinelServiceConfigError(
+                "PRIME SENTINEL ML-DSA-65 mode requires ML-DSA-65 private key material"
+            )
+        return key
+    if algorithm == PRIME_SENTINEL_LEGACY_ALGORITHM:
+        if not isinstance(key, Ed25519PrivateKey):
+            raise PrimeSentinelServiceConfigError(
+                "PRIME SENTINEL Ed25519 mode requires Ed25519 private key material"
+            )
+        return key
+    raise PrimeSentinelServiceConfigError("unsupported PRIME SENTINEL private key algorithm")
 
 
 def _load_service_token_file(path_value: str) -> str:
@@ -175,7 +196,6 @@ def _load_service_token_file(path_value: str) -> str:
         raise PrimeSentinelServiceConfigError(
             "PRIME SENTINEL service-token file must be UTF-8 text"
         ) from exc
-
     token = text.rstrip("\r\n")
     if not token or token != token.strip() or "\n" in token or "\r" in token:
         raise PrimeSentinelServiceConfigError(
@@ -226,35 +246,60 @@ class PrimeSentinelSigner:
     def __init__(
         self,
         *,
-        private_key: Ed25519PrivateKey,
+        private_key: Ed25519PrivateKey | MLDSA65PrivateKey,
+        algorithm: str,
         key_id: str,
         service_token: str,
     ) -> None:
         self._private_key = private_key
+        self.algorithm = algorithm
         self.key_id = key_id
         self.service_token = service_token
         public_bytes = private_key.public_key().public_bytes(
             encoding=serialization.Encoding.Raw,
             format=serialization.PublicFormat.Raw,
         )
+        expected = 1952 if algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM else 32
+        if len(public_bytes) != expected:
+            raise PrimeSentinelServiceConfigError(
+                f"PRIME SENTINEL {algorithm} public-key size mismatch"
+            )
         self.public_key_b64url = _b64url(public_bytes)
         self.fingerprint_sha256 = hashlib.sha256(public_bytes).hexdigest()
+        self.signature_context = (
+            PRIME_SENTINEL_MLDSA65_CONTEXT
+            if algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM
+            else None
+        )
 
     @classmethod
     def from_environment(cls) -> "PrimeSentinelSigner":
+        algorithm = _load_signing_algorithm()
         return cls(
-            private_key=_load_private_key_file(os.getenv(KEY_FILE_ENV, "")),
-            key_id=_load_key_id(),
-            service_token=_load_service_token_file(
-                os.getenv(SERVICE_TOKEN_FILE_ENV, "")
+            private_key=_load_private_key_file(
+                os.getenv(KEY_FILE_ENV, ""),
+                algorithm=algorithm,
             ),
+            algorithm=algorithm,
+            key_id=_load_key_id(),
+            service_token=_load_service_token_file(os.getenv(SERVICE_TOKEN_FILE_ENV, "")),
         )
+
+    @property
+    def post_quantum_signature_protection(self) -> bool:
+        return self.algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM
 
     def public_key_record(self) -> PrimeSentinelPublicKey:
         return PrimeSentinelPublicKey(
+            algorithm=self.algorithm,
             key_id=self.key_id,
             public_key_b64url=self.public_key_b64url,
             fingerprint_sha256=self.fingerprint_sha256,
+            signature_context=(
+                self.signature_context.decode("ascii")
+                if self.signature_context is not None
+                else None
+            ),
         )
 
     def _assertion_from_record(
@@ -276,6 +321,15 @@ class PrimeSentinelSigner:
             nonce=record.nonce,
             signature_b64url=signature_b64url,
         )
+
+    def _sign(self, message: bytes) -> bytes:
+        if self.algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM:
+            assert isinstance(self._private_key, MLDSA65PrivateKey)
+            return self._private_key.sign(message, PRIME_SENTINEL_MLDSA65_CONTEXT)
+        if self.algorithm == PRIME_SENTINEL_LEGACY_ALGORITHM:
+            assert isinstance(self._private_key, Ed25519PrivateKey)
+            return self._private_key.sign(message)
+        raise PrimeSentinelServiceConfigError("unsupported active PRIME SENTINEL signer")
 
     def issue_durable(
         self,
@@ -300,7 +354,7 @@ class PrimeSentinelSigner:
             return PrimeSentinelAuthorizationAssertion.model_validate(stored)
 
         unsigned = self._assertion_from_record(record, signature_b64url="UNSIGNED")
-        signature = self._private_key.sign(canonical_authorization_message(unsigned))
+        signature = self._sign(canonical_authorization_message(unsigned))
         signed = unsigned.model_copy(update={"signature_b64url": _b64url(signature)})
         persisted = store.mark_signed(
             request_id=request_id,
@@ -319,25 +373,33 @@ def _bind_signing_key_identity(
     store: PrimeSentinelIssuanceStore,
     signer: PrimeSentinelSigner,
 ) -> None:
-    name = f"signing_key_fingerprint:{signer.key_id}"
+    bindings = {
+        f"signing_key_fingerprint:{signer.key_id}": signer.fingerprint_sha256,
+        f"signing_key_algorithm:{signer.key_id}": signer.algorithm,
+    }
     connection: sqlite3.Connection | None = None
     try:
         connection = sqlite3.connect(store.db_path, timeout=5.0, isolation_level=None)
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA synchronous = FULL")
         connection.execute("BEGIN IMMEDIATE")
-        row = connection.execute(
-            "SELECT value FROM metadata WHERE name = ?", (name,)
-        ).fetchone()
-        if row is None:
-            connection.execute(
-                "INSERT INTO metadata(name, value) VALUES(?, ?)",
-                (name, signer.fingerprint_sha256),
-            )
-        elif row["value"] != signer.fingerprint_sha256:
-            raise PrimeSentinelServiceConfigError(
-                "PRIME SENTINEL signing key ID is already bound to different key material"
-            )
+        for name, expected in bindings.items():
+            row = connection.execute(
+                "SELECT value FROM metadata WHERE name = ?", (name,)
+            ).fetchone()
+            if row is None:
+                connection.execute(
+                    "INSERT INTO metadata(name, value) VALUES(?, ?)",
+                    (name, expected),
+                )
+            elif row["value"] != expected:
+                if name.startswith("signing_key_fingerprint:"):
+                    raise PrimeSentinelServiceConfigError(
+                        "PRIME SENTINEL signing key ID is already bound to different key material"
+                    )
+                raise PrimeSentinelServiceConfigError(
+                    "PRIME SENTINEL signing key ID is already bound to a different algorithm"
+                )
         connection.commit()
     except sqlite3.Error as exc:
         raise PrimeSentinelServiceConfigError(
@@ -348,17 +410,21 @@ def _bind_signing_key_identity(
             connection.close()
 
 
-def _bound_key_fingerprint(
+def _bound_key_metadata(
     store: PrimeSentinelIssuanceStore,
     key_id: str,
-) -> str:
+) -> tuple[str, str]:
     connection: sqlite3.Connection | None = None
     try:
         connection = sqlite3.connect(store.db_path, timeout=5.0)
         connection.row_factory = sqlite3.Row
-        row = connection.execute(
+        fingerprint = connection.execute(
             "SELECT value FROM metadata WHERE name = ?",
             (f"signing_key_fingerprint:{key_id}",),
+        ).fetchone()
+        algorithm = connection.execute(
+            "SELECT value FROM metadata WHERE name = ?",
+            (f"signing_key_algorithm:{key_id}",),
         ).fetchone()
     except sqlite3.Error as exc:
         raise PrimeSentinelIssuanceStoreError(
@@ -367,11 +433,11 @@ def _bound_key_fingerprint(
     finally:
         if connection is not None:
             connection.close()
-    if row is None:
+    if fingerprint is None or algorithm is None:
         raise PrimeSentinelIssuanceStoreError(
-            "issuance ledger is missing the signing-key fingerprint binding"
+            "issuance ledger is missing the signing-key identity binding"
         )
-    return str(row["value"])
+    return str(fingerprint["value"]), str(algorithm["value"])
 
 
 def _combined_ledger_status(store: PrimeSentinelIssuanceStore) -> dict[str, object]:
@@ -393,6 +459,7 @@ def _status_from_record(
     record: IssuanceRecord,
     store: PrimeSentinelIssuanceStore,
 ) -> PrimeSentinelIssuanceStatus:
+    fingerprint, algorithm = _bound_key_metadata(store, record.key_id)
     return PrimeSentinelIssuanceStatus(
         request_id=record.request_id,
         state=record.state,
@@ -400,7 +467,9 @@ def _status_from_record(
         prime_id=record.prime_id,
         target_environment=PrimeEnvironment(record.target_environment),
         key_id=record.key_id,
-        key_fingerprint_sha256=_bound_key_fingerprint(store, record.key_id),
+        key_fingerprint_sha256=fingerprint,
+        signing_algorithm=algorithm,
+        post_quantum_signature_protection=(algorithm == PRIME_SENTINEL_DEFAULT_ALGORITHM),
         issued_at=record.issued_at,
         expires_at=record.expires_at,
         prepared_at=record.prepared_at,
@@ -418,7 +487,7 @@ def create_prime_sentinel_app() -> FastAPI:
 
     app = FastAPI(
         title="Worldshepherd PRIME SENTINEL Authorization Service",
-        version="1.5",
+        version="2.0",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
@@ -438,7 +507,7 @@ def create_prime_sentinel_app() -> FastAPI:
 
     @app.get("/livez")
     def livez() -> dict[str, object]:
-        return {"ok": True, "service": "PRIME_SENTINEL", "version": "1.5"}
+        return {"ok": True, "service": "PRIME_SENTINEL", "version": "2.0"}
 
     @app.get("/readyz")
     def readyz() -> dict[str, object]:
@@ -452,7 +521,13 @@ def create_prime_sentinel_app() -> FastAPI:
             "ok": True,
             "service": "PRIME_SENTINEL",
             "signing_key_id": signer.key_id,
-            "algorithm": "Ed25519",
+            "algorithm": signer.algorithm,
+            "signature_context": (
+                signer.signature_context.decode("ascii")
+                if signer.signature_context is not None
+                else None
+            ),
+            "post_quantum_signature_protection": signer.post_quantum_signature_protection,
             "issuance_ledger": "HEALTHY",
         }
 
@@ -482,7 +557,17 @@ def create_prime_sentinel_app() -> FastAPI:
             raise HTTPException(status_code=503, detail="issuance ledger unavailable") from exc
         if not status["ok"]:
             raise HTTPException(status_code=503, detail="issuance ledger integrity check failed")
-        return {"schema": "WS-PRIME-SENTINEL-LEDGER-STATUS-V1", **status}
+        return {
+            "schema": "WS-PRIME-SENTINEL-LEDGER-STATUS-V2",
+            **status,
+            "signing_algorithm": signer.algorithm,
+            "post_quantum_signature_protection": signer.post_quantum_signature_protection,
+            "claim_boundary": (
+                "ML-DSA-65 protects PRIME authorization signatures when active. This does not by "
+                "itself establish PQ-secure transport, external key custody, FIPS 140 module validation, "
+                "or end-to-end post-quantum security."
+            ),
+        }
 
     @app.post("/v1/requalification-release", response_model=PrimeSentinelIssueResponse)
     def issue_requalification_release(

@@ -1,0 +1,143 @@
+name: QCRYPTO Applied Work Post-Work PoS Gate
+
+on:
+  pull_request:
+    paths:
+      - "security/qcrypto/applied_work_postwork.py"
+      - "security/qcrypto/applied_work_pos_application.py"
+      - "security/qcrypto/applied_work_validation_cycle.py"
+      - "scripts/qcrypto_applied_work_postwork_evidence.py"
+      - "tests/test_qcrypto_applied_work_postwork.py"
+      - "tests/test_qcrypto_applied_work_pos_application.py"
+      - "tests/test_qcrypto_applied_work_validation_cycle.py"
+      - ".github/workflows/qcrypto-applied-work-postwork.yml"
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - "security/qcrypto/applied_work_postwork.py"
+      - "security/qcrypto/applied_work_pos_application.py"
+      - "security/qcrypto/applied_work_validation_cycle.py"
+      - "scripts/qcrypto_applied_work_postwork_evidence.py"
+      - "tests/test_qcrypto_applied_work_postwork.py"
+      - "tests/test_qcrypto_applied_work_pos_application.py"
+      - "tests/test_qcrypto_applied_work_validation_cycle.py"
+      - ".github/workflows/qcrypto-applied-work-postwork.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  post-work-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile measured-PoW to PoS application model
+        run: |
+          python -m compileall \
+            security/qcrypto/applied_work_postwork.py \
+            security/qcrypto/applied_work_pos_application.py \
+            security/qcrypto/applied_work_validation_cycle.py \
+            scripts/qcrypto_applied_work_postwork_evidence.py
+
+      - name: Run measured-PoW, PoS-application, and recursive-cycle regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_applied_work_postwork.py \
+            tests/test_qcrypto_applied_work_pos_application.py \
+            tests/test_qcrypto_applied_work_validation_cycle.py
+
+      - name: Generate machine-readable proof evidence
+        env:
+          PYTHONPATH: .
+        run: python scripts/qcrypto_applied_work_postwork_evidence.py --output applied-work-post-work-pos.json
+
+      - name: Assert measured work precedes bounded PoS application
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          p = Path("applied-work-post-work-pos.json")
+          evidence = json.loads(p.read_text())
+          assert evidence["schema"] == "WS-APPLIED-WORK-POST-WORK-POS-V1"
+          assert evidence["status"] == "PASS"
+          assert evidence["claim_state"] == "BOUNDED_MODEL_PROOF_OF_APPLIED_WORK_TO_POST_WORK_STAKE_PRESERVATION"
+          assert evidence["receipts_checked"] == 128
+          assert evidence["applications_checked"] == 6
+          assert evidence["claims_boundary"]["proof_of_applied_work_value"] is False
+          assert evidence["claims_boundary"]["production_pos_adoption"] is False
+          assert evidence["claims_boundary"]["post_quantum_primitive_security"] is False
+          assert evidence["claims_boundary"]["production_consensus_security"] is False
+          expected = evidence.pop("evidence_sha256")
+          actual = hashlib.sha256(json.dumps(evidence, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+          assert actual == expected
+          print("post_work_status: PASS")
+          print("evidence_sha256:", expected)
+          PY
+
+      - name: Assert PoS remains downstream of measured PoW across all reference families
+        env:
+          PYTHONPATH: .
+        run: |
+          python - <<'PY'
+          from security.qcrypto.applied_work_postwork import AppliedWorkReceipt, WorkValidationState, apply_post_work_stake
+          from security.qcrypto.applied_work_pos_application import instantiate_validator_application, project_to_all_families
+          from security.qcrypto.pos_family_preservation import PROFILES
+
+          receipt = AppliedWorkReceipt(
+              work_id="ci-work",
+              contributor_id="ci-contributor",
+              evidence_digest="ab" * 32,
+              validated_work_units=100,
+              validation_state=WorkValidationState.PROVEN_INTERNALLY,
+              evidence_retained=True,
+              reproducible=True,
+              safety_authorized=True,
+              measurement_accessible=True,
+          )
+          position = apply_post_work_stake(
+              receipt,
+              consensus_domain="WS-QPOS",
+              epoch=1,
+              requested_stake_units=75,
+          )
+          application = instantiate_validator_application(
+              receipt,
+              position,
+              validator_id="ci-validator",
+              withdrawal_owner="ci-owner",
+              classical_credential="ci-classical",
+          )
+          projections = project_to_all_families(application)
+          assert set(projections) == set(PROFILES)
+          assert len(projections) == 19
+          assert application.measured_work_units == receipt.validated_work_units
+          assert application.source_validation_state == receipt.validation_state.value
+          assert application.validator.stake <= application.measured_work_units
+          assert all(p.measured_work_units == receipt.validated_work_units for p in projections.values())
+          assert all(p.source_validation_state == receipt.validation_state.value for p in projections.values())
+          assert all(p.application_mode == "WORLDSHEPHERD_REFERENCE_ADAPTER_ONLY" for p in projections.values())
+          assert all(p.production_network_adoption_claimed is False for p in projections.values())
+          print("reference_profile_count:", len(projections))
+          PY
+
+      - name: Upload Applied Work post-work artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-applied-work-post-work-pos
+          path: applied-work-post-work-pos.json
+          if-no-files-found: error

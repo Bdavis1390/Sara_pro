@@ -1,0 +1,55 @@
+{
+  "schema": "WS-QCRYPTO-QUANTUM-INDUSTRIALIZATION-v1",
+  "as_of": "2026-09-13",
+  "assessment": {
+    "strategic_state": "ATTACK_DEFENSE_CO_ACCELERATION",
+    "offensive_side_state": "INDUSTRIAL_SCALE_ENABLERS_ACTIVE",
+    "defensive_side_state": "COORDINATED_FINANCIAL_PQ_MIGRATION_ACTIVE",
+    "urgency": "COMPRESS_MIGRATION_TIMELINES_AND_TRACK_INDUSTRIAL_CAPACITY",
+    "claims_boundary": "Funding, manufacturing programs, and vendor roadmaps are leading indicators only. They do not demonstrate Q-day, a production cryptanalytic attack machine, or a production key break."
+  },
+  "evidence": [
+    {
+      "name": "CHIPS R&D quantum program",
+      "source": "https://www.nist.gov/news-events/news/2026/05/department-commerce-announces-letters-intent-9-companies-2-billion",
+      "evidence_class": "official_government_program",
+      "statement": "Commerce announced letters of intent with nine companies totaling $2 billion in planned CHIPS R&D support for quantum computing, including fault-tolerant and manufacturing bottlenecks."
+    },
+    {
+      "name": "Quantinuum finalized CHIPS award",
+      "source": "https://www.nist.gov/news-events/news/2026/09/department-commerce-announces-finalization-chips-rd-award-quantinuum",
+      "evidence_class": "official_government_final_award",
+      "statement": "Commerce finalized an award of up to $100 million addressing manufacturing bottlenecks for scalable fault-tolerant trapped-ion quantum computers."
+    },
+    {
+      "name": "Rigetti finalized CHIPS award",
+      "source": "https://www.nist.gov/news-events/news/2026/09/department-commerce-announces-finalization-chips-rd-award-rigetti",
+      "evidence_class": "official_government_final_award",
+      "statement": "Commerce finalized an award of up to $100 million for superconducting quantum-computing scaling, including readout electronics, cryostats, and fabrication capability."
+    },
+    {
+      "name": "D-Wave finalized CHIPS award",
+      "source": "https://www.nist.gov/news-events/news/2026/09/department-commerce-announces-finalization-chips-rd-award-d-wave",
+      "evidence_class": "official_government_final_award",
+      "statement": "Commerce finalized an award of up to $100 million for annealing and gate-model superconducting quantum-computing process technologies, packaging, coherence, and error-rate improvements."
+    },
+    {
+      "name": "GlobalFoundries quantum manufacturing award",
+      "source": "https://gf.com/news-and-events/news/globalfoundries-and-us-department-of-commerce-finalize-375m-r-d-award-to-advance-american-quantum-leadership/",
+      "evidence_class": "official_company_final_award",
+      "statement": "GlobalFoundries and Commerce finalized a $375 million R&D award intended to scale domestic quantum semiconductor manufacturing and move quantum hardware from research/prototyping toward commercial-scale production."
+    },
+    {
+      "name": "Treasury Quantum-Readiness Task Force",
+      "source": "https://home.treasury.gov/news/press-releases/sb0615",
+      "evidence_class": "official_government_transition_program",
+      "statement": "Treasury launched a public-private financial-sector PQ transition task force with digital assets and emerging-technology risk explicitly in scope."
+    }
+  ],
+  "prohibited_inferences": [
+    "These awards do not prove that any funded company will meet its roadmap.",
+    "Manufacturing scale does not equal cryptanalytic capability.",
+    "Financial-sector migration does not equal blockchain-level PQ activation.",
+    "No production cryptocurrency key break is established by this record."
+  ]
+}

@@ -1,0 +1,270 @@
+from dataclasses import replace
+
+from security.qcrypto.canonical_authority_envelope import CanonicalAuthorityEnvelope
+from security.qcrypto.canonical_pq_signing_context import (
+    U32_MAX,
+    U64_MAX,
+    AuthoritySigningIntent,
+    CanonicalSigningContextRequest,
+    build_canonical_signing_context,
+)
+from security.qcrypto.hybrid_authority_migration import (
+    AuthorityLayer,
+    AuthorityPolicy,
+    MigrationRequirement,
+)
+
+
+PAYLOAD = "a" * 64
+EVIDENCE = "b" * 64
+RECOVERY = "c" * 64
+NETWORK = "testnet-fixture"
+DOMAIN = "WS-QCRYPTO-AUTH-V1"
+
+
+def intent(**overrides):
+    data = dict(
+        network_id=NETWORK,
+        domain_separator=DOMAIN,
+        payload_digest=PAYLOAD,
+        authority_id="authority-fixture-1",
+        authority_layer=AuthorityLayer.ACCOUNT,
+        declared_requirement=MigrationRequirement.HYBRID_REQUIRED,
+        envelope_version=3,
+        key_epoch=11,
+        classical_algorithm_id="ECDSA",
+        pq_algorithm_id="ML-DSA",
+        classical_required_for_acceptance=True,
+        pq_required_for_acceptance=True,
+        recovery_evidence_present=True,
+        execution_authority=False,
+        live_value_authorized=False,
+    )
+    data.update(overrides)
+    return AuthoritySigningIntent(**data)
+
+
+def policy(**overrides):
+    data = dict(
+        network_id=NETWORK,
+        domain_separator=DOMAIN,
+        minimum_requirement=MigrationRequirement.HYBRID_REQUIRED,
+        minimum_envelope_version=3,
+        minimum_key_epoch=11,
+        require_recovery_evidence=True,
+    )
+    data.update(overrides)
+    return AuthorityPolicy(**data)
+
+
+def adapter(**overrides):
+    data = dict(
+        chain="FixtureChain",
+        adapter_class="PROGRAMMABLE_AUTH",
+        stable_authority_id=True,
+        authenticator_versioned=True,
+        authenticator_replaceable=True,
+        policy_versioned=True,
+        recovery_commitment_present=True,
+        chain_binding_present=True,
+        replay_domain_present=True,
+        evidence_binding_present=True,
+        explicit_human_approval_required=True,
+        live_chain_support=False,
+        independent_review_complete=False,
+        consensus_layer_pq=False,
+    )
+    data.update(overrides)
+    return CanonicalAuthorityEnvelope(**data)
+
+
+def request(**overrides):
+    data = dict(
+        intent=intent(),
+        authority_policy=policy(),
+        adapter=adapter(),
+        policy_version=5,
+        replay_domain="tx-auth",
+        replay_sequence=42,
+        evidence_digest=EVIDENCE,
+        recovery_commitment_digest=RECOVERY,
+    )
+    data.update(overrides)
+    return CanonicalSigningContextRequest(**data)
+
+
+def ready_result(req=None):
+    result = build_canonical_signing_context(req or request())
+    assert result.ready is True
+    assert result.verdict == "CANONICAL_SIGNING_CONTEXT_READY"
+    assert result.context_digest is not None
+    assert len(result.context_digest) == 64
+    assert result.canonical_preimage_hex is not None
+    assert result.pre_sign_intent_only is True
+    assert result.signature_presence_assumed is False
+    assert result.execution_authority is False
+    assert result.live_value_authorized is False
+    assert result.transaction_signed is False
+    return result
+
+
+def ready_digest(req=None):
+    return ready_result(req).context_digest
+
+
+def test_context_is_deterministic_for_identical_inputs():
+    assert ready_digest() == ready_digest()
+
+
+def test_pre_sign_context_never_assumes_signature_presence():
+    result = ready_result()
+    assert result.pre_sign_intent_only is True
+    assert result.signature_presence_assumed is False
+    assert "signature_present" not in result.canonical_fields
+
+
+def test_context_records_effective_policy_semantics():
+    result = ready_result()
+    assert result.canonical_fields["authority_domain_separator"] == DOMAIN
+    assert result.canonical_fields["declared_migration_requirement"] == "HYBRID_REQUIRED"
+    assert result.canonical_fields["policy_minimum_requirement"] == "HYBRID_REQUIRED"
+    assert result.canonical_fields["effective_migration_requirement"] == "HYBRID_REQUIRED"
+    assert result.canonical_fields["policy_requires_recovery_evidence"] == "1"
+
+
+def test_network_binding_changes_context_digest():
+    base = ready_digest()
+    alt_intent = replace(intent(), network_id="other-testnet")
+    alt_policy = replace(policy(), network_id="other-testnet")
+    changed = ready_digest(request(intent=alt_intent, authority_policy=alt_policy))
+    assert changed != base
+
+
+def test_authority_domain_binding_changes_context_digest():
+    base = ready_digest()
+    alt_intent = replace(intent(), domain_separator="WS-QCRYPTO-AUTH-V2")
+    alt_policy = replace(policy(), domain_separator="WS-QCRYPTO-AUTH-V2")
+    changed = ready_digest(request(intent=alt_intent, authority_policy=alt_policy))
+    assert changed != base
+
+
+def test_authority_role_binding_changes_context_digest():
+    base = ready_digest()
+    changed = ready_digest(
+        request(intent=replace(intent(), authority_layer=AuthorityLayer.CONSENSUS_VALIDATOR))
+    )
+    assert changed != base
+
+
+def test_algorithm_suite_binding_changes_context_digest():
+    base = ready_digest()
+    changed = ready_digest(request(intent=replace(intent(), pq_algorithm_id="SLH-DSA")))
+    assert changed != base
+
+
+def test_policy_version_binding_changes_context_digest():
+    assert ready_digest(request(policy_version=5)) != ready_digest(request(policy_version=6))
+
+
+def test_policy_floor_configuration_changes_context_digest_even_when_both_accept():
+    base = ready_digest()
+    relaxed = policy(minimum_envelope_version=2, minimum_key_epoch=10, require_recovery_evidence=False)
+    changed = ready_digest(request(authority_policy=relaxed))
+    assert changed != base
+
+
+def test_key_epoch_binding_changes_context_digest_when_policy_allows_new_epoch():
+    base = ready_digest()
+    changed = ready_digest(request(intent=replace(intent(), key_epoch=12)))
+    assert changed != base
+
+
+def test_replay_sequence_binding_changes_context_digest():
+    assert ready_digest(request(replay_sequence=42)) != ready_digest(request(replay_sequence=43))
+
+
+def test_payload_evidence_and_recovery_are_independently_bound():
+    base = ready_digest()
+    assert ready_digest(request(intent=replace(intent(), payload_digest="d" * 64))) != base
+    assert ready_digest(request(evidence_digest="e" * 64)) != base
+    assert ready_digest(request(recovery_commitment_digest="f" * 64)) != base
+
+
+def test_policy_downgrade_blocks_context_generation():
+    downgraded = replace(intent(), declared_requirement=MigrationRequirement.CLASSICAL_ALLOWED)
+    result = build_canonical_signing_context(request(intent=downgraded))
+    assert result.ready is False
+    assert result.context_digest is None
+    assert any("downgrade" in blocker.lower() for blocker in result.blockers)
+
+
+def test_self_asserted_execution_authority_blocks_context_generation():
+    result = build_canonical_signing_context(
+        request(intent=replace(intent(), execution_authority=True))
+    )
+    assert result.ready is False
+    assert result.execution_authority is False
+    assert result.live_value_authorized is False
+    assert result.transaction_signed is False
+
+
+def test_hybrid_intent_requires_both_algorithm_slots_without_claiming_signatures_exist():
+    result = build_canonical_signing_context(
+        request(intent=replace(intent(), pq_algorithm_id=None))
+    )
+    assert result.ready is False
+    assert any("Hybrid signing intent requires classical and PQ algorithm slots" in blocker for blocker in result.blockers)
+
+
+def test_missing_adapter_replay_binding_fails_closed():
+    result = build_canonical_signing_context(request(adapter=adapter(replay_domain_present=False)))
+    assert result.ready is False
+    assert any("replay-domain" in blocker for blocker in result.blockers)
+
+
+def test_noncanonical_uppercase_digest_fails_closed():
+    result = build_canonical_signing_context(request(evidence_digest="AB" * 32))
+    assert result.ready is False
+    assert any("lowercase" in blocker for blocker in result.blockers)
+
+
+def test_missing_recovery_commitment_digest_fails_closed():
+    result = build_canonical_signing_context(request(recovery_commitment_digest=None))
+    assert result.ready is False
+    assert any("recovery_commitment_digest is required" in blocker for blocker in result.blockers)
+
+
+def test_unsupported_identifier_characters_fail_closed():
+    result = build_canonical_signing_context(request(replay_domain="tx auth"))
+    assert result.ready is False
+    assert any("unsupported characters" in blocker for blocker in result.blockers)
+
+
+def test_uint32_version_fields_fail_closed_outside_portable_range():
+    too_large_envelope = build_canonical_signing_context(
+        request(intent=replace(intent(), envelope_version=U32_MAX + 1))
+    )
+    assert too_large_envelope.ready is False
+    assert any("envelope_version must be" in blocker for blocker in too_large_envelope.blockers)
+
+    zero_policy_version = build_canonical_signing_context(request(policy_version=0))
+    assert zero_policy_version.ready is False
+    assert any("policy_version must be" in blocker for blocker in zero_policy_version.blockers)
+
+
+def test_uint64_epoch_and_replay_fields_fail_closed_outside_portable_range():
+    oversized_epoch = build_canonical_signing_context(
+        request(intent=replace(intent(), key_epoch=U64_MAX + 1))
+    )
+    assert oversized_epoch.ready is False
+    assert any("key_epoch must be" in blocker for blocker in oversized_epoch.blockers)
+
+    oversized_replay = build_canonical_signing_context(request(replay_sequence=U64_MAX + 1))
+    assert oversized_replay.ready is False
+    assert any("replay_sequence must be" in blocker for blocker in oversized_replay.blockers)
+
+
+def test_boolean_is_not_accepted_as_integer_counter():
+    result = build_canonical_signing_context(request(policy_version=True))
+    assert result.ready is False
+    assert "policy_version must be an integer." in result.blockers

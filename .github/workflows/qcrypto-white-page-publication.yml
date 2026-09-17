@@ -1,0 +1,60 @@
+name: QCRYPTO White Page Publication Gate
+
+on:
+  pull_request:
+    paths:
+      - 'docs/WS_QCRYPTO_PUBLIC_WHITE_PAGE_2026-09-14.md'
+      - 'security/qcrypto/publication_manifest_2026-09-14.json'
+      - 'security/qcrypto/validate_publication.py'
+      - '.github/workflows/qcrypto-white-page-publication.yml'
+  push:
+    paths:
+      - 'docs/WS_QCRYPTO_PUBLIC_WHITE_PAGE_2026-09-14.md'
+      - 'security/qcrypto/publication_manifest_2026-09-14.json'
+      - 'security/qcrypto/validate_publication.py'
+      - '.github/workflows/qcrypto-white-page-publication.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publication-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out full repository history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate public white-page claims and evidence anchor
+        run: |
+          python security/qcrypto/validate_publication.py | tee qcrypto-white-page-publication-result.json
+
+      - name: Assert posting status GO
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('qcrypto-white-page-publication-result.json').read_text(encoding='utf-8'))
+          assert result['schema']=='WS-QCRYPTO-PUBLICATION-GATE-RESULT-V1'
+          assert result['status']=='PASS'
+          assert result['posting_status']=='GO'
+          assert result['claims_state']=='PROVEN_INTERNALLY_BOUNDED_SOFTWARE_BEHAVIOR'
+          assert result['validated_implementation_anchor']=='b65302d2e849dcad67b553378d3fce11b404f3c5'
+          assert result['bridge_artifact_digest']=='sha256:15dc39ef59a8bbe10e48f858f1bb42d34c9c35adb33045b9f7635201c5df698e'
+          PY
+
+      - name: Upload publication-readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-white-page-publication-readiness
+          path: qcrypto-white-page-publication-result.json
+          if-no-files-found: error

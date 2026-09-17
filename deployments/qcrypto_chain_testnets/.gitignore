@@ -1,0 +1,8 @@
+secrets/*
+!secrets/README.md
+.env
+*.pem
+*.key
+keystore*
+wallet*
+validator*

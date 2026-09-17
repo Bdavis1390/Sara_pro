@@ -26,6 +26,12 @@ def check_checkpoint_integrity(manager: EchoCheckpointManager) -> dict[str, Any]
         ).fetchone()
         if binding is None or binding["value"] != manager.fingerprint_sha256:
             raise EchoCheckpointError("ECHO checkpoint key binding mismatch")
+        algorithm_binding = connection.execute(
+            "SELECT value FROM echo_checkpoint_metadata WHERE name=?",
+            (f"checkpoint_key_algorithm:{manager.key_id}",),
+        ).fetchone()
+        if algorithm_binding is None or algorithm_binding["value"] != manager.algorithm:
+            raise EchoCheckpointError("ECHO checkpoint algorithm binding mismatch")
 
         rows = connection.execute(
             "SELECT * FROM echo_checkpoints ORDER BY sequence"
@@ -38,6 +44,9 @@ def check_checkpoint_integrity(manager: EchoCheckpointManager) -> dict[str, Any]
                 "latest_checkpoint_sha256": None,
                 "key_id": manager.key_id,
                 "key_fingerprint_sha256": manager.fingerprint_sha256,
+                "algorithm": manager.algorithm,
+                "post_quantum_signature_protection": manager.algorithm == "ML-DSA-65",
+                "pq_anchor_sequence": None,
             }
 
         bundles: list[dict[str, Any]] = []
@@ -58,6 +67,8 @@ def check_checkpoint_integrity(manager: EchoCheckpointManager) -> dict[str, Any]
             manifest = bundle["manifest"]
             if manifest_copy != manifest:
                 raise EchoCheckpointError("stored manifest copy does not match checkpoint bundle")
+            if verified["algorithm"] != manager.algorithm:
+                raise EchoCheckpointError("stored checkpoint algorithm does not match active signer")
             comparisons = {
                 "checkpoint_id": manifest["checkpoint_id"],
                 "created_at": manifest["created_at"],
@@ -100,6 +111,11 @@ def check_checkpoint_integrity(manager: EchoCheckpointManager) -> dict[str, Any]
             "latest_checkpoint_sha256": verified_chain["last_checkpoint_sha256"],
             "key_id": manager.key_id,
             "key_fingerprint_sha256": manager.fingerprint_sha256,
+            "algorithm": verified_chain["latest_algorithm"],
+            "post_quantum_signature_protection": verified_chain[
+                "post_quantum_signature_protection"
+            ],
+            "pq_anchor_sequence": verified_chain["pq_anchor_sequence"],
         }
     except sqlite3.Error as exc:
         raise EchoCheckpointError("unable to inspect ECHO checkpoint ledger") from exc

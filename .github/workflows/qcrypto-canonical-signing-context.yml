@@ -1,0 +1,123 @@
+name: QCRYPTO Canonical PQ Signing Context Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_hybrid_authority_migration.py'
+      - 'tests/test_qcrypto_pqc_algorithm_policy.py'
+      - 'scripts/qcrypto_canonical_signing_context_evidence.py'
+      - 'scripts/verify_qcrypto_canonical_signing_context.mjs'
+      - '.github/workflows/qcrypto-canonical-signing-context.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/hybrid_authority_migration.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_hybrid_authority_migration.py'
+      - 'tests/test_qcrypto_pqc_algorithm_policy.py'
+      - 'scripts/qcrypto_canonical_signing_context_evidence.py'
+      - 'scripts/verify_qcrypto_canonical_signing_context.mjs'
+      - '.github/workflows/qcrypto-canonical-signing-context.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canonical-signing-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Compile canonical context controls
+        run: |
+          python -m compileall \
+            security/qcrypto/canonical_authority_envelope.py \
+            security/qcrypto/canonical_pq_signing_context.py \
+            security/qcrypto/hybrid_authority_migration.py \
+            security/qcrypto/pqc_algorithm_policy.py \
+            scripts/qcrypto_canonical_signing_context_evidence.py
+
+      - name: Run canonical, migration, and algorithm-policy regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_canonical_pq_signing_context.py \
+            tests/test_qcrypto_hybrid_authority_migration.py \
+            tests/test_qcrypto_pqc_algorithm_policy.py
+
+      - name: Generate canonical context evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_canonical_signing_context_evidence.py \
+            --output canonical-signing-context-evidence.json
+
+      - name: Independently reconstruct framing in Node.js
+        run: |
+          node --version
+          node scripts/verify_qcrypto_canonical_signing_context.mjs \
+            canonical-signing-context-evidence.json
+
+      - name: Assert deterministic pre-sign fail-closed binding posture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e = json.loads(Path('canonical-signing-context-evidence.json').read_text())
+          assert e['schema'] == 'WS-QCRYPTO-CANONICAL-SIGNING-CONTEXT-EVIDENCE-V1'
+          assert e['status'] == 'PASS'
+          assert e['baseline']['verdict'] == 'CANONICAL_SIGNING_CONTEXT_READY'
+          assert e['baseline']['ready'] is True
+          assert e['baseline']['pre_sign_intent_only'] is True
+          assert e['baseline']['signature_presence_assumed'] is False
+          assert not any('signature_present' in key for key in e['baseline']['canonical_fields'])
+          assert len(e['baseline']['context_digest']) == 64
+          assert e['summary']['pre_sign_intent_only'] is True
+          assert e['summary']['signature_presence_assumed'] is False
+          assert e['summary']['distinct_context_digest_count'] == 8
+          assert e['summary']['expected_distinct_context_digest_count'] == 8
+          assert e['summary']['authority_domain_bound'] is True
+          assert e['summary']['policy_floor_bound'] is True
+          assert e['summary']['downgrade_blocked'] is True
+          assert e['summary']['self_authorization_blocked'] is True
+          assert e['negative_controls']['migration_downgrade']['ready'] is False
+          assert e['negative_controls']['self_asserted_live_value']['ready'] is False
+          assert e['summary']['execution_authority'] is False
+          assert e['summary']['live_value_authorized'] is False
+          assert e['summary']['transaction_signed'] is False
+          assert e['summary']['production_deployment_established'] is False
+          assert e['summary']['end_to_end_pq_security_established'] is False
+          assert len(e['evidence_sha256']) == 64
+          print('canonical_pq_signing_context_gate: PASS')
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload canonical signing context evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qcrypto-canonical-signing-context-evidence
+          path: canonical-signing-context-evidence.json
+          if-no-files-found: error

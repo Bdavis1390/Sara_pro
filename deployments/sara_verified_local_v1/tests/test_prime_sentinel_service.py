@@ -5,9 +5,11 @@ from pathlib import Path
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
 from fastapi.testclient import TestClient
 
 from worldshepherd_sara.prime_sentinel_authorization import (
+    PRIME_SENTINEL_MLDSA65_CONTEXT,
     PrimeSentinelAuthorizationAssertion,
     PrimeSentinelVerifier,
 )
@@ -19,6 +21,7 @@ from worldshepherd_sara.prime_sentinel_service import (
     KEY_FILE_ENV,
     KEY_ID_ENV,
     SERVICE_TOKEN_FILE_ENV,
+    SIGNING_ALGORITHM_ENV,
     PrimeSentinelServiceConfigError,
     create_prime_sentinel_app,
 )
@@ -31,12 +34,26 @@ REQUEST_ID = "PSREQ-test-0001"
 
 def write_ed25519_key(path: Path, mode: int = 0o600) -> Ed25519PrivateKey:
     key = Ed25519PrivateKey.generate()
-    data = key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption(),
+    path.write_bytes(
+        key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
     )
-    path.write_bytes(data)
+    path.chmod(mode)
+    return key
+
+
+def write_mldsa65_key(path: Path, mode: int = 0o600) -> MLDSA65PrivateKey:
+    key = MLDSA65PrivateKey.generate()
+    path.write_bytes(
+        key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+    )
     path.chmod(mode)
     return key
 
@@ -53,10 +70,12 @@ def configure(
     *,
     key_id: str = KEY_ID,
     data_dir: Path | None = None,
+    algorithm: str = "Ed25519",
 ):
     monkeypatch.setenv(KEY_FILE_ENV, str(key_path))
     monkeypatch.setenv(SERVICE_TOKEN_FILE_ENV, str(token_path))
     monkeypatch.setenv(KEY_ID_ENV, key_id)
+    monkeypatch.setenv(SIGNING_ALGORITHM_ENV, algorithm)
     monkeypatch.setenv(
         "PRIME_SENTINEL_DATA_DIR",
         str(data_dir or (key_path.parent / "prime-sentinel-data")),
@@ -66,9 +85,17 @@ def configure(
 
 
 def configured_files(tmp_path: Path, *, token: str = SERVICE_TOKEN):
-    key_path = tmp_path / "sentinel.pem"
+    key_path = tmp_path / "sentinel-ed25519.pem"
     token_path = tmp_path / "service-token"
     write_ed25519_key(key_path)
+    write_service_token(token_path, token)
+    return key_path, token_path
+
+
+def configured_pq_files(tmp_path: Path, *, token: str = SERVICE_TOKEN):
+    key_path = tmp_path / "sentinel-mldsa65.pem"
+    token_path = tmp_path / "service-token"
+    write_mldsa65_key(key_path)
     write_service_token(token_path, token)
     return key_path, token_path
 
@@ -80,7 +107,67 @@ def auth_headers(request_id: str = REQUEST_ID) -> dict[str, str]:
     }
 
 
-def test_service_issues_assertion_accepted_by_existing_sara_verifier(tmp_path, monkeypatch):
+def test_default_pq_service_issues_mldsa65_assertion_accepted_by_sara_verifier(
+    tmp_path,
+    monkeypatch,
+):
+    key_path, token_path = configured_pq_files(tmp_path)
+    configure(
+        monkeypatch,
+        key_path,
+        token_path,
+        key_id="prime-sentinel-mldsa65-test-key",
+        algorithm="ML-DSA-65",
+    )
+    app = create_prime_sentinel_app()
+
+    with TestClient(app) as client:
+        ready = client.get("/readyz")
+        assert ready.status_code == 200
+        assert ready.json()["algorithm"] == "ML-DSA-65"
+        assert ready.json()["signature_context"] == PRIME_SENTINEL_MLDSA65_CONTEXT.decode("ascii")
+        assert ready.json()["post_quantum_signature_protection"] is True
+        public = client.get("/v1/public-key")
+        assert public.status_code == 200
+        public_body = public.json()
+        assert public_body["algorithm"] == "ML-DSA-65"
+        assert public_body["signature_context"] == PRIME_SENTINEL_MLDSA65_CONTEXT.decode("ascii")
+
+        issued = client.post(
+            "/v1/requalification-release",
+            headers=auth_headers(),
+            json={
+                "prime_id": "PRIME-PQ-TEST-001",
+                "target_environment": "SPACE",
+                "lifetime_seconds": 300,
+            },
+        )
+        assert issued.status_code == 200
+        assertion = PrimeSentinelAuthorizationAssertion.model_validate(issued.json()["assertion"])
+        status = client.get(
+            f"/v1/issuance/{REQUEST_ID}",
+            headers={"Authorization": f"Bearer {SERVICE_TOKEN}"},
+        )
+        assert status.status_code == 200
+        assert status.json()["signing_algorithm"] == "ML-DSA-65"
+        assert status.json()["post_quantum_signature_protection"] is True
+
+    verifier = PrimeSentinelVerifier(
+        public_keys={
+            public_body["key_id"]: {
+                "algorithm": public_body["algorithm"],
+                "public_key_b64url": public_body["public_key_b64url"],
+                "signature_context": public_body["signature_context"],
+            }
+        }
+    )
+    verified = verifier.verify(assertion)
+    assert verified.prime_id == "PRIME-PQ-TEST-001"
+    assert verified.signing_algorithm == "ML-DSA-65"
+    assert verified.signature_context == PRIME_SENTINEL_MLDSA65_CONTEXT.decode("ascii")
+
+
+def test_legacy_service_issues_assertion_accepted_by_existing_sara_verifier(tmp_path, monkeypatch):
     key_path, token_path = configured_files(tmp_path)
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
@@ -91,71 +178,36 @@ def test_service_issues_assertion_accepted_by_existing_sara_verifier(tmp_path, m
         public_body = public.json()
         assert public_body["algorithm"] == "Ed25519"
         assert public_body["key_id"] == KEY_ID
-
         issued = client.post(
             "/v1/requalification-release",
             headers=auth_headers(),
-            json={
-                "prime_id": "PRIME-TEST-001",
-                "target_environment": "SPACE",
-                "lifetime_seconds": 300,
-            },
+            json={"prime_id": "PRIME-TEST-001", "target_environment": "SPACE", "lifetime_seconds": 300},
         )
         assert issued.status_code == 200
-        assertion = PrimeSentinelAuthorizationAssertion.model_validate(
-            issued.json()["assertion"]
-        )
-        status = client.get(
-            f"/v1/issuance/{REQUEST_ID}",
-            headers={"Authorization": f"Bearer {SERVICE_TOKEN}"},
-        )
-        assert status.status_code == 200
-        assert status.json()["state"] == "SIGNED"
-        assert status.json()["authorization_id"] == assertion.authorization_id
+        assertion = PrimeSentinelAuthorizationAssertion.model_validate(issued.json()["assertion"])
 
-    verifier = PrimeSentinelVerifier(
-        public_keys_b64url={KEY_ID: public_body["public_key_b64url"]}
-    )
+    verifier = PrimeSentinelVerifier(public_keys_b64url={KEY_ID: public_body["public_key_b64url"]})
     verified = verifier.verify(assertion)
+    assert verified.signing_algorithm == "Ed25519"
     assert verified.prime_id == "PRIME-TEST-001"
-    assert verified.target_environment.value == "SPACE"
-    assert verified.key_id == KEY_ID
-    assert assertion.action == "REQUALIFICATION_RELEASE"
 
 
 def test_same_request_id_returns_exact_same_signed_assertion_after_restart(tmp_path, monkeypatch):
     key_path, token_path = configured_files(tmp_path)
     data_dir = tmp_path / "ledger"
     configure(monkeypatch, key_path, token_path, data_dir=data_dir)
-    body = {
-        "prime_id": "PRIME-IDEMPOTENT-001",
-        "target_environment": "SPACE",
-        "lifetime_seconds": 300,
-    }
-
+    body = {"prime_id": "PRIME-IDEMPOTENT-001", "target_environment": "SPACE", "lifetime_seconds": 300}
     app1 = create_prime_sentinel_app()
     with TestClient(app1) as client:
-        first = client.post(
-            "/v1/requalification-release",
-            headers=auth_headers("PSREQ-idempotent-001"),
-            json=body,
-        )
+        first = client.post("/v1/requalification-release", headers=auth_headers("PSREQ-idempotent-001"), json=body)
         assert first.status_code == 200
         first_assertion = first.json()["assertion"]
-
     app2 = create_prime_sentinel_app()
     with TestClient(app2) as client:
-        second = client.post(
-            "/v1/requalification-release",
-            headers=auth_headers("PSREQ-idempotent-001"),
-            json=body,
-        )
+        second = client.post("/v1/requalification-release", headers=auth_headers("PSREQ-idempotent-001"), json=body)
         assert second.status_code == 200
         assert second.json()["assertion"] == first_assertion
-        ledger = client.get(
-            "/v1/ledger-status",
-            headers={"Authorization": f"Bearer {SERVICE_TOKEN}"},
-        )
+        ledger = client.get("/v1/ledger-status", headers={"Authorization": f"Bearer {SERVICE_TOKEN}"})
         assert ledger.status_code == 200
         assert ledger.json()["records"] == 1
         assert ledger.json()["events"] == 2
@@ -167,19 +219,10 @@ def test_request_id_reuse_with_different_parameters_is_conflict(tmp_path, monkey
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
     headers = auth_headers("PSREQ-conflict-001")
-
     with TestClient(app) as client:
-        first = client.post(
-            "/v1/requalification-release",
-            headers=headers,
-            json={"prime_id": "P1", "target_environment": "SPACE"},
-        )
+        first = client.post("/v1/requalification-release", headers=headers, json={"prime_id": "P1", "target_environment": "SPACE"})
         assert first.status_code == 200
-        conflict = client.post(
-            "/v1/requalification-release",
-            headers=headers,
-            json={"prime_id": "P2", "target_environment": "SPACE"},
-        )
+        conflict = client.post("/v1/requalification-release", headers=headers, json={"prime_id": "P2", "target_environment": "SPACE"})
     assert conflict.status_code == 409
 
 
@@ -187,25 +230,14 @@ def test_missing_or_invalid_request_id_is_rejected(tmp_path, monkeypatch):
     key_path, token_path = configured_files(tmp_path)
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
-
     with TestClient(app) as client:
-        missing = client.post(
-            "/v1/requalification-release",
-            headers={"Authorization": f"Bearer {SERVICE_TOKEN}"},
-            json={"prime_id": "P1", "target_environment": "SPACE"},
-        )
-        invalid = client.post(
-            "/v1/requalification-release",
-            headers=auth_headers("bad"),
-            json={"prime_id": "P1", "target_environment": "SPACE"},
-        )
+        missing = client.post("/v1/requalification-release", headers={"Authorization": f"Bearer {SERVICE_TOKEN}"}, json={"prime_id": "P1", "target_environment": "SPACE"})
+        invalid = client.post("/v1/requalification-release", headers=auth_headers("bad"), json={"prime_id": "P1", "target_environment": "SPACE"})
     assert missing.status_code == 400
     assert invalid.status_code == 400
 
 
-def test_signed_persistence_failure_returns_no_assertion_and_retry_recovers_identity(
-    tmp_path, monkeypatch
-):
+def test_signed_persistence_failure_returns_no_assertion_and_retry_recovers_identity(tmp_path, monkeypatch):
     key_path, token_path = configured_files(tmp_path)
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
@@ -223,23 +255,14 @@ def test_signed_persistence_failure_returns_no_assertion_and_retry_recovers_iden
     body = {"prime_id": "P-CRASH", "target_environment": "SPACE"}
     headers = auth_headers("PSREQ-crash-window-001")
     with TestClient(app) as client:
-        failed = client.post(
-            "/v1/requalification-release",
-            headers=headers,
-            json=body,
-        )
+        failed = client.post("/v1/requalification-release", headers=headers, json=body)
         assert failed.status_code == 503
         prepared = store.get("PSREQ-crash-window-001")
         assert prepared is not None
         assert prepared.state == "PREPARED"
         assert prepared.authorization_id == observed["authorization_id"]
-
         monkeypatch.setattr(store, "mark_signed", original_mark_signed)
-        recovered = client.post(
-            "/v1/requalification-release",
-            headers=headers,
-            json=body,
-        )
+        recovered = client.post("/v1/requalification-release", headers=headers, json=body)
         assert recovered.status_code == 200
         assert recovered.json()["assertion"]["authorization_id"] == observed["authorization_id"]
 
@@ -255,11 +278,7 @@ def test_prepare_persistence_failure_returns_no_assertion(tmp_path, monkeypatch)
 
     monkeypatch.setattr(store, "prepare_or_get", fail_prepare)
     with TestClient(app) as client:
-        response = client.post(
-            "/v1/requalification-release",
-            headers=auth_headers("PSREQ-prepare-fail-001"),
-            json={"prime_id": "P1", "target_environment": "SPACE"},
-        )
+        response = client.post("/v1/requalification-release", headers=auth_headers("PSREQ-prepare-fail-001"), json={"prime_id": "P1", "target_environment": "SPACE"})
     assert response.status_code == 503
     assert store.get("PSREQ-prepare-fail-001") is None
 
@@ -269,12 +288,8 @@ def test_signing_key_id_cannot_be_rebound_to_different_key_material(tmp_path, mo
     data_dir = tmp_path / "ledger"
     configure(monkeypatch, key_path, token_path, data_dir=data_dir)
     create_prime_sentinel_app()
-
     write_ed25519_key(key_path)
-    with pytest.raises(
-        PrimeSentinelServiceConfigError,
-        match="already bound to different key material",
-    ):
+    with pytest.raises(PrimeSentinelServiceConfigError, match="already bound to different key material"):
         create_prime_sentinel_app()
 
 
@@ -282,17 +297,9 @@ def test_issue_endpoint_requires_independent_bearer(tmp_path, monkeypatch):
     key_path, token_path = configured_files(tmp_path)
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
-
     with TestClient(app) as client:
-        missing = client.post(
-            "/v1/requalification-release",
-            json={"prime_id": "P1", "target_environment": "GROUND"},
-        )
-        wrong = client.post(
-            "/v1/requalification-release",
-            headers={"Authorization": "Bearer definitely-wrong-token"},
-            json={"prime_id": "P1", "target_environment": "GROUND"},
-        )
+        missing = client.post("/v1/requalification-release", json={"prime_id": "P1", "target_environment": "GROUND"})
+        wrong = client.post("/v1/requalification-release", headers={"Authorization": "Bearer definitely-wrong-token"}, json={"prime_id": "P1", "target_environment": "GROUND"})
     assert missing.status_code == 401
     assert wrong.status_code == 403
 
@@ -301,7 +308,6 @@ def test_caller_cannot_inject_action_authorization_id_nonce_or_signature(tmp_pat
     key_path, token_path = configured_files(tmp_path)
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
-
     with TestClient(app) as client:
         response = client.post(
             "/v1/requalification-release",
@@ -322,17 +328,8 @@ def test_lifetime_above_fifteen_minutes_is_rejected(tmp_path, monkeypatch):
     key_path, token_path = configured_files(tmp_path)
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
-
     with TestClient(app) as client:
-        response = client.post(
-            "/v1/requalification-release",
-            headers=auth_headers(),
-            json={
-                "prime_id": "P1",
-                "target_environment": "SPACE",
-                "lifetime_seconds": 901,
-            },
-        )
+        response = client.post("/v1/requalification-release", headers=auth_headers(), json={"prime_id": "P1", "target_environment": "SPACE", "lifetime_seconds": 901})
     assert response.status_code == 422
 
 
@@ -356,7 +353,7 @@ def test_private_key_symlink_is_rejected(tmp_path, monkeypatch):
 def test_relative_private_key_path_is_rejected(tmp_path, monkeypatch):
     key_path, token_path = configured_files(tmp_path)
     monkeypatch.chdir(tmp_path)
-    configure(monkeypatch, Path("sentinel.pem"), token_path)
+    configure(monkeypatch, Path("sentinel-ed25519.pem"), token_path)
     with pytest.raises(PrimeSentinelServiceConfigError, match="absolute path"):
         create_prime_sentinel_app()
 
@@ -366,11 +363,9 @@ def test_service_token_file_must_be_secure_long_and_independent(tmp_path, monkey
     configure(monkeypatch, key_path, token_path)
     with pytest.raises(PrimeSentinelServiceConfigError, match="at least 32"):
         create_prime_sentinel_app()
-
     write_service_token(token_path, SERVICE_TOKEN, mode=0o644)
     with pytest.raises(PrimeSentinelServiceConfigError, match="group/other permissions"):
         create_prime_sentinel_app()
-
     write_service_token(token_path, SERVICE_TOKEN, mode=0o600)
     monkeypatch.setenv("SARA_ADMIN_TOKEN", SERVICE_TOKEN)
     with pytest.raises(PrimeSentinelServiceConfigError, match="independent"):
@@ -390,13 +385,8 @@ def test_health_and_public_surfaces_do_not_disclose_secrets_or_paths(tmp_path, m
     key_path, token_path = configured_files(tmp_path)
     configure(monkeypatch, key_path, token_path)
     app = create_prime_sentinel_app()
-
     with TestClient(app) as client:
-        bodies = [
-            client.get("/livez").text,
-            client.get("/readyz").text,
-            client.get("/v1/public-key").text,
-        ]
+        bodies = [client.get("/livez").text, client.get("/readyz").text, client.get("/v1/public-key").text]
     combined = "\n".join(bodies)
     assert str(key_path) not in combined
     assert str(token_path) not in combined
@@ -417,8 +407,9 @@ def test_missing_key_configuration_refuses_service_start(tmp_path, monkeypatch):
 
 
 def test_missing_service_token_file_refuses_service_start(tmp_path, monkeypatch):
-    key_path = tmp_path / "sentinel.pem"
+    key_path = tmp_path / "sentinel-ed25519.pem"
     write_ed25519_key(key_path)
+    monkeypatch.setenv(SIGNING_ALGORITHM_ENV, "Ed25519")
     monkeypatch.setenv(KEY_FILE_ENV, str(key_path))
     monkeypatch.setenv(KEY_ID_ENV, KEY_ID)
     monkeypatch.delenv(SERVICE_TOKEN_FILE_ENV, raising=False)

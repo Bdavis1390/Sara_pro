@@ -1,0 +1,111 @@
+name: QCRYPTO AWS KMS Live Probe
+
+on:
+  workflow_dispatch:
+
+# Deliberately manual only. Configure the protected GitHub environment
+# `qcrypto-aws-live` with:
+#   secret QCRYPTO_AWS_ROLE_ARN
+#   variable QCRYPTO_AWS_REGION
+#   variable QCRYPTO_AWS_KMS_KEY_ID
+# The AWS role should be scoped only to DescribeKey, GetPublicKey, Sign, and Verify
+# for the designated ML_DSA_65 key. No static AWS access key is accepted here.
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_USE_FIPS_ENDPOINT: "true"
+  AWS_MAX_ATTEMPTS: "1"
+  AWS_RETRY_MODE: standard
+
+jobs:
+  live-kms-non-transaction-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: qcrypto-aws-live
+    defaults:
+      run:
+        working-directory: deployments/qcrypto_external_signer
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Require protected-environment configuration
+        env:
+          ROLE_ARN: ${{ secrets.QCRYPTO_AWS_ROLE_ARN }}
+          AWS_REGION: ${{ vars.QCRYPTO_AWS_REGION }}
+          KMS_KEY_ID: ${{ vars.QCRYPTO_AWS_KMS_KEY_ID }}
+        run: |
+          test -n "$ROLE_ARN" || { echo 'QCRYPTO_AWS_ROLE_ARN is not configured'; exit 2; }
+          test -n "$AWS_REGION" || { echo 'QCRYPTO_AWS_REGION is not configured'; exit 2; }
+          test -n "$KMS_KEY_ID" || { echo 'QCRYPTO_AWS_KMS_KEY_ID is not configured'; exit 2; }
+
+      - name: Configure short-lived AWS credentials with GitHub OIDC
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ secrets.QCRYPTO_AWS_ROLE_ARN }}
+          aws-region: ${{ vars.QCRYPTO_AWS_REGION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install isolated AWS probe environment
+        run: |
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -e '.[aws]'
+          python -m pip check
+
+      - name: Run live ML-DSA-65 non-transaction probe
+        run: |
+          python scripts/live_aws_kms_probe.py \
+            --region '${{ vars.QCRYPTO_AWS_REGION }}' \
+            --key-id '${{ vars.QCRYPTO_AWS_KMS_KEY_ID }}' \
+            --output live-aws-kms-integration-evidence.json
+
+      - name: Assert live integration claims boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          e=json.loads(Path('live-aws-kms-integration-evidence.json').read_text(encoding='utf-8'))
+          assert e['schema']=='WS-QCRYPTO-LIVE-AWS-KMS-INTEGRATION-EVIDENCE-V1'
+          assert e['status']=='PASS'
+          assert e['claim_state']=='LIVE_AWS_KMS_ML_DSA_65_PROVIDER_CALL_OBSERVED'
+          assert e['aws_live_api_called'] is True
+          assert e['non_transaction_probe_only'] is True
+          assert e['aws_fips_endpoint_enforced'] is True
+          assert len(e['aws_fips_endpoint_host_sha256'])==64
+          assert e['sdk_total_max_attempts']==1
+          assert e['sdk_automatic_sign_retry_permitted'] is False
+          assert e['provider_side_verify_count']==1
+          assert e['algorithm']=='ML-DSA-65'
+          assert e['message_type']=='EXTERNAL_MU'
+          assert e['signing_algorithm']=='ML_DSA_SHAKE_256'
+          assert e['fips204_nonempty_context_preserved'] is True
+          assert e['signature_verified_locally'] is True
+          assert e['cmvp_algorithm_scope_verified_for_mldsa'] is False
+          assert e['worldshepherd_fips_validation_established'] is False
+          assert e['federal_compliance_established'] is False
+          assert e['independent_validation_established'] is False
+          assert e['chain_native_transaction_signature'] is False
+          assert e['transaction_broadcast'] is False
+          assert e['mainnet_authority'] is False
+          assert e['real_value_moved'] is False
+          assert e['end_to_end_pq_cryptocurrency_security_established'] is False
+          assert len(e['key_handle_sha256'])==64
+          assert len(e['public_key_fingerprint_sha256'])==64
+          assert len(e['evidence_sha256'])==64
+          print('qcrypto_live_aws_kms_probe_gate: PASS')
+          print('public_key_fingerprint_sha256:',e['public_key_fingerprint_sha256'])
+          print('evidence_sha256:',e['evidence_sha256'])
+          PY
+
+      - name: Upload live AWS KMS evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: qcrypto-live-aws-kms-integration-evidence
+          path: deployments/qcrypto_external_signer/live-aws-kms-integration-evidence.json
+          if-no-files-found: error

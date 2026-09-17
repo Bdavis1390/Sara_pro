@@ -1,0 +1,164 @@
+name: QCRYPTO Negotiated Canonical PQ Context Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_pq_context_interop.py'
+      - 'security/qcrypto/negotiated_canonical_context.py'
+      - 'security/qcrypto/pqc_suite_negotiation_guard.py'
+      - 'security/qcrypto/pq_signature_interop.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_negotiated_canonical_context.py'
+      - 'tests/test_qcrypto_pqc_suite_negotiation_guard.py'
+      - 'scripts/qcrypto_negotiated_canonical_context_evidence.py'
+      - '.github/workflows/qcrypto-negotiated-canonical-context.yml'
+  push:
+    branches:
+      - worldshepherd-qcrypto-width-time-risk-v1
+    paths:
+      - 'security/qcrypto/canonical_authority_envelope.py'
+      - 'security/qcrypto/canonical_pq_signing_context.py'
+      - 'security/qcrypto/canonical_pq_context_interop.py'
+      - 'security/qcrypto/negotiated_canonical_context.py'
+      - 'security/qcrypto/pqc_suite_negotiation_guard.py'
+      - 'security/qcrypto/pq_signature_interop.py'
+      - 'security/qcrypto/pqc_algorithm_policy.py'
+      - 'tests/test_qcrypto_canonical_pq_signing_context.py'
+      - 'tests/test_qcrypto_negotiated_canonical_context.py'
+      - 'tests/test_qcrypto_pqc_suite_negotiation_guard.py'
+      - 'scripts/qcrypto_negotiated_canonical_context_evidence.py'
+      - '.github/workflows/qcrypto-negotiated-canonical-context.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  negotiated-canonical-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pinned PQ backend and test dependency
+        run: |
+          python -m pip install --disable-pip-version-check --only-binary=:all: "pqcrypto==1.0.0" pytest
+
+      - name: Compile negotiated canonical controls
+        run: |
+          python -m compileall \
+            security/qcrypto/canonical_authority_envelope.py \
+            security/qcrypto/canonical_pq_signing_context.py \
+            security/qcrypto/canonical_pq_context_interop.py \
+            security/qcrypto/negotiated_canonical_context.py \
+            security/qcrypto/pqc_suite_negotiation_guard.py \
+            security/qcrypto/pq_signature_interop.py \
+            security/qcrypto/pqc_algorithm_policy.py \
+            scripts/qcrypto_negotiated_canonical_context_evidence.py
+
+      - name: Run negotiated, canonical, and suite-negotiation regressions
+        env:
+          PYTHONPATH: .
+        run: |
+          pytest -q \
+            tests/test_qcrypto_canonical_pq_signing_context.py \
+            tests/test_qcrypto_negotiated_canonical_context.py \
+            tests/test_qcrypto_pqc_suite_negotiation_guard.py
+
+      - name: Generate negotiated canonical PQ evidence
+        env:
+          PYTHONPATH: .
+        run: |
+          python scripts/qcrypto_negotiated_canonical_context_evidence.py \
+            --output negotiated-canonical-context-evidence.json
+
+      - name: Assert negotiation-bound exact-context PQ posture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          e = json.loads(Path('negotiated-canonical-context-evidence.json').read_text())
+          assert e['schema'] == 'WS-QCRYPTO-NEGOTIATED-CANONICAL-CONTEXT-EVIDENCE-V1'
+          assert e['status'] == 'PASS'
+          assert e['claim_state'] == 'NEGOTIATED_CANONICAL_CONTEXT_PQ_INTEROP_PROVEN_IN_CI'
+          assert e['proof_scope'] == 'EPHEMERAL_ZERO_VALUE_NEGOTIATED_CONTEXT_ONLY'
+
+          accepted = e['accepted']
+          assert accepted['verdict'] == 'NEGOTIATED_CANONICAL_CONTEXT_READY'
+          assert accepted['ready'] is True
+          assert accepted['selected_suite_id'] == 'HYBRID-ECDSA-MLDSA'
+          assert accepted['effective_requirement'] == 'HYBRID_REQUIRED'
+          assert accepted['classical_algorithm_id'] == 'ECDSA'
+          assert accepted['pq_algorithm_id'] == 'ML-DSA'
+          assert accepted['pre_sign_intent_only'] is True
+          assert accepted['signature_presence_assumed'] is False
+          assert accepted['execution_authority'] is False
+          assert accepted['live_value_authorized'] is False
+          assert accepted['transaction_signed'] is False
+          assert len(accepted['canonical_context_digest']) == 64
+          assert len(accepted['negotiation_transcript_digest']) == 64
+          assert len(accepted['negotiated_context_digest']) == 64
+
+          assert e['next_sequence']['ready'] is True
+          assert e['next_sequence']['negotiated_context_digest'] != accepted['negotiated_context_digest']
+          assert e['capability_change']['ready'] is True
+          assert e['capability_change']['negotiated_context_digest'] != accepted['negotiated_context_digest']
+
+          negative = e['negative_controls']
+          assert negative['weaker_selected_with_stronger_offer']['ready'] is False
+          assert negative['algorithm_slot_mismatch']['ready'] is False
+          assert negative['weaker_selected_with_stronger_offer']['negotiated_context_digest'] is None
+          assert negative['algorithm_slot_mismatch']['negotiated_context_digest'] is None
+
+          assert len(e['interop_results']) == 3
+          for result in e['interop_results']:
+              assert result['valid_signature_verified'] is True
+              assert result['tampered_context_rejected'] is True
+              assert result['cross_context_replay_rejected'] is True
+              assert result['wrong_key_rejected'] is True
+              assert result['test_signature_generated'] is True
+              assert result['secret_material_retained'] is False
+              assert result['live_transaction_signed'] is False
+              assert result['live_value_authorized'] is False
+              assert result['execution_authority'] is False
+
+          s = e['summary']
+          assert s['pre_sign_intent_only'] is True
+          assert s['signature_presence_assumed'] is False
+          assert s['transcript_bound'] is True
+          assert s['replay_sequence_changes_negotiated_digest'] is True
+          assert s['capability_transcript_changes_negotiated_digest'] is True
+          assert s['downgrade_selection_rejected'] is True
+          assert s['algorithm_mismatch_rejected'] is True
+          assert s['all_test_signatures_verified'] is True
+          assert s['all_cross_context_replays_rejected'] is True
+          assert s['all_tampered_contexts_rejected'] is True
+          assert s['all_wrong_keys_rejected'] is True
+          assert s['live_transaction_signed'] is False
+          assert s['live_value_authorized'] is False
+          assert s['execution_authority'] is False
+          assert s['production_protocol_integration'] is False
+          assert s['end_to_end_pq_security_established'] is False
+          assert len(e['evidence_sha256']) == 64
+
+          print('negotiated_canonical_context_gate: PASS')
+          print('evidence_sha256:', e['evidence_sha256'])
+          PY
+
+      - name: Upload negotiated canonical PQ evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-qcrypto-negotiated-canonical-context-evidence
+          path: negotiated-canonical-context-evidence.json
+          if-no-files-found: error
