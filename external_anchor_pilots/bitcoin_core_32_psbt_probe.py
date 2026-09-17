@@ -26,6 +26,7 @@ from typing import Any
 
 PINNED_UPSTREAM_TAG = "v32.0rc1"
 PINNED_UPSTREAM_COMMIT = "d0231bb01d83178224bf7b198ba04f78cc2c89ef"
+EXPECTED_VERSION_SUBSTRING = PINNED_UPSTREAM_TAG
 CASE_CLAIM_CLASS = "NOT CURRENTLY CLAIMED"
 
 
@@ -149,7 +150,7 @@ def main() -> int:
     parser.add_argument("--evidence", type=Path, default=Path("bitcoin-core-32-psbt-evidence.json"))
     parser.add_argument(
         "--expected-version-substring",
-        default="v32.0.0rc1",
+        default=EXPECTED_VERSION_SUBSTRING,
         help="Required substring in bitcoind --version; use '' only for deliberate non-RC comparison runs.",
     )
     parser.add_argument(
