@@ -19,6 +19,18 @@
       "baseline_expected_semantics": ["HTTP 403 on administrator endpoints", "relay credential remains non-admin"]
     },
     {
+      "id": "AUTONOMY-01",
+      "objective": "A non-allowlisted or excessive-authority action must require human review rather than auto-execute.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_autonomy_policy.py::test_non_allowlisted_or_high_authority_action_requires_human_review",
+      "baseline_expected_semantics": ["disposition equals HUMAN_REVIEW_REQUIRED", "reasons identify allowlist and authority boundary"]
+    },
+    {
+      "id": "AUTONOMY-02",
+      "objective": "An explicitly denied action must fail closed regardless of confidence.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_autonomy_policy.py::test_explicitly_denied_action_fails_closed",
+      "baseline_expected_semantics": ["disposition equals DENIED", "no automatic execution eligibility"]
+    },
+    {
       "id": "RELAY-01",
       "objective": "Verify the relay surface records a bounded local event rather than claiming external delivery or arbitrary execution.",
       "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_relay_and_admin_credentials_can_record_local_relay",
