@@ -15,8 +15,10 @@ from .auth import Role, require_admin, resolve_role, validate_runtime_secrets
 from .event_outbox import (
     EVENT_OUTBOX_REGISTRY_KEY,
     MAX_PENDING_OUTBOX_EVENTS,
+    EventOutboxError,
     drain_event_outbox,
     outbox_status,
+    pending_event_ids,
 )
 from .hmaa_storage import HMAAEvidenceStore
 from .limits import MAX_REQUEST_BYTES
@@ -26,6 +28,12 @@ from .prime_passport_api import router as prime_passport_router
 from .prime_sentinel_authorization import (
     PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
     PrimeSentinelVerifier,
+)
+from .relay_idempotency import (
+    RELAY_IDEMPOTENCY_REGISTRY_KEY,
+    RelayIdempotencyConflict,
+    RelayIdempotencyError,
+    queue_relay_once_patch,
 )
 from .restriction_observability import (
     MAX_RESTRICTION_AUDIT_WINDOW,
@@ -40,6 +48,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         PRIME_PASSPORTS_REGISTRY_KEY,
         PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
         EVENT_OUTBOX_REGISTRY_KEY,
+        RELAY_IDEMPOTENCY_REGISTRY_KEY,
     }
 )
 
@@ -282,26 +291,66 @@ def relay(
     role: Annotated[Role, Depends(resolve_role)],
 ) -> RelayResponse:
     correlation_id = body.correlation_id or secrets.token_hex(12)
-    result = RelayResponse(
+    durable_store = store(request)
+
+    def operation(registry: dict[str, Any]):
+        return queue_relay_once_patch(
+            registry,
+            correlation_id=correlation_id,
+            actor=role.value,
+            target=body.target,
+            action=body.action,
+            payload=body.payload,
+        )
+
+    try:
+        admission = durable_store.transact_registry(operation)
+    except RelayIdempotencyConflict as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except (RelayIdempotencyError, EventOutboxError) as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Relay admission unavailable: {exc}",
+        ) from exc
+
+    delivery_failed = False
+    try:
+        drain_event_outbox(
+            durable_store,
+            limit=MAX_PENDING_OUTBOX_EVENTS,
+        )
+    except (OSError, RuntimeError, EventOutboxError):
+        delivery_failed = True
+
+    event_pending = delivery_failed
+    if not event_pending:
+        try:
+            event_pending = admission.event_id in pending_event_ids(
+                durable_store.get_registry()
+            )
+        except (OSError, RuntimeError, ValueError, EventOutboxError):
+            event_pending = True
+
+    if admission.is_new:
+        status = (
+            "recorded_local_pending_replay"
+            if event_pending
+            else "recorded_local_only"
+        )
+    else:
+        status = (
+            "duplicate_replay_pending"
+            if event_pending
+            else "duplicate_replay_suppressed"
+        )
+
+    return RelayResponse(
         accepted=True,
         target=body.target,
         action=body.action,
         correlation_id=correlation_id,
-        status="recorded_local_only",
+        status=status,
     )
-    store(request).append_audit(
-        AuditRecord.create(
-            event="relay_recorded",
-            actor=role.value,
-            payload={
-                "target": body.target,
-                "action": body.action,
-                "correlation_id": correlation_id,
-                "payload_keys": sorted(body.payload.keys()),
-            },
-        )
-    )
-    return result
 
 
 @app.get("/v1/audit")
