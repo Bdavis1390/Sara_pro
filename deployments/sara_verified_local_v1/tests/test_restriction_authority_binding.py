@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 
 import pytest
 
@@ -47,6 +49,30 @@ def evidence():
     )
 
 
+def canonical_id(payload: dict) -> str:
+    identity = {
+        key: value
+        for key, value in payload.items()
+        if key not in {"restriction_id", "_outbox_event_id", "_delivery_semantics"}
+    }
+    encoded = json.dumps(
+        identity,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    )
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:32]
+
+
+def legacy_v1_payload() -> dict:
+    payload = evidence().semantic_document()
+    payload["schema"] = RESTRICTION_SCHEMA_V1
+    payload.pop("authority")
+    payload["restriction_id"] = canonical_id(payload)
+    return payload
+
+
 def audit_record(*, actor=RESTRICTION_AUTHORITY, payload=None):
     item = evidence()
     value = copy.deepcopy(item.semantic_document() if payload is None else payload)
@@ -68,6 +94,7 @@ def test_new_restrictions_bind_prime_authority_into_v2_identity():
     assert RESTRICTION_SCHEMA.endswith("V2")
     assert item.authority == RESTRICTION_AUTHORITY
     assert document["authority"] == RESTRICTION_AUTHORITY
+    assert item.restriction_id == canonical_id(document)
     assert item.outbox_event_id == f"SARA-EVENT-RESTRICTION-{item.restriction_id}"
 
 
@@ -103,6 +130,14 @@ def test_v2_projection_requires_governed_outer_actor_and_payload_authority():
         project_restriction_audit_record(audit_record(payload=wrong))
 
 
+def test_v2_semantic_tampering_is_detected_by_recomputed_identity():
+    tampered = evidence().semantic_document()
+    tampered["reason_code"] = "POLICY.TAMPERED"
+
+    with pytest.raises(RestrictionObservabilityError, match="semantic evidence identity"):
+        project_restriction_audit_record(audit_record(payload=tampered))
+
+
 def test_v2_authority_tampering_marks_observability_unhealthy():
     report = restriction_observability(
         [audit_record(actor="UNTRUSTED_ACTOR")],
@@ -117,16 +152,13 @@ def test_v2_authority_tampering_marks_observability_unhealthy():
 
 
 def test_v1_legacy_record_requires_prime_actor_but_not_payload_authority():
-    payload = evidence().semantic_document()
-    payload["schema"] = RESTRICTION_SCHEMA_V1
-    payload.pop("authority")
-    payload["restriction_id"] = "a" * 32
-
+    payload = legacy_v1_payload()
     projected = project_restriction_audit_record(audit_record(payload=payload))
 
     assert projected["provenance_schema"] == RESTRICTION_SCHEMA_V1
     assert projected["authority"] == RESTRICTION_AUTHORITY
     assert projected["authority_bound_in_payload"] is False
+    assert payload["restriction_id"] == canonical_id(payload)
 
     with pytest.raises(RestrictionObservabilityError, match="audit actor"):
         project_restriction_audit_record(
@@ -134,10 +166,20 @@ def test_v1_legacy_record_requires_prime_actor_but_not_payload_authority():
         )
 
 
+def test_v2_cannot_be_downgraded_to_v1_by_stripping_authority():
+    downgraded = evidence().semantic_document()
+    original_v2_id = downgraded["restriction_id"]
+    downgraded["schema"] = RESTRICTION_SCHEMA_V1
+    downgraded.pop("authority")
+    assert downgraded["restriction_id"] == original_v2_id
+
+    with pytest.raises(RestrictionObservabilityError, match="semantic evidence identity"):
+        project_restriction_audit_record(audit_record(payload=downgraded))
+
+
 def test_v1_cannot_smuggle_v2_authority_field():
-    payload = evidence().semantic_document()
-    payload["schema"] = RESTRICTION_SCHEMA_V1
-    payload["restriction_id"] = "b" * 32
+    payload = legacy_v1_payload()
+    payload["authority"] = RESTRICTION_AUTHORITY
 
     with pytest.raises(RestrictionObservabilityError, match="unknown fields"):
         project_restriction_audit_record(audit_record(payload=payload))
