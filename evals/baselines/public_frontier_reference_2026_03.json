@@ -1,0 +1,42 @@
+{
+  "system_id": "PUBLIC_FRONTIER_REFERENCE_2026-03",
+  "metrics": {
+    "arc_agi_3_score_pct": 0.51,
+    "metr_80pct_horizon_hours": 1.5,
+    "metr_50pct_horizon_hours": 12.0
+  },
+  "evidence": [
+    {
+      "system_id": "PUBLIC_FRONTIER_REFERENCE_2026-03",
+      "system_version": "frontier-public-models-as-reported-2026-03",
+      "evaluator": "ARC Prize Foundation",
+      "benchmark_version": "ARC-AGI-3 launch evaluation",
+      "evaluation_date": "2026-03-25",
+      "environment": "ARC-AGI-3 interactive environments",
+      "tools_and_permissions": "As defined by ARC-AGI-3 evaluation",
+      "trial_count": "See ARC-AGI-3 technical report",
+      "score": "0.51% frontier AI; humans 100% at launch",
+      "human_baseline": "100% human-solvable environments",
+      "contamination_controls": "Novel handcrafted interactive environments; see technical report",
+      "integrity_adjudication": "External public benchmark result; not a Worldshepherd result",
+      "source_or_artifact_hash": "https://arcprize.org/blog/arc-agi-3-launch",
+      "claim_state": "EXTERNALLY_REPLICATED"
+    },
+    {
+      "system_id": "PUBLIC_FRONTIER_REFERENCE_2026-03",
+      "system_version": "public-frontier-Feb-Mar-2026",
+      "evaluator": "METR",
+      "benchmark_version": "Time Horizon 1.1",
+      "evaluation_date": "2026-03-16",
+      "environment": "METR autonomous software and reasoning task suite",
+      "tools_and_permissions": "See METR Frontier Risk Report methodology",
+      "trial_count": "See METR report",
+      "score": "~12h 50% horizon; ~1.5h 80% horizon",
+      "human_baseline": "Task duration estimated from human expert completion time",
+      "contamination_controls": "METR task-suite and cheating-detection methodology",
+      "integrity_adjudication": "External evaluator; report notes uncertainty and benchmark saturation on some tasks",
+      "source_or_artifact_hash": "https://metr.org/blog/2026-05-19-frontier-risk-report/",
+      "claim_state": "EXTERNALLY_REPLICATED"
+    }
+  ]
+}

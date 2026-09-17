@@ -1,0 +1,74 @@
+name: Worldshepherd AGI Gate
+
+on:
+  pull_request:
+    paths:
+      - "config/ws_agi_gate_v1.json"
+      - "config/ws_economic_battery_v1.json"
+      - "config/ws_transfer_eval_v1.json"
+      - "config/ws_reliability_eval_v1.json"
+      - "config/ws_replication_eval_v1.json"
+      - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
+      - "evals/**"
+      - "runtime/**"
+      - ".github/workflows/ws-agi-gate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "config/ws_agi_gate_v1.json"
+      - "config/ws_economic_battery_v1.json"
+      - "config/ws_transfer_eval_v1.json"
+      - "config/ws_reliability_eval_v1.json"
+      - "config/ws_replication_eval_v1.json"
+      - "docs/WS_AGI_ACCEPTANCE_GATE_V1.md"
+      - "evals/**"
+      - "runtime/**"
+      - ".github/workflows/ws-agi-gate.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate-agi-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate JSON configuration
+        run: |
+          python -m json.tool config/ws_agi_gate_v1.json >/dev/null
+          python -m json.tool config/ws_economic_battery_v1.json >/dev/null
+          python -m json.tool config/ws_transfer_eval_v1.json >/dev/null
+          python -m json.tool config/ws_reliability_eval_v1.json >/dev/null
+          python -m json.tool config/ws_replication_eval_v1.json >/dev/null
+
+      - name: Compile complete evaluator and runtime tree
+        run: python -m compileall -q evals runtime
+
+      - name: Run unit tests
+        run: python -m unittest discover -s evals -p 'test_*.py' -v
+
+      - name: Evaluate historical public frontier baseline
+        run: |
+          python evals/ws_agi_gate.py \
+            evals/baselines/public_frontier_reference_2026_03.json \
+            --config config/ws_agi_gate_v1.json \
+            --pretty > historical_baseline_output.json
+          python -c "import json; r=json.load(open('historical_baseline_output.json')); assert r['intelligence_state']=='BELOW_AGI'; print('Historical baseline remains BELOW_AGI')"
+
+      - name: Evaluate GPT-6 Astra ARC reference
+        run: |
+          python evals/ws_agi_gate.py \
+            evals/baselines/gpt6_astra_arc_reference_2026_09_03.json \
+            --config config/ws_agi_gate_v1.json \
+            --pretty > astra_arc_output.json
+          python -c "import json; r=json.load(open('astra_arc_output.json')); assert r['intelligence_state']=='BELOW_AGI'; print('Astra ARC reference remains BELOW_AGI under the multi-lane gate')"
+
+      - name: Render OVERWATCH baseline snapshot
+        run: python evals/overwatch_snapshot.py astra_arc_output.json --format markdown > overwatch_snapshot.md
