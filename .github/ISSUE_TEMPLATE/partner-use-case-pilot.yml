@@ -1,0 +1,108 @@
+name: Partner use-case pilot
+description: Propose a bounded external workflow for Worldshepherd assurance testing.
+title: "Partner use case: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for proposing a Worldshepherd partner use case. **Do not include confidential, classified, CUI, export-controlled, credential, proprietary, regulated personal, or otherwise protected information in this public issue.** Use a sanitized description.
+  - type: input
+    id: organization
+    attributes:
+      label: Organization or team
+      description: Publicly disclosable organization/team name. "Undisclosed" is acceptable for initial intake.
+      placeholder: Organization, team, laboratory, project, or Undisclosed
+    validations:
+      required: true
+  - type: input
+    id: role
+    attributes:
+      label: Your role in the workflow
+      description: Describe your relationship to the proposed use case without posting private contact information.
+      placeholder: Operator, developer, evaluator, integrator, manufacturer, researcher...
+    validations:
+      required: true
+  - type: dropdown
+    id: track
+    attributes:
+      label: Pilot track
+      options:
+        - Governed AI / agent workflow
+        - Software assurance / adversarial evaluation
+        - Supply-chain / manufacturing provenance
+        - Mission / industrial operations
+        - Other bounded assurance use case
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow or decision to test
+      description: What real decision, action, handoff, or process should be made more governable, reproducible, or auditable?
+      placeholder: Describe the workflow at a level safe for public disclosure.
+    validations:
+      required: true
+  - type: textarea
+    id: authority
+    attributes:
+      label: Actors and authority boundaries
+      description: Who may propose, approve, execute, observe, or stop the action?
+    validations:
+      required: true
+  - type: textarea
+    id: failure_modes
+    attributes:
+      label: Important failure, misuse, or recovery cases
+      description: What should fail closed? What error, misuse, replay, corruption, or degraded condition matters most?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence needed to trust the result
+      description: What logs, measurements, provenance, signatures, test results, or operator observations would be persuasive?
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Measurable acceptance criteria
+      description: State one or more pass/fail conditions. Avoid purely subjective goals where possible.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Environment and integration constraints
+      description: Offline/local requirements, APIs, hardware, timing, network, data, security, regulatory, or interoperability constraints.
+    validations:
+      required: false
+  - type: dropdown
+    id: data_class
+    attributes:
+      label: Public-intake data classification
+      description: This issue may contain only publicly disclosable or sanitized information.
+      options:
+        - Public / non-sensitive
+        - Sanitized or synthetic representation of a sensitive workflow
+    validations:
+      required: true
+  - type: textarea
+    id: disclosure
+    attributes:
+      label: What may be published from a pilot?
+      description: Identify what could be public and what would require a private agreement/channel.
+    validations:
+      required: false
+  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Acknowledgements
+      options:
+        - label: I have not included confidential, classified, CUI, export-controlled, credential, proprietary, regulated personal, or otherwise protected information in this public issue.
+          required: true
+        - label: I understand that submitting a use case does not imply acceptance, successful results, certification, endorsement, or operational validation.
+          required: true
+        - label: I understand that failed tests, limitations, and unresolved discrepancies may be retained as part of the evidence record.
+          required: true
