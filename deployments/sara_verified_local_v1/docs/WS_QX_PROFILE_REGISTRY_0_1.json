@@ -1,0 +1,11 @@
+{
+  "registry_version": "0.1",
+  "profiles": [
+    {"id": "WS-LAB-INTEROP-01", "state": "HISTORICAL_IMPLEMENTATION_REQUIRES_CURRENT_MAIN_REBASE", "physical_validation": false},
+    {"id": "WS-SEMCAP-01", "state": "PROFILE_IMPLEMENTED", "physical_validation": false},
+    {"id": "WS-DDIL-01", "state": "PLANNED", "physical_validation": false},
+    {"id": "WS-MOSA-EDGE-01", "state": "PLANNED", "physical_validation": false},
+    {"id": "WS-AUTONOMY-01", "state": "PLANNED", "physical_validation": false},
+    {"id": "WS-AIRFRAME-QUAL-01", "state": "PLANNED", "physical_validation": false}
+  ]
+}
