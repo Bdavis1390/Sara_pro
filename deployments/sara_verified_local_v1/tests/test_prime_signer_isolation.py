@@ -82,6 +82,31 @@ def test_recognized_prime_private_ingress_acceptance_drops_to_zero():
     assert residual_accepted == 0
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        "PRIME_SENTINEL_BACKUP_PRIVATE_KEY_MATERIAL",
+        "PRIME_SENTINEL_EXTERNAL_SIGNING_KEY_REFERENCE",
+        "PRIME_SENTINEL_LEGACY_SECRET_KEY_BLOB",
+        "PRIME_SENTINEL_ROTATION_SEED",
+    ],
+)
+def test_unexpected_private_signer_names_fail_closed(name):
+    env = _base_env()
+    env[name] = "private-material"
+
+    with pytest.raises(RuntimeError, match="must not receive PRIME SENTINEL private"):
+        reject_prime_private_signing_material(env)
+
+
+def test_public_signing_metadata_names_remain_allowed():
+    env = _base_env()
+    env["PRIME_SENTINEL_ACTIVE_SIGNING_KEY_ID"] = "PS-K1"
+    env["PRIME_SENTINEL_ACTIVE_KEY_FINGERPRINT_SHA256"] = "a" * 64
+
+    reject_prime_private_signing_material(env)
+
+
 def test_public_verification_and_revocation_configuration_remain_allowed():
     env = _base_env()
     env["PRIME_SENTINEL_PUBLIC_KEYS_JSON"] = json.dumps(
