@@ -1,0 +1,34 @@
+{
+  "schema": "WS-QPHONON-DEPLOYMENT-V0.3",
+  "claims_state": "DEPLOYMENT_INFRASTRUCTURE_IMPLEMENTED_PHONONIC_LAB_EVIDENCE_NOT_YET_OBTAINED",
+  "state_store": {
+    "backend": "sqlite",
+    "journal_mode": "WAL",
+    "synchronous": "FULL",
+    "file_mode": "0600",
+    "busy_timeout_ms": 5000,
+    "durable_replay_required": true,
+    "monotonic_event_sequence_required": true
+  },
+  "approval_attestation": {
+    "mechanism": "openssh_sshsig",
+    "namespace": "worldshepherd-qphonon-approval",
+    "approved_signers_file_must_be_read_only": true,
+    "private_key_must_not_be_present_in_container": true,
+    "approval_replay_is_fail_closed": true
+  },
+  "container": {
+    "network_listener": false,
+    "persistent_state_volume_required": true,
+    "approved_signers_mount_read_only": true,
+    "run_as_non_root": true,
+    "read_only_root_filesystem": true,
+    "drop_all_linux_capabilities": true,
+    "no_new_privileges": true
+  },
+  "physical_boundary": {
+    "hardware_actuation_endpoint_present": false,
+    "generic_qpu_evidence_counts_as_phononic_evidence": false,
+    "phononic_l3_requires_external_lab_hardware": true
+  }
+}
