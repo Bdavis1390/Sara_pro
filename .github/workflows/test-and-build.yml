@@ -42,9 +42,12 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_discord_webhook.py tests/test_discord_connector.py
 
-      - name: Test restriction provenance and bounded remediation
+      - name: Test restriction provenance and observability boundaries
         working-directory: deployments/sara_verified_local_v1
-        run: python -m pytest -q tests/test_restriction_provenance.py
+        run: >-
+          python -m pytest -q
+          tests/test_restriction_provenance.py
+          tests/test_restriction_observability.py
 
       - name: Validate upstream patch artifacts
         shell: bash
