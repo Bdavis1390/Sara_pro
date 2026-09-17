@@ -1,0 +1,47 @@
+{
+  "schema": "WS-SPACELINK-INTERNAL-EVIDENCE-V1",
+  "record_id": "WS-SPACELINK-V0-1-INTERNAL-PASS-2026-09-12",
+  "claims_state": "INTERNAL_PASS",
+  "validated_commit": "849f33625bdc3d981cde3ff3aa5942775145fa01",
+  "branch": "worldshepherd-spacelink-assurance-v0-1-20260912",
+  "pull_request": 174,
+  "scope": [
+    "SL-0 provider-neutral normalized contact schema",
+    "SL-1 authoritative AWS contact-state mapping",
+    "SL-2 fail-closed unknown-state handling",
+    "SL-3 replayable contact-state mission events",
+    "SL-4 human-gated non-executable reservation proposal"
+  ],
+  "verification": {
+    "verified_local_workflow": {
+      "name": "SARA Verified Local v1 Gate",
+      "run_id": 34708918681,
+      "run_number": 1914,
+      "conclusion": "success"
+    },
+    "companion_workflows": [
+      {"name": "SARA TLS Private Backend Architecture", "run_id": 34708918682, "conclusion": "success"},
+      {"name": "SARA Replacement Environment Restore", "run_id": 34708918678, "conclusion": "success"},
+      {"name": "SARA Commit Closure Evidence", "run_id": 34708918679, "conclusion": "success"},
+      {"name": "SARA Operational Resilience Drill", "run_id": 34708918689, "conclusion": "success"},
+      {"name": "SARA NIST 800-171 SSP Precursor", "run_id": 34708918703, "conclusion": "success"},
+      {"name": "SARA Rollback Drill", "run_id": 34708918670, "conclusion": "success"}
+    ],
+    "release_evidence_index": {
+      "artifact_id": 10302931668,
+      "digest": "sha256:68aa295ba9d2ef04928052c6d51d35c5e2d3ee3261f02a4a55e1257c5b978892"
+    }
+  },
+  "excluded_claims": [
+    "AWS account integration",
+    "AWS Ground Station digital-twin execution",
+    "provider-side ReserveContact/CancelContact/UpdateContact execution",
+    "RF transmission or reception",
+    "spectrum authorization or FCC licensing",
+    "telemetry or data delivery",
+    "spacecraft command delivery",
+    "AWS, operator, partner, government, or external certification",
+    "operational readiness"
+  ],
+  "note": "This record validates only the exact commit identified above. Later commits require their own exact-head CI evidence before promotion."
+}
