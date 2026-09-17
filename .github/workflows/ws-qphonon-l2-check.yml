@@ -8,8 +8,10 @@ on:
       - "config/ws_qphonon_echo_event_v0_2.schema.json"
       - "config/ws_qphonon_execution_approval_v0_2.schema.json"
       - "config/ws_qphonon_security_v0_2.json"
+      - "config/ws_qphonon_quality_v0_2.json"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
       - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
+      - "docs/WS_QPHONON_QUALITY_RELIABILITY_V0_2.md"
       - "tools/qphonon/**"
       - ".github/workflows/ws-qphonon-l2-check.yml"
   push:
@@ -22,8 +24,10 @@ on:
       - "config/ws_qphonon_echo_event_v0_2.schema.json"
       - "config/ws_qphonon_execution_approval_v0_2.schema.json"
       - "config/ws_qphonon_security_v0_2.json"
+      - "config/ws_qphonon_quality_v0_2.json"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
       - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
+      - "docs/WS_QPHONON_QUALITY_RELIABILITY_V0_2.md"
       - "tools/qphonon/**"
       - ".github/workflows/ws-qphonon-l2-check.yml"
 
@@ -53,6 +57,9 @@ jobs:
       - name: Validate V0.2 security profile
         run: python tools/qphonon/validate_security.py config/ws_qphonon_security_v0_2.json
 
+      - name: Validate V0.2 quality profile
+        run: python tools/qphonon/validate_quality.py config/ws_qphonon_quality_v0_2.json
+
       - name: Validate CI hardening invariants
         run: python tools/qphonon/validate_ci_hardening.py .github/workflows/ws-qphonon-l2-check.yml
 
@@ -61,6 +68,8 @@ jobs:
           python -m json.tool config/ws_qphonon_echo_event_v0_1.schema.json > /dev/null
           python -m json.tool config/ws_qphonon_echo_event_v0_2.schema.json > /dev/null
           python -m json.tool config/ws_qphonon_execution_approval_v0_2.schema.json > /dev/null
+          python -m json.tool config/ws_qphonon_security_v0_2.json > /dev/null
+          python -m json.tool config/ws_qphonon_quality_v0_2.json > /dev/null
 
       - name: Run QPHONON regression and adversarial tests
         working-directory: tools/qphonon
@@ -71,5 +80,9 @@ jobs:
           test_registry_adapter.py
           test_drift_state.py
           test_validate_security.py
+          test_validate_quality.py
           test_security_controls.py
+          test_security_mutations.py
           test_execution_gate.py
+          test_experiment_manifest.py
+          test_state_machine.py
