@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldshepherd.local/schemas/glyph_record.schema.json",
+  "title": "Worldshepherd Glyph / Stela LSRP Record",
+  "type": "object",
+  "required": ["record_id", "artifact", "motifs", "layered_reasoning", "evidence_state"],
+  "properties": {
+    "record_id": {"type": "string", "minLength": 1},
+    "record_version": {"type": "string", "default": "0.1.0"},
+    "artifact": {
+      "type": "object",
+      "required": ["source_repository", "culture_or_tradition", "object_type", "date_range", "provenance_status"],
+      "properties": {
+        "source_repository": {"type": "string"},
+        "source_url": {"type": ["string", "null"]},
+        "accession_or_catalog_id": {"type": ["string", "null"]},
+        "culture_or_tradition": {"type": "string"},
+        "place": {"type": ["string", "null"]},
+        "date_range": {"type": "string"},
+        "material_medium": {"type": ["string", "null"]},
+        "object_type": {"type": "string"},
+        "rights_license": {"type": ["string", "null"]},
+        "image_or_model_refs": {"type": "array", "items": {"type": "string"}},
+        "scholarly_transcription": {"type": ["string", "null"]},
+        "scholarly_translation": {"type": ["string", "null"]},
+        "decipherment_status": {
+          "type": "string",
+          "enum": ["deciphered", "partially_deciphered", "undeciphered", "not_applicable", "unknown"]
+        },
+        "provenance_status": {
+          "type": "string",
+          "enum": ["secure", "substantial", "partial", "disputed", "incomplete", "unknown"]
+        },
+        "source_notes": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "motifs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["motif_id", "literal_geometry", "topology"],
+        "properties": {
+          "motif_id": {"type": "string"},
+          "local_sign_id": {"type": ["string", "null"]},
+          "literal_geometry": {"type": "array", "items": {"type": "string"}},
+          "orientation": {"type": ["string", "null"]},
+          "handedness": {"type": ["string", "null"]},
+          "topology": {"type": "array", "items": {"type": "string"}},
+          "repeated_elements": {"type": "array", "items": {"type": "string"}},
+          "relative_position": {"type": "array", "items": {"type": "string"}},
+          "counts": {"type": "object", "additionalProperties": {"type": "number"}},
+          "known_readings": {"type": "array", "items": {"type": "string"}},
+          "documented_symbolic_meanings": {"type": "array", "items": {"type": "string"}},
+          "observational_uncertainty": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "measurements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["quantity", "value", "unit", "measurement_status"],
+        "properties": {
+          "quantity": {"type": "string"},
+          "value": {"type": ["number", "string"]},
+          "unit": {"type": "string"},
+          "uncertainty": {"type": ["number", "string", "null"]},
+          "method": {"type": ["string", "null"]},
+          "measurement_status": {"type": "string", "enum": ["measured", "source_reported", "estimated", "derived", "hypothetical"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "layered_reasoning": {
+      "type": "object",
+      "required": [
+        "literal_observations",
+        "relational_structure",
+        "cross_domain_correspondences",
+        "process_hypotheses",
+        "scale_mapping",
+        "measurable_counterparts",
+        "systems_dependencies",
+        "testable_hypotheses",
+        "alternative_explanations",
+        "disconfirming_evidence",
+        "uncertainty",
+        "next_validation_gate"
+      ],
+      "properties": {
+        "literal_observations": {"type": "array", "items": {"type": "string"}},
+        "relational_structure": {"type": "array", "items": {"type": "string"}},
+        "cross_domain_correspondences": {"type": "array", "items": {"$ref": "#/$defs/correspondence"}},
+        "process_hypotheses": {"type": "array", "items": {"$ref": "#/$defs/hypothesis"}},
+        "scale_mapping": {"type": "array", "items": {"type": "string"}},
+        "measurable_counterparts": {"type": "array", "items": {"type": "string"}},
+        "systems_dependencies": {"type": "array", "items": {"type": "string"}},
+        "testable_hypotheses": {"type": "array", "items": {"$ref": "#/$defs/hypothesis"}},
+        "alternative_explanations": {"type": "array", "items": {"type": "string"}},
+        "disconfirming_evidence": {"type": "array", "items": {"type": "string"}},
+        "uncertainty": {"type": "array", "items": {"type": "string"}},
+        "next_validation_gate": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "cross_links": {
+      "type": "object",
+      "properties": {
+        "visual_similarity": {"type": "array", "items": {"$ref": "#/$defs/crossLink"}},
+        "semantic_similarity": {"type": "array", "items": {"$ref": "#/$defs/crossLink"}},
+        "documented_historical_transmission": {"type": "array", "items": {"$ref": "#/$defs/crossLink"}},
+        "independent_invention_candidates": {"type": "array", "items": {"$ref": "#/$defs/crossLink"}},
+        "later_reuse_or_reinterpretation": {"type": "array", "items": {"$ref": "#/$defs/crossLink"}},
+        "organizational_association": {"type": "array", "items": {"$ref": "#/$defs/crossLink"}},
+        "quantitative_correspondence": {"type": "array", "items": {"$ref": "#/$defs/crossLink"}}
+      },
+      "additionalProperties": false
+    },
+    "evidence_state": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "PROVEN INTERNALLY",
+          "IMPLEMENTED IN SOFTWARE",
+          "SUPPORTED BY LITERATURE",
+          "SIMULATED ONLY",
+          "HYPOTHESIS",
+          "SPECULATIVE EXTENSION",
+          "REQUIRES LAB VALIDATION",
+          "REQUIRES PARTNER VALIDATION",
+          "REQUIRES LEGAL REVIEW",
+          "NOT CURRENTLY CLAIMED"
+        ]
+      }
+    },
+    "audit": {
+      "type": "object",
+      "properties": {
+        "created_at": {"type": "string"},
+        "updated_at": {"type": "string"},
+        "analyst": {"type": "string"},
+        "reviewers": {"type": "array", "items": {"type": "string"}},
+        "source_hashes": {"type": "array", "items": {"type": "string"}},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "correspondence": {
+      "type": "object",
+      "required": ["target", "basis", "strength", "status"],
+      "properties": {
+        "target": {"type": "string"},
+        "basis": {"type": "array", "items": {"type": "string"}},
+        "strength": {"type": "number", "minimum": 0, "maximum": 1},
+        "status": {"type": "string", "enum": ["observed_similarity", "documented_parallel", "possible_transmission", "documented_transmission", "rejected"]},
+        "source_refs": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "hypothesis": {
+      "type": "object",
+      "required": ["id", "statement", "prediction", "falsifier", "status"],
+      "properties": {
+        "id": {"type": "string"},
+        "statement": {"type": "string"},
+        "prediction": {"type": "string"},
+        "falsifier": {"type": "string"},
+        "status": {"type": "string", "enum": ["untested", "testing", "supported", "weakened", "rejected"]}
+      },
+      "additionalProperties": false
+    },
+    "crossLink": {
+      "type": "object",
+      "required": ["target_id", "relation", "evidence_grade"],
+      "properties": {
+        "target_id": {"type": "string"},
+        "relation": {"type": "string"},
+        "evidence_grade": {"type": "string", "enum": ["A", "B", "C", "D", "E"]},
+        "chronology_compatible": {"type": ["boolean", "null"]},
+        "contact_plausible": {"type": ["boolean", "null"]},
+        "semantic_match": {"type": ["boolean", "null"]},
+        "notes": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
