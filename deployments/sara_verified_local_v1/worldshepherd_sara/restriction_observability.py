@@ -7,12 +7,21 @@ from collections import Counter
 from datetime import datetime
 from typing import Any
 
+from .prime_sentinel_authorization import (
+    PrimeSentinelAuthorizationError,
+    PrimeSentinelVerifier,
+)
 from .restriction_provenance import (
     RESTRICTION_AUTHORITY,
     RESTRICTION_EVENT,
     RESTRICTION_SCHEMA,
     RESTRICTION_SCHEMA_V1,
     RESTRICTION_SCHEMA_V2,
+)
+from .restriction_signature import (
+    RESTRICTION_SIGNATURE_SCHEMA,
+    SIGNED_RESTRICTION_SCHEMA,
+    verify_restriction_signature_document,
 )
 
 
@@ -57,6 +66,26 @@ _V1_PAYLOAD_KEYS = frozenset(
 )
 _V2_PAYLOAD_KEYS = _V1_PAYLOAD_KEYS | frozenset({"authority"})
 _V3_PAYLOAD_KEYS = _V2_PAYLOAD_KEYS | frozenset({"fingerprint_key_id"})
+_V4_PAYLOAD_KEYS = frozenset(
+    {
+        "schema",
+        "restriction",
+        "prime_signature",
+        "raw_content_persisted",
+        "_outbox_event_id",
+        "_delivery_semantics",
+    }
+)
+_SIGNATURE_KEYS = frozenset(
+    {
+        "schema",
+        "restriction_id",
+        "signing_key_id",
+        "signing_key_fingerprint_sha256",
+        "signature_b64url",
+        "signed_message_sha256",
+    }
+)
 
 
 class RestrictionObservabilityError(ValueError):
@@ -143,7 +172,123 @@ def _expected_restriction_id(payload: dict[str, Any], provenance_schema: str) ->
     ).hexdigest()[:32]
 
 
-def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
+def _project_signed_restriction_audit_record(
+    record: dict[str, Any],
+    *,
+    audit_timestamp: str,
+    payload: dict[str, Any],
+    verifier: PrimeSentinelVerifier | None,
+) -> dict[str, Any]:
+    if verifier is None:
+        raise RestrictionObservabilityError(
+            "signed restriction evidence requires a PRIME signature verifier"
+        )
+    unknown_top = sorted(set(payload) - _V4_PAYLOAD_KEYS)
+    if unknown_top:
+        raise RestrictionObservabilityError(
+            "signed restriction envelope contains unknown fields"
+        )
+    if payload.get("raw_content_persisted") is not False:
+        raise RestrictionObservabilityError(
+            "signed restriction raw-content persistence assertion is invalid"
+        )
+
+    event_id = payload.get("_outbox_event_id")
+    if not isinstance(event_id, str):
+        raise RestrictionObservabilityError("signed restriction event ID is missing")
+    if payload.get("_delivery_semantics") != "AT_LEAST_ONCE":
+        raise RestrictionObservabilityError(
+            "signed restriction delivery semantics are invalid"
+        )
+
+    restriction = payload.get("restriction")
+    signature = payload.get("prime_signature")
+    if not isinstance(restriction, dict):
+        raise RestrictionObservabilityError("signed restriction document is missing")
+    if not isinstance(signature, dict):
+        raise RestrictionObservabilityError("PRIME signature attestation is missing")
+
+    # Reuse the V1-V3 structural and semantic-ID validation path, injecting
+    # only the delivery metadata that lives at the V4 envelope level.
+    nested_payload = dict(restriction)
+    nested_payload["_outbox_event_id"] = event_id
+    nested_payload["_delivery_semantics"] = "AT_LEAST_ONCE"
+    nested_record = {
+        "timestamp": audit_timestamp,
+        "event": RESTRICTION_EVENT,
+        "actor": RESTRICTION_AUTHORITY,
+        "payload": nested_payload,
+    }
+    projected = project_restriction_audit_record(
+        nested_record,
+        verifier=verifier,
+    )
+    if projected["provenance_schema"] != RESTRICTION_SCHEMA:
+        raise RestrictionObservabilityError(
+            "V4 signed envelopes must wrap the active V3 restriction schema"
+        )
+
+    unknown_signature = sorted(set(signature) - _SIGNATURE_KEYS)
+    if unknown_signature:
+        raise RestrictionObservabilityError(
+            "PRIME signature attestation contains unknown fields"
+        )
+    if signature.get("schema") != RESTRICTION_SIGNATURE_SCHEMA:
+        raise RestrictionObservabilityError("PRIME signature schema is invalid")
+    if signature.get("restriction_id") != projected["restriction_id"]:
+        raise RestrictionObservabilityError(
+            "PRIME signature restriction identity mismatch"
+        )
+
+    signing_key_id = _component(signature.get("signing_key_id"), "signing_key_id")
+    signing_key_fingerprint = _fingerprint(
+        signature.get("signing_key_fingerprint_sha256"),
+        "signing_key_fingerprint_sha256",
+    )
+    signed_message_sha256 = _fingerprint(
+        signature.get("signed_message_sha256"),
+        "signed_message_sha256",
+    )
+    signature_b64url = signature.get("signature_b64url")
+    if not isinstance(signature_b64url, str) or not signature_b64url:
+        raise RestrictionObservabilityError("PRIME signature value is invalid")
+
+    try:
+        verified = verify_restriction_signature_document(
+            restriction,
+            signing_key_id=signing_key_id,
+            signature_b64url=signature_b64url,
+            verifier=verifier,
+        )
+    except (PrimeSentinelAuthorizationError, ValueError) as exc:
+        raise RestrictionObservabilityError(
+            "PRIME restriction signature verification failed"
+        ) from exc
+
+    if verified.signing_key_fingerprint_sha256 != signing_key_fingerprint:
+        raise RestrictionObservabilityError(
+            "PRIME signature public-key fingerprint mismatch"
+        )
+    if verified.signed_message_sha256 != signed_message_sha256:
+        raise RestrictionObservabilityError(
+            "PRIME signed-message digest mismatch"
+        )
+
+    return {
+        **projected,
+        "provenance_schema": SIGNED_RESTRICTION_SCHEMA,
+        "restriction_schema": RESTRICTION_SCHEMA,
+        "signature_verified": True,
+        "signing_key_id": verified.signing_key_id,
+        "signing_key_fingerprint_sha256": verified.signing_key_fingerprint_sha256,
+    }
+
+
+def project_restriction_audit_record(
+    record: dict[str, Any],
+    *,
+    verifier: PrimeSentinelVerifier | None = None,
+) -> dict[str, Any]:
     """Validate one restriction audit event and return a strict non-content projection."""
     if not isinstance(record, dict) or record.get("event") != RESTRICTION_EVENT:
         raise RestrictionObservabilityError("record is not a restriction event")
@@ -156,6 +301,13 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
         raise RestrictionObservabilityError("restriction payload is missing")
 
     provenance_schema = payload.get("schema")
+    if provenance_schema == SIGNED_RESTRICTION_SCHEMA:
+        return _project_signed_restriction_audit_record(
+            record,
+            audit_timestamp=audit_timestamp,
+            payload=payload,
+            verifier=verifier,
+        )
     if provenance_schema == RESTRICTION_SCHEMA_V1:
         allowed_payload_keys = _V1_PAYLOAD_KEYS
         authority_bound_in_payload = False
@@ -228,6 +380,10 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
         "event_id": event_id,
         "authority": RESTRICTION_AUTHORITY,
         "authority_bound_in_payload": authority_bound_in_payload,
+        "restriction_schema": provenance_schema,
+        "signature_verified": False,
+        "signing_key_id": None,
+        "signing_key_fingerprint_sha256": None,
         "fingerprint_key_id": fingerprint_key_id,
         "fingerprint_key_epoch_bound_in_payload": fingerprint_key_epoch_bound_in_payload,
         "audit_timestamp": audit_timestamp,
@@ -246,6 +402,7 @@ def restriction_observability(
     audit_records: list[dict[str, Any]],
     *,
     recent_limit: int = 50,
+    verifier: PrimeSentinelVerifier | None = None,
 ) -> dict[str, Any]:
     """Summarize restriction evidence from one explicitly bounded SARA audit window."""
     if not isinstance(audit_records, list):
@@ -267,7 +424,7 @@ def restriction_observability(
             continue
         restriction_seen += 1
         try:
-            projected.append(project_restriction_audit_record(record))
+            projected.append(project_restriction_audit_record(record, verifier=verifier))
         except RestrictionObservabilityError:
             malformed += 1
 
@@ -277,6 +434,9 @@ def restriction_observability(
     by_processor = Counter(str(item["processor"]) for item in projected)
     by_fingerprint_key_id = Counter(
         str(item["fingerprint_key_id"] or "UNBOUND_LEGACY") for item in projected
+    )
+    by_signing_key_id = Counter(
+        str(item["signing_key_id"] or "UNSIGNED_LEGACY") for item in projected
     )
 
     newest_first = list(reversed(projected[-recent_limit:]))
@@ -295,6 +455,7 @@ def restriction_observability(
             "by_source_system": dict(sorted(by_source.items())),
             "by_processor": dict(sorted(by_processor.items())),
             "by_fingerprint_key_id": dict(sorted(by_fingerprint_key_id.items())),
+            "by_signing_key_id": dict(sorted(by_signing_key_id.items())),
         },
         "last_valid_occurred_at": last_valid_occurred_at,
         "recent": newest_first,
@@ -303,6 +464,7 @@ def restriction_observability(
             "bounded audit retention does not establish global lifetime counts or complete "
             "provider-side restriction history. V1 records rely on the governed outer audit "
             "actor; V2 records additionally bind authority into the payload identity; V3 "
-            "records also bind the non-secret fingerprint-key epoch identifier."
+            "records also bind the non-secret fingerprint-key epoch identifier; V4 "
+            "records additionally require a currently trusted PRIME Ed25519 signature."
         ),
     }
