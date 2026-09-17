@@ -5,7 +5,12 @@ from collections import Counter
 from datetime import datetime
 from typing import Any
 
-from .restriction_provenance import RESTRICTION_EVENT, RESTRICTION_SCHEMA
+from .restriction_provenance import (
+    RESTRICTION_AUTHORITY,
+    RESTRICTION_EVENT,
+    RESTRICTION_SCHEMA,
+    RESTRICTION_SCHEMA_V1,
+)
 
 
 RESTRICTION_OBSERVABILITY_SCHEMA = "WS-RESTRICTION-OBSERVABILITY-V1"
@@ -29,7 +34,7 @@ _FINGERPRINT_FIELDS = (
     "generated_fingerprint",
     "safe_output_fingerprint",
 )
-_ALLOWED_PAYLOAD_KEYS = frozenset(
+_V1_PAYLOAD_KEYS = frozenset(
     {
         "schema",
         "restriction_id",
@@ -47,6 +52,7 @@ _ALLOWED_PAYLOAD_KEYS = frozenset(
         "_delivery_semantics",
     }
 )
+_V2_PAYLOAD_KEYS = _V1_PAYLOAD_KEYS | frozenset({"authority"})
 
 
 class RestrictionObservabilityError(ValueError):
@@ -85,16 +91,29 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     """Validate one restriction audit event and return a strict non-content projection."""
     if not isinstance(record, dict) or record.get("event") != RESTRICTION_EVENT:
         raise RestrictionObservabilityError("record is not a restriction event")
+    if record.get("actor") != RESTRICTION_AUTHORITY:
+        raise RestrictionObservabilityError("restriction audit actor is not the governed authority")
 
     audit_timestamp = _timestamp(record.get("timestamp"), "audit timestamp")
     payload = record.get("payload")
     if not isinstance(payload, dict):
         raise RestrictionObservabilityError("restriction payload is missing")
-    unknown_keys = sorted(set(payload) - _ALLOWED_PAYLOAD_KEYS)
+
+    provenance_schema = payload.get("schema")
+    if provenance_schema == RESTRICTION_SCHEMA_V1:
+        allowed_payload_keys = _V1_PAYLOAD_KEYS
+        authority_bound_in_payload = False
+    elif provenance_schema == RESTRICTION_SCHEMA:
+        allowed_payload_keys = _V2_PAYLOAD_KEYS
+        authority_bound_in_payload = True
+        if payload.get("authority") != RESTRICTION_AUTHORITY:
+            raise RestrictionObservabilityError("restriction payload authority is invalid")
+    else:
+        raise RestrictionObservabilityError("restriction schema is invalid")
+
+    unknown_keys = sorted(set(payload) - allowed_payload_keys)
     if unknown_keys:
         raise RestrictionObservabilityError("restriction payload contains unknown fields")
-    if payload.get("schema") != RESTRICTION_SCHEMA:
-        raise RestrictionObservabilityError("restriction schema is invalid")
     if payload.get("raw_content_persisted") is not False:
         raise RestrictionObservabilityError("raw-content persistence assertion is invalid")
 
@@ -130,8 +149,11 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     }
 
     return {
+        "provenance_schema": provenance_schema,
         "restriction_id": restriction_id,
         "event_id": event_id,
+        "authority": RESTRICTION_AUTHORITY,
+        "authority_bound_in_payload": authority_bound_in_payload,
         "audit_timestamp": audit_timestamp,
         "occurred_at": occurred_at,
         "action": action,
@@ -199,7 +221,7 @@ def restriction_observability(
         "claims_boundary": (
             "Window-scoped observability over persisted SARA restriction events only; "
             "bounded audit retention does not establish global lifetime counts or complete "
-            "provider-side restriction history. Responses intentionally expose only the "
-            "documented structural projection."
+            "provider-side restriction history. V1 records rely on the governed outer audit "
+            "actor; V2 records additionally bind that authority into the payload identity."
         ),
     }
