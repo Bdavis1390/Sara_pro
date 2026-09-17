@@ -6,6 +6,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Protocol
 
+from .connector_claim_recovery import ClaimReconciliation
 from .connector_ticket_lifecycle import (
     DEFAULT_TTL_SECONDS,
     ReadTicketLedger,
@@ -86,6 +87,31 @@ class SharedReadTicketLedger(ReadTicketLedger):
             ticket_id=ticket_id,
             ticket_sha256=str(ticket["sha256"]),
             now=claim_time,
+        )
+
+    def reconcile_unknown_claim(
+        self,
+        ticket: Mapping[str, Any],
+    ) -> ClaimReconciliation:
+        ticket_id = str(ticket.get("ticket_id", ""))
+        if not verify_v2_ticket_shape(ticket):
+            return ClaimReconciliation(
+                state="invalid_ticket",
+                ticket_id=ticket_id,
+                reason="invalid read ticket cannot be reconciled",
+            )
+
+        reconcile = getattr(self.store, "reconcile_unknown_claim", None)
+        if not callable(reconcile):
+            return ClaimReconciliation(
+                state="unsupported",
+                ticket_id=ticket_id,
+                reason="claim store does not support ambiguous-outcome reconciliation",
+            )
+
+        return reconcile(
+            ticket_id=ticket_id,
+            ticket_sha256=str(ticket["sha256"]),
         )
 
     def status(self, ticket_id: str) -> Dict[str, Any]:
