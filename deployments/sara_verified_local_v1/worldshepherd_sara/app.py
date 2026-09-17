@@ -114,10 +114,11 @@ async def lifespan(app: FastAPI):
     os.umask(0o077)
     validate_runtime_secrets()
     app.state.store = DurableStore()
-    # Trust-root admission must complete before replaying any pending governed
-    # event. A rejected rollback may not produce startup side effects.
-    app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
+    # Trust-root admission is the first PRIME trust decision after opening
+    # durable storage. A rejected rollback or malformed root may not construct
+    # the runtime verifier or replay pending governed events.
     app.state.prime_trust_root = guard_prime_trust_root(app.state.store)
+    app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
     replayed = drain_event_outbox(
         app.state.store,
         limit=MAX_PENDING_OUTBOX_EVENTS,
