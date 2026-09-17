@@ -1,6 +1,6 @@
 # Worldshepherd Assurance Selection Benchmark v1
 
-**Profile:** `sovereign_clean_room_evaluator_controlled_assurance`  
+**Profile:** `sovereign_clean_room_evaluator_controlled_assurance`
 **Evidence date:** 2026-09-17
 
 ## What this benchmark answers
