@@ -23,7 +23,7 @@ from worldshepherd_sara.restriction_provenance import (
 KEY = b"worldshepherd-10x-security-test-key-32-bytes-minimum"
 KEY_ID = "ws-restriction-key-epoch-2026-09"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
-BASELINE_RESIDUAL_RISK_UNITS = 5
+BASELINE_RESIDUAL_RISK_UNITS = 6
 MAX_RESIDUAL_RATIO = 0.10
 
 
@@ -97,11 +97,18 @@ def test_g4_reduces_declared_g3_start_residual_risk_by_at_least_ten_x():
     tampered["reason_code"] = "POLICY.TAMPERED"
     semantic_tamper_with_stale_id_accepted = _accepts_projection(audit_record(tampered))
 
-    # 5. G3-start had no V2-to-V1 downgrade identity check.
+    # 5. G3-start had no versioned downgrade identity check.
     downgraded = copy.deepcopy(document)
     downgraded["schema"] = RESTRICTION_SCHEMA_V1
     downgraded.pop("authority")
-    downgrade_with_stale_v2_id_accepted = _accepts_projection(audit_record(downgraded))
+    downgraded.pop("fingerprint_key_id")
+    downgrade_with_stale_id_accepted = _accepts_projection(audit_record(downgraded))
+
+    # 6. G3-start fingerprints carried no non-secret key-epoch provenance.
+    fingerprint_epoch_ambiguity_open = not (
+        document.get("fingerprint_key_id") == KEY_ID
+        and document.get("schema") == RESTRICTION_SCHEMA
+    )
 
     residual = sum(
         int(value)
@@ -110,11 +117,12 @@ def test_g4_reduces_declared_g3_start_residual_risk_by_at_least_ten_x():
             payload_authority_missing,
             outer_actor_mismatch_accepted,
             semantic_tamper_with_stale_id_accepted,
-            downgrade_with_stale_v2_id_accepted,
+            downgrade_with_stale_id_accepted,
+            fingerprint_epoch_ambiguity_open,
         )
     )
 
-    assert BASELINE_RESIDUAL_RISK_UNITS == 5
+    assert BASELINE_RESIDUAL_RISK_UNITS == 6
     assert residual / BASELINE_RESIDUAL_RISK_UNITS <= MAX_RESIDUAL_RATIO
     assert residual == 0
 
