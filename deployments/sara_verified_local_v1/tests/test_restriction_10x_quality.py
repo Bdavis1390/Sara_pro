@@ -33,7 +33,17 @@ KEY_ID = "ws-restriction-key-epoch-quality"
 SIGNING_KEY_ID = "PS-QUALITY-K1"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 TOTAL_ASSURANCE_DIMENSIONS = 10
-BASELINE_MANUAL_INFERENCE_UNITS = 6
+BASELINE_UNRESOLVED_DIMENSIONS = frozenset(
+    {
+        "authority_identity",
+        "authority_binding",
+        "fingerprint_key_epoch",
+        "signature_verification",
+        "signing_key_identity",
+        "signing_key_fingerprint",
+    }
+)
+BASELINE_MANUAL_INFERENCE_UNITS = len(BASELINE_UNRESOLVED_DIMENSIONS)
 MAX_UNRESOLVED_RATIO = 0.10
 
 
@@ -139,8 +149,13 @@ def test_v4_machine_resolves_all_ten_assurance_dimensions():
 
     assert projected["provenance_schema"] == SIGNED_RESTRICTION_SCHEMA
     assert len(ASSURANCE_DIMENSIONS) == TOTAL_ASSURANCE_DIMENSIONS == 10
+    assert BASELINE_MANUAL_INFERENCE_UNITS == 6
+    assert BASELINE_UNRESOLVED_DIMENSIONS.issubset(set(ASSURANCE_DIMENSIONS))
     assert set(facts) == set(ASSURANCE_DIMENSIONS)
     assert all(facts.values())
+    assert not [
+        name for name in BASELINE_UNRESOLVED_DIMENSIONS if not facts[name]
+    ]
 
     unresolved = sum(int(not value) for value in facts.values())
     assert unresolved / BASELINE_MANUAL_INFERENCE_UNITS <= MAX_UNRESOLVED_RATIO
