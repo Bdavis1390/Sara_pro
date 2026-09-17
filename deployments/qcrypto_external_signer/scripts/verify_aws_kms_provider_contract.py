@@ -2,9 +2,9 @@
 """Retained evidence for the AWS KMS ML-DSA-65 provider contract.
 
 This exercise uses a deterministic fake KMS API surface to prove request shaping,
-FIPS-204 context-preserving EXTERNAL_MU construction, independent signature
-verification, and fail-closed ambiguous-outcome semantics. It does not claim that
-CI contacted AWS or that Worldshepherd is FIPS validated.
+FIPS-204 context-preserving EXTERNAL_MU construction, provider-side verification,
+local consistency verification, and fail-closed ambiguous-outcome semantics. It
+does not claim that CI contacted AWS or that Worldshepherd is FIPS validated.
 """
 from __future__ import annotations
 
@@ -42,9 +42,11 @@ class ContractKmsClient:
         self.arn = "arn:aws:kms:us-east-1:111122223333:key/contract-only"
         self.fail_sign = fail_sign
         self.sign_calls = 0
+        self.verify_calls = 0
         self.expected_message = b"worldshepherd-production-provider-contract-v1"
         self.expected_context = b"WS-QCRYPTO-OPAQUE-PROVIDER-V1"
-        self.last_request = None
+        self.last_sign_request = None
+        self.last_verify_request = None
 
     def describe_key(self, **kwargs):
         return {
@@ -66,22 +68,40 @@ class ContractKmsClient:
             "SigningAlgorithms": ["ML_DSA_SHAKE_256"],
         }
 
-    def sign(self, **kwargs):
-        self.sign_calls += 1
-        self.last_request = dict(kwargs)
-        if self.fail_sign:
-            raise TimeoutError("synthetic acknowledgement loss")
-        expected_mu = fips204_external_mu(
+    def _mu(self):
+        return fips204_external_mu(
             self.public_raw,
             self.expected_message,
             self.expected_context,
         )
-        if kwargs.get("Message") != expected_mu:
+
+    def sign(self, **kwargs):
+        self.sign_calls += 1
+        self.last_sign_request = dict(kwargs)
+        if self.fail_sign:
+            raise TimeoutError("synthetic acknowledgement loss")
+        if kwargs.get("Message") != self._mu():
             raise AssertionError("adapter did not send the expected FIPS-204 EXTERNAL_MU")
         signature = self.private.sign(self.expected_message, self.expected_context)
         return {
             "KeyId": self.arn,
             "Signature": signature,
+            "SigningAlgorithm": "ML_DSA_SHAKE_256",
+        }
+
+    def verify(self, **kwargs):
+        self.verify_calls += 1
+        self.last_verify_request = dict(kwargs)
+        if kwargs.get("Message") != self._mu():
+            raise AssertionError("provider Verify did not receive the same EXTERNAL_MU")
+        self.private.public_key().verify(
+            kwargs["Signature"],
+            self.expected_message,
+            self.expected_context,
+        )
+        return {
+            "KeyId": self.arn,
+            "SignatureValid": True,
             "SigningAlgorithm": "ML_DSA_SHAKE_256",
         }
 
@@ -128,7 +148,8 @@ def build_evidence() -> dict:
     reconciliation = failed_provider.reconcile(failed_op)
     after_reconcile = failed_client.sign_calls
 
-    request = client.last_request or {}
+    sign_request = client.last_sign_request or {}
+    verify_request = client.last_verify_request or {}
     evidence = {
         "schema": "WS-QCRYPTO-AWS-KMS-PROVIDER-CONTRACT-EVIDENCE-V1",
         "status": "PASS",
@@ -139,15 +160,20 @@ def build_evidence() -> dict:
         "required_key_spec": "ML_DSA_65",
         "required_key_usage": "SIGN_VERIFY",
         "required_signing_algorithm": "ML_DSA_SHAKE_256",
-        "message_type": request.get("MessageType"),
-        "external_mu_length": len(request.get("Message", b"")),
+        "message_type": sign_request.get("MessageType"),
+        "external_mu_length": len(sign_request.get("Message", b"")),
         "fips204_nonempty_context_preserved": True,
+        "provider_side_verify_required": provider.provider_profile["provider_side_verify_required"],
+        "provider_side_verify_calls": client.verify_calls,
+        "provider_verify_used_same_external_mu": verify_request.get("Message") == sign_request.get("Message"),
+        "provider_verify_used_same_signature": verify_request.get("Signature") is not None,
         "signature_verified_against_original_message_and_context": signature_verified,
         "opaque_key_handle_is_arn": provider.key_handle.startswith("arn:aws:kms:"),
         "successful_sign_calls": client.sign_calls,
         "ambiguous_sign_fail_stopped": ambiguous_blocked,
         "ambiguous_sign_calls_before_reconcile": before_reconcile,
         "ambiguous_sign_calls_after_reconcile": after_reconcile,
+        "ambiguous_provider_verify_calls": failed_client.verify_calls,
         "reconcile_state": reconciliation.state.value,
         "reconcile_safe_to_retry": reconciliation.safe_to_retry,
         "reconciliation_reissued_sign": after_reconcile != before_reconcile,
@@ -165,8 +191,8 @@ def build_evidence() -> dict:
         "real_value_moved": False,
         "end_to_end_pq_cryptocurrency_security_established": False,
         "claims_boundary": (
-            "CI contract proof only. The AWS KMS adapter and context-preserving request semantics are "
-            "implemented in software, but this artifact does not demonstrate a live AWS KMS call, "
+            "CI contract proof only. The AWS KMS adapter and context-preserving Sign/Verify semantics "
+            "are implemented in software, but this artifact does not demonstrate a live AWS KMS call, "
             "Worldshepherd FIPS validation, Federal compliance, independent validation, native-chain "
             "transaction signing, broadcast, mainnet authorization, real-value movement, or end-to-end "
             "post-quantum cryptocurrency security."
@@ -175,11 +201,16 @@ def build_evidence() -> dict:
     if not (
         evidence["message_type"] == "EXTERNAL_MU"
         and evidence["external_mu_length"] == 64
+        and evidence["provider_side_verify_required"] is True
+        and evidence["provider_side_verify_calls"] == 1
+        and evidence["provider_verify_used_same_external_mu"] is True
+        and evidence["provider_verify_used_same_signature"] is True
         and evidence["signature_verified_against_original_message_and_context"]
         and evidence["successful_sign_calls"] == 1
         and evidence["ambiguous_sign_fail_stopped"]
         and evidence["ambiguous_sign_calls_before_reconcile"] == 1
         and evidence["ambiguous_sign_calls_after_reconcile"] == 1
+        and evidence["ambiguous_provider_verify_calls"] == 0
         and evidence["reconcile_state"] == ProviderState.INDETERMINATE.value
         and evidence["reconcile_safe_to_retry"] is False
         and evidence["reconciliation_reissued_sign"] is False
