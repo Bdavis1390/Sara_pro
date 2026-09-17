@@ -1,25 +1,25 @@
 """AWS KMS ML-DSA-65 opaque signer provider.
 
 This adapter targets a real AWS KMS asymmetric ML_DSA_65 SIGN_VERIFY key while
-preserving the Worldshepherd FIPS-204 non-empty signature context.  AWS KMS does
-not expose a context parameter on Sign, so the adapter computes the FIPS-204
-64-byte message representative mu and calls Sign with MessageType=EXTERNAL_MU.
-The returned signature is independently verified against the original message and
-context before custody can accept it.
+preserving the Worldshepherd FIPS-204 non-empty signature context. AWS KMS does
+not expose a context parameter on Sign/Verify, so the adapter computes the
+FIPS-204 64-byte message representative mu and uses MessageType=EXTERNAL_MU.
+
+A returned signature is first verified by AWS KMS using the same key and mu, keeping
+the security-relevant provider verification inside the KMS boundary. It is then
+verified locally as an additional consistency check against the original message
+and context. Neither fact makes Worldshepherd itself a FIPS-validated module.
 
 Important recovery boundary: AWS KMS Sign does not provide caller-supplied
 idempotency tokens or a signature-retrieval API keyed by a Worldshepherd operation
-ID.  Therefore an exception after the Sign request is issued is treated as an
-ambiguous outcome.  reconcile() never calls Sign again and returns INDETERMINATE.
+ID. Therefore an exception after the Sign request is issued is treated as an
+ambiguous outcome. reconcile() never calls Sign again and returns INDETERMINATE.
 This deliberately sacrifices automatic recovery rather than risking a second
 provider signing operation under a consumed human authorization.
-
-Using this adapter does not by itself establish that Worldshepherd is FIPS 140-3
-validated, federally compliant, independently validated, chain-native, mainnet
-authorized, or end-to-end post-quantum secure.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 from typing import Any, Protocol
 
@@ -45,6 +45,7 @@ class KmsClient(Protocol):
     def describe_key(self, **kwargs: Any) -> dict[str, Any]: ...
     def get_public_key(self, **kwargs: Any) -> dict[str, Any]: ...
     def sign(self, **kwargs: Any) -> dict[str, Any]: ...
+    def verify(self, **kwargs: Any) -> dict[str, Any]: ...
 
 
 def fips204_external_mu(public_key_raw: bytes, message: bytes, context: bytes) -> bytes:
@@ -118,6 +119,7 @@ class AwsKmsMlDsa65Provider:
         self._key_handle, self._public = _require_metadata(metadata, public)
         self._fingerprint = hashlib.sha256(self._public).hexdigest()
         self._attempted_operations: set[str] = set()
+        self.provider_verify_count = 0
 
     @property
     def algorithm(self) -> str:
@@ -145,6 +147,7 @@ class AwsKmsMlDsa65Provider:
             "message_type": "EXTERNAL_MU",
             "key_handle": self.key_handle,
             "fips204_context_preserved_via_external_mu": True,
+            "provider_side_verify_required": True,
             "provider_documentation_states_fips_140_3_level_3_hsm": True,
             "worldshepherd_fips_validation_established": False,
             "live_integration_established_by_this_profile": False,
@@ -188,6 +191,34 @@ class AwsKmsMlDsa65Provider:
             raise ProviderAmbiguousOutcome(operation_id, "AWS KMS Sign response omitted signature bytes")
         if returned_key != self.key_handle or returned_algorithm != _AWS_KMS_ALGORITHM:
             raise ProviderAmbiguousOutcome(operation_id, "AWS KMS Sign response identity changed")
+        signature_bytes = bytes(signature)
+
+        # The authoritative production-provider verification remains within KMS.
+        try:
+            verification = self._client.verify(
+                KeyId=self.key_handle,
+                Message=mu,
+                MessageType="EXTERNAL_MU",
+                Signature=signature_bytes,
+                SigningAlgorithm=_AWS_KMS_ALGORITHM,
+            )
+            self.provider_verify_count += 1
+        except Exception as exc:
+            raise ProviderAmbiguousOutcome(
+                operation_id,
+                "AWS KMS Verify failed after signing; custody remains indeterminate",
+            ) from exc
+        if not isinstance(verification, dict):
+            raise ProviderAmbiguousOutcome(operation_id, "AWS KMS returned an invalid Verify response")
+        if (
+            verification.get("SignatureValid") is not True
+            or verification.get("KeyId") != self.key_handle
+            or verification.get("SigningAlgorithm") != _AWS_KMS_ALGORITHM
+        ):
+            raise ProviderAmbiguousOutcome(
+                operation_id,
+                "AWS KMS did not affirm the context-bound signature",
+            )
 
         result = ProviderResult(
             operation_id=operation_id,
@@ -196,9 +227,11 @@ class AwsKmsMlDsa65Provider:
             algorithm=self.algorithm,
             message_sha256=hashlib.sha256(message).hexdigest(),
             context_sha256=hashlib.sha256(context).hexdigest(),
-            signature_b64url=__import__("base64").urlsafe_b64encode(bytes(signature)).rstrip(b"=").decode("ascii"),
+            signature_b64url=base64.urlsafe_b64encode(signature_bytes).rstrip(b"=").decode("ascii"),
             safe_to_retry=False,
         )
+        # Defense-in-depth consistency check; KMS Verify above is the provider-side
+        # acceptance condition for the production adapter.
         if not verify_provider_result(
             result,
             public_key_bytes=self.public_key_bytes,
@@ -207,7 +240,7 @@ class AwsKmsMlDsa65Provider:
         ):
             raise ProviderAmbiguousOutcome(
                 operation_id,
-                "AWS KMS signature failed independent context-bound verification",
+                "AWS KMS signature failed local context-bound consistency verification",
             )
         return result
 
