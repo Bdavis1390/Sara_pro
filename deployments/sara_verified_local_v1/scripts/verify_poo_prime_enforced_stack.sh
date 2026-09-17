@@ -160,7 +160,7 @@ python3 - "${secret_dir}/policy.before.json" <<'PY'
 import json,sys
 r=json.load(open(sys.argv[1],encoding='utf-8'))
 assert r['prime_authorization_required'] is True
-assert r['registry']['states']==[] and r['registry']['commits']==[]
+assert r['registry']['states']==[] and r['registry']['commits']=={}
 PY
 
 PYTHONPATH="${REPO_ROOT}:${ROOT}" python3 - "${secret_dir}/durable.json" "${secret_dir}/issue.json" <<'PY'
