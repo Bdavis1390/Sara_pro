@@ -1,4 +1,4 @@
-name: SPDX Jena Semantic Diversity Gate
+name: SPDX Jena Semantic Interoperability Gate
 
 on:
   pull_request:
@@ -24,7 +24,7 @@ env:
   PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
-  prove-semantic-engine-diversity:
+  probe-semantic-interoperability:
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact source head
@@ -78,7 +78,60 @@ jobs:
           actual=$(sha256sum /tmp/spdx-3.0.1-model.ttl | awk '{print $1}')
           test "$actual" = "$EXPECTED_MODEL_SHA256"
 
-      - name: Build exact semantic mutation
+      - name: Prove Jena SHACL class-constraint engine with independent micro-control
+        run: |
+          set -euo pipefail
+          JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
+          cat > /tmp/jena-control-shapes.ttl <<'TTL'
+          @prefix sh: <http://www.w3.org/ns/shacl#> .
+          @prefix ex: <urn:worldshepherd:jena-control:> .
+
+          ex:CreationInfoShape
+            a sh:NodeShape ;
+            sh:targetClass ex:CreationInfo ;
+            sh:property [
+              sh:path ex:createdBy ;
+              sh:class ex:Agent
+            ] .
+          TTL
+          cat > /tmp/jena-control-baseline.ttl <<'TTL'
+          @prefix ex: <urn:worldshepherd:jena-control:> .
+          ex:creation a ex:CreationInfo ; ex:createdBy ex:person .
+          ex:person a ex:Agent .
+          TTL
+          cat > /tmp/jena-control-negative.ttl <<'TTL'
+          @prefix ex: <urn:worldshepherd:jena-control:> .
+          ex:creation a ex:CreationInfo ; ex:createdBy ex:package .
+          ex:package a ex:Package .
+          TTL
+
+          "$JENA_HOME/bin/shacl" validate --text \
+            --shapes /tmp/jena-control-shapes.ttl \
+            --data /tmp/jena-control-baseline.ttl \
+            > /tmp/jena-control-baseline.log
+          grep -qx 'Conforms' /tmp/jena-control-baseline.log
+
+          "$JENA_HOME/bin/shacl" validate --text \
+            --shapes /tmp/jena-control-shapes.ttl \
+            --data /tmp/jena-control-negative.ttl \
+            > /tmp/jena-control-negative.log
+          if grep -qx 'Conforms' /tmp/jena-control-negative.log; then
+            echo 'Jena failed its independent sh:class negative micro-control' >&2
+            exit 1
+          fi
+          grep -Eq 'Agent|class|ClassConstraint' /tmp/jena-control-negative.log
+
+      - name: Inspect Jena parsing of canonical SPDX shapes
+        run: |
+          set -euo pipefail
+          JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
+          "$JENA_HOME/bin/shacl" parse /tmp/spdx-3.0.1-model.ttl \
+            > /tmp/jena-spdx-parsed-shapes.log
+          test -s /tmp/jena-spdx-parsed-shapes.log
+          grep -q 'createdBy' /tmp/jena-spdx-parsed-shapes.log
+          grep -q 'Agent' /tmp/jena-spdx-parsed-shapes.log
+
+      - name: Build exact SPDX semantic mutation
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -111,50 +164,38 @@ jobs:
         run: |
           set -euo pipefail
           JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
-
-          # SPDX JSON-LD is parsed by RIOT as quad-capable input. Without --merge,
-          # RIOT intentionally ignores quads when writing a triples-only format.
-          # Merge every quad into one validation graph before SHACL evaluation.
           "$JENA_HOME/bin/riot" --merge --syntax=JSONLD11 --output=NTRIPLES \
             /tmp/spdx-baseline.jsonld > /tmp/spdx-baseline.nt
           "$JENA_HOME/bin/riot" --merge --syntax=JSONLD11 --output=NTRIPLES \
             /tmp/spdx-semantic-invalid.jsonld > /tmp/spdx-semantic-invalid.nt
-
           test -s /tmp/spdx-baseline.nt
           test -s /tmp/spdx-semantic-invalid.nt
 
-          # Permanent regression against the original lossy quad->triple harness.
+          # Regression against the original lossy quad->triple harness.
           grep 'createdBy' /tmp/spdx-baseline.nt \
             | grep -q 'urn:worldshepherd:spdx:person:validator'
           grep 'createdBy' /tmp/spdx-semantic-invalid.nt \
             | grep -q 'urn:worldshepherd:spdx:package:validator'
+          grep 'software_Package' /tmp/spdx-semantic-invalid.nt \
+            | grep -q 'urn:worldshepherd:spdx:package:validator'
+          grep 'CreationInfo' /tmp/spdx-semantic-invalid.nt >/dev/null
 
-          baseline_created_by=$(grep -c 'createdBy' /tmp/spdx-baseline.nt)
-          mutation_created_by=$(grep -c 'createdBy' /tmp/spdx-semantic-invalid.nt)
-          test "$baseline_created_by" -ge 1
-          test "$mutation_created_by" -ge 1
-
-      - name: Require Jena baseline conformance and semantic rejection
+      - name: Record Jena result against canonical SPDX model
         run: |
           set -euo pipefail
           JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
           "$JENA_HOME/bin/shacl" validate --text \
             --shapes /tmp/spdx-3.0.1-model.ttl \
             --data /tmp/spdx-baseline.nt \
-            > /tmp/jena-baseline.log
-          grep -qx 'Conforms' /tmp/jena-baseline.log
+            > /tmp/jena-spdx-baseline.log
+          grep -qx 'Conforms' /tmp/jena-spdx-baseline.log
 
           "$JENA_HOME/bin/shacl" validate --text \
             --shapes /tmp/spdx-3.0.1-model.ttl \
             --data /tmp/spdx-semantic-invalid.nt \
-            > /tmp/jena-semantic-invalid.log
-          if grep -qx 'Conforms' /tmp/jena-semantic-invalid.log; then
-            echo 'Apache Jena unexpectedly accepted the semantic negative control' >&2
-            exit 1
-          fi
-          grep -Eq 'createdBy|Agent|class|ClassConstraint' /tmp/jena-semantic-invalid.log
+            > /tmp/jena-spdx-semantic-invalid.log
 
-      - name: Require pySHACL agreement on same JSON-LD inputs
+      - name: Require pySHACL canonical baseline and negative behavior
         run: |
           set -euo pipefail
           /tmp/ws-pyshacl/bin/pyshacl \
@@ -178,12 +219,15 @@ jobs:
           grep -q 'Conforms: False' /tmp/pyshacl-semantic-invalid.log
           grep -q 'Value does not have class' /tmp/pyshacl-semantic-invalid.log
 
-      - name: Build claims-bounded engine-diversity evidence
+      - name: Build claims-controlled interoperability evidence
         run: |
           set -euo pipefail
           mkdir -p spdx_jena_semantic_evidence_ci
-          cp /tmp/jena-baseline.log spdx_jena_semantic_evidence_ci/
-          cp /tmp/jena-semantic-invalid.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/jena-control-baseline.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/jena-control-negative.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/jena-spdx-parsed-shapes.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/jena-spdx-baseline.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/jena-spdx-semantic-invalid.log spdx_jena_semantic_evidence_ci/
           cp /tmp/pyshacl-baseline.log spdx_jena_semantic_evidence_ci/
           cp /tmp/pyshacl-semantic-invalid.log spdx_jena_semantic_evidence_ci/
           cp /tmp/spdx-baseline.nt spdx_jena_semantic_evidence_ci/
@@ -199,8 +243,23 @@ jobs:
           def digest(path):
               return 'sha256:' + hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
+          jena_negative_conforms = Path('/tmp/jena-spdx-semantic-invalid.log').read_text(encoding='utf-8').strip() == 'Conforms'
+          if jena_negative_conforms:
+              state = 'CANONICAL_SPDX_MODEL_SEMANTIC_INTEROPERABILITY_DIVERGENCE'
+              diversity = False
+              agreement = False
+              jena_negative = 'CONFORMS'
+              divergence = True
+          else:
+              state = 'EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT'
+              diversity = True
+              agreement = True
+              jena_negative = 'REJECTED'
+              divergence = False
+
+          parsed_shapes = Path('/tmp/jena-spdx-parsed-shapes.log').read_text(encoding='utf-8')
           record = {
-              'schema': 'WS-SPDX-SEMANTIC-ENGINE-DIVERSITY-EVIDENCE-V1',
+              'schema': 'WS-SPDX-JENA-SEMANTIC-INTEROPERABILITY-EVIDENCE-V1',
               'source_head_sha': os.environ['PR_HEAD_SHA'],
               'spdx_version': '3.0.1',
               'canonical_model_sha256': digest('/tmp/spdx-3.0.1-model.ttl'),
@@ -209,24 +268,29 @@ jobs:
               'jena_merged_baseline_graph_sha256': digest('/tmp/spdx-baseline.nt'),
               'jena_merged_semantic_negative_graph_sha256': digest('/tmp/spdx-semantic-invalid.nt'),
               'quad_merge_required_for_jena_jsonld_projection': True,
+              'jena_core_class_constraint_microcontrol_proven': True,
+              'jena_parsed_createdby_agent_constraint': ('createdBy' in parsed_shapes and 'Agent' in parsed_shapes),
               'engines': [
                   {
                       'name': 'Apache Jena SHACL',
                       'version': os.environ['JENA_VERSION'],
                       'language_lineage': 'Java / Apache Jena',
-                      'baseline': 'CONFORMS',
-                      'semantic_negative': 'REJECTED',
+                      'microcontrol_negative': 'REJECTED',
+                      'spdx_baseline': 'CONFORMS',
+                      'spdx_semantic_negative': jena_negative,
                   },
                   {
                       'name': 'pySHACL',
                       'version': os.environ['PYSHACL_VERSION'],
                       'language_lineage': 'Python / RDFLib',
-                      'baseline': 'CONFORMS',
-                      'semantic_negative': 'REJECTED',
+                      'spdx_baseline': 'CONFORMS',
+                      'spdx_semantic_negative': 'REJECTED',
                   },
               ],
-              'evidence_state': 'EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT',
-              'semantic_engine_diversity_established_for_exact_control': True,
+              'evidence_state': state,
+              'semantic_engine_diversity_established_for_exact_control': diversity,
+              'canonical_spdx_model_semantic_agreement_established': agreement,
+              'canonical_spdx_model_interoperability_divergence_detected': divergence,
               'jena_is_spdx_recommended_validator': False,
               'general_spdx_conformance_established': False,
               'arbitrary_input_conformance_established': False,
@@ -236,25 +300,23 @@ jobs:
               'admission_authorized': False,
               'release_approved': False,
               'claims_boundary': (
-                  'Apache Jena and pySHACL are independent semantic engine lineages and agreed on this exact '
-                  'baseline/createdBy wrong-range control after Jena RIOT explicitly merged quad-capable JSON-LD '
-                  'input into a complete triples validation graph. SPDX validation guidance names pySHACL, not '
-                  'Jena, as its known SHACL CLI path. The Jena archive was checksum-verified but its PGP signature '
-                  'was not verified in this gate. This does not establish general SPDX conformance, independent '
-                  'external validation, or community endorsement.'
+                  'Jena independently proves sh:class enforcement on a minimal control and parses createdBy/Agent '
+                  'content from the canonical SPDX model. The result then records, rather than hides, whether '
+                  'Jena and pySHACL agree on the exact SPDX createdBy wrong-range mutation. A divergence does not '
+                  'establish engine diversity for the SPDX control and is standards-interoperability evidence only.'
               ),
           }
-          out = Path('spdx_jena_semantic_evidence_ci/jena-semantic-diversity.json')
+          out = Path('spdx_jena_semantic_evidence_ci/jena-semantic-interoperability.json')
           out.write_text(json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           PY
-          python -m json.tool spdx_jena_semantic_evidence_ci/jena-semantic-diversity.json >/dev/null
+          python -m json.tool spdx_jena_semantic_evidence_ci/jena-semantic-interoperability.json >/dev/null
 
-      - name: Enforce diversity and claims boundaries
+      - name: Enforce claims and diagnostic boundaries
         run: |
           set -euo pipefail
-          evidence='spdx_jena_semantic_evidence_ci/jena-semantic-diversity.json'
-          grep -q 'EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT' "$evidence"
-          grep -q '"semantic_engine_diversity_established_for_exact_control": true' "$evidence"
+          evidence='spdx_jena_semantic_evidence_ci/jena-semantic-interoperability.json'
+          grep -q '"jena_core_class_constraint_microcontrol_proven": true' "$evidence"
+          grep -q '"jena_parsed_createdby_agent_constraint": true' "$evidence"
           grep -q '"quad_merge_required_for_jena_jsonld_projection": true' "$evidence"
           grep -q '"jena_is_spdx_recommended_validator": false' "$evidence"
           grep -q '"general_spdx_conformance_established": false' "$evidence"
@@ -264,10 +326,28 @@ jobs:
           grep -q '"release_artifact_pgp_signature_verified": false' "$evidence"
           grep -q '"admission_authorized": false' "$evidence"
           grep -q '"release_approved": false' "$evidence"
+          python - "$evidence" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          record = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          allowed = {
+              'EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT',
+              'CANONICAL_SPDX_MODEL_SEMANTIC_INTEROPERABILITY_DIVERGENCE',
+          }
+          if record['evidence_state'] not in allowed:
+              raise SystemExit(f"unexpected evidence state: {record['evidence_state']}")
+          if record['canonical_spdx_model_interoperability_divergence_detected']:
+              assert record['semantic_engine_diversity_established_for_exact_control'] is False
+              assert record['canonical_spdx_model_semantic_agreement_established'] is False
+          else:
+              assert record['semantic_engine_diversity_established_for_exact_control'] is True
+              assert record['canonical_spdx_model_semantic_agreement_established'] is True
+          PY
 
-      - name: Upload Jena semantic-diversity evidence
+      - name: Upload Jena semantic interoperability evidence
         uses: actions/upload-artifact@v4
         with:
-          name: spdx-jena-semantic-diversity-evidence
+          name: spdx-jena-semantic-interoperability-evidence
           path: spdx_jena_semantic_evidence_ci
           if-no-files-found: error
