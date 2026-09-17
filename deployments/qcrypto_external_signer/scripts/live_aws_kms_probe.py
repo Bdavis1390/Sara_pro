@@ -6,6 +6,12 @@ construct or sign a blockchain transaction, broadcast to any network, enable
 mainnet authority, or move value. AWS credentials are obtained only through the
 normal boto3 credential chain and are never accepted as command-line arguments or
 written to the evidence artifact.
+
+The live probe deliberately uses an AWS FIPS endpoint and configures the SDK for
+one total request attempt per API call. This is important for Sign: AWS KMS does
+not expose an idempotency token or signature-retrieval operation for asymmetric
+Sign, so an SDK-layer automatic retry could otherwise cross the signing fence more
+than once after an ambiguous transport failure.
 """
 from __future__ import annotations
 
@@ -14,6 +20,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlparse
 
 from qcrypto_external_signer.aws_kms_provider import AwsKmsMlDsa65Provider
 from qcrypto_external_signer.opaque_provider import provider_operation_id, verify_provider_result
@@ -37,10 +44,20 @@ def main() -> int:
 
     try:
         import boto3
+        from botocore.config import Config
     except ImportError as exc:
         raise SystemExit("install the optional AWS dependency with: pip install -e '.[aws]'") from exc
 
-    kms = boto3.client("kms", region_name=args.region)
+    config = Config(
+        use_fips_endpoint=True,
+        retries={"total_max_attempts": 1, "mode": "standard"},
+    )
+    kms = boto3.client("kms", region_name=args.region, config=config)
+    endpoint_url = str(kms.meta.endpoint_url)
+    endpoint_host = (urlparse(endpoint_url).hostname or "").lower()
+    if "fips" not in endpoint_host or not endpoint_host.startswith("kms"):
+        raise SystemExit("live AWS KMS probe did not resolve to a KMS FIPS endpoint")
+
     provider = AwsKmsMlDsa65Provider(kms_client=kms, key_id=args.key_id)
     operation_id = provider_operation_id(
         key_handle=provider.key_handle,
@@ -56,6 +73,8 @@ def main() -> int:
     )
     if not verified:
         raise SystemExit("live AWS KMS signature did not verify locally")
+    if provider.provider_verify_count != 1:
+        raise SystemExit("live AWS KMS provider-side Verify did not execute exactly once")
 
     evidence = {
         "schema": "WS-QCRYPTO-LIVE-AWS-KMS-INTEGRATION-EVIDENCE-V1",
@@ -64,6 +83,11 @@ def main() -> int:
         "observed_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "aws_live_api_called": True,
         "non_transaction_probe_only": True,
+        "aws_fips_endpoint_enforced": True,
+        "aws_fips_endpoint_host_sha256": hashlib.sha256(endpoint_host.encode()).hexdigest(),
+        "sdk_total_max_attempts": 1,
+        "sdk_automatic_sign_retry_permitted": False,
+        "provider_side_verify_count": provider.provider_verify_count,
         "key_handle_sha256": hashlib.sha256(provider.key_handle.encode()).hexdigest(),
         "public_key_fingerprint_sha256": provider.fingerprint_sha256,
         "algorithm": provider.algorithm,
@@ -76,6 +100,7 @@ def main() -> int:
             "FIPS 140-3 Security Level 3 validated HSMs."
         ),
         "provider_documentation_url": "https://docs.aws.amazon.com/kms/latest/developerguide/mldsa.html",
+        "cmvp_algorithm_scope_verified_for_mldsa": False,
         "worldshepherd_fips_validation_established": False,
         "federal_compliance_established": False,
         "independent_validation_established": False,
@@ -86,8 +111,10 @@ def main() -> int:
         "end_to_end_pq_cryptocurrency_security_established": False,
         "claims_boundary": (
             "A passing artifact establishes only that this Worldshepherd adapter successfully used a live "
-            "AWS KMS ML-DSA-65 key for a non-transaction test signature and verified it locally. It does "
-            "not make Worldshepherd a FIPS-validated product, establish Federal compliance or independent "
+            "AWS KMS ML-DSA-65 key through an AWS KMS FIPS endpoint for a non-transaction test signature, "
+            "with provider-side and local verification and SDK automatic retries disabled. It does not "
+            "establish that the independently located CMVP certificate's approved-algorithm scope includes "
+            "ML-DSA, make Worldshepherd a FIPS-validated product, establish Federal compliance or independent "
             "validation, authorize blockchain-native signing or broadcast, enable mainnet, move value, or "
             "establish end-to-end post-quantum security of Bitcoin or Ethereum."
         ),
