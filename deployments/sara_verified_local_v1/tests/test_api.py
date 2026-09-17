@@ -26,6 +26,7 @@ def test_health_liveness_readiness_and_ui(client):
     health = client.get("/health")
     assert health.status_code == 200
     assert health.json()["ok"] is True
+    assert health.json()["prime_signer_isolation"] == "verification_only"
     assert client.get("/livez").json() == {"ok": True, "status": "alive"}
     ready = client.get("/readyz")
     assert ready.status_code == 200
