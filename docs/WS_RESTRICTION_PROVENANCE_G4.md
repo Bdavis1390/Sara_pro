@@ -12,7 +12,7 @@ G4 removes the override and introduces a versioned authority-bound evidence enve
 
 ## V2 provenance schema
 
-New restriction captures use:
+At the G4 stage, new restriction captures used:
 
 ```text
 schema    = WS-RESTRICTION-PROVENANCE-V2
@@ -122,4 +122,4 @@ ECHO semantic hashing and stable event IDs provide replay/conflict evidence with
 
 A later gate should add non-secret fingerprint-key epoch identifiers and, separately, independently verifiable signing/witness evidence where justified.
 
-G3 is merged and proven internally for its tested positive-schema invariants. G4 is reconciled onto current protected main and remains **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION** until its exact-head required CI, broader Verified Local validation, and protected merge complete. The separate 10x scorecard requires the five declared G3-start residual attack classes to fall from 5 units to 0 while zero-tolerance G3 controls remain closed.
+G3 is merged and proven internally for its tested positive-schema invariants. G4 is merged on protected main and established the authority-binding baseline used by G5. G5 advances new captures to V3 by adding fingerprint-key epoch provenance while preserving V1/V2 legacy-read semantics. The separate G4 10x scorecard remains the retained evidence for the five declared G3-start residual attack classes.
