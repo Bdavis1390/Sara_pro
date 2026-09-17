@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+from worldshepherd_sara.registry_checkpoint import REGISTRY_CHECKPOINT_META_KEY
 from worldshepherd_sara.storage import DurableStore
 
 
@@ -69,4 +70,7 @@ def test_transact_registry_validates_combined_registry_before_commit(tmp_path):
         store.transact_registry(invalid_patch)
 
     assert store.registry_path.read_bytes() == before
-    assert store.get_registry() == {"GOOD": "state"}
+    registry = store.get_registry()
+    assert registry["GOOD"] == "state"
+    assert "BAD" not in registry
+    assert registry[REGISTRY_CHECKPOINT_META_KEY]["generation"] == 1
