@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldshepherd.local/schema/ws_qphonon_echo_event_v0_2.schema.json",
+  "title": "WS-QPHONON ECHO Evidence Event V0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "event_id",
+    "event_sequence",
+    "event_time_utc",
+    "raw_data_hash",
+    "config_digest",
+    "previous_event_digest",
+    "event_digest",
+    "model_version",
+    "prior",
+    "posterior",
+    "experiment_proposed",
+    "expected_information_gain",
+    "prime_decision",
+    "control_waveform_or_parameters",
+    "environmental_state",
+    "measurement_result",
+    "model_discrepancy",
+    "claims_state"
+  ],
+  "properties": {
+    "schema": {"const": "WS-QPHONON-ECHO-EVENT-V0.2"},
+    "event_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "event_sequence": {"type": "integer", "minimum": 0},
+    "event_time_utc": {"type": "string", "format": "date-time"},
+    "raw_data_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "config_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "previous_event_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "event_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "model_version": {"type": "string", "minLength": 1, "maxLength": 256},
+    "prior": {"type": "object"},
+    "posterior": {"type": "object"},
+    "experiment_proposed": {"type": "object"},
+    "expected_information_gain": {"type": ["number", "null"]},
+    "prime_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorized", "disposition", "reasons", "requires_human_approval"],
+      "properties": {
+        "authorized": {"type": "boolean"},
+        "disposition": {
+          "type": "string",
+          "enum": ["READY_FOR_HUMAN_APPROVAL", "CHARACTERIZE_OR_ABORT"]
+        },
+        "reasons": {"type": "array", "items": {"type": "string"}},
+        "requires_human_approval": {"type": "boolean"}
+      }
+    },
+    "control_waveform_or_parameters": {"type": "object"},
+    "environmental_state": {"type": "object"},
+    "measurement_result": {"type": "object"},
+    "model_discrepancy": {"type": "object"},
+    "claims_state": {
+      "type": "string",
+      "enum": [
+        "PROVEN_INTERNALLY",
+        "IMPLEMENTED_IN_SOFTWARE",
+        "SUPPORTED_BY_LITERATURE",
+        "SIMULATED_ONLY",
+        "HYPOTHESIS",
+        "SPECULATIVE_EXTENSION",
+        "REQUIRES_LAB_VALIDATION",
+        "REQUIRES_PARTNER_VALIDATION",
+        "REQUIRES_LEGAL_REVIEW",
+        "NOT_CURRENTLY_CLAIMED"
+      ]
+    }
+  }
+}
