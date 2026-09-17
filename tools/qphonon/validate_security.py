@@ -44,12 +44,15 @@ def validate(data: dict[str, Any]) -> list[str]:
     freshness = data.get("event_freshness_seconds_max")
     skew = data.get("future_clock_skew_seconds_max")
     lifetime = data.get("approval_lifetime_seconds_max")
+    mutation_min = data.get("minimum_adversarial_mutation_cases")
     if not isinstance(freshness, int) or isinstance(freshness, bool) or not 1 <= freshness <= 300:
         errors.append("event freshness window must be an integer in [1, 300]")
     if not isinstance(skew, int) or isinstance(skew, bool) or not 0 <= skew <= 30:
         errors.append("future clock skew must be an integer in [0, 30]")
     if not isinstance(lifetime, int) or isinstance(lifetime, bool) or not 1 <= lifetime <= 900:
         errors.append("approval lifetime must be an integer in [1, 900]")
+    if not isinstance(mutation_min, int) or isinstance(mutation_min, bool) or mutation_min < 100:
+        errors.append("minimum adversarial mutation cases must remain >= 100")
 
     execution = data.get("execution_policy")
     if not isinstance(execution, dict):
