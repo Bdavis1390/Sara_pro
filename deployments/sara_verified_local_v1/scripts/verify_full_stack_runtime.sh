@@ -26,9 +26,13 @@ fi
 
 container_uid="${WS_DEPLOY_CONTAINER_UID:-10001}"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-evidence_dir=".deployment-evidence/full-stack/${stamp}"
-mkdir -p "$evidence_dir"
-chmod 0700 .deployment-evidence .deployment-evidence/full-stack "$evidence_dir"
+evidence_root=".deployment-evidence/full-stack"
+mkdir -p "$evidence_root"
+chmod 0700 .deployment-evidence "$evidence_root"
+evidence_dir="${evidence_root}/${stamp}-$"
+if ! mkdir -m 0700 "$evidence_dir"; then
+  fail "could not create unique deployment evidence directory"
+fi
 
 preflight_receipt="${evidence_dir}/preflight.json"
 operator_uid="$(id -u)"
