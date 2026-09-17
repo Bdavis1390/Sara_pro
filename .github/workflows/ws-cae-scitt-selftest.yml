@@ -1,0 +1,74 @@
+name: WS-CAE SCITT Transparency Self-Test
+
+on:
+  pull_request:
+    paths:
+      - 'ws_cae/**'
+      - '.github/workflows/ws-cae-scitt-selftest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scitt-signed-statement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install current SCITT client tooling
+        run: python -m pip install --disable-pip-version-check pyscitt 'scitt-cose>=0.1.0' check-jsonschema
+      - name: Build deterministic WS-CAE transparency payload
+        run: |
+          PYTHONPATH=. python -m ws_cae.scitt_statement_cli \
+            ws_cae/examples/ethereum.patch.json \
+            --issuer did:web:example.invalid \
+            --observed-at 2026-09-13T22:00:00Z \
+            --pretty > /tmp/ws-cae-scitt-payload.json
+          python -m json.tool /tmp/ws-cae-scitt-payload.json >/dev/null
+          check-jsonschema --schemafile ws_cae/scitt_statement.schema.json /tmp/ws-cae-scitt-payload.json
+      - name: Wrap payload in SCITT COSE signed statement and verify decode
+        shell: bash
+        run: |
+          PYTHONPATH=. python - <<'PY'
+          import json
+          from pathlib import Path
+          from pyscitt import crypto
+          from ws_cae.scitt_statement import MEDIA_TYPE
+
+          payload = json.loads(Path('/tmp/ws-cae-scitt-payload.json').read_text())
+          private_key, _ = crypto.generate_ec_keypair('P-256')
+          cert = crypto.generate_cert(private_key, cn='ws-cae-ci')
+          signer = crypto.Signer(
+              private_key,
+              issuer='did:web:example.invalid',
+              algorithm='ES256',
+              x5c=[cert],
+          )
+          signed = crypto.sign_json_statement(
+              signer,
+              payload,
+              content_type=MEDIA_TYPE,
+              feed='ws-cae/ethereum',
+              cwt=True,
+          )
+          Path('/tmp/ws-cae-statement.cose').write_bytes(signed)
+          header, decoded = crypto.parse_cose_sign1(signed)
+          parsed = json.loads(decoded)
+          assert header['cty'] == MEDIA_TYPE
+          assert parsed['spec'] == 'WS-CAE-SCITT-STATEMENT-1'
+          assert parsed['subject']['name'] == 'Ethereum'
+          assert parsed['claims']['implementation_maturity'] == 'DEVNET'
+          assert len(signed) > len(decoded)
+          print(f'signed_statement_bytes={len(signed)}')
+          PY
+      - name: Validate official IETF SCITT cross-implementation vectors
+        shell: bash
+        run: |
+          git clone --quiet --depth 1 https://github.com/ietf-wg-scitt/examples.git /tmp/ietf-scitt-examples
+          cd /tmp/ietf-scitt-examples/test-vectors/scitt-cose
+          sha256sum -c SHA256SUMS
+          cd /tmp/ietf-scitt-examples
+          python -m scitt_cose.vectors test-vectors/scitt-cose

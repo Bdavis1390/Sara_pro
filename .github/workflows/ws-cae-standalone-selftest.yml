@@ -1,0 +1,167 @@
+name: WS-CAE Standalone Self-Test
+
+on:
+  pull_request:
+    paths:
+      - 'ws_cae/**'
+      - '.github/actions/ws-cae-conformance/**'
+      - '.github/actions/ws-cae-chain-patch/**'
+      - '.github/actions/ws-cae-crypto-system/**'
+      - '.github/actions/ws-cae-cyclonedx/**'
+      - '.github/workflows/ws-cae-standalone-selftest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Unit tests
+        run: python -m unittest discover -s ws_cae/tests -p 'test_*.py' -v
+      - name: Reference profile conformance
+        uses: ./.github/actions/ws-cae-conformance
+        with:
+          profile: ws_cae/examples/reference_pair.json
+      - name: Interoperability consumer policy
+        uses: ./.github/actions/ws-cae-conformance
+        with:
+          profile: ws_cae/examples/reference_pair.json
+          policy: ws_cae/examples/interop_policy.json
+      - name: Algorand chain patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/algorand.patch.json
+      - name: Ethereum chain patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/ethereum.patch.json
+      - name: Ethereum fork-commitment policy
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/ethereum.patch.json
+          policy: ws_cae/examples/fork_committed_policy.json
+      - name: Sui chain patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/sui.patch.json
+      - name: Sui must not satisfy fork-scheduled policy yet
+        shell: bash
+        run: |
+          set +e
+          PYTHONPATH=. python -m ws_cae.patch_cli ws_cae/examples/sui.patch.json --policy ws_cae/examples/fork_committed_policy.json >/tmp/ws-cae-sui-policy.json
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+          python -m json.tool /tmp/ws-cae-sui-policy.json >/dev/null
+      - name: Bitcoin limited-mainnet patch
+        uses: ./.github/actions/ws-cae-chain-patch
+        with:
+          patch: ws_cae/examples/bitcoin-qsb.patch.json
+      - name: Build four-chain catalog
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.catalog \
+            ws_cae/examples/algorand.patch.json \
+            ws_cae/examples/ethereum.patch.json \
+            ws_cae/examples/sui.patch.json \
+            ws_cae/examples/bitcoin-qsb.patch.json \
+            --pretty >/tmp/ws-cae-catalog.json
+          python -m json.tool /tmp/ws-cae-catalog.json >/dev/null
+      - name: Native-coin system dependency path
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_native_coin.json
+      - name: Stablecoin weakest-link path
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_stablecoin.json
+      - name: Bridged-asset weakest-link path
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_bridged_asset.json
+      - name: Exchange-balance weakest-link path
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_exchange_balance.json
+      - name: Rollup-asset weakest-link path
+        uses: ./.github/actions/ws-cae-crypto-system
+        with:
+          patch: ws_cae/examples/system_rollup_asset.json
+      - name: Build all-crypto dependency portfolio
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.crypto_portfolio \
+            ws_cae/examples/system_native_coin.json \
+            ws_cae/examples/system_stablecoin.json \
+            ws_cae/examples/system_bridged_asset.json \
+            ws_cae/examples/system_exchange_balance.json \
+            ws_cae/examples/system_rollup_asset.json \
+            --pretty >/tmp/ws-cae-crypto-portfolio.json
+          python -m json.tool /tmp/ws-cae-crypto-portfolio.json >/dev/null
+      - name: Export crypto dependency graph as CycloneDX 1.7
+        uses: ./.github/actions/ws-cae-cyclonedx
+        with:
+          patch: ws_cae/examples/system_stablecoin.json
+          output: /tmp/ws-cae-stablecoin.cdx.json
+      - name: Validate CycloneDX export with upstream CLI
+        shell: bash
+        run: |
+          docker run --rm -v /tmp:/work cyclonedx/cyclonedx-cli:0.33.1 \
+            validate --input-file /work/ws-cae-stablecoin.cdx.json \
+            --input-format json --input-version v1_7 --fail-on-errors
+      - name: Use Python 3.14 for current standards validators
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - name: Install format validators
+        run: python -m pip install --disable-pip-version-check spdx3-validate check-jsonschema ocsf-schema-compiler
+      - name: Export and validate SPDX 3.0.1
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.spdx_cdx_cli ws_cae/examples/system_stablecoin.json --pretty >/tmp/ws-cae.spdx3.json
+          spdx3-validate --json /tmp/ws-cae.spdx3.json
+      - name: Export and validate SARIF 2.1.0
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.sarif_cdx_cli ws_cae/examples/system_bridged_asset.json --pretty >/tmp/ws-cae.sarif.json
+          check-jsonschema --schemafile https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json /tmp/ws-cae.sarif.json
+      - name: Export and validate CloudEvents 1.0
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.cloudevents_cdx_cli ws_cae/examples/system_exchange_balance.json --pretty >/tmp/ws-cae.cloudevent.json
+          check-jsonschema --schemafile https://raw.githubusercontent.com/cloudevents/spec/v1.0.2/cloudevents/formats/cloudevents.json /tmp/ws-cae.cloudevent.json
+      - name: Build OCSF 1.8 validation schema
+        shell: bash
+        run: |
+          git clone --quiet --depth 1 --branch v1.8.0 https://github.com/ocsf/ocsf-schema.git /tmp/ocsf-schema-v1.8.0
+          ocsf-schema-compiler /tmp/ocsf-schema-v1.8.0 >/tmp/ocsf-schema-v1.8.0.json
+          mkdir -p /tmp/ocsf-toolkit
+          curl --fail --location --silent --show-error \
+            https://github.com/ocsf/ocsf-toolkit/releases/download/v0.9.0/ocsf-toolkit_v0.9.0_linux_amd64.tar.gz \
+            --output /tmp/ocsf-toolkit.tar.gz
+          tar -xzf /tmp/ocsf-toolkit.tar.gz -C /tmp/ocsf-toolkit
+          OCSF_TOOLKIT_BIN="$(find /tmp/ocsf-toolkit -type f -perm -111 -print -quit)"
+          test -n "$OCSF_TOOLKIT_BIN"
+          printf '%s\n' "$OCSF_TOOLKIT_BIN" >/tmp/ocsf-toolkit-bin
+      - name: Export and validate OCSF 1.8 Detection Finding
+        shell: bash
+        run: |
+          PYTHONPATH=. python -m ws_cae.ocsf_cdx_cli ws_cae/examples/system_rollup_asset.json --pretty >/tmp/ws-cae.ocsf.json
+          OCSF_TOOLKIT_BIN="$(cat /tmp/ocsf-toolkit-bin)"
+          "$OCSF_TOOLKIT_BIN" \
+            --schema /tmp/ocsf-schema-v1.8.0.json \
+            --event /tmp/ws-cae.ocsf.json \
+            --validate --fail-on-validation-errors \
+            --report-output -
+      - name: Strict institutional policy must distinguish maturity
+        shell: bash
+        run: |
+          set +e
+          PYTHONPATH=. python -m ws_cae.cli ws_cae/examples/reference_pair.json --policy ws_cae/examples/institutional_policy.json >/tmp/ws-cae-strict.json
+          rc=$?
+          set -e
+          test "$rc" -eq 1
+          python -m json.tool /tmp/ws-cae-strict.json >/dev/null

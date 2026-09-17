@@ -1,0 +1,23 @@
+[
+  {
+    "ref": "refs/heads/ws-cae-standalone-v0-1",
+    "commit_sha": "12d79f3cc6935ed35bb77847af6988ed64308a74",
+    "analysis_key": ".github/workflows/ws-cae-operational-ingestion.yml:operational-proof",
+    "environment": "{}",
+    "category": "ws-cae-crypto-dependency-readiness",
+    "error": "",
+    "created_at": "2026-09-13T21:28:44Z",
+    "results_count": 2,
+    "rules_count": 1,
+    "id": 1769440398,
+    "url": "https://api.github.com/repos/Bdavis1390/Sara_pro/code-scanning/analyses/1769440398",
+    "sarif_id": "18ae3420-afba-11f1-9b94-35b048b9905c",
+    "tool": {
+      "name": "WS-CAE",
+      "guid": null,
+      "version": null
+    },
+    "deletable": true,
+    "warning": ""
+  }
+]

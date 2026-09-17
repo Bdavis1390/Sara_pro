@@ -1,0 +1,1 @@
+WS-CAE named-chain market snapshot, 2026-09-13. See four-chain-snapshot.json and source patches for Algorand, Bitcoin, Ethereum, and Sui. This is a comparative migration-state record, not a certification or claim of full post-quantum security.

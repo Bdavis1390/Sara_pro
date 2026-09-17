@@ -1,0 +1,20 @@
+{
+  "subject_id": "urn:example:pos-bft-chain",
+  "consensus_family": "POS_BFT",
+  "mechanism_name": "Example PoS+BFT",
+  "resource_proof": "STAKE",
+  "finality_model": "BFT_FINALITY",
+  "participant_auth_primitive": "CLASSICAL_SIGNATURE",
+  "participant_key_agility": "ROTATABLE_CLASSICAL",
+  "local_validation_mode": "FULL_NODE_REEXECUTION",
+  "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+  "resource_proof_agility": "DOCUMENTED",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "Synthetic example",
+      "url": "https://example.com/consensus",
+      "claim": "Synthetic example used to demonstrate the WS-CAE consensus-continuity format."
+    }
+  ]
+}

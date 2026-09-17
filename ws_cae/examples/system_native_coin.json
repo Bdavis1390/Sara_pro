@@ -1,0 +1,9 @@
+{
+  "spec": "WS-CAE-CRYPTO-SYSTEM-PATCH-1",
+  "asset": "SYNTHETIC-NATIVE-COIN",
+  "components": [
+    {"role": "CHAIN_AUTHORITY", "name": "native-chain-authority", "readiness_state": "PQ_PARTIAL", "critical": true, "evidence_documented": true},
+    {"role": "WALLET_DEVICE", "name": "self-custody-device", "readiness_state": "CRYPTO_AGILE", "critical": true, "evidence_documented": true},
+    {"role": "RECOVERY", "name": "recovery-path", "readiness_state": "CRYPTO_AGILE", "critical": true, "evidence_documented": true}
+  ]
+}

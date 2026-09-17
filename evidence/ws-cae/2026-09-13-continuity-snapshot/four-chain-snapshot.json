@@ -1,0 +1,45 @@
+{
+  "all_valid": true,
+  "as_of": "2026-09-13",
+  "manifest_count": 4,
+  "manifests": [
+    {
+      "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+      "content_id": "sha256:51add7f084d6a64b9a5800aaeed9f3ba2f90f2fd7fe4fce5f3c61ba26d6d05a8",
+      "implementation_maturity": "MAINNET",
+      "pq_authorization_state": "PQ_MAINNET",
+      "protocol_commitment_state": "MAINNET",
+      "subject": "Algorand",
+      "valid": true
+    },
+    {
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "content_id": "sha256:6e60e1056bd485d3a7fb7a0d08af84bc3d2f9f54ba8aa2cc81a6f4d4065499c2",
+      "implementation_maturity": "MAINNET",
+      "pq_authorization_state": "PQ_MAINNET_LIMITED",
+      "protocol_commitment_state": "UNSPECIFIED",
+      "subject": "Bitcoin",
+      "valid": true
+    },
+    {
+      "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+      "content_id": "sha256:6bf8baf0ba57588a00c0726565b4c5a3ed065b9a18fb1ae26b200a1783f57373",
+      "implementation_maturity": "DEVNET",
+      "pq_authorization_state": "PLUGGABLE_AUTH_ONLY",
+      "protocol_commitment_state": "FORK_SCHEDULED",
+      "subject": "Ethereum",
+      "valid": true
+    },
+    {
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "content_id": "sha256:5aa8e14ae0c638deead44248cb0b9eb09f21d6f15f7485d09a5c43f0b42c53c3",
+      "implementation_maturity": "MAINNET",
+      "pq_authorization_state": "PLUGGABLE_AUTH_ONLY",
+      "protocol_commitment_state": "GOVERNANCE_SELECTED",
+      "subject": "Sui",
+      "valid": true
+    }
+  ],
+  "snapshot_id": "sha256:dbdbb6f1588c7c380f91e8d4d054f0bb2ab19df9ed5d36ee7dd40bf9dd1cd3e7",
+  "spec": "WS-CAE-CONTINUITY-SNAPSHOT-1"
+}

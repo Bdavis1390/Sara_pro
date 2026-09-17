@@ -1,0 +1,25 @@
+name: WS-CAE Chain Patch Check
+description: Validate one WS-CAE chain patch and optionally apply a relying-party policy
+inputs:
+  patch:
+    description: Path to a WS-CAE chain patch JSON in the caller workspace
+    required: true
+  policy:
+    description: Optional path to a relying-party policy JSON in the caller workspace
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Run WS-CAE chain patch check
+      shell: bash
+      env:
+        WS_CAE_ROOT: ${{ github.action_path }}/../../..
+        WS_CAE_PATCH: ${{ inputs.patch }}
+        WS_CAE_POLICY: ${{ inputs.policy }}
+      run: |
+        if [ -n "$WS_CAE_POLICY" ]; then
+          PYTHONPATH="$WS_CAE_ROOT" python -m ws_cae.patch_cli "$WS_CAE_PATCH" --policy "$WS_CAE_POLICY" --pretty
+        else
+          PYTHONPATH="$WS_CAE_ROOT" python -m ws_cae.patch_cli "$WS_CAE_PATCH" --pretty
+        fi
