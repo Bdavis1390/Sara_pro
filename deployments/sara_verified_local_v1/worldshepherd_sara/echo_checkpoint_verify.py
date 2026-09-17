@@ -12,7 +12,9 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from .echo_checkpoint import (
     CHECKPOINT_BUNDLE_SCHEMA,
     CHECKPOINT_SCHEMA,
+    CHECKPOINT_SIGNATURE_INPUT_SCHEMA,
     EchoCheckpointError,
+    checkpoint_signature_input,
     merkle_root,
 )
 
@@ -129,11 +131,23 @@ def verify_bundle(bundle: Any, expected_fingerprint: str) -> dict[str, Any]:
     checkpoint_digest = hashlib.sha256(manifest_bytes).hexdigest()
     if bundle.get("checkpoint_sha256") != checkpoint_digest:
         raise EchoCheckpointVerificationError("checkpoint manifest digest mismatch")
+    signature_input_schema = bundle.get("signature_input_schema")
+    if signature_input_schema is None:
+        signing_input = manifest_bytes
+        normalized_signature_input_schema = "LEGACY_RAW_MANIFEST"
+    elif signature_input_schema == CHECKPOINT_SIGNATURE_INPUT_SCHEMA:
+        signing_input = checkpoint_signature_input(checkpoint_digest)
+        normalized_signature_input_schema = CHECKPOINT_SIGNATURE_INPUT_SCHEMA
+    else:
+        raise EchoCheckpointVerificationError(
+            "checkpoint signature input schema mismatch"
+        )
+
     signature = _b64url_decode(bundle.get("signature_b64url"), label="checkpoint signature")
     if len(signature) != 64:
         raise EchoCheckpointVerificationError("Ed25519 signature must be 64 bytes")
     try:
-        Ed25519PublicKey.from_public_bytes(public_bytes).verify(signature, manifest_bytes)
+        Ed25519PublicKey.from_public_bytes(public_bytes).verify(signature, signing_input)
     except InvalidSignature as exc:
         raise EchoCheckpointVerificationError("checkpoint signature verification failed") from exc
 
@@ -146,6 +160,7 @@ def verify_bundle(bundle: Any, expected_fingerprint: str) -> dict[str, Any]:
         "events": normalized,
         "key_id": public["key_id"],
         "key_fingerprint_sha256": expected_fingerprint,
+        "signature_input_schema": normalized_signature_input_schema,
     }
 
 

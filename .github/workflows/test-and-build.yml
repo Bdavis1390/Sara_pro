@@ -58,6 +58,26 @@ jobs:
           tests/test_prime_signer_isolation.py
           tests/test_restriction_10x_quality.py
 
+      - name: Test ECHO external signer boundary and deployment preflight
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          tests/test_echo_checkpoint.py
+          tests/test_echo_checkpoint_signer_boundary.py
+          tests/test_aws_kms_checkpoint_signer.py
+          tests/test_deployment_preflight.py
+
+      - name: Validate deployment shell entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/sara.sh
+          bash -n deployments/sara_verified_local_v1/scripts/deploy_full_stack.sh
+          bash -n deployments/sara_verified_local_v1/scripts/verify_full_stack_runtime.sh
+          bash scripts/sara.sh help | grep -q 'deploy-full'
+          bash scripts/sara.sh help | grep -q 'verify-full'
+          bash scripts/sara.sh help | grep -q 'down-full'
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |
@@ -107,3 +127,70 @@ jobs:
           else
             git diff --check HEAD^ -- . ':(exclude,glob)**/*.patch'
           fi
+
+
+  full-stack-deploy:
+    name: full-stack-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      WS_DEPLOY_SECRET_ROOT: ${{ runner.temp }}/worldshepherd-deploy
+      WS_DEPLOY_RELEASE_ID: ci-${{ github.sha }}
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Deploy localhost full stack
+        run: bash scripts/sara.sh deploy-full
+
+      - name: Repeat deployment verification
+        run: bash scripts/sara.sh verify-full
+
+      - name: Ensure no raw container-inspect evidence is retained
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find deployments/sara_verified_local_v1/.deployment-evidence -type f -name '*.inspect.json' -print -quit | grep -q .; then
+            echo "Raw docker inspect evidence must not be retained." >&2
+            exit 1
+          fi
+
+      - name: Scan retained evidence for live SARA bearer values
+        shell: bash
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          set -euo pipefail
+          set -a
+          source .env
+          set +a
+          if grep -R -F -- "${SARA_ADMIN_TOKEN}" .deployment-evidence >/dev/null 2>&1; then
+            echo "Administrator bearer token leaked into deployment evidence." >&2
+            exit 1
+          fi
+          if grep -R -F -- "${SARA_RELAY_TOKEN}" .deployment-evidence >/dev/null 2>&1; then
+            echo "Relay bearer token leaked into deployment evidence." >&2
+            exit 1
+          fi
+
+      - name: Upload deployment acceptance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-verified-local-full-stack-${{ github.sha }}
+          path: |
+            deployments/sara_verified_local_v1/.deployment-evidence/preflight
+            deployments/sara_verified_local_v1/.deployment-evidence/full-stack
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Cleanup deployment
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          cd deployments/sara_verified_local_v1
+          docker compose --profile prime-sentinel --profile echo down
+          sudo rm -rf "${WS_DEPLOY_SECRET_ROOT}"
+          rm -f .env
