@@ -47,8 +47,14 @@
   "transaction_abort_recovery_validation": true,
   "terminated_backend_recovery_validation": true,
   "best_effort_dead_connection_cleanup": true,
+  "ambiguous_commit_outcome_validation": true,
+  "ambiguous_commit_validation_scope": "single_host_simulated_commit_ack_loss_before_and_after_database_commit",
+  "unknown_claim_execution_fail_closed": true,
+  "unknown_claim_automatic_retry": false,
+  "consumed_unknown_ownership_execution_allowed": false,
+  "unconsumed_unknown_explicit_retry_validation": true,
   "multi_host_live_validation": false,
   "distributed_replay_protection": false,
   "multi_host_consensus": false,
-  "claims_boundary": "Default single-use enforcement remains process-local memory and durable_replay_protection remains false for the default path. SQLite is validated for restart-safe single-host claims. The credential-blind Postgres adapter is PROVEN INTERNALLY in ephemeral PostgreSQL 18.6 CI for single-host multi-connection and separate-process contention, reconnect replay rejection, database-authoritative expiry and consumption time, injected opposite issuer/claimant absolute clock offsets, transaction-abort rollback recovery, and forced backend-termination recovery. Multi-host operation, distributed replay protection, network-partition behavior, ambiguous commit outcomes, and consensus remain NOT CURRENTLY CLAIMED."
+  "claims_boundary": "Default single-use enforcement remains process-local memory and durable_replay_protection remains false for the default path. SQLite is validated for restart-safe single-host claims. The credential-blind Postgres adapter is PROVEN INTERNALLY in ephemeral PostgreSQL 18.6 CI for single-host multi-connection and separate-process contention, reconnect replay rejection, database-authoritative expiry and consumption time, injected opposite issuer/claimant absolute clock offsets, transaction-abort rollback recovery, forced backend-termination recovery, and simulated lost COMMIT acknowledgement both before and after the database commit. UNKNOWN claim outcomes never authorize connector execution and are never automatically retried; a consumed ticket with uncertain claimant ownership remains non-executable, while only a fresh unconsumed observation is eligible for an explicit new claim. Multi-host operation, network partitions, distributed replay protection, and consensus remain NOT CURRENTLY CLAIMED."
 }
