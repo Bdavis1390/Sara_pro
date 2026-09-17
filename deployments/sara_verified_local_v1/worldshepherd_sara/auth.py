@@ -19,6 +19,11 @@ _PRIME_PRIVATE_ENV_NAMES = frozenset(
         "PRIME_SENTINEL_SEED",
     }
 )
+_PRIME_PRIVATE_NAME_TOKENS = (
+    "PRIVATE_KEY",
+    "SIGNING_KEY",
+    "SECRET_KEY",
+)
 _PRIVATE_KEY_MARKERS = (
     "-----BEGIN PRIVATE KEY-----",
     "-----BEGIN OPENSSH PRIVATE KEY-----",
@@ -42,7 +47,20 @@ def reject_prime_private_signing_material(
         value = str(raw).strip()
         if not value:
             continue
-        if name in _PRIME_PRIVATE_ENV_NAMES:
+        suspicious_name = (
+            name in _PRIME_PRIVATE_ENV_NAMES
+            or any(token in name for token in _PRIME_PRIVATE_NAME_TOKENS)
+            or name.endswith("_SEED")
+        )
+        public_metadata_name = (
+            name.endswith("_KEY_ID")
+            or name.endswith("_KEY_IDS")
+            or name.endswith("_KEY_FINGERPRINT")
+            or name.endswith("_KEY_FINGERPRINT_SHA256")
+            or name == "PRIME_SENTINEL_PUBLIC_KEYS_JSON"
+            or name == "PRIME_SENTINEL_REVOKED_KEY_IDS"
+        )
+        if suspicious_name and not public_metadata_name:
             raise RuntimeError(
                 "SARA must not receive PRIME SENTINEL private signing material"
             )
