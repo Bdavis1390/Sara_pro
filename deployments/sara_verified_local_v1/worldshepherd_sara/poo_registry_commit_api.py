@@ -12,6 +12,11 @@ from .poo_prime_authorized_commit import (
     PoOPrimeAuthorizedCommitRequest,
     prepare_prime_authorized_poo_commit_patch,
 )
+from .poo_prime_hybrid_pq_commit import (
+    PoOPrimeHybridPqCommitError,
+    PoOPrimeHybridPqCommitRequest,
+    prepare_prime_hybrid_pq_poo_commit_patch,
+)
 from .poo_prime_quorum_commit import (
     MAX_QUORUM_SIZE,
     PoOPrimeQuorumCommitError,
@@ -25,6 +30,7 @@ from .poo_registry_commit import (
     prepare_poo_durable_commit_patch,
 )
 from .prime_sentinel_poo_authorization import PrimeSentinelPoOVerifier
+from .prime_sentinel_pq_poo_authorization import PrimeSentinelPqPoOVerifier
 from .storage import DurableStore
 
 
@@ -32,6 +38,7 @@ router = APIRouter(prefix="/admin/poo", tags=["poo-governance"])
 POO_REQUIRE_PRIME_AUTHORIZATION_ENV = "POO_REQUIRE_PRIME_AUTHORIZATION"
 POO_REQUIRE_PRIME_QUORUM_ENV = "POO_REQUIRE_PRIME_QUORUM"
 POO_PRIME_QUORUM_THRESHOLD_ENV = "POO_PRIME_QUORUM_THRESHOLD"
+POO_REQUIRE_PRIME_HYBRID_PQ_ENV = "POO_REQUIRE_PRIME_HYBRID_PQ"
 _TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 _FALSE_VALUES = frozenset({"", "0", "false", "no", "off"})
 
@@ -53,6 +60,10 @@ def poo_prime_authorization_required() -> bool:
 
 def poo_prime_quorum_required() -> bool:
     return _policy_bool(POO_REQUIRE_PRIME_QUORUM_ENV)
+
+
+def poo_prime_hybrid_pq_required() -> bool:
+    return _policy_bool(POO_REQUIRE_PRIME_HYBRID_PQ_ENV)
 
 
 def poo_prime_quorum_threshold() -> int:
@@ -99,11 +110,37 @@ def _prime_verifier() -> PrimeSentinelPoOVerifier:
     return verifier
 
 
-def _policy_state() -> tuple[bool, bool, int | None]:
+def _pq_verifier() -> PrimeSentinelPqPoOVerifier:
+    try:
+        verifier = PrimeSentinelPqPoOVerifier.from_environment()
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="PRIME SENTINEL PQ PoO verifier configuration is invalid",
+        ) from exc
+    if not verifier.configured:
+        raise HTTPException(
+            status_code=503,
+            detail="PRIME SENTINEL PQ PoO public-key trust is not configured",
+        )
+    return verifier
+
+
+def _policy_state() -> tuple[bool, bool, int | None, bool]:
     prime_required = poo_prime_authorization_required()
     quorum_required = poo_prime_quorum_required()
+    hybrid_pq_required = poo_prime_hybrid_pq_required()
+    if hybrid_pq_required and not quorum_required:
+        raise RuntimeError(
+            f"{POO_REQUIRE_PRIME_HYBRID_PQ_ENV}=1 requires {POO_REQUIRE_PRIME_QUORUM_ENV}=1"
+        )
     threshold = poo_prime_quorum_threshold() if quorum_required else None
-    return prime_required or quorum_required, quorum_required, threshold
+    return (
+        prime_required or quorum_required or hybrid_pq_required,
+        quorum_required,
+        threshold,
+        hybrid_pq_required,
+    )
 
 
 @router.get("/registry")
@@ -121,7 +158,7 @@ def get_poo_technical_registry(
             detail="PoO technical registry validation failed",
         ) from exc
     try:
-        prime_required, quorum_required, threshold = _policy_state()
+        prime_required, quorum_required, threshold, hybrid_pq_required = _policy_state()
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {
@@ -129,6 +166,7 @@ def get_poo_technical_registry(
         "prime_authorization_required": prime_required,
         "prime_quorum_required": quorum_required,
         "prime_quorum_threshold": threshold,
+        "prime_hybrid_pq_required": hybrid_pq_required,
         "claims_boundary": "INTERNAL_TECHNICAL_REGISTRY_ONLY",
     }
 
@@ -141,17 +179,23 @@ def commit_poo_technical_registry(
 ) -> dict[str, Any]:
     require_admin(role)
     try:
-        prime_required, quorum_required, _threshold = _policy_state()
+        prime_required, quorum_required, _threshold, hybrid_pq_required = _policy_state()
         if prime_required:
-            detail = (
-                "Unsigned PoO technical commits are disabled by quorum policy; "
-                "use the PRIME quorum-authorized PoO commit route"
-                if quorum_required
-                else (
+            if hybrid_pq_required:
+                detail = (
+                    "Unsigned PoO technical commits are disabled by hybrid PQ policy; "
+                    "use the PRIME hybrid PQ-authorized PoO commit route"
+                )
+            elif quorum_required:
+                detail = (
+                    "Unsigned PoO technical commits are disabled by quorum policy; "
+                    "use the PRIME quorum-authorized PoO commit route"
+                )
+            else:
+                detail = (
                     "Unsigned PoO technical commits are disabled by policy; "
                     "use a PRIME-authorized PoO commit route"
                 )
-            )
             raise HTTPException(status_code=403, detail=detail)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -195,9 +239,14 @@ def commit_poo_technical_registry_prime_authorized(
 ) -> dict[str, Any]:
     require_admin(role)
     try:
-        prime_required, quorum_required, threshold = _policy_state()
+        prime_required, quorum_required, threshold, hybrid_pq_required = _policy_state()
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if hybrid_pq_required:
+        raise HTTPException(
+            status_code=403,
+            detail="Single-signer PRIME PoO commits are disabled by hybrid PQ policy",
+        )
     if quorum_required:
         raise HTTPException(
             status_code=403,
@@ -241,6 +290,7 @@ def commit_poo_technical_registry_prime_authorized(
         "audit_delivery": delivery,
         "prime_authorization_required": prime_required,
         "prime_quorum_required": False,
+        "prime_hybrid_pq_required": False,
         "claims_boundary": (
             "PRIME_SIGNED_INTERNAL_TECHNICAL_STATE_COMMIT_NOT_LEGAL_TITLE_OR_"
             "LIVE_VALUE_AUTHORITY"
@@ -257,9 +307,17 @@ def commit_poo_technical_registry_prime_quorum_authorized(
     require_admin(role)
     try:
         threshold = poo_prime_quorum_threshold()
-        prime_required, quorum_required, _configured_threshold = _policy_state()
+        prime_required, quorum_required, _configured_threshold, hybrid_pq_required = _policy_state()
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if hybrid_pq_required:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Classical-only PRIME quorum PoO commits are disabled by hybrid PQ policy; "
+                "use the PRIME hybrid PQ-authorized route"
+            ),
+        )
 
     verifier = _prime_verifier()
     durable_store = _store(request)
@@ -297,8 +355,75 @@ def commit_poo_technical_registry_prime_quorum_authorized(
         "prime_authorization_required": prime_required,
         "prime_quorum_required": quorum_required,
         "prime_quorum_threshold": threshold,
+        "prime_hybrid_pq_required": False,
         "claims_boundary": (
             "PRIME_MULTI_KEY_QUORUM_INTERNAL_TECHNICAL_STATE_COMMIT_NOT_LEGAL_TITLE_OR_"
             "LIVE_VALUE_AUTHORITY"
+        ),
+    }
+
+
+@router.post("/registry/commit-prime-hybrid-pq-authorized")
+def commit_poo_technical_registry_prime_hybrid_pq_authorized(
+    body: PoOPrimeHybridPqCommitRequest,
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+) -> dict[str, Any]:
+    require_admin(role)
+    try:
+        threshold = poo_prime_quorum_threshold()
+        prime_required, quorum_required, _configured_threshold, hybrid_pq_required = _policy_state()
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if not quorum_required:
+        raise HTTPException(
+            status_code=503,
+            detail="Hybrid PQ PoO commits require classical PRIME quorum policy",
+        )
+
+    classical_verifier = _prime_verifier()
+    pq_verifier = _pq_verifier()
+    durable_store = _store(request)
+
+    def operation(registry: dict[str, Any]):
+        return prepare_prime_hybrid_pq_poo_commit_patch(
+            registry,
+            body,
+            actor=role.value,
+            classical_verifier=classical_verifier,
+            pq_verifier=pq_verifier,
+            classical_threshold=threshold,
+        )
+
+    try:
+        result = durable_store.transact_registry(operation)
+    except EventOutboxError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "PRIME hybrid PQ PoO commit blocked because durable audit custody is unavailable"
+            ),
+        ) from exc
+    except (PoODurableCommitError, PoOPrimeHybridPqCommitError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail="PRIME hybrid PQ PoO commit exceeds registry resource limits",
+        ) from exc
+
+    delivery = _drain_delivery_status(durable_store)
+    return {
+        "commit": result.model_dump(mode="json"),
+        "audit_delivery": delivery,
+        "prime_authorization_required": prime_required,
+        "prime_quorum_required": quorum_required,
+        "prime_quorum_threshold": threshold,
+        "prime_hybrid_pq_required": hybrid_pq_required,
+        "pq_algorithm": "ML-DSA-65",
+        "pq_standard": "FIPS-204",
+        "claims_boundary": (
+            "HYBRID_ED25519_QUORUM_PLUS_FIPS204_MLDSA65_INTERNAL_TECHNICAL_"
+            "STATE_COMMIT_NOT_LEGAL_TITLE_OR_LIVE_VALUE_AUTHORITY"
         ),
     }
