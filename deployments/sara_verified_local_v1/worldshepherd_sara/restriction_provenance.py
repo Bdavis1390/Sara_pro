@@ -19,7 +19,8 @@ from .restriction_context_policy import (
 
 
 RESTRICTION_SCHEMA_V1 = "WS-RESTRICTION-PROVENANCE-V1"
-RESTRICTION_SCHEMA = "WS-RESTRICTION-PROVENANCE-V2"
+RESTRICTION_SCHEMA_V2 = "WS-RESTRICTION-PROVENANCE-V2"
+RESTRICTION_SCHEMA = "WS-RESTRICTION-PROVENANCE-V3"
 RESTRICTION_AUTHORITY = "PRIME_SENTINEL"
 REMEDIATION_SCHEMA = "WS-RESTRICTION-REMEDIATION-V1"
 RESTRICTION_EVENT = "content_restriction_recorded"
@@ -97,6 +98,16 @@ def _validate_fingerprint_key(key: bytes) -> None:
         )
 
 
+def _fingerprint_key_epoch_id(key: bytes) -> str:
+    """Return a non-secret opaque identifier for one fingerprint-key epoch."""
+    _validate_fingerprint_key(key)
+    return hmac.new(
+        key,
+        b"WS-RESTRICTION\x00fingerprint-key-epoch\x00",
+        hashlib.sha256,
+    ).hexdigest()[:32]
+
+
 def _fingerprint(key: bytes, label: str, value: str | None) -> str | None:
     if value is None:
         return None
@@ -167,6 +178,7 @@ def _canonical_json(value: dict[str, Any]) -> str:
 class RestrictionEvidence:
     restriction_id: str
     authority: str
+    fingerprint_key_epoch_id: str
     occurred_at: str
     action: RestrictionAction
     reason_code: str
@@ -187,6 +199,7 @@ class RestrictionEvidence:
             "schema": RESTRICTION_SCHEMA,
             "restriction_id": self.restriction_id,
             "authority": self.authority,
+            "fingerprint_key_epoch_id": self.fingerprint_key_epoch_id,
             "occurred_at": self.occurred_at,
             "action": self.action,
             "reason_code": self.reason_code,
@@ -237,6 +250,7 @@ def capture_restriction(
     The authority is system-controlled and cannot be supplied by the caller.
     """
     _validate_fingerprint_key(fingerprint_key)
+    fingerprint_key_epoch_id = _fingerprint_key_epoch_id(fingerprint_key)
     if action not in _ALLOWED_RESTRICTION_ACTIONS:
         raise RestrictionProvenanceError("unsupported restriction action")
     if not isinstance(reason_code, str) or not _REASON_CODE.fullmatch(reason_code):
@@ -287,6 +301,7 @@ def capture_restriction(
     identity_document = {
         "schema": RESTRICTION_SCHEMA,
         "authority": RESTRICTION_AUTHORITY,
+        "fingerprint_key_epoch_id": fingerprint_key_epoch_id,
         "occurred_at": timestamp,
         "action": action,
         "reason_code": reason_code,
@@ -308,6 +323,7 @@ def capture_restriction(
     return RestrictionEvidence(
         restriction_id=restriction_id,
         authority=RESTRICTION_AUTHORITY,
+        fingerprint_key_epoch_id=fingerprint_key_epoch_id,
         occurred_at=timestamp,
         action=action,
         reason_code=reason_code,
@@ -366,6 +382,7 @@ def build_remediation_directive(
         "rationale_code": rationale_code,
         "created_at": _utc_now(),
         "content_binding": {
+            "fingerprint_key_epoch_id": evidence.fingerprint_key_epoch_id,
             "input_fingerprint": evidence.input_fingerprint,
             "generated_fingerprint": evidence.generated_fingerprint,
         },
