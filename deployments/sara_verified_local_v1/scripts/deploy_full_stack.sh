@@ -164,10 +164,10 @@ lines = [
     "# Contains bearer credentials. Keep mode 0600 and never commit this file.",
 ]
 for key, val in settings.items():
-    if key == "PRIME_SENTINEL_PUBLIC_KEYS_JSON":
-        lines.append(f"{key}='{val}'")
-    else:
-        lines.append(f"{key}={val}")
+    val = str(val)
+    if "\n" in val or "\r" in val or "'" in val:
+        raise SystemExit(f"unsafe value for generated environment field {key}")
+    lines.append(f"{key}='{val}'")
 path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 path.chmod(0o600)
 PY
