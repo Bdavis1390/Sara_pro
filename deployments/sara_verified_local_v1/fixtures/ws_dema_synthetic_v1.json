@@ -1,0 +1,62 @@
+{
+  "schema": "WS-DEMA-G1-V1",
+  "scenario_id": "DEMO-001",
+  "created_utc": "2026-09-12T20:00:00+00:00",
+  "actor": "SSPADAWANZZ",
+  "baseline_configuration": {
+    "cooling_profile": "nominal",
+    "telemetry_period_ms": 100,
+    "maintenance_policy": "observe-only"
+  },
+  "candidate_configuration": {
+    "cooling_profile": "high-margin",
+    "telemetry_period_ms": 50,
+    "maintenance_policy": "observe-only"
+  },
+  "envelopes": [
+    {
+      "metric": "power_available_kw",
+      "minimum": 80.0,
+      "maximum": 120.0,
+      "units": "kW"
+    },
+    {
+      "metric": "coolant_outlet_c",
+      "minimum": 15.0,
+      "maximum": 40.0,
+      "units": "C"
+    },
+    {
+      "metric": "network_latency_ms",
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "units": "ms"
+    }
+  ],
+  "samples": [
+    {
+      "sample_id": "S1",
+      "asset_id": "power-bus-1",
+      "metric": "power_available_kw",
+      "value": 100.0,
+      "t_seconds": 0.0,
+      "source_ref": "synthetic://power-bus-1"
+    },
+    {
+      "sample_id": "S2",
+      "asset_id": "cooling-loop-1",
+      "metric": "coolant_outlet_c",
+      "value": 47.0,
+      "t_seconds": 1.0,
+      "source_ref": "synthetic://cooling-loop-1"
+    },
+    {
+      "sample_id": "S3",
+      "asset_id": "network-link-1",
+      "metric": "network_latency_ms",
+      "value": 25.0,
+      "t_seconds": 2.0,
+      "source_ref": "synthetic://network-link-1"
+    }
+  ]
+}
