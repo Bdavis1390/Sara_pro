@@ -94,6 +94,30 @@ class ManifestTests(unittest.TestCase):
                 acceptance_criteria=ACCEPTANCE,
             )
 
+    def test_invalid_timestamp_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            freeze_manifest(
+                experiment_id=EXPERIMENT_ID,
+                created_at_utc="not-a-timeZ",
+                model_version="qphonon-twin-v0.2",
+                claims_state="SIMULATED_ONLY",
+                config=CONFIG,
+                parameter_snapshot=PARAMETERS,
+                acceptance_criteria=ACCEPTANCE,
+            )
+
+    def test_invalid_claims_state_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            freeze_manifest(
+                experiment_id=EXPERIMENT_ID,
+                created_at_utc="2026-09-17T23:00:00Z",
+                model_version="qphonon-twin-v0.2",
+                claims_state="TOTALLY_PROVEN",
+                config=CONFIG,
+                parameter_snapshot=PARAMETERS,
+                acceptance_criteria=ACCEPTANCE,
+            )
+
     def test_nan_parameter_is_rejected_by_canonicalization(self) -> None:
         changed = dict(PARAMETERS)
         changed["g1_hz"] = math.nan
