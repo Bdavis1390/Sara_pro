@@ -7,6 +7,12 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from worldshepherd_sara.event_outbox import EVENT_OUTBOX_REGISTRY_KEY
+from worldshepherd_sara.models import AuditRecord
+from worldshepherd_sara.restriction_observability import (
+    RestrictionObservabilityError,
+    project_restriction_audit_record,
+    restriction_observability,
+)
 from worldshepherd_sara.prime_sentinel_authorization import (
     PrimeSentinelAuthorizationError,
     PrimeSentinelVerifier,
@@ -247,3 +253,94 @@ def test_tampered_evidence_cannot_be_bound_or_queued_as_verified_v4():
             signature_b64url=signature,
             verifier=verifier,
         )
+
+
+def _signed_audit_record(private, verifier):
+    item = evidence()
+    signature = _b64url(
+        private.sign(
+            canonical_restriction_signature_message(
+                item,
+                signing_key_id=SIGNING_KEY_ID,
+            )
+        )
+    )
+    signed = bind_verified_restriction_signature(
+        item,
+        signing_key_id=SIGNING_KEY_ID,
+        signature_b64url=signature,
+        verifier=verifier,
+    )
+    payload = signed.semantic_document()
+    payload["_outbox_event_id"] = signed.outbox_event_id
+    payload["_delivery_semantics"] = "AT_LEAST_ONCE"
+    return item, signed, AuditRecord(
+        timestamp="2026-09-17T23:00:01+00:00",
+        event="content_restriction_recorded",
+        actor="PRIME_SENTINEL",
+        payload=payload,
+    ).model_dump(mode="json")
+
+
+def test_v4_observability_reverifies_signature_and_minimizes_projection():
+    private, verifier = _signing_material()
+    item, signed, record = _signed_audit_record(private, verifier)
+
+    projected = project_restriction_audit_record(record, verifier=verifier)
+
+    assert projected["provenance_schema"] == SIGNED_RESTRICTION_SCHEMA
+    assert projected["restriction_schema"] == item.semantic_document()["schema"]
+    assert projected["signature_verified"] is True
+    assert projected["signing_key_id"] == SIGNING_KEY_ID
+    assert projected["signing_key_fingerprint_sha256"] == (
+        signed.signature.signing_key_fingerprint_sha256
+    )
+    assert "signature_b64url" not in projected
+    assert "prime_signature" not in projected
+    assert "safe_summary" not in projected
+    assert "metadata" not in projected
+
+
+def test_v4_signature_tampering_and_revocation_make_observability_unhealthy():
+    private, verifier = _signing_material()
+    _item, _signed, record = _signed_audit_record(private, verifier)
+
+    tampered_signature = copy.deepcopy(record)
+    sig = tampered_signature["payload"]["prime_signature"]["signature_b64url"]
+    tampered_signature["payload"]["prime_signature"]["signature_b64url"] = (
+        ("A" if sig[0] != "A" else "B") + sig[1:]
+    )
+    with pytest.raises(RestrictionObservabilityError, match="signature verification"):
+        project_restriction_audit_record(tampered_signature, verifier=verifier)
+
+    tampered_fingerprint = copy.deepcopy(record)
+    tampered_fingerprint["payload"]["prime_signature"][
+        "signing_key_fingerprint_sha256"
+    ] = "0" * 64
+    with pytest.raises(RestrictionObservabilityError, match="fingerprint mismatch"):
+        project_restriction_audit_record(tampered_fingerprint, verifier=verifier)
+
+    revoked = PrimeSentinelVerifier(
+        public_keys_b64url={
+            SIGNING_KEY_ID: _b64url(private.public_key().public_bytes_raw())
+        },
+        revoked_key_ids={SIGNING_KEY_ID},
+    )
+    report = restriction_observability(
+        [record],
+        recent_limit=1,
+        verifier=revoked,
+    )
+    assert report["ok"] is False
+    assert report["valid_restriction_events"] == 0
+    assert report["malformed_restriction_events"] == 1
+
+
+def test_v4_signed_message_digest_tampering_is_detected():
+    private, verifier = _signing_material()
+    _item, _signed, record = _signed_audit_record(private, verifier)
+    tampered = copy.deepcopy(record)
+    tampered["payload"]["prime_signature"]["signed_message_sha256"] = "f" * 64
+
+    with pytest.raises(RestrictionObservabilityError, match="digest mismatch"):
+        project_restriction_audit_record(tampered, verifier=verifier)
