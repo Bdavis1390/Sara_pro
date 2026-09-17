@@ -128,17 +128,20 @@ docker run -d \
   --checkpoint-sync-url https://hoodi.checkpoint.sigp.io --checkpoint-sync-url-timeout 180 \
   --disable-upnp --http --http-address 0.0.0.0 --http-port 5052 --target-peers 20 >/dev/null
 
-# Prove execution-chain identity from two independently readable properties:
-# the network id and immutable genesis hash. This avoids relying on a non-portable
-# JavaScript-console `eth.chainId` property.
+# Prove execution-chain identity from Geth's running protocol NodeInfo over the
+# private IPC boundary. NodeInfo is a documented Geth structure carrying both
+# the network ID and immutable genesis hash for the active eth protocol.
 GETH_NETWORK_ID=""
 GETH_GENESIS=""
+GETH_BLOCK_NUMBER=""
 for _ in $(seq 1 60); do
-  if GETH_NETWORK_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'net.version' 2>/dev/null)"; then
-    GETH_NETWORK_ID="$(printf '%s' "$GETH_NETWORK_RAW" | tr -d '"[:space:]')"
-    GETH_GENESIS_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'eth.getBlock(0).hash' 2>/dev/null || true)"
-    GETH_GENESIS="$(printf '%s' "$GETH_GENESIS_RAW" | tr -d '"[:space:]' | tr '[:upper:]' '[:lower:]')"
-    [[ -n "$GETH_NETWORK_ID" && -n "$GETH_GENESIS" ]] && break
+  if GETH_NODE_INFO_RAW="$(docker exec "$GETH_CONTAINER" geth attach /data/geth.ipc --exec 'JSON.stringify({network:admin.nodeInfo.protocols.eth.network,genesis:admin.nodeInfo.protocols.eth.genesis,blockNumber:eth.blockNumber})' 2>/dev/null)"; then
+    if GETH_NODE_INFO_JSON="$(printf '%s\n' "$GETH_NODE_INFO_RAW" | tail -n 1 | jq -c . 2>/dev/null)"; then
+      GETH_NETWORK_ID="$(printf '%s' "$GETH_NODE_INFO_JSON" | jq -r '.network // empty')"
+      GETH_GENESIS="$(printf '%s' "$GETH_NODE_INFO_JSON" | jq -r '.genesis // empty' | tr '[:upper:]' '[:lower:]')"
+      GETH_BLOCK_NUMBER="$(printf '%s' "$GETH_NODE_INFO_JSON" | jq -r '.blockNumber // empty')"
+      [[ -n "$GETH_NETWORK_ID" && -n "$GETH_GENESIS" && -n "$GETH_BLOCK_NUMBER" ]] && break
+    fi
   fi
   if [[ "$(docker inspect -f '{{.State.Running}}' "$GETH_CONTAINER" 2>/dev/null || true)" != "true" ]]; then
     fail "Geth Hoodi container exited before IPC became ready"
@@ -178,7 +181,7 @@ done
 DEPLOYMENT_REVISION="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 export DEPLOYMENT_REVISION TIMESTAMP BITCOIN_VERSION BTC_ARCHIVE_SHA256 GOOD_SIGS BTC_PEERS BTC_BLOCKS BTC_HEADERS
-export GETH_IMAGE GETH_DIGEST GETH_PEERS GETH_NETWORK_ID GETH_GENESIS LIGHTHOUSE_IMAGE LIGHTHOUSE_DIGEST LIGHTHOUSE_PEERS LIGHTHOUSE_SYNC_JSON
+export GETH_IMAGE GETH_DIGEST GETH_PEERS GETH_NETWORK_ID GETH_GENESIS GETH_BLOCK_NUMBER LIGHTHOUSE_IMAGE LIGHTHOUSE_DIGEST LIGHTHOUSE_PEERS LIGHTHOUSE_SYNC_JSON
 
 python3 - "$ARTIFACT_DIR/qcrypto_public_testnet_handshake.json" <<'PY'
 import json, os, sys
@@ -190,7 +193,7 @@ receipt={
  "captured_at":os.environ["TIMESTAMP"],
  "deployment_revision":os.environ["DEPLOYMENT_REVISION"],
  "bitcoin":{"network":"SIGNET","core_version":os.environ["BITCOIN_VERSION"],"archive_sha256":os.environ["BTC_ARCHIVE_SHA256"],"verified_release_signature_count":int(os.environ["GOOD_SIGS"]),"connected_peers":int(os.environ["BTC_PEERS"]),"blocks":int(os.environ["BTC_BLOCKS"]),"headers":int(os.environ["BTC_HEADERS"]),"wallet_disabled":True},
- "ethereum":{"network":"HOODI","chain_id":560048,"network_id":int(os.environ["GETH_NETWORK_ID"]),"genesis_hash":os.environ["GETH_GENESIS"],"geth_image":os.environ["GETH_IMAGE"],"geth_image_digest":os.environ["GETH_DIGEST"],"geth_connected_peers":int(os.environ["GETH_PEERS"]),"lighthouse_image":os.environ["LIGHTHOUSE_IMAGE"],"lighthouse_image_digest":os.environ["LIGHTHOUSE_DIGEST"],"lighthouse_connected_peers":int(os.environ["LIGHTHOUSE_PEERS"]),"consensus_sync":sync.get("data",{}),"validator_client_started":False},
+ "ethereum":{"network":"HOODI","chain_id":560048,"network_id":int(os.environ["GETH_NETWORK_ID"]),"genesis_hash":os.environ["GETH_GENESIS"],"execution_block_number":int(os.environ["GETH_BLOCK_NUMBER"]),"geth_image":os.environ["GETH_IMAGE"],"geth_image_digest":os.environ["GETH_DIGEST"],"geth_connected_peers":int(os.environ["GETH_PEERS"]),"lighthouse_image":os.environ["LIGHTHOUSE_IMAGE"],"lighthouse_image_digest":os.environ["LIGHTHOUSE_DIGEST"],"lighthouse_connected_peers":int(os.environ["LIGHTHOUSE_PEERS"]),"consensus_sync":sync.get("data",{}),"validator_client_started":False},
  "claims":{"mainnet_permitted":False,"live_value_authorized":False,"private_key_operations_permitted":False,"bitcoin_transaction_created":False,"bitcoin_transaction_broadcast":False,"ethereum_validator_activated":False,"end_to_end_post_quantum_security_established":False},
 }
 Path(sys.argv[1]).write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n",encoding="utf-8")
