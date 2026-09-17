@@ -22,6 +22,9 @@ import time
 from pathlib import Path
 from typing import Any
 
+PINNED_UPSTREAM_TAG = "v32.0rc1"
+PINNED_UPSTREAM_COMMIT = "d0231bb01d83178224bf7b198ba04f78cc2c89ef"
+
 
 def run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, check=check, text=True, capture_output=True)
@@ -31,6 +34,17 @@ def json_arg(value: Any) -> str:
     if isinstance(value, (dict, list, bool)) or value is None:
         return json.dumps(value, separators=(",", ":"))
     return str(value)
+
+
+def parse_cli_output(text: str) -> Any:
+    """Parse bitcoin-cli output while preserving unquoted scalar strings."""
+    text = text.strip()
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return text
 
 
 class CoreHarness:
@@ -46,9 +60,7 @@ class CoreHarness:
             cmd.append(f"-rpcwallet={wallet}")
         cmd.append(method)
         cmd.extend(json_arg(arg) for arg in args)
-        cp = run(cmd)
-        text = cp.stdout.strip()
-        return json.loads(text) if text else None
+        return parse_cli_output(run(cmd).stdout)
 
     def named(self, method: str, params: dict[str, Any], *, wallet: str | None = None) -> Any:
         cmd = [self.bitcoin_cli, f"-datadir={self.datadir}", "-regtest"]
@@ -57,9 +69,7 @@ class CoreHarness:
         cmd.extend(["-named", method])
         for key, value in params.items():
             cmd.append(f"{key}={json_arg(value)}")
-        cp = run(cmd)
-        text = cp.stdout.strip()
-        return json.loads(text) if text else None
+        return parse_cli_output(run(cmd).stdout)
 
     def start(self) -> None:
         self.datadir.mkdir(parents=True, exist_ok=True)
@@ -68,8 +78,11 @@ class CoreHarness:
                 [
                     "regtest=1",
                     "server=1",
+                    "networkactive=0",
                     "listen=0",
                     "discover=0",
+                    "dnsseed=0",
+                    "fixedseeds=0",
                     "fallbackfee=0.0002",
                     "printtoconsole=0",
                 ]
@@ -84,15 +97,19 @@ class CoreHarness:
             text=True,
         )
         deadline = time.monotonic() + 30
+        last_error = "RPC not ready"
         while time.monotonic() < deadline:
             try:
-                self.cli("getblockchaininfo")
+                info = self.cli("getblockchaininfo")
+                if info["chain"] != "regtest":
+                    raise RuntimeError(f"refusing non-regtest chain: {info['chain']}")
                 return
-            except subprocess.CalledProcessError:
+            except (subprocess.CalledProcessError, KeyError, TypeError, RuntimeError) as exc:
+                last_error = str(exc)
                 if self.proc.poll() is not None:
-                    raise RuntimeError(f"bitcoind exited early with code {self.proc.returncode}")
+                    raise RuntimeError(f"bitcoind exited early with code {self.proc.returncode}") from exc
                 time.sleep(0.25)
-        raise TimeoutError("bitcoind did not become RPC-ready within 30 seconds")
+        raise TimeoutError(f"bitcoind did not become RPC-ready within 30 seconds: {last_error}")
 
     def stop(self) -> None:
         if self.proc is None:
@@ -108,8 +125,8 @@ class CoreHarness:
             self.proc.wait(timeout=5)
 
 
-def decode_version(h: CoreHarness, psbt: str) -> int:
-    decoded = h.cli("decodepsbt", psbt)
+def decode_version(harness: CoreHarness, psbt: str) -> int:
+    decoded = harness.cli("decodepsbt", psbt)
     return int(decoded["psbt_version"])
 
 
@@ -117,11 +134,21 @@ def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def first_line(command: list[str]) -> str:
+    stdout = run(command).stdout.splitlines()
+    return stdout[0].strip() if stdout else ""
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--bitcoind", default=os.environ.get("BITCOIND", "bitcoind"))
     parser.add_argument("--bitcoin-cli", default=os.environ.get("BITCOIN_CLI", "bitcoin-cli"))
     parser.add_argument("--evidence", type=Path, default=Path("bitcoin-core-32-psbt-evidence.json"))
+    parser.add_argument(
+        "--expected-version-substring",
+        default="v32.0.0rc1",
+        help="Required substring in bitcoind --version; use '' only for deliberate non-RC comparison runs.",
+    )
     parser.add_argument("--keep-datadir", action="store_true")
     args = parser.parse_args()
 
@@ -132,16 +159,31 @@ def main() -> int:
     harness = CoreHarness(bitcoind, bitcoin_cli, datadir)
 
     observed: dict[str, dict[str, int]] = {}
-    raw_stdout: list[str] = []
     result = "INCONCLUSIVE"
     failure: str | None = None
+    daemon_version = ""
+    cli_version = ""
+    chain = None
+    network_active = None
 
     try:
-        daemon_version = run([bitcoind, "--version"]).stdout.splitlines()[0].strip()
-        cli_version = run([bitcoin_cli, "--version"]).stdout.splitlines()[0].strip()
-        raw_stdout.extend([daemon_version, cli_version])
+        daemon_version = first_line([bitcoind, "--version"])
+        cli_version = first_line([bitcoin_cli, "--version"])
+        if args.expected_version_substring and args.expected_version_substring not in daemon_version:
+            raise RuntimeError(
+                f"unexpected bitcoind build: expected {args.expected_version_substring!r} in {daemon_version!r}"
+            )
 
         harness.start()
+        blockchain_info = harness.cli("getblockchaininfo")
+        network_info = harness.cli("getnetworkinfo")
+        chain = blockchain_info["chain"]
+        network_active = bool(network_info["networkactive"])
+        if chain != "regtest" or network_active:
+            raise RuntimeError(
+                f"isolation check failed: chain={chain!r}, networkactive={network_active!r}"
+            )
+
         wallet = "ws_bc32"
         harness.cli("createwallet", wallet)
         mining_address = harness.cli("getnewaddress", wallet=wallet)
@@ -151,9 +193,8 @@ def main() -> int:
         destination = harness.cli("getnewaddress", wallet=wallet)
         amount = float(utxo["amount"]) / 2.0
         inputs = [{"txid": utxo["txid"], "vout": utxo["vout"]}]
-        outputs = {destination: amount}
+        outputs = [{destination: amount}]
 
-        # createpsbt
         default_psbt = harness.named("createpsbt", {"inputs": inputs, "outputs": outputs})
         legacy_psbt = harness.named(
             "createpsbt", {"inputs": inputs, "outputs": outputs, "psbt_version": 0}
@@ -163,7 +204,6 @@ def main() -> int:
             "legacy": decode_version(harness, legacy_psbt),
         }
 
-        # walletcreatefundedpsbt
         default_funded = harness.named(
             "walletcreatefundedpsbt",
             {"inputs": inputs, "outputs": outputs},
@@ -179,7 +219,6 @@ def main() -> int:
             "legacy": decode_version(harness, legacy_funded),
         }
 
-        # converttopsbt
         raw_tx = harness.named("createrawtransaction", {"inputs": inputs, "outputs": outputs})
         default_converted = harness.named("converttopsbt", {"hexstring": raw_tx})
         legacy_converted = harness.named(
@@ -190,7 +229,6 @@ def main() -> int:
             "legacy": decode_version(harness, legacy_converted),
         }
 
-        # psbtbumpfee: create an unconfirmed explicitly replaceable transaction.
         bump_address = harness.cli("getnewaddress", wallet=wallet)
         txid = harness.named(
             "sendtoaddress",
@@ -208,7 +246,7 @@ def main() -> int:
 
         expected = {"default": 2, "legacy": 0}
         result = "PASS" if all(values == expected for values in observed.values()) else "FAIL"
-    except Exception as exc:  # evidence should survive a failed probe
+    except Exception as exc:
         result = "FAIL"
         failure = f"{type(exc).__name__}: {exc}"
     finally:
@@ -217,21 +255,48 @@ def main() -> int:
     evidence = {
         "benchmark": "bitcoin-core-32",
         "case_id": "BC32-001",
+        "upstream": {
+            "tag": PINNED_UPSTREAM_TAG,
+            "commit": PINNED_UPSTREAM_COMMIT,
+            "expected_version_substring": args.expected_version_substring,
+            "bitcoind_version": daemon_version,
+            "bitcoin_cli_version": cli_version,
+        },
         "result": result,
         "claim_class": "PROVEN INTERNALLY" if result == "PASS" else "NOT CURRENTLY CLAIMED",
-        "isolation": {"network": "regtest-only", "real_funds": False},
+        "isolation": {
+            "chain": chain,
+            "networkactive": network_active,
+            "real_funds": False,
+            "datadir": "disposable",
+        },
         "host": {
             "platform": platform.platform(),
             "python": platform.python_version(),
         },
         "observed_psbt_versions": observed,
         "failure": failure,
-        "stdout_sha256": sha256_text("\n".join(raw_stdout)),
+        "evidence_digest": sha256_text(
+            json.dumps(
+                {
+                    "upstream_tag": PINNED_UPSTREAM_TAG,
+                    "upstream_commit": PINNED_UPSTREAM_COMMIT,
+                    "daemon_version": daemon_version,
+                    "cli_version": cli_version,
+                    "chain": chain,
+                    "networkactive": network_active,
+                    "observed": observed,
+                    "failure": failure,
+                },
+                sort_keys=True,
+            )
+        ),
         "note": (
-            "A PASS validates only the PSBT version behavior exercised by this pinned local build; "
-            "it does not establish third-party wallet compatibility."
+            "A PASS validates only the PSBT version behavior exercised by this local pinned-build "
+            "probe; it does not establish third-party wallet compatibility or broader Bitcoin Core assurance."
         ),
     }
+    args.evidence.parent.mkdir(parents=True, exist_ok=True)
     args.evidence.write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(evidence, indent=2, sort_keys=True))
 
