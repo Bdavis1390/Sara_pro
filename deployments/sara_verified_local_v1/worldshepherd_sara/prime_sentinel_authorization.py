@@ -51,6 +51,11 @@ class PrimeSentinelAuthorizationAssertion(BaseModel):
         return self
 
 
+class VerifiedPrimeSentinelSignature(BaseModel):
+    key_id: str
+    key_fingerprint_sha256: str
+
+
 class VerifiedPrimeSentinelAuthorization(BaseModel):
     authorization_id: str
     prime_id: str
@@ -122,6 +127,49 @@ class PrimeSentinelVerifier:
     def key_is_revoked(self, key_id: str) -> bool:
         return key_id in self.revoked_key_ids
 
+    def _key_bytes_for_verification(self, key_id: str) -> bytes:
+        if not self.configured:
+            raise PrimeSentinelAuthorizationError("no PRIME SENTINEL public keys are configured")
+        if key_id in self.revoked_key_ids:
+            raise PrimeSentinelAuthorizationError("PRIME SENTINEL signing key is revoked")
+        key_bytes = self._public_keys.get(key_id)
+        if key_bytes is None:
+            raise PrimeSentinelAuthorizationError("unknown PRIME SENTINEL signing key")
+        return key_bytes
+
+    def verify_detached_signature(
+        self,
+        *,
+        key_id: str,
+        message: bytes,
+        signature_b64url: str,
+    ) -> VerifiedPrimeSentinelSignature:
+        """Verify an externally produced PRIME Ed25519 signature.
+
+        This method is verification-only. It does not accept, derive, persist,
+        or generate PRIME private signing key material.
+        """
+        if not isinstance(message, bytes) or not message:
+            raise PrimeSentinelAuthorizationError(
+                "PRIME SENTINEL signed message must be non-empty bytes"
+            )
+        key_bytes = self._key_bytes_for_verification(key_id)
+        signature = _decode_b64url(
+            signature_b64url,
+            expected_length=64,
+            label="Ed25519 signature",
+        )
+        try:
+            Ed25519PublicKey.from_public_bytes(key_bytes).verify(signature, message)
+        except (InvalidSignature, ValueError) as exc:
+            raise PrimeSentinelAuthorizationError(
+                "invalid PRIME SENTINEL Ed25519 signature"
+            ) from exc
+        return VerifiedPrimeSentinelSignature(
+            key_id=key_id,
+            key_fingerprint_sha256=hashlib.sha256(key_bytes).hexdigest(),
+        )
+
     @classmethod
     def from_environment(cls) -> "PrimeSentinelVerifier":
         raw_keys = os.getenv("PRIME_SENTINEL_PUBLIC_KEYS_JSON", "{}").strip() or "{}"
@@ -149,13 +197,9 @@ class PrimeSentinelVerifier:
         *,
         now: datetime | None = None,
     ) -> VerifiedPrimeSentinelAuthorization:
-        if not self.configured:
-            raise PrimeSentinelAuthorizationError("no PRIME SENTINEL public keys are configured")
-        if assertion.key_id in self.revoked_key_ids:
-            raise PrimeSentinelAuthorizationError("PRIME SENTINEL signing key is revoked")
-        key_bytes = self._public_keys.get(assertion.key_id)
-        if key_bytes is None:
-            raise PrimeSentinelAuthorizationError("unknown PRIME SENTINEL signing key")
+        # Resolve the key before time checks to preserve the established
+        # unknown/revoked-key failure ordering of this authorization path.
+        self._key_bytes_for_verification(assertion.key_id)
 
         current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
         issued = assertion.issued_at.astimezone(timezone.utc)
@@ -165,25 +209,18 @@ class PrimeSentinelVerifier:
         if current >= expires:
             raise PrimeSentinelAuthorizationError("authorization assertion is expired")
 
-        signature = _decode_b64url(
-            assertion.signature_b64url,
-            expected_length=64,
-            label="Ed25519 signature",
+        detached = self.verify_detached_signature(
+            key_id=assertion.key_id,
+            message=canonical_authorization_message(assertion),
+            signature_b64url=assertion.signature_b64url,
         )
-        try:
-            Ed25519PublicKey.from_public_bytes(key_bytes).verify(
-                signature,
-                canonical_authorization_message(assertion),
-            )
-        except (InvalidSignature, ValueError) as exc:
-            raise PrimeSentinelAuthorizationError("invalid PRIME SENTINEL Ed25519 signature") from exc
 
         return VerifiedPrimeSentinelAuthorization(
             authorization_id=assertion.authorization_id,
             prime_id=assertion.prime_id,
             target_environment=assertion.target_environment,
-            key_id=assertion.key_id,
-            key_fingerprint_sha256=hashlib.sha256(key_bytes).hexdigest(),
+            key_id=detached.key_id,
+            key_fingerprint_sha256=detached.key_fingerprint_sha256,
             nonce=assertion.nonce,
             issued_at=issued,
             expires_at=expires,
