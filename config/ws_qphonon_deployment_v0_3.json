@@ -1,6 +1,6 @@
 {
   "schema": "WS-QPHONON-DEPLOYMENT-V0.3",
-  "claims_state": "DEPLOYMENT_INFRASTRUCTURE_IMPLEMENTED_PHONONIC_LAB_EVIDENCE_NOT_YET_OBTAINED",
+  "claims_state": "DEPLOYMENT_INFRASTRUCTURE_IMPLEMENTED_EXTERNAL_PUBLISHED_LAB_EVIDENCE_INGESTED_PARTNER_L3_NOT_YET_OBTAINED",
   "state_store": {
     "backend": "sqlite",
     "journal_mode": "WAL",
@@ -29,6 +29,8 @@
   "physical_boundary": {
     "hardware_actuation_endpoint_present": false,
     "generic_qpu_evidence_counts_as_phononic_evidence": false,
+    "external_published_phononic_lab_evidence_ingested": true,
+    "worldshepherd_partner_phononic_lab_evidence_obtained": false,
     "phononic_l3_requires_external_lab_hardware": true
   }
 }
