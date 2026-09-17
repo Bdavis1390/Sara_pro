@@ -343,15 +343,15 @@ def queue_restriction_event(
     registry: dict[str, Any],
     evidence: RestrictionEvidence,
 ) -> tuple[dict[str, Any], str]:
-    """Queue restriction evidence through the normal SARA -> ECHO outbox path."""
-    payload = evidence.semantic_document()
-    validate_json_resource(payload)
-    return queue_event_outbox_patch(
-        registry,
-        event=RESTRICTION_EVENT,
-        actor=evidence.authority,
-        payload=payload,
-        event_id=evidence.outbox_event_id,
+    """Fail closed for unsigned new restriction events.
+
+    G6 requires an externally signed PRIME attestation before a restriction may
+    enter the governed SARA -> ECHO outbox. Historical V1-V3 evidence remains
+    readable, but this unsigned queue path is intentionally retired.
+    """
+    del registry, evidence
+    raise RestrictionProvenanceError(
+        "unsigned restriction queueing is disabled; use queue_signed_restriction_event"
     )
 
 

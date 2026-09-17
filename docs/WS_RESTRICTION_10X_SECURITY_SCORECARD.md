@@ -10,22 +10,22 @@ A literal 10x claim is used only where a non-zero measurable baseline exists. Fo
 
 ## Executable G4 security metric
 
-The cumulative required test now models six concrete residual attack classes that existed at the G3-start boundary:
+The cumulative required test now models seven concrete residual attack classes that existed at the G3-start boundary:
 
 1. caller-selected audit actor path;
 2. authority absent from the hashed restriction payload identity;
 3. outer audit actor mismatch accepted by observability;
 4. semantic evidence mutation accepted without recomputing and checking restriction_id;
 5. schema downgrade with a stale stronger-schema identity accepted;
-6. HMAC fingerprints lacked a non-secret key-epoch identifier, making cross-rotation comparisons ambiguous.
+6. HMAC fingerprints lacked a non-secret key-epoch identifier, making cross-rotation comparisons ambiguous;\n7. new restriction events could be emitted without an independently verified PRIME signature.
 
 Each open class counts as one residual-risk unit.
 
-Baseline residual-risk units: **6**.
+Baseline residual-risk units: **7**.
 
 10x acceptance threshold: **<= 0.5 residual units**, i.e. **<=10% of baseline**.
 
-Because attack-path count is integral, the cumulative G5 pass condition is **0/6 residual classes open**.
+Because attack-path count is integral, the cumulative G6 pass condition is **0/7 residual classes open**.
 
 This is tested behaviorally in `test_restriction_10x_security.py`, not asserted from configuration strings.
 
@@ -53,7 +53,7 @@ It means the selected measurable G3-start residual attack-path count must be red
 Subsequent gates should use similarly measurable baselines:
 
 - **G5 fingerprint-key epoch provenance:** implemented on the stacked G5 branch; ambiguous cross-rotation comparison paths must be zero before promotion;
-- **G6 signer/witness assurance:** unsigned authority assertions -> independently verifiable signed/witnessed evidence;
+- **G6 signer/witness assurance:** implemented on the stacked G6 branch with external-signature verification and signed-only new-event queueing; protected validation remains required;
 - **G7 secret custody:** software/environment key custody -> external hardware-backed or independently managed custody where justified;
 - **G8 adversarial validation:** predefined mutation/bypass corpus with quantified detection rate and false-negative budget;
 - **G9 recovery:** measured mean/max recovery and evidence reconstruction time under injected corruption;

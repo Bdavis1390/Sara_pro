@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import base64
 import json
 
 import pytest
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from worldshepherd_sara.echo_event_store import EchoEventStore
 from worldshepherd_sara.event_outbox import (
@@ -10,6 +12,7 @@ from worldshepherd_sara.event_outbox import (
     drain_event_outbox,
 )
 from worldshepherd_sara.models import AuditRecord
+from worldshepherd_sara.prime_sentinel_authorization import PrimeSentinelVerifier
 from worldshepherd_sara.restriction_observability import (
     RESTRICTION_OBSERVABILITY_SCHEMA,
     restriction_observability,
@@ -22,6 +25,12 @@ from worldshepherd_sara.restriction_provenance import (
     capture_restriction,
     queue_restriction_event,
 )
+from worldshepherd_sara.restriction_signature import (
+    SIGNED_RESTRICTION_SCHEMA,
+    bind_verified_restriction_signature,
+    canonical_restriction_signature_message,
+    queue_signed_restriction_event,
+)
 from worldshepherd_sara.storage import DurableStore
 
 
@@ -29,6 +38,36 @@ KEY = b"worldshepherd-test-restriction-key-32-bytes-minimum"
 KEY_ID = "ws-restriction-key-epoch-2026-09"
 OCCURRED_AT = "2026-09-17T20:14:00+00:00"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
+SIGNING_KEY_ID = "PS-RESTRICTION-TEST-K1"
+
+
+def _b64url(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+
+_SIGNING_PRIVATE = Ed25519PrivateKey.generate()
+_SIGNING_VERIFIER = PrimeSentinelVerifier(
+    public_keys_b64url={
+        SIGNING_KEY_ID: _b64url(_SIGNING_PRIVATE.public_key().public_bytes_raw())
+    }
+)
+
+
+def sign_evidence(evidence):
+    signature = _b64url(
+        _SIGNING_PRIVATE.sign(
+            canonical_restriction_signature_message(
+                evidence,
+                signing_key_id=SIGNING_KEY_ID,
+            )
+        )
+    )
+    return bind_verified_restriction_signature(
+        evidence,
+        signing_key_id=SIGNING_KEY_ID,
+        signature_b64url=signature,
+        verifier=_SIGNING_VERIFIER,
+    )
 
 
 def auth(token: str) -> dict[str, str]:
@@ -63,8 +102,10 @@ def make_evidence(**overrides):
 
 
 def queue_into_store(store: DurableStore, evidence) -> str:
+    signed = sign_evidence(evidence)
+
     def operation(registry):
-        patch, stable_id = queue_restriction_event(registry, evidence)
+        patch, stable_id = queue_signed_restriction_event(registry, signed)
         return patch, stable_id
 
     stable_id = store.transact_registry(operation)
@@ -128,10 +169,14 @@ def test_safe_summary_cannot_equal_restricted_input_or_generated_output():
         make_evidence(raw_input=raw, safe_summary=raw)
 
 
-def test_queue_restriction_event_uses_normal_sara_outbox_contract():
+def test_unsigned_queue_fails_closed_and_signed_v4_uses_normal_sara_outbox_contract():
     evidence = make_evidence()
 
-    patch, event_id = queue_restriction_event({}, evidence)
+    with pytest.raises(RestrictionProvenanceError, match="unsigned restriction queueing"):
+        queue_restriction_event({}, evidence)
+
+    signed = sign_evidence(evidence)
+    patch, event_id = queue_signed_restriction_event({}, signed)
 
     assert event_id == evidence.outbox_event_id
     entry = patch[EVENT_OUTBOX_REGISTRY_KEY][event_id]
@@ -139,7 +184,9 @@ def test_queue_restriction_event_uses_normal_sara_outbox_contract():
     assert entry["actor"] == "PRIME_SENTINEL"
     assert entry["status"] == "PENDING"
     assert entry["delivery_semantics"] == "AT_LEAST_ONCE"
-    assert entry["payload"]["restriction_id"] == evidence.restriction_id
+    assert entry["payload"]["schema"] == SIGNED_RESTRICTION_SCHEMA
+    assert entry["payload"]["restriction"]["restriction_id"] == evidence.restriction_id
+    assert entry["payload"]["prime_signature"]["restriction_id"] == evidence.restriction_id
     assert entry["payload"]["raw_content_persisted"] is False
     serialized = json.dumps(entry, sort_keys=True)
     assert "restricted candidate output" not in serialized
@@ -186,7 +233,9 @@ def test_restriction_survives_sara_to_echo_without_raw_content(tmp_path):
     ]
     persisted = echo.get(stable_id)
     assert persisted is not None
-    assert persisted.payload()["restriction_id"] == evidence.restriction_id
+    assert persisted.payload()["schema"] == SIGNED_RESTRICTION_SCHEMA
+    assert persisted.payload()["restriction"]["restriction_id"] == evidence.restriction_id
+    assert persisted.payload()["restriction"]["raw_content_persisted"] is False
     assert persisted.payload()["raw_content_persisted"] is False
     assert echo.health()["ok"] is True
 
@@ -215,7 +264,11 @@ def test_observability_strict_projection_omits_summary_and_metadata(tmp_path):
     sara = DurableStore(tmp_path / "sara-observability")
     stable_id = queue_into_store(sara, evidence)
 
-    report = restriction_observability(sara.read_audit(100), recent_limit=10)
+    report = restriction_observability(
+        sara.read_audit(100),
+        recent_limit=10,
+        verifier=_SIGNING_VERIFIER,
+    )
 
     assert report["schema"] == RESTRICTION_OBSERVABILITY_SCHEMA
     assert report["ok"] is True
@@ -276,6 +329,7 @@ def test_restriction_observability_api_is_admin_only_and_strict(client, tokens):
             "attempt": 3,
         },
     )
+    client.app.state.prime_sentinel_verifier = _SIGNING_VERIFIER
     stable_id = queue_into_store(client.app.state.store, evidence)
 
     assert client.get("/admin/restrictions/status").status_code == 401

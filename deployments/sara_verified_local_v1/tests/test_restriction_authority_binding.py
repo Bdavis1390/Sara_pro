@@ -6,7 +6,6 @@ import json
 
 import pytest
 
-from worldshepherd_sara.event_outbox import EVENT_OUTBOX_REGISTRY_KEY
 from worldshepherd_sara.models import AuditRecord
 from worldshepherd_sara.restriction_observability import (
     RestrictionObservabilityError,
@@ -19,6 +18,7 @@ from worldshepherd_sara.restriction_provenance import (
     RESTRICTION_SCHEMA,
     RESTRICTION_SCHEMA_V1,
     RESTRICTION_SCHEMA_V2,
+    RestrictionProvenanceError,
     capture_restriction,
     queue_restriction_event,
 )
@@ -110,13 +110,11 @@ def test_new_restrictions_preserve_prime_authority_binding_in_v3_identity():
     assert item.outbox_event_id == f"SARA-EVENT-RESTRICTION-{item.restriction_id}"
 
 
-def test_queue_actor_is_not_caller_overridable():
+def test_unsigned_queue_is_disabled_and_actor_is_not_caller_overridable():
     item = evidence()
-    patch, stable_id = queue_restriction_event({}, item)
-    queued = patch[EVENT_OUTBOX_REGISTRY_KEY][stable_id]
 
-    assert queued["actor"] == RESTRICTION_AUTHORITY
-    assert queued["payload"]["authority"] == RESTRICTION_AUTHORITY
+    with pytest.raises(RestrictionProvenanceError, match="unsigned restriction queueing"):
+        queue_restriction_event({}, item)
 
     with pytest.raises(TypeError):
         queue_restriction_event({}, item, actor="UNTRUSTED_ACTOR")  # type: ignore[call-arg]
