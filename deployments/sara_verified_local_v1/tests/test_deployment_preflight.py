@@ -35,6 +35,7 @@ def _env(tmp_path: Path, **overrides: str) -> Path:
         "PRIME_SENTINEL_HOST_PORT": "9540",
         "ECHO_HOST_PORT": "9550",
         "PRIME_SENTINEL_SIGNING_KEY_ID": "PS-LOCAL-V1",
+        "PRIME_SENTINEL_TRUST_EPOCH": "1",
         "PRIME_SENTINEL_PUBLIC_KEYS_JSON": json.dumps(
             {"PS-LOCAL-V1": "A" * 43},
             separators=(",", ":"),
@@ -151,6 +152,16 @@ def test_preflight_rejects_unsafe_release_identifier(tmp_path):
     with pytest.raises(DeploymentPreflightError, match="safe bounded identifier"):
         validate_deployment(
             _env(tmp_path, SARA_RELEASE_ID="bad;release"),
+            expected_head=HEAD,
+            required_uid=os.geteuid(),
+        )
+
+
+@pytest.mark.parametrize("epoch", ["0", "-1", "not-an-integer"])
+def test_preflight_rejects_invalid_prime_trust_epoch(tmp_path, epoch):
+    with pytest.raises(DeploymentPreflightError, match="positive integer"):
+        validate_deployment(
+            _env(tmp_path, PRIME_SENTINEL_TRUST_EPOCH=epoch),
             expected_head=HEAD,
             required_uid=os.geteuid(),
         )
