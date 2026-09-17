@@ -13,6 +13,7 @@ dependencies = [
   "uvicorn[standard]>=0.27,<1",
   "pydantic>=2.6,<3",
   "cryptography>=50,<51",
+  "opentelemetry-api==1.44.0",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,7 @@ ws-intake-minimum-ledger = "worldshepherd_sara.intake_minimum_cli:main"
 ws-echo-checkpoint-verify = "worldshepherd_sara.echo_checkpoint_verify_cli:main"
 ws-echo-anchor = "worldshepherd_sara.echo_checkpoint_anchor_cli:main"
 ws-prime-basis-ablation = "worldshepherd_sara.prime_basis_ablation_cli:main"
+ws-trace-context-receipt = "worldshepherd_sara.trace_context_cli:main"
 ws-programmable-boundary-benchmark = "worldshepherd_sara.programmable_boundary_benchmark_cli:main"
 ws-nsb-benchmark = "worldshepherd_sara.nsb_benchmark_cli:main"
 ws-nsb-g2 = "worldshepherd_sara.nsb_g2_cli:main"
