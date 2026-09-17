@@ -124,7 +124,6 @@ jobs:
           assert p['post_expiry_retry_identical'] is True
           assert p['provider_invocations_after_restart_retry']==1
           assert p['provider_not_found_safe_to_retry_reported'] is True
-          assert p['provider_not_found_did_auto_retry'] is False if 'provider_not_found_did_auto_retry' in p else p['provider_not_found_did_auto_retry'] if False else True
           assert p['provider_not_found_did_not_auto_retry'] is True
           assert p['provider_not_found_requires_new_human_authorization'] is True
           assert p['production_hsm_integrated'] is False
