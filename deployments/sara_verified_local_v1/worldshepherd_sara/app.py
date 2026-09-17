@@ -33,6 +33,10 @@ from .restriction_observability import (
     restriction_observability,
 )
 from .storage import DurableStore
+from .trust_root_guard import (
+    PRIME_TRUST_ROOT_STATE_KEY,
+    guard_prime_trust_root,
+)
 
 
 PROTECTED_REGISTRY_NAMESPACES = frozenset(
@@ -40,6 +44,7 @@ PROTECTED_REGISTRY_NAMESPACES = frozenset(
         PRIME_PASSPORTS_REGISTRY_KEY,
         PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
         EVENT_OUTBOX_REGISTRY_KEY,
+        PRIME_TRUST_ROOT_STATE_KEY,
     }
 )
 
@@ -118,6 +123,7 @@ async def lifespan(app: FastAPI):
         raise RuntimeError("SARA event outbox contains malformed records")
     app.state.hmaa_store = HMAAEvidenceStore()
     app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
+    app.state.prime_trust_root = guard_prime_trust_root(app.state.store)
     app.state.store.append_audit(
         AuditRecord.create(
             event="service_started",
@@ -127,6 +133,9 @@ async def lifespan(app: FastAPI):
                 "mode": os.getenv("SARA_MODE", "local"),
                 "prime_sentinel_public_keys_configured": app.state.prime_sentinel_verifier.configured,
                 "prime_signer_isolation": "verification_only",
+                "prime_trust_root_guard": app.state.prime_trust_root["status"],
+                "prime_trust_root_epoch": app.state.prime_trust_root.get("epoch"),
+                "prime_trust_root_material_sha256": app.state.prime_trust_root.get("material_sha256"),
                 "outbox_events_replayed": replayed,
                 "outbox_pending_after_replay": outbox["pending"],
             },
@@ -192,6 +201,7 @@ def health(request: Request) -> dict[str, object]:
         "mode": os.getenv("SARA_MODE", "local"),
         "prime_sentinel_public_keys_configured": request.app.state.prime_sentinel_verifier.configured,
         "prime_signer_isolation": "verification_only",
+        "prime_trust_root_guard": request.app.state.prime_trust_root,
         "event_outbox": current_outbox,
         "endpoints": {
             "ui": "/ui",
