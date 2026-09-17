@@ -174,7 +174,11 @@ def _restriction_report(
     recent_limit: int,
 ) -> dict[str, Any]:
     records = store(request).read_audit(audit_window)
-    return restriction_observability(records, recent_limit=recent_limit)
+    return restriction_observability(
+        records,
+        recent_limit=recent_limit,
+        verifier=request.app.state.prime_sentinel_verifier,
+    )
 
 
 @app.get("/health")

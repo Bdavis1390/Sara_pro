@@ -23,7 +23,7 @@ from worldshepherd_sara.restriction_provenance import (
 KEY = b"worldshepherd-10x-security-test-key-32-bytes-minimum"
 KEY_ID = "ws-restriction-key-epoch-2026-09"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
-BASELINE_RESIDUAL_RISK_UNITS = 6
+BASELINE_RESIDUAL_RISK_UNITS = 7
 MAX_RESIDUAL_RATIO = 0.10
 
 
@@ -110,6 +110,13 @@ def test_g4_reduces_declared_g3_start_residual_risk_by_at_least_ten_x():
         and document.get("schema") == RESTRICTION_SCHEMA
     )
 
+    # 7. G3-start allowed new unsigned restriction events into the outbox.
+    unsigned_new_event_path_open = True
+    try:
+        queue_restriction_event({}, item)
+    except RestrictionProvenanceError:
+        unsigned_new_event_path_open = False
+
     residual = sum(
         int(value)
         for value in (
@@ -119,10 +126,11 @@ def test_g4_reduces_declared_g3_start_residual_risk_by_at_least_ten_x():
             semantic_tamper_with_stale_id_accepted,
             downgrade_with_stale_id_accepted,
             fingerprint_epoch_ambiguity_open,
+            unsigned_new_event_path_open,
         )
     )
 
-    assert BASELINE_RESIDUAL_RISK_UNITS == 6
+    assert BASELINE_RESIDUAL_RISK_UNITS == 7
     assert residual / BASELINE_RESIDUAL_RISK_UNITS <= MAX_RESIDUAL_RATIO
     assert residual == 0
 
