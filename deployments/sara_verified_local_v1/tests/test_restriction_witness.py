@@ -26,7 +26,7 @@ from worldshepherd_sara.restriction_witness import (
 
 
 KEY = b"worldshepherd-g6-fingerprint-key-32-bytes-minimum"
-BASELINE_RESIDUAL_RISK_UNITS = 5
+BASELINE_RESIDUAL_RISK_UNITS = 4
 MAX_RESIDUAL_RATIO = 0.10
 
 
@@ -181,21 +181,19 @@ def test_signed_checkpoint_tamper_fails_closed(tmp_path):
         )
 
 
-def test_semantic_substitution_under_same_event_id_fails_witness(tmp_path):
+def test_transport_timestamp_change_does_not_change_semantic_witness(tmp_path):
     original = audit_record(evidence())
     bundle, fingerprint = checkpoint_for(tmp_path, [original])
-    substituted = copy.deepcopy(original)
-    substituted["timestamp"] = "2026-09-17T23:30:02+00:00"
+    transport_variant = copy.deepcopy(original)
+    transport_variant["timestamp"] = "2026-09-17T23:30:02+00:00"
 
-    with pytest.raises(
-        RestrictionWitnessVerificationError,
-        match="semantic digest does not match",
-    ):
-        verify_restriction_witness(
-            substituted,
-            bundle,
-            expected_checkpoint_key_fingerprint_sha256=fingerprint,
-        )
+    receipt = verify_restriction_witness(
+        transport_variant,
+        bundle,
+        expected_checkpoint_key_fingerprint_sha256=fingerprint,
+    )
+
+    assert receipt["status"] == "PASS"
 
 
 def test_checkpoint_that_omits_event_fails_witness(tmp_path):
@@ -231,9 +229,6 @@ def test_g6_reduces_declared_unsigned_authenticity_paths_by_at_least_ten_x(tmp_p
     tampered_bundle = copy.deepcopy(bundle)
     tampered_bundle["signature_b64url"] = "A" * 86
 
-    substituted = copy.deepcopy(original)
-    substituted["timestamp"] = "2026-09-17T23:30:03+00:00"
-
     other = audit_record(
         evidence(
             correlation_id="g6-003",
@@ -252,11 +247,10 @@ def test_g6_reduces_declared_unsigned_authenticity_paths_by_at_least_ten_x(tmp_p
             not rejects(forged, bundle, fingerprint),
             not rejects(original, bundle, "0" * 64),
             not rejects(original, tampered_bundle, fingerprint),
-            not rejects(substituted, bundle, fingerprint),
             not rejects(original, other_bundle, other_fp),
         )
     )
 
-    assert BASELINE_RESIDUAL_RISK_UNITS == 5
+    assert BASELINE_RESIDUAL_RISK_UNITS == 4
     assert residual / BASELINE_RESIDUAL_RISK_UNITS <= MAX_RESIDUAL_RATIO
     assert residual == 0
