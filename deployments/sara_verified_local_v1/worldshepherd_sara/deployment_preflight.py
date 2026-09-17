@@ -147,6 +147,18 @@ def validate_deployment(
             "ECHO_CHECKPOINT_KEY_ID is not a safe bounded identifier"
         )
 
+    trust_epoch_raw = _required(values, "PRIME_SENTINEL_TRUST_EPOCH")
+    try:
+        trust_epoch = int(trust_epoch_raw, 10)
+    except ValueError as exc:
+        raise DeploymentPreflightError(
+            "PRIME_SENTINEL_TRUST_EPOCH must be a positive integer"
+        ) from exc
+    if trust_epoch < 1:
+        raise DeploymentPreflightError(
+            "PRIME_SENTINEL_TRUST_EPOCH must be a positive integer"
+        )
+
     signer_mode = values.get("ECHO_CHECKPOINT_SIGNER_MODE", "LOCAL_PEM").strip().upper()
     if signer_mode != "LOCAL_PEM":
         raise DeploymentPreflightError(
@@ -187,6 +199,7 @@ def validate_deployment(
         "build_commit": build_commit,
         "release_id": release_id,
         "prime_key_id": prime_key_id,
+        "prime_trust_epoch": trust_epoch,
         "echo_key_id": echo_key_id,
         "echo_signer_mode": signer_mode,
         "ports": ports,
