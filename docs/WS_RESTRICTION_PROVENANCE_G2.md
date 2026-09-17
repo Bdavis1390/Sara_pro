@@ -1,6 +1,8 @@
 # WS-RESTRICTION-PROVENANCE G2 — ADMIN OBSERVABILITY
 
-Status: **IMPLEMENTED IN SOFTWARE ON BRANCH / PENDING INTERNAL VALIDATION**
+Status: **IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY FOR THE TESTED OBSERVABILITY INVARIANTS**
+
+Merged through protected `main` in PR `#373` at commit `500f18b144e74a130a233ba140389460517f6ecc` after the required `Analyze (python)`, `CodeQL`, and `test-and-build` contexts succeeded on current ancestry. The broader SARA Verified Local v1 gate also completed successfully through the full unit/API suite, PRE and partner evidence generation, ephemeral deployment verification, destructive backup/restore, operational snapshot, release identity, and release-evidence indexing. Rollback, operational-resilience, TLS private-backend, replacement-environment restore, NIST precursor, freshness, and closure-evidence gates were also green on the reconciled head.
 
 ## Objective
 
@@ -131,6 +133,6 @@ The G2 regression path verifies:
 
 ## Claims boundary
 
-G2 is **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION** until its exact-head required CI, broader verified-local gate, and protected merge complete.
+The internal proof applies only to the tested observability invariants and the bounded SARA audit window. G2 does not create a restricted-content submission endpoint and does not provide raw-content recovery, reconstruction, replay, bypass, or disclosure. It does not establish global lifetime restriction counts, provider-side completeness, production authorization hardening, external policy-provider interoperability, or semantic safety of arbitrary caller metadata.
 
-G2 does not create a restricted-content submission endpoint and does not provide raw-content recovery, reconstruction, replay, bypass, or disclosure. It does not establish global lifetime restriction counts, provider-side completeness, production authorization hardening, or external policy-provider interoperability.
+G3 is the positive-schema follow-on that removes arbitrary caller-controlled restriction context prospectively; it does not retroactively rewrite historical G1/G2 audit evidence.
