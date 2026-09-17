@@ -27,6 +27,7 @@ from worldshepherd_sara.storage import DurableStore
 
 KEY = b"worldshepherd-test-restriction-key-32-bytes-minimum"
 OCCURRED_AT = "2026-09-17T20:14:00+00:00"
+APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 
 
 def auth(token: str) -> dict[str, str]:
@@ -47,7 +48,7 @@ def make_evidence(**overrides):
         "raw_input": "sensitive input material that must not persist",
         "raw_generated": "restricted candidate output that must not persist",
         "safe_output": "safe replacement",
-        "safe_summary": "Output was restricted; only bounded provenance is retained.",
+        "safe_summary": APPROVED_SUMMARY,
         "metadata": {
             "stage": "post_generation_policy_check",
             "claims_state": "IMPLEMENTED_IN_SOFTWARE",
@@ -193,8 +194,8 @@ def test_restriction_survives_sara_to_echo_without_raw_content(tmp_path):
 
 
 def test_observability_strict_projection_omits_summary_and_metadata(tmp_path):
-    hidden_summary = "caller-approved summary is still omitted from observability 1109ab"
-    hidden_metadata = "metadata-value-is-not-projected-cd9941"
+    approved_stage = "connector_policy_check"
+    approved_claims_state = "PROVEN_INTERNALLY"
     raw_input = "raw input must remain absent 4b92d3"
     raw_generated = "raw generated must remain absent 04a9ee"
     safe_output = "safe replacement must remain absent 4d2cc8"
@@ -202,8 +203,12 @@ def test_observability_strict_projection_omits_summary_and_metadata(tmp_path):
         raw_input=raw_input,
         raw_generated=raw_generated,
         safe_output=safe_output,
-        safe_summary=hidden_summary,
-        metadata={"stage": hidden_metadata},
+        safe_summary=APPROVED_SUMMARY,
+        metadata={
+            "stage": approved_stage,
+            "claims_state": approved_claims_state,
+            "attempt": 7,
+        },
     )
     sara = DurableStore(tmp_path / "sara-observability")
     stable_id = queue_into_store(sara, evidence)
@@ -221,8 +226,9 @@ def test_observability_strict_projection_omits_summary_and_metadata(tmp_path):
     for forbidden in (
         "safe_summary",
         "metadata",
-        hidden_summary,
-        hidden_metadata,
+        APPROVED_SUMMARY,
+        approved_stage,
+        approved_claims_state,
         raw_input,
         raw_generated,
         safe_output,
@@ -252,8 +258,8 @@ def test_observability_counts_malformed_restriction_records():
 
 def test_restriction_observability_api_is_admin_only_and_strict(client, tokens):
     relay_token, admin_token = tokens
-    hidden_summary = "never return this summary over the observability API 971f63"
-    hidden_metadata = "never-return-this-metadata-value-8a210c"
+    approved_stage = "pre_generation_policy_check"
+    approved_claims_state = "SUPPORTED_BY_LITERATURE"
     raw_input = "api raw input sentinel d39a42"
     raw_generated = "api raw generated sentinel 0aaf16"
     safe_output = "api safe output sentinel 620c04"
@@ -261,8 +267,12 @@ def test_restriction_observability_api_is_admin_only_and_strict(client, tokens):
         raw_input=raw_input,
         raw_generated=raw_generated,
         safe_output=safe_output,
-        safe_summary=hidden_summary,
-        metadata={"stage": hidden_metadata},
+        safe_summary=APPROVED_SUMMARY,
+        metadata={
+            "stage": approved_stage,
+            "claims_state": approved_claims_state,
+            "attempt": 3,
+        },
     )
     stable_id = queue_into_store(client.app.state.store, evidence)
 
@@ -299,8 +309,9 @@ def test_restriction_observability_api_is_admin_only_and_strict(client, tokens):
     for forbidden in (
         "safe_summary",
         "metadata",
-        hidden_summary,
-        hidden_metadata,
+        APPROVED_SUMMARY,
+        approved_stage,
+        approved_claims_state,
         raw_input,
         raw_generated,
         safe_output,
