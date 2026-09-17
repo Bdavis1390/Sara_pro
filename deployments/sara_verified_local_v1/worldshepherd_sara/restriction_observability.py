@@ -265,7 +265,7 @@ def _project_signed_restriction_audit_record(
             "PRIME restriction signature verification failed"
         ) from exc
 
-    if verified.key_fingerprint_sha256 != signing_key_fingerprint:
+    if verified.signing_key_fingerprint_sha256 != signing_key_fingerprint:
         raise RestrictionObservabilityError(
             "PRIME signature public-key fingerprint mismatch"
         )
@@ -280,7 +280,7 @@ def _project_signed_restriction_audit_record(
         "restriction_schema": RESTRICTION_SCHEMA,
         "signature_verified": True,
         "signing_key_id": verified.key_id,
-        "signing_key_fingerprint_sha256": verified.key_fingerprint_sha256,
+        "signing_key_fingerprint_sha256": verified.signing_key_fingerprint_sha256,
     }
 
 
