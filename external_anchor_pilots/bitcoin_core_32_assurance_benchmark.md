@@ -2,7 +2,7 @@
 
 Upstream: `bitcoin/bitcoin`
 Target release: `v32.0rc1` → `v32.0`
-Worldshepherd status: **IMPLEMENTED AS TEST DESIGN / NOT YET EXECUTED**
+Worldshepherd status: **TEST DESIGN + BC32-001 HARNESS IMPLEMENTED / EXECUTION RESULT NOT YET CLAIMED**
 Execution environment: isolated local container or VM, `regtest` only, no real funds, no public-node exposure
 
 ## Purpose
@@ -11,13 +11,13 @@ Use Bitcoin Core 32.0 as an external, high-quality reference target for testing 
 
 > AI proposes or discovers → human reviews → PRIME authorizes → SARA executes bounded tests → ECHO captures provenance → OVERWATCH compares observed evidence with upstream truth → claims remain gated by evidence.
 
-This benchmark deliberately separates **upstream-confirmed facts** from **Worldshepherd-observed facts**. Nothing in this document claims that Worldshepherd has reproduced a Bitcoin Core defect, confirmed a fix, measured a speedup, or contributed upstream until execution evidence exists.
+This benchmark deliberately separates **upstream-confirmed facts** from **Worldshepherd-observed facts**. Nothing in this document claims that Worldshepherd has reproduced a Bitcoin Core defect, confirmed a fix, measured a speedup, or contributed upstream until execution evidence exists and passes the relevant claim gate.
 
 ## Current upstream anchors
 
 As of 2026-09-17:
 
-- Bitcoin Core `v32.0rc1` is the current release candidate.
+- Bitcoin Core `v32.0rc1` is pinned here to commit `d0231bb01d83178224bf7b198ba04f78cc2c89ef`.
 - The project release schedule targets `v32.0` tagging on 2026-10-10; this is an aim, not a guarantee.
 - The official 32.0 RC testing guide is explicitly work in progress and encourages independent additional testing.
 - Block validation can prefetch input prevouts from chainstate in parallel. `-prevoutfetchthreads` defaults to 8 and permits up to 16 workers. Upstream: PR #35295.
@@ -32,7 +32,7 @@ Primary references:
 - https://github.com/bitcoin/bitcoin/issues/35122
 - https://github.com/bitcoin-core/bitcoin-devwiki/wiki/32.0-Release-Candidate-Testing-Guide
 - https://github.com/bitcoin-core/bitcoin-devwiki/wiki/32.0-Release-Notes-Draft
-- https://github.com/bitcoin/bitcoin/blob/master/test/functional/rpc_psbt.py
+- https://github.com/bitcoin/bitcoin/blob/v32.0rc1/test/functional/rpc_psbt.py
 
 ## Benchmark architecture
 
@@ -59,7 +59,7 @@ PRIME must authorize every transition from analysis to active execution. Minimum
 
 ### ECHO — provenance/evidence ledger
 
-Every test run records at minimum:
+The complete ECHO envelope for a governed run records at minimum:
 
 ```json
 {
@@ -79,7 +79,7 @@ Every test run records at minimum:
   },
   "authorization": {
     "prime_gate": "<approval id>",
-    "operator": "<human/operator identity>",
+    "operator": "<human/operator or automation identity>",
     "timestamp": "<UTC>"
   },
   "inputs_sha256": "<digest>",
@@ -91,6 +91,12 @@ Every test run records at minimum:
 ```
 
 Logs should be append-only or content-addressed after collection.
+
+#### Case-probe vs ECHO envelope
+
+A case probe is not the complete ECHO ledger. `bitcoin_core_32_psbt_probe.py` emits case-local raw evidence: exact upstream pin, binary version strings, technical result, PSBT observations, isolation state, execution operator/authorization reference, timestamp, and a deterministic evidence digest. The SARA/ECHO wrapper or CI evidence collector is responsible for adding build-tool metadata, workflow/run identity, and full transcript/artifact digests where required.
+
+A probe `PASS` MUST NOT self-promote the claim class. The BC32-001 probe therefore records `claim_class: NOT CURRENTLY CLAIMED` even on technical success and emits the next claim gate. Claim promotion requires repeatability plus human `CLAIM_REVIEWED` authorization.
 
 ### OVERWATCH — independent comparison
 
@@ -113,20 +119,27 @@ OVERWATCH must distinguish a process being alive from the target behavior being 
 
 **Method:**
 
-- start `v32.0rc1` in regtest;
-- create a disposable descriptor wallet;
+- build exact `v32.0rc1` commit `d0231bb01d83178224bf7b198ba04f78cc2c89ef`;
+- start the node in `regtest` with P2P networking disabled;
+- create a disposable descriptor wallet and mine only regtest blocks;
 - exercise `createpsbt`, `walletcreatefundedpsbt`, `converttopsbt`, and `psbtbumpfee`;
 - decode the resulting PSBTs and record version;
 - repeat while explicitly requesting PSBT v0;
-- compare JSON/RPC error shapes with v31.1 where relevant.
+- reject the run if the binary version, chain, or network-isolation check does not match the expected test envelope.
 
 **PASS:** each tested v32 default decodes as PSBT v2 and each explicit legacy request decodes as PSBT v0.
 
-**Failure classes:** `DEFAULT_VERSION_MISMATCH`, `OVERRIDE_MISMATCH`, `RPC_SCHEMA_MISMATCH`.
+**Failure classes:** `SOURCE_PIN_MISMATCH`, `ISOLATION_FAILURE`, `DEFAULT_VERSION_MISMATCH`, `OVERRIDE_MISMATCH`, `RPC_SCHEMA_MISMATCH`.
 
-**Claims boundary:** a pass demonstrates only the tested RPC behavior on the pinned build; it does not prove compatibility with third-party wallets.
+**Claims boundary:** a pass demonstrates only the tested RPC behavior on the pinned build; it does not prove compatibility with third-party wallets, broader Bitcoin Core correctness, or Worldshepherd assurance as a whole.
 
-**Executable probe:** `external_anchor_pilots/bitcoin_core_32_psbt_probe.py`.
+**Executable assets:**
+
+- `external_anchor_pilots/bitcoin_core_32_psbt_probe.py`
+- `scripts/run_bitcoin_core_32_psbt_probe.sh`
+- `tests/test_bitcoin_core_32_psbt_probe.py`
+- `.github/workflows/bitcoin-core-32-assurance-static.yml`
+- `.github/workflows/bitcoin-core-32-assurance-execution.yml`
 
 ### BC32-002 — fee-estimator selection semantics
 
@@ -227,26 +240,27 @@ A vulnerability regression should be considered especially strong only when the 
 - safety boundaries defined;
 - evidence schema defined.
 
-Claim: **IMPLEMENTED IN SOFTWARE** only if the orchestration/evidence machinery exists; otherwise **PROVEN INTERNALLY** is not permitted.
+Claim: **IMPLEMENTED IN SOFTWARE** for the specification/harness components that actually exist; **PROVEN INTERNALLY** is not permitted here.
 
 ### Gate B — harness executes
 
 - deterministic environment launches;
-- PRIME approvals are logged;
+- execution authorization context is logged;
 - ECHO captures artifacts;
 - OVERWATCH renders expected vs observed;
 - no public network dependency.
 
-Claim: **PROVEN INTERNALLY** for orchestration behavior only.
+Claim: execution success alone remains evidence and does not automatically change the claim class.
 
 ### Gate C — technical reproduction
 
 - target behavior reproduced repeatedly;
 - controls included;
 - environment and commit pinned;
-- independent rerun succeeds.
+- independent rerun succeeds;
+- human `CLAIM_REVIEWED` gate approves the specific claim wording.
 
-Claim: **PROVEN INTERNALLY** for the specific reproduced property.
+Only then may the specific tested property advance to **PROVEN INTERNALLY**.
 
 ### Gate D — upstream corroboration
 
@@ -264,18 +278,21 @@ Claim: **SUPPORTED BY LITERATURE** or **PARTNER VALIDATION** only where the exte
 
 ## Immediate execution sequence
 
-1. Keep this benchmark on a review branch until the harness exists.
-2. Add an isolated Bitcoin Core RC runner (container or disposable VM).
-3. Execute BC32-001 first: low risk, deterministic, fast, and directly relevant to integration breakage.
-4. Implement BC32-004 second: validates Worldshepherd resource-boundary monitoring against a real network service rewrite.
+1. Keep this benchmark on a review branch while executable gates mature.
+2. Run the pinned BC32-001 build/probe and preserve its evidence artifact.
+3. Repeat BC32-001 independently before any claim promotion.
+4. Implement BC32-004 next: validate resource-boundary monitoring against the HTTP rewrite.
 5. Implement BC32-003 using upstream regression coverage, not an improvised exploit payload.
 6. Implement BC32-005 after the environment can reliably capture storage/cache/performance metadata.
-7. Re-run the entire suite for every subsequent 32.0 RC and final v32.0.
+7. Re-run the suite for every subsequent 32.0 RC and final v32.0.
 
 ## Current claim state
 
-- Benchmark specification: **IMPLEMENTED IN SOFTWARE** as repository test design.
-- BC32-001 executable probe: **IMPLEMENTED IN SOFTWARE / NOT YET EXECUTED**.
+- Benchmark specification: **IMPLEMENTED IN SOFTWARE**.
+- BC32-001 executable probe: **IMPLEMENTED IN SOFTWARE / EXECUTION RESULT NOT YET CLAIMED**.
+- Pinned source-build runner: **IMPLEMENTED IN SOFTWARE**.
+- Static and execution CI definitions: **IMPLEMENTED IN SOFTWARE**.
+- BC32-001 technical PASS/FAIL result: **NOT CURRENTLY CLAIMED until a completed evidence artifact is retrieved and reviewed**.
 - Bitcoin Core defect reproduction by Worldshepherd: **NOT CURRENTLY CLAIMED**.
 - Bitcoin Core fix validation by Worldshepherd: **NOT CURRENTLY CLAIMED**.
 - Worldshepherd performance measurement of v32: **NOT CURRENTLY CLAIMED**.
