@@ -18,6 +18,29 @@ python -c 'import secrets; print(secrets.token_urlsafe(32))'
 
 Open `http://127.0.0.1:<SARA_HOST_PORT>/ui` after the verification script passes. The default host port is `9530`.
 
+
+## Full-stack localhost deployment
+
+For the SARA + PRIME SENTINEL + ECHO SENTINEL LINK baseline, use the one-command lifecycle:
+
+```bash
+bash ../../../scripts/sara.sh deploy-full
+bash ../../../scripts/sara.sh verify-full
+bash ../../../scripts/sara.sh down-full
+```
+
+From the repository root the same commands are:
+
+```bash
+bash scripts/sara.sh deploy-full
+bash scripts/sara.sh verify-full
+bash scripts/sara.sh down-full
+```
+
+The full-stack path provisions service-owned secret files outside Git, binds SARA to the deployed PRIME public key, starts all three services on loopback only, performs a live PRIME signing transaction, performs an ECHO ingest + signed checkpoint, verifies that checkpoint cryptographically, inspects container hardening, and emits a machine-readable acceptance receipt.
+
+See [FULL_STACK_DEPLOYMENT.md](FULL_STACK_DEPLOYMENT.md).
+
 ## Required acceptance evidence
 
 A promoted local deployment is internally verified only when all of the following are bound to the tested committed revision:
