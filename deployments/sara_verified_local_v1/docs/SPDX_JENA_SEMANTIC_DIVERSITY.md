@@ -39,13 +39,31 @@ The gate:
 1. installs Java 21;
 2. downloads Apache Jena 6.2.0 from the Apache distribution site;
 3. verifies the Jena archive against Apache's published SHA-512 sidecar;
-4. converts both JSON-LD inputs to RDF/Turtle using Jena's own RIOT JSON-LD parser;
-5. runs Jena `shacl validate --text` against the canonical SPDX model;
-6. requires the baseline report to be exactly `Conforms`;
-7. requires the mutation report to contain a semantic violation rather than `Conforms`; and
-8. independently runs pySHACL on the original JSON-LD inputs and requires the same baseline/negative result.
+4. parses both JSON-LD inputs with Jena RIOT;
+5. explicitly merges quad-capable JSON-LD input into a complete triples validation graph and writes N-Triples;
+6. proves the expected `createdBy` object survives that projection in both baseline and mutation;
+7. runs Jena `shacl validate --text` against the canonical SPDX model;
+8. requires the baseline report to be exactly `Conforms`;
+9. requires the mutation report to contain a semantic violation rather than `Conforms`; and
+10. independently runs pySHACL on the original JSON-LD inputs and requires the same baseline/negative result.
 
-This keeps the RDF parsing and semantic validation of the Jena path within Jena's Java stack rather than feeding it RDF produced by pySHACL/RDFLib.
+This keeps RDF parsing and semantic validation of the Jena path within Jena's Java stack rather than feeding it RDF produced by pySHACL/RDFLib.
+
+### Quad-projection correction
+
+The first Jena experiment used RIOT JSON-LD input with triples-only Turtle output **without** `--merge`. RIOT emitted a warning that the input contained quads while triple output was requested. Jena's own command implementation documents that, in this mode, quads are ignored rather than merged into the triples output.
+
+That made the first result invalid as a semantic-engine comparison: Jena reported `Conforms` for the negative control because the validation graph had lost relevant quad data before SHACL evaluation.
+
+The corrected gate now uses:
+
+```text
+riot --merge --syntax=JSONLD11 --output=NTRIPLES
+```
+
+and hard-fails unless the baseline projection contains a `createdBy` triple referencing the expected Person and the mutated projection contains a `createdBy` triple referencing the expected Package.
+
+The initial false-conformance observation is therefore classified as **HARNESS DEFECT / QUAD-TO-TRIPLE DATA LOSS**, not as evidence that Jena and pySHACL disagree semantically.
 
 ## Release-integrity boundary
 
@@ -59,7 +77,7 @@ Checksum verification establishes download integrity against the published sidec
 
 ## Maximum positive evidence state
 
-If the engines agree on both exact controls, the maximum state is:
+If the corrected engines agree on both exact controls, the maximum state is:
 
 `EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT`
 
@@ -86,4 +104,4 @@ release_approved = false
 
 ## Claims state
 
-`IMPLEMENTED IN SOFTWARE / JENA CROSS-CHECK CI PENDING`
+`IMPLEMENTED IN SOFTWARE / CORRECTED JENA CROSS-CHECK CI PENDING`
