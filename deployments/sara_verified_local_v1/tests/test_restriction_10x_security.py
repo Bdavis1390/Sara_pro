@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 
+import pytest
+
 from worldshepherd_sara.models import AuditRecord
 from worldshepherd_sara.restriction_observability import (
     RestrictionObservabilityError,
@@ -116,7 +118,7 @@ def test_g4_reduces_declared_g3_start_residual_risk_by_at_least_ten_x():
 
 
 def test_g3_zero_tolerance_context_controls_do_not_regress():
-    with pytest_raises_restriction_error():
+    with pytest.raises(RestrictionProvenanceError):
         capture_restriction(
             fingerprint_key=KEY,
             action="BLOCK",
@@ -132,7 +134,7 @@ def test_g3_zero_tolerance_context_controls_do_not_regress():
             occurred_at="2026-09-17T22:30:00+00:00",
         )
 
-    with pytest_raises_restriction_error():
+    with pytest.raises(RestrictionProvenanceError):
         capture_restriction(
             fingerprint_key=KEY,
             action="BLOCK",
@@ -142,13 +144,3 @@ def test_g3_zero_tolerance_context_controls_do_not_regress():
             metadata={"note": "free form metadata must not persist"},
             occurred_at="2026-09-17T22:30:00+00:00",
         )
-
-
-class pytest_raises_restriction_error:
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        assert exc_type is not None
-        assert issubclass(exc_type, RestrictionProvenanceError)
-        return True
