@@ -378,6 +378,7 @@ def project_restriction_audit_record(
         "provenance_schema": provenance_schema,
         "restriction_id": restriction_id,
         "event_id": event_id,
+        "delivery_semantics": "AT_LEAST_ONCE",
         "authority": RESTRICTION_AUTHORITY,
         "authority_bound_in_payload": authority_bound_in_payload,
         "restriction_schema": provenance_schema,
@@ -396,6 +397,48 @@ def project_restriction_audit_record(
         **fingerprints,
         "raw_content_persisted": False,
     }
+
+
+ASSURANCE_DIMENSIONS = (
+    "restriction_identity",
+    "event_identity",
+    "delivery_semantics",
+    "authority_identity",
+    "authority_binding",
+    "fingerprint_key_epoch",
+    "signature_verification",
+    "signing_key_identity",
+    "signing_key_fingerprint",
+    "raw_content_persistence",
+)
+
+
+def restriction_assurance_dimensions(projected: dict[str, Any]) -> dict[str, bool]:
+    restriction_id = projected.get("restriction_id")
+    event_id = projected.get("event_id")
+    signing_key_fingerprint = projected.get("signing_key_fingerprint_sha256")
+    facts = {
+        "restriction_identity": isinstance(restriction_id, str)
+        and bool(_RESTRICTION_ID.fullmatch(restriction_id)),
+        "event_identity": isinstance(event_id, str)
+        and event_id == f"SARA-EVENT-RESTRICTION-{restriction_id}",
+        "delivery_semantics": projected.get("delivery_semantics") == "AT_LEAST_ONCE",
+        "authority_identity": projected.get("authority") == RESTRICTION_AUTHORITY,
+        "authority_binding": projected.get("authority_bound_in_payload") is True,
+        "fingerprint_key_epoch": (
+            projected.get("fingerprint_key_epoch_bound_in_payload") is True
+            and isinstance(projected.get("fingerprint_key_id"), str)
+            and bool(projected.get("fingerprint_key_id"))
+        ),
+        "signature_verification": projected.get("signature_verified") is True,
+        "signing_key_identity": isinstance(projected.get("signing_key_id"), str)
+        and bool(projected.get("signing_key_id")),
+        "signing_key_fingerprint": isinstance(signing_key_fingerprint, str)
+        and bool(_FINGERPRINT.fullmatch(signing_key_fingerprint)),
+        "raw_content_persistence": projected.get("raw_content_persisted") is False,
+    }
+    assert tuple(facts) == ASSURANCE_DIMENSIONS
+    return facts
 
 
 def restriction_observability(
@@ -438,6 +481,14 @@ def restriction_observability(
     by_signing_key_id = Counter(
         str(item["signing_key_id"] or "UNSIGNED_LEGACY") for item in projected
     )
+    assurance_vectors = [restriction_assurance_dimensions(item) for item in projected]
+    fully_resolved = sum(
+        int(all(vector.values())) for vector in assurance_vectors
+    )
+    unresolved_dimensions = sum(
+        sum(int(not value) for value in vector.values())
+        for vector in assurance_vectors
+    )
 
     newest_first = list(reversed(projected[-recent_limit:]))
     last_valid_occurred_at = None if not projected else projected[-1]["occurred_at"]
@@ -456,6 +507,11 @@ def restriction_observability(
             "by_processor": dict(sorted(by_processor.items())),
             "by_fingerprint_key_id": dict(sorted(by_fingerprint_key_id.items())),
             "by_signing_key_id": dict(sorted(by_signing_key_id.items())),
+        },
+        "assurance_quality": {
+            "required_dimensions_per_record": len(ASSURANCE_DIMENSIONS),
+            "fully_resolved_v4_records": fully_resolved,
+            "unresolved_dimensions": unresolved_dimensions,
         },
         "last_valid_occurred_at": last_valid_occurred_at,
         "recent": newest_first,

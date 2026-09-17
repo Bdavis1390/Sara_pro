@@ -126,6 +126,7 @@ async def lifespan(app: FastAPI):
                 "version": __version__,
                 "mode": os.getenv("SARA_MODE", "local"),
                 "prime_sentinel_public_keys_configured": app.state.prime_sentinel_verifier.configured,
+                "prime_signer_isolation": "verification_only",
                 "outbox_events_replayed": replayed,
                 "outbox_pending_after_replay": outbox["pending"],
             },
@@ -190,6 +191,7 @@ def health(request: Request) -> dict[str, object]:
         "version": __version__,
         "mode": os.getenv("SARA_MODE", "local"),
         "prime_sentinel_public_keys_configured": request.app.state.prime_sentinel_verifier.configured,
+        "prime_signer_isolation": "verification_only",
         "event_outbox": current_outbox,
         "endpoints": {
             "ui": "/ui",
