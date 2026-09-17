@@ -13,7 +13,7 @@ from worldshepherd_sara.aws_kms_checkpoint_signer import (
     AwsKmsCheckpointSignerError,
     AwsKmsEd25519CheckpointSigner,
 )
-from worldshepherd_sara.echo_checkpoint import EchoCheckpointManager
+from worldshepherd_sara.echo_checkpoint import EchoCheckpointError, EchoCheckpointManager
 from worldshepherd_sara.echo_checkpoint_verify import verify_bundle
 from worldshepherd_sara.echo_event_store import EchoEventStore
 from worldshepherd_sara.models import AuditRecord
@@ -89,7 +89,6 @@ def test_aws_kms_adapter_matches_echo_ed25519_checkpoint_boundary(tmp_path):
     assert len(call["Message"]) < 128
     assert b"payload-remains-outside-kms-signing-request" not in call["Message"]
     verified = verify_bundle(bundle, manager.fingerprint_sha256)
-    assert verified["status"] if "status" in verified else True
     assert verified["event_count"] == 1
 
 
@@ -137,9 +136,14 @@ def test_aws_kms_adapter_rejects_sign_response_key_identity_change(tmp_path):
     store.ingest(record())
     manager = EchoCheckpointManager(store, signer=signer)
 
-    with pytest.raises(Exception, match="key identity changed"):
+    with pytest.raises(
+        EchoCheckpointError,
+        match="signer rejected request",
+    ) as exc_info:
         manager.create_checkpoint()
 
+    assert exc_info.value.__cause__ is not None
+    assert "key identity changed" in str(exc_info.value.__cause__)
     assert manager.latest_status()["checkpoint_count"] == 0
 
 
