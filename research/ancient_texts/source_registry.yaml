@@ -1,0 +1,60 @@
+# ATIP source registry — bootstrap lanes
+# Exact endpoints, licenses and ingestion adapters must be verified before canonical ingest.
+
+source_families:
+  - id: MESOPOTAMIAN_CUNEIFORM
+    targets: [Sumerian, Akkadian, Babylonian, Assyrian, Hurrian, Hittite, Ugaritic]
+    preferred_authority_types: [primary_museum_catalog, scholarly_corpus, critical_edition]
+    status: VERIFY_AND_ADAPT
+  - id: EGYPTIAN
+    targets: [hieroglyphic, hieratic, demotic]
+    preferred_authority_types: [primary_museum_catalog, scholarly_corpus, encoded_sign_standard]
+    status: VERIFY_AND_ADAPT
+  - id: LEVANTINE_SEMITIC
+    targets: [Phoenician, Hebrew, Aramaic, Moabite, Edomite, Ammonite, Ugaritic]
+    preferred_authority_types: [critical_edition, manuscript_repository, epigraphic_database]
+    status: VERIFY_AND_ADAPT
+  - id: AEGEAN
+    targets: [Linear_A, Linear_B, Cypro_Minoan, Cypriot_syllabic]
+    preferred_authority_types: [scholarly_corpus, museum_repository]
+    status: VERIFY_AND_ADAPT
+  - id: GREEK
+    targets: [archaic, classical, koine, papyri, inscriptions, literary_witnesses]
+    preferred_authority_types: [papyrus_database, epigraphic_database, critical_text_repository]
+    status: VERIFY_AND_ADAPT
+  - id: ITALIC_ROMAN
+    targets: [Latin, Etruscan, Oscan, Umbrian]
+    preferred_authority_types: [epigraphic_database, critical_edition]
+    status: VERIFY_AND_ADAPT
+  - id: IRANIAN_CENTRAL_ASIAN
+    targets: [Old_Persian, Avestan, Sogdian, Bactrian]
+    preferred_authority_types: [manuscript_repository, inscription_corpus, critical_edition]
+    status: VERIFY_AND_ADAPT
+  - id: SOUTH_ASIAN
+    targets: [Indus, Vedic_Sanskrit, Classical_Sanskrit, Prakrit, Pali, Brahmi, Kharosthi, Tamil_Brahmi]
+    preferred_authority_types: [manuscript_repository, inscription_corpus, critical_edition]
+    status: VERIFY_AND_ADAPT
+  - id: EAST_ASIAN
+    targets: [oracle_bone, bronze_inscription, seal_script, early_Chinese_texts]
+    preferred_authority_types: [museum_repository, university_corpus, critical_edition]
+    status: VERIFY_AND_ADAPT
+  - id: MESOAMERICAN
+    targets: [Maya, Zapotec, Mixtec, other_documented_scripts]
+    preferred_authority_types: [museum_repository, epigraphic_project, facsimile_corpus]
+    status: VERIFY_AND_ADAPT
+  - id: AFRICAN_ARABIAN
+    targets: [Geez, Sabaic, Ancient_South_Arabian, Nubian]
+    preferred_authority_types: [epigraphic_database, manuscript_repository]
+    status: VERIFY_AND_ADAPT
+  - id: EUROPEAN_EPIGRAPHY
+    targets: [Runic, Ogham, Iberian, Tartessian]
+    preferred_authority_types: [national_corpus, university_database, museum_repository]
+    status: VERIFY_AND_ADAPT
+  - id: RELIGIOUS_APOCALYPTIC
+    targets: [Dead_Sea_Scrolls, 1_Enoch, related_Jewish_Christian_manuscripts]
+    preferred_authority_types: [manuscript_repository, critical_edition]
+    status: VERIFY_AND_ADAPT
+  - id: EARLY_MODERN_CONTROL
+    targets: [Dee_Kelley_Enochian]
+    preferred_authority_types: [primary_manuscript, curatorial_repository]
+    status: ACTIVE_CONTROL
