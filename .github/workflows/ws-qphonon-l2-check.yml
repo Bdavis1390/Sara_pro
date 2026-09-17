@@ -44,4 +44,4 @@ jobs:
 
       - name: Run QPHONON regression tests
         working-directory: tools/qphonon
-        run: python -m unittest -v test_validate_config.py test_prime_gate.py
+        run: python -m unittest -v test_validate_config.py test_prime_gate.py test_registry_adapter.py test_drift_state.py
