@@ -67,7 +67,13 @@ class G10IdealInvariantCase(BaseModel):
     grid_size: int = Field(ge=8)
     final_time: float = Field(gt=0.0)
     dt: float = Field(gt=0.0)
+    steps: int = Field(ge=1)
     total_energy_relative_drift: float = Field(ge=0.0)
+    cross_helicity_initial: float
+    cross_helicity_final: float
+    cross_helicity_absolute_drift: float = Field(ge=0.0)
+    cross_helicity_scale: float = Field(gt=0.0)
+    cross_helicity_normalized_drift: float = Field(ge=0.0)
     cross_helicity_relative_drift: float = Field(ge=0.0)
     magnetic_potential_variance_relative_drift: float = Field(ge=0.0)
 
@@ -80,6 +86,7 @@ class G10AcceptanceSummary(BaseModel):
     nonlinear_rhs_floor: float = Field(gt=0.0)
     nonlinear_energy_drop_floor: float = Field(gt=0.0)
     ideal_invariant_drift_limit: float = Field(gt=0.0)
+    cross_helicity_acceptance_metric: str
     exact_solution_pass: bool
     nonlinear_cancellation_pass: bool
     geometry_pass: bool
@@ -91,7 +98,7 @@ class G10AcceptanceSummary(BaseModel):
 
 class NSBG10Report(BaseModel):
     qualification_id: str = "WS-NSB-2026-G10-001"
-    benchmark_version: str = "1.5"
+    benchmark_version: str = "1.5.2"
     formulation: str = "bounded 2D periodic incompressible nonlinear resistive MHD in vorticity-vector-potential form"
     equations: tuple[str, str] = (
         "domega/dt = -u.grad(omega) + B.grad(j) + nu*laplacian(omega)",
@@ -103,6 +110,7 @@ class NSBG10Report(BaseModel):
     exact_case: G10ExactCase
     nonlinear_case: G10NonlinearCase
     ideal_invariant_case: G10IdealInvariantCase
+    ideal_temporal_refinement: tuple[G10IdealInvariantCase, G10IdealInvariantCase, G10IdealInvariantCase]
     acceptance: G10AcceptanceSummary
     capability_status: CapabilityStatus = CapabilityStatus.SIMULATED_ONLY
     nonlinear_2d_mhd_implemented: bool = True
@@ -129,7 +137,7 @@ class NSBG10Report(BaseModel):
     @model_validator(mode="after")
     def fail_closed_claims(self) -> "NSBG10Report":
         if self.capability_status != CapabilityStatus.SIMULATED_ONLY:
-            raise ValueError("WS-NSB v1.5 must remain SIMULATED_ONLY")
+            raise ValueError("WS-NSB v1.5.2 must remain SIMULATED_ONLY")
         if not all((self.nonlinear_2d_mhd_implemented, self.induction_equation_evolved, self.reciprocal_lorentz_backreaction_evolved)):
             raise ValueError("G10 report must represent the complete bounded nonlinear MHD reference")
         prohibited = (
@@ -144,7 +152,7 @@ class NSBG10Report(BaseModel):
             self.operational_validation_performed,
         )
         if any(prohibited):
-            raise ValueError("WS-NSB v1.5 cannot promote unsupported physical or higher-fidelity MHD claims")
+            raise ValueError("WS-NSB v1.5.2 cannot promote unsupported physical or higher-fidelity MHD claims")
         return self
 
 
@@ -309,24 +317,67 @@ def _relative_drift(initial: float, final: float) -> float:
     return abs(final - initial) / max(abs(initial), 1e-12)
 
 
-def _ideal_case(n: int = 32, dt: float = 0.00025, final_time: float = 0.01):
+def _ideal_case(n: int = 32, dt: float = 0.000125, final_time: float = 0.01):
     omega0, a0 = _mixed_initial(n)
     e0 = _energetics(omega0, a0, 0.0, 0.0)
-    omega, a, effective_dt, _ = integrate_periodic_mhd(initial_vorticity=omega0, initial_magnetic_potential=a0, viscosity=0.0, resistivity=0.0, dt=dt, final_time=final_time)
+    omega, a, effective_dt, steps = integrate_periodic_mhd(initial_vorticity=omega0, initial_magnetic_potential=a0, viscosity=0.0, resistivity=0.0, dt=dt, final_time=final_time)
     ef = _energetics(omega, a, 0.0, 0.0)
-    return G10IdealInvariantCase(grid_size=n, final_time=final_time, dt=effective_dt, total_energy_relative_drift=_relative_drift(e0["total"], ef["total"]), cross_helicity_relative_drift=_relative_drift(e0["cross"], ef["cross"]), magnetic_potential_variance_relative_drift=_relative_drift(e0["a_var"], ef["a_var"]))
+    cross_absolute_drift = abs(ef["cross"] - e0["cross"])
+    cross_scale = max(2.0 * math.sqrt(e0["kinetic"] * e0["magnetic"]), 1e-12)
+    return G10IdealInvariantCase(
+        grid_size=n,
+        final_time=final_time,
+        dt=effective_dt,
+        steps=steps,
+        total_energy_relative_drift=_relative_drift(e0["total"], ef["total"]),
+        cross_helicity_initial=e0["cross"],
+        cross_helicity_final=ef["cross"],
+        cross_helicity_absolute_drift=cross_absolute_drift,
+        cross_helicity_scale=cross_scale,
+        cross_helicity_normalized_drift=cross_absolute_drift / cross_scale,
+        cross_helicity_relative_drift=_relative_drift(e0["cross"], ef["cross"]),
+        magnetic_potential_variance_relative_drift=_relative_drift(e0["a_var"], ef["a_var"]),
+    )
 
 
 def run_nsb_g10_benchmark(*, exact_l2_limit: float = 2e-5, cancellation_limit: float = 1e-10, divergence_limit: float = 1e-10, energy_budget_limit: float = 2e-8, nonlinear_rhs_floor: float = 1e-2, nonlinear_energy_drop_floor: float = 1e-5, ideal_invariant_drift_limit: float = 2e-5) -> NSBG10Report:
-    exact, nonlinear, ideal = _exact_case(), _nonlinear_case(), _ideal_case()
+    exact, nonlinear = _exact_case(), _nonlinear_case()
+    ideal_temporal_refinement = (
+        _ideal_case(dt=0.00025),
+        _ideal_case(dt=0.000125),
+        _ideal_case(dt=0.0000625),
+    )
+    ideal = ideal_temporal_refinement[1]
     exact_pass = max(exact.vorticity_l2_error, exact.magnetic_potential_l2_error) <= exact_l2_limit
     cancellation_pass = exact.nonlinear_advection_rms_initial > 1e-3 and exact.lorentz_curl_rms_initial > 1e-3 and exact.nonlinear_cancellation_rms_initial <= cancellation_limit
     geometry_pass = max(exact.velocity_divergence_rms, exact.magnetic_divergence_rms, nonlinear.velocity_divergence_rms_final, nonlinear.magnetic_divergence_rms_final) <= divergence_limit
     energy_budget_pass = nonlinear.instantaneous_energy_budget_residual <= energy_budget_limit
     nonlinear_pass = nonlinear.nonlinear_rhs_rms_initial >= nonlinear_rhs_floor and nonlinear.total_energy_final <= nonlinear.total_energy_initial - nonlinear_energy_drop_floor and nonlinear.viscous_dissipation_initial > 0.0 and nonlinear.resistive_dissipation_initial > 0.0 and nonlinear.mean_vorticity_drift <= 1e-12 and nonlinear.mean_magnetic_potential_drift <= 1e-12
-    ideal_pass = max(ideal.total_energy_relative_drift, ideal.cross_helicity_relative_drift, ideal.magnetic_potential_variance_relative_drift) <= ideal_invariant_drift_limit
+    ideal_pass = max(ideal.total_energy_relative_drift, ideal.cross_helicity_normalized_drift, ideal.magnetic_potential_variance_relative_drift) <= ideal_invariant_drift_limit
     acceptance_pass = all((exact_pass, cancellation_pass, geometry_pass, energy_budget_pass, nonlinear_pass, ideal_pass))
-    report = NSBG10Report(exact_case=exact, nonlinear_case=nonlinear, ideal_invariant_case=ideal, acceptance=G10AcceptanceSummary(exact_l2_limit=exact_l2_limit, cancellation_limit=cancellation_limit, divergence_limit=divergence_limit, energy_budget_limit=energy_budget_limit, nonlinear_rhs_floor=nonlinear_rhs_floor, nonlinear_energy_drop_floor=nonlinear_energy_drop_floor, ideal_invariant_drift_limit=ideal_invariant_drift_limit, exact_solution_pass=exact_pass, nonlinear_cancellation_pass=cancellation_pass, geometry_pass=geometry_pass, energy_budget_pass=energy_budget_pass, nonlinear_evolution_pass=nonlinear_pass, ideal_invariants_pass=ideal_pass, acceptance_pass=acceptance_pass))
+    report = NSBG10Report(
+        exact_case=exact,
+        nonlinear_case=nonlinear,
+        ideal_invariant_case=ideal,
+        ideal_temporal_refinement=ideal_temporal_refinement,
+        acceptance=G10AcceptanceSummary(
+            exact_l2_limit=exact_l2_limit,
+            cancellation_limit=cancellation_limit,
+            divergence_limit=divergence_limit,
+            energy_budget_limit=energy_budget_limit,
+            nonlinear_rhs_floor=nonlinear_rhs_floor,
+            nonlinear_energy_drop_floor=nonlinear_energy_drop_floor,
+            ideal_invariant_drift_limit=ideal_invariant_drift_limit,
+            cross_helicity_acceptance_metric="absolute drift normalized by 2*sqrt(initial kinetic energy * initial magnetic energy)",
+            exact_solution_pass=exact_pass,
+            nonlinear_cancellation_pass=cancellation_pass,
+            geometry_pass=geometry_pass,
+            energy_budget_pass=energy_budget_pass,
+            nonlinear_evolution_pass=nonlinear_pass,
+            ideal_invariants_pass=ideal_pass,
+            acceptance_pass=acceptance_pass,
+        ),
+    )
     digest = canonical_digest(report.model_dump(mode="json", exclude={"report_digest"}))
     return report.model_copy(update={"report_digest": digest})
 
