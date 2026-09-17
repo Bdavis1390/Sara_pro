@@ -114,6 +114,10 @@ async def lifespan(app: FastAPI):
     os.umask(0o077)
     validate_runtime_secrets()
     app.state.store = DurableStore()
+    # Trust-root admission must complete before replaying any pending governed
+    # event. A rejected rollback may not produce startup side effects.
+    app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
+    app.state.prime_trust_root = guard_prime_trust_root(app.state.store)
     replayed = drain_event_outbox(
         app.state.store,
         limit=MAX_PENDING_OUTBOX_EVENTS,
@@ -122,8 +126,6 @@ async def lifespan(app: FastAPI):
     if outbox["malformed"]:
         raise RuntimeError("SARA event outbox contains malformed records")
     app.state.hmaa_store = HMAAEvidenceStore()
-    app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
-    app.state.prime_trust_root = guard_prime_trust_root(app.state.store)
     app.state.store.append_audit(
         AuditRecord.create(
             event="service_started",
