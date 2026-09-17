@@ -5,7 +5,8 @@ Runs only against an isolated regtest node. It verifies that the four v32 PSBT
 creation pathways covered by upstream rpc_psbt.py default to PSBT v2 and still
 permit an explicit PSBT v0 request.
 
-No mainnet/testnet connection is used and no real funds are involved.
+No mainnet/testnet connection is used and no real funds are involved. A technical
+PASS is raw evidence only; this probe never self-promotes a Worldshepherd claim.
 """
 
 from __future__ import annotations
@@ -19,11 +20,13 @@ import shutil
 import subprocess
 import tempfile
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 PINNED_UPSTREAM_TAG = "v32.0rc1"
 PINNED_UPSTREAM_COMMIT = "d0231bb01d83178224bf7b198ba04f78cc2c89ef"
+CASE_CLAIM_CLASS = "NOT CURRENTLY CLAIMED"
 
 
 def run(cmd: list[str], *, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -149,6 +152,16 @@ def main() -> int:
         default="v32.0.0rc1",
         help="Required substring in bitcoind --version; use '' only for deliberate non-RC comparison runs.",
     )
+    parser.add_argument(
+        "--prime-gate-id",
+        default=os.environ.get("BC32_PRIME_GATE_ID", "UNSET"),
+        help="External PRIME/human authorization reference. UNSET means no claim advancement is permitted.",
+    )
+    parser.add_argument(
+        "--operator",
+        default=os.environ.get("BC32_OPERATOR") or os.environ.get("GITHUB_ACTOR") or "UNRECORDED",
+        help="Execution operator identity or automation actor.",
+    )
     parser.add_argument("--keep-datadir", action="store_true")
     args = parser.parse_args()
 
@@ -159,12 +172,13 @@ def main() -> int:
     harness = CoreHarness(bitcoind, bitcoin_cli, datadir)
 
     observed: dict[str, dict[str, int]] = {}
-    result = "INCONCLUSIVE"
+    technical_result = "INCONCLUSIVE"
     failure: str | None = None
     daemon_version = ""
     cli_version = ""
     chain = None
     network_active = None
+    timestamp_utc = datetime.now(timezone.utc).isoformat()
 
     try:
         daemon_version = first_line([bitcoind, "--version"])
@@ -191,9 +205,8 @@ def main() -> int:
 
         utxo = harness.cli("listunspent", wallet=wallet)[0]
         destination = harness.cli("getnewaddress", wallet=wallet)
-        amount = float(utxo["amount"]) / 2.0
         inputs = [{"txid": utxo["txid"], "vout": utxo["vout"]}]
-        outputs = [{destination: amount}]
+        outputs = [{destination: 1.0}]
 
         default_psbt = harness.named("createpsbt", {"inputs": inputs, "outputs": outputs})
         legacy_psbt = harness.named(
@@ -245,13 +258,26 @@ def main() -> int:
         }
 
         expected = {"default": 2, "legacy": 0}
-        result = "PASS" if all(values == expected for values in observed.values()) else "FAIL"
+        technical_result = "PASS" if all(values == expected for values in observed.values()) else "FAIL"
     except Exception as exc:
-        result = "FAIL"
+        technical_result = "FAIL"
         failure = f"{type(exc).__name__}: {exc}"
     finally:
         harness.stop()
 
+    digest_payload = {
+        "upstream_tag": PINNED_UPSTREAM_TAG,
+        "upstream_commit": PINNED_UPSTREAM_COMMIT,
+        "daemon_version": daemon_version,
+        "cli_version": cli_version,
+        "chain": chain,
+        "networkactive": network_active,
+        "observed": observed,
+        "failure": failure,
+        "timestamp_utc": timestamp_utc,
+        "prime_gate_id": args.prime_gate_id,
+        "operator": args.operator,
+    }
     evidence = {
         "benchmark": "bitcoin-core-32",
         "case_id": "BC32-001",
@@ -262,8 +288,18 @@ def main() -> int:
             "bitcoind_version": daemon_version,
             "bitcoin_cli_version": cli_version,
         },
-        "result": result,
-        "claim_class": "PROVEN INTERNALLY" if result == "PASS" else "NOT CURRENTLY CLAIMED",
+        "technical_result": technical_result,
+        "claim_class": CASE_CLAIM_CLASS,
+        "next_claim_gate": (
+            "independent-repeat-and-human-claim-review"
+            if technical_result == "PASS"
+            else "resolve-failure-before-claim-review"
+        ),
+        "authorization": {
+            "prime_gate_id": args.prime_gate_id,
+            "operator": args.operator,
+            "timestamp_utc": timestamp_utc,
+        },
         "isolation": {
             "chain": chain,
             "networkactive": network_active,
@@ -276,24 +312,10 @@ def main() -> int:
         },
         "observed_psbt_versions": observed,
         "failure": failure,
-        "evidence_digest": sha256_text(
-            json.dumps(
-                {
-                    "upstream_tag": PINNED_UPSTREAM_TAG,
-                    "upstream_commit": PINNED_UPSTREAM_COMMIT,
-                    "daemon_version": daemon_version,
-                    "cli_version": cli_version,
-                    "chain": chain,
-                    "networkactive": network_active,
-                    "observed": observed,
-                    "failure": failure,
-                },
-                sort_keys=True,
-            )
-        ),
+        "evidence_digest": sha256_text(json.dumps(digest_payload, sort_keys=True)),
         "note": (
-            "A PASS validates only the PSBT version behavior exercised by this local pinned-build "
-            "probe; it does not establish third-party wallet compatibility or broader Bitcoin Core assurance."
+            "A PASS is case-local technical evidence only. Claim advancement requires the external "
+            "Worldshepherd authorization, repeatability, and human review gates defined by the benchmark."
         ),
     }
     args.evidence.parent.mkdir(parents=True, exist_ok=True)
@@ -305,7 +327,7 @@ def main() -> int:
     else:
         print(f"kept datadir at {datadir}")
 
-    return 0 if result == "PASS" else 1
+    return 0 if technical_result == "PASS" else 1
 
 
 if __name__ == "__main__":
