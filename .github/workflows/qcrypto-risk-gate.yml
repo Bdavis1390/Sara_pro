@@ -47,3 +47,4 @@ jobs:
           python -m json.tool security/qcrypto/ecosystem_migration_horizon_2026-09-13.json >/dev/null
           python -m json.tool security/qcrypto/institutional_custody_readiness_2026-09-13.json >/dev/null
           python -m json.tool security/qcrypto/financial_sector_coordination_2026-09-13.json >/dev/null
+          python -m json.tool security/qcrypto/production_assurance_status_2026-09-17.json >/dev/null
