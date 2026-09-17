@@ -1,12 +1,12 @@
 # WS-RESTRICTION-PROVENANCE G7 — SIGNER ISOLATION AND 10X ASSURANCE QUALITY
 
-Status: **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING G6 + INTERNAL VALIDATION**
+Status: **IMPLEMENTED IN SOFTWARE ON CURRENT-MAIN BRANCH / PENDING INTERNAL VALIDATION**
 
 ## Objective
 
 G7 strengthens the signer trust boundary and defines a separate measurable "10x better" standard.
 
-G6 establishes signed-only V4 evidence using externally produced PRIME Ed25519 signatures.
+Protected main now contains both G6A signed ECHO witness verification and G6B signed-only PRIME V4 evidence.
 
 G7 adds two controls:
 
@@ -96,4 +96,4 @@ Those require external signer/provider evidence.
 
 G7 proves only the software boundary that SARA refuses recognized PRIME private signing material and verifies externally supplied signatures with configured public keys.
 
-Until G6 is merged and G7 is reconciled onto that protected head, then passes exact-head required CI, full Verified Local deployment/recovery/evidence qualification, and protected merge, classify G7 as **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING INTERNAL VALIDATION**.
+G7 is reconciled directly onto the combined protected G6A+G6B head. Until this exact head passes required CI, CodeQL/Analyze, full Verified Local deployment/recovery/evidence qualification, and protected merge, classify G7 as **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION**.
