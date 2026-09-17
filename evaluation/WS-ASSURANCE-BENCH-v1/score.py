@@ -10,8 +10,26 @@ class BenchmarkError(ValueError):
     pass
 
 
-def load_json(path: str | Path) -> dict[str, Any]:
+def load_json(path: str | Path) -> Any:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def load_records(paths: list[str]) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for path in paths:
+        payload = load_json(path)
+        if isinstance(payload, list):
+            records.extend(payload)
+        elif isinstance(payload, dict) and "records" in payload:
+            bundled = payload["records"]
+            if not isinstance(bundled, list):
+                raise BenchmarkError(f"records bundle must be a list: {path}")
+            records.extend(bundled)
+        elif isinstance(payload, dict):
+            records.append(payload)
+        else:
+            raise BenchmarkError(f"unsupported record payload in {path}")
+    return records
 
 
 def score_record(benchmark: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
@@ -122,7 +140,9 @@ def main() -> int:
     args = parser.parse_args()
 
     benchmark = load_json(args.benchmark)
-    records = [load_json(path) for path in args.records]
+    if not isinstance(benchmark, dict):
+        raise BenchmarkError("benchmark must be a JSON object")
+    records = load_records(args.records)
     scored = [score_record(benchmark, record) for record in records]
     scored.sort(key=lambda item: (-item["score"], item["entity"].lower()))
     result = {
