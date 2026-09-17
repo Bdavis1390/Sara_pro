@@ -5,16 +5,25 @@ on:
     paths:
       - "config/ws_qphonon_l2_v0_1.json"
       - "config/ws_qphonon_echo_event_v0_1.schema.json"
+      - "config/ws_qphonon_echo_event_v0_2.schema.json"
+      - "config/ws_qphonon_execution_approval_v0_2.schema.json"
+      - "config/ws_qphonon_security_v0_2.json"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
+      - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
       - "tools/qphonon/**"
       - ".github/workflows/ws-qphonon-l2-check.yml"
   push:
     branches:
       - "worldshepherd/qphonon-l2-architecture-v0-1-20260912"
+      - "worldshepherd/qphonon-security-hardening-v0-2-20260917"
     paths:
       - "config/ws_qphonon_l2_v0_1.json"
       - "config/ws_qphonon_echo_event_v0_1.schema.json"
+      - "config/ws_qphonon_echo_event_v0_2.schema.json"
+      - "config/ws_qphonon_execution_approval_v0_2.schema.json"
+      - "config/ws_qphonon_security_v0_2.json"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
+      - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
       - "tools/qphonon/**"
       - ".github/workflows/ws-qphonon-l2-check.yml"
 
@@ -27,9 +36,11 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
 
@@ -39,9 +50,26 @@ jobs:
       - name: Validate governed config
         run: python tools/qphonon/validate_config.py config/ws_qphonon_l2_v0_1.json
 
-      - name: Parse ECHO evidence schema
-        run: python -m json.tool config/ws_qphonon_echo_event_v0_1.schema.json > /dev/null
+      - name: Validate V0.2 security profile
+        run: python tools/qphonon/validate_security.py config/ws_qphonon_security_v0_2.json
 
-      - name: Run QPHONON regression tests
+      - name: Validate CI hardening invariants
+        run: python tools/qphonon/validate_ci_hardening.py .github/workflows/ws-qphonon-l2-check.yml
+
+      - name: Parse evidence and approval schemas
+        run: |
+          python -m json.tool config/ws_qphonon_echo_event_v0_1.schema.json > /dev/null
+          python -m json.tool config/ws_qphonon_echo_event_v0_2.schema.json > /dev/null
+          python -m json.tool config/ws_qphonon_execution_approval_v0_2.schema.json > /dev/null
+
+      - name: Run QPHONON regression and adversarial tests
         working-directory: tools/qphonon
-        run: python -m unittest -v test_validate_config.py test_prime_gate.py test_registry_adapter.py test_drift_state.py
+        run: >
+          python -m unittest -v
+          test_validate_config.py
+          test_prime_gate.py
+          test_registry_adapter.py
+          test_drift_state.py
+          test_validate_security.py
+          test_security_controls.py
+          test_execution_gate.py
