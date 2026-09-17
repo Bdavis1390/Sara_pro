@@ -46,7 +46,7 @@ This does not establish HSM/KMS custody. It establishes that SARA itself refuses
 
 ## 10x better assurance metric
 
-G7 freezes ten operator assurance questions as manual-inference units.
+G7 evaluates ten operator assurance dimensions. At G3-start, four were already machine-resolved and six remained unresolved or weakly inferred.
 
 Valid signed V4 evidence must resolve all ten automatically:
 
@@ -64,7 +64,7 @@ Valid signed V4 evidence must resolve all ten automatically:
 Acceptance:
 
 ```text
-10 baseline manual-inference units -> 0 unresolved
+6 baseline unresolved manual-inference units across 10 dimensions -> 0 unresolved
 ```
 
 Historical V1-V3 records remain readable with visibly weaker assurance and cannot be counted as fully resolved V4 evidence.
