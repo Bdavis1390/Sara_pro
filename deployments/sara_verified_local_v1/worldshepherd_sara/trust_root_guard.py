@@ -38,8 +38,8 @@ _REJECTION_REASON_PATTERNS: tuple[tuple[str, str], ...] = (
     ("must be a positive integer", "TRUST_EPOCH_INVALID"),
     ("PUBLIC_KEYS_JSON", "PUBLIC_KEY_CONFIGURATION_INVALID"),
     ("public key", "PUBLIC_KEY_CONFIGURATION_INVALID"),
-    ("signing key ID", "KEY_ID_INVALID"),
     ("revoked PRIME signing key ID", "REVOCATION_ID_INVALID"),
+    ("signing key ID", "KEY_ID_INVALID"),
 )
 
 
