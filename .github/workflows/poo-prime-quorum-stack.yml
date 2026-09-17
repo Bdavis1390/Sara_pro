@@ -1,0 +1,121 @@
+name: PoO PRIME Quorum Stack Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime-quorum.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_quorum_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_quorum_commit.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_prime_quorum_*.py'
+      - '.github/workflows/poo-prime-quorum-stack.yml'
+  push:
+    branches:
+      - 'worldshepherd-proof-of-ownership-prime-quorum-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime-quorum.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_quorum_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_quorum_commit.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_prime_quorum_*.py'
+      - '.github/workflows/poo-prime-quorum-stack.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  quorum-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned test dependencies
+        run: >-
+          python -m pip install --disable-pip-version-check
+          -c deployments/sara_verified_local_v1/constraints-runtime.txt
+          './deployments/sara_verified_local_v1[test]'
+      - name: Run quorum policy and transaction regressions
+        env:
+          PYTHONPATH: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          deployments/sara_verified_local_v1/tests/test_poo_prime_quorum_commit.py
+          deployments/sara_verified_local_v1/tests/test_poo_prime_quorum_policy.py
+      - name: Validate quorum-stack shell
+        run: bash -n deployments/sara_verified_local_v1/scripts/verify_poo_prime_quorum_stack.sh
+      - name: Validate quorum Compose overlay
+        working-directory: deployments/sara_verified_local_v1
+        env:
+          SARA_RELAY_TOKEN: ci-relay-token-that-is-independent-and-long
+          SARA_ADMIN_TOKEN: ci-admin-token-that-is-different-and-long
+          PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH: /tmp/nonexistent-prime-a-private-key
+          PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH: /tmp/nonexistent-prime-a-service-token
+          PRIME_SENTINEL_B_PRIVATE_KEY_HOST_PATH: /tmp/nonexistent-prime-b-private-key
+          PRIME_SENTINEL_B_SERVICE_TOKEN_HOST_PATH: /tmp/nonexistent-prime-b-service-token
+          PRIME_SENTINEL_SIGNING_KEY_ID: PS-CI-A
+          PRIME_SENTINEL_B_SIGNING_KEY_ID: PS-CI-B
+        run: |
+          cp .env.example .env
+          docker compose -f compose.yaml -f compose.poo-prime.yaml -f compose.poo-prime-quorum.yaml --profile prime-sentinel config >/tmp/poo-prime-quorum-compose.yaml
+          test "$(grep -c 'POO_REQUIRE_PRIME_QUORUM: "1"' /tmp/poo-prime-quorum-compose.yaml)" -eq 1
+          test "$(grep -c 'POO_PRIME_QUORUM_THRESHOLD: "2"' /tmp/poo-prime-quorum-compose.yaml)" -eq 1
+          grep -q 'prime-sentinel-b:' /tmp/poo-prime-quorum-compose.yaml
+          grep -q 'worldshepherd_sara.prime_sentinel_poo_service:create_prime_sentinel_poo_app' /tmp/poo-prime-quorum-compose.yaml
+          rm -f .env
+      - name: Run containerized two-signer PRIME quorum exercise
+        env:
+          POO_PRIME_QUORUM_EVIDENCE_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/poo_prime_quorum_evidence
+        run: bash deployments/sara_verified_local_v1/scripts/verify_poo_prime_quorum_stack.sh
+      - name: Validate quorum evidence contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path('deployments/sara_verified_local_v1/poo_prime_quorum_evidence/result.json')
+          r=json.loads(p.read_text(encoding='utf-8'))
+          assert r['schema']=='WS-POO-PRIME-QUORUM-STACK-EVIDENCE-V1'
+          assert r['evidence_status']=='INTERNAL_CI_GENERATED_UNSIGNED'
+          assert r['result']=='PASS'
+          assert r['tested_head_sha']==os.environ['GITHUB_SHA']
+          assert r['prime_quorum_required'] is True
+          assert r['prime_quorum_threshold']==2
+          assert r['isolated_signer_process_count']==2
+          assert r['distinct_signing_key_count']==2
+          assert len(set(r['signing_key_fingerprints_sha256']))==2
+          assert r['unsigned_commit_http_status']==403
+          assert r['single_signer_commit_http_status']==403
+          assert r['one_assertion_quorum_http_status']==422
+          assert r['lower_assurance_routes_blocked_before_mutation'] is True
+          assert r['poo_state_count']==1 and r['poo_commit_count']==1
+          assert r['consumed_prime_authorization_count']==2
+          assert r['technical_commit_audit_count']==1
+          assert r['quorum_authorization_audit_count']==1
+          assert r['restart_signer_a_issuance_idempotent'] is True
+          assert r['restart_signer_b_issuance_idempotent'] is True
+          assert r['restart_commit_idempotent'] is True
+          assert r['tampered_quorum_replay_rejected'] is True
+          assert r['prime_quorum_cryptographic_authorization_verified'] is True
+          assert r['single_signer_sufficient'] is False
+          assert r['durable_internal_state_committed'] is True
+          assert r['sara_prime_private_material_exposed'] is False
+          assert r['legal_title_changed'] is False
+          assert r['live_value_moved'] is False
+          assert r['credential_rotated'] is False
+          assert r['external_transfer_executed'] is False
+          assert 'not independent organizations' in r['claims_boundary'].lower()
+          assert 'not post-quantum security' in r['claims_boundary'].lower()
+          PY
+      - name: Upload quorum evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: poo-prime-quorum-stack-evidence
+          path: deployments/sara_verified_local_v1/poo_prime_quorum_evidence
+          if-no-files-found: error
+          retention-days: 90
+      - name: Capture Docker state on failure
+        if: failure()
+        run: |
+          docker ps -a --no-trunc || true
+          docker volume ls || true
