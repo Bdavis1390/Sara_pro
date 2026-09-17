@@ -32,7 +32,8 @@ KEY = b"worldshepherd-g7-quality-hmac-key-32-bytes-minimum"
 KEY_ID = "ws-restriction-key-epoch-quality"
 SIGNING_KEY_ID = "PS-QUALITY-K1"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
-TOTAL_ASSURANCE_DIMENSIONS = 10\nBASELINE_MANUAL_INFERENCE_UNITS = 6
+TOTAL_ASSURANCE_DIMENSIONS = 10
+BASELINE_MANUAL_INFERENCE_UNITS = 6
 MAX_UNRESOLVED_RATIO = 0.10
 
 
