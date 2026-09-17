@@ -1,0 +1,30 @@
+{
+  "spec": "WS-CAE-CHAIN-PATCH-1",
+  "chain": "Algorand",
+  "profile": {
+    "ecosystem": "Algorand",
+    "adapter_class": "NATIVE_REKEY",
+    "implementation_maturity": "MAINNET",
+    "stable_authority_id": true,
+    "authenticator_replaceable": true,
+    "pq_authorization_state": "PQ_MAINNET",
+    "policy_state_documented": true,
+    "recovery_state_documented": false,
+    "domain_binding_documented": true,
+    "evidence_state_documented": true,
+    "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+    "protocol_commitment_state": "MAINNET"
+  },
+  "evidence": [
+    {
+      "label": "Algorand post-quantum technology",
+      "url": "https://algorand.co/technology/post-quantum",
+      "claim": "Native Falcon-1024 accounts are live on Mainnet while consensus PQ work remains a separate research lane."
+    },
+    {
+      "label": "Algorand post-quantum accounts",
+      "url": "https://dev.algorand.co/concepts/accounts/post-quantum/",
+      "claim": "Existing accounts can rekey to a post-quantum authorization key while retaining the public account address."
+    }
+  ]
+}

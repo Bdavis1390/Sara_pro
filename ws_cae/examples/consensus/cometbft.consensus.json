@@ -1,0 +1,25 @@
+{
+  "subject_id": "urn:ws-cae:protocol:cometbft",
+  "consensus_family": "BFT",
+  "mechanism_name": "CometBFT/Tendermint-style BFT consensus",
+  "resource_proof": "OTHER_NAMED",
+  "finality_model": "BFT_SIGNED_VOTE_COMMIT_FINALITY",
+  "participant_auth_primitive": "ED25519_VALIDATOR_CONSENSUS_KEYS",
+  "participant_key_agility": "ROTATABLE_CLASSICAL",
+  "local_validation_mode": "FULL_NODE_RULE_VALIDATION",
+  "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+  "resource_proof_agility": "VALIDATOR_SELECTION_IS_APPLICATION_DEFINED_AND_SEPARATE_FROM_COMETBFT",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "CometBFT consensus overview",
+      "url": "https://docs.cosmos.network/cometbft/latest/spec/consensus/Overview",
+      "claim": "CometBFT implements a Byzantine-fault-tolerant consensus protocol with cryptographic validator signing and a light-client verification protocol."
+    },
+    {
+      "label": "CometBFT validators",
+      "url": "https://docs.cosmos.network/cometbft/latest/docs/core/Validators",
+      "claim": "Validators commit blocks using cryptographically signed votes; proof of stake is not required by CometBFT and can be layered on by the application. Current validator consensus keys use Ed25519."
+    }
+  ]
+}

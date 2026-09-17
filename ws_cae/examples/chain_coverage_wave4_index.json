@@ -1,0 +1,14 @@
+{
+  "spec": "WS-CAE-CHAIN-COVERAGE-INDEX-1",
+  "as_of": "2026-09-13",
+  "entries": [
+    {"name":"Monero","kind":"PRIVACY_L1","status":"PRIMARY_EVIDENCE_COLLECTED","architecture":"EDWARDS25519_SPEND_AND_VIEW_KEYS_WITH_ONE_TIME_OUTPUT_KEYS_AND_KEY_IMAGES","pq_state":"NONE_ESTABLISHED","sources":["https://docs.getmonero.org/cryptography/asymmetric/public-key/","https://docs.getmonero.org/public-address/standard-address/","https://docs.getmonero.org/cryptography/asymmetric/key-image/"]},
+    {"name":"Litecoin","kind":"UTXO_L1_WITH_MWEB_EXTENSION","status":"PRIMARY_EVIDENCE_COLLECTED","architecture":"BITCOIN_DERIVED_TRANSPARENT_UTXO_PLUS_OPTIONAL_MWEB_EXTENSION_BLOCK","pq_state":"NONE_ESTABLISHED","consensus_pq_state":"CLASSICAL_OR_UNPROVEN","sources":["https://litecoin.com/news/mweb-has-officially-activated","https://litecoin.com/learning-center/litecoin-and-mweb-what-it-is-and-how-to-use-it"]},
+    {"name":"Dogecoin","kind":"UTXO_L1","status":"PRIMARY_EVIDENCE_COLLECTED","authorization":"ECDSA_SECP256K1","pq_state":"NONE_ESTABLISHED","consensus_pq_state":"CLASSICAL_OR_UNPROVEN","sources":["https://github.com/dogecoin/dogecoin/blob/master/src/pubkey.cpp","https://github.com/dogecoin/dogecoin/blob/master/src/secp256k1/README.md"]},
+    {"name":"Bitcoin Cash","kind":"UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Zcash","kind":"PRIVACY_UTXO_L1","status":"PRIMARY_EVIDENCE_COLLECTED_PARTIAL","architecture":"TRANSPARENT_AND_SHIELDED_POOLS_WITH_ORCHARD_PALLAS_KEYS_HALO2_AND_SINSEMILLA_COMMITMENTS","pq_state":"NONE_ESTABLISHED","evidence_boundary":"ORCHARD_KEY_AND_COMMITMENT_EVIDENCE_COLLECTED; FULL_TRANSPARENT_AND_CONSENSUS_PROFILE_STILL_PENDING","sources":["https://zcash.github.io/orchard/design/keys.html","https://zcash.github.io/orchard/design/commitments.html"]},
+    {"name":"Kaspa","kind":"DAG_UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Chia","kind":"UTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Ergo","kind":"EUTXO_L1","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"}
+  ]
+}

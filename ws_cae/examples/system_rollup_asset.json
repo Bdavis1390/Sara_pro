@@ -1,0 +1,9 @@
+{
+  "spec": "WS-CAE-CRYPTO-SYSTEM-PATCH-1",
+  "asset": "SYNTHETIC-ROLLUP-ASSET",
+  "components": [
+    {"role": "CHAIN_AUTHORITY", "name": "base-chain-authority", "readiness_state": "PQ_DEPLOYED", "critical": true, "evidence_documented": true},
+    {"role": "ROLLUP_PROVER", "name": "proof-system", "readiness_state": "PQ_PARTIAL", "critical": true, "evidence_documented": true},
+    {"role": "PROTOCOL_ADMIN", "name": "protocol-governance", "readiness_state": "CLASSICAL_DEPENDENCY", "critical": true, "evidence_documented": true}
+  ]
+}

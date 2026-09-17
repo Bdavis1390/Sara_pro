@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Bdavis1390/Sara_pro/ws_cae/scitt_statement.schema.json",
+  "title": "WS-CAE Digital Asset Authority Transparency Statement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "media_type", "issuer", "observed_at", "subject", "claims", "evidence"],
+  "properties": {
+    "spec": {"const": "WS-CAE-SCITT-STATEMENT-1"},
+    "media_type": {"const": "application/vnd.ws-cae.digital-asset-authority+json"},
+    "issuer": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "name", "source_patch_sha256"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "type": {"const": "blockchain-authority-state"},
+        "name": {"type": "string", "minLength": 1},
+        "source_patch_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation_maturity",
+        "protocol_commitment_state",
+        "pq_authorization_state",
+        "consensus_pq_state",
+        "stable_authority_id",
+        "authenticator_replaceable",
+        "recovery_state_documented",
+        "policy_state_documented"
+      ],
+      "properties": {
+        "implementation_maturity": {"enum": ["ROADMAP", "DRAFT", "DEVNET", "TESTNET", "MAINNET"]},
+        "protocol_commitment_state": {"enum": ["UNSPECIFIED", "RESEARCH", "GOVERNANCE_SELECTED", "FORK_SCHEDULED", "MAINNET"]},
+        "pq_authorization_state": {"enum": ["NONE", "PLUGGABLE_AUTH_ONLY", "PQ_NON_MAINNET", "PQ_MAINNET_LIMITED", "PQ_MAINNET"]},
+        "consensus_pq_state": {"enum": ["CLASSICAL_OR_UNPROVEN", "PQ_RESEARCH_OR_PARTIAL", "PQ_DEPLOYED"]},
+        "stable_authority_id": {"type": "boolean"},
+        "authenticator_replaceable": {"type": "boolean"},
+        "recovery_state_documented": {"type": "boolean"},
+        "policy_state_documented": {"type": "boolean"}
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "minProperties": 1
+      }
+    }
+  }
+}

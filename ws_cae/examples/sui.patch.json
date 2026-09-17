@@ -1,0 +1,30 @@
+{
+  "spec": "WS-CAE-CHAIN-PATCH-1",
+  "chain": "Sui",
+  "profile": {
+    "ecosystem": "Sui",
+    "adapter_class": "ADDRESS_ALIAS_AUTHORITY",
+    "implementation_maturity": "MAINNET",
+    "stable_authority_id": true,
+    "authenticator_replaceable": true,
+    "pq_authorization_state": "PLUGGABLE_AUTH_ONLY",
+    "policy_state_documented": true,
+    "recovery_state_documented": true,
+    "domain_binding_documented": true,
+    "evidence_state_documented": true,
+    "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+    "protocol_commitment_state": "GOVERNANCE_SELECTED"
+  },
+  "evidence": [
+    {
+      "label": "Making Sui Quantum Ready",
+      "url": "https://www.sui.io/blog/making-sui-quantum-ready",
+      "claim": "Address aliases are live and provide a migration path that can retain an account address while authorization changes; native ML-DSA and SLH-DSA rollout remains staged."
+    },
+    {
+      "label": "Sui post-quantum scheme selection",
+      "url": "https://www.sui.io/blog/suis-post-quantum-signature-schemes",
+      "claim": "Sui selected ML-DSA-65 for native accounts and SLH-DSA for high-value vaults, using two cryptographic families."
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "schema": "WS-QCRYPTO-RESOURCE-BASELINE-v4",
+  "as_of": "2026-09-12",
+  "claims_control": "External resource estimates, measured QEC evidence, platform maturity evidence, classical-decoder designs, and vendor roadmaps only; no production key break is claimed. Cross-architecture extrapolation is prohibited without a complete fault-tolerant overhead model, and roadmap/prototype/decoder design evidence is never treated as delivered attack capability.",
+  "attack_estimates": [
+    {
+      "name": "Google Quantum AI 2026 low-width secp256k1 ECDLP",
+      "source": "https://research.google/pubs/securing-elliptic-curve-cryptocurrencies-against-quantum-vulnerabilities-resource-estimates-and-mitigations-2/",
+      "full_attack": true,
+      "logical_qubits": 1200,
+      "toffoli_gates": 90000000,
+      "physical_qubits": 500000,
+      "runtime_seconds": null,
+      "runtime_note": "Published superconducting scenario says minutes with fewer than 500,000 physical qubits under stated assumptions; no exact runtime is encoded here."
+    },
+    {
+      "name": "IonQ Walking Cat trapped-ion secp256k1 ECDLP",
+      "source": "https://arxiv.org/abs/2609.05625",
+      "full_attack": true,
+      "logical_qubits": 1457,
+      "toffoli_gates": 39000000,
+      "physical_qubits": 19397,
+      "runtime_seconds": 2220480,
+      "runtime_note": "25.7 days per attempt under the published Walking Cat architecture assumptions."
+    },
+    {
+      "name": "Luo et al. 2026 space-efficient complete ECDLP",
+      "source": "https://arxiv.org/abs/2607.13816",
+      "full_attack": true,
+      "logical_qubits": 835,
+      "toffoli_gates": 1927282688,
+      "physical_qubits": null,
+      "runtime_seconds": null,
+      "runtime_note": "835 logical qubits is a complete Shor/ECDLP width result. The stored Toffoli value is the 919*n^3/log2(n) leading term evaluated at n=256; the paper also includes O(n^2). Do not infer fast runtime without architecture-specific compilation."
+    }
+  ],
+  "hardware_roadmaps": [
+    {
+      "vendor": "IonQ",
+      "source": "https://www.ionq.com/roadmap",
+      "target_year": 2027,
+      "physical_qubits": 10000,
+      "logical_qubits": 800,
+      "logical_error_state": "<1e-7",
+      "same_architecture_family_as_walking_cat": true,
+      "demonstrated": false,
+      "claims_note": "Forward-looking vendor target only. It is 35 logical qubits below the Luo 835-qubit width result; no attack capability is inferred."
+    },
+    {
+      "vendor": "IonQ",
+      "source": "https://www.ionq.com/roadmap",
+      "target_year": 2028,
+      "physical_qubits": 20000,
+      "logical_qubits": 1600,
+      "logical_error_state": "<1e-7",
+      "same_architecture_family_as_walking_cat": true,
+      "demonstrated": false,
+      "claims_note": "Forward-looking vendor target only. The target numerically overlaps IonQ's published Walking Cat attack envelope of 19,397 physical and 1,457 logical qubits. This is a migration-planning trigger, not evidence that the target will be achieved or that the attack will execute as modeled."
+    }
+  ],
+  "platform_maturity_evidence": [
+    {
+      "vendor": "IonQ",
+      "source": "https://www.ionq.com/news/ionq-launches-superion-product-line-industry-leading-upgradeable-platform-designed-to-scale-manufacturable-fault-tolerant-quantum-computing",
+      "platform": "Superion 256",
+      "physical_qubits": 256,
+      "integrated_qpu_fabricated": true,
+      "ions_trapped_in_prototype": true,
+      "orders_open": true,
+      "customer_delivery_year": 2027,
+      "qec_component_validated_on_related_hardware": true,
+      "related_qec_note": "IonQ reports breakeven qLDPC QEC on a Tempo engineering test system and describes this as validating key elements of Walking Cat on hardware.",
+      "target_scale_demonstrated": false,
+      "claims_note": "This raises roadmap maturity above slideware but remains far below the 20,000-physical-qubit attack-scale target and does not establish integrated fault-tolerant cryptanalytic capability."
+    }
+  ],
+  "qec_evidence": [
+    {
+      "name": "IonQ breakeven qLDPC demonstration",
+      "source": "https://arxiv.org/abs/2606.06455",
+      "hardware": "IonQ trapped-ion engineering hardware",
+      "physical_qubits": 18,
+      "logical_qubits": 4,
+      "postselection_used": false,
+      "breakeven_reported": true,
+      "attack_scale_demonstrated": false,
+      "claims_note": "Demonstrates qLDPC breakeven behavior on trapped-ion hardware. It does not demonstrate the full Walking Cat attack code stack, magic-state factories, 1,457 logical qubits, or attack runtime."
+    },
+    {
+      "name": "Quantinuum C4-Helix on Helios",
+      "source": "https://arxiv.org/abs/2609.03194",
+      "hardware": "Quantinuum Helios trapped-ion processor",
+      "physical_qubits": 20,
+      "logical_qubits": 2,
+      "code_distance": 6,
+      "physical_per_logical_codeblock_ratio": 10.0,
+      "logical_memory_error_per_cycle": 0.000046,
+      "logical_two_qubit_clifford_error": 0.00028,
+      "postselection_used": false,
+      "encoded_outperformed_unencoded_baseline": true,
+      "universal_non_clifford_demonstrated_for_this_code": false,
+      "architecture_specific_secp256k1_attack_compilation": false,
+      "attack_scale_demonstrated": false,
+      "complete_fault_tolerant_overhead_model": false,
+      "claims_note": "Independent trapped-ion evidence that compact logical memory/computation is advancing; no cross-vendor multiplication into an IonQ attack estimate is allowed."
+    }
+  ],
+  "classical_decoder_evidence": [
+    {
+      "name": "Generalized qLDPC predecoding architecture",
+      "source": "https://arxiv.org/abs/2605.03180",
+      "code_family": "qLDPC / bivariate bicycle",
+      "evidence_class": "proposed classical decoder architecture and hardware design",
+      "demonstrated_attack_scale_hardware": false,
+      "fpga_supported_logical_qubits": 1200,
+      "cryogenic_asic_supported_logical_qubits_low": 36000,
+      "cryogenic_asic_supported_logical_qubits_high": 360000,
+      "reported_decoder_utilization_reduction_max": 3963,
+      "reported_predecoded_workload_fraction": ">90%",
+      "exact_walking_cat_code_compatibility_demonstrated": false,
+      "attack_specific_integration_demonstrated": false,
+      "claims_note": "This materially reduces the plausibility of classical decoding being an immutable scale bottleneck, but the FPGA/ASIC capacities are design estimates and are not demonstrated as an integrated decoder for IonQ's Walking Cat ECDLP workload."
+    }
+  ],
+  "multi_vendor_fault_tolerance_evidence": [
+    {
+      "source": "https://www.quantinuum.com/blog/quantinuums-fault-tolerance-advantage-turning-quantum-reliability-into-commercial-usefulness",
+      "finding": "Quantinuum reports high-rate logical encoding and fault-tolerant universal-gate/magic-state progress on commercial trapped-ion hardware.",
+      "allowed_use": "Independent evidence that fault-tolerant primitives are progressing across more than one trapped-ion vendor; not interchangeable with IonQ's architecture or attack resource estimate."
+    },
+    {
+      "source": "https://www.nature.com/articles/s41467-026-68533-x",
+      "finding": "Peer-reviewed trapped-ion experiment demonstrates a fault-tolerant universal logical toolbox and a small Grover algorithm on encoded logical qubits.",
+      "allowed_use": "Multi-vendor/platform technology-trend evidence only; not proof of cryptanalytic scale."
+    }
+  ],
+  "full_stack_convergence_policy": {
+    "purpose": "Detect when attack-resource estimates, same-architecture roadmaps, prototype/manufacturing progress, QEC hardware evidence, and classical-decoder capacity are converging before a production break exists.",
+    "hard_rule": "A multi-plane convergence signal may accelerate migration validation but never establishes Q2, Q3, Q4, Q-day, or a demonstrated production break without integrated hardware/runtime evidence.",
+    "current_trigger": "IonQ's 2028 attack-envelope roadmap collision is now accompanied by fabricated/trapped-ion Superion 256 prototypes, reported breakeven qLDPC on related trapped-ion hardware, and a separate published qLDPC decoder design whose FPGA capacity is near the logical width of the Walking Cat attack estimate. Exact code compatibility and end-to-end integration remain unproven."
+  }
+}

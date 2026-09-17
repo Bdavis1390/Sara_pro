@@ -1,0 +1,9 @@
+{
+  "spec": "WS-CAE-CRYPTO-SYSTEM-PATCH-1",
+  "asset": "SYNTHETIC-BRIDGED-ASSET",
+  "components": [
+    {"role": "CHAIN_AUTHORITY", "name": "destination-chain", "readiness_state": "PQ_DEPLOYED", "critical": true, "evidence_documented": true},
+    {"role": "BRIDGE_MESSAGING", "name": "cross-chain-verification", "readiness_state": "CLASSICAL_DEPENDENCY", "critical": true, "evidence_documented": true},
+    {"role": "RECOVERY", "name": "recovery-governance", "readiness_state": "CRYPTO_AGILE", "critical": true, "evidence_documented": true}
+  ]
+}
