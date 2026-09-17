@@ -362,3 +362,48 @@ def test_rejection_audit_is_bounded_and_does_not_echo_trust_material(tmp_path):
     assert "PS-SENSITIVE-ID" not in serialized
     assert key not in serialized
     assert "epoch rollback detected" not in serialized
+
+
+
+def test_rejected_trust_root_prevents_verifier_construction_and_replay(
+    monkeypatch,
+    tmp_path,
+):
+    app_module = importlib.import_module("worldshepherd_sara.app")
+    calls: list[str] = []
+
+    monkeypatch.setenv(
+        "SARA_RELAY_TOKEN",
+        "relay-token-0123456789abcdef012345",
+    )
+    monkeypatch.setenv(
+        "SARA_ADMIN_TOKEN",
+        "admin-token-0123456789abcdef012345",
+    )
+    monkeypatch.setenv("SARA_DATA_DIR", str(tmp_path / "data"))
+
+    def reject_guard(store):
+        calls.append("guard")
+        raise PrimeTrustRootError("PRIME trust-root epoch rollback detected")
+
+    def forbidden_verifier():
+        calls.append("verifier")
+        raise AssertionError("verifier must not be constructed after trust-root rejection")
+
+    def forbidden_drain(store, *, limit):
+        calls.append("drain")
+        raise AssertionError("outbox must not replay after trust-root rejection")
+
+    monkeypatch.setattr(app_module, "guard_prime_trust_root", reject_guard)
+    monkeypatch.setattr(
+        app_module.PrimeSentinelVerifier,
+        "from_environment",
+        forbidden_verifier,
+    )
+    monkeypatch.setattr(app_module, "drain_event_outbox", forbidden_drain)
+
+    with pytest.raises(PrimeTrustRootError, match="epoch rollback"):
+        with TestClient(app_module.app):
+            pass
+
+    assert calls == ["guard"]
