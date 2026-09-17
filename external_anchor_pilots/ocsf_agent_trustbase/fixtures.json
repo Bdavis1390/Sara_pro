@@ -1,0 +1,149 @@
+{
+  "schema_status": "provisional-non-normative",
+  "issue": "ocsf/ocsf-schema#1724",
+  "cases": [
+    {
+      "name": "session-start baseline",
+      "expected": "pass",
+      "events": [
+        {
+          "metadata": {"uid": "e1"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-baseline", "version": "1.0.0"},
+          "phase": "admission",
+          "trust_base": {
+            "declared": {"artifacts": [
+              {"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "111"}},
+              {"kind": "hosted_model", "ai_model": {"ai_provider": "ExampleAI", "name": "model-x", "version": "2026-09"}}
+            ]},
+            "observed": {"artifacts": [
+              {"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "111"}},
+              {"kind": "hosted_model", "ai_model": {"ai_provider": "ExampleAI", "name": "model-x", "version": "2026-09"}}
+            ]}
+          },
+          "attestation_list": [{"chain_uid": "inst-baseline", "fingerprint": {"value": "fp-e1"}}]
+        },
+        {
+          "metadata": {"uid": "e2"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-baseline", "version": "1.0.0"},
+          "phase": "closure",
+          "trust_base": {
+            "declared": {"artifacts": [{"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "111"}}]},
+            "observed": {"artifacts": [{"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "111"}}]}
+          },
+          "attestation_list": [{"chain_uid": "inst-baseline", "fingerprint": {"value": "fp-e2"}, "prev_event": {"uid": "e1", "fingerprint": {"value": "fp-e1"}}}]
+        }
+      ]
+    },
+    {
+      "name": "MCP tool refresh benign divergence",
+      "expected": "pass",
+      "events": [
+        {
+          "metadata": {"uid": "b1"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-benign"},
+          "phase": "admission",
+          "trust_base": {
+            "declared": {"artifacts": [{"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "222"}}]},
+            "observed": {"artifacts": [{"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "111"}}]}
+          },
+          "attestation_list": [{"chain_uid": "inst-benign", "fingerprint": {"value": "fp-b1"}}]
+        },
+        {
+          "metadata": {"uid": "b2"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-benign"},
+          "phase": "closure",
+          "trust_base": {
+            "declared": {"artifacts": [{"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "222"}}]},
+            "observed": {"artifacts": [{"kind": "tool_schema", "name": "mcp-tools", "fingerprint": {"value": "111"}}]}
+          },
+          "attestation_list": [{"chain_uid": "inst-benign", "fingerprint": {"value": "fp-b2"}, "prev_event": {"uid": "b1", "fingerprint": {"value": "fp-b1"}}}]
+        }
+      ]
+    },
+    {
+      "name": "adapter digest divergence is evidence not validator failure",
+      "expected": "pass",
+      "events": [
+        {
+          "metadata": {"uid": "m1"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-adapter"},
+          "phase": "admission",
+          "trust_base": {
+            "declared": {"artifacts": [{"kind": "adapter", "name": "adapter-a", "fingerprint": {"value": "aaa"}}]},
+            "observed": {"artifacts": [{"kind": "adapter", "name": "adapter-a", "fingerprint": {"value": "bbb"}}]}
+          },
+          "attestation_list": [{"chain_uid": "inst-adapter", "fingerprint": {"value": "fp-m1"}}]
+        },
+        {
+          "metadata": {"uid": "m2"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-adapter"},
+          "phase": "closure",
+          "trust_base": {
+            "declared": {"artifacts": [{"kind": "adapter", "name": "adapter-a", "fingerprint": {"value": "aaa"}}]},
+            "observed": {"artifacts": [{"kind": "adapter", "name": "adapter-a", "fingerprint": {"value": "bbb"}}]}
+          },
+          "attestation_list": [{"chain_uid": "inst-adapter", "fingerprint": {"value": "fp-m2"}, "prev_event": {"uid": "m1", "fingerprint": {"value": "fp-m1"}}}]
+        }
+      ]
+    },
+    {
+      "name": "missing closure emission",
+      "expected": "fail",
+      "events": [
+        {
+          "metadata": {"uid": "x1"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-missing"},
+          "phase": "admission",
+          "trust_base": {
+            "declared": {"artifacts": [{"kind": "tool_schema", "fingerprint": {"value": "111"}}]},
+            "observed": {"artifacts": [{"kind": "tool_schema", "fingerprint": {"value": "111"}}]}
+          },
+          "attestation_list": [{"chain_uid": "inst-missing", "fingerprint": {"value": "fp-x1"}}]
+        }
+      ]
+    },
+    {
+      "name": "broken prev_event chain",
+      "expected": "fail",
+      "events": [
+        {
+          "metadata": {"uid": "c1"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-broken"},
+          "phase": "admission",
+          "trust_base": {"declared": {"artifacts": []}, "observed": {"artifacts": []}},
+          "attestation_list": [{"chain_uid": "inst-broken", "fingerprint": {"value": "fp-c1"}}]
+        },
+        {
+          "metadata": {"uid": "c2"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-broken"},
+          "phase": "closure",
+          "trust_base": {"declared": {"artifacts": []}, "observed": {"artifacts": []}},
+          "attestation_list": [{"chain_uid": "inst-broken", "fingerprint": {"value": "fp-c2"}, "prev_event": {"uid": "WRONG", "fingerprint": {"value": "fp-WRONG"}}}]
+        }
+      ]
+    },
+    {
+      "name": "raw credential material present",
+      "expected": "fail",
+      "events": [
+        {
+          "metadata": {"uid": "s1"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-secret"},
+          "phase": "admission",
+          "trust_base": {
+            "declared": {"artifacts": []},
+            "observed": {"artifacts": [], "credentials": [{"credential_ref": "vault://prod/key", "scopes": ["read"], "api_key": "SHOULD-NOT-BE-HERE"}]}
+          },
+          "attestation_list": [{"chain_uid": "inst-secret", "fingerprint": {"value": "fp-s1"}}]
+        },
+        {
+          "metadata": {"uid": "s2"},
+          "ai_agent": {"uid": "agent-1", "instance_uid": "inst-secret"},
+          "phase": "closure",
+          "trust_base": {"declared": {"artifacts": []}, "observed": {"artifacts": []}},
+          "attestation_list": [{"chain_uid": "inst-secret", "fingerprint": {"value": "fp-s2"}, "prev_event": {"uid": "s1", "fingerprint": {"value": "fp-s1"}}}]
+        }
+      ]
+    }
+  ]
+}
