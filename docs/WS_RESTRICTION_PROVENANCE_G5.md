@@ -1,6 +1,6 @@
 # WS-RESTRICTION-PROVENANCE G5 — FINGERPRINT KEY EPOCH PROVENANCE
 
-Status: **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING G4 + INTERNAL VALIDATION**
+Status: **IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY FOR THE TESTED KEY-EPOCH AND CUMULATIVE 10X INVARIANTS**
 
 ## Objective
 
@@ -115,4 +115,4 @@ It does not establish KMS/HSM custody, key rotation automation, secure key destr
 
 Those are separate gates.
 
-Until G4 is merged and G5 is reconciled onto that protected head, then passes exact-head required CI, the broader Verified Local gate, and protected merge, classify G5 as **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING INTERNAL VALIDATION**.
+G5 merged through protected main in PR #430 at commit `0714d058b07edbe26d301409c6b403615d4b1c89` after required CodeQL/Analyze/test-and-build and the full Verified Local deployment/recovery/evidence gate succeeded. The cumulative executable scorecard closed all six declared G3-start residual classes (6 -> 0) while preserving every prior zero-tolerance control. This proof applies only to those declared software invariants.
