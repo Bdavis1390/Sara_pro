@@ -29,7 +29,8 @@ stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 evidence_root=".deployment-evidence/full-stack"
 mkdir -p "$evidence_root"
 chmod 0700 .deployment-evidence "$evidence_root"
-evidence_dir="${evidence_root}/${stamp}-$"
+evidence_nonce="$(python3 -c 'import uuid; print(uuid.uuid4().hex[:12])')"
+evidence_dir="${evidence_root}/${stamp}-${evidence_nonce}"
 if ! mkdir -m 0700 "$evidence_dir"; then
   fail "could not create unique deployment evidence directory"
 fi
