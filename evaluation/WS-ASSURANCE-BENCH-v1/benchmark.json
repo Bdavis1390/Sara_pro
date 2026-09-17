@@ -10,7 +10,8 @@
     "Missing public evidence is scored as not evidenced, not as proof that a competitor lacks a capability.",
     "Vendor documentation is not treated as independent reproduction.",
     "Worldshepherd-controlled CI is not treated as independent reproduction or external customer use.",
-    "Competition records must cite public evidence current enough to support the scored state."
+    "Competition records must cite public evidence current enough to support the scored state.",
+    "A Worldshepherd-authored score lead is not public leadership evidence until the benchmark methodology has attributable external review."
   ],
   "evidence_levels": {
     "not_evidenced": 0.0,
@@ -104,6 +105,7 @@
     "minimum_margin_points": 5.0,
     "required_worldshepherd_criteria": ["A01", "A02", "A03", "A04", "A06", "A07", "A08", "A09", "A11"],
     "critical_zero_blocks": ["A01", "A02", "A04", "A07", "A09"],
+    "public_claim_requires_external_methodology_review": true,
     "wording_when_passed": "Leads this benchmark profile under the recorded public evidence set as of the stated date.",
     "prohibited_wording": [
       "best AI platform",
