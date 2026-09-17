@@ -5,9 +5,11 @@ import hmac
 import json
 import os
 import re
+import stat
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Literal
 
 from .event_outbox import queue_event_outbox_patch
@@ -26,6 +28,10 @@ REMEDIATION_SCHEMA = "WS-RESTRICTION-REMEDIATION-V1"
 RESTRICTION_EVENT = "content_restriction_recorded"
 MIN_FINGERPRINT_KEY_BYTES = 32
 FINGERPRINT_KEY_ID_ENV = "RESTRICTION_FINGERPRINT_KEY_ID"
+FINGERPRINT_KEY_FILE_ENV = "RESTRICTION_FINGERPRINT_KEY_FILE"
+LEGACY_FINGERPRINT_KEY_ENV = "RESTRICTION_FINGERPRINT_KEY"
+ALLOW_LEGACY_FINGERPRINT_KEY_ENV = "RESTRICTION_ALLOW_LEGACY_ENV_KEY"
+MAX_FINGERPRINT_KEY_FILE_BYTES = 4096
 MAX_SAFE_SUMMARY_CHARS = 2048
 MAX_REASON_CODE_CHARS = 96
 MAX_COMPONENT_CHARS = 128
@@ -114,16 +120,105 @@ def fingerprint_key_id_from_environment() -> str:
     return _bounded_component("fingerprint_key_id", value)
 
 
-def fingerprint_key_from_environment() -> bytes:
-    """Load the deployment-only key used for non-reversible content fingerprints.
+def _read_fingerprint_key_file(path_value: str) -> bytes:
+    """Read fingerprint-key bytes from a tightly controlled regular file.
 
-    The key is intentionally not stored in a restriction event. Deployments should
-    provide a high-entropy secret through their normal secret-injection mechanism.
+    This deliberately mirrors the fail-closed ECHO checkpoint-key file posture:
+    absolute path, no symlink, same-UID ownership, no group/other access, bounded
+    size, and inode stability across the secure open.
     """
-    value = os.getenv("RESTRICTION_FINGERPRINT_KEY", "")
-    key = value.encode("utf-8")
+    if not path_value:
+        raise RestrictionProvenanceError(
+            f"{FINGERPRINT_KEY_FILE_ENV} is required for file-backed custody"
+        )
+    path = Path(path_value)
+    if not path.is_absolute():
+        raise RestrictionProvenanceError(
+            f"{FINGERPRINT_KEY_FILE_ENV} must be an absolute path"
+        )
+    try:
+        link_status = path.lstat()
+    except OSError as exc:
+        raise RestrictionProvenanceError(
+            "unable to inspect restriction fingerprint key file"
+        ) from exc
+    if stat.S_ISLNK(link_status.st_mode):
+        raise RestrictionProvenanceError(
+            "restriction fingerprint key file must not be a symbolic link"
+        )
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise RestrictionProvenanceError(
+            "unable to open restriction fingerprint key file securely"
+        ) from exc
+    try:
+        status = os.fstat(descriptor)
+        if not stat.S_ISREG(status.st_mode):
+            raise RestrictionProvenanceError(
+                "restriction fingerprint key file must be a regular file"
+            )
+        if (link_status.st_dev, link_status.st_ino) != (status.st_dev, status.st_ino):
+            raise RestrictionProvenanceError(
+                "restriction fingerprint key file changed during secure open"
+            )
+        if status.st_uid != os.geteuid():
+            raise RestrictionProvenanceError(
+                "restriction fingerprint key file must be owned by the service UID"
+            )
+        if stat.S_IMODE(status.st_mode) & 0o077:
+            raise RestrictionProvenanceError(
+                "restriction fingerprint key file must not grant group/other permissions"
+            )
+        if status.st_size < MIN_FINGERPRINT_KEY_BYTES or status.st_size > MAX_FINGERPRINT_KEY_FILE_BYTES:
+            raise RestrictionProvenanceError(
+                "restriction fingerprint key file size is invalid"
+            )
+        with os.fdopen(descriptor, "rb") as handle:
+            descriptor = -1
+            key = handle.read(MAX_FINGERPRINT_KEY_FILE_BYTES + 1)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+    if len(key) > MAX_FINGERPRINT_KEY_FILE_BYTES:
+        raise RestrictionProvenanceError(
+            "restriction fingerprint key file is too large"
+        )
     _validate_fingerprint_key(key)
     return key
+
+
+def fingerprint_key_from_environment() -> bytes:
+    """Load the deployment key through the G7 custody policy.
+
+    File-backed custody is the default and preferred path. Direct secret material
+    in the process environment is denied unless an operator explicitly enables the
+    legacy compatibility path. Supplying both sources is rejected as ambiguous.
+    """
+    file_value = os.getenv(FINGERPRINT_KEY_FILE_ENV, "").strip()
+    legacy_value = os.getenv(LEGACY_FINGERPRINT_KEY_ENV, "")
+    if file_value and legacy_value:
+        raise RestrictionProvenanceError(
+            "configure exactly one restriction fingerprint key source"
+        )
+    if file_value:
+        return _read_fingerprint_key_file(file_value)
+
+    allow_legacy = os.getenv(ALLOW_LEGACY_FINGERPRINT_KEY_ENV, "").strip().lower()
+    if legacy_value:
+        if allow_legacy not in {"1", "true", "yes"}:
+            raise RestrictionProvenanceError(
+                "direct environment fingerprint-key custody is disabled; "
+                f"use {FINGERPRINT_KEY_FILE_ENV} or explicitly enable the legacy path"
+            )
+        key = legacy_value.encode("utf-8")
+        _validate_fingerprint_key(key)
+        return key
+
+    raise RestrictionProvenanceError(
+        f"{FINGERPRINT_KEY_FILE_ENV} is required; no fingerprint key source is configured"
+    )
 
 
 def _scan_metadata(value: Any) -> None:
