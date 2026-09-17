@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from collections import Counter
 from datetime import datetime
@@ -87,6 +89,56 @@ def _fingerprint(value: Any, name: str) -> str | None:
     return value
 
 
+def _canonical_json(value: dict[str, Any]) -> str:
+    try:
+        return json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+    except (TypeError, ValueError) as exc:
+        raise RestrictionObservabilityError(
+            "restriction identity document is not canonical bounded JSON"
+        ) from exc
+
+
+def _expected_restriction_id(payload: dict[str, Any], provenance_schema: str) -> str:
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        raise RestrictionObservabilityError("restriction metadata is invalid")
+
+    safe_summary = payload.get("safe_summary")
+    if safe_summary is not None and not isinstance(safe_summary, str):
+        raise RestrictionObservabilityError("restriction safe_summary is invalid")
+
+    identity_document: dict[str, Any] = {
+        "schema": provenance_schema,
+        "occurred_at": payload.get("occurred_at"),
+        "action": payload.get("action"),
+        "reason_code": payload.get("reason_code"),
+        "source_system": payload.get("source_system"),
+        "processor": payload.get("processor"),
+        "process_version": payload.get("process_version"),
+        "policy_ref": payload.get("policy_ref"),
+        "correlation_id": payload.get("correlation_id"),
+        "parent_event_id": payload.get("parent_event_id"),
+        "input_fingerprint": payload.get("input_fingerprint"),
+        "generated_fingerprint": payload.get("generated_fingerprint"),
+        "safe_output_fingerprint": payload.get("safe_output_fingerprint"),
+        "safe_summary": safe_summary,
+        "metadata": metadata,
+        "raw_content_persisted": payload.get("raw_content_persisted"),
+    }
+    if provenance_schema == RESTRICTION_SCHEMA:
+        identity_document["authority"] = payload.get("authority")
+
+    return hashlib.sha256(
+        _canonical_json(identity_document).encode("utf-8")
+    ).hexdigest()[:32]
+
+
 def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     """Validate one restriction audit event and return a strict non-content projection."""
     if not isinstance(record, dict) or record.get("event") != RESTRICTION_EVENT:
@@ -120,6 +172,10 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     restriction_id = payload.get("restriction_id")
     if not isinstance(restriction_id, str) or not _RESTRICTION_ID.fullmatch(restriction_id):
         raise RestrictionObservabilityError("restriction_id is invalid")
+    if restriction_id != _expected_restriction_id(payload, provenance_schema):
+        raise RestrictionObservabilityError(
+            "restriction_id does not match the semantic evidence identity"
+        )
 
     event_id = payload.get("_outbox_event_id")
     expected_event_id = f"SARA-EVENT-RESTRICTION-{restriction_id}"
