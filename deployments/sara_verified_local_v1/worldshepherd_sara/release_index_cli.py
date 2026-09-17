@@ -15,7 +15,7 @@ SBOM_EVIDENCE_SCHEMA = "WS-SOFTWARE-SUPPLY-CHAIN-EVIDENCE-V1"
 VULNERABILITY_EVIDENCE_SCHEMA = "WS-VULNERABILITY-ADVISORY-EVIDENCE-V1"
 HUMAN_TRIAGE_LEDGER_SCHEMA = "WS-VULNERABILITY-HUMAN-TRIAGE-LEDGER-V1"
 MERGE_STATE_PR_CANDIDATE = "PR_CANDIDATE_UNMERGED"
-MERGE_STATE_MAIN_PUSH = "MERGED_MAIN_PUSH"
+MERGE_STATE_MAIN_PUSH = "MAIN_BRANCH_PUSH"
 MERGE_STATE_MANUAL_OR_NON_MAIN = "MANUAL_OR_NON_MAIN_RUN"
 ALLOWED_MERGE_STATES = {
     MERGE_STATE_PR_CANDIDATE,
@@ -119,25 +119,47 @@ def _validate_sbom_summary(sbom_summary: dict[str, Any]) -> None:
         raise ValueError("SBOM summary missing claims boundary")
 
 
-def _validate_vulnerability_summary(vulnerability_summary: dict[str, Any]) -> None:
+def _validate_vulnerability_summary(
+    vulnerability_summary: dict[str, Any],
+    vulnerability_report_path: Path,
+) -> None:
     if vulnerability_summary.get("schema") != VULNERABILITY_EVIDENCE_SCHEMA:
         raise ValueError("unexpected vulnerability evidence summary schema")
     if vulnerability_summary.get("evidence_status") != "INTERNAL_CI_GENERATED_UNSIGNED":
         raise ValueError("unexpected vulnerability evidence status")
-    if not vulnerability_summary.get("vulnerability_report_sha256", "").startswith("sha256:"):
-        raise ValueError("vulnerability summary missing vulnerability_report_sha256")
+    recorded_digest = _normalize_digest(
+        vulnerability_summary.get("vulnerability_report_sha256"),
+        field="vulnerability summary vulnerability_report_sha256",
+    )
+    actual_digest = _sha256_file(vulnerability_report_path)
+    if recorded_digest != actual_digest:
+        raise ValueError(
+            "vulnerability report digest mismatch: "
+            f"summary records {recorded_digest}, file is {actual_digest}"
+        )
     claims_boundary = vulnerability_summary.get("claims_boundary", "")
     if "does not establish" not in claims_boundary:
         raise ValueError("vulnerability summary missing claims boundary")
 
 
-def _validate_human_triage_summary(human_triage_summary: dict[str, Any]) -> None:
+def _validate_human_triage_summary(
+    human_triage_summary: dict[str, Any],
+    human_triage_ledger_path: Path,
+) -> None:
     if human_triage_summary.get("schema") != HUMAN_TRIAGE_LEDGER_SCHEMA:
         raise ValueError("unexpected human triage summary schema")
     if human_triage_summary.get("evidence_status") != "INTERNAL_REVIEW_LEDGER_UNSIGNED":
         raise ValueError("unexpected human triage evidence status")
-    if not human_triage_summary.get("human_triage_ledger_sha256", "").startswith("sha256:"):
-        raise ValueError("human triage summary missing human_triage_ledger_sha256")
+    recorded_digest = _normalize_digest(
+        human_triage_summary.get("human_triage_ledger_sha256"),
+        field="human triage summary human_triage_ledger_sha256",
+    )
+    actual_digest = _sha256_file(human_triage_ledger_path)
+    if recorded_digest != actual_digest:
+        raise ValueError(
+            "human triage ledger digest mismatch: "
+            f"summary records {recorded_digest}, file is {actual_digest}"
+        )
     claims_boundary = human_triage_summary.get("claims_boundary", "")
     if "does not establish" not in claims_boundary:
         raise ValueError("human triage summary missing claims boundary")
@@ -197,8 +219,14 @@ def build_release_evidence_index(
     if qualification_index.get("schema") is None:
         raise ValueError("qualification index missing schema")
     _validate_sbom_summary(sbom_summary)
-    _validate_vulnerability_summary(vulnerability_summary)
-    _validate_human_triage_summary(human_triage_summary)
+    _validate_vulnerability_summary(
+        vulnerability_summary,
+        vulnerability_root / "vulnerability-advisory-report.json",
+    )
+    _validate_human_triage_summary(
+        human_triage_summary,
+        human_triage_root / "human-triage-ledger.json",
+    )
 
     generated_at = executed_utc or datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     pre_artifact = _artifact_record(

@@ -48,7 +48,7 @@ jobs:
           assert record['schema'] == 'WS-SARA-RELEASE-EVIDENCE-INDEX-V1'
           assert record['commit_sha'] == os.environ['TRIGGER_SHA']
           assert str(record['workflow']['run_id']) == os.environ['TRIGGER_RUN_ID']
-          assert record['workflow']['merge_state'] == 'MERGED_MAIN_PUSH'
+          assert record['workflow']['merge_state'] == 'MAIN_BRANCH_PUSH'
           assert record['workflow']['event_name'] == 'push'
           assert record['workflow']['ref'] == 'refs/heads/main'
           assert record['release_index_digest'].startswith('sha256:')
@@ -59,7 +59,7 @@ jobs:
         uses: actions/attest@v4
         with:
           subject-path: release_index/release-index.json
-          create-storage-record: false
+          create-storage-record: true
 
       - name: Build attestation custody receipt
         env:

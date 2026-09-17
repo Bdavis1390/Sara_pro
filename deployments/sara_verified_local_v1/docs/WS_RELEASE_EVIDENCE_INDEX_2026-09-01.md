@@ -31,6 +31,9 @@ ws-release-index \
   --out release_index_ci/release-index.json \
   --pre-dir qualification_evidence_ci \
   --partner-dir partner_screening_ci \
+  --sbom-dir sbom_evidence_ci \
+  --vulnerability-dir vulnerability_evidence_ci \
+  --human-triage-dir human_triage_ci \
   --repository "$GITHUB_REPOSITORY" \
   --commit-sha "$GITHUB_SHA" \
   --workflow-name "$GITHUB_WORKFLOW" \
@@ -45,7 +48,16 @@ ws-release-index \
   --pre-artifact-url "$PRE_ARTIFACT_URL" \
   --partner-artifact-id "$PARTNER_ARTIFACT_ID" \
   --partner-artifact-digest "$PARTNER_ARTIFACT_DIGEST" \
-  --partner-artifact-url "$PARTNER_ARTIFACT_URL"
+  --partner-artifact-url "$PARTNER_ARTIFACT_URL" \
+  --sbom-artifact-id "$SBOM_ARTIFACT_ID" \
+  --sbom-artifact-digest "$SBOM_ARTIFACT_DIGEST" \
+  --sbom-artifact-url "$SBOM_ARTIFACT_URL" \
+  --vulnerability-artifact-id "$VULNERABILITY_ARTIFACT_ID" \
+  --vulnerability-artifact-digest "$VULNERABILITY_ARTIFACT_DIGEST" \
+  --vulnerability-artifact-url "$VULNERABILITY_ARTIFACT_URL" \
+  --human-triage-artifact-id "$HUMAN_TRIAGE_ARTIFACT_ID" \
+  --human-triage-artifact-digest "$HUMAN_TRIAGE_ARTIFACT_DIGEST" \
+  --human-triage-artifact-url "$HUMAN_TRIAGE_ARTIFACT_URL"
 ```
 
 ## CI artifact
@@ -82,7 +94,7 @@ Core fields:
     "event_name": "pull_request|push|workflow_dispatch",
     "ref": "<GITHUB_REF>",
     "pull_request_number": "<PR number or null>",
-    "merge_state": "PR_CANDIDATE_UNMERGED|POST_MERGE_OR_MANUAL_RUN"
+    "merge_state": "PR_CANDIDATE_UNMERGED|MAIN_BRANCH_PUSH|MANUAL_OR_NON_MAIN_RUN"
   },
   "artifacts": {
     "pre_full_bloom_qualification_evidence": {
