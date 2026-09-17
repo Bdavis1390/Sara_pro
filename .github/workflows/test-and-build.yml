@@ -42,7 +42,7 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_discord_webhook.py tests/test_discord_connector.py
 
-      - name: Test restriction provenance, observability, context schemas, and authority binding
+      - name: Test PRIME verification and restriction provenance G1-G6
         working-directory: deployments/sara_verified_local_v1
         run: >-
           python -m pytest -q
@@ -52,6 +52,8 @@ jobs:
           tests/test_restriction_authority_binding.py
           tests/test_restriction_10x_security.py
           tests/test_restriction_key_epoch.py
+          tests/test_prime_sentinel_authorization.py
+          tests/test_restriction_signature.py
 
       - name: Validate upstream patch artifacts
         shell: bash
