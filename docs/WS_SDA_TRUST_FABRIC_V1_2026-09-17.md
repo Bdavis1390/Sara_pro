@@ -202,7 +202,7 @@ The dedicated SDA CI gate must prove at minimum:
 | Gate | Objective | Exit evidence |
 |---|---|---|
 | G1 | canonical observation + source isolation + bounded fusion | unit/integration CI and ECHO conflict tests |
-| G2 | workload identity | per-service identity, short-lived credentials, mTLS, revocation, no ambient shared bearer authority on SDA path |
+| G2 | workload identity | **G2A implemented:** short-lived signed per-adapter identity, revocation, exact source/adapter/version binding and expiry recheck. **Remaining:** mTLS transport binding and removal of ambient shared bearer authority from the complete SDA path. |
 | G3 | adapter isolation | sandboxed adapters, quotas, schema/size/time limits, source quarantine and blast-radius tests |
 | G4 | standards interop | authoritative CCSDS ODM/TDM fixtures + round-trip/negative tests; partner formats remain contract gated |
 | G5 | provenance-aware multi-hypothesis fusion | covariance/reference-frame/time normalization, contradiction retention, degraded-source exclusion and alternative hypotheses |
@@ -213,6 +213,28 @@ The dedicated SDA CI gate must prove at minimum:
 | G10 | independent replication | frozen protocol repeated by an external evaluator/partner with evidence package |
 
 No higher gate is inferred from a lower one.
+
+## 8.1 G2A — signed workload identity implemented
+
+`sda_identity.py` adds a five-minute-maximum PRIME-signed workload assertion for the
+SDA adapter boundary. The assertion binds:
+
+- a URI-form workload identity under the Worldshepherd SDA trust domain;
+- source ID;
+- adapter ID and adapter version;
+- the fixed SDA-ingest audience;
+- issuance and expiration time;
+- signing key ID and public-key fingerprint;
+- nonce.
+
+The ingest gate can require this identity per interface contract. It fails closed on
+missing identity, signature tamper, unknown/revoked key, expiry, future issuance,
+source/adapter/version mismatch, and expiry between verification and use.
+
+This is **not** claimed to be a SPIFFE SVID or mTLS. The SPIFFE-style URI is an
+internal namespace only. G2 remains incomplete until transport identity is bound to
+the verified workload identity and the SDA path no longer relies on ambient shared
+bearer authority.
 
 ## 9. External integration rule
 
@@ -241,13 +263,15 @@ claim:
   evidence:
     - deployments/sara_verified_local_v1/worldshepherd_sara/sda.py
     - deployments/sara_verified_local_v1/tests/test_sda.py
+    - deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py
+    - deployments/sara_verified_local_v1/tests/test_sda_identity.py
   configuration: "feature/ws-sda-trust-fabric-v1-20260917 and CI evidence for exact tested commit"
   limitations:
     - "Unclassified synthetic/reference software baseline."
     - "No operational orbit determination or validated aerospace tracker."
     - "No UDL/CCSDS partner acceptance yet."
     - "No government authorization, CMMC certification, classified-network approval, or flight validation."
-  next_gate: "Pass exact-head CI, then implement G2 workload identity and G4 authoritative CCSDS fixtures without weakening G1 invariants."
+  next_gate: "Pass exact-head CI, complete G2 transport binding/mTLS, then implement G4 authoritative CCSDS fixtures without weakening G1/G2A invariants."
 ```
 
 ## 11. Completion definition
