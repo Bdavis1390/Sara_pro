@@ -1,0 +1,107 @@
+record_id: "WS-GLYPH-ENOCHIAN-0001"
+record_version: "0.1.0"
+
+artifact_family:
+  name: "Dee/Kelley angelic or Enochian material"
+  date_range: "1581-1585 primary working period"
+  period_class: "early_modern_renaissance"
+  ancient_status: "NOT_ANCIENT"
+  provenance_status: "documented_primary_manuscripts_exist"
+  primary_anchors:
+    - shelfmark: "British Library Sloane MS 3188"
+      date: "1581 onward"
+      description: "John Dee's conferences with angels"
+      source_url: "https://searcharchives.bl.uk/"
+    - shelfmark: "British Library Sloane MS 3189"
+      date: "1583"
+      description: "Liber Mysteriorum Sextus et Sanctus / Liber Loagaeth; letters and numbers in 49 x 49 grids from fol. 10r onward"
+      source_url: "https://searcharchives.bl.uk/"
+    - shelfmark: "British Library Sloane MS 3191"
+      date: "1584-1585"
+      description: "John Dee's ceremonial magic notes; includes 48 angelical keys"
+      source_url: "https://searcharchives.bl.uk/catalog/040-002115575"
+    - accession: "History of Science Museum Oxford Inv. 15449"
+      date: "mid/late seventeenth century copy"
+      description: "Marble copy of Dee's Holy Table; museum identifies inscribed characters as Enochian alphabet"
+      source_url: "https://hsm.ox.ac.uk/marble-copy-of-john-dees-holy-table"
+
+non_conflation:
+  - "Ancient Jewish 1 Enoch is not the same document/corpus as Dee/Kelley Liber Loagaeth."
+  - "Claims of Adamic, angelic or primordial origin belong to the historical belief/claim layer unless independently demonstrated."
+  - "Later Golden Dawn and modern Enochian reconstructions must not be back-projected onto 1580s sources."
+
+observable_structures:
+  - id: "EN01_grids"
+    literal: "49 x 49 letter/number grids documented in Sloane MS 3189"
+    measurable: ["rows", "columns", "cell coordinates", "symbol frequency", "adjacency", "symmetry", "routes"]
+  - id: "EN02_keys"
+    literal: "48 angelical keys documented in Sloane MS 3191"
+    measurable: ["ordering", "length", "lexeme frequency", "phonotactic statistics", "repetition"]
+  - id: "EN03_holy_table"
+    literal: "ritual table with inscribed Enochian characters; surviving museum object is a later copy"
+    measurable: ["layout", "character placement", "symmetry", "center/periphery", "partitions"]
+  - id: "EN04_alphabet"
+    literal: "distinctive character inventory in Dee/Kelley tradition"
+    measurable: ["stroke primitives", "junctions", "curvature", "symmetry", "orientation", "graph topology"]
+
+lsrp:
+  literal_observations:
+    - "The corpus combines character forms, grids, ordered verbal material and spatial ritual diagrams."
+    - "Primary surviving records are sixteenth-century manuscripts, not ancient inscriptions."
+  relational_structure:
+    - "Characters occupy fixed coordinates inside structured tables."
+    - "Meaning claims are mediated through ordering, adjacency, extraction and ritual placement, not glyph shape alone."
+  cross_domain_correspondences:
+    - target: "current Sound/Light/Frequency screenshot"
+      basis: ["ordered symbolic geometry", "privileged axes/centers", "integration of symbol and claimed cosmological meaning"]
+      status: "hypothesis_only"
+    - target: "ancient grid/calendrical systems"
+      basis: ["structured spatial encoding"]
+      status: "structural_comparator_only"
+    - target: "formal information systems"
+      basis: ["symbols + coordinates + traversal/order rules"]
+      status: "strong_analytic_analogy"
+  measurable_counterparts:
+    - "Shannon entropy and n-gram structure"
+    - "graph centrality and enclosure depth"
+    - "row/column/diagonal autocorrelation"
+    - "route extraction statistics"
+    - "glyph-shape distance"
+    - "speech acoustics for source-controlled recitations"
+  alternative_explanations:
+    - "constructed or emergent early-modern symbolic language"
+    - "cryptographic or combinatorial structure"
+    - "ritual mnemonic system"
+    - "later editors/reception traditions imposed structure absent from originals"
+  disconfirming_evidence:
+    - "No established evidence presently demonstrates ancient provenance for the Dee/Kelley Enochian script."
+    - "No established evidence presently demonstrates a unique physical frequency intrinsic to Enochian language."
+  uncertainty:
+    - "Primary manuscript images may have access limitations."
+    - "Character inventories and pronunciations differ across later reception traditions."
+  claim_state:
+    - "SUPPORTED BY LITERATURE"
+    - "HYPOTHESIS"
+  next_validation_gate: "Coordinate-preserving primary-source transcription followed by topology, language-statistics and provenance-drift analysis."
+
+comparative_tests:
+  - id: "E01_topology_over_primitives"
+    hypothesis: "Enochian/screenshot similarity, if meaningful, survives down-weighting generic circles, lines, triangles and crosses."
+    falsifier: "Similarity disappears after generic primitives are controlled."
+  - id: "E02_route_information"
+    hypothesis: "Information-bearing routes through Enochian tables provide a useful structural comparator for path-through-stations interpretations of the screenshot."
+    falsifier: "No source-grounded route or ordering behavior exists in the relevant primary material."
+  - id: "E03_multimodal_integration"
+    hypothesis: "Dee/Kelley material is a historical example of integrated glyph + spatial table + spoken sequence + cosmological interpretation."
+    falsifier: "Primary sources show these components were independent rather than operationally linked."
+  - id: "E04_frequency_claim"
+    hypothesis: "Any claimed special Enochian acoustic frequency produces reproducible measurable effects beyond ordinary speech acoustics."
+    falsifier: "Effects vanish under matched-language, speaker, loudness and expectation controls."
+
+provenance_classes:
+  - "DEE_KELLEY_PRIMARY_1580S"
+  - "EARLY_COPY_OR_PRINT_17C"
+  - "LATER_ESOTERIC_RECEPTION"
+  - "GOLDEN_DAWN_OR_DERIVED"
+  - "TWENTIETH_CENTURY_REINTERPRETATION"
+  - "MODERN_INTERNET_ATTRIBUTION"
