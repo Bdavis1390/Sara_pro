@@ -209,8 +209,27 @@ for service in ("sara", "prime-sentinel", "echo"):
         "image_version": labels.get("org.opencontainers.image.version"),
     }
 
+sara=json.loads((inspect_root / "sara.json").read_text(encoding="utf-8"))[0]
 prime=json.loads((inspect_root / "prime-sentinel.json").read_text(encoding="utf-8"))[0]
 echo=json.loads((inspect_root / "echo.json").read_text(encoding="utf-8"))[0]
+
+sara_env=sara["Config"].get("Env") or []
+for name in (
+    "PRIME_SENTINEL_PRIVATE_KEY_FILE",
+    "PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH",
+    "PRIME_SENTINEL_SERVICE_TOKEN_FILE",
+    "PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH",
+    "PRIME_SENTINEL_SERVICE_TOKEN",
+    "ECHO_INGEST_TOKEN_FILE",
+    "ECHO_INGEST_TOKEN_HOST_PATH",
+    "ECHO_CHECKPOINT_PRIVATE_KEY_FILE",
+    "ECHO_CHECKPOINT_PRIVATE_KEY_HOST_PATH",
+):
+    assert not any(
+        item.startswith(name + "=") and item.split("=", 1)[1]
+        for item in sara_env
+    ), f"SARA received forbidden secret ingress: {name}"
+
 for record in (prime, echo):
     env=record["Config"].get("Env") or []
     assert not any(item.startswith("SARA_ADMIN_TOKEN=") and item.split("=",1)[1] for item in env)
