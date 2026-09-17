@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ATIP Benchmark Manifest",
+  "type": "object",
+  "required": [
+    "benchmark_id",
+    "target",
+    "epistemic_class",
+    "contamination_class",
+    "allowed_evidence",
+    "forbidden_comparators",
+    "frozen_prediction",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "benchmark_id": {"type": "string"},
+    "target": {
+      "type": "object",
+      "required": ["source_id", "stable_id", "witness_ref"],
+      "properties": {
+        "source_id": {"type": "string"},
+        "stable_id": {"type": "string"},
+        "witness_ref": {"type": "string"},
+        "source_checksum": {"type": ["string", "null"]}
+      }
+    },
+    "epistemic_class": {
+      "enum": [
+        "KNOWN_DECIPHERED",
+        "PARTIALLY_CONSTRAINED",
+        "UNDECIPHERED",
+        "SYNTHETIC_NULL"
+      ]
+    },
+    "contamination_class": {
+      "enum": [
+        "C0_SESSION_BLIND",
+        "C1_PARTIAL_LEXICON",
+        "C2_RETROSPECTIVE",
+        "C3_EDITORIAL_DEPENDENT",
+        "C4_UNKNOWN"
+      ]
+    },
+    "allowed_evidence": {"type": "array", "items": {"type": "string"}},
+    "forbidden_comparators": {"type": "array", "items": {"type": "string"}},
+    "null_models": {"type": "array"},
+    "frozen_prediction": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["NOT_STARTED", "FROZEN", "REVEALED"]},
+        "artifact_ref": {"type": ["string", "null"]},
+        "sha256": {"type": ["string", "null"]},
+        "timestamp": {"type": ["string", "null"]}
+      }
+    },
+    "reveal": {
+      "type": "object",
+      "properties": {
+        "comparator_ref": {"type": ["string", "null"]},
+        "revealed_at": {"type": ["string", "null"]},
+        "difference_vector_ref": {"type": ["string", "null"]}
+      }
+    },
+    "claim_ceiling": {"type": "string"}
+  }
+}
