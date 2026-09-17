@@ -49,6 +49,7 @@ jobs:
             deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py \
+            deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_quorum_commit.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_authorization.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_issuance_store.py \
             deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_poo_service.py \
@@ -62,7 +63,7 @@ jobs:
           python -m pytest -q
           deployments/sara_verified_local_v1/tests/test_poo_*.py
           deployments/sara_verified_local_v1/tests/test_prime_sentinel_poo_*.py
-      - name: Enforce core claims, governance, durable-commit, and PRIME-authorization boundaries
+      - name: Enforce core claims, governance, durable-commit, PRIME-authorization, and quorum boundaries
         run: |
           grep -q 'POO_SCHEMA = "WS-POO-V3"' security/poo/ownership_guard.py
           grep -q 'TRANSFER_SCHEMA = "WS-POO-TRANSFER-V3"' security/poo/transfer_guard.py
@@ -89,6 +90,12 @@ jobs:
           grep -q 'prime_cryptographic_authorization_verified: Literal\[True\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py
           grep -q 'legal_title_changed: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py
           grep -q 'live_value_moved: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_authorized_commit.py
+          grep -q 'POO_PRIME_QUORUM_COMMIT_REQUEST_SCHEMA = "WS-POO-PRIME-QUORUM-DURABLE-COMMIT-REQUEST-V1"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_quorum_commit.py
+          grep -q 'MAX_QUORUM_SIZE = 8' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_quorum_commit.py
+          grep -q 'prime_quorum_cryptographic_authorization_verified: Literal\[True\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_quorum_commit.py
+          grep -q 'single_signer_sufficient: Literal\[False\]' deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_quorum_commit.py
+          grep -q 'POO_PRIME_QUORUM_THRESHOLD_ENV = "POO_PRIME_QUORUM_THRESHOLD"' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py
+          grep -q '@router.post("/registry/commit-prime-quorum-authorized")' deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py
           grep -q 'REGISTRY_BOOTSTRAP_COMMIT_READY_WITH_FULL_GOVERNANCE' security/poo/bootstrap_governance_guard.py
           grep -q 'REGISTRY_COMMIT_READY_WITH_FULL_GOVERNANCE' security/poo/registry_governance_guard.py
           grep -q 'REGISTRY_COMMIT_BLOCKED_STALE_SNAPSHOT' security/poo/registry_governance_guard.py
