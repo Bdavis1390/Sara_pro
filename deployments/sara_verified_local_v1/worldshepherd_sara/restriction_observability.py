@@ -279,7 +279,7 @@ def _project_signed_restriction_audit_record(
         "provenance_schema": SIGNED_RESTRICTION_SCHEMA,
         "restriction_schema": RESTRICTION_SCHEMA,
         "signature_verified": True,
-        "signing_key_id": verified.key_id,
+        "signing_key_id": verified.signing_key_id,
         "signing_key_fingerprint_sha256": verified.signing_key_fingerprint_sha256,
     }
 
