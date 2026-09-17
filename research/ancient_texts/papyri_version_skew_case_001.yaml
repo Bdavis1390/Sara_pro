@@ -1,0 +1,44 @@
+case_id: ATIP-PAPYRI-VERSIONSKEW-001
+status: CONFIRMED
+source:
+  platform: "Papyri.info"
+  canonical_record: "p.tebt.2.408"
+  identifiers:
+    hgv: "P.Tebt. 2 408"
+    trismegistos: "13560"
+    apis: "berkeley.apis.646"
+  source_url: "https://papyri.info/ddbdp/p.tebt%3B2%3B408"
+
+current_transcription:
+  line: "r.1"
+  reading: "Ἱππόνικος"
+  normalized_name: "Hipponikos"
+  evidence: "DDbDP current transcription"
+  apparatus_note: "C. Balamoshev (from image) (via PN): Ἱππόλιτος previous edition"
+
+stale_layers:
+  - layer: "APIS English translation"
+    observed_value: "Hippolitos to his dearest Akousilaos..."
+    expected_after_current_transcription: "Hipponikos ..."
+  - layer: "APIS catalog title"
+    observed_value: "Hippolitos' letter : to Akousilaos"
+  - layer: "HGV subject summary"
+    observed_value: "Hippolitos an den Dioiketen Akusilaos ..."
+
+classification:
+  translation_difference: T6_SUPERSEDED
+  witness_editorial_dependency: T4_WITNESS
+  operational_state: STALE_PENDING_REAUDIT
+  materiality: "Named sender identity differs."
+
+claim:
+  supported: "Current composite record contains cross-layer version skew."
+  not_claimed:
+    - "The scholarly database is generally unreliable."
+    - "The entire translation is wrong."
+    - "The transcription correction is beyond future revision."
+
+required_system_behavior:
+  - "Bind translation/metadata layers to exact transcription version."
+  - "Invalidate dependent layers when upstream reading changes materially."
+  - "Require named-entity consistency check after editorial updates."
