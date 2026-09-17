@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class ContextSourceType(str, Enum):
     HUMAN_ROOT_INSTRUCTION = "HUMAN_ROOT_INSTRUCTION"
     SIGNED_POLICY = "SIGNED_POLICY"
+    PRIME_SIGNED_AUTHORIZATION = "PRIME_SIGNED_AUTHORIZATION"
     TOOL_RESULT = "TOOL_RESULT"
     SOURCE_DOCUMENT = "SOURCE_DOCUMENT"
     MODEL_SUMMARY = "MODEL_SUMMARY"
@@ -25,6 +26,7 @@ class TrustClass(str, Enum):
 TRUST_BY_SOURCE: dict[ContextSourceType, TrustClass] = {
     ContextSourceType.HUMAN_ROOT_INSTRUCTION: TrustClass.ROOT,
     ContextSourceType.SIGNED_POLICY: TrustClass.POLICY,
+    ContextSourceType.PRIME_SIGNED_AUTHORIZATION: TrustClass.POLICY,
     ContextSourceType.TOOL_RESULT: TrustClass.EVIDENCE,
     ContextSourceType.SOURCE_DOCUMENT: TrustClass.EVIDENCE,
     ContextSourceType.MODEL_SUMMARY: TrustClass.UNTRUSTED_DERIVED,
@@ -35,6 +37,7 @@ TRUST_BY_SOURCE: dict[ContextSourceType, TrustClass] = {
 AUTHORITY_GRANTING_SOURCES = {
     ContextSourceType.HUMAN_ROOT_INSTRUCTION,
     ContextSourceType.SIGNED_POLICY,
+    ContextSourceType.PRIME_SIGNED_AUTHORIZATION,
 }
 
 
