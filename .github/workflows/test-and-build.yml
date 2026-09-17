@@ -50,6 +50,7 @@ jobs:
           tests/test_restriction_observability.py
           tests/test_restriction_context_policy.py
           tests/test_restriction_authority_binding.py
+          tests/test_restriction_10x_security.py
 
       - name: Validate upstream patch artifacts
         shell: bash
