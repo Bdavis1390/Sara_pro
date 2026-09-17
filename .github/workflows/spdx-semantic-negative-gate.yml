@@ -1,0 +1,240 @@
+name: SPDX Semantic Negative Control Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_SEMANTIC_NEGATIVE_CONTROL.md'
+      - '.github/workflows/spdx-semantic-negative-gate.yml'
+  push:
+    branches:
+      - 'worldshepherd-spdx-semantic-negative-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_SEMANTIC_NEGATIVE_CONTROL.md'
+      - '.github/workflows/spdx-semantic-negative-gate.yml'
+
+permissions:
+  contents: read
+
+env:
+  PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  WORKFLOW_CHECKOUT_SHA: ${{ github.sha }}
+
+jobs:
+  prove-semantic-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Fetch canonical SPDX 3.0.1 validation resources
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            'https://spdx.org/schema/3.0.1/spdx-json-schema.json' \
+            --output /tmp/spdx-3.0.1-schema.json
+          curl --fail --silent --show-error --location \
+            'https://spdx.org/rdf/3.0.1/spdx-model.ttl' \
+            --output /tmp/spdx-3.0.1-model.ttl
+          test -s /tmp/spdx-3.0.1-schema.json
+          test -s /tmp/spdx-3.0.1-model.ttl
+          sha256sum /tmp/spdx-3.0.1-schema.json /tmp/spdx-3.0.1-model.ttl
+
+      - name: Install isolated validator toolchains
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/ws-spdx-semantic-validator
+          /tmp/ws-spdx-semantic-validator/bin/python -m pip install --disable-pip-version-check \
+            'spdx3-validate==0.0.7' 'pyshacl==0.40.1'
+          /tmp/ws-spdx-semantic-validator/bin/python -m pip check
+          mkdir -p /tmp/ws-spdx-ajv
+          npm install --prefix /tmp/ws-spdx-ajv --no-save 'ajv-cli@5.0.0'
+          /tmp/ws-spdx-ajv/node_modules/.bin/ajv help validate >/dev/null
+
+      - name: Confirm baseline fixture passes structural and semantic validation
+        run: |
+          set -euo pipefail
+          fixture='deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+          /tmp/ws-spdx-ajv/node_modules/.bin/ajv validate \
+            --spec=draft2020 \
+            -s /tmp/spdx-3.0.1-schema.json \
+            -d "$fixture"
+          /tmp/ws-spdx-semantic-validator/bin/pyshacl \
+            -f human \
+            -df json-ld \
+            --shacl /tmp/spdx-3.0.1-model.ttl \
+            --ont-graph /tmp/spdx-3.0.1-model.ttl \
+            "$fixture"
+          /tmp/ws-spdx-semantic-validator/bin/spdx3-validate --json "$fixture"
+
+      - name: Build semantic-only mutation
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          src = Path('deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json')
+          doc = json.loads(src.read_text(encoding='utf-8'))
+          package_id = next(
+              element['spdxId']
+              for element in doc['@graph']
+              if element.get('type') == 'software_Package'
+          )
+          creation_info = next(
+              element
+              for element in doc['@graph']
+              if element.get('type') == 'CreationInfo'
+          )
+          creation_info['createdBy'] = [package_id]
+          Path('/tmp/spdx301-schema-valid-semantic-invalid.spdx3.json').write_text(
+              json.dumps(doc, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Prove schema-valid but SHACL-invalid behavior
+        run: |
+          set -euo pipefail
+          mutation='/tmp/spdx301-schema-valid-semantic-invalid.spdx3.json'
+
+          # The control is useful only if the canonical JSON Schema accepts it.
+          /tmp/ws-spdx-ajv/node_modules/.bin/ajv validate \
+            --spec=draft2020 \
+            -s /tmp/spdx-3.0.1-schema.json \
+            -d "$mutation" \
+            > /tmp/semantic-ajv.log 2>&1
+          cat /tmp/semantic-ajv.log
+
+          # The canonical SHACL model must reject the wrong-range createdBy reference.
+          set +e
+          /tmp/ws-spdx-semantic-validator/bin/pyshacl \
+            -f human \
+            -df json-ld \
+            --shacl /tmp/spdx-3.0.1-model.ttl \
+            --ont-graph /tmp/spdx-3.0.1-model.ttl \
+            "$mutation" \
+            > /tmp/semantic-pyshacl.log 2>&1
+          pyshacl_status=$?
+          set -e
+          cat /tmp/semantic-pyshacl.log
+          if [ "$pyshacl_status" -eq 0 ]; then
+            echo 'pySHACL unexpectedly accepted schema-valid semantic mutation' >&2
+            exit 1
+          fi
+          if [ "$pyshacl_status" -ne 1 ]; then
+            echo "pySHACL returned runtime/tooling status $pyshacl_status rather than semantic non-conformance" >&2
+            exit 1
+          fi
+          grep -q 'Conforms: False' /tmp/semantic-pyshacl.log
+
+          # The combined validator must also reject the same document.
+          set +e
+          /tmp/ws-spdx-semantic-validator/bin/spdx3-validate --json "$mutation" \
+            > /tmp/semantic-spdx3-validate.log 2>&1
+          spdx_status=$?
+          set -e
+          cat /tmp/semantic-spdx3-validate.log
+          if [ "$spdx_status" -eq 0 ]; then
+            echo 'spdx3-validate unexpectedly accepted schema-valid semantic mutation' >&2
+            exit 1
+          fi
+
+      - name: Build semantic-boundary evidence record
+        run: |
+          set -euo pipefail
+          mkdir -p spdx_semantic_negative_evidence_ci
+          cp /tmp/spdx301-schema-valid-semantic-invalid.spdx3.json \
+            spdx_semantic_negative_evidence_ci/semantic-invalid-control.spdx3.json
+          cp /tmp/semantic-ajv.log spdx_semantic_negative_evidence_ci/ajv.log
+          cp /tmp/semantic-pyshacl.log spdx_semantic_negative_evidence_ci/pyshacl.log
+          cp /tmp/semantic-spdx3-validate.log spdx_semantic_negative_evidence_ci/spdx3-validate.log
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          baseline = Path('deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json')
+          mutation = Path('spdx_semantic_negative_evidence_ci/semantic-invalid-control.spdx3.json')
+          schema = Path('/tmp/spdx-3.0.1-schema.json')
+          model = Path('/tmp/spdx-3.0.1-model.ttl')
+
+          def digest(path: Path) -> str:
+              return 'sha256:' + hashlib.sha256(path.read_bytes()).hexdigest()
+
+          record = {
+              'schema': 'WS-SPDX-SEMANTIC-NEGATIVE-EVIDENCE-V1',
+              'repository': os.environ.get('GITHUB_REPOSITORY'),
+              'pull_request_head_sha': os.environ.get('PR_HEAD_SHA'),
+              'workflow_checkout_sha': os.environ.get('WORKFLOW_CHECKOUT_SHA'),
+              'spdx_version': '3.0.1',
+              'baseline_fixture_sha256': digest(baseline),
+              'semantic_mutation_sha256': digest(mutation),
+              'canonical_schema_sha256': digest(schema),
+              'canonical_model_sha256': digest(model),
+              'semantic_constraint': {
+                  'property': 'Core/createdBy',
+                  'declared_range': 'Core/Agent',
+                  'official_reference': 'https://spdx.github.io/spdx-spec/v3.0.1/model/Core/Properties/createdBy/',
+                  'mutation': 'CreationInfo.createdBy references software_Package instead of Agent',
+              },
+              'results': {
+                  'baseline_ajv': 'PASS',
+                  'baseline_pyshacl': 'PASS',
+                  'baseline_spdx3_validate': 'PASS',
+                  'semantic_mutation_ajv': 'PASS',
+                  'semantic_mutation_pyshacl': 'REJECTED_NONCONFORMANT',
+                  'semantic_mutation_spdx3_validate': 'REJECTED',
+              },
+              'evidence_state': 'SCHEMA_VALID_SEMANTIC_INVALID_CONTROL_PROVEN',
+              'structural_semantic_boundary_discrimination_established': True,
+              'semantic_engine_diversity_established': False,
+              'general_spdx_conformance_established': False,
+              'arbitrary_input_conformance_established': False,
+              'independent_external_validation_established': False,
+              'community_endorsement_established': False,
+              'admission_authorized': False,
+              'release_approved': False,
+              'claims_boundary': (
+                  'This evidence proves only that the pinned canonical SPDX 3.0.1 JSON Schema accepts one '
+                  'wrong-range reference that the pinned canonical SHACL model rejects. It demonstrates '
+                  'structural-versus-semantic discrimination for this exact mutation, not general conformance '
+                  'or independent validation.'
+              ),
+          }
+          out = Path('spdx_semantic_negative_evidence_ci/semantic-negative-evidence.json')
+          out.write_text(json.dumps(record, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+          python -m json.tool spdx_semantic_negative_evidence_ci/semantic-negative-evidence.json >/dev/null
+
+      - name: Enforce claims and provenance boundaries
+        run: |
+          set -euo pipefail
+          evidence='spdx_semantic_negative_evidence_ci/semantic-negative-evidence.json'
+          grep -q 'SCHEMA_VALID_SEMANTIC_INVALID_CONTROL_PROVEN' "$evidence"
+          grep -q '"structural_semantic_boundary_discrimination_established": true' "$evidence"
+          grep -q '"semantic_engine_diversity_established": false' "$evidence"
+          grep -q '"general_spdx_conformance_established": false' "$evidence"
+          grep -q '"arbitrary_input_conformance_established": false' "$evidence"
+          grep -q '"independent_external_validation_established": false' "$evidence"
+          grep -q '"community_endorsement_established": false' "$evidence"
+          grep -q '"admission_authorized": false' "$evidence"
+          grep -q '"release_approved": false' "$evidence"
+          test -n "$PR_HEAD_SHA"
+          test -n "$WORKFLOW_CHECKOUT_SHA"
+
+      - name: Upload semantic-negative evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: spdx-semantic-negative-evidence
+          path: spdx_semantic_negative_evidence_ci
+          if-no-files-found: error
