@@ -35,6 +35,9 @@ check_runtime() {
     "worldshepherd_sara/auth.py"
     "scripts/start_interface.sh"
     "scripts/admin_smoke_test.sh"
+    "scripts/deploy_full_stack.sh"
+    "scripts/verify_full_stack_runtime.sh"
+    "worldshepherd_sara/deployment_preflight.py"
     "tests/test_api.py"
   )
   local item
@@ -122,6 +125,9 @@ Commands:
   run          Start the canonical local SARA / SSPADAWANZZ service
   test [args]  Run the canonical pytest suite (optional pytest args accepted)
   smoke        Run the admin smoke test against an already-running local service
+  deploy-full  Provision and start localhost-only SARA + PRIME + ECHO
+  verify-full  Verify the deployed full stack and emit an acceptance receipt
+  down-full    Stop SARA + PRIME + ECHO without deleting named evidence volumes
   check        Verify required canonical runtime entry-point files exist
   path         Print the canonical runtime path
   help         Show this help
@@ -136,6 +142,9 @@ case "${command_name}" in
   run) run_runtime "$@" ;;
   test) test_runtime "$@" ;;
   smoke) smoke_runtime "$@" ;;
+  deploy-full) exec bash "${RUNTIME_DIR}/scripts/deploy_full_stack.sh" "$@" ;;
+  verify-full) exec bash "${RUNTIME_DIR}/scripts/verify_full_stack_runtime.sh" "$@" ;;
+  down-full) cd "${RUNTIME_DIR}"; exec docker compose --profile prime-sentinel --profile echo down ;;
   check) check_runtime "$@" ;;
   path) printf '%s\n' "${RUNTIME_DIR}" ;;
   help|-h|--help) usage ;;
