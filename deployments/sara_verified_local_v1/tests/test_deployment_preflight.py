@@ -145,3 +145,12 @@ def test_preflight_rejects_insecure_secret_mode(tmp_path):
             expected_head=HEAD,
             required_uid=os.geteuid(),
         )
+
+
+def test_preflight_rejects_unsafe_release_identifier(tmp_path):
+    with pytest.raises(DeploymentPreflightError, match="safe bounded identifier"):
+        validate_deployment(
+            _env(tmp_path, SARA_RELEASE_ID="bad;release"),
+            expected_head=HEAD,
+            required_uid=os.geteuid(),
+        )
