@@ -85,16 +85,58 @@ else
   : "${SPDX3_VALIDATE:?set SPDX3_VALIDATE when SPDX_REPRO_BOOTSTRAP=0}"
   : "${PYSHACL:?set PYSHACL when SPDX_REPRO_BOOTSTRAP=0}"
   : "${AJV:?set AJV when SPDX_REPRO_BOOTSTRAP=0}"
-  VALIDATOR_PYTHON="${VALIDATOR_PYTHON:-python3}"
-  AJV_ROOT="${AJV_ROOT:-}"
+  : "${VALIDATOR_PYTHON:?set VALIDATOR_PYTHON to the validator Python environment when SPDX_REPRO_BOOTSTRAP=0}"
+  : "${AJV_ROOT:?set AJV_ROOT to the npm prefix containing node_modules/ajv-cli when SPDX_REPRO_BOOTSTRAP=0}"
 fi
 
-for executable in "$SPDX3_VALIDATE" "$PYSHACL" "$AJV"; do
+for executable in "$SPDX3_VALIDATE" "$PYSHACL" "$AJV" "$VALIDATOR_PYTHON"; do
   if [ ! -x "$executable" ]; then
     echo "validator executable missing/not executable: $executable" >&2
     exit 2
   fi
 done
+
+AJV_PACKAGE_JSON="$AJV_ROOT/node_modules/ajv-cli/package.json"
+if [ ! -f "$AJV_PACKAGE_JSON" ]; then
+  echo "AJV package metadata missing: $AJV_PACKAGE_JSON" >&2
+  exit 2
+fi
+
+spdx_version="$($VALIDATOR_PYTHON - <<'PY'
+from importlib.metadata import version
+print(version('spdx3-validate'))
+PY
+)"
+pyshacl_version="$($VALIDATOR_PYTHON - <<'PY'
+from importlib.metadata import version
+print(version('pyshacl'))
+PY
+)"
+ajv_version="$(python3 - "$AJV_PACKAGE_JSON" <<'PY'
+import json
+import sys
+from pathlib import Path
+print(json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))['version'])
+PY
+)"
+
+if [ "$spdx_version" != "$SPDX3_VALIDATE_VERSION" ]; then
+  echo "spdx3-validate version mismatch: expected $SPDX3_VALIDATE_VERSION, got $spdx_version" >&2
+  exit 6
+fi
+if [ "$pyshacl_version" != "$PYSHACL_VERSION" ]; then
+  echo "pySHACL version mismatch: expected $PYSHACL_VERSION, got $pyshacl_version" >&2
+  exit 6
+fi
+if [ "$ajv_version" != "$AJV_CLI_VERSION" ]; then
+  echo "ajv-cli version mismatch: expected $AJV_CLI_VERSION, got $ajv_version" >&2
+  exit 6
+fi
+
+# Capture the resolved dependency graph used by this run. These manifests are
+# provenance evidence, not a claim that transitive dependencies are lockfile-pinned.
+"$VALIDATOR_PYTHON" -m pip freeze --all | LC_ALL=C sort > "$OUTPUT_DIR/python-validator-freeze.txt"
+npm list --prefix "$AJV_ROOT" --all --json > "$OUTPUT_DIR/ajv-npm-tree.json"
 
 BASELINE_AJV_LOG="$OUTPUT_DIR/baseline-ajv.log"
 BASELINE_SHACL_LOG="$OUTPUT_DIR/baseline-pyshacl.log"
@@ -185,25 +227,11 @@ grep -q 'Value does not have class' "$SEMANTIC_SHACL_LOG"
 fixture_sha="$(sha256sum "$FIXTURE" | awk '{print $1}')"
 structural_sha="$(sha256sum "$STRUCTURAL_MUTATION" | awk '{print $1}')"
 semantic_sha="$(sha256sum "$SEMANTIC_MUTATION" | awk '{print $1}')"
+python_manifest_sha="$(sha256sum "$OUTPUT_DIR/python-validator-freeze.txt" | awk '{print $1}')"
+npm_manifest_sha="$(sha256sum "$OUTPUT_DIR/ajv-npm-tree.json" | awk '{print $1}')"
 repo_head="$(git -C "$ROOT_DIR" rev-parse HEAD 2>/dev/null || printf 'UNAVAILABLE')"
 python_version="$(python3 --version 2>&1)"
 node_version="$(node --version 2>/dev/null || printf 'UNAVAILABLE')"
-
-spdx_version="$($VALIDATOR_PYTHON - <<'PY'
-from importlib.metadata import version
-print(version('spdx3-validate'))
-PY
-)"
-pyshacl_version="$($VALIDATOR_PYTHON - <<'PY'
-from importlib.metadata import version
-print(version('pyshacl'))
-PY
-)"
-if [ -n "$AJV_ROOT" ] && [ -f "$AJV_ROOT/node_modules/ajv-cli/package.json" ]; then
-  ajv_version="$(node -e "console.log(require('$AJV_ROOT/node_modules/ajv-cli/package.json').version)")"
-else
-  ajv_version="$AJV_CLI_VERSION-requested"
-fi
 
 export RECEIPT_REPO_HEAD="$repo_head"
 export RECEIPT_FIXTURE_SHA="$fixture_sha"
@@ -211,6 +239,8 @@ export RECEIPT_STRUCTURAL_SHA="$structural_sha"
 export RECEIPT_SEMANTIC_SHA="$semantic_sha"
 export RECEIPT_SCHEMA_SHA="$schema_sha"
 export RECEIPT_MODEL_SHA="$model_sha"
+export RECEIPT_PYTHON_MANIFEST_SHA="$python_manifest_sha"
+export RECEIPT_NPM_MANIFEST_SHA="$npm_manifest_sha"
 export RECEIPT_PYTHON_VERSION="$python_version"
 export RECEIPT_NODE_VERSION="$node_version"
 export RECEIPT_SPDX_VERSION="$spdx_version"
@@ -246,6 +276,9 @@ receipt = {
         'spdx3_validate': os.environ['RECEIPT_SPDX_VERSION'],
         'pyshacl': os.environ['RECEIPT_PYSHACL_VERSION'],
         'ajv_cli': os.environ['RECEIPT_AJV_VERSION'],
+        'python_dependency_manifest_sha256': 'sha256:' + os.environ['RECEIPT_PYTHON_MANIFEST_SHA'],
+        'npm_dependency_manifest_sha256': 'sha256:' + os.environ['RECEIPT_NPM_MANIFEST_SHA'],
+        'transitive_dependencies_lockfile_pinned': False,
     },
     'results': {
         'baseline_structural': 'PASS',
@@ -262,12 +295,14 @@ receipt = {
     'reviewer_identity_established': False,
     'general_spdx_conformance_established': False,
     'community_endorsement_established': False,
+    'supply_chain_reproducibility_established': False,
     'admission_authorized': False,
     'release_approved': False,
     'claims_boundary': (
         'A successful execution proves that this environment reproduced the exact bounded controls. '
-        'It does not establish independent external reproduction until an attributable outside reviewer '
-        'runs the package and supplies their own environment/identity evidence.'
+        'Resolved dependency manifests are captured for provenance, but transitive dependencies are not '
+        'lockfile-pinned. This does not establish supply-chain reproducibility or independent external '
+        'reproduction until an attributable outside reviewer runs the package and supplies their own evidence.'
     ),
 }
 Path(os.environ['RECEIPT_OUTPUT']).write_text(
@@ -278,5 +313,6 @@ PY
 python3 -m json.tool "$OUTPUT_DIR/reproduction-receipt.json" >/dev/null
 grep -q '"evidence_state": "REPRODUCTION_PACKAGE_EXECUTED"' "$OUTPUT_DIR/reproduction-receipt.json"
 grep -q '"independently_reproduced": false' "$OUTPUT_DIR/reproduction-receipt.json"
+grep -q '"supply_chain_reproducibility_established": false' "$OUTPUT_DIR/reproduction-receipt.json"
 
 echo "SPDX reproduction package completed: $OUTPUT_DIR/reproduction-receipt.json"
