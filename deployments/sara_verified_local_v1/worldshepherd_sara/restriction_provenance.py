@@ -19,11 +19,13 @@ from .restriction_context_policy import (
 
 
 RESTRICTION_SCHEMA_V1 = "WS-RESTRICTION-PROVENANCE-V1"
-RESTRICTION_SCHEMA = "WS-RESTRICTION-PROVENANCE-V2"
+RESTRICTION_SCHEMA_V2 = "WS-RESTRICTION-PROVENANCE-V2"
+RESTRICTION_SCHEMA = "WS-RESTRICTION-PROVENANCE-V3"
 RESTRICTION_AUTHORITY = "PRIME_SENTINEL"
 REMEDIATION_SCHEMA = "WS-RESTRICTION-REMEDIATION-V1"
 RESTRICTION_EVENT = "content_restriction_recorded"
 MIN_FINGERPRINT_KEY_BYTES = 32
+FINGERPRINT_KEY_ID_ENV = "RESTRICTION_FINGERPRINT_KEY_ID"
 MAX_SAFE_SUMMARY_CHARS = 2048
 MAX_REASON_CODE_CHARS = 96
 MAX_COMPONENT_CHARS = 128
@@ -106,6 +108,12 @@ def _fingerprint(key: bytes, label: str, value: str | None) -> str | None:
     return hmac.new(key, message, hashlib.sha256).hexdigest()
 
 
+def fingerprint_key_id_from_environment() -> str:
+    """Load the non-secret identifier for the active fingerprint-key epoch."""
+    value = os.getenv(FINGERPRINT_KEY_ID_ENV, "")
+    return _bounded_component("fingerprint_key_id", value)
+
+
 def fingerprint_key_from_environment() -> bytes:
     """Load the deployment-only key used for non-reversible content fingerprints.
 
@@ -167,6 +175,7 @@ def _canonical_json(value: dict[str, Any]) -> str:
 class RestrictionEvidence:
     restriction_id: str
     authority: str
+    fingerprint_key_id: str
     occurred_at: str
     action: RestrictionAction
     reason_code: str
@@ -187,6 +196,7 @@ class RestrictionEvidence:
             "schema": RESTRICTION_SCHEMA,
             "restriction_id": self.restriction_id,
             "authority": self.authority,
+            "fingerprint_key_id": self.fingerprint_key_id,
             "occurred_at": self.occurred_at,
             "action": self.action,
             "reason_code": self.reason_code,
@@ -215,6 +225,7 @@ class RestrictionEvidence:
 def capture_restriction(
     *,
     fingerprint_key: bytes,
+    fingerprint_key_id: str,
     action: RestrictionAction,
     reason_code: str,
     source_system: str,
@@ -237,6 +248,7 @@ def capture_restriction(
     The authority is system-controlled and cannot be supplied by the caller.
     """
     _validate_fingerprint_key(fingerprint_key)
+    fingerprint_key_id = _bounded_component("fingerprint_key_id", fingerprint_key_id)
     if action not in _ALLOWED_RESTRICTION_ACTIONS:
         raise RestrictionProvenanceError("unsupported restriction action")
     if not isinstance(reason_code, str) or not _REASON_CODE.fullmatch(reason_code):
@@ -287,6 +299,7 @@ def capture_restriction(
     identity_document = {
         "schema": RESTRICTION_SCHEMA,
         "authority": RESTRICTION_AUTHORITY,
+        "fingerprint_key_id": fingerprint_key_id,
         "occurred_at": timestamp,
         "action": action,
         "reason_code": reason_code,
@@ -308,6 +321,7 @@ def capture_restriction(
     return RestrictionEvidence(
         restriction_id=restriction_id,
         authority=RESTRICTION_AUTHORITY,
+        fingerprint_key_id=fingerprint_key_id,
         occurred_at=timestamp,
         action=action,
         reason_code=reason_code,
@@ -368,6 +382,7 @@ def build_remediation_directive(
         "content_binding": {
             "input_fingerprint": evidence.input_fingerprint,
             "generated_fingerprint": evidence.generated_fingerprint,
+            "fingerprint_key_id": evidence.fingerprint_key_id,
         },
         "raw_content_included": False,
     }

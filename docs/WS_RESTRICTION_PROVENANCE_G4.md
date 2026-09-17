@@ -1,6 +1,6 @@
 # WS-RESTRICTION-PROVENANCE G4 — AUTHORITY BINDING
 
-Status: **IMPLEMENTED IN SOFTWARE ON CURRENT-MAIN BRANCH / PENDING INTERNAL VALIDATION**
+Status: **IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY FOR THE TESTED AUTHORITY-BINDING AND 10X INVARIANTS**
 
 ## Objective
 
@@ -122,4 +122,4 @@ ECHO semantic hashing and stable event IDs provide replay/conflict evidence with
 
 A later gate should add non-secret fingerprint-key epoch identifiers and, separately, independently verifiable signing/witness evidence where justified.
 
-G3 is merged and proven internally for its tested positive-schema invariants. G4 is reconciled onto current protected main and remains **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION** until its exact-head required CI, broader Verified Local validation, and protected merge complete. The separate 10x scorecard requires the five declared G3-start residual attack classes to fall from 5 units to 0 while zero-tolerance G3 controls remain closed.
+G4 merged through protected main in PR #427 at commit `8e7a6a2f6b22ce84e109bdd3d0fb2c55d3bfec41` after required CodeQL/Analyze/test-and-build and the broader Verified Local deployment/recovery/evidence gate succeeded. The executable 10x scorecard closed all five declared G3-start residual attack classes (5 -> 0) while preserving zero-tolerance G3 controls. This proof applies only to those declared software invariants; it is not a claim of 10x cryptographic strength or real-world breach-probability reduction.

@@ -17,6 +17,7 @@ from worldshepherd_sara.restriction_provenance import (
 
 
 KEY = b"worldshepherd-g3-context-policy-key-32-bytes-minimum"
+KEY_ID = "ws-restriction-key-epoch-2026-09"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 
 
@@ -55,6 +56,7 @@ def test_profile_registry_and_field_rules_are_immutable():
 def test_capture_binds_context_profile_into_persisted_evidence():
     evidence = capture_restriction(
         fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
         action="REDACT",
         reason_code="POLICY.RESTRICTED_OUTPUT",
         source_system="CHAT_ASSISTANT",
@@ -162,6 +164,7 @@ def test_capture_propagates_context_policy_failure_as_provenance_error():
     with pytest.raises(RestrictionProvenanceError, match="unregistered"):
         capture_restriction(
             fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
             action="BLOCK",
             reason_code="POLICY.UNKNOWN_SOURCE",
             source_system="UNREGISTERED_PROVIDER",
