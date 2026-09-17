@@ -1,0 +1,117 @@
+{
+  "scenario_id": "WS-NP004-POC-A-001",
+  "claims_boundary": "SIMULATED_ONLY / SYNTHETIC APNT OPERATOR-AWARENESS DEMONSTRATOR / INFORMATIONAL DECISION AID ONLY",
+  "events": [
+    {
+      "sequence": 1,
+      "timestamp_s": 0.0,
+      "source": "GPS_PRIMARY",
+      "integrity_state": "NOMINAL",
+      "position": {"x_m": 1000.0, "y_m": 2000.0, "z_m": 25.0},
+      "confidence": 0.99,
+      "integrity_indicator": 0.98,
+      "anomaly_code": null,
+      "reason_code": "NOMINAL_TRACK",
+      "recommended_recovery_candidate": null
+    },
+    {
+      "sequence": 2,
+      "timestamp_s": 1.0,
+      "source": "GPS_PRIMARY",
+      "integrity_state": "DEGRADED",
+      "position": {"x_m": 1002.0, "y_m": 2004.0, "z_m": 25.0},
+      "confidence": 0.72,
+      "integrity_indicator": 0.63,
+      "anomaly_code": "ACCURACY_DEGRADED",
+      "reason_code": "INTEGRITY_MARGIN_REDUCED",
+      "recommended_recovery_candidate": "COMPARE_ALTERNATE_SOURCE"
+    },
+    {
+      "sequence": 3,
+      "timestamp_s": 2.0,
+      "source": "GPS_PRIMARY",
+      "integrity_state": "SUSPECT",
+      "position": {"x_m": 1045.0, "y_m": 2050.0, "z_m": 25.0},
+      "confidence": 0.41,
+      "integrity_indicator": 0.31,
+      "anomaly_code": "SPOOFING_SUSPECTED",
+      "reason_code": "KINEMATIC_RESIDUAL_EXCEEDED",
+      "recommended_recovery_candidate": "ISOLATE_PRIMARY_SOURCE"
+    },
+    {
+      "sequence": 4,
+      "timestamp_s": 3.0,
+      "source": "FUSED_COMPARATOR",
+      "integrity_state": "DISAGREEMENT",
+      "position": {"x_m": 1006.0, "y_m": 2008.0, "z_m": 25.0},
+      "confidence": 0.66,
+      "integrity_indicator": 0.52,
+      "anomaly_code": "SOURCE_DISAGREEMENT",
+      "reason_code": "PRIMARY_ALTERNATE_DIVERGENCE",
+      "recommended_recovery_candidate": "PREFER_ALTERNATE_SOURCE"
+    },
+    {
+      "sequence": 5,
+      "timestamp_s": 4.0,
+      "source": "ALTERNATE_SOURCE",
+      "integrity_state": "RECOVERING",
+      "position": {"x_m": 1008.0, "y_m": 2010.0, "z_m": 25.0},
+      "confidence": 0.88,
+      "integrity_indicator": 0.84,
+      "anomaly_code": "ALTERNATE_RECOVERY",
+      "reason_code": "ALTERNATE_SOURCE_CONSISTENT",
+      "recommended_recovery_candidate": "HOLD_ALTERNATE_UNTIL_TRUST_RESTORED"
+    },
+    {
+      "sequence": 6,
+      "timestamp_s": 5.0,
+      "source": "FUSED_COMPARATOR",
+      "integrity_state": "RESTORED",
+      "position": {"x_m": 1010.0, "y_m": 2012.0, "z_m": 25.0},
+      "confidence": 0.97,
+      "integrity_indicator": 0.95,
+      "anomaly_code": null,
+      "reason_code": "MULTISOURCE_TRUST_RESTORED",
+      "recommended_recovery_candidate": null
+    }
+  ],
+  "operator_inputs": [
+    {
+      "event_sequence": 2,
+      "recommendation_id": "REC:2:DEGRADED:INTEGRITY_MARGIN_REDUCED:COMPARE_ALTERNATE_SOURCE",
+      "operator_id": "SYNTHETIC-OPERATOR-01",
+      "decision": "APPROVE",
+      "reason": "Synthetic operator judges the informational comparison recommendation appropriate."
+    },
+    {
+      "event_sequence": 3,
+      "recommendation_id": "REC:3:SUSPECT:KINEMATIC_RESIDUAL_EXCEEDED:ISOLATE_PRIMARY_SOURCE",
+      "operator_id": "SYNTHETIC-OPERATOR-01",
+      "decision": "APPROVE",
+      "reason": "Synthetic operator judges the informational isolation recommendation appropriate."
+    },
+    {
+      "event_sequence": 4,
+      "recommendation_id": "REC:4:DISAGREEMENT:PRIMARY_ALTERNATE_DIVERGENCE:PREFER_ALTERNATE_SOURCE",
+      "operator_id": "SYNTHETIC-OPERATOR-01",
+      "decision": "APPROVE",
+      "reason": "Synthetic operator judges the informational alternate-source recommendation appropriate."
+    },
+    {
+      "event_sequence": 5,
+      "recommendation_id": "REC:5:RECOVERING:ALTERNATE_SOURCE_CONSISTENT:HOLD_ALTERNATE_UNTIL_TRUST_RESTORED",
+      "operator_id": "SYNTHETIC-OPERATOR-01",
+      "decision": "DEFER",
+      "reason": "Synthetic operator defers the informational recommendation pending another sample."
+    }
+  ],
+  "expected": {
+    "event_count": 6,
+    "recommendation_count": 4,
+    "final_integrity_state": "RESTORED",
+    "trace_complete": true,
+    "execution_attempted": false,
+    "event_2_action_state": "APPROVED",
+    "event_5_action_state": "DEFERRED"
+  }
+}
