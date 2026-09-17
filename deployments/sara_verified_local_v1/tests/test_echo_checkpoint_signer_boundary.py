@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import base64
+import copy
+import json
 from dataclasses import dataclass, field
 
 import pytest
@@ -8,6 +11,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 import worldshepherd_sara.echo_checkpoint as checkpoint_module
 from worldshepherd_sara.echo_checkpoint import (
+    CHECKPOINT_SIGNATURE_INPUT_SCHEMA,
     CHECKPOINT_SIGNER_MODE_ENV,
     EXTERNAL_SIGNER_MODE,
     EchoCheckpointConfigError,
@@ -86,6 +90,7 @@ def test_injected_signer_creates_verifiable_checkpoint_without_payload_disclosur
     verified = verify_bundle(bundle, manager.fingerprint_sha256)
     assert verified["event_count"] == 1
     assert verified["key_id"] == signer.key_id
+    assert verified["signature_input_schema"] == CHECKPOINT_SIGNATURE_INPUT_SCHEMA
 
 
 def test_invalid_external_signature_fails_before_checkpoint_persistence(tmp_path):
@@ -180,3 +185,61 @@ def test_signer_boundary_is_software_precursor_not_g7_custody_proof(tmp_path):
     assert public["algorithm"] == "Ed25519"
     assert "private" not in str(public).lower()
     assert manager.fingerprint_sha256
+
+
+def test_digest_signing_reduces_fixed_100_event_signer_request_over_ten_x(tmp_path):
+    root = (tmp_path / "echo-g7-100").resolve()
+    store = EchoEventStore(root)
+    for index in range(100):
+        store.ingest(
+            record(
+                f"SARA-EVENT-G7-BULK-{index:04d}",
+                secret_marker=f"bulk-marker-{index:04d}",
+            )
+        )
+    signer = ExternalTestSigner(
+        Ed25519PrivateKey.generate(),
+        key_id="EXTERNAL-SIGNER-BULK-V1",
+    )
+    manager = EchoCheckpointManager(store, signer=signer)
+
+    bundle = manager.create_checkpoint()
+
+    assert len(signer.signed_messages) == 1
+    signing_request = signer.signed_messages[0]
+    legacy_raw_manifest = json.dumps(
+        bundle["manifest"],
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    improvement_ratio = len(legacy_raw_manifest) / len(signing_request)
+
+    assert len(signing_request) < 128
+    assert improvement_ratio >= 10.0
+
+
+def test_legacy_raw_manifest_signature_bundle_remains_verifiable(tmp_path):
+    store, _marker = store_with_event(tmp_path, name="echo-g7-legacy")
+    signer = ExternalTestSigner(
+        Ed25519PrivateKey.generate(),
+        key_id="EXTERNAL-SIGNER-LEGACY-V1",
+    )
+    manager = EchoCheckpointManager(store, signer=signer)
+    bundle = manager.create_checkpoint()
+
+    legacy = copy.deepcopy(bundle)
+    legacy.pop("signature_input_schema")
+    raw_manifest = json.dumps(
+        legacy["manifest"],
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    legacy["signature_b64url"] = (
+        base64.urlsafe_b64encode(signer.private_key.sign(raw_manifest))
+        .rstrip(b"=")
+        .decode("ascii")
+    )
+
+    verified = verify_bundle(legacy, manager.fingerprint_sha256)
+    assert verified["signature_input_schema"] == "LEGACY_RAW_MANIFEST"
+    assert verified["event_count"] == 1
