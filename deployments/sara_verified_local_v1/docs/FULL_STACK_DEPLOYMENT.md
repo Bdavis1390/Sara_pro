@@ -128,7 +128,7 @@ The deployable baseline uses:
 ECHO_CHECKPOINT_SIGNER_MODE=LOCAL_PEM
 ```
 
-The G7 external-signer interface and AWS KMS Ed25519 adapter are separate software capabilities. They do not convert this local profile into an HSM/KMS-custody claim. `EXTERNAL` mode fails closed until a deployment integration injects an actual approved signer.
+The ECHO external-signer interface and AWS KMS Ed25519 adapter are separate software capabilities. They do not convert this local profile into an HSM/KMS-custody claim. `EXTERNAL` mode fails closed until a deployment integration injects an actual approved signer.
 
 ## Evidence confidentiality
 
