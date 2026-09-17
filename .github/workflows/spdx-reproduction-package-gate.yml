@@ -1,0 +1,115 @@
+name: SPDX Reproduction Package Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/reproduce_spdx_validation.sh'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_REPRODUCTION_PACKAGE.md'
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - '.github/workflows/spdx-reproduction-package-gate.yml'
+  push:
+    branches:
+      - 'worldshepherd-spdx-reproduction-*'
+    paths:
+      - 'scripts/reproduce_spdx_validation.sh'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_REPRODUCTION_PACKAGE.md'
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - '.github/workflows/spdx-reproduction-package-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce-spdx-controls:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Validate reproduction script syntax
+        run: bash -n scripts/reproduce_spdx_validation.sh
+
+      - name: Run portable reproduction package
+        env:
+          SPDX_REPRO_OUTPUT_DIR: ${{ github.workspace }}/spdx_reproduction_evidence
+          SPDX_REPRO_BOOTSTRAP: '1'
+        run: bash scripts/reproduce_spdx_validation.sh
+
+      - name: Enforce receipt claims, dependency provenance, and source identity
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          receipt='spdx_reproduction_evidence/reproduction-receipt.json'
+          python -m json.tool "$receipt" >/dev/null
+          test -s spdx_reproduction_evidence/python-validator-freeze.txt
+          test -s spdx_reproduction_evidence/ajv-npm-tree.json
+          python -m json.tool spdx_reproduction_evidence/ajv-npm-tree.json >/dev/null
+          grep -q '"evidence_state": "REPRODUCTION_PACKAGE_EXECUTED"' "$receipt"
+          grep -q '"independently_reproduced": false' "$receipt"
+          grep -q '"reviewer_identity_established": false' "$receipt"
+          grep -q '"general_spdx_conformance_established": false' "$receipt"
+          grep -q '"community_endorsement_established": false' "$receipt"
+          grep -q '"supply_chain_reproducibility_established": false' "$receipt"
+          grep -q '"transitive_dependencies_lockfile_pinned": false' "$receipt"
+          grep -q '"admission_authorized": false' "$receipt"
+          grep -q '"release_approved": false' "$receipt"
+          python - "$receipt" "$EXPECTED_HEAD_SHA" <<'PY'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+
+          receipt = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          expected = sys.argv[2]
+          actual = receipt['repository_head']
+          if actual != expected:
+              raise SystemExit(f'receipt repository_head mismatch: expected {expected}, got {actual}')
+          expected_results = {
+              'baseline_structural': 'PASS',
+              'baseline_semantic': 'PASS',
+              'baseline_combined': 'PASS',
+              'structural_negative_ajv': 'REJECTED',
+              'structural_negative_combined': 'REJECTED',
+              'semantic_negative_ajv': 'PASS',
+              'semantic_negative_pyshacl': 'REJECTED_NONCONFORMANT',
+              'semantic_negative_combined': 'REJECTED',
+          }
+          if receipt['results'] != expected_results:
+              raise SystemExit(f'unexpected reproduction results: {receipt["results"]!r}')
+          expected_versions = {
+              'spdx3_validate': '0.0.7',
+              'pyshacl': '0.40.1',
+              'ajv_cli': '5.0.0',
+          }
+          for key, expected_version in expected_versions.items():
+              actual_version = receipt['environment'].get(key)
+              if actual_version != expected_version:
+                  raise SystemExit(f'{key} version mismatch in receipt: expected {expected_version}, got {actual_version}')
+          for filename, receipt_key in [
+              ('python-validator-freeze.txt', 'python_dependency_manifest_sha256'),
+              ('ajv-npm-tree.json', 'npm_dependency_manifest_sha256'),
+          ]:
+              payload = Path('spdx_reproduction_evidence', filename).read_bytes()
+              actual_digest = 'sha256:' + hashlib.sha256(payload).hexdigest()
+              expected_digest = receipt['environment'][receipt_key]
+              if actual_digest != expected_digest:
+                  raise SystemExit(f'{filename} digest mismatch: expected {expected_digest}, got {actual_digest}')
+          PY
+
+      - name: Upload reproduction evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: spdx-portable-reproduction-evidence
+          path: spdx_reproduction_evidence
+          if-no-files-found: error
