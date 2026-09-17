@@ -1,6 +1,6 @@
 # WS-RESTRICTION 10X QUALITY SCORECARD
 
-Status: **ENGINEERING ACCEPTANCE STANDARD / G7 INTERNAL VALIDATION PENDING**
+Status: **ENGINEERING ACCEPTANCE STANDARD / G7 CURRENT-MAIN QUALIFICATION PENDING**
 
 ## Definition of "10x better"
 
@@ -19,13 +19,13 @@ The frozen baseline is ten assurance questions that an operator should not have 
 9. Is the configured signing public-key fingerprint known?
 10. Is raw-content persistence explicitly false?
 
-Each unresolved question is one manual-inference unit.
+The final model contains ten assurance dimensions. Four were already machine-resolved at the G3-start baseline: restriction identity, event identity, delivery semantics, and raw-content-persistence state. Six remained unresolved or weakly inferred: governed authority identity, authority binding, fingerprint-key epoch, signature verification, signing-key identity, and signing public-key fingerprint.
 
-Baseline manual-inference units: **10**.
+Baseline unresolved manual-inference units: **6 of 10 dimensions**.
 
-10x acceptance threshold: **<=1 unresolved unit**.
+10x acceptance threshold: **<=0.6 unresolved unit**.
 
-The stronger practical V4 acceptance condition is **0/10 unresolved**.
+Because unresolved dimensions are integral, the practical V4 acceptance condition is **0 unresolved across all 10 dimensions**.
 
 ## Executable implementation
 
