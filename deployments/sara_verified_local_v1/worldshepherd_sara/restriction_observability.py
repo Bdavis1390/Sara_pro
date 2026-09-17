@@ -199,7 +199,7 @@ def restriction_observability(
         "claims_boundary": (
             "Window-scoped observability over persisted SARA restriction events only; "
             "bounded audit retention does not establish global lifetime counts or complete "
-            "provider-side restriction history. Responses intentionally omit safe_summary, "
-            "metadata, and all unrestricted audit payload fields."
+            "provider-side restriction history. Responses intentionally expose only the "
+            "documented structural projection."
         ),
     }
