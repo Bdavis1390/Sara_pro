@@ -18,6 +18,7 @@ from worldshepherd_sara.restriction_provenance import (
     RESTRICTION_EVENT,
     RESTRICTION_SCHEMA,
     RESTRICTION_SCHEMA_V1,
+    RESTRICTION_SCHEMA_V2,
     capture_restriction,
     queue_restriction_event,
 )
@@ -67,8 +68,16 @@ def canonical_id(payload: dict) -> str:
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:32]
 
 
-def legacy_v1_payload() -> dict:
+def legacy_v2_payload() -> dict:
     payload = evidence().semantic_document()
+    payload["schema"] = RESTRICTION_SCHEMA_V2
+    payload.pop("fingerprint_key_id")
+    payload["restriction_id"] = canonical_id(payload)
+    return payload
+
+
+def legacy_v1_payload() -> dict:
+    payload = legacy_v2_payload()
     payload["schema"] = RESTRICTION_SCHEMA_V1
     payload.pop("authority")
     payload["restriction_id"] = canonical_id(payload)
@@ -88,12 +97,13 @@ def audit_record(*, actor=RESTRICTION_AUTHORITY, payload=None):
     ).model_dump(mode="json")
 
 
-def test_new_restrictions_bind_prime_authority_into_v2_identity():
+def test_new_restrictions_preserve_prime_authority_binding_in_v3_identity():
     item = evidence()
     document = item.semantic_document()
 
     assert document["schema"] == RESTRICTION_SCHEMA
-    assert RESTRICTION_SCHEMA.endswith("V2")
+    assert RESTRICTION_SCHEMA.endswith("V3")
+    assert document["fingerprint_key_id"] == KEY_ID
     assert item.authority == RESTRICTION_AUTHORITY
     assert document["authority"] == RESTRICTION_AUTHORITY
     assert item.restriction_id == canonical_id(document)
@@ -113,20 +123,23 @@ def test_queue_actor_is_not_caller_overridable():
 
 
 def test_v2_projection_requires_governed_outer_actor_and_payload_authority():
-    projected = project_restriction_audit_record(audit_record())
+    payload = legacy_v2_payload()
+    projected = project_restriction_audit_record(audit_record(payload=payload))
     assert projected["authority"] == RESTRICTION_AUTHORITY
     assert projected["authority_bound_in_payload"] is True
-    assert projected["provenance_schema"] == RESTRICTION_SCHEMA
+    assert projected["provenance_schema"] == RESTRICTION_SCHEMA_V2
+    assert projected["fingerprint_key_epoch_bound_in_payload"] is False
+    assert projected["fingerprint_key_id"] is None
 
     with pytest.raises(RestrictionObservabilityError, match="audit actor"):
         project_restriction_audit_record(audit_record(actor="UNTRUSTED_ACTOR"))
 
-    missing = evidence().semantic_document()
+    missing = legacy_v2_payload()
     missing.pop("authority")
     with pytest.raises(RestrictionObservabilityError, match="payload authority"):
         project_restriction_audit_record(audit_record(payload=missing))
 
-    wrong = evidence().semantic_document()
+    wrong = legacy_v2_payload()
     wrong["authority"] = "UNTRUSTED_ACTOR"
     with pytest.raises(RestrictionObservabilityError, match="payload authority"):
         project_restriction_audit_record(audit_record(payload=wrong))
@@ -169,7 +182,7 @@ def test_v1_legacy_record_requires_prime_actor_but_not_payload_authority():
 
 
 def test_v2_cannot_be_downgraded_to_v1_by_stripping_authority():
-    downgraded = evidence().semantic_document()
+    downgraded = legacy_v2_payload()
     original_v2_id = downgraded["restriction_id"]
     downgraded["schema"] = RESTRICTION_SCHEMA_V1
     downgraded.pop("authority")
