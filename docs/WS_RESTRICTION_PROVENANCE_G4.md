@@ -1,6 +1,6 @@
 # WS-RESTRICTION-PROVENANCE G4 — AUTHORITY BINDING
 
-Status: **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING G3 + INTERNAL VALIDATION**
+Status: **IMPLEMENTED IN SOFTWARE ON CURRENT-MAIN BRANCH / PENDING INTERNAL VALIDATION**
 
 ## Objective
 
@@ -122,4 +122,4 @@ ECHO semantic hashing and stable event IDs provide replay/conflict evidence with
 
 A later gate should add non-secret fingerprint-key epoch identifiers and, separately, independently verifiable signing/witness evidence where justified.
 
-Until G3 is merged and G4 is reconciled onto that protected head, then passes exact-head required CI, broader Verified Local validation, and protected merge, classify G4 as **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING INTERNAL VALIDATION**.
+G3 is merged and proven internally for its tested positive-schema invariants. G4 is reconciled onto current protected main and remains **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION** until its exact-head required CI, broader Verified Local validation, and protected merge complete. The separate 10x scorecard requires the five declared G3-start residual attack classes to fall from 5 units to 0 while zero-tolerance G3 controls remain closed.
