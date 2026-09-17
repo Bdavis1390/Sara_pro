@@ -505,4 +505,8 @@ jobs:
 
       - name: Stop and remove CI services
         if: always()
-        run: docker compose down -v || true
+        run: |
+          set +e
+          docker compose --profile prime-sentinel --profile echo down -v
+          sudo rm -rf "${{ runner.temp }}/worldshepherd-deploy"
+          rm -f .env
