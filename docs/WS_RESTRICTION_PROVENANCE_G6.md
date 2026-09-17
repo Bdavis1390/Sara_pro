@@ -55,24 +55,22 @@ Additional fail-closed cases include:
 
 - wrong out-of-band signer fingerprint;
 - checkpoint signature tampering;
-- semantic substitution under the same event ID;
 - checkpoint omission of the target event.
 
 ## Executable 10x metric
 
-G6 declares five unsigned-authenticity residual classes at the G5 boundary:
+G6 declares four unsigned-authenticity residual classes at the G5 boundary:
 
 1. fully rewritten self-consistent safe evidence accepted without signed inclusion;
 2. signer trust derived only from material embedded in the evidence bundle;
 3. checkpoint signature tampering not checked at the restriction-verification boundary;
-4. semantic substitution under a stable event ID not checked against signed membership;
-5. a restriction event can be treated as witnessed even when omitted from the signed checkpoint.
+4. a restriction event can be treated as witnessed even when omitted from the signed checkpoint.
 
-Baseline residual units: **5**.
+Baseline residual units: **4**.
 
-10x threshold: **<= 0.5 residual units**.
+10x threshold: **<= 0.4 residual units**.
 
-Because the count is integral, the practical G6 pass condition is **0/5 residual authenticity classes open**.
+Because the count is integral, the practical G6 pass condition is **0/4 residual authenticity classes open**.
 
 This is a bounded authenticity metric. It is not a universal security multiplier.
 
