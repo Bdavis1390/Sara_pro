@@ -12,6 +12,7 @@ from .restriction_provenance import (
     RESTRICTION_EVENT,
     RESTRICTION_SCHEMA,
     RESTRICTION_SCHEMA_V1,
+    RESTRICTION_SCHEMA_V2,
 )
 
 
@@ -55,6 +56,7 @@ _V1_PAYLOAD_KEYS = frozenset(
     }
 )
 _V2_PAYLOAD_KEYS = _V1_PAYLOAD_KEYS | frozenset({"authority"})
+_V3_PAYLOAD_KEYS = _V2_PAYLOAD_KEYS | frozenset({"fingerprint_key_id"})
 
 
 class RestrictionObservabilityError(ValueError):
@@ -131,8 +133,10 @@ def _expected_restriction_id(payload: dict[str, Any], provenance_schema: str) ->
         "metadata": metadata,
         "raw_content_persisted": payload.get("raw_content_persisted"),
     }
-    if provenance_schema == RESTRICTION_SCHEMA:
+    if provenance_schema in {RESTRICTION_SCHEMA_V2, RESTRICTION_SCHEMA}:
         identity_document["authority"] = payload.get("authority")
+    if provenance_schema == RESTRICTION_SCHEMA:
+        identity_document["fingerprint_key_id"] = payload.get("fingerprint_key_id")
 
     return hashlib.sha256(
         _canonical_json(identity_document).encode("utf-8")
@@ -155,11 +159,25 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     if provenance_schema == RESTRICTION_SCHEMA_V1:
         allowed_payload_keys = _V1_PAYLOAD_KEYS
         authority_bound_in_payload = False
-    elif provenance_schema == RESTRICTION_SCHEMA:
+        fingerprint_key_epoch_bound_in_payload = False
+        fingerprint_key_id = None
+    elif provenance_schema == RESTRICTION_SCHEMA_V2:
         allowed_payload_keys = _V2_PAYLOAD_KEYS
         authority_bound_in_payload = True
+        fingerprint_key_epoch_bound_in_payload = False
+        fingerprint_key_id = None
         if payload.get("authority") != RESTRICTION_AUTHORITY:
             raise RestrictionObservabilityError("restriction payload authority is invalid")
+    elif provenance_schema == RESTRICTION_SCHEMA:
+        allowed_payload_keys = _V3_PAYLOAD_KEYS
+        authority_bound_in_payload = True
+        fingerprint_key_epoch_bound_in_payload = True
+        if payload.get("authority") != RESTRICTION_AUTHORITY:
+            raise RestrictionObservabilityError("restriction payload authority is invalid")
+        fingerprint_key_id = _component(
+            payload.get("fingerprint_key_id"),
+            "fingerprint_key_id",
+        )
     else:
         raise RestrictionObservabilityError("restriction schema is invalid")
 
@@ -210,6 +228,8 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
         "event_id": event_id,
         "authority": RESTRICTION_AUTHORITY,
         "authority_bound_in_payload": authority_bound_in_payload,
+        "fingerprint_key_id": fingerprint_key_id,
+        "fingerprint_key_epoch_bound_in_payload": fingerprint_key_epoch_bound_in_payload,
         "audit_timestamp": audit_timestamp,
         "occurred_at": occurred_at,
         "action": action,
@@ -255,6 +275,9 @@ def restriction_observability(
     by_reason = Counter(str(item["reason_code"]) for item in projected)
     by_source = Counter(str(item["source_system"]) for item in projected)
     by_processor = Counter(str(item["processor"]) for item in projected)
+    by_fingerprint_key_id = Counter(
+        str(item["fingerprint_key_id"] or "UNBOUND_LEGACY") for item in projected
+    )
 
     newest_first = list(reversed(projected[-recent_limit:]))
     last_valid_occurred_at = None if not projected else projected[-1]["occurred_at"]
@@ -271,6 +294,7 @@ def restriction_observability(
             "by_reason_code": dict(sorted(by_reason.items())),
             "by_source_system": dict(sorted(by_source.items())),
             "by_processor": dict(sorted(by_processor.items())),
+            "by_fingerprint_key_id": dict(sorted(by_fingerprint_key_id.items())),
         },
         "last_valid_occurred_at": last_valid_occurred_at,
         "recent": newest_first,
@@ -278,6 +302,7 @@ def restriction_observability(
             "Window-scoped observability over persisted SARA restriction events only; "
             "bounded audit retention does not establish global lifetime counts or complete "
             "provider-side restriction history. V1 records rely on the governed outer audit "
-            "actor; V2 records additionally bind that authority into the payload identity."
+            "actor; V2 records additionally bind authority into the payload identity; V3 "
+            "records also bind the non-secret fingerprint-key epoch identifier."
         ),
     }
