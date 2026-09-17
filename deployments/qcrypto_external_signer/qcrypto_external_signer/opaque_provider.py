@@ -4,9 +4,10 @@ The custody process receives only an opaque key handle, public key/fingerprint, 
 provider operation ID, and reconciliation state. Private-key bytes are never part of
 this interface.
 
-The reference provider is CI software only. It models production-HSM/KMS semantics,
-including acknowledgement loss and explicit reconciliation, but is not a production
-HSM, FIPS 140 validated module, or native blockchain signer.
+The reference provider is CI software only. Production providers may use a different
+FIPS 204 transport profile (for example, a cloud KMS API that exposes pure ML-DSA but
+not the optional ML-DSA context parameter). The verification mode is therefore an
+explicit, signed provider property instead of an implicit implementation detail.
 """
 from __future__ import annotations
 
@@ -22,6 +23,7 @@ from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey, M
 
 
 PROVIDER_CONTEXT = b"WS-QCRYPTO-OPAQUE-PROVIDER-V1"
+_RAW_FRAME_PREFIX = b"WS-QCRYPTO-MLDSA-RAW-FRAMED-CONTEXT-V1\x00"
 
 
 class ProviderError(RuntimeError):
@@ -45,6 +47,13 @@ class ProviderState(str, Enum):
     INDETERMINATE = "INDETERMINATE"
 
 
+class ProviderVerificationMode(str, Enum):
+    """How the provider cryptographically binds the Worldshepherd domain context."""
+
+    FIPS204_CONTEXT = "FIPS204_CONTEXT"
+    RAW_FRAMED_CONTEXT = "RAW_FRAMED_CONTEXT"
+
+
 @dataclass(frozen=True)
 class ProviderResult:
     operation_id: str
@@ -55,6 +64,7 @@ class ProviderResult:
     context_sha256: str
     signature_b64url: str | None = None
     safe_to_retry: bool = False
+    verification_mode: str = ProviderVerificationMode.FIPS204_CONTEXT.value
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -66,6 +76,7 @@ class ProviderResult:
             "context_sha256": self.context_sha256,
             "signature_b64url": self.signature_b64url,
             "safe_to_retry": self.safe_to_retry,
+            "verification_mode": self.verification_mode,
         }
 
 
@@ -82,6 +93,9 @@ class OpaqueSignerProvider(Protocol):
     @property
     def fingerprint_sha256(self) -> str: ...
 
+    @property
+    def verification_mode(self) -> str: ...
+
     def begin_sign(self, operation_id: str, message: bytes, context: bytes) -> ProviderResult: ...
 
     def reconcile(self, operation_id: str) -> ProviderResult: ...
@@ -96,14 +110,49 @@ def _unb64(value: str) -> bytes:
     return base64.b64decode(raw + b"=" * (-len(raw) % 4), altchars=b"-_", validate=True)
 
 
+def provider_raw_framed_message(message: bytes, context: bytes) -> bytes:
+    """Encode a context-bound message for providers without FIPS 204 ctx input.
+
+    The provider signs this exact byte string using pure ML-DSA with an empty FIPS
+    context. The original Worldshepherd context and payload remain unambiguously
+    length-delimited inside the signed data, preserving domain separation without
+    pretending the remote API supports the FIPS 204 context parameter.
+    """
+    if not isinstance(message, bytes) or not isinstance(context, bytes):
+        raise ProviderError("provider message and context must be bytes")
+    if len(context) > 65535:
+        raise ProviderError("provider context is too large")
+    if len(message) > (2**64 - 1):
+        raise ProviderError("provider message is too large")
+    return (
+        _RAW_FRAME_PREFIX
+        + len(context).to_bytes(2, "big")
+        + context
+        + len(message).to_bytes(8, "big")
+        + message
+    )
+
+
 def provider_operation_id(*, key_handle: str, message: bytes, context: bytes) -> str:
     if not key_handle or not isinstance(key_handle, str):
         raise ProviderError("opaque key handle is required")
-    binding = b"WS-QCRYPTO-PROVIDER-OP-V1\x00" + key_handle.encode("utf-8") + b"\x00" + hashlib.sha256(context).digest() + hashlib.sha256(message).digest()
+    binding = (
+        b"WS-QCRYPTO-PROVIDER-OP-V1\x00"
+        + key_handle.encode("utf-8")
+        + b"\x00"
+        + hashlib.sha256(context).digest()
+        + hashlib.sha256(message).digest()
+    )
     return "QCRYPTO-PROVIDER-" + hashlib.sha256(binding).hexdigest()
 
 
-def verify_provider_result(result: ProviderResult, *, public_key_bytes: bytes, message: bytes, context: bytes) -> bool:
+def verify_provider_result(
+    result: ProviderResult,
+    *,
+    public_key_bytes: bytes,
+    message: bytes,
+    context: bytes,
+) -> bool:
     if result.state is not ProviderState.SIGNED or not result.signature_b64url:
         return False
     if result.algorithm != "ML-DSA-65":
@@ -113,9 +162,16 @@ def verify_provider_result(result: ProviderResult, *, public_key_bytes: bytes, m
     if result.context_sha256 != hashlib.sha256(context).hexdigest():
         return False
     try:
+        mode = ProviderVerificationMode(result.verification_mode)
         signature = _unb64(result.signature_b64url)
-        MLDSA65PublicKey.from_public_bytes(public_key_bytes).verify(signature, message, context)
-    except (InvalidSignature, ValueError, TypeError):
+        public = MLDSA65PublicKey.from_public_bytes(public_key_bytes)
+        if mode is ProviderVerificationMode.FIPS204_CONTEXT:
+            public.verify(signature, message, context)
+        elif mode is ProviderVerificationMode.RAW_FRAMED_CONTEXT:
+            public.verify(signature, provider_raw_framed_message(message, context), b"")
+        else:  # pragma: no cover - enum exhaustiveness guard
+            return False
+    except (InvalidSignature, ValueError, TypeError, ProviderError):
         return False
     return True
 
@@ -164,6 +220,10 @@ class ReferenceOpaqueMlDsa65Provider:
     def fingerprint_sha256(self) -> str:
         return hashlib.sha256(self._public).hexdigest()
 
+    @property
+    def verification_mode(self) -> str:
+        return ProviderVerificationMode.FIPS204_CONTEXT.value
+
     def begin_sign(self, operation_id: str, message: bytes, context: bytes) -> ProviderResult:
         expected = provider_operation_id(key_handle=self.key_handle, message=message, context=context)
         if operation_id != expected:
@@ -188,12 +248,16 @@ class ReferenceOpaqueMlDsa65Provider:
             context_sha256=context_digest,
             signature_b64url=_b64(signature),
             safe_to_retry=False,
+            verification_mode=self.verification_mode,
         )
         self._semantic[operation_id] = (message_digest, context_digest)
         self._operations[operation_id] = result
         if self._ack_loss_once and not self._ack_loss_used:
             self._ack_loss_used = True
-            raise ProviderAmbiguousOutcome(operation_id, "simulated provider acknowledgement loss after signature commit")
+            raise ProviderAmbiguousOutcome(
+                operation_id,
+                "simulated provider acknowledgement loss after signature commit",
+            )
         return result
 
     def reconcile(self, operation_id: str) -> ProviderResult:
@@ -209,6 +273,7 @@ class ReferenceOpaqueMlDsa65Provider:
             context_sha256="",
             signature_b64url=None,
             safe_to_retry=True,
+            verification_mode=self.verification_mode,
         )
 
 
