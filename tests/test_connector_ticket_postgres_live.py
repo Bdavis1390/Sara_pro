@@ -148,6 +148,12 @@ def test_policy_records_single_host_resilience_evidence_without_distributed_upgr
     assert policy["transaction_abort_recovery_validation"] is True
     assert policy["terminated_backend_recovery_validation"] is True
     assert policy["best_effort_dead_connection_cleanup"] is True
+    assert policy["ambiguous_commit_outcome_validation"] is True
+    assert policy["ambiguous_commit_validation_scope"] == "single_host_simulated_commit_ack_loss_before_and_after_database_commit"
+    assert policy["unknown_claim_execution_fail_closed"] is True
+    assert policy["unknown_claim_automatic_retry"] is False
+    assert policy["consumed_unknown_ownership_execution_allowed"] is False
+    assert policy["unconsumed_unknown_explicit_retry_validation"] is True
     assert policy["multi_host_live_validation"] is False
     assert policy["distributed_replay_protection"] is False
     assert policy["multi_host_consensus"] is False
