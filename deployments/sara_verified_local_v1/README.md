@@ -31,6 +31,25 @@ cp .env.example .env
 
 For the Docker-based acceptance sequence, see [`docs/VERIFIED_DEPLOYMENT.md`](docs/VERIFIED_DEPLOYMENT.md).
 
+
+## Quick start — verified local full stack
+
+For the localhost-only SARA + PRIME SENTINEL + ECHO SENTINEL LINK baseline:
+
+```bash
+# From the repository root:
+bash scripts/sara.sh deploy-full
+bash scripts/sara.sh verify-full
+```
+
+Stop the stack without deleting named volumes:
+
+```bash
+bash scripts/sara.sh down-full
+```
+
+The deploy command provisions service-owned secrets outside Git, binds the exact Git commit/release identity, keeps all published ports on `127.0.0.1`, and runs the full acceptance verifier. See [docs/FULL_STACK_DEPLOYMENT.md](docs/FULL_STACK_DEPLOYMENT.md).
+
 ## Quick start — PRE full-bloom qualification compiler
 
 After installing the package, compile the current frozen internal qualification evidence with:
