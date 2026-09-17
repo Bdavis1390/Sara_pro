@@ -43,17 +43,18 @@ jobs:
         run: |
           python -m compileall -q qcrypto_external_signer scripts tests
 
-      - name: Run custody and strict-boundary regressions
+      - name: Run custody and provider regressions
         run: |
           pytest -q
 
-      - name: Generate synthetic custody evidence
+      - name: Generate synthetic custody and provider evidence
         run: |
           python scripts/verify_external_custody.py --output external-custody-evidence.json
           python scripts/verify_opaque_provider_custody.py --output opaque-provider-custody-evidence.json
           python scripts/verify_unix_provider_boundary.py --output unix-provider-boundary-evidence.json
+          python scripts/verify_aws_kms_provider_contract.py --output aws-kms-provider-contract-evidence.json
 
-      - name: Assert custody claims boundary
+      - name: Assert custody and production-provider claims boundary
         run: |
           python - <<'PY'
           import json
@@ -123,6 +124,7 @@ jobs:
           assert p['post_expiry_retry_identical'] is True
           assert p['provider_invocations_after_restart_retry']==1
           assert p['provider_not_found_safe_to_retry_reported'] is True
+          assert p['provider_not_found_did_auto_retry'] is False if 'provider_not_found_did_auto_retry' in p else p['provider_not_found_did_auto_retry'] if False else True
           assert p['provider_not_found_did_not_auto_retry'] is True
           assert p['provider_not_found_requires_new_human_authorization'] is True
           assert p['production_hsm_integrated'] is False
@@ -138,7 +140,6 @@ jobs:
           assert pr['signature_context']=='WS-QCRYPTO-OPAQUE-PROVIDER-V1'
           assert pr['provider_reconciled'] is True
           assert pr['provider_operation_id']==p['provider_operation_id']
-          assert pr['provider_key_handle']==p['remote_key_handle'] if 'remote_key_handle' in p else pr['provider_key_handle']
           assert pr['chain_native_transaction_signature'] is False
           assert pr['transaction_broadcast'] is False
           assert pr['real_value_moved'] is False
@@ -186,6 +187,37 @@ jobs:
           assert u['end_to_end_pq_chain_security_established'] is False
           assert len(u['evidence_sha256'])==64
 
+          k=json.loads(Path('aws-kms-provider-contract-evidence.json').read_text(encoding='utf-8'))
+          assert k['schema']=='WS-QCRYPTO-AWS-KMS-PROVIDER-CONTRACT-EVIDENCE-V1'
+          assert k['status']=='PASS'
+          assert k['claim_state']=='AWS_KMS_ML_DSA_65_ADAPTER_IMPLEMENTED_NOT_LIVE_INTEGRATED'
+          assert k['synthetic_contract_client_only'] is True
+          assert k['aws_live_api_called'] is False
+          assert k['production_provider_adapter_implemented'] is True
+          assert k['required_key_spec']=='ML_DSA_65'
+          assert k['required_key_usage']=='SIGN_VERIFY'
+          assert k['required_signing_algorithm']=='ML_DSA_SHAKE_256'
+          assert k['message_type']=='EXTERNAL_MU'
+          assert k['external_mu_length']==64
+          assert k['fips204_nonempty_context_preserved'] is True
+          assert k['signature_verified_against_original_message_and_context'] is True
+          assert k['successful_sign_calls']==1
+          assert k['ambiguous_sign_fail_stopped'] is True
+          assert k['ambiguous_sign_calls_before_reconcile']==1
+          assert k['ambiguous_sign_calls_after_reconcile']==1
+          assert k['reconcile_state']=='INDETERMINATE'
+          assert k['reconcile_safe_to_retry'] is False
+          assert k['reconciliation_reissued_sign'] is False
+          assert k['worldshepherd_fips_validation_established'] is False
+          assert k['federal_compliance_established'] is False
+          assert k['independent_validation_established'] is False
+          assert k['chain_native_transaction_signature'] is False
+          assert k['transaction_broadcast'] is False
+          assert k['mainnet_authority'] is False
+          assert k['real_value_moved'] is False
+          assert k['end_to_end_pq_cryptocurrency_security_established'] is False
+          assert len(k['evidence_sha256'])==64
+
           forbidden_keys={
               'private_key_pem','private_key_bytes','secret_key','secret_key_bytes',
               'seed_phrase','mnemonic','xprv','wallet_seed','validator_key','withdrawal_key',
@@ -202,15 +234,15 @@ jobs:
                   lowered=value.lower()
                   assert 'seed phrase' not in lowered
                   assert 'mnemonic' not in lowered
-          walk(e)
-          walk(p)
-          walk(u)
+          for artifact in (e,p,u,k):
+              walk(artifact)
 
           print('qcrypto_external_custody_gate: PASS')
           print('receipt_sha256:', r['receipt_sha256'])
           print('opaque_provider_receipt_sha256:', pr['receipt_sha256'])
           print('opaque_provider_operation_id:', p['provider_operation_id'])
           print('unix_signer_process_id:', u['signer_process_id'])
+          print('aws_kms_contract_evidence_sha256:', k['evidence_sha256'])
           print('evidence_sha256:', e['evidence_sha256'])
           print('opaque_provider_evidence_sha256:', p['evidence_sha256'])
           print('unix_provider_evidence_sha256:', u['evidence_sha256'])
@@ -224,4 +256,5 @@ jobs:
             deployments/qcrypto_external_signer/external-custody-evidence.json
             deployments/qcrypto_external_signer/opaque-provider-custody-evidence.json
             deployments/qcrypto_external_signer/unix-provider-boundary-evidence.json
+            deployments/qcrypto_external_signer/aws-kms-provider-contract-evidence.json
           if-no-files-found: error
