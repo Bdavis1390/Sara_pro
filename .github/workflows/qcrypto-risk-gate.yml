@@ -35,6 +35,7 @@ jobs:
           python -m py_compile security/qcrypto/institutional_custody_readiness.py
           python -m py_compile security/qcrypto/financial_sector_coordination.py
           python -m py_compile security/qcrypto/production_assurance_guard.py
+          python -m py_compile security/qcrypto/native_execution_admission.py
       - name: Run QCRYPTO regression tests
         run: python -m unittest discover -s security/qcrypto -p 'test_*.py' -v
       - name: Validate structured evidence
