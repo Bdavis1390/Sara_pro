@@ -89,7 +89,10 @@ def score_record(benchmark: dict[str, Any], record: dict[str, Any]) -> dict[str,
 
 
 def leadership_result(
-    benchmark: dict[str, Any], scored: list[dict[str, Any]], focal_entity: str
+    benchmark: dict[str, Any],
+    scored: list[dict[str, Any]],
+    focal_entity: str,
+    methodology_review: dict[str, Any],
 ) -> dict[str, Any]:
     by_entity = {item["entity"]: item for item in scored}
     if focal_entity not in by_entity:
@@ -111,11 +114,21 @@ def leadership_result(
     critical_zero = [
         cid for cid in gate["critical_zero_blocks"] if focal_rows[cid]["score"] <= 0
     ]
-    passed = (
+    score_gate_passed = (
         margin >= float(gate["minimum_margin_points"])
         and not required_missing
         and not critical_zero
     )
+    externally_reviewed = bool(
+        methodology_review.get("external_methodology_reviewed", False)
+    )
+    review_required = bool(
+        gate.get("public_claim_requires_external_methodology_review", False)
+    )
+    public_claim_ready = score_gate_passed and (
+        externally_reviewed or not review_required
+    )
+
     return {
         "focal_entity": focal_entity,
         "focal_score": focal["score"],
@@ -125,8 +138,12 @@ def leadership_result(
         "minimum_margin_points": gate["minimum_margin_points"],
         "required_missing": required_missing,
         "critical_zero": critical_zero,
-        "profile_leadership_gate_passed": passed,
-        "allowed_wording": gate["wording_when_passed"] if passed else None,
+        "internal_profile_score_gate_passed": score_gate_passed,
+        "external_methodology_reviewed": externally_reviewed,
+        "public_claim_ready": public_claim_ready,
+        "allowed_public_wording": (
+            gate["wording_when_passed"] if public_claim_ready else None
+        ),
         "prohibited_wording": gate["prohibited_wording"],
     }
 
@@ -135,6 +152,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", required=True)
     parser.add_argument("--records", nargs="+", required=True)
+    parser.add_argument("--methodology-review", required=True)
     parser.add_argument("--focal-entity", default="Worldshepherd WS-SARA-EVAL-v1.1")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
@@ -142,6 +160,9 @@ def main() -> int:
     benchmark = load_json(args.benchmark)
     if not isinstance(benchmark, dict):
         raise BenchmarkError("benchmark must be a JSON object")
+    methodology_review = load_json(args.methodology_review)
+    if not isinstance(methodology_review, dict):
+        raise BenchmarkError("methodology review must be a JSON object")
     records = load_records(args.records)
     scored = [score_record(benchmark, record) for record in records]
     scored.sort(key=lambda item: (-item["score"], item["entity"].lower()))
@@ -150,7 +171,10 @@ def main() -> int:
         "as_of": benchmark["as_of"],
         "profile": benchmark["profile"],
         "ranking": scored,
-        "leadership": leadership_result(benchmark, scored, args.focal_entity),
+        "leadership": leadership_result(
+            benchmark, scored, args.focal_entity, methodology_review
+        ),
+        "methodology_review": methodology_review,
         "benchmark_non_claims": benchmark["non_claims"],
     }
     output = Path(args.output)
