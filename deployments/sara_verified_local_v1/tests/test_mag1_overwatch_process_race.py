@@ -158,6 +158,10 @@ def _attempt_transition_after_hold_owns_lock(
     result_queue,
 ) -> None:
     try:
+        # Signal process startup before opening DurableStore. MAG-1.5+ protects
+        # DurableStore construction/recovery with the same process-visible lock,
+        # so opening the store is itself expected to block while HOLD owns it.
+        transition_started.set()
         store = DurableStore(data_dir)
         prime_verifier = PrimeSentinelVerifier(
             public_keys_b64url={"PS-RACE": prime_public_b64}
@@ -168,7 +172,6 @@ def _attempt_transition_after_hold_owns_lock(
             clear_quorum=2,
         )
         assertion = PrimeSentinelAuthorizationAssertion.model_validate(assertion_json)
-        transition_started.set()
         result = execute_prime_requalification_transition(
             store,
             assertion=assertion,
@@ -279,9 +282,10 @@ def test_overwatch_hold_wins_serialized_process_race_against_prime_release(tmp_p
     transition_process.start()
     assert transition_started.wait(timeout=15), "transition worker never started"
 
-    # The transition worker has started while the HOLD worker still owns the
-    # process-visible registry transaction lock. Releasing HOLD now forces the
-    # transition's subsequent registry read to observe the committed directive.
+    # The transition process is alive while HOLD still owns the process-visible
+    # lock. MAG-1.5+ may block it during DurableStore startup/recovery itself.
+    # Releasing HOLD forces that protected open and the later transition read to
+    # observe the committed containment directive.
     release_hold.set()
 
     results = [result_queue.get(timeout=30) for _ in range(2)]
