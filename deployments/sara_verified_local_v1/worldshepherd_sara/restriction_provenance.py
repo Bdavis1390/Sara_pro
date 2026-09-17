@@ -5,6 +5,7 @@ import hmac
 import json
 import os
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Literal
@@ -83,15 +84,18 @@ def _bounded_component(name: str, value: str) -> str:
     return value
 
 
+def _validate_fingerprint_key(key: bytes) -> None:
+    if not isinstance(key, bytes) or len(key) < MIN_FINGERPRINT_KEY_BYTES:
+        raise RestrictionProvenanceError(
+            f"fingerprint key must contain at least {MIN_FINGERPRINT_KEY_BYTES} bytes"
+        )
+
+
 def _fingerprint(key: bytes, label: str, value: str | None) -> str | None:
     if value is None:
         return None
     if not isinstance(value, str):
         raise RestrictionProvenanceError(f"{label} content must be text when supplied")
-    if not isinstance(key, bytes) or len(key) < MIN_FINGERPRINT_KEY_BYTES:
-        raise RestrictionProvenanceError(
-            f"fingerprint key must contain at least {MIN_FINGERPRINT_KEY_BYTES} bytes"
-        )
     message = b"WS-RESTRICTION\x00" + label.encode("ascii") + b"\x00" + value.encode("utf-8")
     return hmac.new(key, message, hashlib.sha256).hexdigest()
 
@@ -104,10 +108,7 @@ def fingerprint_key_from_environment() -> bytes:
     """
     value = os.getenv("RESTRICTION_FINGERPRINT_KEY", "")
     key = value.encode("utf-8")
-    if len(key) < MIN_FINGERPRINT_KEY_BYTES:
-        raise RestrictionProvenanceError(
-            "RESTRICTION_FINGERPRINT_KEY must contain at least 32 bytes"
-        )
+    _validate_fingerprint_key(key)
     return key
 
 
@@ -120,7 +121,7 @@ def _scan_metadata(value: Any) -> None:
                     f"metadata key {key!r} is forbidden for restriction evidence"
                 )
             _scan_metadata(child)
-    elif isinstance(value, list):
+    elif isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         for child in value:
             _scan_metadata(child)
 
@@ -226,6 +227,7 @@ def capture_restriction(
     Raw text is accepted only long enough to compute domain-separated HMAC-SHA256
     fingerprints. It is never included in the returned object or its JSON form.
     """
+    _validate_fingerprint_key(fingerprint_key)
     if action not in _ALLOWED_RESTRICTION_ACTIONS:
         raise RestrictionProvenanceError("unsupported restriction action")
     if not isinstance(reason_code, str) or not _REASON_CODE.fullmatch(reason_code):
@@ -326,7 +328,7 @@ def build_remediation_directive(
     *,
     action: str,
     requested_by: str,
-    rationale: str | None = None,
+    rationale_code: str | None = None,
 ) -> dict[str, Any]:
     """Bind an allowed remediation to a restriction without carrying raw content."""
     normalized = action.strip().upper() if isinstance(action, str) else ""
@@ -335,15 +337,15 @@ def build_remediation_directive(
             "remediation must not replay raw content, bypass policy, or disable filtering"
         )
     requested_by = _bounded_component("requested_by", requested_by)
-    if rationale is not None and (not isinstance(rationale, str) or len(rationale) > 1024):
-        raise RestrictionProvenanceError("rationale must be at most 1024 characters")
+    if rationale_code is not None:
+        rationale_code = _bounded_component("rationale_code", rationale_code)
     directive = {
         "schema": REMEDIATION_SCHEMA,
         "restriction_id": evidence.restriction_id,
         "restriction_event_id": evidence.outbox_event_id,
         "action": normalized,
         "requested_by": requested_by,
-        "rationale": rationale,
+        "rationale_code": rationale_code,
         "created_at": _utc_now(),
         "content_binding": {
             "input_fingerprint": evidence.input_fingerprint,
