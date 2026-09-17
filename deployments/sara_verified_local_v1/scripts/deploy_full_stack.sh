@@ -240,7 +240,15 @@ preflight_dir=".deployment-evidence/preflight"
 mkdir -p "$preflight_dir"
 chmod 0700 .deployment-evidence "$preflight_dir"
 preflight_file="${preflight_dir}/${git_head}.json"
-python3 -m worldshepherd_sara.deployment_preflight   --env .env   --expected-head "$git_head"   --required-uid "$container_uid"   --output "$preflight_file" >/dev/null
+operator_uid="$(id -u)"
+operator_gid="$(id -g)"
+if [[ "$operator_uid" -eq 0 ]]; then
+  python3 worldshepherd_sara/deployment_preflight.py --env .env --expected-head "$git_head" --required-uid "$container_uid" --output "$preflight_file" >/dev/null
+else
+  sudo python3 worldshepherd_sara/deployment_preflight.py --env .env --expected-head "$git_head" --required-uid "$container_uid" --output "$preflight_file" >/dev/null
+  sudo chown "${operator_uid}:${operator_gid}" "$preflight_file"
+  chmod 0600 "$preflight_file"
+fi
 
 docker compose --profile prime-sentinel --profile echo up -d --build
 
