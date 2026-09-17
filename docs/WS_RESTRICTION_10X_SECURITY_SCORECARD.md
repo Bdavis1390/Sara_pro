@@ -1,6 +1,6 @@
 # WS-RESTRICTION 10X SECURITY SCORECARD
 
-Status: **ENGINEERING ACCEPTANCE TARGET / G4 VALIDATION PENDING**
+Status: **G4-G5 PROVEN INTERNALLY FOR TESTED INVARIANTS / G6 CANDIDATE IN PROGRESS**
 
 ## Baseline
 
@@ -23,7 +23,7 @@ Each open class counts as one residual-risk unit.
 
 Baseline residual-risk units: **6**.
 
-10x acceptance threshold: **<= 0.5 residual units**, i.e. **<=10% of baseline**.
+10x acceptance threshold: **<= 0.6 residual units**, i.e. **<=10% of the six-unit baseline**.
 
 Because attack-path count is integral, the cumulative G5 pass condition is **0/6 residual classes open**.
 
@@ -52,8 +52,8 @@ It means the selected measurable G3-start residual attack-path count must be red
 
 Subsequent gates should use similarly measurable baselines:
 
-- **G5 fingerprint-key epoch provenance:** implemented on the stacked G5 branch; ambiguous cross-rotation comparison paths must be zero before promotion;
-- **G6 signer/witness assurance:** unsigned authority assertions -> independently verifiable signed/witnessed evidence;
+- **G5 fingerprint-key epoch provenance:** merged on protected main and proven internally for its tested rotation/migration invariants;
+- **G6 signer/witness assurance:** candidate gate verifies exact restriction-event inclusion in an Ed25519-signed ECHO checkpoint against a separately trusted public-key fingerprint;
 - **G7 secret custody:** software/environment key custody -> external hardware-backed or independently managed custody where justified;
 - **G8 adversarial validation:** predefined mutation/bypass corpus with quantified detection rate and false-negative budget;
 - **G9 recovery:** measured mean/max recovery and evidence reconstruction time under injected corruption;
