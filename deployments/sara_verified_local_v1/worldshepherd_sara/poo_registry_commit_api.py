@@ -30,21 +30,29 @@ from .storage import DurableStore
 
 router = APIRouter(prefix="/admin/poo", tags=["poo-governance"])
 POO_REQUIRE_PRIME_AUTHORIZATION_ENV = "POO_REQUIRE_PRIME_AUTHORIZATION"
+POO_REQUIRE_PRIME_QUORUM_ENV = "POO_REQUIRE_PRIME_QUORUM"
 POO_PRIME_QUORUM_THRESHOLD_ENV = "POO_PRIME_QUORUM_THRESHOLD"
 _TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
 _FALSE_VALUES = frozenset({"", "0", "false", "no", "off"})
 
 
-def poo_prime_authorization_required() -> bool:
-    raw = os.getenv(POO_REQUIRE_PRIME_AUTHORIZATION_ENV, "").strip().lower()
+def _policy_bool(name: str) -> bool:
+    raw = os.getenv(name, "").strip().lower()
     if raw in _TRUE_VALUES:
         return True
     if raw in _FALSE_VALUES:
         return False
     raise RuntimeError(
-        f"{POO_REQUIRE_PRIME_AUTHORIZATION_ENV} must be one of: "
-        "0/1, false/true, no/yes, off/on"
+        f"{name} must be one of: 0/1, false/true, no/yes, off/on"
     )
+
+
+def poo_prime_authorization_required() -> bool:
+    return _policy_bool(POO_REQUIRE_PRIME_AUTHORIZATION_ENV)
+
+
+def poo_prime_quorum_required() -> bool:
+    return _policy_bool(POO_REQUIRE_PRIME_QUORUM_ENV)
 
 
 def poo_prime_quorum_threshold() -> int:
@@ -91,6 +99,13 @@ def _prime_verifier() -> PrimeSentinelPoOVerifier:
     return verifier
 
 
+def _policy_state() -> tuple[bool, bool, int | None]:
+    prime_required = poo_prime_authorization_required()
+    quorum_required = poo_prime_quorum_required()
+    threshold = poo_prime_quorum_threshold() if quorum_required else None
+    return prime_required or quorum_required, quorum_required, threshold
+
+
 @router.get("/registry")
 def get_poo_technical_registry(
     request: Request,
@@ -106,12 +121,14 @@ def get_poo_technical_registry(
             detail="PoO technical registry validation failed",
         ) from exc
     try:
-        prime_required = poo_prime_authorization_required()
+        prime_required, quorum_required, threshold = _policy_state()
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {
         "registry": namespace.model_dump(mode="json"),
         "prime_authorization_required": prime_required,
+        "prime_quorum_required": quorum_required,
+        "prime_quorum_threshold": threshold,
         "claims_boundary": "INTERNAL_TECHNICAL_REGISTRY_ONLY",
     }
 
@@ -124,14 +141,18 @@ def commit_poo_technical_registry(
 ) -> dict[str, Any]:
     require_admin(role)
     try:
-        if poo_prime_authorization_required():
-            raise HTTPException(
-                status_code=403,
-                detail=(
+        prime_required, quorum_required, _threshold = _policy_state()
+        if prime_required:
+            detail = (
+                "Unsigned PoO technical commits are disabled by quorum policy; "
+                "use the PRIME quorum-authorized PoO commit route"
+                if quorum_required
+                else (
                     "Unsigned PoO technical commits are disabled by policy; "
                     "use a PRIME-authorized PoO commit route"
-                ),
+                )
             )
+            raise HTTPException(status_code=403, detail=detail)
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     durable_store = _store(request)
@@ -174,9 +195,17 @@ def commit_poo_technical_registry_prime_authorized(
 ) -> dict[str, Any]:
     require_admin(role)
     try:
-        prime_required = poo_prime_authorization_required()
+        prime_required, quorum_required, threshold = _policy_state()
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    if quorum_required:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Single-signer PRIME PoO commits are disabled by quorum policy; "
+                f"use the PRIME quorum-authorized route with threshold {threshold}"
+            ),
+        )
     durable_store = _store(request)
     verifier = _prime_verifier()
 
@@ -211,6 +240,7 @@ def commit_poo_technical_registry_prime_authorized(
         "commit": result.model_dump(mode="json"),
         "audit_delivery": delivery,
         "prime_authorization_required": prime_required,
+        "prime_quorum_required": False,
         "claims_boundary": (
             "PRIME_SIGNED_INTERNAL_TECHNICAL_STATE_COMMIT_NOT_LEGAL_TITLE_OR_"
             "LIVE_VALUE_AUTHORITY"
@@ -227,7 +257,7 @@ def commit_poo_technical_registry_prime_quorum_authorized(
     require_admin(role)
     try:
         threshold = poo_prime_quorum_threshold()
-        prime_required = poo_prime_authorization_required()
+        prime_required, quorum_required, _configured_threshold = _policy_state()
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
@@ -265,6 +295,7 @@ def commit_poo_technical_registry_prime_quorum_authorized(
         "commit": result.model_dump(mode="json"),
         "audit_delivery": delivery,
         "prime_authorization_required": prime_required,
+        "prime_quorum_required": quorum_required,
         "prime_quorum_threshold": threshold,
         "claims_boundary": (
             "PRIME_MULTI_KEY_QUORUM_INTERNAL_TECHNICAL_STATE_COMMIT_NOT_LEGAL_TITLE_OR_"
