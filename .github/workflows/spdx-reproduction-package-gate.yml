@@ -1,0 +1,91 @@
+name: SPDX Reproduction Package Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/reproduce_spdx_validation.sh'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_REPRODUCTION_PACKAGE.md'
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - '.github/workflows/spdx-reproduction-package-gate.yml'
+  push:
+    branches:
+      - 'worldshepherd-spdx-reproduction-*'
+    paths:
+      - 'scripts/reproduce_spdx_validation.sh'
+      - 'deployments/sara_verified_local_v1/docs/SPDX_REPRODUCTION_PACKAGE.md'
+      - 'deployments/sara_verified_local_v1/tests/fixtures/spdx301_minimal.spdx3.json'
+      - '.github/workflows/spdx-reproduction-package-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reproduce-spdx-controls:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Validate reproduction script syntax
+        run: bash -n scripts/reproduce_spdx_validation.sh
+
+      - name: Run portable reproduction package
+        env:
+          SPDX_REPRO_OUTPUT_DIR: ${{ github.workspace }}/spdx_reproduction_evidence
+          SPDX_REPRO_BOOTSTRAP: '1'
+        run: bash scripts/reproduce_spdx_validation.sh
+
+      - name: Enforce receipt claims and source identity
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          receipt='spdx_reproduction_evidence/reproduction-receipt.json'
+          python -m json.tool "$receipt" >/dev/null
+          grep -q '"evidence_state": "REPRODUCTION_PACKAGE_EXECUTED"' "$receipt"
+          grep -q '"independently_reproduced": false' "$receipt"
+          grep -q '"reviewer_identity_established": false' "$receipt"
+          grep -q '"general_spdx_conformance_established": false' "$receipt"
+          grep -q '"community_endorsement_established": false' "$receipt"
+          grep -q '"admission_authorized": false' "$receipt"
+          grep -q '"release_approved": false' "$receipt"
+          python - "$receipt" "$EXPECTED_HEAD_SHA" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          receipt = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          expected = sys.argv[2]
+          actual = receipt['repository_head']
+          if actual != expected:
+              raise SystemExit(f'receipt repository_head mismatch: expected {expected}, got {actual}')
+          expected_results = {
+              'baseline_structural': 'PASS',
+              'baseline_semantic': 'PASS',
+              'baseline_combined': 'PASS',
+              'structural_negative_ajv': 'REJECTED',
+              'structural_negative_combined': 'REJECTED',
+              'semantic_negative_ajv': 'PASS',
+              'semantic_negative_pyshacl': 'REJECTED_NONCONFORMANT',
+              'semantic_negative_combined': 'REJECTED',
+          }
+          if receipt['results'] != expected_results:
+              raise SystemExit(f'unexpected reproduction results: {receipt["results"]!r}')
+          PY
+
+      - name: Upload reproduction evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: spdx-portable-reproduction-evidence
+          path: spdx_reproduction_evidence
+          if-no-files-found: error
