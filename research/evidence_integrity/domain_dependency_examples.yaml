@@ -1,0 +1,69 @@
+examples:
+  science_refseq:
+    chain:
+      - "RefSeq sequence accession.version"
+      - "annotation release"
+      - "gene/protein interpretation"
+      - "derived scientific claim"
+    invalidation:
+      - "sequence change"
+      - "annotation release change"
+    special_rule: "Native sequence version may not capture annotation changes."
+
+  medicine_clinvar:
+    chain:
+      - "SCV submissions"
+      - "aggregate VCV/RCV classification"
+      - "local clinical-data interpretation layer"
+      - "decision support"
+    invalidation:
+      - "SCV version/classification change"
+      - "expert-panel update"
+      - "web/file release skew"
+    special_rule: "Aggregate ClinVar classification is not patient-specific interpretation."
+
+  law_supreme_court:
+    chain:
+      - "slip opinion revision"
+      - "quoted proposition"
+      - "memo/brief/secondary summary"
+    invalidation:
+      - "opinion revised"
+      - "slip opinion superseded by later official publication state"
+    special_rule: "Pin revision state and text snapshot."
+
+  intelligence_icd203:
+    chain:
+      - "underlying intelligence"
+      - "assumption"
+      - "analytic judgment"
+      - "downstream plan"
+    invalidation:
+      - "material source change"
+      - "linchpin assumption invalidated"
+      - "specified indicator observed"
+    special_rule: "Confidence and likelihood remain distinct fields."
+
+  software_api:
+    chain:
+      - "runtime/API version"
+      - "schema"
+      - "documentation"
+      - "integration code"
+      - "operational workflow"
+    invalidation:
+      - "breaking API change"
+      - "deprecated API removal"
+      - "docs/runtime mismatch"
+    special_rule: "Documentation must be bound to deployed version."
+
+  historical_archive:
+    chain:
+      - "archival object"
+      - "catalog description"
+      - "historical interpretation"
+      - "public narrative"
+    invalidation:
+      - "catalog description revision"
+      - "new digital object or primary source"
+    special_rule: "Stable archival ID does not freeze descriptive metadata."
