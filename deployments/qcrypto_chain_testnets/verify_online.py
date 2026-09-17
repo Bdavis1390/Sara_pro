@@ -25,6 +25,8 @@ COMPOSE = ROOT / "compose.observer.yaml"
 ARTIFACT_DIR = ROOT / "artifacts"
 START_RECEIPT = ARTIFACT_DIR / "qcrypto_chain_start_receipt.json"
 CHECKPOINT_RECEIPT = ARTIFACT_DIR / "qcrypto_hoodi_checkpoint_quorum.json"
+HOODI_NETWORK_ID = 560048
+HOODI_GENESIS_HASH = "0xbbe312868b376a3001692a646dd2d7d1e4406380dfd86b98aa8a34d1557c971b"
 
 
 def run(*args: str, cwd: Path | None = None) -> str:
@@ -71,6 +73,25 @@ def as_int(value) -> int:
 
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def parse_geth_protocol_snapshot(text: str) -> tuple[int, str, int]:
+    """Parse and fail-closed validate Geth's running eth protocol NodeInfo snapshot."""
+    payload = load_last_json(text)
+    try:
+        network_id = as_int(payload["network"])
+        genesis_hash = str(payload["genesis"]).lower()
+        execution_block = as_int(payload["blockNumber"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError(f"Incomplete Geth protocol NodeInfo snapshot: {exc}") from exc
+
+    if network_id != HOODI_NETWORK_ID:
+        raise RuntimeError(f"Geth network id mismatch: {network_id}")
+    if genesis_hash != HOODI_GENESIS_HASH:
+        raise RuntimeError(f"Geth Hoodi genesis hash mismatch: {genesis_hash}")
+    if execution_block < 0:
+        raise RuntimeError("Geth execution block number must be non-negative")
+    return network_id, genesis_hash, execution_block
 
 
 def load_and_verify_start_receipt() -> dict:
@@ -150,11 +171,10 @@ def main() -> int:
         "attach",
         "/data/geth.ipc",
         "--exec",
-        "JSON.stringify({chainId:eth.chainId.toString(),blockNumber:eth.blockNumber})",
+        "JSON.stringify({network:admin.nodeInfo.protocols.eth.network,genesis:admin.nodeInfo.protocols.eth.genesis,blockNumber:eth.blockNumber})",
     )
-    geth = load_last_json(geth_raw)
-    chain_id = as_int(geth["chainId"])
-    execution_block = as_int(geth["blockNumber"])
+    network_id, genesis_hash, execution_block = parse_geth_protocol_snapshot(geth_raw)
+    chain_id = HOODI_NETWORK_ID
 
     with urlopen("http://127.0.0.1:5052/eth/v1/node/syncing", timeout=10) as response:
         beacon = json.loads(response.read().decode("utf-8"))
@@ -197,6 +217,8 @@ def main() -> int:
         "ethereum": {
             "network": "HOODI",
             "chain_id": measured.ethereum_chain_id,
+            "network_id": network_id,
+            "genesis_hash": genesis_hash,
             "execution_block_number": measured.ethereum_execution_block_number,
             "consensus_head_slot": measured.ethereum_consensus_head_slot,
             "consensus_sync_distance": measured.ethereum_consensus_sync_distance,
