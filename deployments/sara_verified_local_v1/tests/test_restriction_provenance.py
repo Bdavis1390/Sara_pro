@@ -26,6 +26,7 @@ from worldshepherd_sara.storage import DurableStore
 
 
 KEY = b"worldshepherd-test-restriction-key-32-bytes-minimum"
+KEY_ID = "ws-restriction-key-epoch-2026-09"
 OCCURRED_AT = "2026-09-17T20:14:00+00:00"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 
@@ -37,6 +38,7 @@ def auth(token: str) -> dict[str, str]:
 def make_evidence(**overrides):
     values = {
         "fingerprint_key": KEY,
+        "fingerprint_key_id": KEY_ID,
         "action": "REDACT",
         "reason_code": "POLICY.RESTRICTED_OUTPUT",
         "source_system": "CHAT_ASSISTANT",
