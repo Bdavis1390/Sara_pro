@@ -1,0 +1,64 @@
+services:
+  sara:
+    environment:
+      POO_REQUIRE_PRIME_AUTHORIZATION: "1"
+      POO_REQUIRE_PRIME_QUORUM: "1"
+      POO_PRIME_QUORUM_THRESHOLD: "2"
+
+  prime-sentinel-b:
+    profiles: ["prime-sentinel"]
+    build:
+      context: .
+      args:
+        SARA_BUILD_COMMIT: ${SARA_BUILD_COMMIT:-UNKNOWN}
+        SARA_RELEASE_ID: ${SARA_RELEASE_ID:-UNVERIFIED}
+    restart: unless-stopped
+    command:
+      - uvicorn
+      - --factory
+      - worldshepherd_sara.prime_sentinel_poo_service:create_prime_sentinel_poo_app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "9540"
+    environment:
+      PRIME_SENTINEL_PRIVATE_KEY_FILE: /run/worldshepherd-prime-sentinel-b/ed25519-private.pem
+      PRIME_SENTINEL_SERVICE_TOKEN_FILE: /run/worldshepherd-prime-sentinel-b/service-token
+      PRIME_SENTINEL_SIGNING_KEY_ID: ${PRIME_SENTINEL_B_SIGNING_KEY_ID:-UNCONFIGURED-B}
+      PRIME_SENTINEL_DATA_DIR: /var/lib/prime-sentinel-b
+      ECHO_INGEST_TOKEN_FILE: ""
+      ECHO_DATA_DIR: ""
+      ECHO_CHECKPOINT_PRIVATE_KEY_FILE: ""
+      ECHO_CHECKPOINT_KEY_ID: ""
+      SARA_ADMIN_TOKEN: ""
+      SARA_RELAY_TOKEN: ""
+    ports:
+      - "127.0.0.1:${PRIME_SENTINEL_B_HOST_PORT:-9541}:9540"
+    volumes:
+      - type: bind
+        source: ${PRIME_SENTINEL_B_PRIVATE_KEY_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel-b/ed25519-private.pem}
+        target: /run/worldshepherd-prime-sentinel-b/ed25519-private.pem
+        read_only: true
+      - type: bind
+        source: ${PRIME_SENTINEL_B_SERVICE_TOKEN_HOST_PATH:-/var/lib/worldshepherd/prime-sentinel-b/service-token}
+        target: /run/worldshepherd-prime-sentinel-b/service-token
+        read_only: true
+      - prime_sentinel_b_data:/var/lib/prime-sentinel-b
+    read_only: true
+    tmpfs:
+      - /tmp:size=8m,mode=1777
+    networks:
+      - prime_sentinel_private
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9540/readyz', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  prime_sentinel_b_data:
