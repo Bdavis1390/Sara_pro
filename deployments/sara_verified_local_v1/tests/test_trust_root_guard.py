@@ -323,3 +323,30 @@ def test_trust_root_admission_precedes_outbox_replay(monkeypatch, tmp_path):
 
     with TestClient(app_module.app):
         assert order[:2] == ["guard", "drain"]
+
+
+
+def test_rejection_audit_is_bounded_and_does_not_echo_trust_material(tmp_path):
+    key = _pub()
+    store = DurableStore(tmp_path / "sara")
+    guard_prime_trust_root(
+        store,
+        environ=env(epoch=2, keys={"PS-SENSITIVE-ID": key}),
+    )
+
+    with pytest.raises(PrimeTrustRootError, match="epoch rollback"):
+        guard_prime_trust_root(
+            store,
+            environ=env(epoch=1, keys={"PS-SENSITIVE-ID": key}),
+        )
+
+    record = store.read_audit(10)[-1]
+    assert record["event"] == "prime_trust_root_guard_rejected"
+    assert record["payload"] == {
+        "status": "REJECTED",
+        "reason_code": "TRUST_EPOCH_ROLLBACK",
+    }
+    serialized = json.dumps(record, sort_keys=True)
+    assert "PS-SENSITIVE-ID" not in serialized
+    assert key not in serialized
+    assert "epoch rollback detected" not in serialized
