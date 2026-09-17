@@ -52,6 +52,7 @@ jobs:
           tests/test_restriction_authority_binding.py
           tests/test_restriction_10x_security.py
           tests/test_restriction_key_epoch.py
+          tests/test_restriction_witness.py
 
       - name: Validate upstream patch artifacts
         shell: bash

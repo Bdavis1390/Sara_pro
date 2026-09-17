@@ -1,6 +1,6 @@
 # WS-RESTRICTION-PROVENANCE G5 — FINGERPRINT KEY EPOCH PROVENANCE
 
-Status: **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING G4 + INTERNAL VALIDATION**
+Status: **MERGED ON PROTECTED MAIN / PROVEN INTERNALLY FOR TESTED ROTATION AND MIGRATION INVARIANTS**
 
 ## Objective
 
@@ -115,4 +115,4 @@ It does not establish KMS/HSM custody, key rotation automation, secure key destr
 
 Those are separate gates.
 
-Until G4 is merged and G5 is reconciled onto that protected head, then passes exact-head required CI, the broader Verified Local gate, and protected merge, classify G5 as **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH / PENDING INTERNAL VALIDATION**.
+G5 is merged on protected main through PR #430. Its claims remain limited to the tested rotation/migration invariants and do not include external validation, independent key custody, or signer/witness assurance. G6 addresses the next authenticity boundary.
