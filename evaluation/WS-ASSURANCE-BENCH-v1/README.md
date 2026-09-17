@@ -36,20 +36,29 @@ Worldshepherd receives zero for any criterion that is not supported by the froze
 
 The earlier `WS-SARA-EVAL-v1` hosted preflight failure remains evidence. A later fix does not erase it.
 
-## Leadership gate
+## Leadership and publication gates
 
-The scorer may emit only this bounded language when all gates pass:
+The deterministic scorer separates two questions:
+
+1. **Internal profile score gate:** does Worldshepherd outscore the current comparison registry by the predeclared margin while clearing critical assurance criteria?
+2. **Public claim readiness:** has an identifiable reviewer outside the Worldshepherd authoring process examined the benchmark criteria, weights, evidence multipliers, comparison-source rules, and leadership gate?
+
+The current `METHODOLOGY_REVIEW.json` intentionally starts with external review set to `false`. Therefore an internally leading score cannot automatically publish a leadership claim.
+
+Only after both gates pass may the scorer emit this bounded language:
 
 > **Leads this benchmark profile under the recorded public evidence set as of the stated date.**
 
 It may not emit or justify universal language such as “best AI platform” or “better than every competitor overall.”
 
-A benchmark-profile lead requires:
+A score lead requires:
 
 1. at least a five-point margin over the strongest scored comparison record;
 2. no zero score on the defined critical Worldshepherd assurance criteria;
 3. current sources for every non-zero competitor score; and
 4. preservation of all non-claims and evidence limitations.
+
+A public leadership statement additionally requires attributable external methodology review.
 
 ## Comparison set
 
@@ -63,11 +72,12 @@ python evaluation/WS-ASSURANCE-BENCH-v1/score.py \
   --records \
     evaluation/WS-ASSURANCE-BENCH-v1/worldshepherd-v1.1.json \
     evaluation/WS-ASSURANCE-BENCH-v1/competitor-public-evidence-2026-09-17.json \
+  --methodology-review evaluation/WS-ASSURANCE-BENCH-v1/METHODOLOGY_REVIEW.json \
   --focal-entity 'Worldshepherd WS-SARA-EVAL-v1.1' \
   --output build/ws-assurance-benchmark-v1.json
 ```
 
-The output includes the full scored criteria rows, strongest comparison record, margin, and whether the bounded profile-leadership wording is allowed.
+The output includes the full scored criteria rows, strongest comparison record, margin, internal score-gate state, external methodology-review state, and public-claim readiness.
 
 ## Improvement rule
 
