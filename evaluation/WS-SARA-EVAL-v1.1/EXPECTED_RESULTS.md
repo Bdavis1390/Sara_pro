@@ -1,7 +1,7 @@
 # WS-SARA-EVAL-v1.1 — Expected Results and Adjudication Semantics
 
-**Candidate:** `WS-SARA-EVAL-v1.1`  
-**Authoritative commit:** `45494ddd32f96b36cef8df37dea33ab405cd4573`  
+**Candidate:** `WS-SARA-EVAL-v1.1`
+**Authoritative commit:** `45494ddd32f96b36cef8df37dea33ab405cd4573`
 **Convenience ref:** `refs/heads/freeze/WS-SARA-EVAL-v1.1`
 
 ## Status and evidence boundary
