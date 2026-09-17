@@ -29,7 +29,7 @@ from qcrypto_external_signer.provider_custody import (
     OpaqueProviderCustodyService,
     verify_opaque_provider_receipt,
 )
-from tests.test_custody import fixture
+from qcrypto_external_signer.synthetic import build_synthetic_request
 
 
 class AmbiguousWithoutCommitProvider(ReferenceOpaqueMlDsa65Provider):
@@ -100,7 +100,7 @@ def build_evidence() -> dict:
         root = Path(tmp)
         provider = ReferenceOpaqueMlDsa65Provider(ack_loss_once=True)
         signer = OpaqueProviderReleaseSigner(provider)
-        request, _ignored, human_public, now = fixture(signer=signer)
+        request, _ignored, human_public, now = build_synthetic_request(signer=signer)
         custody = service(root, signer, human_public)
 
         ambiguous_blocked = False
@@ -140,7 +140,7 @@ def build_evidence() -> dict:
         root2 = Path(tmp2)
         missing_provider = AmbiguousWithoutCommitProvider()
         missing_signer = OpaqueProviderReleaseSigner(missing_provider)
-        missing_request, _ignored, missing_human_public, missing_now = fixture(
+        missing_request, _ignored, missing_human_public, missing_now = build_synthetic_request(
             signer=missing_signer,
             request_id="CUSTODY-REQ-NOT-FOUND-001",
         )
