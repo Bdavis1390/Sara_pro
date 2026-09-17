@@ -1,5 +1,6 @@
 """Worldshepherd QCRYPTO separately controlled external custody domain."""
 
+from .aws_kms_provider import AwsKmsMlDsa65Provider, fips204_external_mu
 from .custody import (
     CustodyConflict,
     CustodyError,
@@ -31,6 +32,7 @@ from .unix_provider import (
 )
 
 __all__ = [
+    "AwsKmsMlDsa65Provider",
     "CustodyConflict",
     "CustodyError",
     "CustodyIndeterminate",
@@ -49,6 +51,7 @@ __all__ = [
     "ProviderState",
     "ReferenceOpaqueMlDsa65Provider",
     "UnixOpaqueSignerProviderClient",
+    "fips204_external_mu",
     "serve_reference_provider",
     "verify_opaque_provider_receipt",
     "verify_release_receipt",
