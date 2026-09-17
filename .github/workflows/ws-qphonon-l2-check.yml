@@ -10,6 +10,7 @@ on:
       - "config/ws_qphonon_security_v0_2.json"
       - "config/ws_qphonon_quality_v0_2.json"
       - "config/ws_qphonon_deployment_v0_3.json"
+      - "evidence/qphonon/**"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
       - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
       - "docs/WS_QPHONON_QUALITY_RELIABILITY_V0_2.md"
@@ -29,6 +30,7 @@ on:
       - "config/ws_qphonon_security_v0_2.json"
       - "config/ws_qphonon_quality_v0_2.json"
       - "config/ws_qphonon_deployment_v0_3.json"
+      - "evidence/qphonon/**"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
       - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
       - "docs/WS_QPHONON_QUALITY_RELIABILITY_V0_2.md"
@@ -68,6 +70,9 @@ jobs:
       - name: Validate V0.3 deployment profile
         run: python tools/qphonon/validate_deployment.py config/ws_qphonon_deployment_v0_3.json
 
+      - name: Validate external laboratory evidence ledger
+        run: python tools/qphonon/validate_external_lab_evidence.py evidence/qphonon/external_lab_evidence_2026-09-17.json
+
       - name: Validate CI hardening invariants
         run: python tools/qphonon/validate_ci_hardening.py .github/workflows/ws-qphonon-l2-check.yml
 
@@ -79,6 +84,7 @@ jobs:
           python -m json.tool config/ws_qphonon_security_v0_2.json > /dev/null
           python -m json.tool config/ws_qphonon_quality_v0_2.json > /dev/null
           python -m json.tool config/ws_qphonon_deployment_v0_3.json > /dev/null
+          python -m json.tool evidence/qphonon/external_lab_evidence_2026-09-17.json > /dev/null
 
       - name: Check host installer syntax
         run: bash -n deployments/qphonon-control/install-host.sh
@@ -86,7 +92,7 @@ jobs:
       - name: Require OpenSSH signature tooling
         run: command -v ssh-keygen
 
-      - name: Run QPHONON regression, adversarial, and deployment tests
+      - name: Run QPHONON regression, adversarial, deployment, and evidence tests
         working-directory: tools/qphonon
         run: >
           python -m unittest -v
@@ -105,3 +111,4 @@ jobs:
           test_durable_state.py
           test_ssh_attestation.py
           test_deployment_guard.py
+          test_external_lab_evidence.py
