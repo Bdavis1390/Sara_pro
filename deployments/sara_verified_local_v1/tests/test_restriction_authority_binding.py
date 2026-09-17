@@ -24,12 +24,14 @@ from worldshepherd_sara.restriction_provenance import (
 
 
 KEY = b"worldshepherd-g4-authority-test-key-32-bytes-minimum"
+KEY_ID = "ws-restriction-key-epoch-2026-09"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 
 
 def evidence():
     return capture_restriction(
         fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
         action="BLOCK",
         reason_code="POLICY.AUTHORITY_TEST",
         source_system="CHAT_ASSISTANT",
