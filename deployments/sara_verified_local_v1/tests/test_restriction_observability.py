@@ -17,6 +17,7 @@ from worldshepherd_sara.restriction_provenance import (
 
 KEY = b"worldshepherd-observability-test-key-32-bytes-minimum"
 OCCURRED_AT = "2026-09-17T20:14:00+00:00"
+APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 
 
 def valid_restriction_record() -> dict:
@@ -24,16 +25,20 @@ def valid_restriction_record() -> dict:
         fingerprint_key=KEY,
         action="BLOCK",
         reason_code="POLICY.TEST_BLOCK",
-        source_system="TEST_SOURCE",
-        processor="TEST_POLICY_GATE",
+        source_system="CHAT_ASSISTANT",
+        processor="POLICY_GATE",
         process_version="v1",
         policy_ref="TEST_POLICY",
         correlation_id="obs-001",
         raw_input="raw test input not persisted",
         raw_generated="raw test generated not persisted",
         safe_output="safe test output not persisted",
-        safe_summary="Safe bounded test summary.",
-        metadata={"stage": "test"},
+        safe_summary=APPROVED_SUMMARY,
+        metadata={
+            "stage": "post_generation_policy_check",
+            "claims_state": "IMPLEMENTED_IN_SOFTWARE",
+            "attempt": 1,
+        },
         occurred_at=OCCURRED_AT,
     )
     payload = evidence.semantic_document()
