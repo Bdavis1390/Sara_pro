@@ -40,6 +40,10 @@ from .prime_sentinel_authorization import (
     PrimeSentinelVerifier,
     consumed_authorization_registry_patch,
 )
+from .registry_witness_gate import (
+    RegistryWitnessPrecondition,
+    assert_registry_witness_precondition,
+)
 from .storage import DurableStore
 from .trajectory_guard import (
     SideEffectClass,
@@ -85,6 +89,8 @@ class PrimeMag1TransitionResult(BaseModel):
     overwatch_directive_id: str | None = None
     overwatch_directive_sha256: str | None = None
     overwatch_sequence: int = 0
+    registry_witness_receipt_sha256: str | None = None
+    registry_witness_precondition_sha256: str | None = None
     release_reasons: list[str] = Field(default_factory=list)
 
 
@@ -150,6 +156,7 @@ def _transition_id(
     action_id: str,
     policy_bundle_hash: str,
     overwatch_snapshot_sha256: str,
+    registry_witness_precondition_sha256: str | None,
 ) -> str:
     digest = _sha256(
         {
@@ -164,6 +171,7 @@ def _transition_id(
             "action_id": action_id,
             "policy_bundle_sha256": policy_bundle_hash,
             "overwatch_snapshot_sha256": overwatch_snapshot_sha256,
+            "registry_witness_precondition_sha256": registry_witness_precondition_sha256,
         }
     )
     return f"PRIME-MAG1-TRANSITION-{digest}"
@@ -239,6 +247,8 @@ def execute_prime_requalification_transition(
     trajectory_action_id: str,
     trajectory_policy: TrajectoryGuardPolicy | None = None,
     overwatch_verifier: OverwatchContainmentVerifier | None = None,
+    registry_witness_precondition: RegistryWitnessPrecondition | None = None,
+    require_registry_witness: bool = False,
     now: datetime | None = None,
 ) -> PrimeMag1TransitionResult:
     """Evaluate and, if eligible, commit PRIME requalification under one registry lock.
@@ -247,6 +257,13 @@ def execute_prime_requalification_transition(
     trajectory policy, current OVERWATCH containment state, one-time
     authorization consumption, custody release, MAG-1 decision evidence, and
     transition evidence to one read/derive/write registry operation.
+
+    A hardened caller may additionally require a signed monotonic registry
+    witness precondition. The remote witness is checked before this function is
+    called; the exact witnessed generation/root/commit tuple is then rechecked
+    inside the protected transaction immediately before authority consumption
+    and custody release. An intervening registry change therefore fails closed
+    without performing network I/O while the registry lock is held.
 
     On supported POSIX deployments, `DurableStore.transact_registry()` also
     holds the process-visible registry lock introduced by MAG-1.3. Consequently
@@ -425,6 +442,20 @@ def execute_prime_requalification_transition(
             # events; no custody or authorization namespace is changed.
             return containment_patch, result
 
+        witness_precondition_hash: str | None = None
+        if require_registry_witness and registry_witness_precondition is None:
+            raise PrimeMag1TransitionError(
+                "registry witness precondition is required before PRIME release"
+            )
+        if registry_witness_precondition is not None:
+            assert_registry_witness_precondition(
+                registry,
+                registry_witness_precondition,
+            )
+            witness_precondition_hash = _sha256(
+                registry_witness_precondition.evidence()
+            )
+
         bound_record = _bind_release_authorization(record, binding)
         released, activation_disposition, release_reasons = release_from_quarantine(
             bound_record,
@@ -450,6 +481,7 @@ def execute_prime_requalification_transition(
             action_id=canonical_action.action_id,
             policy_bundle_hash=policy_hash,
             overwatch_snapshot_sha256=containment.snapshot_sha256,
+            registry_witness_precondition_sha256=witness_precondition_hash,
         )
 
         working = dict(registry)
@@ -498,6 +530,25 @@ def execute_prime_requalification_transition(
             "overwatch_sequence": containment.sequence,
             "overwatch_directive_id": containment.directive_id,
             "overwatch_directive_sha256": containment.directive_sha256,
+            "registry_witness_required": require_registry_witness,
+            "registry_witness_precondition_sha256": witness_precondition_hash,
+            "registry_witness_receipt_sha256": (
+                registry_witness_precondition.witness_receipt_sha256
+                if registry_witness_precondition is not None
+                else None
+            ),
+            "registry_witness_id": (
+                registry_witness_precondition.witness_id
+                if registry_witness_precondition is not None
+                else None
+            ),
+            "registry_witness_mode": (
+                registry_witness_precondition.witness_mode
+                if registry_witness_precondition is not None
+                else None
+            ),
+            "registry_witness_independence_verified": False,
+            "registry_witness_post_transition_covered": False,
         }
         transition_patch, queued_transition_id = queue_event_outbox_patch(
             working,
@@ -530,6 +581,12 @@ def execute_prime_requalification_transition(
             overwatch_directive_id=containment.directive_id,
             overwatch_directive_sha256=containment.directive_sha256,
             overwatch_sequence=containment.sequence,
+            registry_witness_receipt_sha256=(
+                registry_witness_precondition.witness_receipt_sha256
+                if registry_witness_precondition is not None
+                else None
+            ),
+            registry_witness_precondition_sha256=witness_precondition_hash,
             release_reasons=list(release_reasons),
         )
         return patch, result
