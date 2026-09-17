@@ -38,9 +38,19 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pip install -e '.[test]'
 
-      - name: Test WS-SDA provenance and workload identity boundaries
+      - name: Test WS-SDA and cross-project trust seams
         working-directory: deployments/sara_verified_local_v1
-        run: python -m pytest -q tests/test_sda.py tests/test_sda_identity.py
+        run: >-
+          python -m pytest -q
+          tests/test_sda.py
+          tests/test_sda_identity.py
+          tests/test_apnt_interface_contract.py
+          tests/test_ddil_reconcile.py
+          tests/test_mission_replay.py
+          tests/test_echo_persistence.py
+          tests/test_prime_sentinel_authorization.py
+          tests/test_hmaa_human_acceptance.py
+          tests/test_sensor_fusion.py
 
       - name: Test Discord notification and connector security boundaries
         working-directory: deployments/sara_verified_local_v1
