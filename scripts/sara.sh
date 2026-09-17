@@ -35,6 +35,9 @@ check_runtime() {
     "worldshepherd_sara/auth.py"
     "scripts/start_interface.sh"
     "scripts/admin_smoke_test.sh"
+    "scripts/deploy_full_stack.sh"
+    "scripts/verify_full_stack_runtime.sh"
+    "worldshepherd_sara/deployment_preflight.py"
     "tests/test_api.py"
   )
   local item
