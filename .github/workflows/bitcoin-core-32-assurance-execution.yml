@@ -1,0 +1,51 @@
+name: Bitcoin Core 32 Assurance Execution
+
+on:
+  push:
+    branches:
+      - 'worldshepherd/bitcoin-core-32-assurance'
+    paths:
+      - 'external_anchor_pilots/bitcoin_core_32_psbt_probe.py'
+      - 'scripts/run_bitcoin_core_32_psbt_probe.sh'
+      - 'tests/test_bitcoin_core_32_psbt_probe.py'
+      - '.github/workflows/bitcoin-core-32-assurance-execution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bc32-001:
+    name: BC32-001 pinned RC PSBT probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out Worldshepherd source
+        uses: actions/checkout@v7
+
+      - name: Install Bitcoin Core build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake python3 libboost-dev libsqlite3-dev pkg-config
+
+      - name: Static helper regression tests
+        run: |
+          python3 -m py_compile external_anchor_pilots/bitcoin_core_32_psbt_probe.py
+          python3 -m unittest -v tests/test_bitcoin_core_32_psbt_probe.py
+
+      - name: Build pinned v32.0rc1 and execute BC32-001
+        env:
+          BC32_BUILD_JOBS: '2'
+          BC32_EVIDENCE: '${{ github.workspace }}/artifacts/bitcoin-core-32-psbt-evidence.json'
+        run: |
+          mkdir -p artifacts
+          bash scripts/run_bitcoin_core_32_psbt_probe.sh
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bitcoin-core-32-bc32-001-evidence
+          path: artifacts/bitcoin-core-32-psbt-evidence.json
+          if-no-files-found: warn
