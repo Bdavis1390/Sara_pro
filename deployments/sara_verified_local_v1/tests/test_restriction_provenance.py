@@ -10,8 +10,13 @@ from worldshepherd_sara.event_outbox import (
     drain_event_outbox,
 )
 from worldshepherd_sara.models import AuditRecord
+from worldshepherd_sara.restriction_observability import (
+    RESTRICTION_OBSERVABILITY_SCHEMA,
+    restriction_observability,
+)
 from worldshepherd_sara.restriction_provenance import (
     RESTRICTION_EVENT,
+    RESTRICTION_SCHEMA,
     RestrictionProvenanceError,
     build_remediation_directive,
     capture_restriction,
@@ -22,6 +27,10 @@ from worldshepherd_sara.storage import DurableStore
 
 KEY = b"worldshepherd-test-restriction-key-32-bytes-minimum"
 OCCURRED_AT = "2026-09-17T20:14:00+00:00"
+
+
+def auth(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
 
 def make_evidence(**overrides):
@@ -48,6 +57,16 @@ def make_evidence(**overrides):
     }
     values.update(overrides)
     return capture_restriction(**values)
+
+
+def queue_into_store(store: DurableStore, evidence) -> str:
+    def operation(registry):
+        patch, stable_id = queue_restriction_event(registry, evidence)
+        return patch, stable_id
+
+    stable_id = store.transact_registry(operation)
+    assert drain_event_outbox(store, limit=1) == 1
+    return stable_id
 
 
 def test_raw_restricted_content_never_serializes():
@@ -135,13 +154,8 @@ def test_restriction_survives_sara_to_echo_without_raw_content(tmp_path):
     )
     sara = DurableStore(tmp_path / "sara-data")
 
-    def queue_operation(registry):
-        patch, stable_id = queue_restriction_event(registry, evidence)
-        return patch, stable_id
-
-    stable_id = sara.transact_registry(queue_operation)
+    stable_id = queue_into_store(sara, evidence)
     assert stable_id == evidence.outbox_event_id
-    assert drain_event_outbox(sara, limit=1) == 1
 
     records = [
         record
@@ -176,6 +190,163 @@ def test_restriction_survives_sara_to_echo_without_raw_content(tmp_path):
     database_bytes = echo.db_path.read_bytes()
     for forbidden in (raw_input, raw_generated, safe_output):
         assert forbidden.encode("utf-8") not in database_bytes
+
+
+def test_observability_strict_projection_omits_summary_and_metadata(tmp_path):
+    hidden_summary = "caller-approved summary is still omitted from observability 1109ab"
+    hidden_metadata = "metadata-value-is-not-projected-cd9941"
+    raw_input = "raw input must remain absent 4b92d3"
+    raw_generated = "raw generated must remain absent 04a9ee"
+    safe_output = "safe replacement must remain absent 4d2cc8"
+    evidence = make_evidence(
+        raw_input=raw_input,
+        raw_generated=raw_generated,
+        safe_output=safe_output,
+        safe_summary=hidden_summary,
+        metadata={"stage": hidden_metadata},
+    )
+    sara = DurableStore(tmp_path / "sara-observability")
+    stable_id = queue_into_store(sara, evidence)
+
+    report = restriction_observability(sara.read_audit(100), recent_limit=10)
+
+    assert report["schema"] == RESTRICTION_OBSERVABILITY_SCHEMA
+    assert report["ok"] is True
+    assert report["restriction_events_seen"] == 1
+    assert report["valid_restriction_events"] == 1
+    assert report["malformed_restriction_events"] == 0
+    assert report["counts"]["by_action"] == {"REDACT": 1}
+    assert report["recent"][0]["event_id"] == stable_id
+    serialized = json.dumps(report, sort_keys=True)
+    for forbidden in (
+        "safe_summary",
+        "metadata",
+        hidden_summary,
+        hidden_metadata,
+        raw_input,
+        raw_generated,
+        safe_output,
+    ):
+        assert forbidden not in serialized
+
+
+def test_observability_counts_malformed_restriction_records():
+    malformed = AuditRecord.create(
+        event=RESTRICTION_EVENT,
+        actor="PRIME_SENTINEL",
+        payload={
+            "schema": RESTRICTION_SCHEMA,
+            "restriction_id": "0" * 32,
+            "raw_content_persisted": True,
+        },
+    ).model_dump(mode="json")
+
+    report = restriction_observability([malformed], recent_limit=1)
+
+    assert report["ok"] is False
+    assert report["restriction_events_seen"] == 1
+    assert report["valid_restriction_events"] == 0
+    assert report["malformed_restriction_events"] == 1
+    assert report["recent"] == []
+
+
+def test_restriction_observability_api_is_admin_only_and_strict(client, tokens):
+    relay_token, admin_token = tokens
+    hidden_summary = "never return this summary over the observability API 971f63"
+    hidden_metadata = "never-return-this-metadata-value-8a210c"
+    raw_input = "api raw input sentinel d39a42"
+    raw_generated = "api raw generated sentinel 0aaf16"
+    safe_output = "api safe output sentinel 620c04"
+    evidence = make_evidence(
+        raw_input=raw_input,
+        raw_generated=raw_generated,
+        safe_output=safe_output,
+        safe_summary=hidden_summary,
+        metadata={"stage": hidden_metadata},
+    )
+    stable_id = queue_into_store(client.app.state.store, evidence)
+
+    assert client.get("/admin/restrictions/status").status_code == 401
+    assert (
+        client.get(
+            "/admin/restrictions/status",
+            headers=auth(relay_token),
+        ).status_code
+        == 403
+    )
+
+    status = client.get(
+        "/admin/restrictions/status",
+        headers=auth(admin_token),
+    )
+    assert status.status_code == 200
+    status_body = status.json()
+    assert status_body["ok"] is True
+    assert status_body["restriction_events_seen"] == 1
+    assert status_body["valid_restriction_events"] == 1
+    assert "recent" not in status_body
+    assert status.headers["cache-control"] == "no-store"
+
+    recent = client.get(
+        "/admin/restrictions/recent?limit=10",
+        headers=auth(admin_token),
+    )
+    assert recent.status_code == 200
+    body = recent.json()
+    assert body["recent"][0]["event_id"] == stable_id
+    assert body["recent"][0]["restriction_id"] == evidence.restriction_id
+    serialized = json.dumps(body, sort_keys=True)
+    for forbidden in (
+        "safe_summary",
+        "metadata",
+        hidden_summary,
+        hidden_metadata,
+        raw_input,
+        raw_generated,
+        safe_output,
+    ):
+        assert forbidden not in serialized
+
+    assert (
+        client.get(
+            "/admin/restrictions/recent?limit=0",
+            headers=auth(admin_token),
+        ).status_code
+        == 422
+    )
+    assert (
+        client.get(
+            "/admin/restrictions/recent?limit=101",
+            headers=auth(admin_token),
+        ).status_code
+        == 422
+    )
+
+
+def test_restriction_status_api_reports_malformed_event(client, tokens):
+    _relay_token, admin_token = tokens
+    client.app.state.store.append_audit(
+        AuditRecord.create(
+            event=RESTRICTION_EVENT,
+            actor="PRIME_SENTINEL",
+            payload={
+                "schema": RESTRICTION_SCHEMA,
+                "restriction_id": "f" * 32,
+                "raw_content_persisted": True,
+            },
+        )
+    )
+
+    response = client.get(
+        "/admin/restrictions/status",
+        headers=auth(admin_token),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is False
+    assert body["restriction_events_seen"] == 1
+    assert body["malformed_restriction_events"] == 1
 
 
 def test_allowed_remediation_is_bound_to_restriction_without_raw_content():
