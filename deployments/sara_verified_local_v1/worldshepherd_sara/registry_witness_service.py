@@ -18,8 +18,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .registry_monotonic_witness import (
     REMOTE_WITNESS_MODE,
+    RegistryMonotonicWitnessVerifier,
     RegistryWitnessConflict,
     RegistryWitnessCoordinates,
+    RegistryWitnessError,
     RegistryWitnessRollbackDetected,
     ZERO_HASH,
     build_signed_witness_receipt,
@@ -39,7 +41,6 @@ MAX_TOKEN_FILE_BYTES = 4 * 1024
 MIN_TOKEN_CHARS = 32
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _NAMESPACE = re.compile(r"^[A-Za-z0-9._:/-]{1,256}$")
-_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 class RegistryWitnessServiceConfigError(RuntimeError):
@@ -88,6 +89,11 @@ class RegistryWitnessLedger:
         )
         self.public_key_b64url = _b64url(public_bytes)
         self.fingerprint_sha256 = hashlib.sha256(public_bytes).hexdigest()
+        self._verifier = RegistryMonotonicWitnessVerifier(
+            public_keys_b64url={self.key_id: self.public_key_b64url},
+            expected_witness_id=self.witness_id,
+            expected_namespace=self.namespace,
+        )
         self._initialize()
 
     def _connect(self) -> sqlite3.Connection:
@@ -155,6 +161,7 @@ class RegistryWitnessLedger:
         finally:
             connection.close()
         os.chmod(self.db_path, 0o600)
+        self.verify_integrity()
 
     @staticmethod
     def _decode_receipt(row: sqlite3.Row | None) -> dict[str, Any] | None:
@@ -168,6 +175,127 @@ class RegistryWitnessLedger:
             raise RegistryWitnessLedgerError("stored witness receipt is not an object")
         return value
 
+    def _verify_stored_receipt(self, receipt: dict[str, Any]) -> dict[str, Any]:
+        try:
+            verified = self._verifier.verify_receipt(receipt)
+        except RegistryWitnessError as exc:
+            raise RegistryWitnessLedgerError(
+                "stored witness receipt failed cryptographic verification"
+            ) from exc
+        if verified.get("witness_mode") != REMOTE_WITNESS_MODE:
+            raise RegistryWitnessLedgerError(
+                "stored durable witness receipt is not REMOTE_WITNESS mode"
+            )
+        return verified
+
+    def verify_integrity(self) -> dict[str, Any]:
+        """Verify SQLite integrity, receipt signatures, hash chain, and head binding."""
+
+        connection = self._connect()
+        try:
+            sqlite_integrity = connection.execute("PRAGMA integrity_check").fetchone()
+            if sqlite_integrity is None or sqlite_integrity[0] != "ok":
+                raise RegistryWitnessLedgerError("witness SQLite integrity check failed")
+            if connection.execute("PRAGMA foreign_key_check").fetchone() is not None:
+                raise RegistryWitnessLedgerError("witness ledger foreign-key integrity failed")
+
+            foreign_namespace_count = connection.execute(
+                "SELECT COUNT(*) FROM witness_receipts WHERE namespace != ?",
+                (self.namespace,),
+            ).fetchone()[0]
+            if foreign_namespace_count:
+                raise RegistryWitnessLedgerError(
+                    "witness ledger contains an unexpected namespace"
+                )
+
+            rows = connection.execute(
+                "SELECT generation, receipt_sha256, receipt_json "
+                "FROM witness_receipts WHERE namespace=? ORDER BY generation",
+                (self.namespace,),
+            ).fetchall()
+            heads = connection.execute(
+                "SELECT namespace, generation, receipt_sha256 FROM witness_heads"
+            ).fetchall()
+            if len(heads) > 1:
+                raise RegistryWitnessLedgerError("witness ledger contains multiple heads")
+            if heads and heads[0]["namespace"] != self.namespace:
+                raise RegistryWitnessLedgerError("witness head namespace is invalid")
+
+            previous_receipt_sha256 = ZERO_HASH
+            previous_generation = -1
+            last_receipt: dict[str, Any] | None = None
+            for row in rows:
+                receipt = self._decode_receipt(row)
+                assert receipt is not None
+                verified = self._verify_stored_receipt(receipt)
+                generation = int(verified["generation"])
+                if generation != int(row["generation"]):
+                    raise RegistryWitnessLedgerError(
+                        "witness receipt generation does not match ledger key"
+                    )
+                if verified["receipt_sha256"] != row["receipt_sha256"]:
+                    raise RegistryWitnessLedgerError(
+                        "witness receipt digest does not match ledger key"
+                    )
+                if generation <= previous_generation:
+                    raise RegistryWitnessLedgerError(
+                        "witness receipt generations are not strictly increasing"
+                    )
+                if verified["previous_receipt_sha256"] != previous_receipt_sha256:
+                    raise RegistryWitnessLedgerError(
+                        "witness receipt hash chain is broken"
+                    )
+                previous_generation = generation
+                previous_receipt_sha256 = str(verified["receipt_sha256"])
+                last_receipt = verified
+
+            if last_receipt is None:
+                if heads:
+                    raise RegistryWitnessLedgerError(
+                        "witness ledger head exists without any receipts"
+                    )
+                head_generation = None
+                head_receipt_sha256 = None
+            else:
+                if len(heads) != 1:
+                    raise RegistryWitnessLedgerError(
+                        "witness ledger receipts exist without exactly one head"
+                    )
+                head = heads[0]
+                if int(head["generation"]) != int(last_receipt["generation"]):
+                    raise RegistryWitnessLedgerError(
+                        "witness head generation does not match newest receipt"
+                    )
+                if head["receipt_sha256"] != last_receipt["receipt_sha256"]:
+                    raise RegistryWitnessLedgerError(
+                        "witness head digest does not match newest receipt"
+                    )
+                head_generation = int(head["generation"])
+                head_receipt_sha256 = str(head["receipt_sha256"])
+
+            return {
+                "schema": "WS-SARA-REGISTRY-WITNESS-LEDGER-INTEGRITY-V1",
+                "status": "PASS",
+                "witness_id": self.witness_id,
+                "namespace": self.namespace,
+                "key_id": self.key_id,
+                "key_fingerprint_sha256": self.fingerprint_sha256,
+                "receipt_count": len(rows),
+                "head_generation": head_generation,
+                "head_receipt_sha256": head_receipt_sha256,
+                "signature_chain_verified": True,
+                "sqlite_integrity_verified": True,
+                "external_witnessed": False,
+                "independence_verified": False,
+                "claims_boundary": (
+                    "Ledger integrity verifies this service's durable database, receipt signatures, "
+                    "and receipt chain. It does not establish independent administration, external "
+                    "hosting, WORM retention, or protection from compromise of this witness authority."
+                ),
+            }
+        finally:
+            connection.close()
+
     def read_head(self) -> dict[str, Any] | None:
         connection = self._connect()
         try:
@@ -178,7 +306,10 @@ class RegistryWitnessLedger:
                 "WHERE h.namespace=?",
                 (self.namespace,),
             ).fetchone()
-            return self._decode_receipt(row)
+            receipt = self._decode_receipt(row)
+            if receipt is None:
+                return None
+            return self._verify_stored_receipt(receipt)
         finally:
             connection.close()
 
@@ -196,6 +327,7 @@ class RegistryWitnessLedger:
             ).fetchone()
             current = self._decode_receipt(row)
             if current is not None:
+                current = self._verify_stored_receipt(current)
                 current_generation = int(current["generation"])
                 if coordinates.generation < current_generation:
                     raise RegistryWitnessRollbackDetected(
@@ -213,6 +345,14 @@ class RegistryWitnessLedger:
                     return current
                 previous = str(current["receipt_sha256"])
             else:
+                existing_count = connection.execute(
+                    "SELECT COUNT(*) FROM witness_receipts WHERE namespace=?",
+                    (self.namespace,),
+                ).fetchone()[0]
+                if existing_count:
+                    raise RegistryWitnessLedgerError(
+                        "witness head is missing while durable receipts remain"
+                    )
                 previous = ZERO_HASH
 
             receipt = build_signed_witness_receipt(
@@ -330,6 +470,11 @@ def create_registry_witness_app(service: RegistryWitnessService) -> FastAPI:
     @app.get("/v1/public-key")
     def public_key() -> dict[str, Any]:
         return service.public_key_record()
+
+    @app.get("/v1/integrity")
+    def integrity(request: Request) -> dict[str, Any]:
+        _require_bearer(request, service.service_token)
+        return service.ledger.verify_integrity()
 
     @app.get("/v1/head")
     def head(request: Request) -> dict[str, Any]:
