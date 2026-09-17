@@ -4,6 +4,7 @@
   "event_freshness_seconds_max": 300,
   "future_clock_skew_seconds_max": 30,
   "approval_lifetime_seconds_max": 900,
+  "minimum_adversarial_mutation_cases": 100,
   "required_controls": [
     "STRICT_ECHO_TOP_LEVEL_SCHEMA",
     "SHA256_INTEGRITY_FORMAT",
