@@ -12,6 +12,7 @@ from .restriction_provenance import (
     RESTRICTION_EVENT,
     RESTRICTION_SCHEMA,
     RESTRICTION_SCHEMA_V1,
+    RESTRICTION_SCHEMA_V2,
 )
 
 
@@ -22,6 +23,7 @@ MAX_RESTRICTION_RECENT_RESULTS = 100
 
 _RESTRICTION_ID = re.compile(r"^[0-9a-f]{32}$")
 _FINGERPRINT = re.compile(r"^[0-9a-f]{64}$")
+_KEY_EPOCH_ID = re.compile(r"^[0-9a-f]{32}$")
 _REASON_CODE = re.compile(r"^[A-Z0-9][A-Z0-9_.:-]{0,95}$")
 _COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/+-]{0,127}$")
 _ALLOWED_ACTIONS = frozenset({"BLOCK", "REDACT", "TRANSFORM", "ESCALATE"})
@@ -55,6 +57,7 @@ _V1_PAYLOAD_KEYS = frozenset(
     }
 )
 _V2_PAYLOAD_KEYS = _V1_PAYLOAD_KEYS | frozenset({"authority"})
+_V3_PAYLOAD_KEYS = _V2_PAYLOAD_KEYS | frozenset({"fingerprint_key_epoch_id"})
 
 
 class RestrictionObservabilityError(ValueError):
@@ -131,8 +134,12 @@ def _expected_restriction_id(payload: dict[str, Any], provenance_schema: str) ->
         "metadata": metadata,
         "raw_content_persisted": payload.get("raw_content_persisted"),
     }
-    if provenance_schema == RESTRICTION_SCHEMA:
+    if provenance_schema in {RESTRICTION_SCHEMA_V2, RESTRICTION_SCHEMA}:
         identity_document["authority"] = payload.get("authority")
+    if provenance_schema == RESTRICTION_SCHEMA:
+        identity_document["fingerprint_key_epoch_id"] = payload.get(
+            "fingerprint_key_epoch_id"
+        )
 
     return hashlib.sha256(
         _canonical_json(identity_document).encode("utf-8")
@@ -152,14 +159,30 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
         raise RestrictionObservabilityError("restriction payload is missing")
 
     provenance_schema = payload.get("schema")
+    fingerprint_key_epoch_id: str | None = None
+    fingerprint_epoch_bound_in_payload = False
     if provenance_schema == RESTRICTION_SCHEMA_V1:
         allowed_payload_keys = _V1_PAYLOAD_KEYS
         authority_bound_in_payload = False
-    elif provenance_schema == RESTRICTION_SCHEMA:
+    elif provenance_schema == RESTRICTION_SCHEMA_V2:
         allowed_payload_keys = _V2_PAYLOAD_KEYS
         authority_bound_in_payload = True
         if payload.get("authority") != RESTRICTION_AUTHORITY:
             raise RestrictionObservabilityError("restriction payload authority is invalid")
+    elif provenance_schema == RESTRICTION_SCHEMA:
+        allowed_payload_keys = _V3_PAYLOAD_KEYS
+        authority_bound_in_payload = True
+        fingerprint_epoch_bound_in_payload = True
+        if payload.get("authority") != RESTRICTION_AUTHORITY:
+            raise RestrictionObservabilityError("restriction payload authority is invalid")
+        fingerprint_key_epoch_id = payload.get("fingerprint_key_epoch_id")
+        if (
+            not isinstance(fingerprint_key_epoch_id, str)
+            or not _KEY_EPOCH_ID.fullmatch(fingerprint_key_epoch_id)
+        ):
+            raise RestrictionObservabilityError(
+                "restriction fingerprint key epoch is invalid"
+            )
     else:
         raise RestrictionObservabilityError("restriction schema is invalid")
 
@@ -210,6 +233,8 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
         "event_id": event_id,
         "authority": RESTRICTION_AUTHORITY,
         "authority_bound_in_payload": authority_bound_in_payload,
+        "fingerprint_key_epoch_id": fingerprint_key_epoch_id,
+        "fingerprint_epoch_bound_in_payload": fingerprint_epoch_bound_in_payload,
         "audit_timestamp": audit_timestamp,
         "occurred_at": occurred_at,
         "action": action,
@@ -278,6 +303,8 @@ def restriction_observability(
             "Window-scoped observability over persisted SARA restriction events only; "
             "bounded audit retention does not establish global lifetime counts or complete "
             "provider-side restriction history. V1 records rely on the governed outer audit "
-            "actor; V2 records additionally bind that authority into the payload identity."
+            "actor; V2 records additionally bind authority into the payload identity; V3 "
+            "also binds an opaque fingerprint-key epoch identifier so cross-rotation "
+            "fingerprint comparisons can fail closed when epochs differ."
         ),
     }
