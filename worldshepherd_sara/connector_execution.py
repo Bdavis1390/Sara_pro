@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional
 
+from .connector_claim_recovery import UnknownClaimOutcome
 from .connector_control import ConnectorControlPlane, Decision
 from .connector_ticket_lifecycle import (
     DEFAULT_TTL_SECONDS,
@@ -164,12 +165,53 @@ class ReadExecutionBroker:
         *,
         now: Optional[float] = None,
     ) -> Dict[str, Any]:
-        claim = self.ledger.claim(ticket, now=now)
+        try:
+            claim = self.ledger.claim(ticket, now=now)
+        except UnknownClaimOutcome as exc:
+            return {
+                "ok": False,
+                "state": "unknown",
+                "ticket_id": exc.ticket_id,
+                "reason": str(exc),
+                "consumed_at": None,
+                "may_execute_connector": False,
+                "may_retry_claim": False,
+            }
+
         return {
             "ok": claim.ok,
+            "state": "claimed" if claim.ok else "denied",
             "ticket_id": claim.ticket_id,
             "reason": claim.reason,
             "consumed_at": claim.consumed_at,
+            "may_execute_connector": bool(claim.ok),
+            "may_retry_claim": False,
+        }
+
+    def reconcile_claim_for_execution(
+        self,
+        ticket: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        reconcile = getattr(self.ledger, "reconcile_unknown_claim", None)
+        ticket_id = str(ticket.get("ticket_id", ""))
+        if not callable(reconcile):
+            return {
+                "ok": False,
+                "state": "unsupported",
+                "ticket_id": ticket_id,
+                "reason": "ledger does not support ambiguous-outcome reconciliation",
+                "may_execute_connector": False,
+                "may_retry_claim": False,
+            }
+
+        result = reconcile(ticket)
+        return {
+            "ok": False,
+            "state": result.state,
+            "ticket_id": result.ticket_id,
+            "reason": result.reason,
+            "may_execute_connector": bool(result.may_execute_connector),
+            "may_retry_claim": bool(result.may_retry_claim),
         }
 
 

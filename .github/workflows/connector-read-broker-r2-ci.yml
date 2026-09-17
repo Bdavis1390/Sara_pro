@@ -9,6 +9,7 @@ on:
       - "worldshepherd/connectors-distributed-claim-contract-v1-*"
       - "worldshepherd/connectors-dbtime-clock-skew-v1-*"
       - "worldshepherd/connectors-failure-injection-v1-*"
+      - "worldshepherd/connectors-ambiguous-claim-v1-*"
   pull_request:
     paths:
       - "data/worldshepherd_connectors.v2.json"
@@ -16,10 +17,12 @@ on:
       - "worldshepherd_sara/connector_control.py"
       - "worldshepherd_sara/connector_execution.py"
       - "worldshepherd_sara/connector_receipt.py"
+      - "worldshepherd_sara/connector_claim_recovery.py"
       - "worldshepherd_sara/connector_ticket_lifecycle.py"
       - "worldshepherd_sara/connector_ticket_sqlite.py"
       - "worldshepherd_sara/connector_ticket_shared.py"
       - "worldshepherd_sara/connector_ticket_postgres.py"
+      - "tests/test_connector_claim_recovery.py"
       - "tests/test_connector_ticket_lifecycle.py"
       - "tests/test_connector_ticket_sqlite.py"
       - "tests/test_connector_ticket_shared.py"
@@ -42,6 +45,6 @@ jobs:
       - name: Install runtime imports
         run: python -m pip install --disable-pip-version-check fastapi pytest
       - name: Compile connector claim stack
-        run: python -m py_compile worldshepherd_sara/connector_control.py worldshepherd_sara/connector_execution.py worldshepherd_sara/connector_receipt.py worldshepherd_sara/connector_ticket_lifecycle.py worldshepherd_sara/connector_ticket_sqlite.py worldshepherd_sara/connector_ticket_shared.py worldshepherd_sara/connector_ticket_postgres.py
-      - name: Verify lifecycle durable and shared claim contracts
-        run: python -m pytest -q tests/test_connector_ticket_lifecycle.py tests/test_connector_ticket_sqlite.py tests/test_connector_ticket_shared.py tests/test_connector_ticket_postgres.py
+        run: python -m py_compile worldshepherd_sara/connector_control.py worldshepherd_sara/connector_execution.py worldshepherd_sara/connector_receipt.py worldshepherd_sara/connector_claim_recovery.py worldshepherd_sara/connector_ticket_lifecycle.py worldshepherd_sara/connector_ticket_sqlite.py worldshepherd_sara/connector_ticket_shared.py worldshepherd_sara/connector_ticket_postgres.py
+      - name: Verify lifecycle durable shared and ambiguous claim contracts
+        run: python -m pytest -q tests/test_connector_claim_recovery.py tests/test_connector_ticket_lifecycle.py tests/test_connector_ticket_sqlite.py tests/test_connector_ticket_shared.py tests/test_connector_ticket_postgres.py
