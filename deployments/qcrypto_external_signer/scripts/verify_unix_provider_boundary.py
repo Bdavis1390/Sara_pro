@@ -7,7 +7,6 @@ import hashlib
 import json
 import multiprocessing
 import os
-import socket
 import stat
 import tempfile
 import time
@@ -24,12 +23,12 @@ from qcrypto_external_signer.provider_custody import (
     OpaqueProviderCustodyService,
     verify_opaque_provider_receipt,
 )
+from qcrypto_external_signer.synthetic import build_synthetic_request
 from qcrypto_external_signer.unix_provider import (
     ProviderRpcError,
     UnixOpaqueSignerProviderClient,
     serve_reference_provider,
 )
-from tests.test_custody import fixture
 
 
 class CountingUnixProviderClient(UnixOpaqueSignerProviderClient):
@@ -99,8 +98,6 @@ def export_rpc_rejected(client: UnixOpaqueSignerProviderClient) -> bool:
 
 
 def tcp_connect_surface_absent(socket_path: Path) -> bool:
-    # The configured endpoint is AF_UNIX. There is deliberately no host/port in the
-    # descriptor or client API; assert the filesystem endpoint is in fact a socket.
     mode = socket_path.stat().st_mode
     return stat.S_ISSOCK(mode) and not hasattr(UnixOpaqueSignerProviderClient, "host")
 
@@ -113,7 +110,7 @@ def build_evidence() -> dict:
         try:
             client = CountingUnixProviderClient(socket_path)
             signer = OpaqueProviderReleaseSigner(client)
-            request, _ignored, human_public, now = fixture(signer=signer)
+            request, _ignored, human_public, now = build_synthetic_request(signer=signer)
             service = custody(root, signer, human_public)
 
             child_pid = client.descriptor.signer_process_id
@@ -143,8 +140,6 @@ def build_evidence() -> dict:
                 public_key_bytes=client.public_key_bytes,
             )
 
-            # Restart only the custody-side objects. The signer process remains the
-            # authoritative provider process and the custody ledger remains durable.
             restarted_client = CountingUnixProviderClient(socket_path)
             restarted_signer = OpaqueProviderReleaseSigner(restarted_client)
             post_expiry = custody(root, restarted_signer, human_public).execute_release(
