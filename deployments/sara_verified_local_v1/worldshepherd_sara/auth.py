@@ -7,6 +7,51 @@ from enum import StrEnum
 from fastapi import Header, HTTPException, status
 
 
+_PRIME_PRIVATE_ENV_NAMES = frozenset(
+    {
+        "PRIME_SENTINEL_PRIVATE_KEY",
+        "PRIME_SENTINEL_PRIVATE_KEY_FILE",
+        "PRIME_SENTINEL_SIGNING_KEY",
+        "PRIME_SENTINEL_SIGNING_KEY_FILE",
+        "PRIME_SENTINEL_ED25519_PRIVATE_KEY",
+        "PRIME_SENTINEL_ED25519_PRIVATE_KEY_FILE",
+        "PRIME_SENTINEL_SECRET_KEY",
+        "PRIME_SENTINEL_SEED",
+    }
+)
+_PRIVATE_KEY_MARKERS = (
+    "-----BEGIN PRIVATE KEY-----",
+    "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "-----BEGIN EC PRIVATE KEY-----",
+    "-----BEGIN RSA PRIVATE KEY-----",
+)
+
+
+def reject_prime_private_signing_material(
+    environ: dict[str, str] | None = None,
+) -> None:
+    """Fail SARA startup if PRIME private signing material is presented.
+
+    This is a runtime boundary, not a claim about external signer custody. SARA
+    accepts PRIME public verification keys only.
+    """
+    values = os.environ if environ is None else environ
+    for name, raw in values.items():
+        if not isinstance(name, str) or not name.startswith("PRIME_SENTINEL_"):
+            continue
+        value = str(raw).strip()
+        if not value:
+            continue
+        if name in _PRIME_PRIVATE_ENV_NAMES:
+            raise RuntimeError(
+                "SARA must not receive PRIME SENTINEL private signing material"
+            )
+        if any(marker in value for marker in _PRIVATE_KEY_MARKERS):
+            raise RuntimeError(
+                "SARA detected PRIME SENTINEL private key material in runtime environment"
+            )
+
+
 class Role(StrEnum):
     RELAY = "relay"
     ADMIN = "admin"
@@ -22,6 +67,7 @@ def _required_secret(name: str) -> str:
 
 
 def validate_runtime_secrets() -> None:
+    reject_prime_private_signing_material()
     relay = _required_secret("SARA_RELAY_TOKEN")
     admin = _required_secret("SARA_ADMIN_TOKEN")
     if hmac.compare_digest(relay, admin):
