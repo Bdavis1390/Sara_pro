@@ -95,6 +95,44 @@ def valid_fixture(compose_bytes=b"services: {}\n"):
     return receipt(compose_bytes, quorum_bytes), quorum
 
 
+def test_geth_protocol_snapshot_accepts_hoodi_identity():
+    text = "noise\n" + json.dumps(
+        {
+            "network": 560048,
+            "genesis": verify_online.HOODI_GENESIS_HASH,
+            "blockNumber": 42,
+        }
+    )
+    network_id, genesis_hash, block_number = verify_online.parse_geth_protocol_snapshot(text)
+    assert network_id == 560048
+    assert genesis_hash == verify_online.HOODI_GENESIS_HASH
+    assert block_number == 42
+
+
+def test_geth_protocol_snapshot_rejects_wrong_network():
+    text = json.dumps(
+        {
+            "network": 1,
+            "genesis": verify_online.HOODI_GENESIS_HASH,
+            "blockNumber": 0,
+        }
+    )
+    with pytest.raises(RuntimeError, match="network id mismatch"):
+        verify_online.parse_geth_protocol_snapshot(text)
+
+
+def test_geth_protocol_snapshot_rejects_wrong_genesis():
+    text = json.dumps(
+        {
+            "network": 560048,
+            "genesis": "0x" + "0" * 64,
+            "blockNumber": 0,
+        }
+    )
+    with pytest.raises(RuntimeError, match="genesis hash mismatch"):
+        verify_online.parse_geth_protocol_snapshot(text)
+
+
 def test_valid_v3_start_receipt_lineage_is_accepted(monkeypatch, tmp_path):
     compose_bytes = b"services: {}\n"
     data, quorum = valid_fixture(compose_bytes)
