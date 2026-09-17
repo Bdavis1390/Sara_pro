@@ -249,3 +249,38 @@ def test_declared_rollback_classes_drop_by_more_than_ten_x(tmp_path):
     assert baseline_classes == 4
     assert residual / baseline_classes <= 0.10
     assert residual == 0
+
+
+
+def _auth(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
+def test_trust_root_namespace_is_protected_from_generic_admin_patch(client, tokens):
+    _relay, admin = tokens
+    response = client.patch(
+        "/admin/registry",
+        headers=_auth(admin),
+        json={
+            "values": {
+                PRIME_TRUST_ROOT_STATE_KEY: {
+                    "schema": "attacker-controlled",
+                    "epoch": 999,
+                }
+            }
+        },
+    )
+
+    assert response.status_code == 403
+    assert PRIME_TRUST_ROOT_STATE_KEY in response.json()["detail"]
+
+
+def test_health_reports_bounded_trust_root_guard_state(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    body = response.json()
+
+    guard = body["prime_trust_root_guard"]
+    assert guard["status"] == "UNCONFIGURED"
+    assert guard["epoch"] is None
+    assert guard["material_sha256"] is None
