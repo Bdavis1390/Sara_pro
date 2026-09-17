@@ -1,0 +1,163 @@
+from __future__ import annotations
+
+import hashlib
+
+import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
+
+from qcrypto_external_signer.aws_kms_provider import (
+    AwsKmsMlDsa65Provider,
+    fips204_external_mu,
+)
+from qcrypto_external_signer.opaque_provider import (
+    OpaqueProviderReleaseSigner,
+    ProviderAmbiguousOutcome,
+    ProviderError,
+    ProviderState,
+    provider_operation_id,
+    verify_provider_result,
+)
+
+
+class FakeKms:
+    def __init__(self, *, fail_sign: bool = False, enabled: bool = True, key_spec: str = "ML_DSA_65"):
+        self.private = MLDSA65PrivateKey.generate()
+        self.public_der = self.private.public_key().public_bytes(
+            serialization.Encoding.DER,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+        self.public_raw = self.private.public_key().public_bytes(
+            serialization.Encoding.Raw,
+            serialization.PublicFormat.Raw,
+        )
+        self.arn = "arn:aws:kms:us-east-1:111122223333:key/00000000-1111-2222-3333-444444444444"
+        self.fail_sign = fail_sign
+        self.enabled = enabled
+        self.key_spec = key_spec
+        self.sign_calls = 0
+        self.expected_message: bytes | None = None
+        self.expected_context: bytes | None = None
+        self.last_sign_request = None
+
+    def describe_key(self, **kwargs):
+        return {
+            "KeyMetadata": {
+                "Arn": self.arn,
+                "KeySpec": self.key_spec,
+                "KeyUsage": "SIGN_VERIFY",
+                "Enabled": self.enabled,
+                "KeyState": "Enabled" if self.enabled else "Disabled",
+            }
+        }
+
+    def get_public_key(self, **kwargs):
+        return {
+            "KeyId": self.arn,
+            "PublicKey": self.public_der,
+            "KeySpec": self.key_spec,
+            "KeyUsage": "SIGN_VERIFY",
+            "SigningAlgorithms": ["ML_DSA_SHAKE_256"],
+        }
+
+    def sign(self, **kwargs):
+        self.sign_calls += 1
+        self.last_sign_request = dict(kwargs)
+        if self.fail_sign:
+            raise TimeoutError("simulated lost KMS acknowledgement")
+        assert self.expected_message is not None
+        assert self.expected_context is not None
+        assert kwargs["Message"] == fips204_external_mu(
+            self.public_raw,
+            self.expected_message,
+            self.expected_context,
+        )
+        # The fake models KMS's EXTERNAL_MU contract while cryptography performs
+        # the equivalent pure ML-DSA operation for independent verification.
+        signature = self.private.sign(self.expected_message, self.expected_context)
+        return {
+            "KeyId": self.arn,
+            "Signature": signature,
+            "SigningAlgorithm": "ML_DSA_SHAKE_256",
+        }
+
+
+def test_external_mu_preserves_nonempty_fips204_context():
+    private = MLDSA65PrivateKey.generate()
+    raw = private.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    message = b"worldshepherd-kms-contract-message"
+    context = b"WS-QCRYPTO-OPAQUE-PROVIDER-V1"
+
+    tr = hashlib.shake_256(raw).digest(64)
+    expected = hashlib.shake_256(
+        tr + b"\x00" + bytes((len(context),)) + context + message
+    ).digest(64)
+    assert fips204_external_mu(raw, message, context) == expected
+    assert len(expected) == 64
+
+
+def test_kms_provider_validates_capability_and_context_bound_signature():
+    kms = FakeKms()
+    provider = AwsKmsMlDsa65Provider(kms_client=kms, key_id="alias/worldshepherd-qcrypto")
+    signer = OpaqueProviderReleaseSigner(provider)
+    message = b"canonical-custody-release-binding"
+    context = signer.context
+    kms.expected_message = message
+    kms.expected_context = context
+    operation_id = provider_operation_id(
+        key_handle=provider.key_handle,
+        message=message,
+        context=context,
+    )
+
+    result = provider.begin_sign(operation_id, message, context)
+    assert result.state is ProviderState.SIGNED
+    assert kms.sign_calls == 1
+    assert kms.last_sign_request["KeyId"] == kms.arn
+    assert kms.last_sign_request["MessageType"] == "EXTERNAL_MU"
+    assert kms.last_sign_request["SigningAlgorithm"] == "ML_DSA_SHAKE_256"
+    assert len(kms.last_sign_request["Message"]) == 64
+    assert verify_provider_result(
+        result,
+        public_key_bytes=provider.public_key_bytes,
+        message=message,
+        context=context,
+    )
+    assert provider.provider_profile["worldshepherd_fips_validation_established"] is False
+
+
+def test_kms_ambiguous_sign_never_auto_retries_or_reissues_on_reconcile():
+    kms = FakeKms(fail_sign=True)
+    provider = AwsKmsMlDsa65Provider(kms_client=kms, key_id=kms.arn)
+    message = b"ambiguous-kms-release-binding"
+    context = b"WS-QCRYPTO-OPAQUE-PROVIDER-V1"
+    operation_id = provider_operation_id(
+        key_handle=provider.key_handle,
+        message=message,
+        context=context,
+    )
+
+    with pytest.raises(ProviderAmbiguousOutcome):
+        provider.begin_sign(operation_id, message, context)
+    assert kms.sign_calls == 1
+
+    reconciled = provider.reconcile(operation_id)
+    assert reconciled.state is ProviderState.INDETERMINATE
+    assert reconciled.safe_to_retry is False
+    assert kms.sign_calls == 1
+
+    with pytest.raises(ProviderAmbiguousOutcome):
+        provider.begin_sign(operation_id, message, context)
+    assert kms.sign_calls == 1
+
+
+def test_kms_provider_rejects_disabled_or_wrong_spec_key_before_signing():
+    disabled = FakeKms(enabled=False)
+    with pytest.raises(ProviderError, match="enabled"):
+        AwsKmsMlDsa65Provider(kms_client=disabled, key_id=disabled.arn)
+    assert disabled.sign_calls == 0
+
+    wrong = FakeKms(key_spec="ML_DSA_44")
+    with pytest.raises(ProviderError, match="ML_DSA_65"):
+        AwsKmsMlDsa65Provider(kms_client=wrong, key_id=wrong.arn)
+    assert wrong.sign_calls == 0
