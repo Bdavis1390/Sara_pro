@@ -1,7 +1,7 @@
 # Worldshepherd Global Glyph & Stela Corpus
 
-Status: ACTIVE research program  
-Parent issue: #378  
+Status: ACTIVE research program
+Parent issue: #378
 Methodology: #377 Layered Systems Reasoning Protocol (LSRP)
 
 ## Mission
