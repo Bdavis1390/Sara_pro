@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -41,11 +42,21 @@ from worldshepherd_sara.prime_sentinel_authorization import (
     canonical_authorization_message,
     verified_authorization_registry_patch,
 )
+from worldshepherd_sara.registry_monotonic_witness import (
+    REMOTE_WITNESS_MODE,
+    RegistryMonotonicWitnessVerifier,
+    build_signed_witness_receipt,
+    coordinates_from_checkpoint_status,
+)
+from worldshepherd_sara.registry_witness_gate import RegistryWitnessPrecondition
 from worldshepherd_sara.storage import DurableStore
 from worldshepherd_sara.trajectory_guard import TrajectoryState
 
 
 NOW = datetime(2026, 9, 17, 19, 30, tzinfo=timezone.utc)
+WITNESS_ID = "WITNESS-OW-UNIT"
+WITNESS_KEY_ID = "WITNESS-OW-UNIT-KEY"
+WITNESS_NAMESPACE = "worldshepherd/sara/registry"
 
 
 def _b64url(raw: bytes) -> str:
@@ -147,7 +158,45 @@ def _store(tmp_path):
     return store, prime_verifier, assertion
 
 
+def _signed_remote_witness(store: DurableStore):
+    private = Ed25519PrivateKey.generate()
+    coordinates = coordinates_from_checkpoint_status(store.checkpoint_status())
+    receipt = build_signed_witness_receipt(
+        private_key=private,
+        witness_id=WITNESS_ID,
+        key_id=WITNESS_KEY_ID,
+        namespace=WITNESS_NAMESPACE,
+        coordinates=coordinates,
+        issued_at=NOW.isoformat(),
+        witness_mode=REMOTE_WITNESS_MODE,
+    )
+    witness_verifier = RegistryMonotonicWitnessVerifier(
+        public_keys_b64url={
+            WITNESS_KEY_ID: _b64url(private.public_key().public_bytes_raw())
+        },
+        expected_witness_id=WITNESS_ID,
+        expected_namespace=WITNESS_NAMESPACE,
+    )
+    precondition = RegistryWitnessPrecondition(
+        generation=coordinates.generation,
+        state_root_sha256=coordinates.state_root_sha256,
+        commit_hash=coordinates.commit_hash,
+        witness_id=WITNESS_ID,
+        witness_mode=REMOTE_WITNESS_MODE,
+        witness_receipt_sha256=str(receipt["receipt_sha256"]),
+        witness_receipt_json=json.dumps(
+            receipt,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ),
+    )
+    return precondition, witness_verifier
+
+
 def _execute(store, prime_verifier, assertion, *, overwatch_verifier=None):
+    precondition, witness_verifier = _signed_remote_witness(store)
     return execute_prime_requalification_transition(
         store,
         assertion=assertion,
@@ -179,6 +228,8 @@ def _execute(store, prime_verifier, assertion, *, overwatch_verifier=None):
         ),
         trajectory_action_id="ACT-OW",
         overwatch_verifier=overwatch_verifier,
+        registry_witness_precondition=precondition,
+        registry_witness_verifier=witness_verifier,
         now=NOW,
     )
 
@@ -265,6 +316,7 @@ def test_dual_signed_clear_reenables_transition_and_is_bound_into_evidence(tmp_p
 
     assert result.disposition == PrimeMag1TransitionDisposition.APPLIED
     assert result.transition_id is not None
+    assert result.registry_witness_receipt_sha256 is not None
     assert result.overwatch_directive_id == clear.directive_id
     assert result.overwatch_directive_sha256 == clear_status.directive_sha256
     assert result.overwatch_sequence == 2
@@ -278,6 +330,7 @@ def test_dual_signed_clear_reenables_transition_and_is_bound_into_evidence(tmp_p
     assert transition["payload"]["overwatch_state"] == "CLEAR"
     assert transition["payload"]["overwatch_sequence"] == 2
     assert transition["payload"]["overwatch_directive_sha256"] == clear_status.directive_sha256
+    assert transition["payload"]["registry_witness_required"] is True
 
 
 def test_existing_containment_state_without_verifier_fails_closed(tmp_path):
