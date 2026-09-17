@@ -93,5 +93,5 @@ jobs:
           if git rev-parse --verify origin/main >/dev/null 2>&1; then
             git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.patch'
           else
-            git diff --check HEAD^
+            git diff --check HEAD^ -- . ':(exclude,glob)**/*.patch'
           fi
