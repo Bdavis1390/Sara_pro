@@ -53,6 +53,10 @@ jobs:
           tests/test_restriction_10x_security.py
           tests/test_restriction_key_epoch.py
 
+      - name: Test ECHO external signer boundary
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pytest -q tests/test_echo_checkpoint.py tests/test_echo_checkpoint_signer_boundary.py
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |
