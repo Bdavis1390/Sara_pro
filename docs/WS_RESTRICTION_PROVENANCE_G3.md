@@ -59,13 +59,15 @@ WS-RESTRICTION-CONTEXT-EMPTY-V1
 
 This preserves the core identifiers and keyed fingerprints while preventing an unknown integration from using metadata or summary fields as a covert text channel.
 
-## Profile binding
+## Profile binding and immutability
 
 `context_profile` is system-managed. Callers cannot supply or override it.
 
 The selected profile ID is inserted into the sanitized metadata before the restriction identity document is hashed. Therefore the stable `restriction_id` and SARA outbox event ID are bound to the context-validation policy that admitted the record.
 
 Changing source/processor/profile semantics changes the evidence identity rather than silently reusing the same restriction ID.
+
+The in-process profile registry and each profile's metadata-rule mapping are exposed as immutable mappings. Runtime code cannot add a new integration profile or widen an existing field allowlist through ordinary dictionary mutation after startup.
 
 ## Validation order
 
@@ -90,15 +92,17 @@ The adversarial suite verifies:
 
 1. the registered internal profile accepts only its declared fields and fixed summary template;
 2. the profile ID is inserted by the system and persisted in evidence;
-3. unknown metadata fields fail closed;
-4. unapproved `stage` and `claims_state` values fail closed;
-5. booleans are not accepted as integers;
-6. attempt values below `1` or above `1000` fail closed;
-7. caller-supplied `context_profile` values are rejected;
-8. arbitrary safe-summary text is rejected;
-9. unregistered integrations accept only empty context;
-10. context-policy failures propagate through `capture_restriction()` as provenance errors;
-11. the required build executes the G1 provenance suite and the G3 positive-schema suite together.
+3. the registry and per-profile field-rule mappings reject runtime mutation attempts;
+4. unknown metadata fields fail closed;
+5. unapproved `stage` and `claims_state` values fail closed;
+6. booleans are not accepted as integers;
+7. attempt values below `1` or above `1000` fail closed;
+8. caller-supplied `context_profile` values are rejected;
+9. arbitrary safe-summary text is rejected;
+10. unregistered integrations accept only empty context;
+11. context-policy failures propagate through `capture_restriction()` as provenance errors;
+12. G2 observability tests continue proving that even approved summary/context values are omitted from admin projections;
+13. the required build executes the G1 provenance, G2 observability, and G3 positive-schema suites together.
 
 ## Compatibility and migration boundary
 
