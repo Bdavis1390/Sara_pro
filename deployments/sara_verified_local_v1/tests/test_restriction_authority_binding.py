@@ -1,0 +1,142 @@
+from __future__ import annotations
+
+import copy
+
+import pytest
+
+from worldshepherd_sara.models import AuditRecord
+from worldshepherd_sara.restriction_observability import (
+    RestrictionObservabilityError,
+    project_restriction_audit_record,
+    restriction_observability,
+)
+from worldshepherd_sara.restriction_provenance import (
+    RESTRICTION_AUTHORITY,
+    RESTRICTION_EVENT,
+    RESTRICTION_SCHEMA,
+    RESTRICTION_SCHEMA_V1,
+    capture_restriction,
+    queue_restriction_event,
+)
+
+
+KEY = b"worldshepherd-g4-authority-test-key-32-bytes-minimum"
+APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
+
+
+def evidence():
+    return capture_restriction(
+        fingerprint_key=KEY,
+        action="BLOCK",
+        reason_code="POLICY.AUTHORITY_TEST",
+        source_system="CHAT_ASSISTANT",
+        processor="POLICY_GATE",
+        process_version="v2",
+        policy_ref="CONTENT_POLICY",
+        correlation_id="authority-001",
+        raw_input="authority test input must not persist",
+        raw_generated="authority test generated must not persist",
+        safe_summary=APPROVED_SUMMARY,
+        metadata={
+            "stage": "post_generation_policy_check",
+            "claims_state": "IMPLEMENTED_IN_SOFTWARE",
+            "attempt": 1,
+        },
+        occurred_at="2026-09-17T21:45:00+00:00",
+    )
+
+
+def audit_record(*, actor=RESTRICTION_AUTHORITY, payload=None):
+    item = evidence()
+    value = copy.deepcopy(item.semantic_document() if payload is None else payload)
+    value["_outbox_event_id"] = f"SARA-EVENT-RESTRICTION-{value['restriction_id']}"
+    value["_delivery_semantics"] = "AT_LEAST_ONCE"
+    return AuditRecord(
+        timestamp="2026-09-17T21:45:01+00:00",
+        event=RESTRICTION_EVENT,
+        actor=actor,
+        payload=value,
+    ).model_dump(mode="json")
+
+
+def test_new_restrictions_bind_prime_authority_into_v2_identity():
+    item = evidence()
+    document = item.semantic_document()
+
+    assert document["schema"] == RESTRICTION_SCHEMA
+    assert RESTRICTION_SCHEMA.endswith("V2")
+    assert item.authority == RESTRICTION_AUTHORITY
+    assert document["authority"] == RESTRICTION_AUTHORITY
+    assert item.outbox_event_id == f"SARA-EVENT-RESTRICTION-{item.restriction_id}"
+
+
+def test_queue_actor_is_not_caller_overridable():
+    item = evidence()
+    patch, stable_id = queue_restriction_event({}, item)
+    queued = patch["event_outbox"][stable_id]
+
+    assert queued["actor"] == RESTRICTION_AUTHORITY
+    assert queued["payload"]["authority"] == RESTRICTION_AUTHORITY
+
+    with pytest.raises(TypeError):
+        queue_restriction_event({}, item, actor="UNTRUSTED_ACTOR")  # type: ignore[call-arg]
+
+
+def test_v2_projection_requires_governed_outer_actor_and_payload_authority():
+    projected = project_restriction_audit_record(audit_record())
+    assert projected["authority"] == RESTRICTION_AUTHORITY
+    assert projected["authority_bound_in_payload"] is True
+    assert projected["provenance_schema"] == RESTRICTION_SCHEMA
+
+    with pytest.raises(RestrictionObservabilityError, match="audit actor"):
+        project_restriction_audit_record(audit_record(actor="UNTRUSTED_ACTOR"))
+
+    missing = evidence().semantic_document()
+    missing.pop("authority")
+    with pytest.raises(RestrictionObservabilityError, match="payload authority"):
+        project_restriction_audit_record(audit_record(payload=missing))
+
+    wrong = evidence().semantic_document()
+    wrong["authority"] = "UNTRUSTED_ACTOR"
+    with pytest.raises(RestrictionObservabilityError, match="payload authority"):
+        project_restriction_audit_record(audit_record(payload=wrong))
+
+
+def test_v2_authority_tampering_marks_observability_unhealthy():
+    report = restriction_observability(
+        [audit_record(actor="UNTRUSTED_ACTOR")],
+        recent_limit=1,
+    )
+
+    assert report["ok"] is False
+    assert report["restriction_events_seen"] == 1
+    assert report["valid_restriction_events"] == 0
+    assert report["malformed_restriction_events"] == 1
+    assert report["recent"] == []
+
+
+def test_v1_legacy_record_requires_prime_actor_but_not_payload_authority():
+    payload = evidence().semantic_document()
+    payload["schema"] = RESTRICTION_SCHEMA_V1
+    payload.pop("authority")
+    payload["restriction_id"] = "a" * 32
+
+    projected = project_restriction_audit_record(audit_record(payload=payload))
+
+    assert projected["provenance_schema"] == RESTRICTION_SCHEMA_V1
+    assert projected["authority"] == RESTRICTION_AUTHORITY
+    assert projected["authority_bound_in_payload"] is False
+
+    with pytest.raises(RestrictionObservabilityError, match="audit actor"):
+        project_restriction_audit_record(
+            audit_record(actor="UNTRUSTED_ACTOR", payload=payload)
+        )
+
+
+def test_v1_cannot_smuggle_v2_authority_field():
+    payload = evidence().semantic_document()
+    payload["schema"] = RESTRICTION_SCHEMA_V1
+    payload["restriction_id"] = "b" * 32
+
+    with pytest.raises(RestrictionObservabilityError, match="unknown fields"):
+        project_restriction_audit_record(audit_record(payload=payload))
