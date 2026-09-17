@@ -27,6 +27,11 @@ from .prime_sentinel_authorization import (
     PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
     PrimeSentinelVerifier,
 )
+from .restriction_observability import (
+    MAX_RESTRICTION_AUDIT_WINDOW,
+    MAX_RESTRICTION_RECENT_RESULTS,
+    restriction_observability,
+)
 from .storage import DurableStore
 
 
@@ -162,6 +167,16 @@ def hmaa_store(request: Request) -> HMAAEvidenceStore:
     return request.app.state.hmaa_store
 
 
+def _restriction_report(
+    request: Request,
+    *,
+    audit_window: int,
+    recent_limit: int,
+) -> dict[str, Any]:
+    records = store(request).read_audit(audit_window)
+    return restriction_observability(records, recent_limit=recent_limit)
+
+
 @app.get("/health")
 def health(request: Request) -> dict[str, object]:
     current_outbox = outbox_status(store(request).get_registry())
@@ -179,6 +194,8 @@ def health(request: Request) -> dict[str, object]:
             "audit": "/v1/audit?limit=50",
             "hmaa_status": "/v1/hmaa/status",
             "hmaa_evidence": "/v1/hmaa/evidence?limit=50",
+            "restriction_status": "/admin/restrictions/status",
+            "restriction_recent": "/admin/restrictions/recent?limit=50",
             "registry": "/admin/registry",
             "prime_passport": "/admin/prime/{prime_id}/passport",
             "prime_requalification_authorize": "/admin/prime/{prime_id}/requalification/authorize",
@@ -221,7 +238,7 @@ code{color:#9ad5ff} .ok{color:#96e6a1}
 </style></head><body><h1>Worldshepherd SARA</h1>
 <p class="ok">Local administration interface is online.</p>
 <div class="card"><strong>Authority separation</strong><p>CRE1AWS approves high-impact releases. SSPADAWANZZ operates the local service.</p></div>
-<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
+<div class="card"><strong>Operational endpoints</strong><p><code>/health</code>, <code>/v1/relay</code>, <code>/v1/audit</code>, <code>/v1/hmaa/status</code>, <code>/v1/hmaa/evidence</code>, <code>/admin/restrictions/status</code>, <code>/admin/restrictions/recent</code>, <code>/admin/registry</code>, <code>/admin/prime/{prime_id}/passport</code>, <code>/admin/selftest</code></p></div>
 <div class="card"><strong>Security boundary</strong><p>Tokens are never stored in this page. PRIME SENTINEL private signing keys are not stored by SARA.</p></div>
 </body></html>"""
 
@@ -295,6 +312,46 @@ def audit(
 ) -> dict[str, object]:
     require_admin(role)
     return {"records": store(request).read_audit(limit)}
+
+
+@app.get("/admin/restrictions/status")
+def restriction_status(
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+    audit_window: Annotated[
+        int,
+        Query(ge=1, le=MAX_RESTRICTION_AUDIT_WINDOW),
+    ] = MAX_RESTRICTION_AUDIT_WINDOW,
+) -> dict[str, object]:
+    require_admin(role)
+    report = _restriction_report(
+        request,
+        audit_window=audit_window,
+        recent_limit=1,
+    )
+    report.pop("recent", None)
+    return report
+
+
+@app.get("/admin/restrictions/recent")
+def restriction_recent(
+    request: Request,
+    role: Annotated[Role, Depends(resolve_role)],
+    limit: Annotated[
+        int,
+        Query(ge=1, le=MAX_RESTRICTION_RECENT_RESULTS),
+    ] = 50,
+    audit_window: Annotated[
+        int,
+        Query(ge=1, le=MAX_RESTRICTION_AUDIT_WINDOW),
+    ] = MAX_RESTRICTION_AUDIT_WINDOW,
+) -> dict[str, object]:
+    require_admin(role)
+    return _restriction_report(
+        request,
+        audit_window=audit_window,
+        recent_limit=limit,
+    )
 
 
 @app.get("/admin/registry")
