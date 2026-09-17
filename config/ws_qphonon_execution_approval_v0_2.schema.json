@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldshepherd.local/schema/ws_qphonon_execution_approval_v0_2.schema.json",
+  "title": "WS-QPHONON Execution Approval V0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "approved",
+    "approval_id",
+    "approver",
+    "approval_attestation_verified",
+    "experiment_digest",
+    "config_digest",
+    "issued_at_utc",
+    "expires_at_utc"
+  ],
+  "properties": {
+    "approved": {"const": true},
+    "approval_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "approver": {"type": "string", "minLength": 1, "maxLength": 256},
+    "approval_attestation_verified": {"const": true},
+    "experiment_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "config_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "issued_at_utc": {"type": "string", "format": "date-time"},
+    "expires_at_utc": {"type": "string", "format": "date-time"}
+  }
+}
