@@ -54,6 +54,80 @@ def _signed_assertion(
     return assertion.model_copy(update={"signature_b64url": _b64url(signature)})
 
 
+
+def test_generic_detached_signature_verifies_with_public_key_only():
+    private, verifier = _keys()
+    message = b"WS-RESTRICTION-SIGNATURE-TEST\x00canonical-safe-evidence"
+    signature = _b64url(private.sign(message))
+
+    verified = verifier.verify_detached_signature(
+        key_id="PS-K1",
+        message=message,
+        signature_b64url=signature,
+    )
+
+    assert verified.key_id == "PS-K1"
+    assert len(verified.key_fingerprint_sha256) == 64
+
+
+def test_generic_detached_signature_rejects_message_signature_and_key_tampering():
+    private, verifier = _keys()
+    message = b"WS-RESTRICTION-SIGNATURE-TEST\x00canonical-safe-evidence"
+    signature = _b64url(private.sign(message))
+
+    with pytest.raises(PrimeSentinelAuthorizationError, match="signature"):
+        verifier.verify_detached_signature(
+            key_id="PS-K1",
+            message=message + b"-tampered",
+            signature_b64url=signature,
+        )
+
+    bad_signature = bytearray(private.sign(message))
+    bad_signature[0] ^= 0x01
+    with pytest.raises(PrimeSentinelAuthorizationError, match="signature"):
+        verifier.verify_detached_signature(
+            key_id="PS-K1",
+            message=message,
+            signature_b64url=_b64url(bytes(bad_signature)),
+        )
+
+    with pytest.raises(PrimeSentinelAuthorizationError, match="unknown"):
+        verifier.verify_detached_signature(
+            key_id="PS-UNKNOWN",
+            message=message,
+            signature_b64url=signature,
+        )
+
+    revoked = PrimeSentinelVerifier(
+        public_keys_b64url={"PS-K1": _b64url(private.public_key().public_bytes_raw())},
+        revoked_key_ids={"PS-K1"},
+    )
+    with pytest.raises(PrimeSentinelAuthorizationError, match="revoked"):
+        revoked.verify_detached_signature(
+            key_id="PS-K1",
+            message=message,
+            signature_b64url=signature,
+        )
+
+
+def test_generic_detached_signature_rejects_empty_message_and_bad_encoding():
+    _private, verifier = _keys()
+
+    with pytest.raises(PrimeSentinelAuthorizationError, match="non-empty bytes"):
+        verifier.verify_detached_signature(
+            key_id="PS-K1",
+            message=b"",
+            signature_b64url=_b64url(b"0" * 64),
+        )
+
+    with pytest.raises(PrimeSentinelAuthorizationError, match="encoding"):
+        verifier.verify_detached_signature(
+            key_id="PS-K1",
+            message=b"message",
+            signature_b64url="not*base64url",
+        )
+
+
 def test_valid_ed25519_assertion_verifies_with_public_key_only():
     private, verifier = _keys()
     now = datetime.now(timezone.utc)
