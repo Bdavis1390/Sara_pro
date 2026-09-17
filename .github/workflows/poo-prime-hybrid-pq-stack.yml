@@ -1,0 +1,149 @@
+name: PoO PRIME Hybrid PQ Stack Gate
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime-hybrid-pq.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_hybrid_pq_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_hybrid_pq_commit.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_pq_poo_authorization.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_pq_poo_service.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_prime_hybrid_pq_*.py'
+      - '.github/workflows/poo-prime-hybrid-pq-stack.yml'
+  push:
+    branches:
+      - 'worldshepherd-proof-of-ownership-prime-hybrid-pq-*'
+    paths:
+      - 'deployments/sara_verified_local_v1/compose.poo-prime-hybrid-pq.yaml'
+      - 'deployments/sara_verified_local_v1/scripts/verify_poo_prime_hybrid_pq_stack.sh'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_prime_hybrid_pq_commit.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_pq_poo_authorization.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/prime_sentinel_pq_poo_service.py'
+      - 'deployments/sara_verified_local_v1/worldshepherd_sara/poo_registry_commit_api.py'
+      - 'deployments/sara_verified_local_v1/tests/test_poo_prime_hybrid_pq_*.py'
+      - '.github/workflows/poo-prime-hybrid-pq-stack.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  hybrid-pq-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned test dependencies
+        run: >-
+          python -m pip install --disable-pip-version-check
+          -c deployments/sara_verified_local_v1/constraints-runtime.txt
+          './deployments/sara_verified_local_v1[test]'
+      - name: Prove ML-DSA-65 backend availability
+        run: |
+          python - <<'PY'
+          from cryptography.hazmat.primitives.asymmetric.mldsa import MLDSA65PrivateKey
+          key=MLDSA65PrivateKey.generate()
+          message=b'worldshepherd-hybrid-pq-backend-proof'
+          sig=key.sign(message, context=b'WS-POO-PQ-COMMIT-V1')
+          key.public_key().verify(sig, message, context=b'WS-POO-PQ-COMMIT-V1')
+          assert len(key.public_key().public_bytes_raw()) == 1952
+          assert len(sig) == 3309
+          PY
+      - name: Run hybrid PQ policy and transaction regressions
+        env:
+          PYTHONPATH: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          deployments/sara_verified_local_v1/tests/test_poo_prime_hybrid_pq_commit.py
+          deployments/sara_verified_local_v1/tests/test_poo_prime_quorum_commit.py
+          deployments/sara_verified_local_v1/tests/test_poo_prime_quorum_policy.py
+      - name: Validate hybrid PQ shell
+        run: bash -n deployments/sara_verified_local_v1/scripts/verify_poo_prime_hybrid_pq_stack.sh
+      - name: Validate hybrid PQ Compose overlay
+        working-directory: deployments/sara_verified_local_v1
+        env:
+          SARA_RELAY_TOKEN: ci-relay-token-that-is-independent-and-long
+          SARA_ADMIN_TOKEN: ci-admin-token-that-is-different-and-long
+          PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH: /tmp/nonexistent-prime-a-private-key
+          PRIME_SENTINEL_SERVICE_TOKEN_HOST_PATH: /tmp/nonexistent-prime-a-service-token
+          PRIME_SENTINEL_B_PRIVATE_KEY_HOST_PATH: /tmp/nonexistent-prime-b-private-key
+          PRIME_SENTINEL_B_SERVICE_TOKEN_HOST_PATH: /tmp/nonexistent-prime-b-service-token
+          PRIME_SENTINEL_PQ_PRIVATE_KEY_HOST_PATH: /tmp/nonexistent-prime-pq-seed
+          PRIME_SENTINEL_PQ_SERVICE_TOKEN_HOST_PATH: /tmp/nonexistent-prime-pq-service-token
+          PRIME_SENTINEL_SIGNING_KEY_ID: PS-CI-A
+          PRIME_SENTINEL_B_SIGNING_KEY_ID: PS-CI-B
+          PRIME_SENTINEL_PQ_SIGNING_KEY_ID: PS-CI-PQ
+        run: |
+          cp .env.example .env
+          docker compose -f compose.yaml -f compose.poo-prime.yaml -f compose.poo-prime-quorum.yaml -f compose.poo-prime-hybrid-pq.yaml --profile prime-sentinel --profile prime-sentinel-pq config >/tmp/poo-prime-hybrid-pq-compose.yaml
+          test "$(grep -c 'POO_REQUIRE_PRIME_HYBRID_PQ: "1"' /tmp/poo-prime-hybrid-pq-compose.yaml)" -eq 1
+          test "$(grep -c 'POO_REQUIRE_PRIME_QUORUM: "1"' /tmp/poo-prime-hybrid-pq-compose.yaml)" -eq 1
+          test "$(grep -c 'POO_PRIME_QUORUM_THRESHOLD: "2"' /tmp/poo-prime-hybrid-pq-compose.yaml)" -eq 1
+          grep -q 'prime-sentinel-pq:' /tmp/poo-prime-hybrid-pq-compose.yaml
+          grep -q 'worldshepherd_sara.prime_sentinel_pq_poo_service:create_prime_sentinel_pq_poo_app' /tmp/poo-prime-hybrid-pq-compose.yaml
+          grep -q 'PRIME_SENTINEL_PRIVATE_KEY_FILE: /run/worldshepherd-prime-sentinel-pq/mldsa65-seed.bin' /tmp/poo-prime-hybrid-pq-compose.yaml
+          rm -f .env
+      - name: Run containerized three-signer hybrid PQ exercise
+        env:
+          POO_PRIME_HYBRID_PQ_EVIDENCE_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/poo_prime_hybrid_pq_evidence
+        run: bash deployments/sara_verified_local_v1/scripts/verify_poo_prime_hybrid_pq_stack.sh
+      - name: Validate hybrid PQ evidence contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          p=pathlib.Path('deployments/sara_verified_local_v1/poo_prime_hybrid_pq_evidence/result.json')
+          r=json.loads(p.read_text(encoding='utf-8'))
+          assert r['schema']=='WS-POO-PRIME-HYBRID-PQ-STACK-EVIDENCE-V1'
+          assert r['evidence_status']=='INTERNAL_CI_GENERATED_UNSIGNED'
+          assert r['result']=='PASS'
+          assert r['tested_head_sha']==os.environ['GITHUB_SHA']
+          assert r['prime_hybrid_pq_required'] is True
+          assert r['classical_quorum_threshold']==2
+          assert r['isolated_signer_process_count']==3
+          assert r['classical_signer_process_count']==2 and r['pq_signer_process_count']==1
+          assert r['distinct_classical_key_count']==2
+          assert r['pq_algorithm']=='ML-DSA-65' and r['pq_standard']=='FIPS-204'
+          assert len(r['pq_key_fingerprint_sha256'])==64
+          assert r['unsigned_commit_http_status']==403
+          assert r['single_signer_commit_http_status']==403
+          assert r['classical_only_quorum_http_status']==403
+          assert r['lower_assurance_routes_blocked_before_mutation'] is True
+          assert r['poo_state_count']==1 and r['poo_commit_count']==1
+          assert r['consumed_classical_authorization_count']==2
+          assert r['consumed_pq_authorization_count']==1
+          assert r['technical_commit_audit_count']==1
+          assert r['classical_quorum_audit_count']==1
+          assert r['hybrid_pq_audit_count']==1
+          assert r['restart_signer_a_issuance_idempotent'] is True
+          assert r['restart_signer_b_issuance_idempotent'] is True
+          assert r['restart_pq_issuance_idempotent'] is True
+          assert r['restart_commit_idempotent'] is True
+          assert r['tampered_pq_replay_rejected'] is True
+          assert r['classical_quorum_cryptographic_authorization_verified'] is True
+          assert r['pq_cryptographic_authorization_verified'] is True
+          assert r['hybrid_cryptographic_authorization_verified'] is True
+          assert r['single_classical_signer_sufficient'] is False
+          assert r['pq_only_sufficient'] is False
+          assert r['algorithm_downgrade_permitted'] is False
+          assert r['sara_signer_private_material_exposed'] is False
+          assert r['legal_title_changed'] is False
+          assert r['live_value_moved'] is False
+          assert r['credential_rotated'] is False
+          assert r['external_transfer_executed'] is False
+          assert 'not independent organizations' in r['claims_boundary'].lower()
+          PY
+      - name: Upload hybrid PQ evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: poo-prime-hybrid-pq-stack-evidence
+          path: deployments/sara_verified_local_v1/poo_prime_hybrid_pq_evidence
+          if-no-files-found: error
+          retention-days: 90
+      - name: Capture Docker state on failure
+        if: failure()
+        run: |
+          docker ps -a --no-trunc || true
+          docker volume ls || true
