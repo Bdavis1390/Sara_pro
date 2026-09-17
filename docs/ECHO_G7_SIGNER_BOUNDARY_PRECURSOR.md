@@ -46,11 +46,22 @@ Unsigned checkpoint fallback is not permitted.
 
 ## Signing-request minimization
 
-The signer receives canonical checkpoint-manifest bytes only.
+New checkpoints do not send the full manifest to the signer. ECHO computes the canonical manifest SHA-256 digest and signs a domain-separated, fixed-size digest input.
 
-The manifest contains event IDs and semantic SHA-256 digests, not ECHO event payload bodies. A regression test places a distinctive payload marker in an ECHO event and verifies that the marker and its field name do not reach the signer request.
+The full manifest remains in the checkpoint bundle so verifiers can recompute the digest. Historical bundles that have no signature-input mode remain verifiable under the legacy raw-manifest signature path.
 
-This does not prove that every future manifest field is non-sensitive; future schema changes must preserve the same review boundary.
+A regression test places a distinctive payload marker in an ECHO event and verifies that neither the marker nor its field name reaches the signer request.
+
+### Fixed 100-event 10x efficiency gate
+
+For a fixed 100-event checkpoint, the test compares:
+
+- baseline: byte length of the legacy canonical raw-manifest signing request;
+- candidate: byte length of the new domain-separated digest signing request.
+
+The candidate must be at least **10x smaller** than the baseline.
+
+This is a narrow signer-request byte-count metric. It does not establish 10x end-to-end performance, 10x lower cost, or 10x overall security.
 
 ## Key identity
 
@@ -71,7 +82,24 @@ Under repository-controlled tests, the software boundary demonstrates:
 3. external mode does not silently downgrade to local PEM;
 4. signer-returned invalid signatures are rejected before persistence;
 5. signer key-ID rebinding is rejected;
-6. the signing request excludes event payload content under the tested checkpoint schema.
+6. the signing request excludes event payload content under the tested checkpoint schema;
+7. the fixed 100-event signing request is at least 10x smaller than the legacy raw-manifest request while legacy verification remains supported.
+
+## AWS KMS Ed25519 adapter
+
+The candidate also includes a dependency-injected AWS KMS adapter for the current `ECC_NIST_EDWARDS25519` / `ED25519_SHA_512` API shape.
+
+The adapter:
+
+- validates the KMS key spec is Ed25519 and usage is `SIGN_VERIFY`;
+- requires `ED25519_SHA_512` support;
+- resolves and pins the KMS key identity returned by `GetPublicKey`;
+- uses `MessageType=RAW`;
+- rejects a changed key identity or signing algorithm in the sign response;
+- exposes only the Ed25519 public key to ECHO;
+- does not own AWS credentials or add the AWS SDK as a mandatory runtime dependency.
+
+The adapter is tested with a local fake KMS client. This is **not** evidence that a live AWS KMS key has been provisioned or validated for Worldshepherd.
 
 ## What it does **not** prove
 
