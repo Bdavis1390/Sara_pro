@@ -87,6 +87,9 @@ def test_metadata_rejects_raw_content_and_secret_fields_recursively():
     with pytest.raises(RestrictionProvenanceError, match="forbidden"):
         make_evidence(metadata={"token": "do not persist"})
 
+    with pytest.raises(RestrictionProvenanceError, match="forbidden"):
+        make_evidence(metadata={"diagnostic": ({"prompt": "do not persist"},)})
+
 
 def test_safe_summary_cannot_equal_restricted_input_or_generated_output():
     raw = "restricted value"
@@ -122,14 +125,25 @@ def test_allowed_remediation_is_bound_to_restriction_without_raw_content():
         evidence,
         action="SAFE_TRANSFORM",
         requested_by="SARA",
-        rationale="Generate a narrower safe representation from permitted context only.",
+        rationale_code="SAFE_REPRESENTATION_ONLY",
     )
 
     assert directive["restriction_id"] == evidence.restriction_id
     assert directive["restriction_event_id"] == evidence.outbox_event_id
     assert directive["action"] == "SAFE_TRANSFORM"
+    assert directive["rationale_code"] == "SAFE_REPRESENTATION_ONLY"
     assert directive["raw_content_included"] is False
     assert directive["content_binding"]["generated_fingerprint"] == evidence.generated_fingerprint
+
+
+def test_remediation_rationale_is_identifier_only_not_free_text():
+    with pytest.raises(RestrictionProvenanceError, match="rationale_code"):
+        build_remediation_directive(
+            make_evidence(),
+            action="HUMAN_REVIEW",
+            requested_by="SARA",
+            rationale_code="free form text is not allowed here",
+        )
 
 
 def test_raw_replay_and_policy_bypass_remediations_are_rejected():
@@ -161,6 +175,11 @@ def test_naive_timestamp_and_invalid_reason_fail_closed():
         make_evidence(reason_code="free form explanation")
 
 
-def test_weak_fingerprint_key_is_rejected_when_content_is_fingerprinted():
+def test_weak_fingerprint_key_is_rejected_even_without_raw_content():
     with pytest.raises(RestrictionProvenanceError, match="at least 32 bytes"):
-        make_evidence(fingerprint_key=b"short")
+        make_evidence(
+            fingerprint_key=b"short",
+            raw_input=None,
+            raw_generated=None,
+            safe_output=None,
+        )
