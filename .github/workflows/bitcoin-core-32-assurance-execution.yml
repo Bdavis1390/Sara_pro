@@ -27,17 +27,21 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            build-essential cmake python3 libboost-dev libsqlite3-dev pkg-config
+            build-essential cmake git python3 pkg-config \
+            libboost-dev libevent-dev libsqlite3-dev
 
       - name: Static helper regression tests
         run: |
           python3 -m py_compile external_anchor_pilots/bitcoin_core_32_psbt_probe.py
           python3 -m unittest -v tests/test_bitcoin_core_32_psbt_probe.py
+          bash -n scripts/run_bitcoin_core_32_psbt_probe.sh
 
       - name: Build pinned v32.0rc1 and execute BC32-001
         env:
           BC32_BUILD_JOBS: '2'
           BC32_EVIDENCE: '${{ github.workspace }}/artifacts/bitcoin-core-32-psbt-evidence.json'
+          BC32_OPERATOR: 'github:${{ github.actor }}'
+          BC32_PRIME_GATE_ID: 'UNSET-CI-DRAFT'
         run: |
           mkdir -p artifacts
           bash scripts/run_bitcoin_core_32_psbt_probe.sh
