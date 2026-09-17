@@ -1,0 +1,174 @@
+name: WS CISNET HDTN v0.2
+
+on:
+  pull_request:
+    paths:
+      - "cisnet/**"
+      - "integrations/hdtn/**"
+      - "docs/WS_CISNET_HDTN_V0_2.md"
+      - ".github/workflows/ws-cisnet-hdtn-v0-2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hdtn-upstream-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Worldshepherd HDTN artifacts
+        run: |
+          python -m compileall -q cisnet
+          python -m json.tool integrations/hdtn/ws-cisnet-contact-plan.json >/dev/null
+          python -m json.tool integrations/hdtn/ws-bpv7-delay-contact-plan.json >/dev/null
+          python -c 'import json; from cisnet.hdtn import reference_cislunar_contacts,to_hdtn_contact_plan; assert to_hdtn_contact_plan(reference_cislunar_contacts()) == json.load(open("integrations/hdtn/ws-cisnet-contact-plan.json"))'
+      - name: Install HDTN build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential libzmq3-dev libboost-all-dev openssl libssl-dev
+      - name: Fetch pinned NASA HDTN
+        run: |
+          set -euo pipefail
+          pin=$(python -c 'import json; print(json.load(open("integrations/hdtn/upstream.json"))["commit"])')
+          git clone --no-tags https://github.com/nasa/HDTN.git "$RUNNER_TEMP/HDTN"
+          git -C "$RUNNER_TEMP/HDTN" checkout --detach "$pin"
+          test "$(git -C "$RUNNER_TEMP/HDTN" rev-parse HEAD)" = "$pin"
+      - name: Configure HDTN
+        run: cmake -S "$RUNNER_TEMP/HDTN" -B "$RUNNER_TEMP/HDTN/build" -DCMAKE_BUILD_TYPE=Release -DENABLE_BPSEC=OFF -DUSE_X86_HARDWARE_ACCELERATION=OFF -DLTP_RNG_USE_RDSEED=OFF
+      - name: Build required HDTN targets
+        run: cmake --build "$RUNNER_TEMP/HDTN/build" --target hdtn-one-process bpsendfile bpreceivefile bpgen-async unit-tests integrated-tests --parallel 4
+      - name: Run HDTN unit tests
+        shell: bash
+        env:
+          HDTN_SOURCE_ROOT: ${{ runner.temp }}/HDTN
+          HDTN_BUILD_ROOT: ${{ runner.temp }}/HDTN/build
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cd "$RUNNER_TEMP/HDTN"
+          set +e
+          ./build/tests/unit_tests/unit-tests 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/hdtn-unit-tests.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          exit "$rc"
+      - name: Run HDTN integrated tests
+        shell: bash
+        env:
+          HDTN_SOURCE_ROOT: ${{ runner.temp }}/HDTN
+          HDTN_BUILD_ROOT: ${{ runner.temp }}/HDTN/build
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cd "$RUNNER_TEMP/HDTN"
+          set +e
+          ./build/tests/integrated_tests/integrated-tests 2>&1 | tee "$GITHUB_WORKSPACE/artifacts/hdtn-integrated-tests.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          exit "$rc"
+      - name: Verify BPv7 and contact-plan interfaces are present
+        shell: bash
+        run: |
+          set -euo pipefail
+          { "$RUNNER_TEMP/HDTN/build/common/bpcodec/apps/bpgen-async" --help 2>&1 || true; } | grep -q -- "--use-bp-version-7"
+          { "$RUNNER_TEMP/HDTN/build/module/hdtn_one_process/hdtn-one-process" --help 2>&1 || true; } | grep -q -- "--contact-plan-file"
+      - name: Prove byte-identical BPv7 delivery across a scheduled contact gap
+        shell: bash
+        run: |
+          set -euo pipefail
+          HDTN="$RUNNER_TEMP/HDTN"
+          LAB="$RUNNER_TEMP/ws-cisnet-bpv7"
+          export LAB
+          mkdir -p "$LAB/input" "$LAB/received" "$LAB/logs" artifacts
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, os
+          target = Path(os.environ["LAB"]) / "input" / "payload.bin"
+          seed = hashlib.sha256(b"WS-CISNET-BPV7-DELAY-GATE-v0.2").digest()
+          target.write_bytes((seed * ((8 * 1024 * 1024 + len(seed) - 1) // len(seed)))[:8 * 1024 * 1024])
+          PY
+          SOURCE="$LAB/input/payload.bin"
+          SRC_SHA=$(sha256sum "$SOURCE" | awk '{print $1}')
+          SIZE=$(stat -c%s "$SOURCE")
+          PLAN="$GITHUB_WORKSPACE/integrations/hdtn/ws-bpv7-delay-contact-plan.json"
+          PLAN_SHA=$(sha256sum "$PLAN" | awk '{print $1}')
+          cleanup() {
+            for pid in "${SEND_PID:-}" "${HDTN_PID:-}" "${RECV_PID:-}"; do
+              if [ -n "$pid" ]; then kill -INT "$pid" 2>/dev/null || true; fi
+            done
+          }
+          trap cleanup EXIT
+          "$HDTN/build/common/bpcodec/apps/bpreceivefile" \
+            --save-directory="$LAB/received" \
+            --my-uri-eid=ipn:2.1 \
+            --inducts-config-file="$HDTN/config_files/inducts/bpsink_one_tcpclv4_port4558.json" \
+            >"$LAB/logs/receiver.log" 2>&1 &
+          RECV_PID=$!
+          sleep 2
+          START=$(date +%s)
+          (cd "$LAB" && "$HDTN/build/module/hdtn_one_process/hdtn-one-process" \
+            --hdtn-config-file="$HDTN/config_files/hdtn/hdtn_ingress1tcpclv4_port4556_egress1tcpclv4_port4558flowid2.json" \
+            --contact-plan-file="$PLAN") >"$LAB/logs/hdtn.log" 2>&1 &
+          HDTN_PID=$!
+          sleep 3
+          (cd "$LAB" && "$HDTN/build/common/bpcodec/apps/bpsendfile" \
+            --use-bp-version-7 \
+            --force-disable-custody \
+            --max-bundle-size-bytes=500000 \
+            --file-or-folder-path="input/payload.bin" \
+            --my-uri-eid=ipn:1.1 \
+            --dest-uri-eid=ipn:2.1 \
+            --outducts-config-file="$HDTN/config_files/outducts/bpgen_one_tcpclv4_port4556.json") \
+            >"$LAB/logs/sender.log" 2>&1 &
+          SEND_PID=$!
+          sleep 8
+          PRE_BYTES=0
+          EARLY=$(find "$LAB/received" -type f -name payload.bin -print -quit || true)
+          if [ -n "$EARLY" ]; then PRE_BYTES=$(stat -c%s "$EARLY"); fi
+          test "$PRE_BYTES" -lt "$SIZE"
+          RECEIVED=""
+          for _ in $(seq 1 90); do
+            RECEIVED=$(find "$LAB/received" -type f -name payload.bin -print -quit || true)
+            if [ -n "$RECEIVED" ] && [ "$(stat -c%s "$RECEIVED")" -eq "$SIZE" ]; then break; fi
+            sleep 1
+          done
+          test -n "$RECEIVED"
+          test "$(stat -c%s "$RECEIVED")" -eq "$SIZE"
+          DST_SHA=$(sha256sum "$RECEIVED" | awk '{print $1}')
+          test "$SRC_SHA" = "$DST_SHA"
+          ELAPSED=$(( $(date +%s) - START ))
+          test "$ELAPSED" -ge 20
+          export SRC_SHA DST_SHA SIZE PRE_BYTES ELAPSED PLAN_SHA
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from cisnet.provenance import EchoLedger
+          ledger = EchoLedger()
+          ledger.append(0, "bpv7_source_prepared", payload_bytes=int(os.environ["SIZE"]), sha256=os.environ["SRC_SHA"])
+          ledger.append(11, "scheduled_contact_gap_observed", received_bytes=int(os.environ["PRE_BYTES"]), egress_contact_opens_s=20)
+          ledger.append(int(os.environ["ELAPSED"]), "bpv7_delivery_complete", sha256=os.environ["DST_SHA"])
+          evidence = {
+              "claim": "byte-identical BPv7 delivery through NASA HDTN across a scheduled contact gap",
+              "bp_version": 7,
+              "payload_bytes": int(os.environ["SIZE"]),
+              "source_sha256": os.environ["SRC_SHA"],
+              "destination_sha256": os.environ["DST_SHA"],
+              "pre_contact_received_bytes": int(os.environ["PRE_BYTES"]),
+              "delivery_elapsed_s": int(os.environ["ELAPSED"]),
+              "contact_plan_sha256": os.environ["PLAN_SHA"],
+              "hdtn_commit": json.load(open("integrations/hdtn/upstream.json"))["commit"],
+              "worldshepherd_commit": os.environ.get("GITHUB_SHA", "unknown"),
+              "ledger_valid": ledger.verify(),
+              "events": ledger.as_dicts(),
+              "result": "PASS",
+          }
+          Path("artifacts/cisnet-bpv7-evidence.json").write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
+          assert evidence["ledger_valid"]
+          PY
+          cp "$LAB/logs/"*.log artifacts/
+      - name: Upload CISNET BPv7 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cisnet-bpv7-v0-2-evidence
+          path: artifacts/
+          if-no-files-found: warn
