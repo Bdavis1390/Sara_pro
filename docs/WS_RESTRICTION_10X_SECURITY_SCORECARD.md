@@ -1,6 +1,6 @@
 # WS-RESTRICTION 10X SECURITY SCORECARD
 
-Status: **G4-G5 PROVEN INTERNALLY / G6A MERGED / G6B COMBINED CANDIDATE IN PROGRESS**
+Status: **G4-G6B PROVEN INTERNALLY FOR TESTED INVARIANTS / G7 CURRENT-MAIN CANDIDATE**
 
 ## Baseline
 
@@ -53,8 +53,8 @@ It means the selected measurable G3-start residual attack-path count must be red
 Subsequent gates should use similarly measurable baselines:
 
 - **G5 fingerprint-key epoch provenance:** merged on protected main and proven internally for its tested rotation/migration invariants;
-- **G6A signed ECHO witness assurance:** merged on protected main and verifies exact restriction-event inclusion in an Ed25519-signed ECHO checkpoint against a separately trusted public-key fingerprint;\n- **G6B PRIME-signed V4 assurance:** current combined candidate requires externally signed PRIME evidence for new-event emission and re-verifies the signature on read;
-- **G7 secret custody:** software/environment key custody -> external hardware-backed or independently managed custody where justified;
+- **G6A signed ECHO witness assurance:** merged on protected main and verifies exact restriction-event inclusion in an Ed25519-signed ECHO checkpoint against a separately trusted public-key fingerprint;\n- **G6B PRIME-signed V4 assurance:** merged on protected main; externally signed PRIME evidence is required for new-event emission and re-verified on read;
+- **G7 signer isolation:** current candidate reduces eight recognized PRIME private-signing ingress classes to zero accepted by SARA; hardware-backed external custody remains a separate validation gate;
 - **G8 adversarial validation:** predefined mutation/bypass corpus with quantified detection rate and false-negative budget;
 - **G9 recovery:** measured mean/max recovery and evidence reconstruction time under injected corruption;
 - **G10 external replication:** independent evaluator repeats the frozen protocol.
@@ -64,3 +64,13 @@ Claims advance only when those metrics are actually measured.
 ## Parallel G6A authenticity metric
 
 The protected G6A witness gate freezes a separate four-class unsigned-authenticity baseline and requires **0/4 residual classes open** (10x threshold <=0.4). The G6A and G6B/application-provenance gates are conjunctive: both must pass; success in one does not offset failure in the other.
+
+## G7 signer-isolation metric
+
+Recognized PRIME private-signing ingress classes at the pre-G7 SARA runtime boundary: **8**.
+
+10x threshold: **<=0.8 accepted classes**.
+
+Integral practical pass: **0/8 accepted**.
+
+Pattern-matched private/signing/secret/seed variable names and common PEM private-key markers are also rejected, while public-key IDs/fingerprints, public verification keys, and revocation metadata remain allowed.
