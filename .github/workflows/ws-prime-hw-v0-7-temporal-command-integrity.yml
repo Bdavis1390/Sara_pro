@@ -1,0 +1,172 @@
+name: WS PRIME-HW v0.7 Temporal Command Integrity Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - 'hardware/prime_hw_v0_6/**'
+      - 'hardware/prime_hw_v0_7/**'
+      - '.github/workflows/ws-prime-hw-v0-7-temporal-command-integrity.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - 'hardware/prime_hw_v0_6/**'
+      - 'hardware/prime_hw_v0_7/**'
+      - '.github/workflows/ws-prime-hw-v0-7-temporal-command-integrity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  temporal-command-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record source and claims boundary
+        run: |
+          mkdir -p build/prime_hw_v0_7
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=RTL + YOSYS STRUCTURAL + BOUNDED FORMAL TEMPORAL-COMMAND EVIDENCE ONLY / NO CRYPTOGRAPHIC AUTHENTICITY, CROSS-RESET ANTI-REPLAY, PHYSICAL INDEPENDENCE, OR SILICON QUALIFICATION"
+
+      - name: Install verification tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys z3
+          python3 --version
+          iverilog -V | head -n 2
+          yosys -V
+          z3 --version
+
+      - name: Exhaust sequence pair-space and temporal scenarios
+        run: |
+          set -o pipefail
+          iverilog -g2012 \
+            -s tb_prime_hw_v0_7_temporal_integrity \
+            -o build/prime_hw_v0_7/temporal-integrity.vvp \
+            hardware/prime_hw_v0_7/prime_hw_sequence_pair_guard.sv \
+            hardware/prime_hw_v0_7/prime_hw_temporal_command_guard.sv \
+            hardware/prime_hw_v0_7/tb_prime_hw_v0_7_temporal_integrity.sv \
+            2>&1 | tee build/prime_hw_v0_7/iverilog.log
+          vvp build/prime_hw_v0_7/temporal-integrity.vvp \
+            | tee build/prime_hw_v0_7/temporal-integrity.log
+          grep -q 'PASS: PRIME-HW v0.7 sequence-pair space=65536 valid=256 invalid=65280 temporal scenarios=7 isolated sequence-store fault classes=2' \
+            build/prime_hw_v0_7/temporal-integrity.log
+
+      - name: Synthesize and audit temporal execution cones
+        run: |
+          yosys -Q -l build/prime_hw_v0_7/yosys-synthesis.log -p '
+            read_verilog -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv hardware/prime_hw_v0_7/prime_hw_sequence_pair_guard.sv hardware/prime_hw_v0_7/prime_hw_temporal_command_guard.sv hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened.sv;
+            hierarchy -check -top prime_hw_policy_controller_temporal_hardened;
+            prep -top prime_hw_policy_controller_temporal_hardened;
+            check;
+            stat;
+            write_json build/prime_hw_v0_7/prime_hw_v0_7.json;
+          '
+          test -s build/prime_hw_v0_7/prime_hw_v0_7.json
+          python3 hardware/prime_hw_v0_7/check_synthesized_temporal_cone.py \
+            build/prime_hw_v0_7/prime_hw_v0_7.json \
+            | tee build/prime_hw_v0_7/temporal-cone-audit.log
+          grep -q 'preserves 8+8 disjoint sequence-state bits plus sticky latch as sequential state' \
+            build/prime_hw_v0_7/temporal-cone-audit.log
+          grep -q 'execute cone contains both sequence representations' \
+            build/prime_hw_v0_7/temporal-cone-audit.log
+          grep -q 'temporal latch has a SAFE-state escalation path' \
+            build/prime_hw_v0_7/temporal-cone-audit.log
+
+      - name: Build v0.7 differential formal model
+        run: |
+          yosys -Q -l build/prime_hw_v0_7/yosys-formal.log -p '
+            read_verilog -formal -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv hardware/prime_hw_v0_7/prime_hw_sequence_pair_guard.sv hardware/prime_hw_v0_7/prime_hw_temporal_command_guard.sv hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened.sv hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened_formal.sv;
+            hierarchy -check -top prime_hw_policy_controller_temporal_hardened_formal;
+            prep -top prime_hw_policy_controller_temporal_hardened_formal;
+            check;
+            async2sync;
+            dffunmap;
+            write_smt2 -wires build/prime_hw_v0_7/prime_hw_v0_7_formal.smt2;
+          '
+          test -s build/prime_hw_v0_7/prime_hw_v0_7_formal.smt2
+
+      - name: Prove bounded temporal safety and nominal v0.6 equivalence
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 60 --presat \
+            --dump-vcd build/prime_hw_v0_7/proof-failure.vcd \
+            build/prime_hw_v0_7/prime_hw_v0_7_formal.smt2 \
+            | tee build/prime_hw_v0_7/proof.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_7/proof.log
+
+      - name: Prove semantic and temporal witness reachability
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 60 -c \
+            --dump-vcd build/prime_hw_v0_7/cover.vcd \
+            build/prime_hw_v0_7/prime_hw_v0_7_formal.smt2 \
+            | tee build/prime_hw_v0_7/cover.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_7/cover.log
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_7/cover.log)
+          echo "reached_cover_statements=$reached"
+          test "$reached" -eq 13
+
+      - name: Preserve v0.7 evidence custody
+        run: |
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_7/cover.log)
+          {
+            echo "tested_sha=$(git rev-parse HEAD)"
+            echo "sequence_pair_space=65536"
+            echo "valid_complementary_sequence_pairs=256"
+            echo "rejected_sequence_pairs=65280"
+            echo "temporal_regression_scenarios=7"
+            echo "isolated_live_sequence_store_fault_classes=2"
+            echo "sequence_width_bits=8"
+            echo "sequence_wrap_semantics=MODULO_256_DEMONSTRATOR"
+            echo "formal_horizon=60"
+            echo "solver=z3"
+            echo "declared_cover_statements=13"
+            echo "reached_cover_statements=$reached"
+            echo "formal_reset_lowering=async2sync+dffunmap"
+            echo "nominal_reference=hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv"
+            echo "post_synthesis_temporal_cone_audit=REQUIRED"
+            echo "cryptographic_command_authenticity_claim=NONE"
+            echo "cross_reset_replay_protection_claim=NONE"
+            echo "nonvolatile_anti_rollback_claim=NONE"
+            echo "physical_sequence_store_independence_claim=NONE"
+            echo "physical_actuator_exactly_once_claim=NONE"
+            echo "claims_boundary=RTL + YOSYS STRUCTURAL + BOUNDED FORMAL TEMPORAL-COMMAND EVIDENCE ONLY / NO CRYPTOGRAPHIC AUTHENTICITY, CROSS-RESET ANTI-REPLAY, PHYSICAL INDEPENDENCE, OR SILICON QUALIFICATION"
+            sha256sum \
+              hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv \
+              hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv \
+              hardware/prime_hw_v0_7/prime_hw_sequence_pair_guard.sv \
+              hardware/prime_hw_v0_7/prime_hw_temporal_command_guard.sv \
+              hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened.sv \
+              hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened_formal.sv \
+              hardware/prime_hw_v0_7/tb_prime_hw_v0_7_temporal_integrity.sv \
+              hardware/prime_hw_v0_7/check_synthesized_temporal_cone.py \
+              build/prime_hw_v0_7/prime_hw_v0_7.json \
+              build/prime_hw_v0_7/prime_hw_v0_7_formal.smt2 \
+              build/prime_hw_v0_7/temporal-integrity.log \
+              build/prime_hw_v0_7/temporal-cone-audit.log \
+              build/prime_hw_v0_7/proof.log \
+              build/prime_hw_v0_7/cover.log
+          } > build/prime_hw_v0_7/evidence.txt
+
+      - name: Upload v0.7 temporal-command evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-prime-hw-v0-7-temporal-command-integrity-evidence
+          path: build/prime_hw_v0_7/
+          if-no-files-found: error
