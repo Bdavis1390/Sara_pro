@@ -12,6 +12,10 @@ from typing import Any, Literal
 
 from .event_outbox import queue_event_outbox_patch
 from .limits import validate_json_resource
+from .restriction_context_policy import (
+    RestrictionContextPolicyError,
+    validate_restriction_context,
+)
 
 
 RESTRICTION_SCHEMA = "WS-RESTRICTION-PROVENANCE-V1"
@@ -261,6 +265,15 @@ def capture_restriction(
     timestamp = occurred_at or _utc_now()
     _validate_timestamp(timestamp)
     safe_metadata = _sanitize_metadata(metadata)
+    try:
+        safe_metadata, safe_summary = validate_restriction_context(
+            source_system=source_system,
+            processor=processor,
+            metadata=safe_metadata,
+            safe_summary=safe_summary,
+        )
+    except RestrictionContextPolicyError as exc:
+        raise RestrictionProvenanceError(str(exc)) from exc
 
     input_fp = _fingerprint(fingerprint_key, "input", raw_input)
     generated_fp = _fingerprint(fingerprint_key, "generated", raw_generated)
