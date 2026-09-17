@@ -6,6 +6,7 @@ import copy
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
+from worldshepherd_sara.event_outbox import EVENT_OUTBOX_REGISTRY_KEY
 from worldshepherd_sara.prime_sentinel_authorization import (
     PrimeSentinelAuthorizationError,
     PrimeSentinelVerifier,
@@ -14,8 +15,11 @@ from worldshepherd_sara.restriction_provenance import capture_restriction
 from worldshepherd_sara.restriction_signature import (
     RESTRICTION_SIGNATURE_DOMAIN,
     RESTRICTION_SIGNATURE_SCHEMA,
+    SIGNED_RESTRICTION_SCHEMA,
+    bind_verified_restriction_signature,
     canonical_restriction_signature_message,
     verify_restriction_signature,
+    queue_signed_restriction_event,
 )
 
 
@@ -185,3 +189,61 @@ def test_signature_protocol_never_contains_hmac_or_prime_private_key_material():
         "signature_b64url",
         "signed_message_sha256",
     }
+
+
+def test_verified_v4_envelope_queues_only_after_signature_verification():
+    private, verifier = _signing_material()
+    item = evidence()
+    signature = _b64url(
+        private.sign(
+            canonical_restriction_signature_message(
+                item,
+                signing_key_id=SIGNING_KEY_ID,
+            )
+        )
+    )
+    signed = bind_verified_restriction_signature(
+        item,
+        signing_key_id=SIGNING_KEY_ID,
+        signature_b64url=signature,
+        verifier=verifier,
+    )
+
+    patch, stable_id = queue_signed_restriction_event({}, signed)
+    entry = patch[EVENT_OUTBOX_REGISTRY_KEY][stable_id]
+
+    assert stable_id == item.outbox_event_id
+    assert entry["actor"] == "PRIME_SENTINEL"
+    assert entry["payload"]["schema"] == SIGNED_RESTRICTION_SCHEMA
+    assert entry["payload"]["restriction"] == item.semantic_document()
+    assert entry["payload"]["prime_signature"]["restriction_id"] == item.restriction_id
+    assert entry["payload"]["prime_signature"]["signing_key_id"] == SIGNING_KEY_ID
+    assert entry["payload"]["raw_content_persisted"] is False
+
+    serialized = str(entry)
+    assert "signature test raw input must not persist" not in serialized
+    assert "signature test raw output must not persist" not in serialized
+    assert KEY.decode("utf-8") not in serialized
+
+
+def test_tampered_evidence_cannot_be_bound_or_queued_as_verified_v4():
+    private, verifier = _signing_material()
+    item = evidence()
+    signature = _b64url(
+        private.sign(
+            canonical_restriction_signature_message(
+                item,
+                signing_key_id=SIGNING_KEY_ID,
+            )
+        )
+    )
+    tampered = copy.deepcopy(item)
+    object.__setattr__(tampered, "policy_ref", "TAMPERED_POLICY")
+
+    with pytest.raises(PrimeSentinelAuthorizationError, match="signature"):
+        bind_verified_restriction_signature(
+            tampered,
+            signing_key_id=SIGNING_KEY_ID,
+            signature_b64url=signature,
+            verifier=verifier,
+        )
