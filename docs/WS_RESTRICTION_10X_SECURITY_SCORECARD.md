@@ -1,6 +1,6 @@
 # WS-RESTRICTION 10X SECURITY SCORECARD
 
-Status: **G4-G5 PROVEN INTERNALLY FOR TESTED INVARIANTS / G6 CANDIDATE IN PROGRESS**
+Status: **G4-G5 PROVEN INTERNALLY / G6A MERGED / G6B COMBINED CANDIDATE IN PROGRESS**
 
 ## Baseline
 
@@ -10,22 +10,22 @@ A literal 10x claim is used only where a non-zero measurable baseline exists. Fo
 
 ## Executable G4 security metric
 
-The cumulative required test now models six concrete residual attack classes that existed at the G3-start boundary:
+The cumulative application/provenance test now models seven concrete residual attack classes that existed at the G3-start boundary:
 
 1. caller-selected audit actor path;
 2. authority absent from the hashed restriction payload identity;
 3. outer audit actor mismatch accepted by observability;
 4. semantic evidence mutation accepted without recomputing and checking restriction_id;
 5. schema downgrade with a stale stronger-schema identity accepted;
-6. HMAC fingerprints lacked a non-secret key-epoch identifier, making cross-rotation comparisons ambiguous.
+6. HMAC fingerprints lacked a non-secret key-epoch identifier, making cross-rotation comparisons ambiguous;\n7. new restriction events could enter SARA without independently verified PRIME signature.
 
 Each open class counts as one residual-risk unit.
 
-Baseline residual-risk units: **6**.
+Baseline residual-risk units: **7**.
 
-10x acceptance threshold: **<= 0.6 residual units**, i.e. **<=10% of the six-unit baseline**.
+10x acceptance threshold: **<= 0.7 residual units**, i.e. **<=10% of the seven-unit baseline**.
 
-Because attack-path count is integral, the cumulative G5 pass condition is **0/6 residual classes open**.
+Because attack-path count is integral, the combined G6B application/provenance pass condition is **0/7 residual classes open**.
 
 This is tested behaviorally in `test_restriction_10x_security.py`, not asserted from configuration strings.
 
@@ -53,10 +53,14 @@ It means the selected measurable G3-start residual attack-path count must be red
 Subsequent gates should use similarly measurable baselines:
 
 - **G5 fingerprint-key epoch provenance:** merged on protected main and proven internally for its tested rotation/migration invariants;
-- **G6 signer/witness assurance:** candidate gate verifies exact restriction-event inclusion in an Ed25519-signed ECHO checkpoint against a separately trusted public-key fingerprint;
+- **G6A signed ECHO witness assurance:** merged on protected main and verifies exact restriction-event inclusion in an Ed25519-signed ECHO checkpoint against a separately trusted public-key fingerprint;\n- **G6B PRIME-signed V4 assurance:** current combined candidate requires externally signed PRIME evidence for new-event emission and re-verifies the signature on read;
 - **G7 secret custody:** software/environment key custody -> external hardware-backed or independently managed custody where justified;
 - **G8 adversarial validation:** predefined mutation/bypass corpus with quantified detection rate and false-negative budget;
 - **G9 recovery:** measured mean/max recovery and evidence reconstruction time under injected corruption;
 - **G10 external replication:** independent evaluator repeats the frozen protocol.
 
 Claims advance only when those metrics are actually measured.
+
+## Parallel G6A authenticity metric
+
+The protected G6A witness gate freezes a separate four-class unsigned-authenticity baseline and requires **0/4 residual classes open** (10x threshold <=0.4). The G6A and G6B/application-provenance gates are conjunctive: both must pass; success in one does not offset failure in the other.
