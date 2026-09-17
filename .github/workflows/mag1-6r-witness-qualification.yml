@@ -1,0 +1,280 @@
+name: MAG-1.6R Remote Witness Qualification
+
+on:
+  pull_request:
+    paths:
+      - "deployments/sara_verified_local_v1/**"
+      - ".github/workflows/mag1-6r-witness-qualification.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-remote-witness:
+    name: qualify-remote-witness
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install SARA test dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pip install -e '.[test]'
+
+      - name: Run MAG-1.6 and MAG-1.6R protocol tests
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python -m pytest -q \
+            tests/test_registry_monotonic_witness.py \
+            tests/test_registry_remote_witness.py \
+            tests/test_registry_witness_ledger_integrity.py \
+            tests/test_mag1_remote_witness_gate.py
+
+      - name: Build standalone witness image
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          docker build \
+            --build-arg SARA_BUILD_COMMIT="${GITHUB_SHA}" \
+            --build-arg SARA_RELEASE_ID="MAG-1.6R-CI" \
+            -f Dockerfile.registry-witness \
+            -t worldshepherd-registry-witness:mag16r-ci \
+            .
+
+      - name: Generate ephemeral witness and TLS qualification material
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-witness .ci-witness-data evidence/mag1-6r
+          openssl genpkey -algorithm Ed25519 -out .ci-witness/witness-signing.pem
+          printf '%s\n' 'mag16r-ci-service-token-0123456789abcdef0123456789' > .ci-witness/service-token
+          openssl req -x509 -newkey rsa:2048 -nodes \
+            -keyout .ci-witness/tls.key \
+            -out .ci-witness/tls.crt \
+            -days 1 \
+            -subj '/CN=localhost'
+          sudo chown 10002:10002 \
+            .ci-witness/witness-signing.pem \
+            .ci-witness/service-token \
+            .ci-witness/tls.key \
+            .ci-witness-data
+          chmod 0755 .ci-witness
+          sudo chmod 0600 \
+            .ci-witness/witness-signing.pem \
+            .ci-witness/service-token \
+            .ci-witness/tls.key
+          chmod 0644 .ci-witness/tls.crt
+          sudo chmod 0700 .ci-witness-data
+
+      - name: Start TLS witness service
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name ws-mag16r-witness --no-healthcheck \
+            -p 127.0.0.1:9540:9540 \
+            -e REGISTRY_WITNESS_ID=WS-MAG16R-CI \
+            -e REGISTRY_WITNESS_NAMESPACE=worldshepherd/sara/ci-registry \
+            -e REGISTRY_WITNESS_SIGNING_KEY_ID=WS-MAG16R-CI-KEY \
+            -e REGISTRY_WITNESS_PRIVATE_KEY_FILE=/run/witness/witness-signing.pem \
+            -e REGISTRY_WITNESS_SERVICE_TOKEN_FILE=/run/witness/service-token \
+            -e REGISTRY_WITNESS_DB_PATH=/var/lib/registry-witness/witness.db \
+            -v "$PWD/.ci-witness:/run/witness:ro" \
+            -v "$PWD/.ci-witness-data:/var/lib/registry-witness" \
+            worldshepherd-registry-witness:mag16r-ci \
+            python -m uvicorn worldshepherd_sara.registry_witness_service_app:app \
+              --host 0.0.0.0 --port 9540 \
+              --ssl-keyfile /run/witness/tls.key \
+              --ssl-certfile /run/witness/tls.crt
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --insecure \
+              https://127.0.0.1:9540/health > evidence/mag1-6r/health.json; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs ws-mag16r-witness
+          exit 1
+
+      - name: Advance witness and verify through real HTTPS transport
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN='mag16r-ci-service-token-0123456789abcdef0123456789'
+          ROOT=$(printf 'a%.0s' $(seq 1 64))
+          COMMIT=$(printf 'b%.0s' $(seq 1 64))
+          curl --fail --silent --show-error --insecure \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://127.0.0.1:9540/v1/public-key \
+            > evidence/mag1-6r/public-key.json
+          curl --fail --silent --show-error --insecure \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"generation\":7,\"state_root_sha256\":\"${ROOT}\",\"commit_hash\":\"${COMMIT}\"}" \
+            https://127.0.0.1:9540/v1/witness \
+            > evidence/mag1-6r/receipt-generation-7.json
+          curl --fail --silent --show-error --insecure \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://127.0.0.1:9540/v1/integrity \
+            > evidence/mag1-6r/integrity-before-restart.json
+          python - <<'PY'
+          import json
+          import ssl
+          from pathlib import Path
+          from worldshepherd_sara.registry_monotonic_witness import (
+              RegistryMonotonicWitnessClient,
+              RegistryMonotonicWitnessVerifier,
+          )
+          from worldshepherd_sara.registry_witness_http import HttpsRegistryWitnessTransport
+
+          root = 'a' * 64
+          commit_hash = 'b' * 64
+          evidence = Path('evidence/mag1-6r')
+          key = json.loads((evidence / 'public-key.json').read_text())
+          receipt = json.loads((evidence / 'receipt-generation-7.json').read_text())
+          verifier = RegistryMonotonicWitnessVerifier(
+              public_keys_b64url={key['key_id']: key['public_key_b64url']},
+              expected_witness_id=key['witness_id'],
+              expected_namespace=key['namespace'],
+          )
+          context = ssl.create_default_context()
+          context.check_hostname = False
+          context.verify_mode = ssl.CERT_NONE
+          transport = HttpsRegistryWitnessTransport(
+              base_url='https://127.0.0.1:9540',
+              bearer_token='mag16r-ci-service-token-0123456789abcdef0123456789',
+              ssl_context=context,
+          )
+          client = RegistryMonotonicWitnessClient(transport=transport, verifier=verifier)
+          assessment = client.check(
+              {
+                  'generation': 7,
+                  'state_root_sha256': root,
+                  'commit_hash': commit_hash,
+              },
+              require_head=True,
+          )
+          assert assessment['status'] == 'PASS'
+          assert assessment['signature_verified'] is True
+          assert assessment['external_witnessed'] is False
+          assert assessment['independence_verified'] is False
+          assert verifier.verify_receipt(receipt)['receipt_sha256'] == receipt['receipt_sha256']
+          (evidence / 'https-client-verification.json').write_text(
+              json.dumps(assessment, sort_keys=True, indent=2) + '\n'
+          )
+          PY
+
+      - name: Restart witness and prove durable head persistence
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker rm -f ws-mag16r-witness
+          docker run -d --name ws-mag16r-witness --no-healthcheck \
+            -p 127.0.0.1:9540:9540 \
+            -e REGISTRY_WITNESS_ID=WS-MAG16R-CI \
+            -e REGISTRY_WITNESS_NAMESPACE=worldshepherd/sara/ci-registry \
+            -e REGISTRY_WITNESS_SIGNING_KEY_ID=WS-MAG16R-CI-KEY \
+            -e REGISTRY_WITNESS_PRIVATE_KEY_FILE=/run/witness/witness-signing.pem \
+            -e REGISTRY_WITNESS_SERVICE_TOKEN_FILE=/run/witness/service-token \
+            -e REGISTRY_WITNESS_DB_PATH=/var/lib/registry-witness/witness.db \
+            -v "$PWD/.ci-witness:/run/witness:ro" \
+            -v "$PWD/.ci-witness-data:/var/lib/registry-witness" \
+            worldshepherd-registry-witness:mag16r-ci \
+            python -m uvicorn worldshepherd_sara.registry_witness_service_app:app \
+              --host 0.0.0.0 --port 9540 \
+              --ssl-keyfile /run/witness/tls.key \
+              --ssl-certfile /run/witness/tls.crt
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error --insecure \
+              https://127.0.0.1:9540/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          TOKEN='mag16r-ci-service-token-0123456789abcdef0123456789'
+          curl --fail --silent --show-error --insecure \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://127.0.0.1:9540/v1/head \
+            > evidence/mag1-6r/head-after-restart.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          evidence = Path('evidence/mag1-6r')
+          before = json.loads((evidence / 'receipt-generation-7.json').read_text())
+          after = json.loads((evidence / 'head-after-restart.json').read_text())
+          assert after == before
+          PY
+          curl --fail --silent --show-error --insecure \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://127.0.0.1:9540/v1/integrity \
+            > evidence/mag1-6r/integrity-after-restart.json
+
+      - name: Prove lower generation is rejected after restart
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN='mag16r-ci-service-token-0123456789abcdef0123456789'
+          ROOT=$(printf 'c%.0s' $(seq 1 64))
+          COMMIT=$(printf 'd%.0s' $(seq 1 64))
+          CODE=$(curl --silent --show-error --insecure \
+            -o evidence/mag1-6r/rollback-rejection.json \
+            -w '%{http_code}' \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"generation\":6,\"state_root_sha256\":\"${ROOT}\",\"commit_hash\":\"${COMMIT}\"}" \
+            https://127.0.0.1:9540/v1/witness)
+          test "${CODE}" = "409"
+          grep -q 'ROLLBACK_DETECTED' evidence/mag1-6r/rollback-rejection.json
+
+      - name: Write qualification boundary evidence
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('evidence/mag1-6r/qualification.json')
+          path.write_text(json.dumps({
+              'schema': 'WS-MAG-1.6R-QUALIFICATION-V1',
+              'status': 'PASS',
+              'https_transport_exercised': True,
+              'restart_persistence_exercised': True,
+              'rollback_rejection_exercised': True,
+              'signature_verification_exercised': True,
+              'external_witnessed': False,
+              'independence_verified': False,
+              'claims_boundary': (
+                  'CI proves the software protocol across separate processes and TLS transport. '
+                  'It does not establish independent administration, separate infrastructure trust, '
+                  'WORM retention, production key custody, or production availability.'
+              ),
+          }, sort_keys=True, indent=2) + '\n')
+          PY
+
+      - name: Upload MAG-1.6R qualification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: mag1-6r-remote-witness-qualification
+          path: deployments/sara_verified_local_v1/evidence/mag1-6r
+          if-no-files-found: error
+
+      - name: Capture witness logs on failure
+        if: failure()
+        working-directory: deployments/sara_verified_local_v1
+        run: docker logs ws-mag16r-witness || true
+
+      - name: Clean up qualification service
+        if: always()
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          docker rm -f ws-mag16r-witness >/dev/null 2>&1 || true
+          sudo rm -rf .ci-witness .ci-witness-data

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
@@ -39,11 +40,21 @@ from worldshepherd_sara.prime_sentinel_authorization import (
     canonical_authorization_message,
     verified_authorization_registry_patch,
 )
+from worldshepherd_sara.registry_monotonic_witness import (
+    REMOTE_WITNESS_MODE,
+    RegistryMonotonicWitnessVerifier,
+    build_signed_witness_receipt,
+    coordinates_from_checkpoint_status,
+)
+from worldshepherd_sara.registry_witness_gate import RegistryWitnessPrecondition
 from worldshepherd_sara.storage import DurableStore
 from worldshepherd_sara.trajectory_guard import TrajectoryState
 
 
 NOW = datetime(2026, 9, 17, 18, 0, tzinfo=timezone.utc)
+WITNESS_ID = "WITNESS-MAG12-UNIT"
+WITNESS_KEY_ID = "WITNESS-MAG12-UNIT-KEY"
+WITNESS_NAMESPACE = "worldshepherd/sara/registry"
 
 
 def _b64url(raw: bytes) -> str:
@@ -151,6 +162,51 @@ def _initialized_store(tmp_path):
     return store, private, verifier, assertion
 
 
+def _signed_remote_witness(store: DurableStore):
+    """Create a cryptographically valid REMOTE_WITNESS fixture for current state.
+
+    This is a unit-test signing fixture only. It proves the protected release API
+    requires and re-verifies a signed remote-mode receipt; durable transport,
+    restart, TLS, and deployment separation remain covered by MAG-1.6R's
+    dedicated remote-witness qualification lane.
+    """
+
+    private = Ed25519PrivateKey.generate()
+    coordinates = coordinates_from_checkpoint_status(store.checkpoint_status())
+    receipt = build_signed_witness_receipt(
+        private_key=private,
+        witness_id=WITNESS_ID,
+        key_id=WITNESS_KEY_ID,
+        namespace=WITNESS_NAMESPACE,
+        coordinates=coordinates,
+        issued_at=NOW.isoformat(),
+        witness_mode=REMOTE_WITNESS_MODE,
+    )
+    witness_verifier = RegistryMonotonicWitnessVerifier(
+        public_keys_b64url={
+            WITNESS_KEY_ID: _b64url(private.public_key().public_bytes_raw())
+        },
+        expected_witness_id=WITNESS_ID,
+        expected_namespace=WITNESS_NAMESPACE,
+    )
+    precondition = RegistryWitnessPrecondition(
+        generation=coordinates.generation,
+        state_root_sha256=coordinates.state_root_sha256,
+        commit_hash=coordinates.commit_hash,
+        witness_id=WITNESS_ID,
+        witness_mode=REMOTE_WITNESS_MODE,
+        witness_receipt_sha256=str(receipt["receipt_sha256"]),
+        witness_receipt_json=json.dumps(
+            receipt,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+            allow_nan=False,
+        ),
+    )
+    return precondition, witness_verifier
+
+
 def _execute(store, verifier, assertion, **overrides):
     values = dict(
         assertion=assertion,
@@ -162,6 +218,13 @@ def _execute(store, verifier, assertion, **overrides):
         trajectory_action_id="ACT-MAG12",
         now=NOW,
     )
+    if (
+        "registry_witness_precondition" not in overrides
+        and "registry_witness_verifier" not in overrides
+    ):
+        precondition, witness_verifier = _signed_remote_witness(store)
+        values["registry_witness_precondition"] = precondition
+        values["registry_witness_verifier"] = witness_verifier
     values.update(overrides)
     return execute_prime_requalification_transition(store, **values)
 
@@ -175,6 +238,8 @@ def test_success_atomically_consumes_authorization_releases_custody_and_queues_t
     assert result.mag1_decision.disposition == Mag1Disposition.AUTO_ELIGIBLE
     assert result.mag1_event_id is not None
     assert result.transition_event_id is not None
+    assert result.registry_witness_receipt_sha256 is not None
+    assert result.registry_witness_precondition_sha256 is not None
 
     registry = store.get_registry()
     auth = registry[PRIME_SENTINEL_AUTHZ_REGISTRY_KEY][assertion.authorization_id]
@@ -190,6 +255,7 @@ def test_success_atomically_consumes_authorization_releases_custody_and_queues_t
     outbox = registry[EVENT_OUTBOX_REGISTRY_KEY]
     assert set((result.mag1_event_id, result.transition_event_id)).issubset(outbox)
     assert outbox[result.transition_event_id]["event"] == PRIME_MAG1_TRANSITION_EVENT
+    assert outbox[result.transition_event_id]["payload"]["registry_witness_required"] is True
     assert registry["UNRELATED_STATE"] == {"preserve": True}
 
 
