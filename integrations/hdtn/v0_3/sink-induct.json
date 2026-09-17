@@ -1,0 +1,18 @@
+{
+  "inductConfigName": "ws-v0.3-sink-induct",
+  "inductVector": [
+    {
+      "name": "tcpcl_v4_from_node3",
+      "convergenceLayer": "tcpcl_v4",
+      "boundPort": 4604,
+      "numRxCircularBufferElements": 200,
+      "numRxCircularBufferBytesPerElement": 20000,
+      "keepAliveIntervalSeconds": 15,
+      "tcpclV4MyMaxRxSegmentSizeBytes": 200000,
+      "tlsIsRequired": false,
+      "certificatePemFile": "",
+      "privateKeyPemFile": "",
+      "diffieHellmanParametersPemFile": ""
+    }
+  ]
+}

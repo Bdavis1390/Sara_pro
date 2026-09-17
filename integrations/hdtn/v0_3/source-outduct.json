@@ -1,0 +1,23 @@
+{
+  "outductConfigName": "ws-v0.3-source-outduct",
+  "outductVector": [
+    {
+      "name": "tcpcl_v4_to_node1",
+      "convergenceLayer": "tcpcl_v4",
+      "nextHopNodeId": 1,
+      "remoteHostname": "127.0.0.1",
+      "remotePort": 4601,
+      "maxNumberOfBundlesInPipeline": 10,
+      "maxSumOfBundleBytesInPipeline": 50000000,
+      "keepAliveIntervalSeconds": 17,
+      "tcpclAllowOpportunisticReceiveBundles": false,
+      "tcpclV4MyMaxRxSegmentSizeBytes": 200000,
+      "tryUseTls": false,
+      "tlsIsRequired": false,
+      "useTlsVersion1_3": false,
+      "doX509CertificateVerification": false,
+      "verifySubjectAltNameInX509Certificate": false,
+      "certificationAuthorityPemFileForVerification": ""
+    }
+  ]
+}

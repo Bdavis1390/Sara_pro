@@ -1,0 +1,267 @@
+name: WS CISNET HDTN v0.3 BPSec BIB
+
+on:
+  pull_request:
+    paths:
+      - "integrations/hdtn/v0_3/**"
+      - ".github/workflows/ws-cisnet-hdtn-v0-3-bpsec-bib.yml"
+      - "docs/WS_CISNET_HDTN_V0_3_BPSEC.md"
+      - "cisnet/provenance.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bpsec-bib-positive-negative:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      WS_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate BPSec policy artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m json.tool integrations/hdtn/v0_3/bpsec/source-bib.json >/dev/null
+          python -m json.tool integrations/hdtn/v0_3/bpsec/acceptor-good.json >/dev/null
+          python -m json.tool integrations/hdtn/v0_3/bpsec/acceptor-wrong-key.json >/dev/null
+          python - <<'PY'
+          import json
+          root = "integrations/hdtn/v0_3/bpsec"
+          s = json.load(open(f"{root}/source-bib.json"))["policyRules"][0]
+          g = json.load(open(f"{root}/acceptor-good.json"))["policyRules"][0]
+          n = json.load(open(f"{root}/acceptor-wrong-key.json"))["policyRules"][0]
+          assert s["securityRole"] == "source"
+          assert g["securityRole"] == n["securityRole"] == "acceptor"
+          assert s["securityService"] == g["securityService"] == n["securityService"] == "integrity"
+          assert s["securityContext"] == g["securityContext"] == n["securityContext"] == "hmacSha"
+          assert s["securityTargetBlockTypes"] == g["securityTargetBlockTypes"] == n["securityTargetBlockTypes"] == [1]
+          assert "failBundleForwarding" in n.get("securityFailureEventSetReference", "") or any(
+              "failBundleForwarding" in e.get("actions", [])
+              for fs in json.load(open(f"{root}/acceptor-wrong-key.json"))["securityFailureEventSets"]
+              for e in fs["securityOperationEvents"]
+          )
+          PY
+
+      - name: Install HDTN build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential libzmq3-dev libboost-all-dev openssl libssl-dev
+
+      - name: Fetch exact pinned NASA HDTN
+        shell: bash
+        run: |
+          set -euo pipefail
+          pin=$(python -c 'import json; print(json.load(open("integrations/hdtn/upstream.json"))["commit"])')
+          git clone --no-tags https://github.com/nasa/HDTN.git "$RUNNER_TEMP/HDTN"
+          git -C "$RUNNER_TEMP/HDTN" checkout --detach "$pin"
+          test "$(git -C "$RUNNER_TEMP/HDTN" rev-parse HEAD)" = "$pin"
+
+      - name: Configure and build HDTN with BPSec enabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          openssl version -a | tee "$RUNNER_TEMP/openssl-version.txt"
+          cmake -S "$RUNNER_TEMP/HDTN" -B "$RUNNER_TEMP/HDTN/build-bpsec" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_OPENSSL_SUPPORT=ON \
+            -DENABLE_BPSEC=ON \
+            -DUSE_X86_HARDWARE_ACCELERATION=OFF \
+            -DLTP_RNG_USE_RDSEED=OFF
+          grep -q '^ENABLE_BPSEC:BOOL=ON' "$RUNNER_TEMP/HDTN/build-bpsec/CMakeCache.txt"
+          cmake --build "$RUNNER_TEMP/HDTN/build-bpsec" \
+            --target hdtn-one-process bpsendfile bpreceivefile --parallel 4
+
+      - name: Execute BIB positive and wrong-key negative controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          HDTN="$RUNNER_TEMP/HDTN"
+          BUILD="$HDTN/build-bpsec"
+          CFG="$GITHUB_WORKSPACE/integrations/hdtn/v0_3"
+          SEC="$CFG/bpsec"
+          PLAN="$CFG/multinode-contact-plan.json"
+          LAB="$RUNNER_TEMP/ws-cisnet-bpsec"
+          EVIDENCE_DIR="$GITHUB_WORKSPACE/artifacts/bpsec"
+          mkdir -p "$LAB" "$EVIDENCE_DIR"
+
+          # Public CI test vectors only; never production key material.
+          # HDTN's pinned sample integrity key is exactly 32 bytes with no trailing newline.
+          printf '%s' '1a2b1a2b1a2b1a2b1a2b1a2b1a2b1a2b' > "$SEC/ci-good.key"
+          printf '%s' '5e6f5e6f5e6f5e6f5e6f5e6f5e6f5e6f' > "$SEC/ci-wrong.key"
+          test "$(wc -c < "$SEC/ci-good.key")" -eq 32
+          test "$(wc -c < "$SEC/ci-wrong.key")" -eq 32
+
+          collect_logs() {
+            for phase in positive negative; do
+              for log in "$LAB/$phase/logs/"*.log; do
+                [ -f "$log" ] || continue
+                cp "$log" "$EVIDENCE_DIR/${phase}-$(basename "$log")"
+              done
+            done
+          }
+          scrub_ci_keys() {
+            rm -f "$SEC/ci-good.key" "$SEC/ci-wrong.key"
+          }
+          finalize() {
+            collect_logs || true
+            scrub_ci_keys
+          }
+          trap finalize EXIT
+
+          GOOD_KEY_SHA=$(sha256sum "$SEC/ci-good.key" | awk '{print $1}')
+          WRONG_KEY_SHA=$(sha256sum "$SEC/ci-wrong.key" | awk '{print $1}')
+          SOURCE_POLICY_SHA=$(sha256sum "$SEC/source-bib.json" | awk '{print $1}')
+          GOOD_POLICY_SHA=$(sha256sum "$SEC/acceptor-good.json" | awk '{print $1}')
+          WRONG_POLICY_SHA=$(sha256sum "$SEC/acceptor-wrong-key.json" | awk '{print $1}')
+          PLAN_SHA=$(sha256sum "$PLAN" | awk '{print $1}')
+          HDTN_SHA=$(git -C "$HDTN" rev-parse HEAD)
+
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, os
+          lab = Path(os.environ["RUNNER_TEMP"]) / "ws-cisnet-bpsec"
+          seed = hashlib.sha256(b"WS-CISNET-BPSEC-BIB-v0.3").digest()
+          size = 4 * 1024 * 1024
+          for name in ("positive", "negative"):
+              d = lab / name / "source"
+              d.mkdir(parents=True, exist_ok=True)
+              target = d / "payload.bin"
+              target.write_bytes((seed * ((size + len(seed) - 1) // len(seed)))[:size])
+          PY
+          SRC_SHA=$(sha256sum "$LAB/positive/source/payload.bin" | awk '{print $1}')
+          SIZE=$(stat -c%s "$LAB/positive/source/payload.bin")
+          test "$SRC_SHA" = "$(sha256sum "$LAB/negative/source/payload.bin" | awk '{print $1}')"
+
+          run_phase() {
+            phase="$1"
+            acceptor="$2"
+            phase_root="$LAB/$phase"
+            mkdir -p "$phase_root"/{node1,node2,node3,received,logs}
+            local recv_pid node1_pid node2_pid node3_pid send_pid
+
+            cleanup_phase() {
+              for pid in "${send_pid:-}" "${node1_pid:-}" "${node2_pid:-}" "${node3_pid:-}" "${recv_pid:-}"; do
+                if [ -n "$pid" ]; then kill -INT "$pid" 2>/dev/null || true; fi
+              done
+              sleep 1
+              collect_logs || true
+            }
+
+            (cd "$GITHUB_WORKSPACE" && "$BUILD/common/bpcodec/apps/bpreceivefile" \
+              --save-directory="$phase_root/received" \
+              --my-uri-eid=ipn:4.1 \
+              --inducts-config-file="$CFG/sink-induct.json" \
+              --bpsec-config-file="$acceptor") \
+              >"$phase_root/logs/receiver.log" 2>&1 &
+            recv_pid=$!
+
+            (cd "$phase_root/node3" && "$BUILD/module/hdtn_one_process/hdtn-one-process" \
+              --hdtn-config-file="$CFG/node3.json" --contact-plan-file="$PLAN") \
+              >"$phase_root/logs/node3.log" 2>&1 &
+            node3_pid=$!
+            (cd "$phase_root/node2" && "$BUILD/module/hdtn_one_process/hdtn-one-process" \
+              --hdtn-config-file="$CFG/node2-initial.json" --contact-plan-file="$PLAN") \
+              >"$phase_root/logs/node2.log" 2>&1 &
+            node2_pid=$!
+            (cd "$phase_root/node1" && "$BUILD/module/hdtn_one_process/hdtn-one-process" \
+              --hdtn-config-file="$CFG/node1.json" --contact-plan-file="$PLAN") \
+              >"$phase_root/logs/node1.log" 2>&1 &
+            node1_pid=$!
+            sleep 5
+
+            (cd "$GITHUB_WORKSPACE" && "$BUILD/common/bpcodec/apps/bpsendfile" \
+              --use-bp-version-7 \
+              --force-disable-custody \
+              --max-bundle-size-bytes=500000 \
+              --file-or-folder-path="$phase_root/source/payload.bin" \
+              --my-uri-eid=ipn:100.1 \
+              --dest-uri-eid=ipn:4.1 \
+              --outducts-config-file="$CFG/source-outduct.json" \
+              --bpsec-config-file="$SEC/source-bib.json") \
+              >"$phase_root/logs/sender.log" 2>&1 &
+            send_pid=$!
+
+            if [ "$phase" = "positive" ]; then
+              received=""
+              for _ in $(seq 1 100); do
+                received=$(find "$phase_root/received" -type f -name payload.bin -print -quit || true)
+                if [ -n "$received" ] && [ "$(stat -c%s "$received")" -eq "$SIZE" ]; then break; fi
+                sleep 1
+              done
+              test -n "$received"
+              test "$(stat -c%s "$received")" -eq "$SIZE"
+              POSITIVE_SHA=$(sha256sum "$received" | awk '{print $1}')
+              test "$POSITIVE_SHA" = "$SRC_SHA"
+              export POSITIVE_SHA
+            else
+              # Allow sufficient time for every protected fragment to traverse the three-node path.
+              sleep 55
+              received=$(find "$phase_root/received" -type f -name payload.bin -print -quit || true)
+              NEGATIVE_BYTES=0
+              if [ -n "$received" ]; then NEGATIVE_BYTES=$(stat -c%s "$received"); fi
+              test "$NEGATIVE_BYTES" -lt "$SIZE"
+              grep -Eqi 'corrupt|security|bpsec|integrity|fail.*forward' "$phase_root/logs/receiver.log"
+              export NEGATIVE_BYTES
+            fi
+            cleanup_phase
+          }
+
+          run_phase positive "$SEC/acceptor-good.json"
+          run_phase negative "$SEC/acceptor-wrong-key.json"
+
+          export SRC_SHA SIZE GOOD_KEY_SHA WRONG_KEY_SHA SOURCE_POLICY_SHA GOOD_POLICY_SHA WRONG_POLICY_SHA PLAN_SHA HDTN_SHA
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from cisnet.provenance import EchoLedger
+
+          ledger = EchoLedger()
+          ledger.append(0, "bpsec_bib_positive_source", payload_bytes=int(os.environ["SIZE"]), sha256=os.environ["SRC_SHA"])
+          ledger.append(1, "bpsec_bib_positive_verified", sha256=os.environ["POSITIVE_SHA"])
+          ledger.append(2, "bpsec_bib_wrong_key_rejected", destination_bytes=int(os.environ["NEGATIVE_BYTES"]))
+
+          openssl_text = Path(os.environ["RUNNER_TEMP"]) / "openssl-version.txt"
+          evidence = {
+              "claim": "functional BPv7 BPSec BIB integrity positive control and wrong-key rejection through the three-HDTN-node Worldshepherd laboratory topology",
+              "security_service": "integrity",
+              "security_context": "hmacSha",
+              "sha_variant": 384,
+              "payload_bytes": int(os.environ["SIZE"]),
+              "source_sha256": os.environ["SRC_SHA"],
+              "positive_destination_sha256": os.environ["POSITIVE_SHA"],
+              "wrong_key_destination_bytes": int(os.environ["NEGATIVE_BYTES"]),
+              "source_policy_sha256": os.environ["SOURCE_POLICY_SHA"],
+              "acceptor_good_policy_sha256": os.environ["GOOD_POLICY_SHA"],
+              "acceptor_wrong_key_policy_sha256": os.environ["WRONG_POLICY_SHA"],
+              "good_ci_test_key_sha256": os.environ["GOOD_KEY_SHA"],
+              "wrong_ci_test_key_sha256": os.environ["WRONG_KEY_SHA"],
+              "contact_plan_sha256": os.environ["PLAN_SHA"],
+              "hdtn_commit": os.environ["HDTN_SHA"],
+              "worldshepherd_head_commit": os.environ.get("WS_HEAD_SHA", "unknown"),
+              "openssl_build_environment": openssl_text.read_text(errors="replace")[:4000],
+              "fips_validation_claimed": False,
+              "ledger_valid": ledger.verify(),
+              "positive_control": "PASS",
+              "wrong_key_negative_control": "PASS",
+              "result": "PASS",
+              "events": ledger.as_dicts(),
+          }
+          Path("artifacts/cisnet-v0-3-bpsec-bib-evidence.json").write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
+          assert evidence["ledger_valid"]
+          assert evidence["source_sha256"] == evidence["positive_destination_sha256"]
+          assert evidence["wrong_key_destination_bytes"] < evidence["payload_bytes"]
+          PY
+
+          collect_logs
+          scrub_ci_keys
+          trap - EXIT
+
+      - name: Upload BPSec BIB evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cisnet-v0-3-bpsec-bib
+          path: artifacts/
+          if-no-files-found: warn
