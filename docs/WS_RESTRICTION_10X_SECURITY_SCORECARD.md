@@ -1,6 +1,6 @@
 # WS-RESTRICTION 10X SECURITY SCORECARD
 
-Status: **ENGINEERING ACCEPTANCE TARGET / G4 VALIDATION PENDING**
+Status: **ENGINEERING ACCEPTANCE STANDARD / G6 VALIDATION IN PROGRESS**
 
 ## Baseline
 
@@ -54,7 +54,7 @@ Subsequent gates should use similarly measurable baselines:
 
 - **G5 fingerprint-key epoch provenance:** implemented on the stacked G5 branch; ambiguous cross-rotation comparison paths must be zero before promotion;
 - **G6 signer/witness assurance:** implemented on the stacked G6 branch with external-signature verification and signed-only new-event queueing; protected validation remains required;
-- **G7 secret custody:** software/environment key custody -> external hardware-backed or independently managed custody where justified;
+- **G7 signer isolation:** SARA must accept zero PRIME private-signing-key ingress paths; external hardware-backed custody remains a separate partner/provider validation gate;
 - **G8 adversarial validation:** predefined mutation/bypass corpus with quantified detection rate and false-negative budget;
 - **G9 recovery:** measured mean/max recovery and evidence reconstruction time under injected corruption;
 - **G10 external replication:** independent evaluator repeats the frozen protocol.
