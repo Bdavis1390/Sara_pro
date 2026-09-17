@@ -350,6 +350,11 @@ def test_restriction_observability_api_is_admin_only_and_strict(client, tokens):
     assert status_body["ok"] is True
     assert status_body["restriction_events_seen"] == 1
     assert status_body["valid_restriction_events"] == 1
+    assert status_body["assurance_quality"] == {
+        "required_dimensions_per_record": 10,
+        "fully_resolved_v4_records": 1,
+        "unresolved_dimensions": 0,
+    }
     assert "recent" not in status_body
     assert status.headers["cache-control"] == "no-store"
 
@@ -361,6 +366,8 @@ def test_restriction_observability_api_is_admin_only_and_strict(client, tokens):
     body = recent.json()
     assert body["recent"][0]["event_id"] == stable_id
     assert body["recent"][0]["restriction_id"] == evidence.restriction_id
+    assert body["assurance_quality"]["fully_resolved_v4_records"] == 1
+    assert body["assurance_quality"]["unresolved_dimensions"] == 0
     serialized = json.dumps(body, sort_keys=True)
     for forbidden in (
         "safe_summary",
