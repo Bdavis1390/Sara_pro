@@ -205,9 +205,14 @@ jobs:
             -H "Authorization: Bearer ${TOKEN}" \
             https://127.0.0.1:9540/v1/head \
             > evidence/mag1-6r/head-after-restart.json
-          cmp \
-            evidence/mag1-6r/receipt-generation-7.json \
-            evidence/mag1-6r/head-after-restart.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          evidence = Path('evidence/mag1-6r')
+          before = json.loads((evidence / 'receipt-generation-7.json').read_text())
+          after = json.loads((evidence / 'head-after-restart.json').read_text())
+          assert after == before
+          PY
           curl --fail --silent --show-error --insecure \
             -H "Authorization: Bearer ${TOKEN}" \
             https://127.0.0.1:9540/v1/integrity \
