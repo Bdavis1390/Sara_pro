@@ -38,7 +38,7 @@ Prerequisites:
 From the repository root:
 
 ```bash
-./scripts/reproduce_spdx_validation.sh
+bash scripts/reproduce_spdx_validation.sh
 ```
 
 By default the script:
@@ -68,7 +68,7 @@ Then run:
 
 ```bash
 SPDX_REPRO_RESOURCE_DIR=/path/to/pinned-resources \
-./scripts/reproduce_spdx_validation.sh
+bash scripts/reproduce_spdx_validation.sh
 ```
 
 The same pinned SHA-256 checks still run. A local file with the wrong digest is rejected.
@@ -83,7 +83,7 @@ SPDX3_VALIDATE=/absolute/path/to/spdx3-validate \
 PYSHACL=/absolute/path/to/pyshacl \
 AJV=/absolute/path/to/ajv \
 VALIDATOR_PYTHON=/absolute/path/to/python \
-./scripts/reproduce_spdx_validation.sh
+bash scripts/reproduce_spdx_validation.sh
 ```
 
 `VALIDATOR_PYTHON` should be the Python interpreter whose environment contains the `spdx3-validate` and `pyshacl` distributions so their installed versions can be recorded.
