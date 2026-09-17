@@ -22,6 +22,11 @@ from .mag1_prime_binding import (
     PrimeMag1Binding,
     evaluate_prime_requalification_mag1,
 )
+from .overwatch_containment import (
+    OverwatchContainmentStatus,
+    OverwatchContainmentVerifier,
+    evaluate_overwatch_containment,
+)
 from .prime_configuration_custody import (
     PrimeActivationDisposition,
     PrimeConfigurationCustodyRecord,
@@ -48,6 +53,9 @@ PRIME_CUSTODY_REGISTRY_KEY = "PRIME_CONFIGURATION_CUSTODY"
 PRIME_MAG1_TRANSITION_SCHEMA = "WS-PRIME-MAG1-TRANSITION-V1"
 PRIME_MAG1_TRANSITION_EVENT = "prime_requalification_transition"
 PRIME_MAG1_TRANSITION_ACTOR = "MAG1_PRIME_TRANSITION"
+OVERWATCH_CONTAINMENT_BLOCK_SCHEMA = "WS-OVERWATCH-CONTAINMENT-BLOCK-V1"
+OVERWATCH_CONTAINMENT_BLOCK_EVENT = "overwatch_containment_block"
+OVERWATCH_CONTAINMENT_BLOCK_ACTOR = "OVERWATCH"
 
 
 class PrimeMag1TransitionError(ValueError):
@@ -57,6 +65,7 @@ class PrimeMag1TransitionError(ValueError):
 class PrimeMag1TransitionDisposition(str, Enum):
     APPLIED = "APPLIED"
     NOT_APPLIED = "NOT_APPLIED"
+    CONTAINED = "CONTAINED"
 
 
 class PrimeMag1TransitionResult(BaseModel):
@@ -72,6 +81,10 @@ class PrimeMag1TransitionResult(BaseModel):
     after_custody_sha256: str | None = None
     mag1_event_id: str | None = None
     transition_event_id: str | None = None
+    overwatch_containment_event_id: str | None = None
+    overwatch_directive_id: str | None = None
+    overwatch_directive_sha256: str | None = None
+    overwatch_sequence: int = 0
     release_reasons: list[str] = Field(default_factory=list)
 
 
@@ -136,6 +149,7 @@ def _transition_id(
     trajectory_id: str,
     action_id: str,
     policy_bundle_hash: str,
+    overwatch_snapshot_sha256: str,
 ) -> str:
     digest = _sha256(
         {
@@ -149,6 +163,7 @@ def _transition_id(
             "trajectory_id": trajectory_id,
             "action_id": action_id,
             "policy_bundle_sha256": policy_bundle_hash,
+            "overwatch_snapshot_sha256": overwatch_snapshot_sha256,
         }
     )
     return f"PRIME-MAG1-TRANSITION-{digest}"
@@ -156,6 +171,29 @@ def _transition_id(
 
 def _transition_event_id(transition_id: str) -> str:
     return f"SARA-EVENT-PRIME-TRANSITION-{hashlib.sha256(transition_id.encode('utf-8')).hexdigest()}"
+
+
+def _containment_event_id(
+    *,
+    containment: OverwatchContainmentStatus,
+    authorization_id: str,
+    trajectory_id: str,
+    action_id: str,
+) -> str:
+    if not containment.active or not containment.directive_sha256:
+        raise PrimeMag1TransitionError(
+            "active OVERWATCH containment must have a directive hash"
+        )
+    digest = _sha256(
+        {
+            "schema": OVERWATCH_CONTAINMENT_BLOCK_SCHEMA,
+            "directive_sha256": containment.directive_sha256,
+            "authorization_id": authorization_id,
+            "trajectory_id": trajectory_id,
+            "action_id": action_id,
+        }
+    )
+    return f"SARA-EVENT-OVERWATCH-BLOCK-{digest}"
 
 
 def _assert_release_binding_available_or_matching(
@@ -200,17 +238,22 @@ def execute_prime_requalification_transition(
     trajectory_state: TrajectoryState,
     trajectory_action_id: str,
     trajectory_policy: TrajectoryGuardPolicy | None = None,
+    overwatch_verifier: OverwatchContainmentVerifier | None = None,
     now: datetime | None = None,
 ) -> PrimeMag1TransitionResult:
     """Evaluate and, if eligible, commit PRIME requalification under one registry lock.
 
-    The protected transaction binds four registry effects to one read/derive/write
-    operation: one-time authorization consumption, custody release, MAG-1 decision
-    evidence, and transition evidence. Exceptions abort before the registry write.
+    The protected transaction binds PRIME authorization verification, MAG-1
+    trajectory policy, current OVERWATCH containment state, one-time
+    authorization consumption, custody release, MAG-1 decision evidence, and
+    transition evidence to one read/derive/write registry operation.
 
-    `DurableStore.transact_registry()` uses an in-process RLock and atomic file
-    replacement. This establishes failure atomicity and same-store-instance thread
-    serialization; it does not claim multi-process/database linearizability.
+    On supported POSIX deployments, `DurableStore.transact_registry()` also
+    holds the process-visible registry lock introduced by MAG-1.3. Consequently
+    a cooperating process that installs an OVERWATCH directive and a process
+    attempting this transition are serialized against the same latest registry
+    state. This remains a local cooperating-process property, not distributed
+    consensus or cross-host transactionality.
     """
 
     current_time = now or datetime.now(timezone.utc)
@@ -301,6 +344,87 @@ def execute_prime_requalification_transition(
             )
             return evidence_patch, result
 
+        # OVERWATCH is deliberately evaluated after the positive MAG-1/PRIME
+        # authority checks but before any authority consumption or custody
+        # mutation. A valid HOLD is therefore an execution veto rather than a
+        # post-hoc telemetry signal.
+        containment = evaluate_overwatch_containment(
+            registry,
+            prime_id=binding.verified.prime_id,
+            action=PRIME_MAG1_ACTION,
+            target_environment=binding.verified.target_environment,
+            verifier=overwatch_verifier,
+            now=current_time,
+        )
+
+        if containment.active:
+            working = dict(registry)
+            mag1_patch, mag1_event_id = queue_mag1_evidence_patch(
+                working,
+                decision=decision,
+                trajectory_action=canonical_action,
+                autonomy_policy=autonomy_policy,
+                trajectory_policy=trajectory_policy,
+                authorization_id=binding.verified.authorization_id,
+                authority_artifact=binding.authority_artifact,
+            )
+            if mag1_event_id != stable_mag1_event_id:
+                raise PrimeMag1TransitionError("MAG-1 evidence event identity is unstable")
+            working.update(mag1_patch)
+
+            containment_event_id = _containment_event_id(
+                containment=containment,
+                authorization_id=binding.verified.authorization_id,
+                trajectory_id=decision.updated_trajectory.trajectory_id,
+                action_id=canonical_action.action_id,
+            )
+            containment_payload = {
+                "schema": OVERWATCH_CONTAINMENT_BLOCK_SCHEMA,
+                "prime_id": binding.verified.prime_id,
+                "authorization_id": binding.verified.authorization_id,
+                "target_environment": binding.verified.target_environment.value,
+                "trajectory_id": decision.updated_trajectory.trajectory_id,
+                "action_id": canonical_action.action_id,
+                "directive_id": containment.directive_id,
+                "directive_sha256": containment.directive_sha256,
+                "sequence": containment.sequence,
+                "reason_code": containment.reason_code,
+                "signer_key_ids_sha256": _sha256(containment.signer_key_ids),
+                "containment_snapshot_sha256": containment.snapshot_sha256,
+                "before_custody_sha256": before_hash,
+            }
+            containment_patch, queued_containment_id = queue_event_outbox_patch(
+                working,
+                event=OVERWATCH_CONTAINMENT_BLOCK_EVENT,
+                actor=OVERWATCH_CONTAINMENT_BLOCK_ACTOR,
+                payload=containment_payload,
+                event_id=containment_event_id,
+            )
+            if queued_containment_id != containment_event_id:
+                raise PrimeMag1TransitionError(
+                    "OVERWATCH containment event identity is unstable"
+                )
+
+            result = PrimeMag1TransitionResult(
+                disposition=PrimeMag1TransitionDisposition.CONTAINED,
+                prime_id=record.prime_id,
+                authorization_id=binding.verified.authorization_id,
+                target_environment=binding.verified.target_environment.value,
+                mag1_decision=decision,
+                before_custody_sha256=before_hash,
+                mag1_event_id=mag1_event_id,
+                overwatch_containment_event_id=containment_event_id,
+                overwatch_directive_id=containment.directive_id,
+                overwatch_directive_sha256=containment.directive_sha256,
+                overwatch_sequence=containment.sequence,
+                release_reasons=[
+                    "OVERWATCH containment vetoed the transition before authority consumption or custody release"
+                ],
+            )
+            # The final outbox patch contains both the MAG-1 and containment
+            # events; no custody or authorization namespace is changed.
+            return containment_patch, result
+
         bound_record = _bind_release_authorization(record, binding)
         released, activation_disposition, release_reasons = release_from_quarantine(
             bound_record,
@@ -325,6 +449,7 @@ def execute_prime_requalification_transition(
             trajectory_id=decision.updated_trajectory.trajectory_id,
             action_id=canonical_action.action_id,
             policy_bundle_hash=policy_hash,
+            overwatch_snapshot_sha256=containment.snapshot_sha256,
         )
 
         working = dict(registry)
@@ -368,6 +493,11 @@ def execute_prime_requalification_transition(
             "mag1_event_id": mag1_event_id,
             "mag1_evidence_sha256": _sha256(mag1_payload),
             "release_reasons_sha256": _sha256(release_reasons),
+            "overwatch_containment_snapshot_sha256": containment.snapshot_sha256,
+            "overwatch_state": containment.state.value if containment.state else "NO_DIRECTIVE",
+            "overwatch_sequence": containment.sequence,
+            "overwatch_directive_id": containment.directive_id,
+            "overwatch_directive_sha256": containment.directive_sha256,
         }
         transition_patch, queued_transition_id = queue_event_outbox_patch(
             working,
@@ -397,6 +527,9 @@ def execute_prime_requalification_transition(
             after_custody_sha256=after_hash,
             mag1_event_id=mag1_event_id,
             transition_event_id=transition_event_id,
+            overwatch_directive_id=containment.directive_id,
+            overwatch_directive_sha256=containment.directive_sha256,
+            overwatch_sequence=containment.sequence,
             release_reasons=list(release_reasons),
         )
         return patch, result
