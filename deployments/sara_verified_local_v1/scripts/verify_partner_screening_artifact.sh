@@ -118,8 +118,20 @@ else
   fail "resolved artifact root has neither batch-manifest.json nor manifest.json: $ARTIFACT_ROOT"
 fi
 
-if command -v ws-partner-screening-verify >/dev/null; then
+if command -v ws-partner-screening-verify >/dev/null 2>&1; then
   ws-partner-screening-verify "$MODE" "$ARTIFACT_ROOT"
 else
-  (cd "$PROJECT_ROOT" && python -m worldshepherd_sara.partner_screening_verify_cli "$MODE" "$ARTIFACT_ROOT")
+  PYTHON_BIN=""
+  if [[ -x "$PROJECT_ROOT/.venv/bin/python" ]]; then
+    PYTHON_BIN="$PROJECT_ROOT/.venv/bin/python"
+  elif [[ -n "${VIRTUAL_ENV:-}" && -x "${VIRTUAL_ENV}/bin/python" ]]; then
+    PYTHON_BIN="${VIRTUAL_ENV}/bin/python"
+  elif command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN=$(command -v python3)
+  elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN=$(command -v python)
+  else
+    fail "Python is required to verify the partner-screening artifact"
+  fi
+  (cd "$PROJECT_ROOT" && "$PYTHON_BIN" -m worldshepherd_sara.partner_screening_verify_cli "$MODE" "$ARTIFACT_ROOT")
 fi
