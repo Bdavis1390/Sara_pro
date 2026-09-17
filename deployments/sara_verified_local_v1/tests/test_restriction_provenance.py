@@ -4,7 +4,12 @@ import json
 
 import pytest
 
-from worldshepherd_sara.event_outbox import EVENT_OUTBOX_REGISTRY_KEY
+from worldshepherd_sara.echo_event_store import EchoEventStore
+from worldshepherd_sara.event_outbox import (
+    EVENT_OUTBOX_REGISTRY_KEY,
+    drain_event_outbox,
+)
+from worldshepherd_sara.models import AuditRecord
 from worldshepherd_sara.restriction_provenance import (
     RESTRICTION_EVENT,
     RestrictionProvenanceError,
@@ -12,6 +17,7 @@ from worldshepherd_sara.restriction_provenance import (
     capture_restriction,
     queue_restriction_event,
 )
+from worldshepherd_sara.storage import DurableStore
 
 
 KEY = b"worldshepherd-test-restriction-key-32-bytes-minimum"
@@ -116,6 +122,60 @@ def test_queue_restriction_event_uses_normal_sara_outbox_contract():
     serialized = json.dumps(entry, sort_keys=True)
     assert "restricted candidate output" not in serialized
     assert "sensitive input material" not in serialized
+
+
+def test_restriction_survives_sara_to_echo_without_raw_content(tmp_path):
+    raw_input = "raw sentinel input must never persist 7c09512f"
+    raw_generated = "raw sentinel generated must never persist 4d6e0231"
+    safe_output = "safe sentinel output is fingerprinted but not persisted 92ce7c11"
+    evidence = make_evidence(
+        raw_input=raw_input,
+        raw_generated=raw_generated,
+        safe_output=safe_output,
+    )
+    sara = DurableStore(tmp_path / "sara-data")
+
+    def queue_operation(registry):
+        patch, stable_id = queue_restriction_event(registry, evidence)
+        return patch, stable_id
+
+    stable_id = sara.transact_registry(queue_operation)
+    assert stable_id == evidence.outbox_event_id
+    assert drain_event_outbox(sara, limit=1) == 1
+
+    records = [
+        record
+        for record in sara.read_audit(100)
+        if record.get("event") == RESTRICTION_EVENT
+    ]
+    assert len(records) == 1
+    serialized_audit = json.dumps(records[0], sort_keys=True)
+    for forbidden in (raw_input, raw_generated, safe_output):
+        assert forbidden not in serialized_audit
+
+    audit = AuditRecord(**records[0])
+    echo = EchoEventStore((tmp_path / "echo-data").resolve())
+    first = echo.ingest(audit)
+    replay = echo.ingest(audit)
+    assert first.outcome == "STORED"
+    assert replay.outcome == "DEDUPLICATED"
+    assert replay.record.event_id == stable_id
+    assert replay.record.delivery_count == 2
+
+    reconciliation = echo.reconcile([audit])
+    assert reconciliation["counts"] == {"MATCHED": 1}
+    assert reconciliation["entries"] == [
+        {"event_id": stable_id, "classification": "MATCHED"}
+    ]
+    persisted = echo.get(stable_id)
+    assert persisted is not None
+    assert persisted.payload()["restriction_id"] == evidence.restriction_id
+    assert persisted.payload()["raw_content_persisted"] is False
+    assert echo.health()["ok"] is True
+
+    database_bytes = echo.db_path.read_bytes()
+    for forbidden in (raw_input, raw_generated, safe_output):
+        assert forbidden.encode("utf-8") not in database_bytes
 
 
 def test_allowed_remediation_is_bound_to_restriction_without_raw_content():
