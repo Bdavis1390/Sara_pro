@@ -48,10 +48,25 @@ By default the script:
 - creates an isolated Python virtual environment;
 - installs exactly `spdx3-validate==0.0.7` and `pyshacl==0.40.1`;
 - installs `ajv-cli@5.0.0` in an isolated npm prefix;
+- reads back and verifies the actual installed versions of all three validators;
+- captures `pip freeze --all` and the full npm dependency tree as run provenance;
 - executes the positive, structural-negative, and semantic-negative controls; and
-- writes logs, both negative-control documents, and `reproduction-receipt.json` under `spdx_reproduction_evidence/`.
+- writes logs, both negative-control documents, dependency manifests, and `reproduction-receipt.json` under `spdx_reproduction_evidence/`.
 
 The bootstrap tools are isolated from the SARA runtime environment. They are reproduction dependencies, not SARA product dependencies.
+
+### Transitive dependency boundary
+
+The top-level validator versions are pinned and verified. Their complete resolved dependency graphs are **captured**, but the transitive dependencies are not currently pinned by a lockfile / cryptographic package-hash manifest.
+
+Therefore the receipt explicitly keeps:
+
+```text
+transitive_dependencies_lockfile_pinned = false
+supply_chain_reproducibility_established = false
+```
+
+The dependency manifests make resolver drift visible; they do not eliminate it.
 
 ## Network-optional resource mode
 
@@ -83,12 +98,17 @@ SPDX3_VALIDATE=/absolute/path/to/spdx3-validate \
 PYSHACL=/absolute/path/to/pyshacl \
 AJV=/absolute/path/to/ajv \
 VALIDATOR_PYTHON=/absolute/path/to/python \
+AJV_ROOT=/absolute/path/to/npm-prefix \
 bash scripts/reproduce_spdx_validation.sh
 ```
 
-`VALIDATOR_PYTHON` should be the Python interpreter whose environment contains the `spdx3-validate` and `pyshacl` distributions so their installed versions can be recorded.
+Requirements in this mode are intentionally strict:
 
-If an npm prefix is available, `AJV_ROOT` may also be set so the script can read the installed `ajv-cli` version directly.
+- `VALIDATOR_PYTHON` must be the interpreter whose environment contains the `spdx3-validate` and `pyshacl` distributions;
+- `AJV_ROOT/node_modules/ajv-cli/package.json` must exist; and
+- the actually installed versions must equal `spdx3-validate 0.0.7`, `pyshacl 0.40.1`, and `ajv-cli 5.0.0` or the run fails.
+
+This prevents a receipt from recording a merely requested validator version when a different executable was actually used.
 
 ## Receipt semantics
 
@@ -99,6 +119,7 @@ A successful run writes a receipt with:
 - canonical SPDX resource digests;
 - baseline and negative-control input digests;
 - Python / Node / validator versions;
+- SHA-256 digests for the captured Python and npm dependency manifests;
 - each bounded test result; and
 - hard-false authority / endorsement fields.
 
@@ -113,6 +134,7 @@ independently_reproduced = false
 reviewer_identity_established = false
 general_spdx_conformance_established = false
 community_endorsement_established = false
+supply_chain_reproducibility_established = false
 admission_authorized = false
 release_approved = false
 ```
@@ -127,6 +149,7 @@ An attributable external reproduction should preserve, at minimum:
 - exact repository commit checked out;
 - operating system / environment details;
 - generated `reproduction-receipt.json`;
+- the dependency manifests;
 - relevant validator logs;
 - execution date; and
 - any deviations from the documented procedure.
