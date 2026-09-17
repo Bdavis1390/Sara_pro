@@ -33,11 +33,11 @@ OVERWATCH restriction/remediation status
 
 The implementation in `restriction_provenance.py` accepts raw input/candidate output only transiently to compute domain-separated HMAC-SHA256 fingerprints. The returned evidence object contains no raw input, generated restricted text, or safe replacement text.
 
-The fingerprint key is deployment-only secret material. It is never written into the restriction record. A deployment helper requires `RESTRICTION_FINGERPRINT_KEY` to contain at least 32 bytes.
+The fingerprint key is deployment-only secret material. It is never written into the restriction record. A deployment helper requires `RESTRICTION_FINGERPRINT_KEY` to contain at least 32 bytes, and `capture_restriction()` independently fails closed if a weak key is supplied even when no raw content is present.
 
 This design uses keyed fingerprints instead of plain content hashes because restricted text may be low entropy. A plain digest can permit dictionary guessing; an HMAC fingerprint remains useful for equality/integrity binding without publishing an unkeyed content hash.
 
-The metadata envelope rejects obvious raw-content and credential-bearing fields such as `raw_content`, `prompt`, `completion`, `token`, `password`, and `api_key`, including nested occurrences. All metadata also passes the existing SARA bounded-JSON resource limits.
+The metadata envelope rejects obvious raw-content and credential-bearing fields such as `raw_content`, `prompt`, `completion`, `token`, `password`, and `api_key`, including occurrences nested inside arbitrary JSON-style sequences. All metadata also passes the existing SARA bounded-JSON resource limits.
 
 ## Provenance fields
 
@@ -76,7 +76,7 @@ A remediation directive may request only:
 
 The API fails closed for unknown actions and explicitly rejects `REPLAY_RAW`, `RESTORE_RAW`, `BYPASS_POLICY`, `DISABLE_FILTER`, and `FORCE_RELEASE`.
 
-A remediation contains only the restriction/event IDs and content fingerprints. It cannot carry the original restricted payload.
+A remediation contains only the restriction/event IDs, content fingerprints, and an optional identifier-only `rationale_code`. Free-form remediation rationale is intentionally not accepted, eliminating a secondary text channel that could be misused to copy restricted payloads back into persistence.
 
 ## G1 acceptance tests
 
@@ -84,16 +84,21 @@ The regression suite proves:
 
 1. raw restricted input/output and safe-output text are absent from serialized evidence;
 2. keyed fingerprints are stable, domain-separated, content-bound, and key-bound;
-3. nested raw/secret metadata keys are rejected;
+3. nested raw/secret metadata keys are rejected through mapping and sequence containers;
 4. a safe summary cannot simply equal the raw input or generated restricted candidate;
 5. restriction evidence enters the normal SARA outbox contract;
 6. allowed remediation is cryptographically bound to the restriction fingerprints;
-7. raw replay and policy-bypass remediations fail closed;
-8. malformed reason codes and naive timestamps fail closed;
-9. weak content-fingerprint keys are rejected.
+7. remediation rationale is identifier-only, not free-form text;
+8. raw replay and policy-bypass remediations fail closed;
+9. unknown remediation actions fail closed;
+10. malformed reason codes and naive timestamps fail closed;
+11. weak content-fingerprint keys are rejected even when no content value is supplied;
+12. deployment-key changes produce different content fingerprints.
 
 ## Claims boundary
 
 G1 does **not** recover, reveal, reconstruct, classify, or bypass restricted material. It does not assert access to a provider's internal moderation rationale, hidden chain-of-thought, or proprietary safety systems. It records only the reason/category and process metadata actually supplied to Worldshepherd by the calling integration.
+
+The metadata-key denylist prevents common accidental leakage paths but cannot semantically prove that arbitrary caller-supplied strings are safe. Integrations remain responsible for supplying only policy-approved metadata and safe summaries. Production deployments should pair this envelope with provider-specific allowlists where the metadata schema is known.
 
 Until repository CI passes and the change merges, classify this as **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION**. After exact-head CI and protected-branch merge, it may be classified as **IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY for the tested invariants only**. Production secret-management, external policy-provider integration, and adversarial red-team validation remain separate gates.
