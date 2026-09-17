@@ -79,6 +79,10 @@ public = json.loads(Path(sys.argv[3]).read_text(encoding="utf-8"))
 trust = json.loads(env["PRIME_SENTINEL_PUBLIC_KEYS_JSON"])
 assert health["prime_sentinel_public_keys_configured"] is True
 assert health["prime_signer_isolation"] == "verification_only"
+guard = health["prime_trust_root_guard"]
+assert guard["status"] in {"INITIALIZED", "MATCHED", "ADVANCED"}
+assert guard["epoch"] == int(env["PRIME_SENTINEL_TRUST_EPOCH"])
+assert isinstance(guard["material_sha256"], str) and len(guard["material_sha256"]) == 64
 assert public["key_id"] == env["PRIME_SENTINEL_SIGNING_KEY_ID"]
 assert trust[public["key_id"]] == public["public_key_b64url"]
 assert len(public["fingerprint_sha256"]) == 64
@@ -250,6 +254,7 @@ echo_public=json.loads((root / "echo.public-key.json").read_text(encoding="utf-8
 echo_verified=json.loads((root / "echo.checkpoint-verified.json").read_text(encoding="utf-8"))
 prime_verified=json.loads((root / "prime.verified-by-sara.json").read_text(encoding="utf-8"))
 preflight=json.loads((root / "preflight.json").read_text(encoding="utf-8"))
+trust_guard=sara_health["prime_trust_root_guard"]
 
 (root / "container-security.json").write_text(
     json.dumps(
@@ -271,6 +276,9 @@ assert echo_ready["ok"] is True
 assert echo_verified["status"] == "PASS"
 assert prime_verified["status"] == "PASS"
 assert preflight["status"] == "PASS"
+assert trust_guard["status"] in {"INITIALIZED", "MATCHED", "ADVANCED"}
+assert trust_guard["epoch"] == preflight["prime_trust_epoch"]
+assert isinstance(trust_guard["material_sha256"], str) and len(trust_guard["material_sha256"]) == 64
 
 receipt={
     "schema":"WS-VERIFIED-LOCAL-FULL-STACK-DEPLOYMENT-RECEIPT-V1",
@@ -290,6 +298,7 @@ receipt={
         "relay_admin_separation":True,
         "prime_trust_configured":True,
         "prime_signer_isolation":"verification_only",
+        "prime_trust_root_guard":trust_guard,
     },
     "prime_sentinel":{
         "ready":True,
