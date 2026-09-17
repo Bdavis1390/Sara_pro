@@ -18,6 +18,7 @@ from worldshepherd_sara.restriction_provenance import (
 
 
 KEY = b"worldshepherd-observability-test-key-32-bytes-minimum"
+KEY_ID = "ws-restriction-key-epoch-2026-09"
 OCCURRED_AT = "2026-09-17T20:14:00+00:00"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 
@@ -25,6 +26,7 @@ APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
 def valid_restriction_record() -> dict:
     evidence = capture_restriction(
         fingerprint_key=KEY,
+        fingerprint_key_id=KEY_ID,
         action="BLOCK",
         reason_code="POLICY.TEST_BLOCK",
         source_system="CHAT_ASSISTANT",
@@ -84,6 +86,8 @@ def test_strict_projection_never_returns_summary_metadata_or_unknown_fields():
     assert projected["provenance_schema"] == RESTRICTION_SCHEMA
     assert projected["authority"] == RESTRICTION_AUTHORITY
     assert projected["authority_bound_in_payload"] is True
+    assert projected["fingerprint_key_id"] == KEY_ID
+    assert projected["fingerprint_key_epoch_bound_in_payload"] is True
     assert "safe_summary" not in projected
     assert "metadata" not in projected
     assert set(projected) == {
@@ -92,6 +96,8 @@ def test_strict_projection_never_returns_summary_metadata_or_unknown_fields():
         "event_id",
         "authority",
         "authority_bound_in_payload",
+        "fingerprint_key_id",
+        "fingerprint_key_epoch_bound_in_payload",
         "audit_timestamp",
         "occurred_at",
         "action",
