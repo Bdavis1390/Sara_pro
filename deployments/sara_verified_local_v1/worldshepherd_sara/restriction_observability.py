@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from collections import Counter
 from datetime import datetime
 from typing import Any
 
-from .restriction_provenance import RESTRICTION_EVENT, RESTRICTION_SCHEMA
+from .restriction_provenance import (
+    RESTRICTION_AUTHORITY,
+    RESTRICTION_EVENT,
+    RESTRICTION_SCHEMA,
+    RESTRICTION_SCHEMA_V1,
+)
 
 
 RESTRICTION_OBSERVABILITY_SCHEMA = "WS-RESTRICTION-OBSERVABILITY-V1"
@@ -29,7 +36,7 @@ _FINGERPRINT_FIELDS = (
     "generated_fingerprint",
     "safe_output_fingerprint",
 )
-_ALLOWED_PAYLOAD_KEYS = frozenset(
+_V1_PAYLOAD_KEYS = frozenset(
     {
         "schema",
         "restriction_id",
@@ -47,6 +54,7 @@ _ALLOWED_PAYLOAD_KEYS = frozenset(
         "_delivery_semantics",
     }
 )
+_V2_PAYLOAD_KEYS = _V1_PAYLOAD_KEYS | frozenset({"authority"})
 
 
 class RestrictionObservabilityError(ValueError):
@@ -81,26 +89,93 @@ def _fingerprint(value: Any, name: str) -> str | None:
     return value
 
 
+def _canonical_json(value: dict[str, Any]) -> str:
+    try:
+        return json.dumps(
+            value,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        )
+    except (TypeError, ValueError) as exc:
+        raise RestrictionObservabilityError(
+            "restriction identity document is not canonical bounded JSON"
+        ) from exc
+
+
+def _expected_restriction_id(payload: dict[str, Any], provenance_schema: str) -> str:
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        raise RestrictionObservabilityError("restriction metadata is invalid")
+
+    safe_summary = payload.get("safe_summary")
+    if safe_summary is not None and not isinstance(safe_summary, str):
+        raise RestrictionObservabilityError("restriction safe_summary is invalid")
+
+    identity_document: dict[str, Any] = {
+        "schema": provenance_schema,
+        "occurred_at": payload.get("occurred_at"),
+        "action": payload.get("action"),
+        "reason_code": payload.get("reason_code"),
+        "source_system": payload.get("source_system"),
+        "processor": payload.get("processor"),
+        "process_version": payload.get("process_version"),
+        "policy_ref": payload.get("policy_ref"),
+        "correlation_id": payload.get("correlation_id"),
+        "parent_event_id": payload.get("parent_event_id"),
+        "input_fingerprint": payload.get("input_fingerprint"),
+        "generated_fingerprint": payload.get("generated_fingerprint"),
+        "safe_output_fingerprint": payload.get("safe_output_fingerprint"),
+        "safe_summary": safe_summary,
+        "metadata": metadata,
+        "raw_content_persisted": payload.get("raw_content_persisted"),
+    }
+    if provenance_schema == RESTRICTION_SCHEMA:
+        identity_document["authority"] = payload.get("authority")
+
+    return hashlib.sha256(
+        _canonical_json(identity_document).encode("utf-8")
+    ).hexdigest()[:32]
+
+
 def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     """Validate one restriction audit event and return a strict non-content projection."""
     if not isinstance(record, dict) or record.get("event") != RESTRICTION_EVENT:
         raise RestrictionObservabilityError("record is not a restriction event")
+    if record.get("actor") != RESTRICTION_AUTHORITY:
+        raise RestrictionObservabilityError("restriction audit actor is not the governed authority")
 
     audit_timestamp = _timestamp(record.get("timestamp"), "audit timestamp")
     payload = record.get("payload")
     if not isinstance(payload, dict):
         raise RestrictionObservabilityError("restriction payload is missing")
-    unknown_keys = sorted(set(payload) - _ALLOWED_PAYLOAD_KEYS)
+
+    provenance_schema = payload.get("schema")
+    if provenance_schema == RESTRICTION_SCHEMA_V1:
+        allowed_payload_keys = _V1_PAYLOAD_KEYS
+        authority_bound_in_payload = False
+    elif provenance_schema == RESTRICTION_SCHEMA:
+        allowed_payload_keys = _V2_PAYLOAD_KEYS
+        authority_bound_in_payload = True
+        if payload.get("authority") != RESTRICTION_AUTHORITY:
+            raise RestrictionObservabilityError("restriction payload authority is invalid")
+    else:
+        raise RestrictionObservabilityError("restriction schema is invalid")
+
+    unknown_keys = sorted(set(payload) - allowed_payload_keys)
     if unknown_keys:
         raise RestrictionObservabilityError("restriction payload contains unknown fields")
-    if payload.get("schema") != RESTRICTION_SCHEMA:
-        raise RestrictionObservabilityError("restriction schema is invalid")
     if payload.get("raw_content_persisted") is not False:
         raise RestrictionObservabilityError("raw-content persistence assertion is invalid")
 
     restriction_id = payload.get("restriction_id")
     if not isinstance(restriction_id, str) or not _RESTRICTION_ID.fullmatch(restriction_id):
         raise RestrictionObservabilityError("restriction_id is invalid")
+    if restriction_id != _expected_restriction_id(payload, provenance_schema):
+        raise RestrictionObservabilityError(
+            "restriction_id does not match the semantic evidence identity"
+        )
 
     event_id = payload.get("_outbox_event_id")
     expected_event_id = f"SARA-EVENT-RESTRICTION-{restriction_id}"
@@ -130,8 +205,11 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     }
 
     return {
+        "provenance_schema": provenance_schema,
         "restriction_id": restriction_id,
         "event_id": event_id,
+        "authority": RESTRICTION_AUTHORITY,
+        "authority_bound_in_payload": authority_bound_in_payload,
         "audit_timestamp": audit_timestamp,
         "occurred_at": occurred_at,
         "action": action,
@@ -199,7 +277,7 @@ def restriction_observability(
         "claims_boundary": (
             "Window-scoped observability over persisted SARA restriction events only; "
             "bounded audit retention does not establish global lifetime counts or complete "
-            "provider-side restriction history. Responses intentionally expose only the "
-            "documented structural projection."
+            "provider-side restriction history. V1 records rely on the governed outer audit "
+            "actor; V2 records additionally bind that authority into the payload identity."
         ),
     }
