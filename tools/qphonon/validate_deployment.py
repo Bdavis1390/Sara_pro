@@ -9,12 +9,19 @@ from pathlib import Path
 from typing import Any
 
 
+EXPECTED_CLAIMS_STATE = (
+    "DEPLOYMENT_INFRASTRUCTURE_IMPLEMENTED_"
+    "EXTERNAL_PUBLISHED_LAB_EVIDENCE_INGESTED_"
+    "PARTNER_L3_NOT_YET_OBTAINED"
+)
+
+
 def validate(data: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     if data.get("schema") != "WS-QPHONON-DEPLOYMENT-V0.3":
         errors.append("deployment schema mismatch")
-    if data.get("claims_state") != "DEPLOYMENT_INFRASTRUCTURE_IMPLEMENTED_PHONONIC_LAB_EVIDENCE_NOT_YET_OBTAINED":
-        errors.append("deployment claims state must preserve the laboratory-evidence boundary")
+    if data.get("claims_state") != EXPECTED_CLAIMS_STATE:
+        errors.append("deployment claims state must distinguish external lab evidence from partner L3 evidence")
 
     state = data.get("state_store")
     if not isinstance(state, dict):
@@ -54,6 +61,10 @@ def validate(data: dict[str, Any]) -> list[str]:
             errors.append("V0.3 guard must not expose a hardware actuation endpoint")
         if physical.get("generic_qpu_evidence_counts_as_phononic_evidence") is not False:
             errors.append("generic QPU evidence must not count as phononic evidence")
+        if physical.get("external_published_phononic_lab_evidence_ingested") is not True:
+            errors.append("the external published phononic evidence ledger must remain acknowledged")
+        if physical.get("worldshepherd_partner_phononic_lab_evidence_obtained") is not False:
+            errors.append("partner-controlled phononic evidence must remain false until an actual partner experiment")
         if physical.get("phononic_l3_requires_external_lab_hardware") is not True:
             errors.append("L3 must continue to require external phononic hardware")
 
