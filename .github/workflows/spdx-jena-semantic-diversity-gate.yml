@@ -32,7 +32,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -107,14 +107,32 @@ jobs:
           )
           PY
 
-      - name: Parse JSON-LD independently through Jena RIOT
+      - name: Merge JSON-LD quads into complete Jena data graphs
         run: |
           set -euo pipefail
           JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
-          "$JENA_HOME/bin/riot" --syntax=JSONLD11 --output=TTL /tmp/spdx-baseline.jsonld > /tmp/spdx-baseline.ttl
-          "$JENA_HOME/bin/riot" --syntax=JSONLD11 --output=TTL /tmp/spdx-semantic-invalid.jsonld > /tmp/spdx-semantic-invalid.ttl
-          test -s /tmp/spdx-baseline.ttl
-          test -s /tmp/spdx-semantic-invalid.ttl
+
+          # SPDX JSON-LD is parsed by RIOT as quad-capable input. Without --merge,
+          # RIOT intentionally ignores quads when writing a triples-only format.
+          # Merge every quad into one validation graph before SHACL evaluation.
+          "$JENA_HOME/bin/riot" --merge --syntax=JSONLD11 --output=NTRIPLES \
+            /tmp/spdx-baseline.jsonld > /tmp/spdx-baseline.nt
+          "$JENA_HOME/bin/riot" --merge --syntax=JSONLD11 --output=NTRIPLES \
+            /tmp/spdx-semantic-invalid.jsonld > /tmp/spdx-semantic-invalid.nt
+
+          test -s /tmp/spdx-baseline.nt
+          test -s /tmp/spdx-semantic-invalid.nt
+
+          # Permanent regression against the original lossy quad->triple harness.
+          grep 'createdBy' /tmp/spdx-baseline.nt \
+            | grep -q 'urn:worldshepherd:spdx:person:validator'
+          grep 'createdBy' /tmp/spdx-semantic-invalid.nt \
+            | grep -q 'urn:worldshepherd:spdx:package:validator'
+
+          baseline_created_by=$(grep -c 'createdBy' /tmp/spdx-baseline.nt)
+          mutation_created_by=$(grep -c 'createdBy' /tmp/spdx-semantic-invalid.nt)
+          test "$baseline_created_by" -ge 1
+          test "$mutation_created_by" -ge 1
 
       - name: Require Jena baseline conformance and semantic rejection
         run: |
@@ -122,19 +140,19 @@ jobs:
           JENA_HOME="/tmp/apache-jena-${JENA_VERSION}"
           "$JENA_HOME/bin/shacl" validate --text \
             --shapes /tmp/spdx-3.0.1-model.ttl \
-            --data /tmp/spdx-baseline.ttl \
+            --data /tmp/spdx-baseline.nt \
             > /tmp/jena-baseline.log
           grep -qx 'Conforms' /tmp/jena-baseline.log
 
           "$JENA_HOME/bin/shacl" validate --text \
             --shapes /tmp/spdx-3.0.1-model.ttl \
-            --data /tmp/spdx-semantic-invalid.ttl \
+            --data /tmp/spdx-semantic-invalid.nt \
             > /tmp/jena-semantic-invalid.log
           if grep -qx 'Conforms' /tmp/jena-semantic-invalid.log; then
             echo 'Apache Jena unexpectedly accepted the semantic negative control' >&2
             exit 1
           fi
-          grep -Eq 'createdBy|Agent|class' /tmp/jena-semantic-invalid.log
+          grep -Eq 'createdBy|Agent|class|ClassConstraint' /tmp/jena-semantic-invalid.log
 
       - name: Require pySHACL agreement on same JSON-LD inputs
         run: |
@@ -168,6 +186,8 @@ jobs:
           cp /tmp/jena-semantic-invalid.log spdx_jena_semantic_evidence_ci/
           cp /tmp/pyshacl-baseline.log spdx_jena_semantic_evidence_ci/
           cp /tmp/pyshacl-semantic-invalid.log spdx_jena_semantic_evidence_ci/
+          cp /tmp/spdx-baseline.nt spdx_jena_semantic_evidence_ci/
+          cp /tmp/spdx-semantic-invalid.nt spdx_jena_semantic_evidence_ci/
           cp /tmp/jena-archive.sha512 spdx_jena_semantic_evidence_ci/
           cp /tmp/java-version.txt spdx_jena_semantic_evidence_ci/
           python - <<'PY'
@@ -186,6 +206,9 @@ jobs:
               'canonical_model_sha256': digest('/tmp/spdx-3.0.1-model.ttl'),
               'baseline_jsonld_sha256': digest('/tmp/spdx-baseline.jsonld'),
               'semantic_negative_jsonld_sha256': digest('/tmp/spdx-semantic-invalid.jsonld'),
+              'jena_merged_baseline_graph_sha256': digest('/tmp/spdx-baseline.nt'),
+              'jena_merged_semantic_negative_graph_sha256': digest('/tmp/spdx-semantic-invalid.nt'),
+              'quad_merge_required_for_jena_jsonld_projection': True,
               'engines': [
                   {
                       'name': 'Apache Jena SHACL',
@@ -214,8 +237,9 @@ jobs:
               'release_approved': False,
               'claims_boundary': (
                   'Apache Jena and pySHACL are independent semantic engine lineages and agreed on this exact '
-                  'baseline/createdBy wrong-range control. SPDX validation guidance names pySHACL, not Jena, '
-                  'as its known SHACL CLI path. The Jena archive was checksum-verified but its PGP signature '
+                  'baseline/createdBy wrong-range control after Jena RIOT explicitly merged quad-capable JSON-LD '
+                  'input into a complete triples validation graph. SPDX validation guidance names pySHACL, not '
+                  'Jena, as its known SHACL CLI path. The Jena archive was checksum-verified but its PGP signature '
                   'was not verified in this gate. This does not establish general SPDX conformance, independent '
                   'external validation, or community endorsement.'
               ),
@@ -231,6 +255,7 @@ jobs:
           evidence='spdx_jena_semantic_evidence_ci/jena-semantic-diversity.json'
           grep -q 'EXACT_CONTROL_SEMANTIC_ENGINE_AGREEMENT' "$evidence"
           grep -q '"semantic_engine_diversity_established_for_exact_control": true' "$evidence"
+          grep -q '"quad_merge_required_for_jena_jsonld_projection": true' "$evidence"
           grep -q '"jena_is_spdx_recommended_validator": false' "$evidence"
           grep -q '"general_spdx_conformance_established": false' "$evidence"
           grep -q '"arbitrary_input_conformance_established": false' "$evidence"
