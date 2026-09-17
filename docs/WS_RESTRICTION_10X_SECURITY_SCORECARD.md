@@ -1,6 +1,6 @@
 # WS-RESTRICTION 10X SECURITY SCORECARD
 
-Status: **G4-G5 PROVEN INTERNALLY FOR TESTED INVARIANTS / G6 CANDIDATE IN PROGRESS**
+Status: **G4-G6 PROVEN INTERNALLY FOR TESTED INVARIANTS / G7 SOFTWARE-CUSTODY CANDIDATE IN PROGRESS**
 
 ## Baseline
 
@@ -53,10 +53,32 @@ It means the selected measurable G3-start residual attack-path count must be red
 Subsequent gates should use similarly measurable baselines:
 
 - **G5 fingerprint-key epoch provenance:** merged on protected main and proven internally for its tested rotation/migration invariants;
-- **G6 signer/witness assurance:** candidate gate verifies exact restriction-event inclusion in an Ed25519-signed ECHO checkpoint against a separately trusted public-key fingerprint;
-- **G7 secret custody:** software/environment key custody -> external hardware-backed or independently managed custody where justified;
+- **G6 signer/witness assurance:** merged on protected main; exact restriction-event inclusion is verified against an Ed25519-signed ECHO checkpoint and a separately trusted public-key fingerprint;
+- **G7 secret custody:** split into two evidence steps. **G7a** raises the local software-custody floor by defaulting fingerprint secrets to an absolute, same-UID, owner-only, non-symlink, bounded regular file and rejecting ambiguous/legacy environment custody unless explicitly opted in. **G7b** remains the stronger target: external hardware-backed or independently managed custody where justified;
 - **G8 adversarial validation:** predefined mutation/bypass corpus with quantified detection rate and false-negative budget;
 - **G9 recovery:** measured mean/max recovery and evidence reconstruction time under injected corruption;
 - **G10 external replication:** independent evaluator repeats the frozen protocol.
 
 Claims advance only when those metrics are actually measured.
+
+
+## G7a software-custody metric
+
+The G7a candidate measures six concrete secret-custody exposure classes at the local software boundary:
+
+1. direct environment-secret custody accepted by default;
+2. ambiguous simultaneous file and environment key sources accepted;
+3. relative key paths accepted;
+4. symbolic-link key paths accepted;
+5. group/other-readable key files accepted;
+6. undersized key material accepted.
+
+Baseline residual-risk units: **6**.
+
+10x acceptance threshold: **<= 0.6 residual units**. Because the metric is integral, the candidate must close **all 6/6** classes to pass.
+
+The behavioral gate is `test_restriction_secret_custody.py`.
+
+### G7a claims boundary
+
+A passing G7a gate proves only the tested local file-custody invariants. It **does not** establish HSM, TPM, enclave, external KMS, split-knowledge, quorum custody, anti-exfiltration, host-compromise resistance, production deployment, or independent validation. Those remain G7b or later evidence requirements.
