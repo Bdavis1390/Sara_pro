@@ -33,6 +33,7 @@ jobs:
           python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/benchmark.json >/dev/null
           python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/worldshepherd-v1.1.json >/dev/null
           python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/competitor-public-evidence-2026-09-17.json >/dev/null
+          python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/METHODOLOGY_REVIEW.json >/dev/null
 
       - name: Score benchmark
         run: |
@@ -42,10 +43,11 @@ jobs:
             --records \
               evaluation/WS-ASSURANCE-BENCH-v1/worldshepherd-v1.1.json \
               evaluation/WS-ASSURANCE-BENCH-v1/competitor-public-evidence-2026-09-17.json \
+            --methodology-review evaluation/WS-ASSURANCE-BENCH-v1/METHODOLOGY_REVIEW.json \
             --focal-entity 'Worldshepherd WS-SARA-EVAL-v1.1' \
             --output build/ws-assurance-benchmark-v1.json
 
-      - name: Validate bounded wording gate
+      - name: Validate bounded public-claim gate
         run: |
           python - <<'PY'
           import json
@@ -56,11 +58,13 @@ jobs:
           assert len(ranking) >= 10
           assert any(item['entity'] == 'Worldshepherd WS-SARA-EVAL-v1.1' for item in ranking)
           leadership=result['leadership']
-          if leadership['profile_leadership_gate_passed']:
+          if leadership['internal_profile_score_gate_passed']:
               assert leadership['margin_points'] >= leadership['minimum_margin_points']
-              assert leadership['allowed_wording'] == 'Leads this benchmark profile under the recorded public evidence set as of the stated date.'
+          if leadership['public_claim_ready']:
+              assert leadership['external_methodology_reviewed'] is True
+              assert leadership['allowed_public_wording'] == 'Leads this benchmark profile under the recorded public evidence set as of the stated date.'
           else:
-              assert leadership['allowed_wording'] is None
+              assert leadership['allowed_public_wording'] is None
           PY
 
       - name: Upload benchmark result
