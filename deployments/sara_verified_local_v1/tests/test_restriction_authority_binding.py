@@ -18,6 +18,7 @@ from worldshepherd_sara.restriction_provenance import (
     RESTRICTION_EVENT,
     RESTRICTION_SCHEMA,
     RESTRICTION_SCHEMA_V1,
+    RESTRICTION_SCHEMA_V2,
     capture_restriction,
     queue_restriction_event,
 )
@@ -69,6 +70,7 @@ def legacy_v1_payload() -> dict:
     payload = evidence().semantic_document()
     payload["schema"] = RESTRICTION_SCHEMA_V1
     payload.pop("authority")
+    payload.pop("fingerprint_key_epoch_id")
     payload["restriction_id"] = canonical_id(payload)
     return payload
 
@@ -91,7 +93,7 @@ def test_new_restrictions_bind_prime_authority_into_v2_identity():
     document = item.semantic_document()
 
     assert document["schema"] == RESTRICTION_SCHEMA
-    assert RESTRICTION_SCHEMA.endswith("V2")
+    assert RESTRICTION_SCHEMA.endswith("V3")
     assert item.authority == RESTRICTION_AUTHORITY
     assert document["authority"] == RESTRICTION_AUTHORITY
     assert item.restriction_id == canonical_id(document)
@@ -166,12 +168,13 @@ def test_v1_legacy_record_requires_prime_actor_but_not_payload_authority():
         )
 
 
-def test_v2_cannot_be_downgraded_to_v1_by_stripping_authority():
+def test_v3_cannot_be_downgraded_to_v1_by_stripping_bound_fields():
     downgraded = evidence().semantic_document()
-    original_v2_id = downgraded["restriction_id"]
+    original_v3_id = downgraded["restriction_id"]
     downgraded["schema"] = RESTRICTION_SCHEMA_V1
     downgraded.pop("authority")
-    assert downgraded["restriction_id"] == original_v2_id
+    downgraded.pop("fingerprint_key_epoch_id")
+    assert downgraded["restriction_id"] == original_v3_id
 
     with pytest.raises(RestrictionObservabilityError, match="semantic evidence identity"):
         project_restriction_audit_record(audit_record(payload=downgraded))
