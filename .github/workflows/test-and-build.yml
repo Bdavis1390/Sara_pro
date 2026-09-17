@@ -42,6 +42,10 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_discord_webhook.py tests/test_discord_connector.py
 
+      - name: Test restriction provenance and bounded remediation
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pytest -q tests/test_restriction_provenance.py
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |
@@ -89,5 +93,5 @@ jobs:
           if git rev-parse --verify origin/main >/dev/null 2>&1; then
             git diff --check origin/main...HEAD -- . ':(exclude,glob)**/*.patch'
           else
-            git diff --check HEAD^ -- . ':(exclude,glob)**/*.patch'
+            git diff --check HEAD^
           fi
