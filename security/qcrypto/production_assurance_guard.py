@@ -4,6 +4,11 @@ The guard intentionally prevents evidence from one assurance axis from promoting
 unrelated claims. In particular, use of a provider backed by a validated HSM does
 not make Worldshepherd itself FIPS validated, and software readiness never grants
 native-chain signing, broadcast, mainnet, or real-value authority.
+
+Every promoted claim below requires evidence that is attributable, scope-bound,
+and cryptographically or operationally tied to the exact system under assessment.
+Boolean inputs are evidence-admission facts supplied by higher-level verification
+workflows; this module does not manufacture those facts itself.
 """
 from __future__ import annotations
 
@@ -16,15 +21,28 @@ class ProductionEvidence:
     live_hsm_kms_probe_passed: bool = False
     provider_fips_module_documented: bool = False
     provider_cmvp_certificate_active: bool = False
+    provider_cmvp_algorithm_scope_verified: bool = False
     worldshepherd_cmvp_certificate_verified: bool = False
+
     bitcoin_native_signature_verified: bool = False
     ethereum_native_signature_verified: bool = False
+    native_execution_evidence_digest_bound: bool = False
     transaction_broadcast_receipt_verified: bool = False
+    canonical_transaction_id_verified: bool = False
     mainnet_authorization_recorded: bool = False
+    mainnet_authority_issuer_verified: bool = False
     real_value_execution_receipt_verified: bool = False
+    real_value_receipt_independently_verified: bool = False
+
     federal_assessment_attributable: bool = False
     federal_scope_and_version_bound: bool = False
+    federal_assessor_authority_verified: bool = False
+    federal_control_evidence_complete: bool = False
+
     independent_reproduction_recorded: bool = False
+    independent_reviewer_identity_verified: bool = False
+    independent_artifact_digest_bound: bool = False
+
     pq_transaction_authority_covered: bool = False
     pq_consensus_covered: bool = False
     pq_data_availability_covered: bool = False
@@ -64,15 +82,56 @@ def assess_production(e: ProductionEvidence) -> ProductionAssessment:
         e.live_hsm_kms_probe_passed
         and e.provider_fips_module_documented
         and e.provider_cmvp_certificate_active
+        and e.provider_cmvp_algorithm_scope_verified
     ):
-        fips_state = "VALIDATED_PROVIDER_MODULE_USED_NOT_WORLD_SHEPHERD_VALIDATED"
+        fips_state = "VALIDATED_PROVIDER_MODULE_AND_ALGORITHM_SCOPE_USED_NOT_WORLD_SHEPHERD_VALIDATED"
+    elif (
+        e.provider_fips_module_documented
+        and e.provider_cmvp_certificate_active
+        and not e.provider_cmvp_algorithm_scope_verified
+    ):
+        fips_state = "ACTIVE_PROVIDER_CMVP_CERTIFICATE_FOUND_ALGORITHM_SCOPE_NOT_VERIFIED"
     elif e.provider_fips_module_documented:
         fips_state = "PROVIDER_FIPS_DOCUMENTATION_ONLY"
     else:
         fips_state = "FIPS_VALIDATION_NOT_ESTABLISHED"
 
-    federal = e.federal_assessment_attributable and e.federal_scope_and_version_bound
-    independent = e.independent_reproduction_recorded
+    native_binding = e.native_execution_evidence_digest_bound
+    bitcoin_native = e.bitcoin_native_signature_verified and native_binding
+    ethereum_native = e.ethereum_native_signature_verified and native_binding
+    any_native = bitcoin_native or ethereum_native
+
+    broadcast = (
+        any_native
+        and e.transaction_broadcast_receipt_verified
+        and e.canonical_transaction_id_verified
+    )
+    mainnet = (
+        broadcast
+        and e.mainnet_authorization_recorded
+        and e.mainnet_authority_issuer_verified
+    )
+    real_value = (
+        mainnet
+        and e.real_value_execution_receipt_verified
+        and e.real_value_receipt_independently_verified
+    )
+
+    federal = all(
+        (
+            e.federal_assessment_attributable,
+            e.federal_scope_and_version_bound,
+            e.federal_assessor_authority_verified,
+            e.federal_control_evidence_complete,
+        )
+    )
+    independent = all(
+        (
+            e.independent_reproduction_recorded,
+            e.independent_reviewer_identity_verified,
+            e.independent_artifact_digest_bound,
+        )
+    )
     end_to_end_pq = all(
         (
             e.pq_transaction_authority_covered,
@@ -88,17 +147,11 @@ def assess_production(e: ProductionEvidence) -> ProductionAssessment:
     return ProductionAssessment(
         hsm_kms_state=hsm_state,
         fips_state=fips_state,
-        bitcoin_native_signing_claim=e.bitcoin_native_signature_verified,
-        ethereum_native_signing_claim=e.ethereum_native_signature_verified,
-        broadcast_claim=e.transaction_broadcast_receipt_verified,
-        mainnet_authority_claim=(
-            e.mainnet_authorization_recorded and e.transaction_broadcast_receipt_verified
-        ),
-        real_value_movement_claim=(
-            e.real_value_execution_receipt_verified
-            and e.mainnet_authorization_recorded
-            and e.transaction_broadcast_receipt_verified
-        ),
+        bitcoin_native_signing_claim=bitcoin_native,
+        ethereum_native_signing_claim=ethereum_native,
+        broadcast_claim=broadcast,
+        mainnet_authority_claim=mainnet,
+        real_value_movement_claim=real_value,
         federal_compliance_claim=federal,
         independent_validation_claim=independent,
         end_to_end_pq_cryptocurrency_security_claim=end_to_end_pq,
