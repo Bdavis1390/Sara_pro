@@ -1,6 +1,8 @@
 # WS-RESTRICTION-PROVENANCE G1
 
-Status: **IMPLEMENTED IN SOFTWARE on branch / REQUIRES CI AND MERGE**
+Status: **IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY FOR THE TESTED INVARIANTS**
+
+Merged through protected `main` in PR `#360` at commit `401a4d56b85500f405127b69be9261b03d22d29e` after the required `Analyze (python)`, `CodeQL`, and `test-and-build` checks succeeded. The broader SARA Verified Local v1 gate also succeeded through unit/API tests, ephemeral deployment verification, destructive backup/restore, operational snapshot, release identity, and release-evidence indexing.
 
 ## Purpose
 
@@ -104,4 +106,4 @@ G1 does **not** recover, reveal, reconstruct, classify, or bypass restricted mat
 
 The metadata-key denylist prevents common accidental leakage paths but cannot semantically prove that arbitrary caller-supplied strings are safe. Integrations remain responsible for supplying only policy-approved metadata and safe summaries. Production deployments should pair this envelope with provider-specific allowlists where the metadata schema is known.
 
-Until repository CI passes and the change merges, classify this as **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION**. After exact-head CI and protected-branch merge, it may be classified as **IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY for the tested invariants only**. Production secret-management, external policy-provider integration, and adversarial red-team validation remain separate gates.
+The internal proof applies only to the tested software invariants. It does **not** establish production secret-management adequacy, secure memory erasure of transient Python strings, external policy-provider interoperability, provider-specific metadata safety, or adversarial red-team validation. Those remain separate gates.
