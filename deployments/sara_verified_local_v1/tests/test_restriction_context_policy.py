@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+import worldshepherd_sara.restriction_context_policy as context_policy
 from worldshepherd_sara.restriction_context_policy import (
     CHAT_ASSISTANT_PROFILE_ID,
     EMPTY_CONTEXT_PROFILE_ID,
@@ -39,6 +40,16 @@ def test_registered_chat_assistant_profile_accepts_only_declared_context():
     }
     assert summary == APPROVED_SUMMARY
     assert registered_context_profile_ids() == (CHAT_ASSISTANT_PROFILE_ID,)
+
+
+def test_profile_registry_and_field_rules_are_immutable():
+    profile = context_policy._PROFILES[("CHAT_ASSISTANT", "POLICY_GATE")]
+
+    with pytest.raises(TypeError):
+        context_policy._PROFILES[("FORGED", "GATE")] = profile
+
+    with pytest.raises(TypeError):
+        profile.metadata_rules["new_field"] = context_policy.MetadataRule(kind="integer")
 
 
 def test_capture_binds_context_profile_into_persisted_evidence():
