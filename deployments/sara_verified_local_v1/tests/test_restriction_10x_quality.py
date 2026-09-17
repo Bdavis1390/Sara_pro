@@ -32,7 +32,7 @@ KEY = b"worldshepherd-g7-quality-hmac-key-32-bytes-minimum"
 KEY_ID = "ws-restriction-key-epoch-quality"
 SIGNING_KEY_ID = "PS-QUALITY-K1"
 APPROVED_SUMMARY = "Output was restricted; only bounded provenance is retained."
-BASELINE_MANUAL_INFERENCE_UNITS = 10
+TOTAL_ASSURANCE_DIMENSIONS = 10\nBASELINE_MANUAL_INFERENCE_UNITS = 6
 MAX_UNRESOLVED_RATIO = 0.10
 
 
@@ -137,7 +137,7 @@ def test_v4_machine_resolves_all_ten_assurance_dimensions():
     facts = restriction_assurance_dimensions(projected)
 
     assert projected["provenance_schema"] == SIGNED_RESTRICTION_SCHEMA
-    assert len(ASSURANCE_DIMENSIONS) == BASELINE_MANUAL_INFERENCE_UNITS == 10
+    assert len(ASSURANCE_DIMENSIONS) == TOTAL_ASSURANCE_DIMENSIONS == 10
     assert set(facts) == set(ASSURANCE_DIMENSIONS)
     assert all(facts.values())
 
