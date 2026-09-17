@@ -169,6 +169,7 @@ def _validated_stored_state(value: Any) -> dict[str, Any]:
         raise PrimeTrustRootError("stored PRIME trust-root digest is invalid")
     if not isinstance(keys, dict) or not all(
         isinstance(key_id, str)
+        and _COMPONENT.fullmatch(key_id)
         and isinstance(fingerprint, str)
         and len(fingerprint) == 64
         and all(ch in "0123456789abcdef" for ch in fingerprint)
@@ -179,6 +180,8 @@ def _validated_stored_state(value: Any) -> dict[str, Any]:
         isinstance(item, str) and _COMPONENT.fullmatch(item) for item in revoked
     ):
         raise PrimeTrustRootError("stored PRIME revocation list is invalid")
+    if revoked != sorted(set(revoked)):
+        raise PrimeTrustRootError("stored PRIME revocation list is not canonical")
 
     material = {
         "key_fingerprints_sha256": dict(sorted(keys.items())),
