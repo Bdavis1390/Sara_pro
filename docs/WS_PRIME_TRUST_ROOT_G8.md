@@ -58,9 +58,11 @@ This makes key retirement one-way at the software policy layer. Reusing a retire
 
 ## Runtime integration
 
-The guard runs during SARA startup after PRIME public-key configuration is parsed and before normal service-start evidence is emitted.
+The guard is the first PRIME trust decision after durable SARA storage is opened. It runs before the PRIME verifier is constructed and before any pending event-outbox replay.
 
-A violation aborts startup.
+A violation aborts startup before verifier construction or governed replay, preventing rollback-rejected configuration from producing startup-side effects.
+
+When audit storage is functional, a rejected trust root appends only a bounded non-secret reason code such as `TRUST_EPOCH_ROLLBACK`, `KEY_ID_REBINDING`, or `REVOCATION_ROLLBACK`. Exception text, key IDs, public-key material, and configuration blobs are not copied into the rejection audit record.
 
 The generic `/admin/registry` patch endpoint cannot modify `PRIME_TRUST_ROOT_STATE`.
 
@@ -97,6 +99,9 @@ Tests also require:
 - missing runtime trust configuration after prior initialization fails closed;
 - stored state digest is self-checked;
 - state survives service/store restart;
+- successful startup order is trust-root guard -> verifier construction -> outbox replay;
+- rejected trust root prevents verifier construction and outbox replay entirely;
+- rejection audit evidence is reason-code-only and does not echo trust material;
 - unconfigured development runtime remains explicitly `UNCONFIGURED`;
 - trust-root registry namespace is protected from generic admin mutation.
 
