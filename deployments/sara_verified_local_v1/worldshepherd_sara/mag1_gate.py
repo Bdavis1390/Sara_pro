@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,6 +19,7 @@ from .autonomy_policy import (
 )
 from .context_lineage import ContextArtifact, evaluate_authority_claim
 from .trajectory_guard import (
+    HIGH_CONSEQUENCE_EFFECTS,
     TrajectoryAction,
     TrajectoryDisposition,
     TrajectoryGuardPolicy,
@@ -55,19 +57,24 @@ def evaluate_mag1(
     authorization_envelope: AuthorizationEnvelope | None = None,
     authorization_request: AuthorizationRequest | None = None,
     authority_artifact: ContextArtifact | None = None,
+    authorization_now: datetime | None = None,
 ) -> Mag1Decision:
     """Compose context, purpose-bound authorization, trajectory, and autonomy gates.
 
-    When purpose-bound authorization is required, the caller cannot self-assert
-    ``trajectory_action.authorization_verified``. The composite gate overwrites
+    High-consequence effects always require purpose-bound authorization regardless
+    of caller preference. The caller cannot self-assert
+    ``trajectory_action.authorization_verified``; the composite gate overwrites
     that value from the authorization decision.
     """
 
     reasons: list[str] = []
     authorization_disposition: AuthorizationDisposition | None = None
-    authorization_verified = not authorization_required
+    requires_authorization = (
+        authorization_required or trajectory_action.side_effect in HIGH_CONSEQUENCE_EFFECTS
+    )
+    authorization_verified = not requires_authorization
 
-    if authorization_required:
+    if requires_authorization:
         if authority_artifact is None:
             reasons.append("authorization requires a root or signed-policy authority artifact")
             authorization_disposition = AuthorizationDisposition.DENIED
@@ -84,6 +91,7 @@ def evaluate_mag1(
             authorization_disposition, auth_reasons = evaluate_authorization(
                 authorization_envelope,
                 authorization_request,
+                now=authorization_now,
             )
             reasons.extend(auth_reasons)
             authorization_verified = authorization_disposition == AuthorizationDisposition.AUTHORIZED
