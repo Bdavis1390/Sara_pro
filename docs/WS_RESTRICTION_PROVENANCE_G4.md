@@ -42,7 +42,8 @@ G4 hardens the G2 restriction projection:
 - every restriction-shaped audit record, including historical V1, must have outer audit actor `PRIME_SENTINEL`;
 - V2 additionally requires payload `authority=PRIME_SENTINEL`;
 - V2 records missing or changing the payload authority are malformed;
-- V1 records containing a V2-style authority field are malformed rather than silently treated as legacy.
+- V1 records containing a V2-style authority field are malformed rather than silently treated as legacy;
+- for both V1 and V2, observability reconstructs the canonical safe identity document and requires the stored `restriction_id` to equal its SHA-256-derived identity.
 
 The strict projection adds only structural fields:
 
@@ -66,6 +67,7 @@ A V1 record is accepted only when:
 
 - its outer audit actor is `PRIME_SENTINEL`;
 - it does not contain the V2-only `authority` field;
+- its `restriction_id` matches the recomputed V1 safe-envelope identity;
 - all existing G2 structural validation succeeds.
 
 G2/G4 observability reports:
@@ -81,9 +83,11 @@ for such records. This makes the weaker legacy assurance visible instead of pret
 
 A V2 record cannot be made to pass as V2 after removing or altering its authority field. It fails V2 validation.
 
-A record explicitly relabeled as V1 must satisfy the V1 field contract, which rejects the V2-only authority field. Historical V1 acceptance therefore has a distinct schema and field shape rather than an optional-V2 authority switch.
+If a V2 record is relabeled as V1 and the V2 authority field is removed, the V1 canonical identity changes. Reusing the original V2 `restriction_id` therefore fails semantic-identity verification.
 
-This is structural downgrade resistance inside the SARA evidence contract. It is not a cryptographic signature scheme.
+A V1 record that retains the V2-only authority field also fails the V1 field contract.
+
+This provides structural and semantic downgrade detection inside the SARA evidence contract. It is not a cryptographic signature scheme: a malicious party able to rewrite the full record could also calculate a new unkeyed restriction ID.
 
 ## Acceptance tests
 
@@ -91,17 +95,20 @@ The G4 regression suite verifies:
 
 1. new captures use provenance schema V2;
 2. `PRIME_SENTINEL` is inserted into the V2 semantic document;
-3. the queue emits the same governed authority as the outer audit actor;
-4. the queue helper has no supported actor override;
-5. valid V2 records project with `authority_bound_in_payload=true`;
-6. a non-PRIME outer audit actor is rejected;
-7. a missing V2 payload authority is rejected;
-8. an altered V2 payload authority is rejected;
-9. authority tampering makes the bounded observability status unhealthy;
-10. historical V1 records with PRIME outer actor remain readable;
-11. historical V1 projections explicitly report `authority_bound_in_payload=false`;
-12. V1 records cannot carry the V2-only authority field;
-13. the required build executes G1, G2, G3, and G4 restriction suites together.
+3. valid V2 restriction IDs match recomputation from the safe identity document;
+4. the queue emits the same governed authority as the outer audit actor;
+5. the queue helper has no supported actor override;
+6. valid V2 records project with `authority_bound_in_payload=true`;
+7. a non-PRIME outer audit actor is rejected;
+8. a missing V2 payload authority is rejected;
+9. an altered V2 payload authority is rejected;
+10. semantic V2 tampering without a matching restriction ID is rejected;
+11. authority tampering makes the bounded observability status unhealthy;
+12. historical V1 records with correctly derived V1 restriction IDs and PRIME outer actor remain readable;
+13. historical V1 projections explicitly report `authority_bound_in_payload=false`;
+14. stripping V2 authority, relabeling as V1, and retaining the V2 ID is rejected;
+15. V1 records cannot carry the V2-only authority field;
+16. the required build executes G1, G2, G3, and G4 restriction suites together.
 
 ## Claims boundary
 
@@ -109,7 +116,9 @@ G4 is **application-level authority binding**, not independent signer authentica
 
 The literal `PRIME_SENTINEL` identifier is bound into V2 evidence identity and cross-checked against the SARA audit actor, but G4 does not prove that a hardware key, external signer, HSM, TPM, remote attestation system, or independent witness produced the event.
 
-ECHO semantic hashing and stable event IDs provide replay/conflict evidence within the existing software architecture; they do not transform the authority string into a digital signature.
+The recomputed `restriction_id` detects inconsistent/tampered safe envelopes when the ID is not rewritten with them, but it is an unkeyed digest of already-safe evidence fields and is not an authenticity proof against a party able to rewrite the entire record.
+
+ECHO semantic hashing and stable event IDs provide replay/conflict evidence within the existing software architecture; they do not transform the authority string or restriction ID into a digital signature.
 
 A later gate should add non-secret fingerprint-key epoch identifiers and, separately, independently verifiable signing/witness evidence where justified.
 
