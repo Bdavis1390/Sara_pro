@@ -30,7 +30,16 @@ evidence_dir=".deployment-evidence/full-stack/${stamp}"
 mkdir -p "$evidence_dir"
 chmod 0700 .deployment-evidence .deployment-evidence/full-stack "$evidence_dir"
 
-python3 worldshepherd_sara/deployment_preflight.py   --env .env   --expected-head "$git_head"   --required-uid "$container_uid"   --output "${evidence_dir}/preflight.json" >/dev/null
+preflight_receipt="${evidence_dir}/preflight.json"
+operator_uid="$(id -u)"
+operator_gid="$(id -g)"
+if [[ "$operator_uid" -eq 0 ]]; then
+  python3 worldshepherd_sara/deployment_preflight.py --env .env --expected-head "$git_head" --required-uid "$container_uid" --output "$preflight_receipt" >/dev/null
+else
+  sudo python3 worldshepherd_sara/deployment_preflight.py --env .env --expected-head "$git_head" --required-uid "$container_uid" --output "$preflight_receipt" >/dev/null
+  sudo chown "${operator_uid}:${operator_gid}" "$preflight_receipt"
+  chmod 0600 "$preflight_receipt"
+fi
 
 sara_url="http://127.0.0.1:${SARA_HOST_PORT:-9530}"
 prime_url="http://127.0.0.1:${PRIME_SENTINEL_HOST_PORT:-9540}"
