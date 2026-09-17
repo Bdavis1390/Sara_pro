@@ -1,0 +1,164 @@
+registry_version: "0.1"
+verified_on: "2026-09-17"
+principle: "Verify authority, access, rights and corpus scope before canonical ingest."
+
+sources:
+  - id: CDLI
+    name: "Cuneiform Digital Library Initiative"
+    url: "https://cdli.earth/"
+    domains: [cuneiform, Sumerian, Akkadian, early_writing]
+    authority: "international scholarly/curatorial collaboration"
+    capabilities: [artifact_metadata, transliterations, images, sign_readings]
+    access_policy: "open-access orientation; verify per-object image rights"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: ORACC
+    name: "Open Richly Annotated Cuneiform Corpus"
+    url: "https://oracc.museum.upenn.edu/"
+    domains: [cuneiform, annotated_texts, translations, lemmatization]
+    authority: "scholarly collaborative corpus"
+    capabilities: [transliteration, translation, linguistic_annotation]
+    access_policy: "open-licensing project; verify project-specific terms"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: UNIKEMET
+    name: "Unicode Egyptian Hieroglyph Database (Unikemet)"
+    url: "https://unicode.org/reports/tr57/"
+    domains: [Egyptian_hieroglyphs, sign_properties]
+    authority: "Unicode Consortium normative annex"
+    capabilities: [encoded_signs, descriptions, sources, functions, rotation, mirroring]
+    access_policy: "Unicode data terms apply"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: TLA
+    name: "Thesaurus Linguae Aegyptiae"
+    url: "https://tla.digital/"
+    domains: [Egyptian, hieroglyphic, hieratic, Demotic]
+    authority: "German academy project"
+    capabilities: [lemmatized_corpus, transliteration, lexicon, cooccurrence]
+    access_policy: "web access; bulk/reuse rights must be verified"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: DAMOS
+    name: "DĀMOS — Database of Mycenaean at Oslo"
+    url: "https://damos.hf.uio.no/"
+    domains: [Linear_B, Mycenaean_Greek]
+    authority: "University of Oslo scholarly corpus"
+    capabilities: [transliteration, epigraphic_metadata, scribe_context]
+    access_policy: "web access; reuse terms must be verified"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: CMHI
+    name: "Corpus of Maya Hieroglyphic Inscriptions"
+    url: "https://peabody.harvard.edu/corpus-maya-hieroglyphic-inscriptions"
+    domains: [Maya, monuments, hieroglyphs]
+    authority: "Harvard Peabody Museum"
+    capabilities: [photographs, line_drawings, monument_context]
+    access_policy: "published/browsable material; image reuse may require permission"
+    source_class: A_PRIMARY_AUTHORITY
+    canonical_use: true
+
+  - id: IAA_DSS
+    name: "Leon Levy Dead Sea Scrolls Digital Library"
+    url: "https://www.deadseascrolls.org.il/"
+    domains: [Dead_Sea_Scrolls, Hebrew, Aramaic, manuscript_fragments]
+    authority: "Israel Antiquities Authority"
+    capabilities: [high_resolution_images, multispectral_images, fragment_metadata]
+    access_policy: "public online access; reuse rights must be checked"
+    source_class: A_PRIMARY_AUTHORITY
+    canonical_use: true
+
+  - id: PAPYRI_INFO
+    name: "Papyri.info"
+    url: "https://papyri.info/"
+    domains: [Greek_papyri, Latin_papyri, documentary_texts]
+    authority: "Duke Collaboratory for Classics Computing + ISAW"
+    capabilities: [texts, translations, commentary, metadata, versioned_peer_review]
+    access_policy: "aggregated corpora; honor component licenses"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: TRISMEGISTOS
+    name: "Trismegistos"
+    url: "https://www.trismegistos.org/"
+    domains: [ancient_world_metadata, papyri, inscriptions, people, places]
+    authority: "KU Leuven interdisciplinary research infrastructure"
+    capabilities: [stable_ids, cross_project_links, text_metadata, linked_open_data]
+    access_policy: "data-services subsets under CC BY-SA 4.0; subscription/access varies by service"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: GANDHARI
+    name: "Corpus of Gāndhārī Texts"
+    url: "https://gandhari.org/"
+    domains: [Gandhari, Kharosthi, manuscripts, inscriptions, coins]
+    authority: "scholarly corpus by Baums/Glass"
+    capabilities: [catalog, text, linguistic_analysis, image_links, reading_history]
+    access_policy: "web corpus; verify image/reuse rights per record"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: SRD
+    name: "Scandinavian Runic-text Database"
+    url: "https://www.runforum.nordiska.uu.se/en/srd/"
+    domains: [runic, Scandinavian_inscriptions]
+    authority: "Uppsala University"
+    capabilities: [digital_inscription_database, downloadable_data]
+    access_policy: "Open Database License + Database Contents License; attribution conditions"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: EDH
+    name: "Epigraphic Database Heidelberg"
+    url: "https://www.propylaeum.de/en/searching/epigraphic-database-of-roman-inscriptions-edh"
+    domains: [Latin, bilingual_Latin_Greek, Roman_epigraphy]
+    authority: "Heidelberg Academy / Heidelberg University Library"
+    capabilities: [text, photos, bibliography, geography, APIs, downloads]
+    access_policy: "open-data repository CC BY-SA 4.0"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: PHI_GREEK
+    name: "PHI Searchable Greek Inscriptions"
+    url: "https://inscriptions.packhum.org/"
+    domains: [Greek_epigraphy]
+    authority: "Packard Humanities Institute"
+    capabilities: [searchable_published_inscriptions]
+    access_policy: "personal study/fair-use terms; do not bulk ingest without permission"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: "metadata/reference only unless permission allows"
+
+  - id: DASI
+    name: "Digital Archive for the Study of pre-Islamic Arabian Inscriptions"
+    url: "https://dasi.cnr.it/"
+    domains: [Ancient_South_Arabian, Ancient_North_Arabian, Nabataean, Aramaic]
+    authority: "CNR / University of Pisa project"
+    capabilities: [inscriptions, metadata, corpora, object_context]
+    access_policy: "record data may be CC BY 4.0; image rights can be third-party"
+    source_class: B_SCHOLARLY_CORPUS
+    canonical_use: true
+
+  - id: ETANA
+    name: "ETANA Core Texts"
+    url: "https://etana.org/coretexts"
+    domains: [Ancient_Near_East, historical_editions]
+    authority: "scholarly digital archive"
+    capabilities: [digitized_editions, teaching_research_texts]
+    access_policy: "freely available for noncommercial teaching/research; per-item copyright applies"
+    source_class: D_SCHOLARLY_SECONDARY
+    canonical_use: "supporting/edition-history layer"
+
+  - id: PFA
+    name: "Persepolis Fortification Archive Project"
+    url: "https://isac.uchicago.edu/"
+    domains: [Achaemenid_Elamite, Imperial_Aramaic, seals, tablets]
+    authority: "University of Chicago scholarly archive project"
+    capabilities: [tablet_images, editions, catalog_records, seal_data]
+    access_policy: "project/interface specific; verify before ingest"
+    source_class: A_PRIMARY_AUTHORITY
+    canonical_use: true
