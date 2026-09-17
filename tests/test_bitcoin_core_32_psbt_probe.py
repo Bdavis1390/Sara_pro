@@ -38,6 +38,9 @@ class BitcoinCore32ProbeHelpersTest(unittest.TestCase):
             'd0231bb01d83178224bf7b198ba04f78cc2c89ef',
         )
 
+    def test_probe_cannot_self_promote_claim(self):
+        self.assertEqual(MODULE.CASE_CLAIM_CLASS, 'NOT CURRENTLY CLAIMED')
+
 
 if __name__ == '__main__':
     unittest.main()
