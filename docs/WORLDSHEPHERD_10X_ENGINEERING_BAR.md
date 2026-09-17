@@ -84,7 +84,7 @@ Prefer:
 
 or:
 
-> “Reduced G6 unsigned-authenticity residual classes from 5 to 0 on the fixed witness-verification test set.”
+> “Reduced G6 unsigned-authenticity residual classes from 4 to 0 on the fixed witness-verification test set.”
 
 Do not infer from those results alone:
 
