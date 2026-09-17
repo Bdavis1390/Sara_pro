@@ -487,7 +487,7 @@ jobs:
             echo "Relay bearer token leaked into deployment evidence." >&2
             exit 1
           fi
-          test -s .deployment-evidence/full-stack/*/receipt.json
+          find .deployment-evidence/full-stack -type f -name receipt.json -size +0c -print -quit | grep -q .
 
       - name: Upload full-stack deployment acceptance evidence
         uses: actions/upload-artifact@v4
