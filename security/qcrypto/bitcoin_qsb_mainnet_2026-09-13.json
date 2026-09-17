@@ -1,0 +1,27 @@
+{
+  "schema": "WS-QCRYPTO-BITCOIN-QSB-MAINNET-v1",
+  "as_of": "2026-09-13",
+  "claims_boundary": "This record treats the August 26, 2026 QSB transaction as a consensus-compatible Bitcoin mainnet proof-of-concept. It does not claim Bitcoin is quantum-safe, does not claim standard relay support, and does not claim protection for already-exposed public keys or a network-wide migration path.",
+  "evidence": {
+    "name": "Quantum-Safe Bitcoin (QSB) mainnet demonstration",
+    "primary_source": "https://starkware.co/blog/the-first-quantum-safe-bitcoin-transaction-has-been-mined/",
+    "date": "2026-08-26",
+    "mainnet_confirmed": true,
+    "consensus_change_required": false,
+    "standard_relay": false,
+    "direct_miner_path_required": true,
+    "miner_path": "MARA Slipstream",
+    "protects_previously_exposed_pubkeys": false,
+    "production_wallet_support": false,
+    "network_wide_migration_path": false,
+    "independent_security_review_complete": false,
+    "current_classification": "CONSENSUS_COMPATIBLE_MAINNET_PROOF",
+    "migration_value": "DEMONSTRATED_OPT_IN_PREPOSITIONING_PATH"
+  },
+  "limitations": [
+    "The construction uses nonstandard transaction formats and did not rely on ordinary mempool relay for the demonstrated transaction.",
+    "It is relevant to coins whose public keys remain hidden before migration; it does not rescue keys already exposed long enough for a future adversary to recover.",
+    "A successful mainnet proof does not supply production wallet integration, network-wide migration, legacy rescue, or signature-sunset policy.",
+    "A protocol-level PQ authorization/output path remains strategically preferable for scalable deployment and recovery policy."
+  ]
+}

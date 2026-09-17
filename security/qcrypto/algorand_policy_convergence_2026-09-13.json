@@ -1,0 +1,27 @@
+{
+  "schema": "WS-QCRYPTO-ALGORAND-POLICY-CONVERGENCE-v1",
+  "as_of": "2026-09-13",
+  "current_state": {
+    "native_falcon_1024_accounts_live": true,
+    "sdk_algokit_pera_support_reported": true,
+    "native_pq_multisig_live": false,
+    "consensus_pq_complete": false
+  },
+  "roadmap_state": {
+    "native_multi_crypto_policy_target": "end-2026",
+    "weighted_approvals_planned": true,
+    "hybrid_classical_pq_combinations_planned": true,
+    "future_pq_algorithm_agility_planned": true,
+    "evidence_class": "official_project_roadmap_not_deployed_capability"
+  },
+  "worldshepherd_control": {
+    "phase_a": "bounded native-PQ account canary only",
+    "phase_b": "institution-grade multi-approver canary only after the policy layer is live and validated",
+    "claim_boundary": "A roadmap promise never satisfies the Phase B live-policy gate."
+  },
+  "sources": [
+    "https://algorand.co/blog/algorand-post-quantum-cryptography-roadmap",
+    "https://algorand.co/technology/post-quantum",
+    "https://dev.algorand.co/concepts/accounts/post-quantum/"
+  ]
+}

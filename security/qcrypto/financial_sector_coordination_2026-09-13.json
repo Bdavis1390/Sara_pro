@@ -1,0 +1,36 @@
+{
+  "schema": "WS-QCRYPTO-FINANCIAL-SECTOR-COORDINATION-v1",
+  "as_of": "2026-09-13",
+  "claims_boundary": "Sector-level coordination is evidence of migration maturity and policy alignment, not proof of Q-day, a crypto-specific binding deadline, or blockchain-level post-quantum activation.",
+  "evidence": [
+    {
+      "name": "Executive Order 14412",
+      "source": "https://www.whitehouse.gov/presidential-actions/2026/06/securing-the-nation-against-advanced-cryptographic-attacks/",
+      "evidence_class": "official_federal_policy",
+      "relevant_statement": "Accelerates Federal PQC migration, directs assistance to critical infrastructure owners and operators, and establishes 2030 key-establishment / 2031 digital-signature deadlines for Federal HVAs and high-impact systems."
+    },
+    {
+      "name": "Treasury Quantum-Readiness Task Force",
+      "source": "https://home.treasury.gov/news/press-releases/sb0615",
+      "evidence_class": "official_public_private_sector_program",
+      "relevant_statement": "Public-private initiative for U.S. financial-sector PQ transition with workstreams for Sector Alignment & PQC Transition, Third-Party & Vendor Readiness, and Digital Assets and Emerging Technology Risk."
+    },
+    {
+      "name": "G7 Cyber Expert Group PQC financial-sector roadmap",
+      "source": "https://home.treasury.gov/system/files/136/G7-CEG-Quantum-Roadmap.pdf",
+      "evidence_class": "official_multilateral_financial_sector_roadmap",
+      "relevant_statement": "G7 financial authorities provide a coordinated roadmap for timely, secure and harmonized financial-sector transition to PQC and cryptographic agility."
+    }
+  ],
+  "current_assessment": {
+    "coordination_state": "FINANCIAL_SECTOR_COORDINATED_PQ_TRANSITION",
+    "digital_asset_state": "DIGITAL_ASSETS_EXPLICITLY_IN_SCOPE",
+    "mandate_state": "COORDINATION_WITHOUT_CRYPTO_SPECIFIC_BINDING_DEADLINE",
+    "urgency": "ALIGN_CHAIN_CUSTODY_STABLECOIN_BRIDGE_MIGRATION_WITH_SECTOR_PROGRAM"
+  },
+  "blocking_gaps": [
+    "No crypto-specific binding PQ migration deadline is established by the Treasury task force announcement.",
+    "Sector coordination does not substitute for chain-native PQ transaction authorization or consensus activation.",
+    "No cryptographically relevant quantum computer or Q-day is demonstrated by these policy actions."
+  ]
+}
