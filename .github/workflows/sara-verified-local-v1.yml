@@ -450,10 +450,63 @@ jobs:
           path: deployments/sara_verified_local_v1/release_index_ci
           if-no-files-found: error
 
+      - name: Reset to clean full-stack deployment state
+        env:
+          WS_DEPLOY_SECRET_ROOT: ${{ runner.temp }}/worldshepherd-deploy
+        run: |
+          set -euo pipefail
+          docker compose --profile prime-sentinel --profile echo down -v || true
+          rm -f .env
+          rm -rf .deployment-evidence
+          sudo rm -rf "${WS_DEPLOY_SECRET_ROOT}"
+
+      - name: Deploy and verify localhost full stack
+        env:
+          WS_DEPLOY_SECRET_ROOT: ${{ runner.temp }}/worldshepherd-deploy
+          WS_DEPLOY_RELEASE_ID: ci-${{ github.sha }}
+        run: |
+          set -euo pipefail
+          bash ../../scripts/sara.sh deploy-full
+          bash ../../scripts/sara.sh verify-full
+
+      - name: Enforce bounded deployment evidence
+        run: |
+          set -euo pipefail
+          if find .deployment-evidence -type f -name '*.inspect.json' -print -quit | grep -q .; then
+            echo "Raw docker inspect evidence must not be retained." >&2
+            exit 1
+          fi
+          set -a
+          source .env
+          set +a
+          if grep -R -F -- "${SARA_ADMIN_TOKEN}" .deployment-evidence >/dev/null 2>&1; then
+            echo "Administrator bearer token leaked into deployment evidence." >&2
+            exit 1
+          fi
+          if grep -R -F -- "${SARA_RELAY_TOKEN}" .deployment-evidence >/dev/null 2>&1; then
+            echo "Relay bearer token leaked into deployment evidence." >&2
+            exit 1
+          fi
+          find .deployment-evidence/full-stack -type f -name receipt.json -size +0c -print -quit | grep -q .
+
+      - name: Upload full-stack deployment acceptance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-verified-local-full-stack-${{ github.sha }}
+          path: |
+            deployments/sara_verified_local_v1/.deployment-evidence/preflight
+            deployments/sara_verified_local_v1/.deployment-evidence/full-stack
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Capture container logs on failure
         if: failure()
         run: docker compose logs --no-color || true
 
       - name: Stop and remove CI services
         if: always()
-        run: docker compose down -v || true
+        run: |
+          set +e
+          docker compose --profile prime-sentinel --profile echo down -v
+          sudo rm -rf "${{ runner.temp }}/worldshepherd-deploy"
+          rm -f .env
