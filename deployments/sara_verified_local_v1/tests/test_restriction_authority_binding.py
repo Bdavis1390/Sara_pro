@@ -4,6 +4,7 @@ import copy
 
 import pytest
 
+from worldshepherd_sara.event_outbox import EVENT_OUTBOX_REGISTRY_KEY
 from worldshepherd_sara.models import AuditRecord
 from worldshepherd_sara.restriction_observability import (
     RestrictionObservabilityError,
@@ -73,7 +74,7 @@ def test_new_restrictions_bind_prime_authority_into_v2_identity():
 def test_queue_actor_is_not_caller_overridable():
     item = evidence()
     patch, stable_id = queue_restriction_event({}, item)
-    queued = patch["event_outbox"][stable_id]
+    queued = patch[EVENT_OUTBOX_REGISTRY_KEY][stable_id]
 
     assert queued["actor"] == RESTRICTION_AUTHORITY
     assert queued["payload"]["authority"] == RESTRICTION_AUTHORITY
