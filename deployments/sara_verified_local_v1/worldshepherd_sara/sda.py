@@ -10,7 +10,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .models import AuditRecord
+from .prime_sentinel_authorization import PrimeSentinelAuthorizationError
 from .qualification import EvidenceGraph, EvidenceGraphEdge, EvidenceGraphNode, canonical_digest
+from .sda_identity import VerifiedSdaWorkloadIdentity, assert_workload_identity_bound_to_adapter
 
 
 SDA_OBSERVATION_SCHEMA = "WS-SDA-OBSERVATION-V1"
@@ -73,6 +75,7 @@ class SdaInterfaceContract(BaseModel):
     max_clock_uncertainty_seconds: float = Field(gt=0.0, le=3600.0)
     validation_state: SdaContractValidationState = SdaContractValidationState.SYNTHETIC
     validation_ref: str | None = Field(default=None, max_length=512)
+    require_workload_identity: bool = False
     enabled: bool = False
 
     @field_validator("allowed_reference_frames", "allowed_releasability_tags")
@@ -212,6 +215,7 @@ def evaluate_sda_ingest(
     *,
     contract: SdaInterfaceContract,
     replay_state: SdaReplayState | None = None,
+    workload_identity: VerifiedSdaWorkloadIdentity | None = None,
     now: datetime | None = None,
 ) -> SdaIngestResult:
     """Fail closed at the source-isolation boundary.
@@ -225,6 +229,7 @@ def evaluate_sda_ingest(
     digest = observation.semantic_digest()
     reject: list[str] = []
     quarantine: list[str] = []
+    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
 
     if not contract.enabled:
         reject.append("interface contract is disabled")
@@ -238,6 +243,21 @@ def evaluate_sda_ingest(
         reject.append("observation interface_contract_id does not match active contract")
     if observation.interface_contract_digest != contract.digest():
         reject.append("observation interface contract digest is stale or mismatched")
+
+    if contract.require_workload_identity:
+        if workload_identity is None:
+            reject.append("active interface contract requires verified workload identity")
+        else:
+            try:
+                assert_workload_identity_bound_to_adapter(
+                    workload_identity,
+                    source_id=observation.source.source_id,
+                    adapter_id=observation.source.adapter_id,
+                    adapter_version=observation.source.adapter_version,
+                    now=current,
+                )
+            except PrimeSentinelAuthorizationError as exc:
+                reject.append(f"workload identity rejected: {exc}")
 
     if replay_state is not None:
         if replay_state.source_id != observation.source.source_id:
@@ -265,7 +285,6 @@ def evaluate_sda_ingest(
     if observed_tags - allowed_tags:
         quarantine.append("observation releasability tags exceed active contract")
 
-    current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     observed = observation.observed_at.astimezone(timezone.utc)
     if observed > current:
         future_skew = (observed - current).total_seconds()
@@ -303,7 +322,7 @@ def evaluate_sda_ingest(
     )
     return SdaIngestResult(
         disposition=SdaIngestDisposition.ACCEPT,
-        reasons=["source, contract, replay, timing, frame, and releasability gates passed"],
+        reasons=["source, contract, workload identity when required, replay, timing, frame, and releasability gates passed"],
         event_id=event_id,
         semantic_digest=digest,
         next_replay_state=next_state,
