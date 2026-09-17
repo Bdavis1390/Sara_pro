@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import base64
+import importlib
 import json
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from fastapi.testclient import TestClient
 
 from worldshepherd_sara.storage import DurableStore
 from worldshepherd_sara.trust_root_guard import (
@@ -284,3 +286,40 @@ def test_health_reports_bounded_trust_root_guard_state(client):
     assert guard["status"] == "UNCONFIGURED"
     assert guard["epoch"] is None
     assert guard["material_sha256"] is None
+
+
+
+def test_trust_root_admission_precedes_outbox_replay(monkeypatch, tmp_path):
+    app_module = importlib.import_module("worldshepherd_sara.app")
+    order: list[str] = []
+
+    monkeypatch.setenv(
+        "SARA_RELAY_TOKEN",
+        "relay-token-0123456789abcdef012345",
+    )
+    monkeypatch.setenv(
+        "SARA_ADMIN_TOKEN",
+        "admin-token-0123456789abcdef012345",
+    )
+    monkeypatch.setenv("SARA_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.delenv("PRIME_SENTINEL_PUBLIC_KEYS_JSON", raising=False)
+    monkeypatch.delenv("PRIME_SENTINEL_REVOKED_KEY_IDS", raising=False)
+    monkeypatch.delenv("PRIME_SENTINEL_TRUST_EPOCH", raising=False)
+
+    def fake_guard(store):
+        order.append("guard")
+        return {
+            "status": "UNCONFIGURED",
+            "epoch": None,
+            "material_sha256": None,
+        }
+
+    def fake_drain(store, *, limit):
+        order.append("drain")
+        return 0
+
+    monkeypatch.setattr(app_module, "guard_prime_trust_root", fake_guard)
+    monkeypatch.setattr(app_module, "drain_event_outbox", fake_drain)
+
+    with TestClient(app_module.app):
+        assert order[:2] == ["guard", "drain"]
