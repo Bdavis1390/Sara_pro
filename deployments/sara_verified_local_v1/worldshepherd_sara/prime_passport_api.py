@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -31,6 +32,7 @@ from .prime_passport import (
     update_requalification_evidence,
 )
 from .prime_sentinel_authorization import (
+    MAX_ASSERTION_LIFETIME,
     PrimeSentinelAuthorizationAssertion,
     PrimeSentinelAuthorizationError,
     PrimeSentinelVerifier,
@@ -50,6 +52,10 @@ class _PassportNotFound(LookupError):
 
 
 class _PassportAlreadyExists(ValueError):
+    pass
+
+
+class _PassportRegistryInvalid(RuntimeError):
     pass
 
 
@@ -364,9 +370,6 @@ def complete_prime_mission(
     except _PassportNotFound as exc:
         raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
     except EventOutboxError as outbox_exc:
-        # Mission completion is safety-tightening. If provenance capacity or
-        # outbox integrity is unavailable, do not leave a returned machine in a
-        # previously READY state merely to preserve the normal provenance path.
         def safety_operation(registry: dict[str, Any]):
             updated, payload, prior_id, supersession_error, base_patch, _events = derive_transition(
                 registry
@@ -506,7 +509,46 @@ def authorize_prime_requalification(
     verifier = _sentinel_verifier(request)
 
     def operation(registry: dict[str, Any]):
-        passport = _load_from_registry(registry, prime_id)
+        try:
+            passport = _load_from_registry(registry, prime_id)
+        except ValueError as exc:
+            raise _PassportRegistryInvalid from exc
+        records = registry.get("PRIME_SENTINEL_AUTHORIZATIONS", {})
+        if not isinstance(records, dict):
+            raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
+        for record_id, entry in records.items():
+            if (
+                not isinstance(record_id, str)
+                or not isinstance(entry, dict)
+                or entry.get("status") not in {"VERIFIED", "CONSUMED", "SUPERSEDED"}
+                or any(
+                    not isinstance(entry.get(field), str) or not entry[field]
+                    for field in (
+                        "prime_id",
+                        "target_environment",
+                        "key_id",
+                        "key_fingerprint_sha256",
+                        "nonce",
+                        "issued_at",
+                        "expires_at",
+                    )
+                )
+            ):
+                raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
+            try:
+                issued = datetime.fromisoformat(entry["issued_at"].replace("Z", "+00:00"))
+                expires = datetime.fromisoformat(entry["expires_at"].replace("Z", "+00:00"))
+            except ValueError as exc:
+                raise _PassportRegistryInvalid(
+                    "PRIME SENTINEL authorization registry validation failed"
+                ) from exc
+            if (
+                issued.tzinfo is None
+                or expires.tzinfo is None
+                or issued >= expires
+                or expires - issued > MAX_ASSERTION_LIFETIME
+            ):
+                raise _PassportRegistryInvalid("PRIME SENTINEL authorization registry validation failed")
         verified = verifier.verify(body)
         updated, payload = apply_verified_requalification_authorization(passport, verified)
         base_patch = verified_authorization_registry_patch(registry, verified)
@@ -522,6 +564,11 @@ def authorize_prime_requalification(
         updated, payload, event_ids = durable_store.transact_registry(operation)
     except _PassportNotFound as exc:
         raise HTTPException(status_code=404, detail="PRIME passport not found") from exc
+    except _PassportRegistryInvalid as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="PRIME passport registry validation failed",
+        ) from exc
     except (PrimeSentinelAuthorizationError, ValueError, EventOutboxError) as exc:
         try:
             _queue_rejection(
@@ -558,11 +605,12 @@ def activate_prime_pack(
     def operation(registry: dict[str, Any]):
         passport = _load_from_registry(registry, prime_id)
         authorization_id = passport.custody.requalification_release_authorization_id
-
-        if (
+        releasing_quarantine = (
             passport.custody.state == PrimeCustodyState.QUARANTINED_FOR_REQUALIFICATION
-            and authorization_id
-        ):
+            and authorization_id is not None
+        )
+
+        if releasing_quarantine:
             if not verifier.configured:
                 rejection = _event(
                     event="prime_sentinel_authorization_rejected",
@@ -639,8 +687,24 @@ def activate_prime_pack(
                 event_ids,
             )
 
+        if authorization_id and not releasing_quarantine:
+            updated = updated.model_copy(
+                update={
+                    "custody": updated.custody.model_copy(
+                        update={
+                            "requalification_release_authorization_id": None,
+                            "requalification_release_target_environment": None,
+                            "requalification_release_key_id": None,
+                        }
+                    )
+                }
+            )
+            payload["details"]["authorization_id"] = None
+            payload["details"]["authorization_key_id"] = None
+            payload["details"]["legacy_release_authorization_cleared"] = True
+
         base_patch = passport_registry_patch(registry, updated)
-        if authorization_id:
+        if releasing_quarantine and authorization_id:
             base_patch.update(
                 consumed_authorization_registry_patch(
                     registry,

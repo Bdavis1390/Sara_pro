@@ -27,7 +27,7 @@ from .prime_sentinel_authorization import (
     PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
     PrimeSentinelVerifier,
 )
-from .storage import DurableStore
+from .storage import DurableStore, RegistryIntegrityError
 
 
 PROTECTED_REGISTRY_NAMESPACES = frozenset(
@@ -141,6 +141,18 @@ app = FastAPI(
 )
 app.add_middleware(RequestSizeLimitMiddleware)
 app.include_router(prime_passport_router)
+
+
+@app.exception_handler(RegistryIntegrityError)
+async def registry_integrity_error_handler(
+    request: Request,
+    exc: RegistryIntegrityError,
+) -> JSONResponse:
+    _ = request, exc
+    return JSONResponse(
+        {"detail": "Durable registry integrity validation failed"},
+        status_code=500,
+    )
 
 
 @app.middleware("http")
