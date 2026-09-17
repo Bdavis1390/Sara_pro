@@ -1,0 +1,150 @@
+{
+  "schema": "WS-QPHONON-EXTERNAL-LAB-EVIDENCE-V0.1",
+  "as_of": "2026-09-17",
+  "classification": "EXTERNAL_PUBLISHED_LABORATORY_EVIDENCE",
+  "worldshepherd_controlled_experiment": false,
+  "closes_l3_partner_hardware_gate": false,
+  "raw_source_files_locally_acquired": false,
+  "raw_source_file_note": "Publisher source-data artifacts are publicly referenced for the Harvard Purcell and Yale muHBAR papers, but binary/source files were not locally acquired in this session.",
+  "records": [
+    {
+      "evidence_id": "EXT-HARVARD-SIV-PURCELL-2026",
+      "organization": "Harvard University / collaborators",
+      "title": "Purcell-enhanced spin-phonon coupling with a single colour centre",
+      "publication": "Nature 653, 378-383 (2026)",
+      "doi": "10.1038/s41586-026-10495-7",
+      "published": "2026-05-06",
+      "physical_system": "single silicon-vacancy colour-centre spin in diamond optomechanical/nanomechanical resonator",
+      "measured_findings": [
+        {
+          "quantity": "acoustic_mode_frequency",
+          "value": 12.0,
+          "unit": "GHz",
+          "qualifier": "approximately"
+        },
+        {
+          "quantity": "spin_relaxation_enhancement_on_resonance",
+          "value": 10.0,
+          "unit": "fold",
+          "qualifier": "observed relative to off-resonance"
+        },
+        {
+          "quantity": "broadband_phonon_probe_upper_frequency",
+          "value": 28.0,
+          "unit": "GHz",
+          "qualifier": "reported upper measurement range"
+        }
+      ],
+      "publisher_source_data_available": true,
+      "publisher_source_data_artifacts": [
+        "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10495-7/MediaObjects/41586_2026_10495_MOESM3_ESM.csv",
+        "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10495-7/MediaObjects/41586_2026_10495_MOESM4_ESM.csv",
+        "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41586-026-10495-7/MediaObjects/41586_2026_10495_MOESM5_ESM.csv"
+      ],
+      "supports": [
+        "single-defect spin-phonon interaction is experimentally real",
+        "acoustic Purcell enhancement in a diamond SiV device is experimentally real"
+      ],
+      "does_not_support": [
+        "Worldshepherd-controlled coherent spin-phonon swapping",
+        "Worldshepherd two-node state transfer",
+        "Worldshepherd-owned quantum hardware"
+      ]
+    },
+    {
+      "evidence_id": "EXT-HARVARD-SIV-DRESSING-2026",
+      "organization": "Harvard University / University of Chicago / Argonne / collaborators",
+      "title": "All-mechanical coherence protection and fast control of a spin qubit",
+      "publication": "Nature Physics 22, 1493-1497 (2026)",
+      "doi": "10.1038/s41567-026-03369-2",
+      "published": "2026-07-15",
+      "physical_system": "silicon-vacancy spin in diamond under continuous acoustic driving",
+      "measured_findings": [
+        {
+          "quantity": "bare_T2_star",
+          "value": 0.68,
+          "uncertainty": 0.04,
+          "unit": "microsecond"
+        },
+        {
+          "quantity": "dressed_T2_star",
+          "value": 2.2,
+          "uncertainty": 0.2,
+          "unit": "microsecond"
+        },
+        {
+          "quantity": "maximum_reported_acoustic_Rabi_frequency",
+          "value": 800.0,
+          "unit": "MHz"
+        }
+      ],
+      "publisher_source_data_available": "not established in this evidence record",
+      "supports": [
+        "continuous acoustic dressing can protect SiV spin coherence",
+        "high-rate acoustic spin control is experimentally real"
+      ],
+      "does_not_support": [
+        "simultaneous Worldshepherd-controlled dressing plus coherent cavity swap",
+        "phonon-mediated entangling gate under Worldshepherd control"
+      ]
+    },
+    {
+      "evidence_id": "EXT-YALE-UHBAR-2026",
+      "organization": "Yale University / collaborators",
+      "title": "Millisecond coherence times in gigahertz-frequency mechanical oscillators",
+      "publication": "Nature Physics 22, 1486-1492 (2026)",
+      "doi": "10.1038/s41567-026-03314-3",
+      "published": "2026-07-09",
+      "physical_system": "crystalline quartz micro-fabricated high-overtone bulk acoustic-wave resonator",
+      "measured_findings": [
+        {
+          "quantity": "phonon_frequency",
+          "value": 12.66,
+          "unit": "GHz"
+        },
+        {
+          "quantity": "maximum_Q",
+          "value": 247000000,
+          "unit": "dimensionless"
+        },
+        {
+          "quantity": "phonon_coherence_time",
+          "value": 6.2,
+          "unit": "millisecond"
+        },
+        {
+          "quantity": "spectral_linewidth",
+          "value": 51.3,
+          "unit": "Hz"
+        },
+        {
+          "quantity": "energy_decay_time",
+          "value": 3.12,
+          "unit": "millisecond"
+        },
+        {
+          "quantity": "surface_loss_reduction_after_optimized_polishing",
+          "value": 10.0,
+          "unit": "fold",
+          "qualifier": "reported approximately"
+        }
+      ],
+      "dephasing_assessment": "negligible contribution within reported measurements",
+      "publisher_source_data_available": true,
+      "publisher_source_data_artifacts": [
+        "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41567-026-03314-3/MediaObjects/41567_2026_3314_MOESM2_ESM.zip",
+        "https://media.springernature.com/original/springer-static/esm/art%3A10.1038%2Fs41567-026-03314-3/MediaObjects/41567_2026_3314_MOESM3_ESM.zip"
+      ],
+      "supports": [
+        "multi-millisecond coherence for approximately 12-GHz-class phonons is experimentally real in a separate quartz platform",
+        "surface damage and impurities can dominate phonon decoherence",
+        "surface processing can materially reduce acoustic loss"
+      ],
+      "does_not_support": [
+        "direct integration of quartz muHBAR with SiV/TFLN",
+        "Worldshepherd-controlled quantum memory",
+        "automatic transfer of the measured Q to a diamond nanophononic device"
+      ]
+    }
+  ]
+}

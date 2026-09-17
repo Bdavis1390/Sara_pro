@@ -9,15 +9,20 @@ on:
       - "config/ws_qphonon_execution_approval_v0_2.schema.json"
       - "config/ws_qphonon_security_v0_2.json"
       - "config/ws_qphonon_quality_v0_2.json"
+      - "config/ws_qphonon_deployment_v0_3.json"
+      - "evidence/qphonon/**"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
       - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
       - "docs/WS_QPHONON_QUALITY_RELIABILITY_V0_2.md"
+      - "docs/WS_QPHONON_EXTERNAL_LAB_EVIDENCE_2026-09-17.md"
+      - "deployments/qphonon-control/**"
       - "tools/qphonon/**"
       - ".github/workflows/ws-qphonon-l2-check.yml"
   push:
     branches:
       - "worldshepherd/qphonon-l2-architecture-v0-1-20260912"
       - "worldshepherd/qphonon-security-hardening-v0-2-20260917"
+      - "worldshepherd/qphonon-deployment-infra-v0-3-20260917"
     paths:
       - "config/ws_qphonon_l2_v0_1.json"
       - "config/ws_qphonon_echo_event_v0_1.schema.json"
@@ -25,9 +30,13 @@ on:
       - "config/ws_qphonon_execution_approval_v0_2.schema.json"
       - "config/ws_qphonon_security_v0_2.json"
       - "config/ws_qphonon_quality_v0_2.json"
+      - "config/ws_qphonon_deployment_v0_3.json"
+      - "evidence/qphonon/**"
       - "docs/WS_QPHONON_L2_INTEGRATION.md"
       - "docs/WS_QPHONON_SECURITY_HARDENING_V0_2.md"
       - "docs/WS_QPHONON_QUALITY_RELIABILITY_V0_2.md"
+      - "docs/WS_QPHONON_EXTERNAL_LAB_EVIDENCE_2026-09-17.md"
+      - "deployments/qphonon-control/**"
       - "tools/qphonon/**"
       - ".github/workflows/ws-qphonon-l2-check.yml"
 
@@ -37,7 +46,7 @@ permissions:
 jobs:
   qphonon-l2-check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -60,18 +69,32 @@ jobs:
       - name: Validate V0.2 quality profile
         run: python tools/qphonon/validate_quality.py config/ws_qphonon_quality_v0_2.json
 
+      - name: Validate V0.3 deployment profile
+        run: python tools/qphonon/validate_deployment.py config/ws_qphonon_deployment_v0_3.json
+
+      - name: Validate external laboratory evidence ledger
+        run: python tools/qphonon/validate_external_lab_evidence.py evidence/qphonon/external_lab_evidence_2026-09-17.json
+
       - name: Validate CI hardening invariants
         run: python tools/qphonon/validate_ci_hardening.py .github/workflows/ws-qphonon-l2-check.yml
 
-      - name: Parse evidence and approval schemas
+      - name: Parse governed JSON
         run: |
           python -m json.tool config/ws_qphonon_echo_event_v0_1.schema.json > /dev/null
           python -m json.tool config/ws_qphonon_echo_event_v0_2.schema.json > /dev/null
           python -m json.tool config/ws_qphonon_execution_approval_v0_2.schema.json > /dev/null
           python -m json.tool config/ws_qphonon_security_v0_2.json > /dev/null
           python -m json.tool config/ws_qphonon_quality_v0_2.json > /dev/null
+          python -m json.tool config/ws_qphonon_deployment_v0_3.json > /dev/null
+          python -m json.tool evidence/qphonon/external_lab_evidence_2026-09-17.json > /dev/null
 
-      - name: Run QPHONON regression and adversarial tests
+      - name: Check host installer syntax
+        run: bash -n deployments/qphonon-control/install-host.sh
+
+      - name: Require OpenSSH signature tooling
+        run: command -v ssh-keygen
+
+      - name: Run QPHONON regression, adversarial, deployment, and evidence tests
         working-directory: tools/qphonon
         run: >
           python -m unittest -v
@@ -86,3 +109,9 @@ jobs:
           test_execution_gate.py
           test_experiment_manifest.py
           test_state_machine.py
+          test_deployment_profile.py
+          test_durable_state.py
+          test_ssh_attestation.py
+          test_deployment_guard.py
+          test_external_lab_evidence.py
+          test_external_lab_consistency.py
