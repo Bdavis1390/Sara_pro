@@ -58,6 +58,26 @@ jobs:
           tests/test_prime_signer_isolation.py
           tests/test_restriction_10x_quality.py
 
+      - name: Test ECHO external signer boundary and deployment preflight
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          tests/test_echo_checkpoint.py
+          tests/test_echo_checkpoint_signer_boundary.py
+          tests/test_aws_kms_checkpoint_signer.py
+          tests/test_deployment_preflight.py
+
+      - name: Validate deployment shell entry points
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/sara.sh
+          bash -n deployments/sara_verified_local_v1/scripts/deploy_full_stack.sh
+          bash -n deployments/sara_verified_local_v1/scripts/verify_full_stack_runtime.sh
+          bash scripts/sara.sh help | grep -q 'deploy-full'
+          bash scripts/sara.sh help | grep -q 'verify-full'
+          bash scripts/sara.sh help | grep -q 'down-full'
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |
