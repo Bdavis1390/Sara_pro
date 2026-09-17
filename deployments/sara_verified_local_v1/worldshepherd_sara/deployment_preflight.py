@@ -12,6 +12,7 @@ from typing import Any
 
 
 _COMMIT = re.compile(r"^[0-9a-f]{40}$")
+_IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
 _SECRET_KEYS = ("SARA_RELAY_TOKEN", "SARA_ADMIN_TOKEN")
 _SECRET_FILES = (
     "PRIME_SENTINEL_PRIVATE_KEY_HOST_PATH",
@@ -130,11 +131,21 @@ def validate_deployment(
 
     release_id = _required(values, "SARA_RELEASE_ID")
     _reject_placeholder("SARA_RELEASE_ID", release_id)
+    if not _IDENTIFIER.fullmatch(release_id):
+        raise DeploymentPreflightError("SARA_RELEASE_ID is not a safe bounded identifier")
 
     prime_key_id = _required(values, "PRIME_SENTINEL_SIGNING_KEY_ID")
     _reject_placeholder("PRIME_SENTINEL_SIGNING_KEY_ID", prime_key_id)
+    if not _IDENTIFIER.fullmatch(prime_key_id):
+        raise DeploymentPreflightError(
+            "PRIME_SENTINEL_SIGNING_KEY_ID is not a safe bounded identifier"
+        )
     echo_key_id = _required(values, "ECHO_CHECKPOINT_KEY_ID")
     _reject_placeholder("ECHO_CHECKPOINT_KEY_ID", echo_key_id)
+    if not _IDENTIFIER.fullmatch(echo_key_id):
+        raise DeploymentPreflightError(
+            "ECHO_CHECKPOINT_KEY_ID is not a safe bounded identifier"
+        )
 
     signer_mode = values.get("ECHO_CHECKPOINT_SIGNER_MODE", "LOCAL_PEM").strip().upper()
     if signer_mode != "LOCAL_PEM":
