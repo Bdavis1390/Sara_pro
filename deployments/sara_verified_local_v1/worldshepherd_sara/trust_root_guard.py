@@ -23,6 +23,34 @@ class PrimeTrustRootError(RuntimeError):
     pass
 
 
+_REJECTION_REASON_PATTERNS: tuple[tuple[str, str], ...] = (
+    ("epoch rollback", "TRUST_EPOCH_ROLLBACK"),
+    ("without epoch advance", "TRUST_MATERIAL_MUTATION"),
+    ("cannot be rebound", "KEY_ID_REBINDING"),
+    ("revocation rollback", "REVOCATION_ROLLBACK"),
+    ("must remain explicitly revoked", "KEY_REMOVAL_WITHOUT_REVOCATION"),
+    ("missing after prior initialization", "TRUST_CONFIGURATION_REMOVED"),
+    ("digest does not match", "PERSISTED_STATE_DIGEST_MISMATCH"),
+    ("contains unexpected fields", "PERSISTED_STATE_SHAPE_INVALID"),
+    ("schema mismatch", "PERSISTED_STATE_SCHEMA_INVALID"),
+    ("stored PRIME", "PERSISTED_STATE_INVALID"),
+    ("is required when PRIME trust roots are configured", "TRUST_EPOCH_MISSING"),
+    ("must be a positive integer", "TRUST_EPOCH_INVALID"),
+    ("PUBLIC_KEYS_JSON", "PUBLIC_KEY_CONFIGURATION_INVALID"),
+    ("public key", "PUBLIC_KEY_CONFIGURATION_INVALID"),
+    ("signing key ID", "KEY_ID_INVALID"),
+    ("revoked PRIME signing key ID", "REVOCATION_ID_INVALID"),
+)
+
+
+def _rejection_reason(exc: PrimeTrustRootError) -> str:
+    message = str(exc)
+    for fragment, reason in _REJECTION_REASON_PATTERNS:
+        if fragment in message:
+            return reason
+    return "TRUST_ROOT_REJECTED"
+
+
 def _canonical_json(value: Any) -> bytes:
     try:
         return json.dumps(
@@ -273,14 +301,36 @@ def guard_prime_trust_root(
     *,
     environ: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    current = trust_root_state_from_environment(environ)
+    try:
+        current = trust_root_state_from_environment(environ)
 
-    def operation(
-        registry: dict[str, Any],
-    ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-        return reconcile_prime_trust_root(registry, current)
+        def operation(
+            registry: dict[str, Any],
+        ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+            return reconcile_prime_trust_root(registry, current)
 
-    result = store.transact_registry(operation)
+        result = store.transact_registry(operation)
+    except PrimeTrustRootError as exc:
+        # Persist only a bounded reason code. The exception text can contain
+        # key identifiers or configuration details and is intentionally not
+        # copied into the audit record.
+        try:
+            store.append_audit(
+                AuditRecord.create(
+                    event="prime_trust_root_guard_rejected",
+                    actor="system",
+                    payload={
+                        "status": "REJECTED",
+                        "reason_code": _rejection_reason(exc),
+                    },
+                )
+            )
+        except (OSError, RuntimeError):
+            # The security decision remains fail-closed even if rejection
+            # evidence cannot be written.
+            pass
+        raise
+
     store.append_audit(
         AuditRecord.create(
             event="prime_trust_root_guard_evaluated",
