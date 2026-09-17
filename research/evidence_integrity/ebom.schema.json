@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worldshepherd Evidence Bill of Materials",
+  "type": "object",
+  "required": ["ebom_id", "claim", "nodes", "edges"],
+  "properties": {
+    "ebom_id": {"type": "string"},
+    "claim": {
+      "type": "object",
+      "required": ["claim_id", "text", "domain", "claim_state"],
+      "properties": {
+        "claim_id": {"type": "string"},
+        "text": {"type": "string"},
+        "domain": {"type": "string"},
+        "claim_state": {"type": "string"}
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["node_id", "kind", "fingerprint", "validity"],
+        "properties": {
+          "node_id": {"type": "string"},
+          "kind": {
+            "enum": ["EVIDENCE","INTERPRETATION","ASSUMPTION","MODEL","CLAIM","DECISION_SUPPORT"]
+          },
+          "fingerprint": {"type": "string"},
+          "validity": {
+            "enum": ["CURRENT","REVALIDATION_REQUIRED","REJECTED","UNKNOWN"]
+          },
+          "source_uri": {"type": ["string","null"]},
+          "native_version": {"type": ["string","null"]},
+          "semantic_snapshot": {"type": ["object","null"]},
+          "review_state": {"type": ["string","null"]}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["parent","child","material"],
+        "properties": {
+          "parent": {"type": "string"},
+          "child": {"type": "string"},
+          "material": {"type": "boolean"},
+          "rationale": {"type": ["string","null"]}
+        }
+      }
+    }
+  }
+}
