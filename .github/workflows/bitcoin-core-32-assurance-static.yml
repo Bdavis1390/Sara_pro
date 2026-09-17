@@ -5,16 +5,20 @@ on:
     paths:
       - 'external_anchor_pilots/bitcoin_core_32_assurance_benchmark.md'
       - 'external_anchor_pilots/bitcoin_core_32_psbt_probe.py'
+      - 'scripts/run_bitcoin_core_32_psbt_probe.sh'
       - 'tests/test_bitcoin_core_32_psbt_probe.py'
       - '.github/workflows/bitcoin-core-32-assurance-static.yml'
+      - '.github/workflows/bitcoin-core-32-assurance-execution.yml'
   push:
     branches:
       - 'worldshepherd/bitcoin-core-32-assurance'
     paths:
       - 'external_anchor_pilots/bitcoin_core_32_assurance_benchmark.md'
       - 'external_anchor_pilots/bitcoin_core_32_psbt_probe.py'
+      - 'scripts/run_bitcoin_core_32_psbt_probe.sh'
       - 'tests/test_bitcoin_core_32_psbt_probe.py'
       - '.github/workflows/bitcoin-core-32-assurance-static.yml'
+      - '.github/workflows/bitcoin-core-32-assurance-execution.yml'
 
 permissions:
   contents: read
@@ -30,14 +34,19 @@ jobs:
           python-version: '3.12'
       - name: Compile probe
         run: python -m py_compile external_anchor_pilots/bitcoin_core_32_psbt_probe.py
-      - name: Test probe helpers and upstream pin
+      - name: Test probe helpers, upstream pin, and claim boundary
         run: python -m unittest -v tests/test_bitcoin_core_32_psbt_probe.py
+      - name: Parse shell runner
+        run: bash -n scripts/run_bitcoin_core_32_psbt_probe.sh
       - name: Reject merge-conflict markers
         run: |
           set -euo pipefail
           ! grep -R -n -E '^(<<<<<<< |>>>>>>> )' \
             external_anchor_pilots/bitcoin_core_32_assurance_benchmark.md \
             external_anchor_pilots/bitcoin_core_32_psbt_probe.py \
-            tests/test_bitcoin_core_32_psbt_probe.py
+            scripts/run_bitcoin_core_32_psbt_probe.sh \
+            tests/test_bitcoin_core_32_psbt_probe.py \
+            .github/workflows/bitcoin-core-32-assurance-static.yml \
+            .github/workflows/bitcoin-core-32-assurance-execution.yml
       - name: Whitespace check
         run: git diff --check origin/main...HEAD
