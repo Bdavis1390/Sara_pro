@@ -29,6 +29,24 @@ _FINGERPRINT_FIELDS = (
     "generated_fingerprint",
     "safe_output_fingerprint",
 )
+_ALLOWED_PAYLOAD_KEYS = frozenset(
+    {
+        "schema",
+        "restriction_id",
+        "occurred_at",
+        "action",
+        "reason_code",
+        "source_system",
+        "processor",
+        *_OPTIONAL_COMPONENT_FIELDS,
+        *_FINGERPRINT_FIELDS,
+        "safe_summary",
+        "metadata",
+        "raw_content_persisted",
+        "_outbox_event_id",
+        "_delivery_semantics",
+    }
+)
 
 
 class RestrictionObservabilityError(ValueError):
@@ -72,6 +90,9 @@ def project_restriction_audit_record(record: dict[str, Any]) -> dict[str, Any]:
     payload = record.get("payload")
     if not isinstance(payload, dict):
         raise RestrictionObservabilityError("restriction payload is missing")
+    unknown_keys = sorted(set(payload) - _ALLOWED_PAYLOAD_KEYS)
+    if unknown_keys:
+        raise RestrictionObservabilityError("restriction payload contains unknown fields")
     if payload.get("schema") != RESTRICTION_SCHEMA:
         raise RestrictionObservabilityError("restriction schema is invalid")
     if payload.get("raw_content_persisted") is not False:
@@ -129,6 +150,12 @@ def restriction_observability(
     recent_limit: int = 50,
 ) -> dict[str, Any]:
     """Summarize restriction evidence from one explicitly bounded SARA audit window."""
+    if not isinstance(audit_records, list):
+        raise RestrictionObservabilityError("audit_records must be a list")
+    if len(audit_records) > MAX_RESTRICTION_AUDIT_WINDOW:
+        raise RestrictionObservabilityError(
+            f"audit window must not exceed {MAX_RESTRICTION_AUDIT_WINDOW} records"
+        )
     if not isinstance(recent_limit, int) or not 1 <= recent_limit <= MAX_RESTRICTION_RECENT_RESULTS:
         raise RestrictionObservabilityError(
             f"recent_limit must be 1-{MAX_RESTRICTION_RECENT_RESULTS}"
@@ -152,7 +179,7 @@ def restriction_observability(
     by_processor = Counter(str(item["processor"]) for item in projected)
 
     newest_first = list(reversed(projected[-recent_limit:]))
-    latest_occurred_at = None if not projected else projected[-1]["occurred_at"]
+    last_valid_occurred_at = None if not projected else projected[-1]["occurred_at"]
     return {
         "schema": RESTRICTION_OBSERVABILITY_SCHEMA,
         "scope": RESTRICTION_OBSERVABILITY_SCOPE,
@@ -167,7 +194,7 @@ def restriction_observability(
             "by_source_system": dict(sorted(by_source.items())),
             "by_processor": dict(sorted(by_processor.items())),
         },
-        "latest_occurred_at": latest_occurred_at,
+        "last_valid_occurred_at": last_valid_occurred_at,
         "recent": newest_first,
         "claims_boundary": (
             "Window-scoped observability over persisted SARA restriction events only; "
