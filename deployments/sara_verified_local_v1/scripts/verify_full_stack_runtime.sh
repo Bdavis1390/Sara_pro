@@ -151,23 +151,31 @@ print(json.dumps({
 }, sort_keys=True))
 ' "$echo_fingerprint" < "${evidence_dir}/echo.checkpoint.json" > "${evidence_dir}/echo.checkpoint-verified.json"
 
+inspect_dir="$(mktemp -d)"
+cleanup_inspect() {
+  rm -rf "$inspect_dir"
+}
+trap cleanup_inspect EXIT
+
 for service in sara prime-sentinel echo; do
   container_id="$(docker compose --profile prime-sentinel --profile echo ps -q "$service")"
   [[ -n "$container_id" ]] || fail "${service} container is missing"
-  docker inspect "$container_id" > "${evidence_dir}/${service}.inspect.json"
+  docker inspect "$container_id" > "${inspect_dir}/${service}.json"
 done
 
-python3 - "$evidence_dir" "$git_head" "${SARA_RELEASE_ID}" <<'PY'
+python3 - "$evidence_dir" "$inspect_dir" "$git_head" "${SARA_RELEASE_ID}" <<'PY'
 import json
 import sys
 from pathlib import Path
 
 root=Path(sys.argv[1])
-head=sys.argv[2]
-release=sys.argv[3]
+inspect_root=Path(sys.argv[2])
+head=sys.argv[3]
+release=sys.argv[4]
+security = {}
 
 for service in ("sara", "prime-sentinel", "echo"):
-    record=json.loads((root / f"{service}.inspect.json").read_text(encoding="utf-8"))[0]
+    record=json.loads((inspect_root / f"{service}.json").read_text(encoding="utf-8"))[0]
     config=record["Config"]
     host=record["HostConfig"]
     labels=config.get("Labels") or {}
@@ -180,9 +188,20 @@ for service in ("sara", "prime-sentinel", "echo"):
     for bindings in (host.get("PortBindings") or {}).values():
         for binding in bindings or []:
             assert binding.get("HostIp") == "127.0.0.1"
+    security[service] = {
+        "container_id": record["Id"],
+        "image_id": record["Image"],
+        "user": config.get("User"),
+        "read_only_rootfs": True,
+        "cap_drop_all": True,
+        "no_new_privileges": True,
+        "loopback_only_ports": True,
+        "image_revision": labels.get("org.opencontainers.image.revision"),
+        "image_version": labels.get("org.opencontainers.image.version"),
+    }
 
-prime=json.loads((root / "prime-sentinel.inspect.json").read_text(encoding="utf-8"))[0]
-echo=json.loads((root / "echo.inspect.json").read_text(encoding="utf-8"))[0]
+prime=json.loads((inspect_root / "prime-sentinel.json").read_text(encoding="utf-8"))[0]
+echo=json.loads((inspect_root / "echo.json").read_text(encoding="utf-8"))[0]
 for record in (prime, echo):
     env=record["Config"].get("Env") or []
     assert not any(item.startswith("SARA_ADMIN_TOKEN=") and item.split("=",1)[1] for item in env)
@@ -197,6 +216,19 @@ echo_public=json.loads((root / "echo.public-key.json").read_text(encoding="utf-8
 echo_verified=json.loads((root / "echo.checkpoint-verified.json").read_text(encoding="utf-8"))
 prime_verified=json.loads((root / "prime.verified-by-sara.json").read_text(encoding="utf-8"))
 preflight=json.loads((root / "preflight.json").read_text(encoding="utf-8"))
+
+(root / "container-security.json").write_text(
+    json.dumps(
+        {
+            "schema": "WS-VERIFIED-LOCAL-CONTAINER-SECURITY-V1",
+            "status": "PASS",
+            "services": security,
+        },
+        sort_keys=True,
+        indent=2,
+    ) + "\n",
+    encoding="utf-8",
+)
 
 assert sara_health["ok"] is True
 assert sara_selftest["ok"] is True
@@ -253,6 +285,8 @@ receipt={
 PY
 
 docker compose --profile prime-sentinel --profile echo ps > "${evidence_dir}/compose.ps.txt"
+cleanup_inspect
+trap - EXIT
 sha256sum "${evidence_dir}"/* > "${evidence_dir}/SHA256SUMS"
 
 printf 'Full-stack deployment acceptance: PASS\n'
