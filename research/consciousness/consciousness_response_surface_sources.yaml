@@ -1,0 +1,51 @@
+sources:
+  - id: MONTI_TFUS_2026
+    title: "Thalamic sonication in chronic disorders of consciousness: a mechanistic single-arm clinical trial"
+    type: "medRxiv preprint"
+    published: "2026-05-28"
+    doi: "10.64898/2026.05.26.26354167"
+    sample: 16
+    design: "single-arm open-label"
+    findings:
+      - "CRS-R increased after tFUS"
+      - "global EEG delta/beta ratio increased"
+      - "frontal slowing predicted behavioral gains"
+      - "FDG-PET metabolism decreased in bilateral thalamus and widespread cortex"
+    interpretation: "authors propose a thalamocortical reset mechanism"
+    caution: "not peer reviewed; no sham control"
+
+  - id: WANG_SCS_2026
+    title: "Graph-Theoretical Signature from Neural and Vascular Signals Reveals Spinal Cord Stimulation Frequency-Specific Brain Network in Disorders of Consciousness Patients"
+    journal: "Cyborg and Bionic Systems"
+    year: 2026
+    doi: "10.34133/cbsystems.0539"
+    sample: 16
+    frequencies_hz: [5,20,70,100]
+    findings:
+      - "5 Hz produced acute theta global-efficiency and gamma nodal-efficiency changes"
+      - "70 Hz produced delayed occipital hemodynamic responses"
+      - "frequency-specific EEG/fNIRS network signatures"
+
+  - id: ZHANG_SCS_2026
+    title: "Early High-Frequency Network Reorganization After Spinal Cord Stimulation Is Linked to Long-Term Recovery in Disorders of Consciousness"
+    journal: "CNS Neuroscience & Therapeutics"
+    year: 2026
+    doi: "10.1002/cns.71101"
+    sample: 31
+    findings:
+      - "alpha/beta network-energy enhancement linked to recovery"
+      - "beta communication-architecture consolidation"
+      - "early and one-month network features associated with six-month outcomes"
+
+  - id: HU_TIS_2026
+    title: "Temporal Interference Stimulation of Centromedian-Parafascicular Complex in Disorders of Consciousness: A Pilot Study"
+    journal: "Annals of Clinical and Translational Neurology"
+    year: 2026
+    doi: "10.1002/acn3.70477"
+    sample: 9
+    design: "single-arm self-controlled pilot"
+    findings:
+      - "patient-specific electric-field targeting"
+      - "CRS-R improved after 10 sessions"
+      - "alpha/beta PSD increased"
+    caution: "small single-arm pilot"
