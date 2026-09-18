@@ -19,6 +19,15 @@ from worldshepherd_sara.prime_sentinel_authorization import (
     PrimeSentinelAuthorizationError,
     PrimeSentinelVerifier,
 )
+from worldshepherd_sara.sda import (
+    SdaContractValidationState,
+    SdaIngestDisposition,
+    SdaInterfaceContract,
+    SdaObservation,
+    SdaSourceClass,
+    SdaSourceIdentity,
+    evaluate_sda_ingest,
+)
 from worldshepherd_sara.sda_identity import (
     SdaWorkloadIdentityAssertion,
     canonical_sda_workload_identity_message,
@@ -166,6 +175,62 @@ def _prime_workload_identity(client_cert: x509.Certificate):
     )
     assertion = unsigned.model_copy(update={"signature_b64url": signature})
     return verify_sda_workload_identity(assertion, verifier=verifier, now=NOW)
+
+
+def _sda_contract() -> SdaInterfaceContract:
+    return SdaInterfaceContract(
+        contract_id="SDA-CONTRACT-MTLS-001",
+        source_id="SYNTH-RADAR-A",
+        adapter_id="WS-SDA-SYNTH",
+        adapter_version="1.0.0",
+        authoritative_spec_ref="internal://ws-sda/mtls-contract-v1",
+        authoritative_spec_digest="sha256:" + "b" * 64,
+        allowed_reference_frames=["GCRF"],
+        allowed_releasability_tags=["US_ONLY"],
+        max_age_seconds=600.0,
+        max_future_skew_seconds=30.0,
+        max_clock_uncertainty_seconds=0.05,
+        validation_state=SdaContractValidationState.SYNTHETIC,
+        validation_ref="test://sda-mtls-contract",
+        require_workload_identity=True,
+        require_transport_identity=True,
+        enabled=True,
+    )
+
+
+def _sda_observation(active: SdaInterfaceContract) -> SdaObservation:
+    covariance = [[0.0 for _ in range(6)] for _ in range(6)]
+    for index in range(6):
+        covariance[index][index] = 1.0
+    return SdaObservation(
+        observation_id="OBS-MTLS-001",
+        source_event_id="EVENT-MTLS-001",
+        source_sequence=1,
+        source=SdaSourceIdentity(
+            source_id="SYNTH-RADAR-A",
+            source_class=SdaSourceClass.SYNTHETIC,
+            provider="Worldshepherd synthetic fixture",
+            sensor_id="SYNTH-SENSOR-1",
+            adapter_id="WS-SDA-SYNTH",
+            adapter_version="1.0.0",
+        ),
+        observed_at=NOW,
+        received_at=NOW + timedelta(seconds=1),
+        time_system="UTC",
+        clock_uncertainty_seconds=0.01,
+        reference_frame="GCRF",
+        position_km=(1.0, 2.0, 3.0),
+        velocity_km_s=(0.1, 0.2, 0.3),
+        covariance_6x6=covariance,
+        measurement_confidence=0.8,
+        source_reliability=0.8,
+        handling_label="UNCLASSIFIED_SYNTHETIC",
+        releasability_tags=["US_ONLY"],
+        raw_source_digest="sha256:" + "a" * 64,
+        interface_contract_id=active.contract_id,
+        interface_contract_digest=active.digest(),
+        transformation_refs=["adapter:synthetic-mtls-v1"],
+    )
 
 
 def _contexts(
@@ -384,3 +449,77 @@ def test_real_mtls_requires_client_certificate_and_binds_tls_peer_to_workload(tm
     assert error is None
     assert data == b"DENY"
     assert "fingerprint" in server_result
+
+
+def test_ingest_requires_and_accepts_exact_mtls_transport_binding():
+    ca_key, ca_cert = _build_ca()
+    _client_key, client_cert = _build_leaf(
+        ca_key=ca_key,
+        ca_cert=ca_cert,
+        common_name="SDA Adapter A",
+        san_uri=WORKLOAD_ID,
+        client_auth=True,
+    )
+    _wrong_key, wrong_cert = _build_leaf(
+        ca_key=ca_key,
+        ca_cert=ca_cert,
+        common_name="SDA Adapter B",
+        san_uri="spiffe://worldshepherd.internal/sda/adapter/other",
+        client_auth=True,
+    )
+
+    active = _sda_contract()
+    item = _sda_observation(active)
+    workload = _prime_workload_identity(client_cert)
+    correct_transport = inspect_tls_peer_certificate(_der_cert(client_cert))
+    wrong_transport = inspect_tls_peer_certificate(_der_cert(wrong_cert))
+
+    missing = evaluate_sda_ingest(
+        item,
+        contract=active,
+        workload_identity=workload,
+        now=NOW,
+    )
+    assert missing.disposition == SdaIngestDisposition.REJECT
+    assert any("requires verified mTLS transport identity" in reason for reason in missing.reasons)
+
+    accepted = evaluate_sda_ingest(
+        item,
+        contract=active,
+        workload_identity=workload,
+        transport_identity=correct_transport,
+        now=NOW,
+    )
+    assert accepted.disposition == SdaIngestDisposition.ACCEPT
+
+    rejected = evaluate_sda_ingest(
+        item,
+        contract=active,
+        workload_identity=workload,
+        transport_identity=wrong_transport,
+        now=NOW,
+    )
+    assert rejected.disposition == SdaIngestDisposition.REJECT
+    assert any("fingerprint" in reason for reason in rejected.reasons)
+
+
+def test_contract_cannot_require_transport_identity_without_workload_identity():
+    with pytest.raises(ValueError, match="transport identity requires workload identity"):
+        SdaInterfaceContract(
+            contract_id="SDA-CONTRACT-INVALID-MTLS",
+            source_id="SYNTH-RADAR-A",
+            adapter_id="WS-SDA-SYNTH",
+            adapter_version="1.0.0",
+            authoritative_spec_ref="internal://ws-sda/invalid-mtls-contract",
+            authoritative_spec_digest="sha256:" + "b" * 64,
+            allowed_reference_frames=["GCRF"],
+            allowed_releasability_tags=["US_ONLY"],
+            max_age_seconds=600.0,
+            max_future_skew_seconds=30.0,
+            max_clock_uncertainty_seconds=0.05,
+            validation_state=SdaContractValidationState.SYNTHETIC,
+            validation_ref="test://invalid-mtls-contract",
+            require_workload_identity=False,
+            require_transport_identity=True,
+            enabled=True,
+        )
