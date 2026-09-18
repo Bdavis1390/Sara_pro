@@ -1,6 +1,6 @@
 # WS-RESTRICTION-PROVENANCE G6 — SIGNED ECHO WITNESS VERIFICATION
 
-Status: **IMPLEMENTED IN SOFTWARE ON CANDIDATE BRANCH / PENDING EXACT-HEAD CI**
+Status: **MERGED ON PROTECTED MAIN / PROVEN INTERNALLY FOR TESTED SIGNED-WITNESS INVARIANTS**
 
 ## Objective
 
@@ -95,3 +95,8 @@ Those remain later gates.
 ## Next gate
 
 G7 should address **secret/signing-key custody and rollback resistance**: reduce software/filesystem key-custody exposure, define independent or hardware-backed custody where justified, and measure whether privileged local compromise can forge or roll back trusted evidence.
+
+
+## Protected-main evidence state
+
+G6A merged through PR #434 and was retained unchanged through combined PR #442. Its required signed-witness tests and the full Verified Local deployment/recovery/evidence qualification passed before the combined assurance baseline advanced. Claims remain limited to the documented local signed-checkpoint inclusion and trust-fingerprint invariants.

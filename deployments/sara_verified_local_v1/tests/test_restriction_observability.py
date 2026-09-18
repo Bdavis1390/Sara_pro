@@ -94,6 +94,7 @@ def test_strict_projection_never_returns_summary_metadata_or_unknown_fields():
         "provenance_schema",
         "restriction_id",
         "event_id",
+        "delivery_semantics",
         "authority",
         "authority_bound_in_payload",
         "restriction_schema",

@@ -11,9 +11,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+    Ed25519PublicKey,
+)
 
+from .echo_checkpoint_signer import (
+    SIGNER_ALGORITHM,
+    EchoCheckpointSigner,
+    EchoCheckpointSignerError,
+    LocalEd25519Signer,
+)
 from .echo_event_store import EchoEventStore, EchoEventStoreError, semantic_sha256
 from .models import AuditRecord
 
@@ -21,8 +31,12 @@ from .models import AuditRecord
 CHECKPOINT_SCHEMA = "WS-ECHO-CHECKPOINT-V1"
 CHECKPOINT_BUNDLE_SCHEMA = "WS-ECHO-CHECKPOINT-BUNDLE-V1"
 CHECKPOINT_DB_SCHEMA = "WS-ECHO-CHECKPOINT-LEDGER-V1"
+CHECKPOINT_SIGNATURE_INPUT_SCHEMA = "WS-ECHO-CHECKPOINT-SIGNATURE-DIGEST-V1"
 CHECKPOINT_PRIVATE_KEY_FILE_ENV = "ECHO_CHECKPOINT_PRIVATE_KEY_FILE"
 CHECKPOINT_KEY_ID_ENV = "ECHO_CHECKPOINT_KEY_ID"
+CHECKPOINT_SIGNER_MODE_ENV = "ECHO_CHECKPOINT_SIGNER_MODE"
+LOCAL_PEM_SIGNER_MODE = "LOCAL_PEM"
+EXTERNAL_SIGNER_MODE = "EXTERNAL"
 MAX_CHECKPOINT_KEY_FILE_BYTES = 16 * 1024
 _KEY_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
@@ -46,6 +60,17 @@ def _canonical(value: Any) -> bytes:
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def checkpoint_signature_input(checkpoint_sha256: str) -> bytes:
+    if not isinstance(checkpoint_sha256, str) or not _SHA256_PATTERN.fullmatch(
+        checkpoint_sha256
+    ):
+        raise EchoCheckpointError("checkpoint signature input digest is invalid")
+    return (
+        b"WS-ECHO-CHECKPOINT-SIGNATURE-DIGEST-V1\0"
+        + bytes.fromhex(checkpoint_sha256)
+    )
 
 
 def _read_private_key(path_value: str) -> Ed25519PrivateKey:
@@ -142,26 +167,68 @@ class EchoCheckpointManager:
         self,
         store: EchoEventStore,
         *,
-        private_key: Ed25519PrivateKey,
-        key_id: str,
+        private_key: Ed25519PrivateKey | None = None,
+        key_id: str | None = None,
+        signer: EchoCheckpointSigner | None = None,
     ) -> None:
         self.store = store
-        self._private_key = private_key
-        self.key_id = key_id
-        public_bytes = private_key.public_key().public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
-        )
+        if signer is not None:
+            if private_key is not None or key_id is not None:
+                raise EchoCheckpointConfigError(
+                    "checkpoint signer injection cannot be combined with local private-key arguments"
+                )
+            selected_signer = signer
+        else:
+            if private_key is None or key_id is None:
+                raise EchoCheckpointConfigError(
+                    "checkpoint signing requires either an injected signer or local key material"
+                )
+            selected_signer = LocalEd25519Signer(private_key=private_key, key_id=key_id)
+
+        if selected_signer.algorithm != SIGNER_ALGORITHM:
+            raise EchoCheckpointConfigError(
+                "ECHO checkpoint signer must use Ed25519"
+            )
+        if not _KEY_ID_PATTERN.fullmatch(selected_signer.key_id):
+            raise EchoCheckpointConfigError(
+                "ECHO checkpoint signer key ID is invalid"
+            )
+        try:
+            public_bytes = selected_signer.public_key_bytes()
+        except Exception as exc:
+            raise EchoCheckpointConfigError(
+                "unable to obtain ECHO checkpoint signer public key"
+            ) from exc
+        if not isinstance(public_bytes, bytes) or len(public_bytes) != 32:
+            raise EchoCheckpointConfigError(
+                "ECHO checkpoint signer must expose a 32-byte Ed25519 public key"
+            )
+
+        self._signer = selected_signer
+        self.key_id = selected_signer.key_id
+        self._public_key = Ed25519PublicKey.from_public_bytes(public_bytes)
         self.public_key_b64url = _b64url(public_bytes)
         self.fingerprint_sha256 = hashlib.sha256(public_bytes).hexdigest()
         self._initialize()
 
     @classmethod
     def from_environment(cls, store: EchoEventStore) -> "EchoCheckpointManager":
-        return cls(
-            store,
-            private_key=_read_private_key(os.getenv(CHECKPOINT_PRIVATE_KEY_FILE_ENV, "")),
-            key_id=_load_key_id(),
+        mode = os.getenv(CHECKPOINT_SIGNER_MODE_ENV, LOCAL_PEM_SIGNER_MODE).strip().upper()
+        if mode == LOCAL_PEM_SIGNER_MODE:
+            return cls(
+                store,
+                private_key=_read_private_key(
+                    os.getenv(CHECKPOINT_PRIVATE_KEY_FILE_ENV, "")
+                ),
+                key_id=_load_key_id(),
+            )
+        if mode == EXTERNAL_SIGNER_MODE:
+            raise EchoCheckpointConfigError(
+                "external checkpoint signer mode requires an injected signer; "
+                "local PEM fallback is forbidden"
+            )
+        raise EchoCheckpointConfigError(
+            f"{CHECKPOINT_SIGNER_MODE_ENV} must be {LOCAL_PEM_SIGNER_MODE} or {EXTERNAL_SIGNER_MODE}"
         )
 
     def _connect(self) -> sqlite3.Connection:
@@ -320,7 +387,7 @@ class EchoCheckpointManager:
                 "event_count": len(items),
                 "events": items,
                 "merkle_root_sha256": root,
-                "algorithm": "Ed25519",
+                "algorithm": SIGNER_ALGORITHM,
                 "key_id": self.key_id,
                 "key_fingerprint_sha256": self.fingerprint_sha256,
                 "claims_boundary": (
@@ -330,11 +397,29 @@ class EchoCheckpointManager:
             }
             manifest_bytes = _canonical(manifest)
             checkpoint_digest = hashlib.sha256(manifest_bytes).hexdigest()
-            signature = _b64url(self._private_key.sign(manifest_bytes))
+            signing_input = checkpoint_signature_input(checkpoint_digest)
+            try:
+                signature_bytes = self._signer.sign(signing_input)
+            except EchoCheckpointSignerError as exc:
+                raise EchoCheckpointError("ECHO checkpoint signer rejected request") from exc
+            except Exception as exc:
+                raise EchoCheckpointError("ECHO checkpoint signer failed") from exc
+            if not isinstance(signature_bytes, bytes) or len(signature_bytes) != 64:
+                raise EchoCheckpointError(
+                    "ECHO checkpoint signer returned an invalid Ed25519 signature"
+                )
+            try:
+                self._public_key.verify(signature_bytes, signing_input)
+            except InvalidSignature as exc:
+                raise EchoCheckpointError(
+                    "ECHO checkpoint signer returned an unverifiable signature"
+                ) from exc
+            signature = _b64url(signature_bytes)
             bundle = {
                 "schema": CHECKPOINT_BUNDLE_SCHEMA,
                 "manifest": manifest,
                 "checkpoint_sha256": checkpoint_digest,
+                "signature_input_schema": CHECKPOINT_SIGNATURE_INPUT_SCHEMA,
                 "signature_b64url": signature,
                 "public_key": self.public_key_record(),
             }

@@ -1,6 +1,6 @@
 # WS-RESTRICTION-PROVENANCE G6B — PRIME-SIGNED V4 EVIDENCE
 
-Status: **IMPLEMENTED IN SOFTWARE ON CURRENT-MAIN CANDIDATE / PENDING EXACT-HEAD QUALIFICATION**
+Status: **MERGED ON PROTECTED MAIN / PROVEN INTERNALLY FOR TESTED PRIME-V4 AND COMBINED G6 INVARIANTS**
 
 ## Relationship to G6A
 
@@ -73,4 +73,4 @@ The combined G6 candidate does not prove:
 
 Those require separate evidence.
 
-Until exact-head required CI, the full Verified Local deployment/recovery/evidence gate, and protected merge succeed on the combined candidate, classify G6B as **IMPLEMENTED IN SOFTWARE / PENDING INTERNAL VALIDATION**.
+G6B merged with G6A through protected PR #442 at commit `876f6ac1fb889d51243e3b5f43e01e959977134e` after the combined required gate, CodeQL, rollback, resilience, TLS, restore, and full Verified Local deployment/recovery/evidence qualification passed. Classify G6B as **IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY for the tested PRIME-V4 and combined G6 invariants**.
