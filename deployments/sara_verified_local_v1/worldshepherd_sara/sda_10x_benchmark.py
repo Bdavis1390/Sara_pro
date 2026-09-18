@@ -118,9 +118,15 @@ class SdaBenchmarkMeasurementBundle(BaseModel):
     schema: Literal[G9_MEASUREMENT_SCHEMA] = G9_MEASUREMENT_SCHEMA
     bundle_id: str = Field(min_length=1, max_length=128)
     role: Literal["BASELINE", "CANDIDATE"]
+    implementation_class: Literal[
+        "HISTORICAL_IMPLEMENTATION",
+        "REFERENCE_IMPLEMENTATION",
+        "CANDIDATE_IMPLEMENTATION",
+    ]
     source_commit: str = Field(pattern=r"^[0-9a-f]{40}$")
     environment_id: str = Field(min_length=1, max_length=256)
     workload_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    comparability_ref: str = Field(min_length=1, max_length=512)
     measurements: list[SdaMetricMeasurement] = Field(min_length=1, max_length=128)
 
     @model_validator(mode="after")
@@ -158,9 +164,12 @@ class SdaBenchmarkReport(BaseModel):
     ten_x_security_claim_eligible: bool
     preserved_zero_invariants: list[str]
     ten_x_improved_metrics: list[str]
+    baseline_implementation_class: str
     claims_boundary: str = (
-        "Eligibility is limited to the frozen protocol, workload, environment and "
-        "measurement evidence supplied to this evaluator. It is not a universal "
+        "Eligibility is limited to a task-comparable HISTORICAL_IMPLEMENTATION "
+        "baseline plus the frozen protocol, workload, environment and measurement "
+        "evidence supplied to this evaluator. A REFERENCE_IMPLEMENTATION may be "
+        "analyzed but cannot make the 10x claim eligible. This is not a universal "
         "10x-security claim, operational accreditation, penetration-test result, "
         "government acceptance, or independent validation."
     )
@@ -179,6 +188,12 @@ def evaluate_g9(
 ) -> SdaBenchmarkReport:
     if baseline.role != "BASELINE" or candidate.role != "CANDIDATE":
         raise SdaBenchmarkError("benchmark roles must be BASELINE and CANDIDATE")
+    if baseline.implementation_class == "CANDIDATE_IMPLEMENTATION":
+        raise SdaBenchmarkError("baseline cannot be classified as candidate implementation")
+    if candidate.implementation_class != "CANDIDATE_IMPLEMENTATION":
+        raise SdaBenchmarkError("candidate bundle must be CANDIDATE_IMPLEMENTATION")
+    if baseline.comparability_ref != candidate.comparability_ref:
+        raise SdaBenchmarkError("baseline and candidate comparability references differ")
     if baseline.environment_id != candidate.environment_id:
         raise SdaBenchmarkError("baseline and candidate environment IDs differ")
     if baseline.environment_id != protocol.required_environment_id:
@@ -301,7 +316,12 @@ def evaluate_g9(
     # Eligibility requires every mandatory security dimension to pass, every
     # mandatory utility non-regression gate to pass, and at least one genuine
     # non-zero-baseline metric to demonstrate a measured >=10x reduction.
-    eligible = security_pass and utility_pass and bool(ten_x_metrics)
+    eligible = (
+        security_pass
+        and utility_pass
+        and bool(ten_x_metrics)
+        and baseline.implementation_class == "HISTORICAL_IMPLEMENTATION"
+    )
 
     return SdaBenchmarkReport(
         protocol_id=protocol.protocol_id,
@@ -313,4 +333,5 @@ def evaluate_g9(
         ten_x_security_claim_eligible=eligible,
         preserved_zero_invariants=sorted(zero_invariants),
         ten_x_improved_metrics=sorted(ten_x_metrics),
+        baseline_implementation_class=baseline.implementation_class,
     )
