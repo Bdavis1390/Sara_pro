@@ -13,6 +13,7 @@ from .models import AuditRecord
 from .prime_sentinel_authorization import PrimeSentinelAuthorizationError
 from .qualification import EvidenceGraph, EvidenceGraphEdge, EvidenceGraphNode, canonical_digest
 from .sda_identity import VerifiedSdaWorkloadIdentity, assert_workload_identity_bound_to_adapter
+from .sda_transport_identity import SdaTransportIdentity, assert_transport_identity_bound_to_workload
 
 
 SDA_OBSERVATION_SCHEMA = "WS-SDA-OBSERVATION-V1"
@@ -76,6 +77,7 @@ class SdaInterfaceContract(BaseModel):
     validation_state: SdaContractValidationState = SdaContractValidationState.SYNTHETIC
     validation_ref: str | None = Field(default=None, max_length=512)
     require_workload_identity: bool = False
+    require_transport_identity: bool = False
     enabled: bool = False
 
     @field_validator("allowed_reference_frames", "allowed_releasability_tags")
@@ -92,6 +94,8 @@ class SdaInterfaceContract(BaseModel):
     def enabled_contract_requires_validation_ref(self) -> "SdaInterfaceContract":
         if self.enabled and not self.validation_ref:
             raise ValueError("enabled SDA interface contract requires validation_ref")
+        if self.require_transport_identity and not self.require_workload_identity:
+            raise ValueError("transport identity requires workload identity")
         return self
 
     def digest(self) -> str:
@@ -216,6 +220,7 @@ def evaluate_sda_ingest(
     contract: SdaInterfaceContract,
     replay_state: SdaReplayState | None = None,
     workload_identity: VerifiedSdaWorkloadIdentity | None = None,
+    transport_identity: SdaTransportIdentity | None = None,
     now: datetime | None = None,
 ) -> SdaIngestResult:
     """Fail closed at the source-isolation boundary.
