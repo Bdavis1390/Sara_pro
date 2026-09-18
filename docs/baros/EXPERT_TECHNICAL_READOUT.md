@@ -1,6 +1,6 @@
 # BAROS Expert Technical Readout Specification
 
-Status: ACTIVE RESEARCH-SOFTWARE SPECIFICATION  
+Status: ACTIVE RESEARCH-SOFTWARE SPECIFICATION
 Patient-care use: PROHIBITED
 
 ## Purpose
