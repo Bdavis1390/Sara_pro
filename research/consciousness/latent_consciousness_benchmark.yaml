@@ -1,0 +1,73 @@
+benchmark_id: WS-LATENT-CONSCIOUS-001
+status: PRE_REGISTERED
+title: "Latent consciousness multimodal and theory-discrimination benchmark"
+
+principles:
+  - "Behavioral nonresponse is an observable, not a definition of unconsciousness."
+  - "Non-detection by one modality is not proof of absence."
+  - "Classification accuracy does not establish mechanism."
+  - "Theory tests must use preregistered discriminating predictions."
+
+lanes:
+  covert_command_following:
+    populations:
+      - behaviorally_unresponsive_DoC
+      - MCS_minus
+      - healthy_controls
+    observables:
+      - CRS_R_behavior
+      - task_EEG
+      - task_fMRI
+      - fNIRS
+      - pupillometry
+      - EMG
+    primary_test:
+      - "detect CMD without using overt motor response as ground truth"
+
+  conscious_state_contrasts:
+    conditions:
+      - awake
+      - NREM_sleep
+      - propofol
+      - xenon
+      - ketamine_preserved_experience
+      - UWS
+      - MCS
+    observables:
+      - spectral_features
+      - complexity
+      - criticality
+      - PCI
+      - FDT_violation
+      - network_connectivity
+
+  theory_discrimination:
+    theories:
+      - IIT_biological_implementation
+      - GNWT_biological_implementation
+      - recurrent_processing
+      - higher_order
+      - criticality
+      - organized_energy
+    rule: >
+      Use predictions that differ before data inspection.
+      Do not score a theory on generic predictions shared by competitors.
+
+ablations:
+  - behavior_only
+  - EEG_only
+  - fMRI_only
+  - complexity_only
+  - network_only
+  - multimodal_without_topology
+  - multimodal_full_relational
+
+success:
+  - "Multimodal relational model improves held-out state inference."
+  - "Known CMD cases are not forced into unconscious label because behavior is absent."
+  - "Theory score changes only on preregistered discriminating predictions."
+  - "Negative tests preserve measurement-specific uncertainty."
+
+claim_boundary:
+  - "Passing does not establish a final theory of consciousness."
+  - "Passing does not establish machine consciousness."
