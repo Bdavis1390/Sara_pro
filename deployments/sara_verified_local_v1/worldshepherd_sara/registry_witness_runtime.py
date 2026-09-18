@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+import ssl
 import stat
 from pathlib import Path
 from typing import Any
@@ -27,8 +28,10 @@ WITNESS_CLIENT_TOKEN_FILE_ENV = "REGISTRY_WITNESS_CLIENT_TOKEN_FILE"
 WITNESS_PUBLIC_KEY_FILE_ENV = "REGISTRY_WITNESS_PUBLIC_KEY_FILE"
 WITNESS_EXPECTED_FINGERPRINT_ENV = "REGISTRY_WITNESS_EXPECTED_FINGERPRINT_SHA256"
 WITNESS_TIMEOUT_ENV = "REGISTRY_WITNESS_TIMEOUT_SECONDS"
+WITNESS_CA_FILE_ENV = "REGISTRY_WITNESS_CA_FILE"
 MAX_CLIENT_TOKEN_BYTES = 4 * 1024
 MAX_PUBLIC_KEY_RECORD_BYTES = 16 * 1024
+MAX_CA_BUNDLE_BYTES = 1024 * 1024
 _SAFE_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 _NAMESPACE = re.compile(r"^[A-Za-z0-9._:/-]{1,256}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -232,10 +235,29 @@ def load_registry_witness_client_from_environment() -> RegistryMonotonicWitnessC
         expected_witness_id=key_record["witness_id"],
         expected_namespace=key_record["namespace"],
     )
+    ca_file = os.getenv(WITNESS_CA_FILE_ENV, "").strip()
+    if ca_file:
+        _read_file(
+            ca_file,
+            env_name=WITNESS_CA_FILE_ENV,
+            label="registry witness CA bundle",
+            maximum=MAX_CA_BUNDLE_BYTES,
+            secret=False,
+        )
+        try:
+            ssl_context = ssl.create_default_context(cafile=ca_file)
+        except (OSError, ssl.SSLError) as exc:
+            raise RegistryWitnessRuntimeConfigError(
+                "registry witness CA bundle could not initialize TLS trust"
+            ) from exc
+    else:
+        ssl_context = ssl.create_default_context()
+
     transport = HttpsRegistryWitnessTransport(
         base_url=base_url,
         bearer_token=token,
         timeout_seconds=timeout,
+        ssl_context=ssl_context,
     )
     return RegistryMonotonicWitnessClient(
         transport=transport,
