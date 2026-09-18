@@ -1,0 +1,31 @@
+case_id: ATIP-PARCHMENT-NONDESTRUCTIVE-DNA-001
+status: SUPPORTED_BY_PEER_REVIEW
+source:
+  title: "Adventures in the Animal Archive: New Techniques for the Genetic Analysis of Parchment Manuscripts"
+  journal: "Manuscript Studies"
+  volume: 11
+  issue: 1
+  pages: "136-169"
+  year: 2026
+  doi: "10.1353/mns.2026.a990234"
+
+sample:
+  manuscripts: 91
+  date_span: "8th to 20th centuries"
+  geography: "England, Europe, Middle East, northeast Africa"
+
+demonstrated:
+  - "nondestructive cellular sampling from historical parchment"
+  - "genetic analysis without damaging the manuscripts"
+  - "scalable application across a diverse library collection"
+
+potential_research_uses:
+  - manuscript_provenance
+  - production_history
+  - livestock_history
+  - trade_routes
+  - authentication_support
+
+claim_boundary:
+  - "Genetic evidence must be integrated with codicology and textual evidence."
+  - "Animal origin does not by itself identify scribal origin."
