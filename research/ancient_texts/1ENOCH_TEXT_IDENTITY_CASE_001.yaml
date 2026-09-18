@@ -1,0 +1,63 @@
+case_id: ATIP-1ENOCH-IDENTITY-001
+status: SUPPORTED_BY_LITERATURE
+work_family: "Enochic literature"
+
+objects:
+  - id: GE_Ethiopic_1Enoch
+    kind: CANONICAL_COLLECTION
+    language: "Geʿez / Ethiopic"
+    date_context: "translation late antiquity; extant manuscripts much later"
+    description: "Complete Ethiopic collection conventionally called 1 Enoch."
+
+  - id: ARAMAIC_ENOCHIC_BOOKLETS
+    kind: PHYSICAL_WITNESS
+    language: "Aramaic"
+    date_context: "Second Temple period manuscripts from Qumran"
+    description: >
+      Multiple Aramaic Enochic works/manuscripts, not simply one physical copy
+      of the later Ethiopic collection.
+
+  - id: ASTRONOMICAL_BOOK_ARAMAIC
+    kind: RECENSION
+    language: "Aramaic"
+    description: >
+      Aramaic astronomical work represented by Qumran material.
+
+  - id: BOOK_OF_LUMINARIES_ETHIOPIC
+    kind: DAUGHTER_VERSION
+    language: "Geʿez / Ethiopic"
+    description: >
+      Ethiopic astronomical section indirectly based on Aramaic through Greek
+      but significantly different in form/content from the Aramaic evidence.
+
+  - id: HYPOTHESIZED_CRITICAL_1ENOCH
+    kind: RECONSTRUCTED_ARCHETYPE
+    language: "multiple source languages"
+    description: >
+      A scholarly reconstructed literary form may draw from Ethiopic, Greek and
+      Aramaic evidence and is not identical to one extant manuscript.
+
+relations:
+  - parent: ARAMAIC_ENOCHIC_BOOKLETS
+    child: GE_Ethiopic_1Enoch
+    relation: "textually_related_across_translation_and_collection_history"
+    caution: "Do not model as exact identity."
+
+  - parent: ASTRONOMICAL_BOOK_ARAMAIC
+    child: BOOK_OF_LUMINARIES_ETHIOPIC
+    relation: "translation_transmission_with_significant_development"
+
+translation_rules:
+  - "State whether translation targets a witness, recension, canonical collection or reconstruction."
+  - "Do not silently merge witness families."
+  - "Additions/omissions/reordering across forms are first-class evidence."
+  - "A reconstructed critical text must list contributing witnesses."
+
+claim:
+  supported: >
+    The traditional label 1 Enoch covers a complex textual history whose
+    surviving forms cannot be treated as one identical text-object.
+  not_claimed:
+    - "The Ethiopic tradition is unreliable as a whole."
+    - "Every difference represents corruption."
+    - "A single recoverable archetype necessarily existed in the exact form reconstructed by modern scholarship."
