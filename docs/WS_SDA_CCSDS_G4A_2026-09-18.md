@@ -77,30 +77,41 @@ The final item is intentional. CCSDS supports more time representations and time
 systems than Python calendar-form UTC. G4A refuses to silently reinterpret those
 values until a dedicated time-scale adapter is qualified.
 
-## 4. Important cross-project finding: canonical schema gap
+## 4. Important cross-project finding: canonical schema gap and corrective implementation
 
-G4A exposed a concrete G1-to-G4 integration gap that must be closed before a CCSDS
-OPM is converted into the canonical `SdaObservation`:
+G4A exposed a concrete G1-to-G4 integration gap: directly converting CCSDS data into
+the original state-vector-only `SdaObservation` would lose or invent semantics.
 
-1. **object identity** — OPM carries OBJECT_ID/OBJECT_NAME, while the current
-   canonical observation identifies the observation and source but does not yet
-   have a first-class target/object identity field;
-2. **center identity** — OPM carries CENTER_NAME; dropping it would make a state
-   vector semantically incomplete;
+The missing semantics are:
+
+1. **object identity** — OPM carries OBJECT_ID/OBJECT_NAME;
+2. **center identity** — OPM carries CENTER_NAME;
 3. **time-system semantics** — CCSDS supports multiple time systems and ordinal
-   forms; converting every epoch to UTC by assumption would be wrong;
-4. **covariance provenance** — the canonical SDA record requires a 6x6 covariance,
-   while a valid OPM may require separate parsing of its covariance block or an
-   explicit qualified upstream covariance source;
+   forms;
+4. **covariance provenance** — a state estimate must not fabricate a 6x6 covariance;
 5. **measurement class** — TDM RANGE is a measurement observable, not a Cartesian
-   state vector, so it must not be coerced into the current state-vector record.
+   state vector.
 
-Therefore G4A **does not** add a lossy `OPM -> SdaObservation` shortcut. The correct
-next schema step is an SDA canonical envelope that retains object/center identity
-and supports typed measurement payloads or a qualified transformation into a state
-estimate.
+The stacked branch now implements the corrective candidate in
+`worldshepherd_sara/sda_canonical.py` as
+`WS-SDA-CANONICAL-ENVELOPE-V2`.
 
-This is a strengthening of the architecture, not a parser limitation to hide.
+The envelope:
+
+- retains OBJECT_ID, OBJECT_NAME and CENTER_NAME for OPM state-vector evidence;
+- preserves the original CCSDS time string and time-system label;
+- normalizes only qualified calendar-form UTC, leaving other time values raw rather
+  than guessing;
+- permits covariance to remain absent instead of inventing one and requires an
+  explicit provenance reference when covariance is supplied;
+- represents RANGE as a typed measurement payload with participants, path, mode and
+  units rather than coercing it into state-vector fields;
+- binds the result to the interface-contract digest, raw-source digest, source
+  standard and parser profile.
+
+The original V1 record remains intact for its tested scope. V2 is a non-lossy
+heterogeneous evidence envelope candidate and does not silently upgrade V1 data or
+full CCSDS conformance.
 
 ## 5. Claims boundary
 
@@ -124,13 +135,11 @@ It will **not** establish:
 ## 6. Next gates
 
 1. pass the G1/G2 parent gate and protected merge;
-2. add G4A tests to exact-head CI;
-3. introduce the canonical SDA object/center/measurement envelope without breaking
-   G1 provenance and identity invariants;
-4. add OPM covariance parsing and provenance;
-5. add qualified CCSDS time-system handling;
-6. expand TDM observables one type at a time with authoritative fixtures;
-7. test XML only against the applicable CCSDS 505.0 navigation-message XML
+2. add G4A parser and canonical-envelope tests to exact-head CI;
+3. add OPM covariance-block parsing and provenance without inventing covariance;
+4. add qualified CCSDS time-system handling beyond bounded calendar UTC;
+5. expand TDM observables one type at a time with authoritative fixtures;
+6. test XML only against the applicable CCSDS 505.0 navigation-message XML
    specification and SANA schemas;
-8. seek independent/partner interoperability validation before any full-conformance
+7. seek independent/partner interoperability validation before any full-conformance
    claim.
