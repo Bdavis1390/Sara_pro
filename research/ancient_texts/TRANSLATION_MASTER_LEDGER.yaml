@@ -87,3 +87,17 @@ source_watch:
     linked_method:
       - Aeneas multimodal contextualization
       - Herculaneum virtual unwrapping
+
+  multiplex_material_evidence:
+    issue: 483
+    state: ACTIVE
+    principle: "manuscripts carry orthogonal textual, biological, chemical, geometric and imaging evidence channels"
+    controls:
+      - "Dead Sea Scroll parchment aDNA / Cell 2020"
+      - "nondestructive DNA sampling / Manuscript Studies 2026"
+      - "Herculaneum lead/XRF synthetic-scroll experiment / PLOS One 2026"
+    capabilities:
+      - orthogonal_material_evidence_fusion
+      - adaptive_sensing
+      - synthetic_ground_truth_validation
+      - fragment_join_material_contradiction
