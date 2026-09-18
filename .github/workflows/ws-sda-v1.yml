@@ -1,0 +1,115 @@
+name: WS-SDA Trust Fabric V1
+
+on:
+  pull_request:
+    paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_identity.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/apnt*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/ddil*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/echo*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/prime*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/hmaa*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/qualification.py"
+      - "docs/WS_SDA_TRUST_FABRIC_V1_2026-09-17.md"
+      - ".github/workflows/ws-sda-v1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_identity.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/apnt*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/ddil*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/echo*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/prime*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/hmaa*.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/qualification.py"
+      - "docs/WS_SDA_TRUST_FABRIC_V1_2026-09-17.md"
+      - ".github/workflows/ws-sda-v1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sda-g1:
+    name: sda-g1-g2-cross-project-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install canonical SARA test dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pip install -e '.[test]'
+
+      - name: Compile SDA and cross-project dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m compileall -q
+          worldshepherd_sara/sda.py
+          worldshepherd_sara/sda_identity.py
+          worldshepherd_sara/sda_transport_identity.py
+          worldshepherd_sara/apnt.py
+          worldshepherd_sara/apnt_adapter.py
+          worldshepherd_sara/apnt_interface_contract.py
+          worldshepherd_sara/ddil.py
+          worldshepherd_sara/ddil_reconcile.py
+          worldshepherd_sara/mission_replay.py
+          worldshepherd_sara/echo_event_store.py
+          worldshepherd_sara/prime_sentinel_authorization.py
+          worldshepherd_sara/hmaa_human_acceptance.py
+          worldshepherd_sara/qualification.py
+
+      - name: Run SDA G1 and G2 acceptance suite
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          tests/test_sda.py
+          tests/test_sda_identity.py
+          tests/test_sda_transport_identity.py
+
+      - name: Run cross-project non-regression seams
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          tests/test_apnt_interface_contract.py
+          tests/test_ddil_reconcile.py
+          tests/test_mission_replay.py
+          tests/test_echo_persistence.py
+          tests/test_prime_sentinel_authorization.py
+          tests/test_hmaa_human_acceptance.py
+          tests/test_sensor_fusion.py
+
+      - name: Reject unresolved merge-conflict markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -R -n -E '^(<<<<<<< |>>>>>>> )' \
+              deployments/sara_verified_local_v1/worldshepherd_sara/sda.py \
+              deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py \
+              deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py \
+              deployments/sara_verified_local_v1/tests/test_sda.py \
+              deployments/sara_verified_local_v1/tests/test_sda_identity.py \
+              deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py \
+              docs/WS_SDA_TRUST_FABRIC_V1_2026-09-17.md; then
+            echo "Unresolved merge-conflict marker found" >&2
+            exit 1
+          fi
