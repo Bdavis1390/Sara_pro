@@ -71,6 +71,10 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_storage_process_lock.py
 
+      - name: Test registry checkpoint recovery and rollback detection
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pytest -q tests/test_registry_checkpoint.py
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |
