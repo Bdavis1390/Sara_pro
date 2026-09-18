@@ -95,11 +95,13 @@ class SdaDdilReleaseRecord(BaseModel):
         return canonical_digest(self)
 
     def stable_echo_event_id(self) -> str:
-        # Authorization identity stays stable across retransmission and across
-        # conflicting/mutated semantic content so ECHO can detect disagreement.
-        suffix = hashlib.sha256(
-            self.receipt.authorization_id.encode("utf-8")
-        ).hexdigest()
+        # Authorization + origin-node identity stays stable across retransmission
+        # and mutated semantic content from that node so ECHO can detect mutation
+        # without treating a second honest replica node as the same event.
+        stable_identity = (
+            self.receipt.authorization_id + "\x00" + self.origin_node
+        ).encode("utf-8")
+        suffix = hashlib.sha256(stable_identity).hexdigest()
         return f"SARA-EVENT-SDA-DDIL-RELEASE-{suffix}"
 
 
