@@ -1,0 +1,94 @@
+name: WS-SDA Adapter Isolation G3
+
+on:
+  pull_request:
+    paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_adapter_isolation.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_adapter_isolation.py"
+      - "deployments/sara_verified_local_v1/scripts/sda_adapter_container_isolation_drill.sh"
+      - "docs/WS_SDA_ADAPTER_ISOLATION_G3A_2026-09-18.md"
+      - ".github/workflows/ws-sda-adapter-isolation-g3.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_adapter_isolation.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_adapter_isolation.py"
+      - "deployments/sara_verified_local_v1/scripts/sda_adapter_container_isolation_drill.sh"
+      - "docs/WS_SDA_ADAPTER_ISOLATION_G3A_2026-09-18.md"
+      - ".github/workflows/ws-sda-adapter-isolation-g3.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  adapter-resource-boundary:
+    name: sda-g3a-resource-boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install canonical SARA test dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pip install -e '.[test]'
+
+      - name: Compile G3A adapter boundary
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m compileall -q worldshepherd_sara/sda_adapter_isolation.py
+
+      - name: Run G3A adapter resource/isolation tests
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pytest -q tests/test_sda_adapter_isolation.py
+
+  adapter-container-boundary:
+    name: sda-g3b-container-boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Validate drill shell syntax
+        run: bash -n deployments/sara_verified_local_v1/scripts/sda_adapter_container_isolation_drill.sh
+
+      - name: Execute G3B container/network/filesystem isolation drill
+        env:
+          SDA_ADAPTER_G3_EVIDENCE_DIR: ${{ github.workspace }}/deployments/sara_verified_local_v1/sda_adapter_g3_evidence
+        run: bash deployments/sara_verified_local_v1/scripts/sda_adapter_container_isolation_drill.sh
+
+      - name: Validate G3B evidence contract
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          path = pathlib.Path(
+              "deployments/sara_verified_local_v1/sda_adapter_g3_evidence/g3b-evidence.json"
+          )
+          record = json.loads(path.read_text(encoding="utf-8"))
+          assert record["schema"] == "WS-SDA-ADAPTER-CONTAINER-ISOLATION-EVIDENCE-V1"
+          assert record["evidence_status"] == "INTERNAL_CI_REFERENCE_ISOLATION"
+          assert record["result"] == "PASS"
+          assert record["source_build_commit"] == os.environ["GITHUB_SHA"]
+          assert all(record["checks"].values())
+          boundary = record["claims_boundary"].lower()
+          assert "does not establish vm/microvm isolation" in boundary
+          assert "accreditation" in boundary
+          PY
+
+      - name: Upload G3B isolation evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-sda-g3b-adapter-isolation-evidence
+          path: deployments/sara_verified_local_v1/sda_adapter_g3_evidence
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Clean residual G3 containers
+        if: always()
+        run: docker ps -aq --filter 'name=ws-sda-adapter-g3-' | xargs -r docker rm -f || true
