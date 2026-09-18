@@ -1,6 +1,6 @@
 # BAROS Translational Risk Analysis Plan
 
-Status: RESEARCH RISK-ANALYSIS ARTIFACT / NON-CLINICAL  
+Status: RESEARCH RISK-ANALYSIS ARTIFACT / NON-CLINICAL
 Clinical authority: NONE
 
 ## Purpose
