@@ -415,7 +415,7 @@ def test_deployment_contract_declares_epoch_only_when_trust_root_is_enabled():
     env_text = Path(".env.example").read_text(encoding="utf-8")
     script_text = Path("scripts/verify_prime_sentinel_integration.sh").read_text(encoding="utf-8")
 
-    assert "\\nPRIME_SENTINEL_TRUST_EPOCH=\\n" in env_text
+    assert "\nPRIME_SENTINEL_TRUST_EPOCH=\n" in env_text
     assert 'trust_epoch="${PRIME_SENTINEL_TRUST_EPOCH:-1}"' in script_text
     assert 'PRIME_SENTINEL_TRUST_EPOCH=" + trust_epoch' in script_text
 
