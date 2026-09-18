@@ -6,8 +6,14 @@ import secrets
 import stat
 import threading
 from collections import deque
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, Iterator, TypeVar
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - non-POSIX runtime.
+    fcntl = None  # type: ignore[assignment]
 
 from .limits import MAX_AUDIT_LINE_BYTES, validate_json_resource
 from .models import AuditRecord
@@ -28,11 +34,18 @@ class DurableStore:
         self.root = root
         self.audit_path = root / "audit.jsonl"
         self.registry_path = root / "registry.json"
+        self.registry_lock_path = root / "registry.lock"
         self._lock = threading.RLock()
-        if not self.registry_path.exists():
-            self._atomic_write_json(self.registry_path, {})
-        else:
-            self._secure_mode(self.registry_path, 0o600, "registry file")
+
+        # Create and secure the lock inode before consulting or creating the
+        # registry so cooperating POSIX processes cannot race initialization.
+        self._ensure_registry_lock_file()
+        with self._lock:
+            with self._registry_process_lock(exclusive=True):
+                if not self.registry_path.exists():
+                    self._atomic_write_json(self.registry_path, {})
+                else:
+                    self._secure_mode(self.registry_path, 0o600, "registry file")
         if self.audit_path.exists():
             self._secure_mode(self.audit_path, 0o600, "audit file")
 
@@ -67,6 +80,76 @@ class DurableStore:
                 )
         except OSError as exc:
             raise RuntimeError(f"Unable to secure {label}: {exc}") from exc
+        finally:
+            os.close(descriptor)
+
+    @property
+    def registry_cross_process_lock_supported(self) -> bool:
+        """Whether this runtime can enforce the POSIX advisory registry lock."""
+
+        return fcntl is not None
+
+    def _ensure_registry_lock_file(self) -> None:
+        flags = (
+            os.O_RDWR
+            | os.O_CREAT
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        try:
+            descriptor = os.open(self.registry_lock_path, flags, 0o600)
+        except OSError as exc:
+            raise RuntimeError(
+                f"Unable to create secured registry lock file: {exc}"
+            ) from exc
+        try:
+            self._secure_descriptor(descriptor, 0o600, "registry lock file")
+        finally:
+            os.close(descriptor)
+        self._secure_mode(self.registry_lock_path, 0o600, "registry lock file")
+
+    @contextmanager
+    def _registry_process_lock(self, *, exclusive: bool) -> Iterator[None]:
+        """Hold a process-visible advisory lock around registry access on POSIX.
+
+        On non-POSIX Python builds where fcntl is unavailable, the existing
+        in-process RLock remains the only serialization primitive.
+        """
+
+        if fcntl is None:
+            yield
+            return
+
+        flags = (
+            os.O_RDWR
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        try:
+            descriptor = os.open(self.registry_lock_path, flags)
+        except OSError as exc:
+            raise RuntimeError(
+                f"Unable to open registry lock file securely: {exc}"
+            ) from exc
+
+        try:
+            self._secure_descriptor(descriptor, 0o600, "registry lock file")
+            operation = fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH
+            try:
+                fcntl.flock(descriptor, operation)
+            except OSError as exc:
+                raise RuntimeError(
+                    f"Unable to acquire registry process lock: {exc}"
+                ) from exc
+            try:
+                yield
+            finally:
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_UN)
+                except OSError as exc:
+                    raise RuntimeError(
+                        f"Unable to release registry process lock: {exc}"
+                    ) from exc
         finally:
             os.close(descriptor)
 
@@ -234,57 +317,65 @@ class DurableStore:
                 records.append((bytes(current), truncated))
         return list(records)
 
+    def _get_registry_unlocked(self) -> dict[str, Any]:
+        descriptor = self._open_read_descriptor(
+            self.registry_path, "registry file"
+        )
+        with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
+            value = json.load(handle)
+
+        if not isinstance(value, dict):
+            raise ValueError("registry must contain a JSON object")
+
+        return validate_json_resource(value)
+
     def get_registry(self) -> dict[str, Any]:
         with self._lock:
-            descriptor = self._open_read_descriptor(
-                self.registry_path, "registry file"
-            )
-            with os.fdopen(descriptor, "r", encoding="utf-8") as handle:
-                value = json.load(handle)
-
-            if not isinstance(value, dict):
-                raise ValueError("registry must contain a JSON object")
-
-            return validate_json_resource(value)
+            with self._registry_process_lock(exclusive=False):
+                return self._get_registry_unlocked()
 
     def patch_registry(self, values: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
-            current = self.get_registry()
-            current.update(values)
-            validate_json_resource(current)
-            self._atomic_write_json(self.registry_path, current)
-            return current
+            with self._registry_process_lock(exclusive=True):
+                current = self._get_registry_unlocked()
+                current.update(values)
+                validate_json_resource(current)
+                self._atomic_write_json(self.registry_path, current)
+                return current
 
     def transact_registry(self, operation: RegistryTransaction[T]) -> T:
-        """Execute a registry read/derive/write operation under one lock.
+        """Execute a registry read/derive/write operation under one transaction lock.
 
-        The callback receives the latest validated registry snapshot while the
-        store lock is held. It returns a top-level patch (or ``None`` for a
-        read/decision-only transaction) plus an arbitrary result. Exceptions
-        abort the transaction before any registry write occurs.
+        The callback receives the latest validated registry snapshot while both
+        the in-process lock and, on POSIX, the process-visible advisory lock are
+        held. It returns a top-level patch (or None for a read-only decision)
+        plus an arbitrary result. Exceptions abort before any registry write.
 
-        This primitive exists to prevent lost updates when callers need to
-        derive a protected namespace map from current registry state. It does
-        not make the audit log and registry a single cross-file transaction.
+        On local POSIX filesystems where flock semantics are honored, this
+        prevents cooperating SARA processes from losing registry updates. It is
+        not distributed consensus and does not make the audit log and registry
+        one cross-file transaction.
         """
         with self._lock:
-            current = self.get_registry()
-            patch, result = operation(current)
-            if patch is None:
+            with self._registry_process_lock(exclusive=True):
+                current = self._get_registry_unlocked()
+                patch, result = operation(current)
+                if patch is None:
+                    return result
+                if not isinstance(patch, dict):
+                    raise TypeError("registry transaction patch must be a dict or None")
+                updated = dict(current)
+                updated.update(patch)
+                validate_json_resource(updated)
+                self._atomic_write_json(self.registry_path, updated)
                 return result
-            if not isinstance(patch, dict):
-                raise TypeError("registry transaction patch must be a dict or None")
-            updated = dict(current)
-            updated.update(patch)
-            validate_json_resource(updated)
-            self._atomic_write_json(self.registry_path, updated)
-            return result
 
     def check_storage(self) -> tuple[bool, str]:
         probe = self.root / f".readiness-{secrets.token_hex(8)}"
         try:
             self._secure_mode(self.root, 0o700, "data directory")
             self._secure_mode(self.registry_path, 0o600, "registry file")
+            self._secure_mode(self.registry_lock_path, 0o600, "registry lock file")
             self.get_registry()
             descriptor = os.open(
                 probe, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600
