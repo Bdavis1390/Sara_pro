@@ -1,6 +1,6 @@
 # Worldshepherd SDA Trust Fabric V1
 
-Status: **IMPLEMENTED IN SOFTWARE — G1 candidate; internal CI required**
+Status: **IMPLEMENTED IN SOFTWARE — G1 + G2 reference candidate; exact-head CI required**
 Date: 2026-09-17
 Program: Worldshepherd
 Primary runtime: SARA / PRIME SENTINEL / ECHO SENTINEL LINK / OVERWATCH
@@ -202,9 +202,9 @@ The dedicated SDA CI gate must prove at minimum:
 | Gate | Objective | Exit evidence |
 |---|---|---|
 | G1 | canonical observation + source isolation + bounded fusion | unit/integration CI and ECHO conflict tests |
-| G2 | workload identity | **G2A implemented:** short-lived signed per-adapter identity, revocation, exact source/adapter/version binding and expiry recheck. **Remaining:** mTLS transport binding and removal of ambient shared bearer authority from the complete SDA path. |
+| G2 | workload + transport identity | **G2A/G2B implemented in the reference path:** short-lived PRIME-signed per-adapter identity; certificate-fingerprint binding; real mTLS client-certificate requirement; exact source/adapter/version/audience/SAN/fingerprint binding; expiry/revocation checks. Production PKI/HSM/customer trust-root and deployment accreditation remain external gates. |
 | G3 | adapter isolation | sandboxed adapters, quotas, schema/size/time limits, source quarantine and blast-radius tests |
-| G4 | standards interop | authoritative CCSDS ODM/TDM fixtures + round-trip/negative tests; partner formats remain contract gated |
+| G4 | standards interop | authoritative CCSDS ODM 502.0-B-3 and TDM 503.0-B-2 fixtures + round-trip/negative tests; partner formats remain contract gated |
 | G5 | provenance-aware multi-hypothesis fusion | covariance/reference-frame/time normalization, contradiction retention, degraded-source exclusion and alternative hypotheses |
 | G6 | PRIME releaseability/authorization | policy revision + action digest + human approval binding; TOCTOU mutation forces reevaluation |
 | G7 | DDIL/degraded operation | disconnected ingest, bounded store/forward, deterministic rejoin, explicit conflicts, mission replay |
@@ -216,8 +216,8 @@ No higher gate is inferred from a lower one.
 
 ## 8.1 G2A — signed workload identity implemented
 
-`sda_identity.py` adds a five-minute-maximum PRIME-signed workload assertion for the
-SDA adapter boundary. The assertion binds:
+`sda_identity.py` defines `WS-SDA-WORKLOAD-IDENTITY-V2`, a five-minute-maximum
+PRIME-signed workload assertion for the SDA adapter boundary. The assertion binds:
 
 - a URI-form workload identity under the Worldshepherd SDA trust domain;
 - source ID;
@@ -225,16 +225,60 @@ SDA adapter boundary. The assertion binds:
 - the fixed SDA-ingest audience;
 - issuance and expiration time;
 - signing key ID and public-key fingerprint;
-- nonce.
+- nonce;
+- the expected TLS client-certificate SHA-256 fingerprint.
 
-The ingest gate can require this identity per interface contract. It fails closed on
-missing identity, signature tamper, unknown/revoked key, expiry, future issuance,
-source/adapter/version mismatch, and expiry between verification and use.
+The ingest gate fails closed on missing identity, signature tamper, unknown/revoked
+key, expiry, future issuance, source/adapter/version mismatch, and expiry between
+verification and use.
 
-This is **not** claimed to be a SPIFFE SVID or mTLS. The SPIFFE-style URI is an
-internal namespace only. G2 remains incomplete until transport identity is bound to
-the verified workload identity and the SDA path no longer relies on ambient shared
-bearer authority.
+The URI syntax is an internal Worldshepherd namespace. It is **not** claimed to be a
+SPIFFE SVID or external IAM credential.
+
+## 8.2 G2B — mTLS transport binding implemented in the reference path
+
+`sda_transport_identity.py` inspects the authenticated TLS peer certificate and
+binds it to the separately PRIME-signed workload assertion. The reference gate
+requires:
+
+- TLS client authentication at the SSL layer (`CERT_REQUIRED`);
+- an end-entity certificate rather than a CA certificate;
+- `clientAuth` extended-key usage;
+- a valid certificate time window;
+- a URI subjectAltName containing the signed workload identity;
+- exact SHA-256 certificate-fingerprint equality with the signed V2 workload
+  assertion.
+
+The test suite creates an ephemeral CA, server certificate, correct client
+certificate, and same-CA incorrect client certificate. It demonstrates:
+
+1. a client with no certificate fails the TLS client-authentication handshake;
+2. the correct certificate passes TLS and the application binding;
+3. a different certificate signed by the same trusted CA passes the CA trust layer
+   but is rejected by the workload/fingerprint binding;
+4. an SDA interface contract requiring transport identity rejects an otherwise valid
+   workload identity when the mTLS peer identity is absent;
+5. transport identity cannot be enabled by contract without workload identity.
+
+This closes G2 for the **reference software path** once exact-head CI passes. It does
+not establish production CA governance, hardware-backed key custody, certificate
+issuance/revocation operations, enterprise service-mesh deployment, customer trust
+roots, classified-network authorization, or government accreditation.
+
+## 8.3 G4 authoritative standards baseline
+
+The next interoperability implementation is pinned to the currently active CCSDS
+navigation standards rather than informal examples:
+
+- CCSDS 502.0-B-3, *Orbit Data Messages*, Issue 3, May 2023:
+  https://ccsds.org/Pubs/502x0b3e1.pdf
+- CCSDS 503.0-B-2, *Tracking Data Message*, Issue 2, June 2020:
+  https://ccsds.org/Pubs/503x0b2c1.pdf
+
+The ODM issue defines OPM/OMM/OEM/OCM version 3.0 support. G4 will not claim CCSDS
+conformance until authoritative KVN/XML fixtures, required metadata, units,
+time/reference-frame handling, round-trip checks, malformed-input tests, and
+version/keyword rejection behavior are executable in CI.
 
 ## 9. External integration rule
 
@@ -257,7 +301,7 @@ Until partner validation exists, the correct claim is **REQUIRES PARTNER VALIDAT
 
 ```yaml
 claim:
-  statement: "Worldshepherd implements a strict provenance-bound SDA canonical observation, source-isolation gate, replay/conflict controls, and deterministic reference fusion with evidence lineage."
+  statement: "Worldshepherd implements a strict provenance-bound SDA canonical observation, source-isolation gate, replay/conflict controls, deterministic reference fusion, PRIME-signed workload identity, and certificate-bound mTLS reference identity with evidence lineage."
   status:
     - IMPLEMENTED_IN_SOFTWARE
   evidence:
@@ -265,13 +309,15 @@ claim:
     - deployments/sara_verified_local_v1/tests/test_sda.py
     - deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py
     - deployments/sara_verified_local_v1/tests/test_sda_identity.py
+    - deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py
+    - deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py
   configuration: "feature/ws-sda-trust-fabric-v1-20260917 and CI evidence for exact tested commit"
   limitations:
     - "Unclassified synthetic/reference software baseline."
     - "No operational orbit determination or validated aerospace tracker."
     - "No UDL/CCSDS partner acceptance yet."
     - "No government authorization, CMMC certification, classified-network approval, or flight validation."
-  next_gate: "Pass exact-head CI, complete G2 transport binding/mTLS, then implement G4 authoritative CCSDS fixtures without weakening G1/G2A invariants."
+  next_gate: "Pass exact-head CI for G1/G2, then implement G3 adapter isolation and G4 authoritative CCSDS ODM/TDM fixtures without weakening the identity/provenance invariants."
 ```
 
 ## 11. Completion definition
