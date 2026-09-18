@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from worldshepherd_sara.registry_monotonic_witness import (
     REMOTE_WITNESS_MODE,
     RegistryWitnessRollbackDetected,
+    RegistryWitnessSignatureError,
 )
 from worldshepherd_sara.registry_witness_startup import (
     RegistryWitnessStartupError,
@@ -294,3 +295,28 @@ def test_witness_rejection_prevents_verifier_and_outbox_replay(monkeypatch, tmp_
             pass
 
     assert calls == ["guard", "witness"]
+
+
+
+def test_signature_failure_maps_to_bounded_startup_reason(tmp_path):
+    store = DurableStore(tmp_path / "sara")
+    client = _Client(
+        error=RegistryWitnessSignatureError(
+            "witness receipt signature verification failed"
+        )
+    )
+
+    with pytest.raises(RegistryWitnessStartupError) as caught:
+        enforce_registry_witness_startup(
+            store,
+            environ={"SARA_REQUIRE_REGISTRY_WITNESS": "1"},
+            client_loader=lambda: client,
+        )
+
+    assert caught.value.reason_code == "WITNESS_VERIFICATION_FAILED"
+    record = store.read_audit(10)[-1]
+    assert record["payload"] == {
+        "status": "REJECTED",
+        "reason_code": "WITNESS_VERIFICATION_FAILED",
+    }
+    assert "signature verification failed" not in str(record)
