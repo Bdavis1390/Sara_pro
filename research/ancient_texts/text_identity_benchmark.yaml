@@ -1,0 +1,30 @@
+benchmark_id: ATIP-TEXT-IDENTITY-001
+status: PRE_REGISTERED
+purpose: >
+  Test whether translation systems can distinguish witness identity, recension,
+  daughter version and scholarly reconstruction instead of flattening them.
+
+cases:
+  - id: ONE_ENOCH
+    expected:
+      - "Distinguish Aramaic Enochic witnesses from later complete Ethiopic collection."
+      - "Distinguish Aramaic Astronomical Book from Ethiopic Book of the Luminaries."
+      - "Label scholarly composite/reconstruction as such."
+
+  - id: SYNTHETIC_RECENSIONS
+    procedure:
+      - "Generate related texts with controlled additions, omissions, reorderings and translations."
+      - "Hide lineage labels."
+      - "Require clustering and uncertainty rather than forced identity."
+
+metrics:
+  - target_identity_accuracy
+  - false_identity_merge_rate
+  - false_split_rate
+  - provenance_coverage
+  - reconstruction_label_accuracy
+
+hard_failures:
+  - "Presenting a scholarly composite as one physical witness."
+  - "Merging distinct recensions without disclosure."
+  - "Attributing daughter-version additions to an earlier witness without evidence."
