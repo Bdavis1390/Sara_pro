@@ -37,7 +37,8 @@ jobs:
             tests/test_registry_remote_witness.py \
             tests/test_registry_witness_ledger_integrity.py \
             tests/test_registry_witness_runtime.py \
-            tests/test_registry_witness_service_config.py
+            tests/test_registry_witness_service_config.py \
+            tests/test_registry_witness_startup.py
 
       - name: Verify registry witness CLI is packaged
         working-directory: deployments/sara_verified_local_v1
@@ -147,6 +148,96 @@ jobs:
           done
           docker logs ws-g9d-witness
           exit 1
+
+      - name: Exercise fail-closed SARA startup witness operator flow
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-client .ci-g9e-data
+          TOKEN='g9d-ci-service-token-0123456789abcdef0123456789'
+          printf '%s\n' "${TOKEN}" > .ci-client/token
+          chmod 0600 .ci-client/token
+
+          curl --fail --silent --show-error \
+            --cacert .ci-witness/ca.crt \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://localhost:9540/v1/public-key \
+            > .ci-client/public-key.json
+          chmod 0644 .ci-client/public-key.json
+
+          WITNESS_FP=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          record=json.loads(Path('.ci-client/public-key.json').read_text())
+          print(record['fingerprint_sha256'])
+          PY
+          )
+
+          export REGISTRY_WITNESS_URL='https://localhost:9540'
+          export REGISTRY_WITNESS_CLIENT_TOKEN_FILE="$PWD/.ci-client/token"
+          export REGISTRY_WITNESS_PUBLIC_KEY_FILE="$PWD/.ci-client/public-key.json"
+          export REGISTRY_WITNESS_EXPECTED_FINGERPRINT_SHA256="${WITNESS_FP}"
+          export REGISTRY_WITNESS_CA_FILE="$PWD/.ci-witness/ca.crt"
+          export SARA_REQUIRE_REGISTRY_WITNESS=1
+          export SARA_DATA_DIR="$PWD/.ci-g9e-data"
+          export SARA_RELAY_TOKEN='g9e-relay-token-0123456789abcdef012345'
+          export SARA_ADMIN_TOKEN='g9e-admin-token-0123456789abcdef012345'
+          unset PRIME_SENTINEL_PUBLIC_KEYS_JSON || true
+          unset PRIME_SENTINEL_REVOKED_KEY_IDS || true
+          unset PRIME_SENTINEL_TRUST_EPOCH || true
+
+          python - <<'PY'
+          from fastapi.testclient import TestClient
+          from worldshepherd_sara.app import app
+          from worldshepherd_sara.registry_witness_runtime import (
+              load_registry_witness_client_from_environment,
+          )
+          from worldshepherd_sara.registry_witness_startup import (
+              RegistryWitnessStartupError,
+          )
+          from worldshepherd_sara.storage import DurableStore
+
+          store = DurableStore()
+          client = load_registry_witness_client_from_environment()
+
+          initial = client.advance_and_verify(store.checkpoint_status())
+          assert initial['status'] == 'PASS'
+          assert initial['generation'] == 0
+
+          with TestClient(app) as http:
+              health = http.get('/health')
+              assert health.status_code == 200
+              witness = health.json()['registry_witness_startup']
+              assert witness['status'] == 'PASS'
+              assert witness['required'] is True
+              assert witness['generation'] == 0
+
+          store = DurableStore()
+          store.patch_registry({'G9E_OPERATOR_FLOW': 'PENDING_EXPLICIT_WITNESS'})
+          assert store.checkpoint_status()['generation'] == 1
+
+          rejected = False
+          try:
+              with TestClient(app):
+                  pass
+          except RegistryWitnessStartupError as exc:
+              rejected = True
+              assert exc.reason_code == 'WITNESS_ADVANCE_REQUIRED'
+          assert rejected is True
+
+          client = load_registry_witness_client_from_environment()
+          advanced = client.advance_and_verify(store.checkpoint_status())
+          assert advanced['status'] == 'PASS'
+          assert advanced['generation'] == 1
+
+          with TestClient(app) as http:
+              health = http.get('/health')
+              assert health.status_code == 200
+              witness = health.json()['registry_witness_startup']
+              assert witness['status'] == 'PASS'
+              assert witness['generation'] == 1
+          PY
 
       - name: Advance and verify witness through authenticated HTTPS
         working-directory: deployments/sara_verified_local_v1
@@ -355,4 +446,4 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: |
           docker rm -f ws-g9d-witness >/dev/null 2>&1 || true
-          sudo rm -rf .ci-witness .ci-witness-data
+          sudo rm -rf .ci-witness .ci-witness-data .ci-client .ci-g9e-data

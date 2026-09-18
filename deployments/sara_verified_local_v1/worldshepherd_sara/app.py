@@ -27,6 +27,7 @@ from .prime_sentinel_authorization import (
     PRIME_SENTINEL_AUTHZ_REGISTRY_KEY,
     PrimeSentinelVerifier,
 )
+from .registry_witness_startup import enforce_registry_witness_startup
 from .restriction_observability import (
     MAX_RESTRICTION_AUDIT_WINDOW,
     MAX_RESTRICTION_RECENT_RESULTS,
@@ -118,6 +119,12 @@ async def lifespan(app: FastAPI):
     # durable storage. A rejected rollback or malformed root may not construct
     # the runtime verifier or replay pending governed events.
     app.state.prime_trust_root = guard_prime_trust_root(app.state.store)
+    # A required remote witness is verification-only at startup. SARA never
+    # auto-advances the witness; newer local state requires explicit operator
+    # advancement before a subsequent startup may proceed.
+    app.state.registry_witness_startup = enforce_registry_witness_startup(
+        app.state.store
+    )
     app.state.prime_sentinel_verifier = PrimeSentinelVerifier.from_environment()
     replayed = drain_event_outbox(
         app.state.store,
@@ -139,6 +146,11 @@ async def lifespan(app: FastAPI):
                 "prime_trust_root_guard": app.state.prime_trust_root["status"],
                 "prime_trust_root_epoch": app.state.prime_trust_root.get("epoch"),
                 "prime_trust_root_material_sha256": app.state.prime_trust_root.get("material_sha256"),
+                "registry_witness_startup_status": app.state.registry_witness_startup["status"],
+                "registry_witness_required": app.state.registry_witness_startup["required"],
+                "registry_witness_generation": app.state.registry_witness_startup.get("generation"),
+                "registry_witness_id": app.state.registry_witness_startup.get("witness_id"),
+                "registry_witness_receipt_sha256": app.state.registry_witness_startup.get("witness_receipt_sha256"),
                 "outbox_events_replayed": replayed,
                 "outbox_pending_after_replay": outbox["pending"],
             },
@@ -205,6 +217,7 @@ def health(request: Request) -> dict[str, object]:
         "prime_sentinel_public_keys_configured": request.app.state.prime_sentinel_verifier.configured,
         "prime_signer_isolation": "verification_only",
         "prime_trust_root_guard": request.app.state.prime_trust_root,
+        "registry_witness_startup": request.app.state.registry_witness_startup,
         "event_outbox": current_outbox,
         "endpoints": {
             "ui": "/ui",
