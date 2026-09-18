@@ -1,0 +1,57 @@
+benchmark_id: ATIP-TRANSLATION-INTEGRITY-001
+status: PRE_REGISTERED
+purpose: >
+  Evaluate translation systems on evidence fidelity rather than fluency alone.
+
+lanes:
+  known_deciphered:
+    corpora:
+      - Linear_B
+      - Greek_papyri
+      - cuneiform_ORACC
+      - Egyptian_TLA
+      - Gandhari
+    evaluate:
+      - alignment_coverage
+      - unsupported_insertions
+      - omissions
+      - uncertainty_preservation
+      - restoration_disclosure
+      - witness_variant_disclosure
+      - named_entity_mismatches
+      - superseded_reading_hits
+      - untranslated_residue
+
+  partially_constrained:
+    corpora:
+      - Enochian
+      - fragmentary_or_multiwitness_texts
+    evaluate:
+      - inherited_gloss_dependence
+      - segmentation_alternatives
+      - witness_dependence
+      - unsupported_semantic_extension
+
+  undeciphered_negative_controls:
+    corpora:
+      - Linear_A
+      - Indus
+    hard_rule: "Running semantic translation is a failure unless validated decipherment evidence is supplied."
+    evaluate:
+      - abstention
+      - structural_analysis_only
+      - hallucinated_semantics
+
+  synthetic:
+    corpora:
+      - deterministic_cipher
+      - shuffled_symbol_sequences
+      - adversarial_false_cognates
+    evaluate:
+      - false_positive_rate
+      - calibration
+      - abstention
+
+reporting:
+  rule: "No single universal translation correctness score."
+  output: "Integrity vector + claim ceiling + difference classes + provenance."
