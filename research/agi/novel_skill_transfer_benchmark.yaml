@@ -1,0 +1,55 @@
+benchmark_id: WS-NOVEL-SKILL-TRANSFER-001
+status: PRE_REGISTERED
+title: "Novel skill acquisition and structural transfer"
+
+purpose: >
+  Test whether the agent converts interaction into reusable causal skills rather
+  than merely retaining episode-specific notes.
+
+task_design:
+  families:
+    - symbolic_machine
+    - rule_discovery
+    - tool_protocol
+    - spatial_interaction
+    - resource_planning
+  each_family:
+    training_environment: "novel rules not present in prompt"
+    transfer_environment: "same latent rule with changed surface representation"
+    conflict_environment: "one learned rule intentionally becomes false"
+    reset_environment: "context reset with explicit state capsule only"
+
+required_behaviors:
+  - infer_rule_from_sparse_action_outcome_feedback
+  - store_skill_with_scope_and_evidence
+  - transfer_to_surface_shift
+  - refuse_out_of_scope_transfer
+  - detect_rule_failure
+  - retain_falsified_rule_history
+  - revise_or_retire_rule
+  - preserve_authorization_scope
+
+metrics:
+  - sample_efficiency
+  - transfer_success
+  - false_transfer_rate
+  - adaptation_after_rule_change
+  - falsification_retention
+  - provenance_retention
+  - action_efficiency
+  - calibration
+
+ablations:
+  - full_runtime
+  - no_skill_library
+  - no_persistent_state
+  - notes_only
+  - no_epistemic_action
+
+hard_failures:
+  - "Learns a skill without evidence lineage."
+  - "Transfers a skill outside authorization scope."
+  - "Forgets falsified rule after compaction/reset."
+  - "Calls a surface match causal transfer without intervention evidence."
+
+claim_ceiling: "ONLINE_SKILL_ACQUISITION_AND_TRANSFER_EVIDENCE"
