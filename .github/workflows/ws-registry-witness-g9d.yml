@@ -97,6 +97,10 @@ jobs:
           openssl x509 -in .ci-witness/tls.crt -noout -ext subjectAltName \
             | grep -Fq 'DNS:localhost'
 
+          # The CA private key is needed only to issue the ephemeral server
+          # certificate. It must not enter the witness container mount.
+          rm -f .ci-witness/ca.key .ci-witness/tls.csr .ci-witness/ca.srl
+
           sudo chown 10002:10002 \
             .ci-witness/witness-signing.pem \
             .ci-witness/service-token \
