@@ -1,0 +1,40 @@
+sources:
+  - id: KATLOWITZ_ET_AL_2026
+    title: "Plasticity and language in the anaesthetized human hippocampus"
+    journal: Nature
+    volume: 654
+    pages: "714-723"
+    published: "2026-05-06"
+    doi: "10.1038/s41586-026-10448-0"
+    sample:
+      patients_total: 7
+      isolated_units: 651
+      language_participants: 4
+    findings:
+      - "oddball discrimination persisted during anesthesia"
+      - "oddball representation strengthened over about 10 minutes"
+      - "semantic and grammatical speech features represented"
+      - "neural activity predicted semantic information about upcoming words"
+    corrections:
+      - "2026-06-11: Fig. 1e timescale correction"
+      - "2026-09-01: Fig. 2k y-axis correction"
+    caution:
+      - "results do not demonstrate conscious awareness of stimuli"
+      - "small intraoperative sample"
+
+  - id: ZHU_ET_AL_2026
+    title: "Topological integration and segregation of the conscious connectome as biomarkers for state, behavior, and prognosis"
+    journal: "Communications Medicine"
+    published: "2026-09-10"
+    doi: "10.1038/s43856-026-01870-6"
+    sample:
+      disorders_of_consciousness: 117
+      healthy_controls: 30
+    findings:
+      - "widespread disruption of integration and segregation in DoC"
+      - "segregation deficits more pronounced"
+      - "functional integration positively associated with behavioral consciousness"
+      - "topology-only prognosis PR-AUC 0.61"
+      - "topology plus clinical variables PR-AUC 0.84"
+    caution:
+      - "network topology is biomarker evidence, not sufficient proof of mechanism"
