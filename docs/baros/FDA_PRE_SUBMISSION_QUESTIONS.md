@@ -19,6 +19,10 @@ Before a Q-Submission, lock:
 - whether BAROS modifies plan parameters, proposes alternatives, or scores/ranks plans;
 - degree of automation and time-criticality;
 - biological models/parameters that can affect output;
+- biological/anatomical measurements that can trigger adaptation;
+- trigger and qualification thresholds;
+- phase-coupling/temporal-state logic;
+- hold-last-valid and standard-plan fallback behavior;
 - human-review and override controls;
 - interoperability/data-flow boundary;
 - cybersecurity/network architecture;
@@ -65,10 +69,13 @@ Ask:
 3. What evidence is expected for selection, calibration, uncertainty and applicability of TCP/NTCP/radiosensitivity/hypoxia/proliferation or related model terms?
 4. Is explicit local-identifiability analysis an appropriate component of model assurance, and what additional evidence should accompany it?
 5. How should low-observability/high-control model states and out-of-distribution inputs be represented and governed?
-6. Is dependency-aware claim invalidation an appropriate change-control mechanism when a calibration, model, TPS version or source artifact changes?
-7. How should partner-controlled raw evidence, uncertainty, deviations, contradictions and reviewer identity be represented in a premarket evidence package?
-8. If future versions introduce learned/AI components, what additional total-product-lifecycle evidence and change-control documentation would FDA expect?
-9. What software-change categories should trigger partial versus full revalidation of the locked intended use?
+6. What evidence should demonstrate that BAROS correctly distinguishes a change that should trigger review from a measured state that is too uncertain or poorly identified to support adaptation?
+7. What validation should be required for trigger sensitivity/specificity, false adaptation, missed adaptation, correct refusal, incorrect refusal, and degraded-mode fallback behavior?
+8. Is the proposed phase-coupled temporal-control structure an appropriate way to prevent each fraction/adaptation phase from being optimized independently of neighboring phases, and what evidence would FDA expect for the chosen temporal model and weights?
+9. Is dependency-aware claim invalidation an appropriate change-control mechanism when a calibration, model, TPS version or source artifact changes?
+10. How should partner-controlled raw evidence, uncertainty, deviations, contradictions and reviewer identity be represented in a premarket evidence package?
+11. If future versions introduce learned/AI components, what additional total-product-lifecycle evidence and change-control documentation would FDA expect?
+12. What software-change categories should trigger partial versus full revalidation of the locked intended use?
 
 ## 5. Interoperability and nonclinical evidence questions
 
@@ -99,6 +106,9 @@ Ask:
 BAROS is designed for expert clinical users, but expert users can still make use errors under workload and time pressure. Provide a task analysis covering at minimum:
 
 - accepting/rejecting a BAROS proposal;
+- understanding why an adaptation trigger fired;
+- understanding why a triggered state was refused;
+- recognizing HOLD_LAST_VALID versus FALLBACK_STANDARD behavior;
 - inspecting model assumptions and confidence/limitations;
 - recognizing unsupported/out-of-distribution cases;
 - detecting stale/mismatched patient or plan context;
@@ -147,8 +157,9 @@ Ask:
 5. Are the proposed safety stopping rules adequate?
 6. Does FDA recommend independent endpoint adjudication or a Data Safety Monitoring Board for the expected risk?
 7. What follow-up is necessary for toxicity or outcome endpoints?
-8. What evidence would support adaptive optimization rather than static planning only?
-9. What evidence is needed to generalize from the initial site/configuration to additional institutions, TPS versions or delivery platforms?
+8. What evidence would support the closed-loop BAROS operating claim specifically: longitudinal measurement, trigger, qualification, re-optimization proposal, independent recalculation/validation, and fallback?
+9. Should controller-performance endpoints (false adaptation, missed adaptation, correct/incorrect refusal, fallback frequency) be treated as separate safety/performance endpoints from plan-quality endpoints?
+10. What evidence is needed to generalize from the initial site/configuration to additional institutions, TPS versions or delivery platforms?
 
 ## 9. 98.7% internal evidence-target question
 

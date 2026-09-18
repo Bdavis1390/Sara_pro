@@ -32,6 +32,12 @@ Before any validation data are collected, freeze:
 - comparator workflow;
 - operator qualifications;
 - permitted human overrides;
+- permitted biological/anatomical adaptation inputs;
+- adaptation-trigger thresholds;
+- state-qualification thresholds;
+- out-of-distribution rules;
+- temporal phase definition and phase-coupling parameters;
+- hold-last-valid and standard-plan fallback rules;
 - primary and secondary endpoints;
 - safety-event taxonomy;
 - follow-up duration;
@@ -82,7 +88,38 @@ These are statistical lower-bound requirements only. All mandatory absolute tole
 
 Any systematic bias, clinically significant localized discrepancy, or serious failure blocks the claim even if the aggregate probability calculation would otherwise pass.
 
-## 4. Stage B — Retrospective silent clinical validation
+## 4. Closed-loop controller validation
+
+Before retrospective plan-quality claims are evaluated, validate the BAROS operating loop itself against partner/adjudicator-defined adaptation need.
+
+For each eligible observation sequence, preserve:
+
+- measured biological/anatomical state;
+- measurement quality and uncertainty;
+- trigger status and exact trigger reason(s);
+- qualification status and exact blocker(s);
+- BAROS controller action: NO_ADAPTATION, PROPOSE_REOPTIMIZATION, HOLD_LAST_VALID, or FALLBACK_STANDARD;
+- last-valid and declared-standard plan identities;
+- whether the BAROS decision matched independent expert adjudication.
+
+Predeclare controller endpoints:
+
+- trigger sensitivity;
+- trigger specificity;
+- false-adaptation rate;
+- missed-adaptation rate;
+- correct-refusal rate;
+- incorrect-refusal rate;
+- hold-last-valid frequency and causes;
+- standard-plan fallback frequency and causes;
+- time from new observation to qualified proposal;
+- phase-coupled control stability;
+- decision changes under perturbation of biological uncertainty;
+- disagreement rate between BAROS qualification and expert adjudication.
+
+A favorable plan-quality result cannot compensate for an unsafe controller decision boundary.
+
+## 5. Stage B — Retrospective silent clinical validation
 
 BAROS processes historical cases without affecting care.
 
@@ -112,7 +149,7 @@ At minimum:
 
 BAROS remains investigational. Retrospective plan superiority does not establish patient benefit.
 
-## 5. Stage C — Prospective shadow-mode validation
+## 6. Stage C — Prospective shadow-mode validation
 
 BAROS runs prospectively but cannot control treatment decisions.
 
@@ -125,6 +162,9 @@ Standard clinical planning remains authoritative.
 - operator interaction and usability failures;
 - BAROS plan generation success;
 - silent safety-control activation;
+- biological/anatomical trigger events;
+- state qualification/refusal events;
+- hold-last-valid and standard-plan fallback events;
 - clinician / QMP acceptability before seeing standard-plan outcome where feasible;
 - elapsed workflow time;
 - prospective dose and constraint agreement;
@@ -140,7 +180,7 @@ If the protocol uses a zero-failure exact-binomial claim at 99.9% one-sided conf
 
 This denominator must consist of real prospectively processed clinical cases, not repeated simulations of the same case.
 
-## 6. Stage D — Regulatory / IRB determination before interventional use
+## 7. Stage D — Regulatory / IRB determination before interventional use
 
 Before BAROS can influence patient treatment:
 
@@ -154,7 +194,7 @@ Before BAROS can influence patient treatment:
 
 No interventional human-use phase begins solely because the prior stages pass.
 
-## 7. Stage E — Controlled prospective interventional study
+## 8. Stage E — Controlled prospective interventional study
 
 BAROS may influence treatment only under the authorized protocol.
 
@@ -179,7 +219,7 @@ A direct >=98.7% claim requires the lower probability bound for this endpoint to
 
 This is a treatment-process endpoint, not a cancer-cure probability.
 
-## 8. Clinical-effectiveness endpoint
+## 9. Clinical-effectiveness endpoint
 
 Clinical effectiveness must be indication-specific.
 
@@ -207,7 +247,7 @@ A numerical sample size cannot be responsibly specified until the partner invest
 - multiplicity plan;
 - desired type-I error / power or Bayesian prior model.
 
-## 9. Multi-site replication
+## 10. Multi-site replication
 
 A broad clinical claim requires replication beyond one institution when the intended use spans multiple clinical environments.
 
@@ -225,7 +265,7 @@ Record for each site:
 
 A pooled result cannot hide a site whose predefined safety or dose-accuracy gate fails.
 
-## 10. Evidence bundle per case
+## 11. Evidence bundle per case
 
 Each external validation case must preserve:
 
@@ -245,20 +285,22 @@ Each external validation case must preserve:
 - analysis inclusion/exclusion reason;
 - cryptographic hashes where feasible.
 
-## 11. Stopping / failure rules
+## 12. Stopping / failure rules
 
 Immediately suspend claim promotion when any of the following occurs:
 
 - serious BAROS-attributable patient safety event;
 - clinically material silent dose corruption;
 - hard constraint bypass;
+- adaptation from an unqualified, non-identifiable, out-of-distribution, or excessive-uncertainty state;
+- clinically material false-adaptation or missed-adaptation behavior beyond predeclared limits;
 - systematic DICOM/TPS coordinate error;
 - systematic measured-dose bias outside commissioned tolerance;
 - unresolved cybersecurity event with treatment impact;
 - evidence of clinically important subgroup degradation;
 - protocol/data-integrity failure invalidating the statistical analysis.
 
-## 12. Final release criterion
+## 13. Final release criterion
 
 BAROS is not allowed to state that it has >=98.7% probability of being clinically safe, clinically effective, dose-accurate, and capable of successful treatment use until the **same locked intended use and version** has evidence supporting all four clinical claims and the applicable regulatory/institutional conditions are satisfied.
 
