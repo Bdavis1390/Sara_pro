@@ -115,9 +115,7 @@ def _set_child_limits(policy: SdaAdapterIsolationPolicy) -> None:
         resource.RLIMIT_NOFILE,
         (policy.max_open_files, policy.max_open_files),
     )
-    file_limit = max(policy.max_output_bytes, policy.max_stderr_bytes)
-    resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))
-
+    # Allow one sentinel byte beyond the configured capture bound so a writer that\n    # overruns the quota leaves observable file-size evidence (> limit) instead of\n    # merely exiting nonzero at exactly the boundary. Readback is still truncated\n    # to the configured limit.\n    file_limit = max(policy.max_output_bytes, policy.max_stderr_bytes) + 1\n    resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))\n
 
 def _bounded_read(path: Path, limit: int) -> tuple[bytes, int, bool]:
     size = path.stat().st_size
