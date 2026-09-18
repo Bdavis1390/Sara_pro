@@ -1,0 +1,118 @@
+name: WS-SDA Adversarial Corpus G8
+
+on:
+  pull_request:
+    paths:
+      - "deployments/sara_verified_local_v1/fixtures/ws_sda_g8_adversarial_corpus_v1.json"
+      - "deployments/sara_verified_local_v1/tests/test_sda_g8_adversarial.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda*.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda*.py"
+      - "docs/WS_SDA_ADVERSARIAL_G8_2026-09-18.md"
+      - ".github/workflows/ws-sda-adversarial-g8.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "deployments/sara_verified_local_v1/fixtures/ws_sda_g8_adversarial_corpus_v1.json"
+      - "deployments/sara_verified_local_v1/tests/test_sda_g8_adversarial.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda*.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda*.py"
+      - "docs/WS_SDA_ADVERSARIAL_G8_2026-09-18.md"
+      - ".github/workflows/ws-sda-adversarial-g8.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  adversarial-g8:
+    name: sda-g8-frozen-adversarial-corpus
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install canonical SARA test dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pip install -e '.[test]'
+
+      - name: Validate frozen corpus contract
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("fixtures/ws_sda_g8_adversarial_corpus_v1.json")
+          record = json.loads(path.read_text(encoding="utf-8"))
+          assert record["schema"] == "WS-SDA-G8-ADVERSARIAL-CORPUS-V1"
+          assert record["frozen_case_count"] == 60
+          assert record["mandatory_false_negative_budget"] == 0
+          assert len(record["cases"]) == 60
+          assert len({case["id"] for case in record["cases"]}) == 60
+          assert {case["gate"] for case in record["cases"]} == {
+              "G1", "G2", "G3", "G4", "G5", "G6", "G7"
+          }
+          PY
+
+      - name: Execute all 60 frozen cases
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          tests/test_sda_g8_adversarial.py
+          --junitxml=sda-g8-junit.xml
+
+      - name: Build exact-commit G8 evidence record
+        working-directory: deployments/sara_verified_local_v1
+        env:
+          TESTED_COMMIT: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          corpus_path = Path("fixtures/ws_sda_g8_adversarial_corpus_v1.json")
+          corpus = json.loads(corpus_path.read_text(encoding="utf-8"))
+          evidence = {
+              "schema": "WS-SDA-G8-ADVERSARIAL-EVIDENCE-V1",
+              "result": "PASS",
+              "tested_commit": os.environ["TESTED_COMMIT"],
+              "corpus_schema": corpus["schema"],
+              "corpus_sha256": "sha256:" + hashlib.sha256(
+                  corpus_path.read_bytes()
+              ).hexdigest(),
+              "executed_cases": corpus["frozen_case_count"],
+              "mandatory_false_negative_budget": corpus[
+                  "mandatory_false_negative_budget"
+              ],
+              "observed_false_negatives": 0,
+              "claims_boundary": (
+                  "Pass applies only to the frozen synthetic/reference software "
+                  "corpus on this exact commit; it is not external validation, "
+                  "operational threat completeness, accreditation, or certification."
+              ),
+          }
+          Path("sda-g8-evidence.json").write_text(
+              json.dumps(evidence, sort_keys=True, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload G8 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-sda-g8-adversarial-evidence
+          path: |
+            deployments/sara_verified_local_v1/sda-g8-junit.xml
+            deployments/sara_verified_local_v1/sda-g8-evidence.json
+            deployments/sara_verified_local_v1/fixtures/ws_sda_g8_adversarial_corpus_v1.json
+          if-no-files-found: error
+          retention-days: 90
