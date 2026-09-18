@@ -5,8 +5,10 @@ on:
     paths:
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py"
       - "deployments/sara_verified_local_v1/tests/test_sda.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_identity.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/apnt*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/ddil*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py"
@@ -22,8 +24,10 @@ on:
     paths:
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py"
       - "deployments/sara_verified_local_v1/tests/test_sda.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_identity.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/apnt*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/ddil*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py"
@@ -39,7 +43,7 @@ permissions:
 
 jobs:
   sda-g1:
-    name: sda-g1-cross-project-gate
+    name: sda-g1-g2-cross-project-gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -62,6 +66,7 @@ jobs:
           python -m compileall -q
           worldshepherd_sara/sda.py
           worldshepherd_sara/sda_identity.py
+          worldshepherd_sara/sda_transport_identity.py
           worldshepherd_sara/apnt.py
           worldshepherd_sara/apnt_adapter.py
           worldshepherd_sara/apnt_interface_contract.py
@@ -73,9 +78,13 @@ jobs:
           worldshepherd_sara/hmaa_human_acceptance.py
           worldshepherd_sara/qualification.py
 
-      - name: Run SDA G1 acceptance suite
+      - name: Run SDA G1 and G2 acceptance suite
         working-directory: deployments/sara_verified_local_v1
-        run: python -m pytest -q tests/test_sda.py tests/test_sda_identity.py
+        run: >-
+          python -m pytest -q
+          tests/test_sda.py
+          tests/test_sda_identity.py
+          tests/test_sda_transport_identity.py
 
       - name: Run cross-project non-regression seams
         working-directory: deployments/sara_verified_local_v1
@@ -93,7 +102,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -R -n -E '^(<<<<<<< |>>>>>>> )'               deployments/sara_verified_local_v1/worldshepherd_sara/sda.py               deployments/sara_verified_local_v1/tests/test_sda.py               docs/WS_SDA_TRUST_FABRIC_V1_2026-09-17.md; then
+          if grep -R -n -E '^(<<<<<<< |>>>>>>> )' \
+              deployments/sara_verified_local_v1/worldshepherd_sara/sda.py \
+              deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py \
+              deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py \
+              deployments/sara_verified_local_v1/tests/test_sda.py \
+              deployments/sara_verified_local_v1/tests/test_sda_identity.py \
+              deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py \
+              docs/WS_SDA_TRUST_FABRIC_V1_2026-09-17.md; then
             echo "Unresolved merge-conflict marker found" >&2
             exit 1
           fi
