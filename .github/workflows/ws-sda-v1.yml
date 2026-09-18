@@ -3,6 +3,8 @@ name: WS-SDA Trust Fabric V1
 on:
   pull_request:
     paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda*.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py"
@@ -11,6 +13,7 @@ on:
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_canonical.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_hypothesis.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_release_authorization.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_release_fence.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_ddil_release.py"
       - "deployments/sara_verified_local_v1/tests/test_sda.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_identity.py"
@@ -20,10 +23,13 @@ on:
       - "deployments/sara_verified_local_v1/tests/test_sda_canonical.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_hypothesis.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_release_authorization.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_release_fence.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_ddil_release.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_g8_adversarial.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_10x_benchmark.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_external_replication.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_10x_benchmark.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_external_replication.py"
       - "deployments/sara_verified_local_v1/fixtures/ws_sda_g9_benchmark_protocol_v1.json"
       - "deployments/sara_verified_local_v1/fixtures/ws_sda_g8_adversarial_corpus_v1.json"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/apnt*.py"
@@ -39,6 +45,8 @@ on:
     branches:
       - main
     paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda*.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py"
@@ -89,7 +97,10 @@ jobs:
           worldshepherd_sara/sda_canonical.py
           worldshepherd_sara/sda_hypothesis.py
           worldshepherd_sara/sda_release_authorization.py
+          worldshepherd_sara/sda_release_fence.py
           worldshepherd_sara/sda_ddil_release.py
+          worldshepherd_sara/sda_10x_benchmark.py
+          worldshepherd_sara/sda_external_replication.py
           worldshepherd_sara/apnt.py
           worldshepherd_sara/apnt_adapter.py
           worldshepherd_sara/apnt_interface_contract.py
@@ -113,9 +124,11 @@ jobs:
           tests/test_sda_canonical.py
           tests/test_sda_hypothesis.py
           tests/test_sda_release_authorization.py
+          tests/test_sda_release_fence.py
           tests/test_sda_ddil_release.py
           tests/test_sda_g8_adversarial.py
           tests/test_sda_10x_benchmark.py
+          tests/test_sda_external_replication.py
 
       - name: Run cross-project non-regression seams
         working-directory: deployments/sara_verified_local_v1

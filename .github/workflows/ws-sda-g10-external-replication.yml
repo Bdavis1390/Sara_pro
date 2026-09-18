@@ -1,0 +1,103 @@
+name: WS-SDA Independent Replication G10
+
+on:
+  pull_request:
+    paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_external_replication.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_external_replication.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_release_fence.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_release_fence.py"
+      - "docs/WS_SDA_EXTERNAL_REPLICATION_G10_2026-09-18.md"
+      - "docs/WS_SDA_ACCOUNT_WIDE_HARDENING_2026-09-18.md"
+      - ".github/workflows/ws-sda-g10-external-replication.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_external_replication.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_external_replication.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_release_fence.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_release_fence.py"
+      - "docs/WS_SDA_EXTERNAL_REPLICATION_G10_2026-09-18.md"
+      - "docs/WS_SDA_ACCOUNT_WIDE_HARDENING_2026-09-18.md"
+      - ".github/workflows/ws-sda-g10-external-replication.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  g10-validator:
+    name: sda-g10-validator-readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install canonical SARA test dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pip install -e '.[test]'
+
+      - name: Compile G6B and G10 boundaries
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m compileall -q
+          worldshepherd_sara/sda_release_fence.py
+          worldshepherd_sara/sda_external_replication.py
+
+      - name: Test durable ambiguity fence and external replication verifier
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          tests/test_sda_release_fence.py
+          tests/test_sda_external_replication.py
+          --junitxml=sda-g10-junit.xml
+
+      - name: Emit G10 readiness evidence
+        working-directory: deployments/sara_verified_local_v1
+        env:
+          TESTED_COMMIT: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = {
+              "schema": "WS-SDA-G10-VALIDATOR-READINESS-V1",
+              "tested_commit": os.environ["TESTED_COMMIT"],
+              "validator_implemented": True,
+              "durable_release_fence_implemented": True,
+              "external_replication_received": False,
+              "g10_independent_replication_gate_passed": False,
+              "reason": (
+                  "Internal CI can validate the handoff/verifier and durable "
+                  "release fence but cannot independently reproduce itself."
+              ),
+              "claims_boundary": (
+                  "Readiness artifact only. No external evaluator execution, "
+                  "independent reproduction, accreditation, certification, or "
+                  "operational authorization is claimed."
+              ),
+          }
+          Path("sda-g10-validator-readiness.json").write_text(
+              json.dumps(evidence, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload G10 validator evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-sda-g10-validator-readiness
+          path: |
+            deployments/sara_verified_local_v1/sda-g10-junit.xml
+            deployments/sara_verified_local_v1/sda-g10-validator-readiness.json
+          if-no-files-found: error
+          retention-days: 90

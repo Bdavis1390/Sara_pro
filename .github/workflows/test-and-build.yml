@@ -50,9 +50,11 @@ jobs:
           tests/test_sda_canonical.py
           tests/test_sda_hypothesis.py
           tests/test_sda_release_authorization.py
+          tests/test_sda_release_fence.py
           tests/test_sda_ddil_release.py
           tests/test_sda_g8_adversarial.py
           tests/test_sda_10x_benchmark.py
+          tests/test_sda_external_replication.py
           tests/test_apnt_interface_contract.py
           tests/test_ddil_reconcile.py
           tests/test_mission_replay.py
