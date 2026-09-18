@@ -1,6 +1,6 @@
 # BAROS Requirements Traceability Matrix
 
-Status: research-only verification artifact  
+Status: research-only verification artifact
 Clinical use: prohibited
 
 This matrix describes only the bounded repository behaviors exercised by BAROS tests. It does **not** establish physical dose accuracy, treatment-planning-system interoperability, clinical safety/effectiveness, regulatory authorization, or patient-care suitability.
