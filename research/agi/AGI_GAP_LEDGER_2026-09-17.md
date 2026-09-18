@@ -50,3 +50,17 @@ General-Agent Runtime v0.1 directly attacks blockers 3–7.
 The Competence Ledger makes blockers 1, 2, 9 and 10 machine-checkable.
 
 No blocker is cleared by prose.
+
+
+## Runtime v0.2 update
+
+Issue #493 adds executable support for:
+- persistent explicit state snapshots;
+- multiple causal hypotheses and Bayesian intervention updates;
+- expected-information-gain action selection;
+- structural transfer hypotheses across representation shifts;
+- repeated-surprise regime-change detection.
+
+These are **architecture milestones, not cleared AGI gates**.
+
+Blockers 3–7 remain open until the preregistered runtime/transfer benchmarks are executed on held-out environments and independently replicated where required.
