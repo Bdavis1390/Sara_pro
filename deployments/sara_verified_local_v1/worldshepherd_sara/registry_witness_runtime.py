@@ -237,7 +237,7 @@ def load_registry_witness_client_from_environment() -> RegistryMonotonicWitnessC
     )
     ca_file = os.getenv(WITNESS_CA_FILE_ENV, "").strip()
     if ca_file:
-        _read_file(
+        ca_bytes = _read_file(
             ca_file,
             env_name=WITNESS_CA_FILE_ENV,
             label="registry witness CA bundle",
@@ -245,8 +245,14 @@ def load_registry_witness_client_from_environment() -> RegistryMonotonicWitnessC
             secret=False,
         )
         try:
-            ssl_context = ssl.create_default_context(cafile=ca_file)
-        except (OSError, ssl.SSLError) as exc:
+            ca_text = ca_bytes.decode("ascii")
+        except UnicodeDecodeError as exc:
+            raise RegistryWitnessRuntimeConfigError(
+                "registry witness CA bundle must be PEM ASCII text"
+            ) from exc
+        try:
+            ssl_context = ssl.create_default_context(cadata=ca_text)
+        except ssl.SSLError as exc:
             raise RegistryWitnessRuntimeConfigError(
                 "registry witness CA bundle could not initialize TLS trust"
             ) from exc
