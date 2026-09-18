@@ -115,7 +115,9 @@ def _set_child_limits(policy: SdaAdapterIsolationPolicy) -> None:
         resource.RLIMIT_NOFILE,
         (policy.max_open_files, policy.max_open_files),
     )
-    file_limit = max(policy.max_output_bytes, policy.max_stderr_bytes)\n    resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))\n
+    file_limit = max(policy.max_output_bytes, policy.max_stderr_bytes)
+    resource.setrlimit(resource.RLIMIT_FSIZE, (file_limit, file_limit))
+
 
 def _bounded_read(path: Path, limit: int) -> tuple[bytes, int, bool]:
     size = path.stat().st_size
@@ -226,7 +228,22 @@ def run_isolated_adapter(
 
         if timed_out:
             status = SdaAdapterRunStatus.TIMED_OUT
-        elif stdout_exceeded or stderr_exceeded or return_code == -signal.SIGXFSZ:
+        elif (
+            stdout_exceeded
+            or stderr_exceeded
+            or return_code == -signal.SIGXFSZ
+            or (
+                return_code not in policy.allow_exit_codes
+                and (
+                    stdout_size >= policy.max_output_bytes
+                    or stderr_size >= policy.max_stderr_bytes
+                )
+            )
+        ):
+            # Some runtimes turn RLIMIT_FSIZE into an application-level write/flush
+            # failure rather than surfacing SIGXFSZ directly. A non-allowed exit
+            # with a capture file pinned at its configured bound is conservatively
+            # classified as an output-limit violation.
             status = SdaAdapterRunStatus.OUTPUT_LIMIT_EXCEEDED
         elif return_code not in policy.allow_exit_codes:
             status = SdaAdapterRunStatus.PROCESS_FAILED
