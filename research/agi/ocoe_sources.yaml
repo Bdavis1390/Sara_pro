@@ -1,0 +1,50 @@
+sources:
+  - id: STANFORD_EE363
+    title: "EE363 Linear Dynamical Systems — Observability and state estimation"
+    organization: "Stanford University"
+    evidence:
+      - "Observability–controllability duality for linear systems."
+      - "Observability matrix of a system relates to controllability matrix of the dual."
+
+  - id: CHADES_2021
+    title: "A primer on partially observable Markov decision processes (POMDPs)"
+    journal: "Methods in Ecology and Evolution"
+    doi: "10.1111/2041-210X.13692"
+    evidence:
+      - "Belief state represents probability distribution over hidden states."
+      - "Under the POMDP model, belief state is sufficient statistic for observable action-observation history."
+
+  - id: CHEN_2022
+    title: "Perspective view of autonomous control in unknown environment: Dual control for exploitation and exploration vs reinforcement learning"
+    journal: "Neurocomputing"
+    volume: 497
+    pages: "50-63"
+    doi: "10.1016/j.neucom.2022.04.131"
+    evidence:
+      - "Dual control actions have directing and probing effects."
+      - "DCEE balances task exploitation with uncertainty-reducing exploration."
+
+  - id: LI_ET_AL_2024
+    title: "Dual Control of Exploration and Exploitation for Auto-Optimization Control With Active Learning"
+    journal: "IEEE Transactions on Automation Science and Engineering"
+    doi: "10.1109/TASE.2024.3375373"
+    evidence:
+      - "Actively probes uncertain environment while optimizing operational condition."
+      - "Provides convergence properties in tested formulation."
+
+  - id: HU_ET_AL_2024
+    title: "Active uncertainty reduction for safe and efficient interaction planning: A shielding-aware dual control approach"
+    journal: "The International Journal of Robotics Research"
+    volume: 43
+    issue: 9
+    doi: "10.1177/02783649231215371"
+    evidence:
+      - "Combines dual control with runtime safety filtering."
+      - "Demonstrated in simulation and 1/10-scale autonomous vehicle hardware."
+
+  - id: CONSTRAINEDZERO_2024
+    title: "ConstrainedZero: Chance-Constrained POMDP Planning Using Learned Probabilistic Failure Surrogates and Adaptive Safety Constraints"
+    venue: "IJCAI 2024"
+    doi: "10.24963/ijcai.2024/746"
+    evidence:
+      - "Plans in belief space under partial observability with explicit failure-probability safety constraints."
