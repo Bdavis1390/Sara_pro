@@ -37,7 +37,8 @@ jobs:
             tests/test_registry_remote_witness.py \
             tests/test_registry_witness_ledger_integrity.py \
             tests/test_registry_witness_runtime.py \
-            tests/test_registry_witness_service_config.py
+            tests/test_registry_witness_service_config.py \
+            tests/test_registry_witness_startup.py
 
       - name: Verify registry witness CLI is packaged
         working-directory: deployments/sara_verified_local_v1
