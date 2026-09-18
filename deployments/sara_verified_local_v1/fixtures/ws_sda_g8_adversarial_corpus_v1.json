@@ -1,0 +1,430 @@
+{
+  "schema": "WS-SDA-G8-ADVERSARIAL-CORPUS-V1",
+  "frozen_at_utc": "2026-09-18T01:05:00Z",
+  "frozen_case_count": 60,
+  "mandatory_false_negative_budget": 0,
+  "scope": "Synthetic/reference software qualification across WS-SDA G1-G7",
+  "claims_boundary": "A pass proves only the frozen software cases on the tested commit. It does not establish operational threat completeness, penetration-test equivalence, accreditation, or external validation.",
+  "cases": [
+    {
+      "id": "G1-001",
+      "gate": "G1",
+      "scenario": "unknown_field_schema",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-002",
+      "gate": "G1",
+      "scenario": "asymmetric_covariance",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-003",
+      "gate": "G1",
+      "scenario": "nonfinite_position",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-004",
+      "gate": "G1",
+      "scenario": "disabled_contract",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-005",
+      "gate": "G1",
+      "scenario": "source_id_mismatch",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-006",
+      "gate": "G1",
+      "scenario": "adapter_id_mismatch",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-007",
+      "gate": "G1",
+      "scenario": "adapter_version_mismatch",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-008",
+      "gate": "G1",
+      "scenario": "stale_contract_digest",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-009",
+      "gate": "G1",
+      "scenario": "backward_sequence",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-010",
+      "gate": "G1",
+      "scenario": "same_sequence_mutation",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G1-011",
+      "gate": "G1",
+      "scenario": "stale_observation",
+      "expected": "QUARANTINE",
+      "must_detect": true
+    },
+    {
+      "id": "G1-012",
+      "gate": "G1",
+      "scenario": "unapproved_releasability",
+      "expected": "QUARANTINE",
+      "must_detect": true
+    },
+    {
+      "id": "G2-001",
+      "gate": "G2",
+      "scenario": "missing_workload_identity",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G2-002",
+      "gate": "G2",
+      "scenario": "workload_signature_tamper",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G2-003",
+      "gate": "G2",
+      "scenario": "workload_revoked_key",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G2-004",
+      "gate": "G2",
+      "scenario": "workload_expired",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G2-005",
+      "gate": "G2",
+      "scenario": "workload_future_issue",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G2-006",
+      "gate": "G2",
+      "scenario": "workload_wrong_adapter",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G2-007",
+      "gate": "G2",
+      "scenario": "missing_transport_identity",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G2-008",
+      "gate": "G2",
+      "scenario": "transport_fingerprint_mismatch",
+      "expected": "REJECT",
+      "must_detect": true
+    },
+    {
+      "id": "G3-001",
+      "gate": "G3",
+      "scenario": "oversized_input",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G3-002",
+      "gate": "G3",
+      "scenario": "shell_metacharacter_literal",
+      "expected": "SAFE_LITERAL",
+      "must_detect": false
+    },
+    {
+      "id": "G3-003",
+      "gate": "G3",
+      "scenario": "wall_clock_timeout",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G3-004",
+      "gate": "G3",
+      "scenario": "stdout_flood",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G3-005",
+      "gate": "G3",
+      "scenario": "stderr_flood",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G3-006",
+      "gate": "G3",
+      "scenario": "nonallowed_exit",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G3-007",
+      "gate": "G3",
+      "scenario": "missing_executable",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G3-008",
+      "gate": "G3",
+      "scenario": "nul_argument",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-001",
+      "gate": "G4",
+      "scenario": "opm_wrong_version",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-002",
+      "gate": "G4",
+      "scenario": "opm_wrong_position_unit",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-003",
+      "gate": "G4",
+      "scenario": "opm_wrong_velocity_unit",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-004",
+      "gate": "G4",
+      "scenario": "opm_duplicate_required_keyword",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-005",
+      "gate": "G4",
+      "scenario": "opm_nonfinite_numeric",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-006",
+      "gate": "G4",
+      "scenario": "tdm_wrong_version",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-007",
+      "gate": "G4",
+      "scenario": "tdm_invalid_range_unit",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G4-008",
+      "gate": "G4",
+      "scenario": "tdm_unsupported_observable",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G5-001",
+      "gate": "G5",
+      "scenario": "empty_observation_set",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G5-002",
+      "gate": "G5",
+      "scenario": "duplicate_observation_id",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G5-003",
+      "gate": "G5",
+      "scenario": "object_identity_mismatch",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G5-004",
+      "gate": "G5",
+      "scenario": "epoch_mismatch",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G5-005",
+      "gate": "G5",
+      "scenario": "reference_frame_mismatch",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G5-006",
+      "gate": "G5",
+      "scenario": "incompatible_outlier",
+      "expected": "MULTI_HYPOTHESIS",
+      "must_detect": true
+    },
+    {
+      "id": "G6-001",
+      "gate": "G6",
+      "scenario": "tamper_hypothesis_digest",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-002",
+      "gate": "G6",
+      "scenario": "tamper_payload_digest",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-003",
+      "gate": "G6",
+      "scenario": "tamper_policy_digest",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-004",
+      "gate": "G6",
+      "scenario": "tamper_destination",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-005",
+      "gate": "G6",
+      "scenario": "tamper_releasability",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-006",
+      "gate": "G6",
+      "scenario": "tamper_human_approval",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-007",
+      "gate": "G6",
+      "scenario": "release_expired",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-008",
+      "gate": "G6",
+      "scenario": "release_future_issue",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-009",
+      "gate": "G6",
+      "scenario": "release_replay_consumption",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G6-010",
+      "gate": "G6",
+      "scenario": "release_use_time_expiry",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G7-001",
+      "gate": "G7",
+      "scenario": "journal_semantic_conflict",
+      "expected": "CONFLICT",
+      "must_detect": true
+    },
+    {
+      "id": "G7-002",
+      "gate": "G7",
+      "scenario": "journal_capacity",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G7-003",
+      "gate": "G7",
+      "scenario": "journal_tamper_health",
+      "expected": "DETECT",
+      "must_detect": true
+    },
+    {
+      "id": "G7-004",
+      "gate": "G7",
+      "scenario": "rejoin_receipt_conflict",
+      "expected": "CONFLICT",
+      "must_detect": true
+    },
+    {
+      "id": "G7-005",
+      "gate": "G7",
+      "scenario": "single_side_internal_conflict",
+      "expected": "CONFLICT",
+      "must_detect": true
+    },
+    {
+      "id": "G7-006",
+      "gate": "G7",
+      "scenario": "echo_same_origin_mutation",
+      "expected": "CONFLICT",
+      "must_detect": true
+    },
+    {
+      "id": "G7-007",
+      "gate": "G7",
+      "scenario": "replay_invalid_sequence",
+      "expected": "BLOCK",
+      "must_detect": true
+    },
+    {
+      "id": "G7-008",
+      "gate": "G7",
+      "scenario": "replica_node_identity_separation",
+      "expected": "SEPARATED",
+      "must_detect": true
+    }
+  ]
+}
