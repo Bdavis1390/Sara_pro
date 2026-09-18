@@ -1,0 +1,27 @@
+case_id: ATIP-DSS-MATERIAL-EVIDENCE-001
+status: SUPPORTED_BY_PEER_REVIEW
+source:
+  title: "Illuminating Genetic Mysteries of the Dead Sea Scrolls"
+  journal: Cell
+  year: 2020
+  doi: "10.1016/j.cell.2020.04.046"
+
+material_channel: "ancient DNA from parchment"
+
+demonstrated_uses:
+  - "genetic classification of parchment fragments"
+  - "distinguishing fragments likely from different source animals/manuscripts"
+  - "disambiguating contested relationships among Jeremiah fragments"
+  - "evidence that some scrolls were brought to Qumran from elsewhere"
+  - "support for parallel circulation of divergent Jeremiah textual versions"
+  - "separation of debated fragments from the Qumran corpus"
+
+translation_implications:
+  - "fragment grouping is an upstream dependency of reconstructed text"
+  - "wrong fragment grouping can contaminate reconstructed order and translation"
+  - "material provenance can independently challenge text-only reconstruction"
+
+claim_boundary:
+  - "DNA compatibility does not prove two fragments are adjacent."
+  - "Different animal DNA can reject some joins but same-animal DNA alone is not sufficient to prove one manuscript."
+  - "Genetic provenance does not by itself determine textual meaning."
