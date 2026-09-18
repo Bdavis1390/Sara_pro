@@ -1,0 +1,38 @@
+sources:
+  - id: TOKER_ET_AL_2026
+    title: "Adversarial AI reveals mechanisms and treatments for disorders of consciousness"
+    journal: "Nature Neuroscience"
+    volume: 29
+    pages: "964-977"
+    published: "2026-03-24"
+    doi: "10.1038/s41593-026-02220-4"
+    evidence:
+      - ">680,000 ten-second neuroelectrophysiology samples"
+      - "validated across 565 patients, healthy volunteers and animals"
+      - "AI-predicted basal-ganglia indirect-pathway disruption supported by DTI in 51 DOC patients"
+      - "AI-predicted inhibitory-to-inhibitory coupling supported by RNA-seq from 6 human coma patients and rat stroke model"
+      - "high-frequency STN stimulation identified as candidate intervention and supported by human electrophysiology"
+
+  - id: LI_ET_AL_2026_PITBS
+    title: "Neuroplasticity underlying prolonged intermittent theta-burst stimulation in the regulation of disorders of consciousness: pilot randomized controlled trial"
+    journal: "European Journal of Medical Research"
+    volume: 31
+    article: 617
+    published: "2026-03-17"
+    doi: "10.1186/s40001-026-04117-1"
+    sample_size: 20
+    evidence:
+      - "randomized sham-controlled pilot"
+      - "60% response active vs 10% sham after 10 sessions"
+      - "greater CRS-R improvement"
+      - "EEG reorganization and stronger frontoparietal connectivity"
+      - "larger BDNF increase"
+    caution: "Small pilot; not established standard of care."
+
+  - id: NCT07539740
+    title: "Effectiveness of Theta-Burst Patterned Temporal Interference Stimulation for Improving Awareness in Patients With Disorders of Consciousness"
+    status: "RECRUITING"
+    enrollment_estimated: 136
+    design: "multicenter randomized double-blind sham-controlled"
+    target: "centromedian-parafascicular thalamic complex"
+    evidence_class: "protocol / ongoing trial — no efficacy result"
