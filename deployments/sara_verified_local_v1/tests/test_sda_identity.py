@@ -29,6 +29,7 @@ from worldshepherd_sara.sda_identity import (
 
 NOW = datetime(2026, 9, 17, 23, 45, tzinfo=timezone.utc)
 KEY_ID = "SDA-WORKLOAD-K1"
+TRANSPORT_CERT_SHA256 = "sha256:" + "d" * 64
 
 
 def b64url(raw: bytes) -> str:
@@ -54,6 +55,7 @@ def signed_assertion(
     issued_at: datetime = NOW - timedelta(seconds=5),
     expires_at: datetime = NOW + timedelta(minutes=2),
     key_id: str = KEY_ID,
+    transport_cert_sha256: str = TRANSPORT_CERT_SHA256,
 ) -> SdaWorkloadIdentityAssertion:
     unsigned = SdaWorkloadIdentityAssertion(
         key_id=key_id,
@@ -61,6 +63,7 @@ def signed_assertion(
         source_id=source_id,
         adapter_id=adapter_id,
         adapter_version=adapter_version,
+        transport_cert_sha256=transport_cert_sha256,
         issued_at=issued_at,
         expires_at=expires_at,
         nonce="nonce-sda-workload-0001",
@@ -134,6 +137,7 @@ def test_workload_assertion_rejects_overlong_lifetime():
             source_id="SYNTH-RADAR-A",
             adapter_id="WS-SDA-SYNTH",
             adapter_version="1.0.0",
+            transport_cert_sha256=TRANSPORT_CERT_SHA256,
             issued_at=NOW,
             expires_at=NOW + timedelta(minutes=6),
             nonce="nonce-sda-workload-0001",
@@ -149,6 +153,7 @@ def test_signed_workload_identity_verifies_with_public_key_only():
     assert verified.source_id == "SYNTH-RADAR-A"
     assert verified.adapter_id == "WS-SDA-SYNTH"
     assert verified.key_id == KEY_ID
+    assert verified.transport_cert_sha256 == TRANSPORT_CERT_SHA256
     assert len(verified.key_fingerprint_sha256) == 64
 
 
