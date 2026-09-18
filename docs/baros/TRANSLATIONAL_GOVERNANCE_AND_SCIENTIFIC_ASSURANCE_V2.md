@@ -1,6 +1,6 @@
 # BAROS Translational Governance and Scientific Assurance v2
 
-Status: IMPLEMENTED IN SOFTWARE / NON-CLINICAL  
+Status: IMPLEMENTED IN SOFTWARE / NON-CLINICAL
 Patient-care authority: **NONE**
 
 ## Purpose
