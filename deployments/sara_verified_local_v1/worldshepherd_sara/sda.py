@@ -256,8 +256,19 @@ def evaluate_sda_ingest(
                     adapter_version=observation.source.adapter_version,
                     now=current,
                 )
+                if contract.require_transport_identity:
+                    if transport_identity is None:
+                        reject.append(
+                            "active interface contract requires verified mTLS transport identity"
+                        )
+                    else:
+                        assert_transport_identity_bound_to_workload(
+                            transport_identity,
+                            workload_identity,
+                            now=current,
+                        )
             except PrimeSentinelAuthorizationError as exc:
-                reject.append(f"workload identity rejected: {exc}")
+                reject.append(f"workload or transport identity rejected: {exc}")
 
     if replay_state is not None:
         if replay_state.source_id != observation.source.source_id:
