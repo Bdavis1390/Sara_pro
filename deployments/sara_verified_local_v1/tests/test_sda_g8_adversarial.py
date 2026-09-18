@@ -388,16 +388,24 @@ def _blocked(callable_):
     raise AssertionError("expected operation to fail closed")
 
 
+def _rejected(callable_):
+    try:
+        callable_()
+    except (ValidationError, ValueError):
+        return "REJECT"
+    raise AssertionError("expected schema/data validation to reject input")
+
+
 def _run_g1(scenario: str) -> str:
     active = _g1_contract()
     if scenario == "unknown_field_schema":
         payload = _g1_observation(active).model_dump(mode="json")
         payload["unexpected"] = True
-        return _blocked(lambda: SdaObservation.model_validate(payload))
+        return _rejected(lambda: SdaObservation.model_validate(payload))
     if scenario == "asymmetric_covariance":
         bad = _covariance()
         bad[0][1] = 1.0
-        return _blocked(lambda: _g1_observation(active, covariance_6x6=bad))
+        return _rejected(lambda: _g1_observation(active, covariance_6x6=bad))
     if scenario == "nonfinite_position":
         return _blocked(
             lambda: _g1_observation(active, position_km=(math.inf, 2.0, 3.0))
