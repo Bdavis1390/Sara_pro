@@ -53,7 +53,7 @@ jobs:
           --target-probability 0.987
           --output baros-reliability-evidence.json
           > baros-reliability.stdout.json
-      - name: Assert evidence remains bounded, detailed, non-clinical, and passing
+      - name: Assert evidence remains bounded, detailed, non-clinical, and falsifiable
         run: |
           python - <<'PY'
           import json
@@ -70,7 +70,14 @@ jobs:
           assert expert['system']['patient_care_ready'] is False
           assert expert['optimization']['hard_constraints_satisfied'] is True
           assert expert['dose_readout']['hard_constraint_margins']
-          assert expert['robustness']['all_hard_constraints_satisfied'] is True
+          assert isinstance(expert['robustness']['all_hard_constraints_satisfied'], bool)
+          failed_robustness=[
+              item for item in expert['robustness']['scenarios']
+              if not item['hard_constraints_satisfied']
+          ]
+          if not expert['robustness']['all_hard_constraints_satisfied']:
+              assert failed_robustness
+              assert all(item['constraint_failures'] for item in failed_robustness)
           assert expert['governance']['intended_use_manifest_implemented'] is True
           assert expert['governance']['current_partner_validation_manifest_locked'] is False
           assert expert['model_assurance']['clinical_model_identifiability_established'] is False

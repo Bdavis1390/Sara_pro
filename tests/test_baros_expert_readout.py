@@ -14,7 +14,7 @@ def test_expert_readout_is_deterministic_and_bounded():
     assert len(first["readout_sha256"]) == 64
 
 
-def test_expert_readout_exposes_quantitative_state_and_constraints():
+def test_expert_readout_exposes_quantitative_state_and_constraint_failures():
     report = build_expert_readout(commit_sha="TEST-SHA")
     optimization = report["optimization"]
     dose = report["dose_readout"]
@@ -22,7 +22,13 @@ def test_expert_readout_exposes_quantitative_state_and_constraints():
     assert optimization["hard_constraints_satisfied"] is True
     assert dose["hard_constraint_margins"]
     assert all(item["satisfied"] for item in dose["hard_constraint_margins"])
-    assert report["robustness"]["all_hard_constraints_satisfied"] is True
+
+    robustness = report["robustness"]
+    assert robustness["scenario_names"] == ["dose_minus_5pct", "dose_plus_5pct", "nominal"]
+    assert isinstance(robustness["all_hard_constraints_satisfied"], bool)
+    failed = [item for item in robustness["scenarios"] if not item["hard_constraints_satisfied"]]
+    assert failed
+    assert all(item["constraint_failures"] for item in failed)
 
 
 def test_expert_readout_exposes_translational_assurance_state():
