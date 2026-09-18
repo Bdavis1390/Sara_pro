@@ -77,3 +77,13 @@ source_watch:
     status: ACTIVE
     triggers: [running_translation_without_validated_decipherment]
     action: BLOCK
+
+  physical_to_semantic_chain:
+    issue: 478
+    state: ACTIVE
+    control: "Herculaneum / Vesuvius Challenge 2026"
+    principle: "translation provenance can extend back through tomography, geometry, ink detection and transcription to the physical artifact"
+    benchmark: ATIP-PSEC-001
+    linked_method:
+      - Aeneas multimodal contextualization
+      - Herculaneum virtual unwrapping
