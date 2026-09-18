@@ -75,7 +75,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="worldshepherd-registry-witness",
         description=(
-            "Inspect or explicitly advance the configured MAG-1.6R registry witness. "
+            "Inspect or explicitly advance the configured G9D registry witness. "
             "This command never infers independent deployment status."
         ),
     )
