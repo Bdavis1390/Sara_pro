@@ -23,6 +23,26 @@ BAROS (Biologically Adaptive Radiotherapy Optimization System) is implemented he
 - fail-closed maximum-dose constraints;
 - deterministic constrained synthetic optimization.
 
+### Closed-loop biological adaptation
+
+BAROS does not operate as a static one-pass optimizer. Its bounded operating doctrine is:
+
+measure -> qualify -> propose/re-optimize -> independently recalculate/validate -> human review -> continue/adapt
+
+Implemented research-control behavior includes:
+
+- voxel-state schema for alpha, beta, hypoxia, resistance and uncertainty;
+- anatomy, motion and measurement-quality state;
+- trigger-governed adaptation rather than automatic replanning;
+- qualification gates for geometry, identifiability, out-of-distribution state, measurement quality and uncertainty;
+- PROPOSE_REOPTIMIZATION only when a trigger fires and the state qualifies;
+- HOLD_LAST_VALID when a triggered state is not sufficiently trustworthy;
+- FALLBACK_STANDARD when no last-valid adaptive plan exists;
+- explicit treatment_authority=false in every bounded controller decision;
+- phase-coupled scoring with uncertainty and temporal control-discontinuity penalties.
+
+See docs/baros/BAROS_CLOSED_LOOP_OPERATING_DOCTRINE.md.
+
 ### DICOM-RT and dosimetric analysis
 
 - bounded RTSTRUCT/RTPLAN/RTDOSE semantic and reference-chain checks;
@@ -77,6 +97,8 @@ BAROS can now generate synchronized machine-readable JSON and human-readable Mar
 - dose vector and target/OAR summaries;
 - every hard-constraint limit, observed value and margin;
 - robustness scenarios and worst case;
+- closed-loop trigger, qualification, degraded-mode and fallback state;
+- phase-coupled temporal-control readout;
 - translational-governance state;
 - model-identifiability / information-gain / observability-controllability capability state;
 - evidence-dependency / quarantine / blast-radius state;
@@ -127,6 +149,7 @@ PYTHONPATH=. python -m baros.expert_cli --commit-sha LOCAL --json-output baros-e
 
 See:
 
+- `docs/baros/BAROS_CLOSED_LOOP_OPERATING_DOCTRINE.md`
 - `docs/baros/EXPERT_TECHNICAL_READOUT.md`
 - `docs/baros/TRACEABILITY_MATRIX.md`
 - `docs/baros/BAROS_IMPLEMENTATION_AND_VALIDATION_GATE.md`

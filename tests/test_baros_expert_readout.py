@@ -39,6 +39,10 @@ def test_expert_readout_exposes_translational_assurance_state():
     assert report["model_assurance"]["clinical_model_identifiability_established"] is False
     assert report["evidence_dependency_control"]["blast_radius_invalidation_implemented"] is True
     assert report["evidence_dependency_control"]["external_partner_graph_populated"] is False
+    assert report["closed_loop_operation"]["qualified_trigger_example"]["action"] == "PROPOSE_REOPTIMIZATION"
+    assert report["closed_loop_operation"]["qualified_trigger_example"]["treatment_authority"] is False
+    assert report["closed_loop_operation"]["degraded_mode_example"]["action"] == "HOLD_LAST_VALID"
+    assert "out_of_distribution" in report["closed_loop_operation"]["degraded_mode_example"]["qualification_blockers"]
     assert len(report["risk_families"]) >= 20
 
 
@@ -60,6 +64,7 @@ def test_expert_markdown_contains_expert_sections():
     assert "# BAROS Expert Technical Readout" in rendered
     assert "## Capability/evidence matrix" in rendered
     assert "## Validation readiness gates" in rendered
+    assert "## Closed-loop biological operating state" in rendered
     assert "## Translational governance state" in rendered
     assert "## Model-assurance state" in rendered
     assert "## Evidence-dependency control state" in rendered

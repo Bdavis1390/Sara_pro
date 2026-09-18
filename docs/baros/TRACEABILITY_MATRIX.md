@@ -22,6 +22,10 @@ This matrix describes bounded repository behaviors only. It does **not** establi
 | BAROS-VAL-001 | DVH summary, Vx, Dx%, cumulative DVH | `baros/dvh.py` | exact-value, monotonicity, mask, fail-closed tests | IMPLEMENTED IN SOFTWARE for numerical arrays | independent TPS/physics reference comparison |
 | BAROS-VAL-002 | gamma comparison | `baros/gamma_analysis.py` using pinned PyMedPhys | identity/error/input-validation tests | IMPLEMENTED IN SOFTWARE as research wrapper | measured-dose validation under qualified physics protocol |
 | BAROS-ROB-001 | finite-scenario robustness evaluation | `baros/robustness.py` | worst-case/constraint/fail-closed tests | SIMULATED ONLY | clinically justified uncertainty model + partner validation |
+| BAROS-LOOP-001 | trigger-governed adaptation | `baros/closed_loop.py::assess_triggers` | biological/anatomical/manual trigger tests | IMPLEMENTED IN SOFTWARE for bounded research state | partner-locked measurement sources and trigger thresholds |
+| BAROS-LOOP-002 | qualification-before-adaptation | `baros/closed_loop.py::qualify_state` | geometry/quality/uncertainty/identifiability/OOD rejection tests | IMPLEMENTED IN SOFTWARE | clinically justified qualification thresholds and expert adjudication |
+| BAROS-LOOP-003 | safe degraded-mode decision | `baros/closed_loop.py::decide_adaptation` | propose/hold/fallback/no-adaptation tests | IMPLEMENTED IN SOFTWARE; no treatment authority | external TPS recalculation, QA and human clinical workflow |
+| BAROS-PHASE-001 | phase-coupled temporal score | `baros/closed_loop.py::phase_coupled_score` | uncertainty/discontinuity penalty tests | SIMULATED ONLY | clinically justified temporal biological model and policy |
 | BAROS-ADAPT-001 | aligned cumulative-dose summation | `baros/adaptive.py::accumulate_aligned_dose` | alignment/mismatch/negative-dose tests | IMPLEMENTED IN SOFTWARE only for already-aligned grids | validated registration/resampling workflow |
 | BAROS-GOV-001 | locked intended-use identity | `baros/clinical_governance.py::IntendedUseManifest` | digest stability/change tests | IMPLEMENTED IN SOFTWARE | partner/institution locks clinical research configuration |
 | BAROS-GOV-002 | EBOM-style evidence envelope | `baros/clinical_governance.py::EvidenceEnvelope` | validation/quarantine tests | IMPLEMENTED IN SOFTWARE | partner-controlled evidence population |
@@ -45,6 +49,8 @@ The expert readout integrates but does not promote the underlying evidence state
 - mathematical/model assumptions;
 - optimization and hard-constraint state;
 - DICOM/dose/robustness summary;
+- closed-loop measure/qualify/propose/fallback state;
+- phase-coupled temporal-control state;
 - governance control state;
 - model-identifiability/experiment-design capability state;
 - evidence dependency/claim invalidation state;
@@ -60,6 +66,9 @@ A requirement may move only to the broadest claim state directly supported by it
 
 - numerical implementation does not establish model validity;
 - an optimizer output does not establish parameter identifiability;
+- a trigger does not authorize adaptation;
+- a qualified research-state proposal does not authorize treatment;
+- phase coupling does not establish a clinically valid temporal biological model;
 - synthetic dose tests do not establish physical dose accuracy;
 - synthetic DICOM tests do not establish vendor/TPS interoperability or formal DICOM conformance;
 - numerical DVH/gamma tests do not establish measurement-based QA;

@@ -14,6 +14,7 @@ import json
 from typing import Any
 
 from .clinical_governance import GATES, REQUIRED_EVIDENCE
+from .closed_loop import AdaptationThresholds, BiologicalState, decide_adaptation, phase_coupled_score
 from .dvh import summarize_dose
 from .pipeline import default_synthetic_case, run_synthetic_pipeline
 from .robustness import evaluate_robustness, scale_influence
@@ -125,6 +126,20 @@ def _capability_matrix() -> list[dict[str, str]]:
             "external_gate": "Validated registration/resampling workflow before non-aligned accumulation",
         },
         {
+            "id": "CLOSED-LOOP",
+            "capability": "Trigger-governed biological adaptation",
+            "implementation": "Measure -> qualify -> propose/re-optimize -> external recalc/validation; hold-last-valid or standard fallback on weak evidence",
+            "evidence": "BOUNDED_INTERNAL_VERIFICATION",
+            "external_gate": "Partner-defined biomarkers, trigger thresholds, qualification rules, TPS recalc, QA and human review",
+        },
+        {
+            "id": "PHASE",
+            "capability": "Phase-coupled temporal control",
+            "implementation": "Per-phase loss plus explicit uncertainty and temporal control-discontinuity penalties",
+            "evidence": "SIMULATED_ONLY",
+            "external_gate": "Clinically justified temporal model, phase definitions and adaptation policy",
+        },
+        {
             "id": "GOV",
             "capability": "Translational gate governance",
             "implementation": "Locked intended-use manifests, evidence envelopes, exact-effect authorization, monotonic epoch/replay protection",
@@ -231,6 +246,68 @@ def build_expert_readout(*, commit_sha: str = "UNPINNED") -> dict[str, Any]:
         hard_max_gy=case.oar_max_gy,
     )
 
+    thresholds = AdaptationThresholds(
+        hypoxia_change=0.10,
+        resistance_change=0.10,
+        uncertainty_change=0.10,
+        anatomy_change_mm=3.0,
+        motion_mm=4.0,
+        max_uncertainty=0.20,
+        min_measurement_quality=0.80,
+    )
+    phase0 = BiologicalState(
+        phase_index=0,
+        alpha_per_gy=(0.30, 0.31),
+        beta_per_gy2=(0.03, 0.03),
+        hypoxia_index=(0.20, 0.30),
+        resistance_index=(0.10, 0.15),
+        uncertainty=(0.05, 0.05),
+        measurement_quality=0.95,
+    )
+    phase1 = BiologicalState(
+        phase_index=1,
+        alpha_per_gy=(0.30, 0.31),
+        beta_per_gy2=(0.03, 0.03),
+        hypoxia_index=(0.20, 0.45),
+        resistance_index=(0.10, 0.15),
+        uncertainty=(0.06, 0.06),
+        anatomy_delta_mm=1.0,
+        measurement_quality=0.95,
+    )
+    phase2_unqualified = BiologicalState(
+        phase_index=2,
+        alpha_per_gy=(0.30, 0.31),
+        beta_per_gy2=(0.03, 0.03),
+        hypoxia_index=(0.20, 0.60),
+        resistance_index=(0.10, 0.20),
+        uncertainty=(0.10, 0.35),
+        anatomy_delta_mm=4.0,
+        measurement_quality=0.55,
+        model_identifiable=False,
+        out_of_distribution=True,
+    )
+    qualified_decision = decide_adaptation(
+        previous=phase0,
+        current=phase1,
+        thresholds=thresholds,
+        last_valid_plan_identity="SYNTHETIC-LAST-VALID",
+        standard_plan_identity="SYNTHETIC-STANDARD",
+    )
+    degraded_decision = decide_adaptation(
+        previous=phase1,
+        current=phase2_unqualified,
+        thresholds=thresholds,
+        last_valid_plan_identity="SYNTHETIC-LAST-VALID",
+        standard_plan_identity="SYNTHETIC-STANDARD",
+    )
+    coupled = phase_coupled_score(
+        phase_losses=(1.0, 0.85),
+        control_vectors=((1.0, 1.0), (1.1, 1.0)),
+        phase_uncertainty=(0.05, 0.06),
+        uncertainty_weight=2.0,
+        temporal_coupling_weight=3.0,
+    )
+
     constraint_readout = []
     for index in oar_indices:
         limit = float(case.oar_max_gy[index])
@@ -311,6 +388,17 @@ def build_expert_readout(*, commit_sha: str = "UNPINNED") -> dict[str, Any]:
             ],
             "clinical_uncertainty_model_claimed": False,
         },
+        "closed_loop_operation": {
+            "doctrine": "measure -> qualify -> propose/re-optimize -> independently recalculate/validate -> human review",
+            "adaptation_is_trigger_governed": True,
+            "qualified_trigger_example": asdict(qualified_decision),
+            "degraded_mode_example": asdict(degraded_decision),
+            "phase_coupled_score_example": asdict(coupled),
+            "treatment_authority": False,
+            "fallback_policy": "hold last valid; otherwise preserve declared standard plan",
+            "clinical_trigger_thresholds_validated": False,
+            "clinical_biological_state_measurements_validated": False,
+        },
         "governance": {
             "intended_use_manifest_implemented": True,
             "evidence_envelope_implemented": True,
@@ -344,6 +432,8 @@ def build_expert_readout(*, commit_sha: str = "UNPINNED") -> dict[str, Any]:
             "Unsupported or malformed bounded DICOM-RT inputs fail validation.",
             "Ambiguous or non-aligned dose-grid geometry is not silently registered or resampled.",
             "BAROS surrogate/numerical dose is never represented as independently commissioned final clinical dose.",
+            "A biological/anatomical trigger does not itself authorize adaptation; the measured state must first qualify.",
+            "Weak, non-identifiable, out-of-distribution or high-uncertainty state causes hold-last-valid or standard-plan fallback.",
             "Synthetic TCP/NTCP and reliability values cannot be promoted into clinical outcome claims.",
             "External gate promotion requires partner-controlled evidence and independent review.",
             "Contradictions and material protocol deviations block evidence promotion.",
@@ -353,6 +443,7 @@ def build_expert_readout(*, commit_sha: str = "UNPINNED") -> dict[str, Any]:
         "partner_execution_package": [
             "Freeze one intended-use manifest: indication, stage/risk group, technique, machine class, TPS/version, fractionation, comparator, endpoints, operator roles and overrides.",
             "Populate model-assurance inputs: parameter sources, sensitivity matrices, priors/uncertainty, identifiability limits and out-of-distribution/refusal criteria.",
+            "Lock the closed-loop adaptation policy: biological/anatomical measurements, trigger thresholds, qualification thresholds, temporal phase definition, hold-last-valid rules and standard-plan fallback.",
             "Execute independent numerical/model verification and parameter/uncertainty review.",
             "Exercise real RTSTRUCT/RTPLAN/RTDOSE objects and vendor/TPS edge cases under governed conditions.",
             "Recalculate any BAROS research proposal using the partner TPS or approved independent dose engine.",
@@ -458,6 +549,15 @@ def render_expert_markdown(report: dict[str, Any]) -> str:
         lines.append(f"| {item['gate']} | {item['name']} | {item['status']} | {required} |")
 
     lines += [
+        "",
+        "## Closed-loop biological operating state",
+        "",
+        f"- Doctrine: {report['closed_loop_operation']['doctrine']}",
+        f"- Adaptation trigger-governed: {report['closed_loop_operation']['adaptation_is_trigger_governed']}",
+        f"- Qualified-trigger action: {report['closed_loop_operation']['qualified_trigger_example']['action']}",
+        f"- Degraded-mode action: {report['closed_loop_operation']['degraded_mode_example']['action']}",
+        f"- Treatment authority: {report['closed_loop_operation']['treatment_authority']}",
+        f"- Fallback policy: {report['closed_loop_operation']['fallback_policy']}",
         "",
         "## Translational governance state",
         "",
