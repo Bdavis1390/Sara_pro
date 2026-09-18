@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import os
 
 import pytest
@@ -18,6 +19,10 @@ from worldshepherd_sara.registry_monotonic_witness import (
     TEST_WITNESS_MODE,
 )
 from worldshepherd_sara.storage import DurableStore
+from worldshepherd_sara.trust_root_guard import (
+    PRIME_TRUST_ROOT_STATE_KEY,
+    guard_prime_trust_root,
+)
 
 
 NAMESPACE = "worldshepherd/sara/registry"
@@ -232,3 +237,64 @@ def test_required_witness_head_fails_closed_when_transport_is_unavailable():
 
     with pytest.raises(RegistryWitnessUnavailable, match="unable to read"):
         client.check(_status(1, _h("a"), _h("b")), require_head=True)
+
+
+
+def test_signed_witness_detects_coherent_g8_trust_root_rollback(tmp_path):
+    _private, _transport, verifier, client = _fixture()
+    store = DurableStore(tmp_path)
+
+    first_key = _b64url(
+        Ed25519PrivateKey.generate().public_key().public_bytes_raw()
+    )
+    second_key = _b64url(
+        Ed25519PrivateKey.generate().public_key().public_bytes_raw()
+    )
+
+    guard_prime_trust_root(
+        store,
+        environ={
+            "PRIME_SENTINEL_PUBLIC_KEYS_JSON": json.dumps({"PS-K1": first_key}),
+            "PRIME_SENTINEL_REVOKED_KEY_IDS": "",
+            "PRIME_SENTINEL_TRUST_EPOCH": "1",
+        },
+    )
+    old_registry = store.registry_path.read_bytes()
+    old_journal = store.registry_checkpoint_path.read_bytes()
+
+    advanced = guard_prime_trust_root(
+        store,
+        environ={
+            "PRIME_SENTINEL_PUBLIC_KEYS_JSON": json.dumps({"PS-K2": second_key}),
+            "PRIME_SENTINEL_REVOKED_KEY_IDS": "PS-K1",
+            "PRIME_SENTINEL_TRUST_EPOCH": "2",
+        },
+    )
+    assert advanced["status"] == "ADVANCED"
+    assert advanced["epoch"] == 2
+
+    new_status = store.checkpoint_status()
+    witness_assessment = client.advance_and_verify(new_status)
+    assert witness_assessment["status"] == "PASS"
+
+    # Restore both local persistence artifacts coherently to epoch 1. G9B local
+    # checkpoint verification accepts the older self-consistent history.
+    store.registry_path.write_bytes(old_registry)
+    store.registry_checkpoint_path.write_bytes(old_journal)
+    os.chmod(store.registry_path, 0o600)
+    os.chmod(store.registry_checkpoint_path, 0o600)
+
+    reopened = DurableStore(tmp_path)
+    restored = reopened.get_registry()[PRIME_TRUST_ROOT_STATE_KEY]
+    assert restored["epoch"] == 1
+
+    witness_head = client.transport.read_head(NAMESPACE)
+    assert witness_head is not None
+    with pytest.raises(
+        RegistryWitnessRollbackDetected,
+        match="older than signed monotonic witness head",
+    ):
+        verifier.assess_local_checkpoint(
+            reopened.checkpoint_status(),
+            witness_head,
+        )
