@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import importlib
 import json
+from pathlib import Path
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -407,3 +408,25 @@ def test_rejected_trust_root_prevents_verifier_construction_and_replay(
             pass
 
     assert calls == ["guard"]
+
+
+
+def test_deployment_contract_declares_epoch_only_when_trust_root_is_enabled():
+    env_text = Path(".env.example").read_text(encoding="utf-8")
+    script_text = Path("scripts/verify_prime_sentinel_integration.sh").read_text(encoding="utf-8")
+
+    assert "\\nPRIME_SENTINEL_TRUST_EPOCH=\\n" in env_text
+    assert 'trust_epoch="${PRIME_SENTINEL_TRUST_EPOCH:-1}"' in script_text
+    assert 'PRIME_SENTINEL_TRUST_EPOCH=" + trust_epoch' in script_text
+
+    inject_index = script_text.index('lines.append("PRIME_SENTINEL_TRUST_EPOCH=" + trust_epoch)')
+    recreate_index = script_text.index("docker compose up -d --force-recreate sara")
+    assert inject_index < recreate_index
+
+
+def test_integration_contract_verifies_runtime_epoch_after_sara_restart():
+    script_text = Path("scripts/verify_prime_sentinel_integration.sh").read_text(encoding="utf-8")
+
+    assert "guard = record[\'prime_trust_root_guard\']" in script_text
+    assert "assert guard[\'epoch\'] == expected_epoch" in script_text
+    assert "assert len(guard[\'material_sha256\']) == 64" in script_text
