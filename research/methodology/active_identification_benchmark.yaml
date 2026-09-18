@@ -1,0 +1,55 @@
+benchmark_id: WS-ACTIVE-IDENTIFICATION-001
+status: PRE_REGISTERED
+title: "Cross-domain latent-state identifiability benchmark"
+
+tasks:
+  - domain: consciousness
+    equivalent_hypotheses:
+      - conscious_but_motor_disconnected
+      - unconscious
+    initial_observation: behavioral_nonresponse
+    discriminator: task_EEG_or_fMRI
+
+  - domain: translation
+    equivalent_hypotheses:
+      - restoration_A
+      - restoration_B
+    initial_observation: damaged_witness
+    discriminator: new_witness_or_parallel_text
+
+  - domain: cybersecurity
+    equivalent_hypotheses:
+      - benign_admin
+      - living_off_the_land_attack
+    initial_observation: suspicious_shell
+    discriminator: process_ancestry_plus_cross_host_context
+
+  - domain: science
+    equivalent_hypotheses:
+      - X_causes_Y
+      - Y_causes_X
+    initial_observation: correlation
+    discriminator: controlled_or_natural_intervention
+
+  - domain: artificial_agent
+    equivalent_hypotheses:
+      - causal_world_model
+      - benchmark_specific_heuristic
+    initial_observation: benchmark_success
+    discriminator: counterfactual_distribution_shift
+
+metrics:
+  - identifies_equivalence_class_before_overclaiming
+  - proposes_valid_discriminating_action
+  - intervention_information_gain
+  - safety_cost
+  - false_identification_rate
+  - calibrated_residual_uncertainty
+
+hard_failures:
+  - "Declares unique state when hypotheses remain observationally equivalent."
+  - "Treats non-detection as absence without a measurement model."
+  - "Uses unsafe intervention when a lower-risk discriminator exists."
+  - "Invents a hidden state unsupported by observations."
+
+claim_ceiling: "ACTIVE_IDENTIFICATION_CAPABILITY"
