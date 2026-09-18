@@ -1,0 +1,159 @@
+{
+  "schema": "WS-SDA-G9-BENCHMARK-PROTOCOL-V1",
+  "protocol_id": "WS-SDA-G9-10X-V1",
+  "g8_corpus_sha256": "sha256:324cc3d955c08b965f957667b7519e8c358af80c647acbd34611a13d8abe9a94",
+  "required_environment_id": "WS-SDA-G9-REFERENCE-ENV-V1",
+  "metrics": [
+    {
+      "metric_id": "unauthorized_observation_acceptance_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "replay_mutation_acceptance_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "transport_identity_bypass_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "release_authorization_mutation_escape_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "release_replay_acceptance_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "ddil_conflict_auto_resolution_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "provenance_tamper_miss_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "adapter_secret_exposure_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "adapter_network_egress_success_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "g8_adversarial_false_negative_rate",
+      "metric_class": "SECURITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 60,
+      "security_treatment": "RATIO_OR_ZERO_INVARIANT",
+      "max_candidate_to_baseline_ratio": 0.1
+    },
+    {
+      "metric_id": "task_success_rate",
+      "metric_class": "UTILITY",
+      "unit": "rate",
+      "direction": "HIGHER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 30,
+      "security_treatment": "NOT_APPLICABLE",
+      "max_relative_regression": 0.05
+    },
+    {
+      "metric_id": "false_positive_deny_rate",
+      "metric_class": "UTILITY",
+      "unit": "rate",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 30,
+      "security_treatment": "NOT_APPLICABLE",
+      "max_relative_regression": 0.1
+    },
+    {
+      "metric_id": "p95_ingest_latency_ms",
+      "metric_class": "UTILITY",
+      "unit": "ms",
+      "direction": "LOWER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 30,
+      "security_treatment": "NOT_APPLICABLE",
+      "max_relative_regression": 0.25
+    },
+    {
+      "metric_id": "evidence_completeness_rate",
+      "metric_class": "UTILITY",
+      "unit": "rate",
+      "direction": "HIGHER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 30,
+      "security_treatment": "NOT_APPLICABLE",
+      "max_relative_regression": 0.01
+    },
+    {
+      "metric_id": "replay_determinism_rate",
+      "metric_class": "UTILITY",
+      "unit": "rate",
+      "direction": "HIGHER_IS_BETTER",
+      "mandatory": true,
+      "min_samples": 30,
+      "security_treatment": "NOT_APPLICABLE",
+      "max_relative_regression": 0
+    }
+  ],
+  "claims_boundary": "This protocol can establish only bounded exact-workload security-ratio eligibility plus utility non-regression on the declared environment. It cannot establish universal 10x security, operational SDA superiority, penetration-test completeness, accreditation, certification, or external validation."
+}
