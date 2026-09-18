@@ -1,6 +1,6 @@
-# WS-SDA G3A — Adapter Resource Isolation Baseline
+# WS-SDA G3 — Adapter Resource + Container Isolation Baseline
 
-Status: **IMPLEMENTED IN SOFTWARE ON STACKED BRANCH — CI NOT YET EXECUTED**
+Status: **G3A + G3B IMPLEMENTED IN SOFTWARE ON STACKED BRANCH — EXACT-HEAD CI NOT YET EXECUTED**
 Date: 2026-09-18
 Branch: `feature/ws-sda-adapter-isolation-g3a-20260918`
 Parent gate: WS-SDA G1/G2 PR #447
@@ -77,12 +77,29 @@ It does **not** yet establish:
 Accordingly the result field exposes `network_isolation_enforced = false`. That is
 an intentional evidence property, not an implementation detail to conceal.
 
-## 5. G3 completion path
+## 5. G3B container/network/filesystem boundary implemented
 
-G3A is the resource/process boundary. G3B must add an externally testable network and
-filesystem isolation boundary before G3 is called complete.
+The stacked branch now adds `scripts/sda_adapter_container_isolation_drill.sh` and a
+dedicated `WS-SDA Adapter Isolation G3` CI workflow. The drill builds the exact tested
+SARA image and executes an adapter probe with:
 
-Preferred G3B reference architecture:
+- `--network none`;
+- read-only root filesystem;
+- writable `/tmp` only as bounded tmpfs scratch;
+- `no-new-privileges`;
+- all Linux capabilities dropped;
+- fixed non-root UID/GID;
+- PID, memory and CPU limits;
+- no host port bindings;
+- no host mounts;
+- no inherited test secret;
+- exact-source-commit image-label verification.
+
+The runtime probe additionally demonstrates that external network connection fails,
+the root filesystem is not writable, tmpfs scratch is writable, and only loopback is
+visible in the reference network namespace.
+
+The reference architecture is therefore:
 
 ```text
 untrusted source
@@ -111,23 +128,30 @@ schema + identity + provenance verification
     +--> REJECT
 ```
 
-The repository already contains Docker/read-only/cap-drop/no-new-privileges reference
-patterns in the SARA TLS/private-backend and Verified Local work. G3B should reuse
-those proven construction patterns rather than inventing a second isolation model.
+This deliberately reuses the repository’s Docker/read-only/cap-drop/no-new-privileges
+patterns from the SARA TLS/private-backend and Verified Local work rather than
+inventing a second isolation model.
+
+G3 is still a **candidate** until both G3A and G3B exact-head CI pass. Even after that,
+the correct claim is reference software/container isolation, not protection against
+all hostile code or container/runtime/kernel compromise.
 
 ## 6. Claims block
 
 ```yaml
 claim:
-  statement: "Worldshepherd implements a bounded SDA adapter subprocess boundary with explicit input/output/time/CPU/memory/file/environment/command controls."
+  statement: "Worldshepherd implements bounded SDA adapter subprocess controls plus a deny-network, read-only, non-root container reference boundary with explicit resource and secret-isolation evidence."
   status:
     - IMPLEMENTED_IN_SOFTWARE
   evidence:
     - deployments/sara_verified_local_v1/worldshepherd_sara/sda_adapter_isolation.py
     - deployments/sara_verified_local_v1/tests/test_sda_adapter_isolation.py
+    - deployments/sara_verified_local_v1/scripts/sda_adapter_container_isolation_drill.sh
+    - .github/workflows/ws-sda-adapter-isolation-g3.yml
   limitations:
-    - "No network namespace isolation in G3A."
-    - "No chroot/seccomp/MAC/container isolation claim."
-    - "No hostile-code sandbox or accreditation claim."
-  next_gate: "Pass exact-head G3A CI, then implement G3B container/network/filesystem isolation and adversarial escape tests."
+    - "G3A alone does not enforce network isolation; G3B uses Docker network=none."
+    - "No VM/microVM isolation or custom seccomp/AppArmor/SELinux claim."
+    - "No guarantee against Docker/runtime/kernel escape."
+    - "No hostile-code universal sandbox or accreditation claim."
+  next_gate: "Pass exact-head G3A/G3B CI, then add adversarial escape/containment corpus and artifact-identity controls without weakening G1/G2."
 ```
