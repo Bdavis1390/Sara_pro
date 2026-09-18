@@ -13,7 +13,7 @@ from .prime_sentinel_authorization import (
 
 
 SDA_WORKLOAD_IDENTITY_SCHEMA = "WS-SDA-WORKLOAD-IDENTITY-V2"
-SDA_WORKLOAD_IDENTITY_DOMAIN = b"WS-SDA-WORKLOAD-IDENTITY-V1\x00"
+SDA_WORKLOAD_IDENTITY_DOMAIN = b"WS-SDA-WORKLOAD-IDENTITY-V2\x00"
 SDA_WORKLOAD_AUDIENCE = "ws-sda-ingest"
 MAX_WORKLOAD_ASSERTION_LIFETIME = timedelta(minutes=5)
 MAX_WORKLOAD_FUTURE_SKEW = timedelta(seconds=30)
@@ -22,8 +22,9 @@ MAX_WORKLOAD_FUTURE_SKEW = timedelta(seconds=30)
 class SdaWorkloadIdentityAssertion(BaseModel):
     """Short-lived signed workload identity for an SDA source adapter.
 
-    This is a Worldshepherd software identity assertion. It is not a SPIFFE SVID,
-    X.509 certificate, mTLS session, DoD credential, or external IAM attestation.
+    V2 binds the signed assertion to one expected TLS client-certificate SHA-256
+    fingerprint. It is a Worldshepherd software identity assertion, not a SPIFFE
+    SVID, DoD credential, external IAM attestation, or production PKI certificate.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -31,11 +32,14 @@ class SdaWorkloadIdentityAssertion(BaseModel):
     schema: Literal[SDA_WORKLOAD_IDENTITY_SCHEMA] = SDA_WORKLOAD_IDENTITY_SCHEMA
     issuer: Literal["PRIME_SENTINEL"] = "PRIME_SENTINEL"
     key_id: str = Field(min_length=1, max_length=128)
-    workload_id: str = Field(pattern=r"^spiffe://worldshepherd\.internal/sda/[A-Za-z0-9._/-]{1,180}$")
+    workload_id: str = Field(
+        pattern=r"^spiffe://worldshepherd\.internal/sda/[A-Za-z0-9._/-]{1,180}$"
+    )
     audience: Literal[SDA_WORKLOAD_AUDIENCE] = SDA_WORKLOAD_AUDIENCE
     source_id: str = Field(min_length=1, max_length=128)
     adapter_id: str = Field(min_length=1, max_length=128)
     adapter_version: str = Field(min_length=1, max_length=64)
+    transport_cert_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     issued_at: datetime
     expires_at: datetime
     nonce: str = Field(min_length=16, max_length=128)
@@ -63,6 +67,7 @@ class VerifiedSdaWorkloadIdentity(BaseModel):
     source_id: str
     adapter_id: str
     adapter_version: str
+    transport_cert_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     audience: str
     key_id: str
     key_fingerprint_sha256: str
@@ -87,6 +92,7 @@ def canonical_sda_workload_identity_message(
         "source_id": assertion.source_id,
         "adapter_id": assertion.adapter_id,
         "adapter_version": assertion.adapter_version,
+        "transport_cert_sha256": assertion.transport_cert_sha256,
         "issued_at": _utc_iso(assertion.issued_at),
         "expires_at": _utc_iso(assertion.expires_at),
         "nonce": assertion.nonce,
@@ -126,6 +132,7 @@ def verify_sda_workload_identity(
         source_id=assertion.source_id,
         adapter_id=assertion.adapter_id,
         adapter_version=assertion.adapter_version,
+        transport_cert_sha256=assertion.transport_cert_sha256,
         audience=assertion.audience,
         key_id=assertion.key_id,
         key_fingerprint_sha256=signature.key_fingerprint_sha256,
