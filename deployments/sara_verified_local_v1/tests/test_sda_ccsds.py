@@ -35,6 +35,31 @@ Z_DOT = -0.3 [km/s]
 """
 
 
+OPM_V3_COVARIANCE = OPM_V3 + """COV_REF_FRAME = RTN
+CX_X = 4.0 [km**2]
+CY_X = 0.0 [km**2]
+CY_Y = 9.0 [km**2]
+CZ_X = 0.0 [km**2]
+CZ_Y = 0.0 [km**2]
+CZ_Z = 16.0 [km**2]
+CX_DOT_X = 0.0 [km**2/s]
+CX_DOT_Y = 0.0 [km**2/s]
+CX_DOT_Z = 0.0 [km**2/s]
+CX_DOT_X_DOT = 0.04 [km**2/s**2]
+CY_DOT_X = 0.0 [km**2/s]
+CY_DOT_Y = 0.0 [km**2/s]
+CY_DOT_Z = 0.0 [km**2/s]
+CY_DOT_X_DOT = 0.0 [km**2/s**2]
+CY_DOT_Y_DOT = 0.05 [km**2/s**2]
+CZ_DOT_X = 0.0 [km**2/s]
+CZ_DOT_Y = 0.0 [km**2/s]
+CZ_DOT_Z = 0.0 [km**2/s]
+CZ_DOT_X_DOT = 0.0 [km**2/s**2]
+CZ_DOT_Y_DOT = 0.0 [km**2/s**2]
+CZ_DOT_Z_DOT = 0.06 [km**2/s**2]
+"""
+
+
 TDM_V2_RANGE = """CCSDS_TDM_VERS = 2.0
 CREATION_DATE = 2026-09-18T00:00:00
 ORIGINATOR = WORLDSHEPHERD
@@ -112,6 +137,48 @@ def test_opm_profile_rejects_duplicate_required_keyword_and_nonfinite_text():
     nonfinite = OPM_V3.replace("X = 7000.0 [km]", "X = NaN [km]")
     with pytest.raises(CcsdsKvnProfileError, match="X is not a valid finite"):
         parse_opm_v3_kvn_profile(nonfinite)
+
+
+
+def test_opm_profile_parses_complete_authoritative_lower_triangular_covariance():
+    message = parse_opm_v3_kvn_profile(OPM_V3_COVARIANCE)
+
+    assert message.covariance_reference_frame == "RTN"
+    assert message.covariance_6x6 is not None
+    assert message.covariance_6x6[0][0] == pytest.approx(4.0)
+    assert message.covariance_6x6[1][1] == pytest.approx(9.0)
+    assert message.covariance_6x6[2][2] == pytest.approx(16.0)
+    assert message.covariance_6x6[3][3] == pytest.approx(0.04)
+    assert message.covariance_6x6[4][4] == pytest.approx(0.05)
+    assert message.covariance_6x6[5][5] == pytest.approx(0.06)
+    assert message.covariance_6x6[0][1] == message.covariance_6x6[1][0] == 0.0
+
+    rendered = render_opm_v3_kvn_profile(message)
+    reparsed = parse_opm_v3_kvn_profile(rendered)
+    assert reparsed.model_dump(mode="json") == message.model_dump(mode="json")
+
+
+def test_opm_covariance_defaults_to_state_reference_frame_when_cov_ref_frame_omitted():
+    text = OPM_V3_COVARIANCE.replace("COV_REF_FRAME = RTN\n", "")
+    message = parse_opm_v3_kvn_profile(text)
+    assert message.covariance_reference_frame == "GCRF"
+
+
+def test_opm_covariance_is_all_or_none_and_unit_checked():
+    partial = OPM_V3 + "CX_X = 4.0 [km**2]\n"
+    with pytest.raises(CcsdsKvnProfileError, match="all-or-none"):
+        parse_opm_v3_kvn_profile(partial)
+
+    orphan_frame = OPM_V3 + "COV_REF_FRAME = RTN\n"
+    with pytest.raises(CcsdsKvnProfileError, match="cannot appear without"):
+        parse_opm_v3_kvn_profile(orphan_frame)
+
+    wrong_unit = OPM_V3_COVARIANCE.replace(
+        "CX_DOT_X_DOT = 0.04 [km**2/s**2]",
+        "CX_DOT_X_DOT = 0.04 [m**2/s**2]",
+    )
+    with pytest.raises(CcsdsKvnProfileError, match=r"CX_DOT_X_DOT must explicitly declare \[km\*\*2/s\*\*2\]"):
+        parse_opm_v3_kvn_profile(wrong_unit)
 
 
 def test_tdm_v2_range_profile_extracts_explicit_unit_and_observations():

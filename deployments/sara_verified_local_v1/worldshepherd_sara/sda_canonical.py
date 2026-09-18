@@ -54,8 +54,8 @@ def _validate_covariance(value: list[list[float]]) -> list[list[float]]:
     if any(not math.isfinite(item) for row in value for item in row):
         raise ValueError("state-vector covariance values must be finite")
     for index in range(6):
-        if value[index][index] <= 0:
-            raise ValueError("state-vector covariance diagonal must be positive")
+        if value[index][index] < 0:
+            raise ValueError("state-vector covariance diagonal must be non-negative")
         for other in range(6):
             scale = max(1.0, abs(value[index][other]), abs(value[other][index]))
             if abs(value[index][other] - value[other][index]) > 1e-12 * scale:
@@ -71,6 +71,7 @@ class SdaCanonicalStateVector(BaseModel):
     position_km: tuple[float, float, float]
     velocity_km_s: tuple[float, float, float]
     covariance_6x6: list[list[float]] | None = None
+    covariance_reference_frame: str | None = Field(default=None, max_length=128)
     covariance_source_ref: str | None = Field(default=None, max_length=512)
 
     @field_validator("position_km", "velocity_km_s")
@@ -89,8 +90,16 @@ class SdaCanonicalStateVector(BaseModel):
 
     @model_validator(mode="after")
     def covariance_reference_is_consistent(self):
-        if self.covariance_6x6 is None and self.covariance_source_ref is not None:
-            raise ValueError("covariance_source_ref cannot exist without covariance")
+        if self.covariance_6x6 is None:
+            if self.covariance_source_ref is not None:
+                raise ValueError("covariance_source_ref cannot exist without covariance")
+            if self.covariance_reference_frame is not None:
+                raise ValueError("covariance_reference_frame cannot exist without covariance")
+        else:
+            if not self.covariance_reference_frame:
+                raise ValueError("covariance requires covariance_reference_frame")
+            if not self.covariance_source_ref:
+                raise ValueError("covariance requires covariance_source_ref")
         return self
 
 
@@ -195,12 +204,38 @@ def opm_profile_to_canonical_envelope(
     raw_source_digest: str,
     received_at: datetime,
     covariance_6x6: list[list[float]] | None = None,
+    covariance_reference_frame: str | None = None,
     covariance_source_ref: str | None = None,
 ) -> SdaCanonicalEnvelope:
     if message.standard != CCSDS_ODM_SPEC:
         raise ValueError("OPM canonical adapter received the wrong source standard")
     if message.version != "3.0":
         raise ValueError("OPM canonical adapter requires version 3.0 profile")
+
+    if message.covariance_6x6 is not None:
+        if covariance_6x6 is not None:
+            raise ValueError(
+                "external covariance cannot override covariance already carried by OPM"
+            )
+        selected_covariance = message.covariance_6x6
+        selected_covariance_frame = message.covariance_reference_frame
+        selected_covariance_source = "CCSDS_OPM:POSITION_VELOCITY_COVARIANCE"
+    elif covariance_6x6 is not None:
+        if not covariance_reference_frame or not covariance_source_ref:
+            raise ValueError(
+                "external covariance requires explicit reference frame and provenance"
+            )
+        selected_covariance = covariance_6x6
+        selected_covariance_frame = covariance_reference_frame
+        selected_covariance_source = covariance_source_ref
+    else:
+        if covariance_reference_frame is not None or covariance_source_ref is not None:
+            raise ValueError(
+                "covariance reference/provenance cannot be supplied without covariance"
+            )
+        selected_covariance = None
+        selected_covariance_frame = None
+        selected_covariance_source = None
 
     return SdaCanonicalEnvelope(
         observation_id=observation_id,
@@ -218,8 +253,9 @@ def opm_profile_to_canonical_envelope(
             reference_frame=message.reference_frame,
             position_km=message.position_km,
             velocity_km_s=message.velocity_km_s,
-            covariance_6x6=covariance_6x6,
-            covariance_source_ref=covariance_source_ref,
+            covariance_6x6=selected_covariance,
+            covariance_reference_frame=selected_covariance_frame,
+            covariance_source_ref=selected_covariance_source,
         ),
         raw_source_digest=raw_source_digest,
         interface_contract_id=contract.contract_id,

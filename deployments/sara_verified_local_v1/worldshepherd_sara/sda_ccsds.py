@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timezone
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .qualification import canonical_digest
 
@@ -102,6 +102,8 @@ class CcsdsOpmV3StateVector(BaseModel):
     epoch: str = Field(min_length=1)
     position_km: tuple[float, float, float]
     velocity_km_s: tuple[float, float, float]
+    covariance_reference_frame: str | None = None
+    covariance_6x6: list[list[float]] | None = None
     extra_keywords: dict[str, list[str]] = Field(default_factory=dict)
 
     @field_validator("position_km", "velocity_km_s")
@@ -110,6 +112,29 @@ class CcsdsOpmV3StateVector(BaseModel):
         if not all(math.isfinite(item) for item in value):
             raise ValueError("CCSDS state-vector values must be finite")
         return value
+
+    @field_validator("covariance_6x6")
+    @classmethod
+    def covariance_is_finite_symmetric_6x6(cls, value: list[list[float]] | None):
+        if value is None:
+            return None
+        if len(value) != 6 or any(len(row) != 6 for row in value):
+            raise ValueError("OPM covariance must be exactly 6x6")
+        if any(not math.isfinite(item) for row in value for item in row):
+            raise ValueError("OPM covariance values must be finite")
+        for row in range(6):
+            for column in range(6):
+                if value[row][column] != value[column][row]:
+                    raise ValueError("OPM covariance must be symmetric")
+        return value
+
+    @model_validator(mode="after")
+    def covariance_reference_is_consistent(self):
+        if self.covariance_6x6 is None and self.covariance_reference_frame is not None:
+            raise ValueError("covariance reference frame cannot exist without covariance")
+        if self.covariance_6x6 is not None and not self.covariance_reference_frame:
+            raise ValueError("covariance requires an explicit resolved reference frame")
+        return self
 
     def digest(self) -> str:
         return canonical_digest(self)
@@ -131,6 +156,31 @@ _OPM_REQUIRED = {
     "X_DOT",
     "Y_DOT",
     "Z_DOT",
+}
+
+
+_OPM_COVARIANCE = {
+    "CX_X": (0, 0, "km**2"),
+    "CY_X": (1, 0, "km**2"),
+    "CY_Y": (1, 1, "km**2"),
+    "CZ_X": (2, 0, "km**2"),
+    "CZ_Y": (2, 1, "km**2"),
+    "CZ_Z": (2, 2, "km**2"),
+    "CX_DOT_X": (3, 0, "km**2/s"),
+    "CX_DOT_Y": (3, 1, "km**2/s"),
+    "CX_DOT_Z": (3, 2, "km**2/s"),
+    "CX_DOT_X_DOT": (3, 3, "km**2/s**2"),
+    "CY_DOT_X": (4, 0, "km**2/s"),
+    "CY_DOT_Y": (4, 1, "km**2/s"),
+    "CY_DOT_Z": (4, 2, "km**2/s"),
+    "CY_DOT_X_DOT": (4, 3, "km**2/s**2"),
+    "CY_DOT_Y_DOT": (4, 4, "km**2/s**2"),
+    "CZ_DOT_X": (5, 0, "km**2/s"),
+    "CZ_DOT_Y": (5, 1, "km**2/s"),
+    "CZ_DOT_Z": (5, 2, "km**2/s"),
+    "CZ_DOT_X_DOT": (5, 3, "km**2/s**2"),
+    "CZ_DOT_Y_DOT": (5, 4, "km**2/s**2"),
+    "CZ_DOT_Z_DOT": (5, 5, "km**2/s**2"),
 }
 
 
@@ -160,10 +210,41 @@ def parse_opm_v3_kvn_profile(text: str) -> CcsdsOpmV3StateVector:
         _parse_finite_number(required["Z_DOT"], key="Z_DOT", expected_unit="km/s"),
     )
 
+    present_covariance = {key for key in _OPM_COVARIANCE if key in mapping}
+    covariance: list[list[float]] | None = None
+    covariance_reference_frame: str | None = None
+    if present_covariance:
+        missing = set(_OPM_COVARIANCE) - present_covariance
+        if missing:
+            raise CcsdsKvnProfileError(
+                "OPM covariance is all-or-none; missing: " + ", ".join(sorted(missing))
+            )
+        covariance = [[0.0 for _ in range(6)] for _ in range(6)]
+        for key, (row, column, unit) in _OPM_COVARIANCE.items():
+            value = _parse_finite_number(
+                _exact_one(mapping, key),
+                key=key,
+                expected_unit=unit,
+            )
+            covariance[row][column] = value
+            covariance[column][row] = value
+        cov_ref_values = mapping.get("COV_REF_FRAME", [])
+        if len(cov_ref_values) > 1:
+            raise CcsdsKvnProfileError("COV_REF_FRAME may occur at most once")
+        covariance_reference_frame = (
+            cov_ref_values[0] if cov_ref_values else required["REF_FRAME"]
+        )
+    elif "COV_REF_FRAME" in mapping:
+        raise CcsdsKvnProfileError(
+            "COV_REF_FRAME cannot appear without the complete OPM covariance matrix"
+        )
+
     extras = {
         key: list(values)
         for key, values in mapping.items()
-        if key not in _OPM_REQUIRED and key != "MESSAGE_ID"
+        if key not in _OPM_REQUIRED
+        and key not in _OPM_COVARIANCE
+        and key not in {"MESSAGE_ID", "COV_REF_FRAME"}
     }
     return CcsdsOpmV3StateVector(
         creation_date=required["CREATION_DATE"],
@@ -177,6 +258,8 @@ def parse_opm_v3_kvn_profile(text: str) -> CcsdsOpmV3StateVector:
         epoch=required["EPOCH"],
         position_km=position,
         velocity_km_s=velocity,
+        covariance_reference_frame=covariance_reference_frame,
+        covariance_6x6=covariance,
         extra_keywords=extras,
     )
 
@@ -205,6 +288,13 @@ def render_opm_v3_kvn_profile(message: CcsdsOpmV3StateVector) -> str:
             f"Z_DOT = {message.velocity_km_s[2]:.17g} [km/s]",
         ]
     )
+    if message.covariance_6x6 is not None:
+        cov_ref = message.covariance_reference_frame or message.reference_frame
+        lines.append(f"COV_REF_FRAME = {cov_ref}")
+        for key, (row, column, unit) in _OPM_COVARIANCE.items():
+            lines.append(
+                f"{key} = {message.covariance_6x6[row][column]:.17g} [{unit}]"
+            )
     return "\n".join(lines) + "\n"
 
 

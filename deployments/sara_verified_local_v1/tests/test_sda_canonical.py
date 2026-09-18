@@ -45,6 +45,31 @@ Z_DOT = -0.3 [km/s]
 """
 
 
+OPM_WITH_COVARIANCE = OPM + """COV_REF_FRAME = RTN
+CX_X = 4.0 [km**2]
+CY_X = 0.0 [km**2]
+CY_Y = 9.0 [km**2]
+CZ_X = 0.0 [km**2]
+CZ_Y = 0.0 [km**2]
+CZ_Z = 16.0 [km**2]
+CX_DOT_X = 0.0 [km**2/s]
+CX_DOT_Y = 0.0 [km**2/s]
+CX_DOT_Z = 0.0 [km**2/s]
+CX_DOT_X_DOT = 0.04 [km**2/s**2]
+CY_DOT_X = 0.0 [km**2/s]
+CY_DOT_Y = 0.0 [km**2/s]
+CY_DOT_Z = 0.0 [km**2/s]
+CY_DOT_X_DOT = 0.0 [km**2/s**2]
+CY_DOT_Y_DOT = 0.05 [km**2/s**2]
+CZ_DOT_X = 0.0 [km**2/s]
+CZ_DOT_Y = 0.0 [km**2/s]
+CZ_DOT_Z = 0.0 [km**2/s]
+CZ_DOT_X_DOT = 0.0 [km**2/s**2]
+CZ_DOT_Y_DOT = 0.0 [km**2/s**2]
+CZ_DOT_Z_DOT = 0.06 [km**2/s**2]
+"""
+
+
 TDM = """CCSDS_TDM_VERS = 2.0
 CREATION_DATE = 2026-09-18T00:00:00
 ORIGINATOR = WORLDSHEPHERD
@@ -145,6 +170,7 @@ def test_opm_canonicalization_accepts_covariance_only_with_explicit_provenance_r
         raw_source_digest=source_text_sha256(OPM),
         received_at=RECEIVED,
         covariance_6x6=covariance(),
+        covariance_reference_frame="GCRF",
         covariance_source_ref="fixture:qualified-covariance-001",
     )
 
@@ -157,7 +183,66 @@ def test_opm_canonicalization_accepts_covariance_only_with_explicit_provenance_r
             position_km=(1.0, 2.0, 3.0),
             velocity_km_s=(0.1, 0.2, 0.3),
             covariance_6x6=None,
+            covariance_reference_frame=None,
             covariance_source_ref="invented",
+        )
+
+
+
+def test_opm_embedded_covariance_flows_to_canonical_with_reference_frame_and_provenance():
+    parsed = parse_opm_v3_kvn_profile(OPM_WITH_COVARIANCE)
+    envelope = opm_profile_to_canonical_envelope(
+        parsed,
+        observation_id="CCSDS-OPM-COV-001",
+        source_event_id="CCSDS-OPM-COV-EVENT-001",
+        source_sequence=5,
+        source=source(),
+        contract=contract(),
+        raw_source_digest=source_text_sha256(OPM_WITH_COVARIANCE),
+        received_at=RECEIVED,
+    )
+
+    assert envelope.payload.covariance_6x6 is not None
+    assert envelope.payload.covariance_reference_frame == "RTN"
+    assert (
+        envelope.payload.covariance_source_ref
+        == "CCSDS_OPM:POSITION_VELOCITY_COVARIANCE"
+    )
+    assert envelope.payload.covariance_6x6[0][0] == pytest.approx(4.0)
+    assert envelope.payload.covariance_6x6[5][5] == pytest.approx(0.06)
+
+
+def test_external_covariance_cannot_override_embedded_opm_covariance():
+    parsed = parse_opm_v3_kvn_profile(OPM_WITH_COVARIANCE)
+    with pytest.raises(ValueError, match="cannot override"):
+        opm_profile_to_canonical_envelope(
+            parsed,
+            observation_id="CCSDS-OPM-COV-002",
+            source_event_id="CCSDS-OPM-COV-EVENT-002",
+            source_sequence=6,
+            source=source(),
+            contract=contract(),
+            raw_source_digest=source_text_sha256(OPM_WITH_COVARIANCE),
+            received_at=RECEIVED,
+            covariance_6x6=covariance(),
+            covariance_reference_frame="GCRF",
+            covariance_source_ref="external:should-not-win",
+        )
+
+
+def test_external_covariance_requires_frame_and_provenance():
+    parsed = parse_opm_v3_kvn_profile(OPM)
+    with pytest.raises(ValueError, match="requires explicit reference frame and provenance"):
+        opm_profile_to_canonical_envelope(
+            parsed,
+            observation_id="CCSDS-OPM-COV-003",
+            source_event_id="CCSDS-OPM-COV-EVENT-003",
+            source_sequence=7,
+            source=source(),
+            contract=contract(),
+            raw_source_digest=source_text_sha256(OPM),
+            received_at=RECEIVED,
+            covariance_6x6=covariance(),
         )
 
 

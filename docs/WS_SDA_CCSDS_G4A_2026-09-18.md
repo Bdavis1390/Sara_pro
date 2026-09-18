@@ -102,8 +102,12 @@ The envelope:
 - preserves the original CCSDS time string and time-system label;
 - normalizes only qualified calendar-form UTC, leaving other time values raw rather
   than guessing;
-- permits covariance to remain absent instead of inventing one and requires an
-  explicit provenance reference when covariance is supplied;
+- permits covariance to remain absent instead of inventing one;
+- parses the complete OPM 6x6 lower-triangular position/velocity covariance only
+  when all 21 CCSDS elements are present, preserving or resolving COV_REF_FRAME;
+- requires covariance reference-frame and provenance identity in the canonical
+  envelope, and forbids an external covariance from overriding an embedded OPM
+  covariance;
 - represents RANGE as a typed measurement payload with participants, path, mode and
   units rather than coercing it into state-vector fields;
 - binds the result to the interface-contract digest, raw-source digest, source
@@ -136,7 +140,8 @@ It will **not** establish:
 
 1. pass the G1/G2 parent gate and protected merge;
 2. add G4A parser and canonical-envelope tests to exact-head CI;
-3. add OPM covariance-block parsing and provenance without inventing covariance;
+3. extend covariance qualification with PSD/conditioning policy appropriate to the
+   downstream estimator without changing the raw evidence;
 4. add qualified CCSDS time-system handling beyond bounded calendar UTC;
 5. expand TDM observables one type at a time with authoritative fixtures;
 6. test XML only against the applicable CCSDS 505.0 navigation-message XML
