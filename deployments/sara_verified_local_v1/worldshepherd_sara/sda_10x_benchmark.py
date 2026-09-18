@@ -241,7 +241,12 @@ def evaluate_g9(
                     treatment = "TEN_X_RATIO"
                     threshold = metric.max_candidate_to_baseline_ratio
                     assert threshold is not None
-                    passed = ratio <= threshold
+                    # Measurements are represented as finite binary floats in v1.
+                    # A machine-epsilon-scale tolerance prevents 0.03/0.30 from
+                    # failing solely because it is represented as 0.10000000000000002.
+                    # The tolerance is far too small to mask a substantive miss.
+                    tolerance = 1e-12 * max(1.0, threshold)
+                    passed = ratio <= threshold + tolerance
                     reason = (
                         f"candidate/baseline={ratio:.6g} <= {threshold:.6g}"
                         if passed
