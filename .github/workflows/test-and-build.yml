@@ -63,6 +63,10 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_echo_checkpoint.py tests/test_echo_checkpoint_signer_boundary.py tests/test_aws_kms_checkpoint_signer.py
 
+      - name: Validate PRIME trust-epoch integration script syntax
+        working-directory: deployments/sara_verified_local_v1
+        run: bash -n scripts/verify_prime_sentinel_integration.sh
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |
