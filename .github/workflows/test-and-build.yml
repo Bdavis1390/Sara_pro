@@ -48,6 +48,7 @@ jobs:
           tests/test_sda_adapter_isolation.py
           tests/test_sda_ccsds.py
           tests/test_sda_canonical.py
+          tests/test_sda_hypothesis.py
           tests/test_apnt_interface_contract.py
           tests/test_ddil_reconcile.py
           tests/test_mission_replay.py
