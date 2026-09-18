@@ -37,6 +37,13 @@ jobs:
         run: PYTHONPATH=. python -m pytest -q tests/test_baros_*.py
       - name: Generate exact-run synthetic evidence bundle
         run: PYTHONPATH=. python -m baros.cli --commit-sha "$GITHUB_SHA" --output baros-evidence.json > baros-evidence.stdout.json
+      - name: Generate expert technical readouts
+        run: >-
+          PYTHONPATH=. python -m baros.expert_cli
+          --commit-sha "$GITHUB_SHA"
+          --json-output baros-expert-readout.json
+          --markdown-output baros-expert-readout.md
+          > baros-expert-readout.stdout.json
       - name: Run 1000-case 98.7 percent bounded reliability gate
         run: >-
           PYTHONPATH=. python -m baros.reliability_cli
@@ -46,16 +53,35 @@ jobs:
           --target-probability 0.987
           --output baros-reliability-evidence.json
           > baros-reliability.stdout.json
-      - name: Assert evidence remains bounded, non-clinical, and passing
+      - name: Assert evidence remains bounded, detailed, non-clinical, and passing
         run: |
           python - <<'PY'
           import json
           evidence=json.load(open('baros-evidence.json', encoding='utf-8'))
+          expert=json.load(open('baros-expert-readout.json', encoding='utf-8'))
           reliability=json.load(open('baros-reliability-evidence.json', encoding='utf-8'))
           assert evidence['passed'] is True
           assert evidence['patient_care_allowed'] is False
           assert evidence['claim_state'] == 'SIMULATED_ONLY'
           assert evidence['commit_sha'] == '${{ github.sha }}'
+          assert expert['system']['commit_sha'] == '${{ github.sha }}'
+          assert expert['system']['patient_care_allowed'] is False
+          assert expert['system']['partner_validation_ready'] is True
+          assert expert['system']['patient_care_ready'] is False
+          assert expert['optimization']['hard_constraints_satisfied'] is True
+          assert expert['dose_readout']['hard_constraint_margins']
+          assert expert['robustness']['all_hard_constraints_satisfied'] is True
+          assert expert['governance']['intended_use_manifest_implemented'] is True
+          assert expert['governance']['current_partner_validation_manifest_locked'] is False
+          assert expert['model_assurance']['clinical_model_identifiability_established'] is False
+          assert expert['evidence_dependency_control']['external_partner_graph_populated'] is False
+          assert len(expert['risk_families']) >= 20
+          assert len(expert['readout_sha256']) == 64
+          gate_status={item['gate']: item['status'] for item in expert['readiness_gates']}
+          assert gate_status['G5'] == 'OPEN_EXTERNAL'
+          assert gate_status['G6'] == 'OPEN_EXTERNAL'
+          assert gate_status['G7'] == 'OPEN_EXTERNAL'
+          assert gate_status['G9'] == 'OPEN_EXTERNAL'
           assert reliability['commit_sha'] == '${{ github.sha }}'
           assert reliability['cases'] == 1000
           assert reliability['successes'] == 1000
@@ -75,6 +101,8 @@ jobs:
           name: baros-bounded-evidence-${{ github.sha }}
           path: |
             baros-evidence.json
+            baros-expert-readout.json
+            baros-expert-readout.md
             baros-reliability-evidence.json
             baros-dependencies.txt
           if-no-files-found: error

@@ -68,13 +68,40 @@ BAROS (Biologically Adaptive Radiotherapy Optimization System) is implemented he
 - blast-radius calculation when evidence, models, calibrations, or configuration change;
 - cycle and missing-dependency rejection.
 
+### Expert technical readout
+
+BAROS can now generate synchronized machine-readable JSON and human-readable Markdown intended for expert review. The report exposes:
+
+- model equations, parameters and assumption boundaries;
+- optimization objective, convergence and quantitative change;
+- dose vector and target/OAR summaries;
+- every hard-constraint limit, observed value and margin;
+- robustness scenarios and worst case;
+- translational-governance state;
+- model-identifiability / information-gain / observability-controllability capability state;
+- evidence-dependency / quarantine / blast-radius state;
+- G0-G9 readiness plus required evidence kinds;
+- risk families and explicit stop conditions;
+- safety invariants;
+- partner execution package and external blockers;
+- runtime/dependency provenance and canonical SHA-256 report identity.
+
+Generate it with:
+
+```bash
+PYTHONPATH=. python -m baros.expert_cli \
+  --commit-sha "$(git rev-parse HEAD)" \
+  --json-output baros-expert-readout.json \
+  --markdown-output baros-expert-readout.md
+```
+
 No module in this repository independently establishes clinical dose calculation, commissioned dose accuracy, clinically valid biological parameters, treatment-machine deliverability, deformable registration accuracy, multi-vendor TPS interoperability, patient safety/effectiveness, or regulatory authorization.
 
 ## Verification
 
-BAROS verification runs all `tests/test_baros_*.py` in a pinned Python environment and generates exact-run synthetic evidence and reliability artifacts.
+BAROS verification runs all `tests/test_baros_*.py` in a pinned Python environment and generates exact-run synthetic evidence, expert-readout, and reliability artifacts.
 
-A historical verified baseline before the translational-assurance expansion had 42 BAROS tests passing and 1,000/1,000 bounded synthetic reliability cases with zero observed failures. New commits must obtain their own hosted verification before their expanded scope is treated as verified.
+A historical verified baseline before the latest translational-assurance/readout expansion had 42 BAROS tests passing and 1,000/1,000 bounded synthetic reliability cases with zero observed failures. New commits must obtain their own hosted verification before their expanded scope is treated as verified.
 
 ## Run locally
 
@@ -82,6 +109,7 @@ A historical verified baseline before the translational-assurance expansion had 
 python -m pip install -r baros/requirements.txt
 PYTHONPATH=. python -m pytest -q tests/test_baros_*.py
 PYTHONPATH=. python -m baros.cli --commit-sha LOCAL --output baros-evidence.json
+PYTHONPATH=. python -m baros.expert_cli --commit-sha LOCAL --json-output baros-expert-readout.json --markdown-output baros-expert-readout.md
 ```
 
 ## Next decisive external gates
@@ -92,14 +120,18 @@ PYTHONPATH=. python -m baros.cli --commit-sha LOCAL --output baros-evidence.json
 4. Validate real-world DICOM/TPS interoperability against the locked partner environment.
 5. Perform qualified medical-physics commissioning and end-to-end measured-dose testing.
 6. Compile partner-controlled evidence envelopes with raw artifacts, uncertainty, deviations, contradictions, and review.
-7. Perform held-out retrospective comparison using governed partner-controlled cases.
-8. Consider prospective shadow-mode workflow evaluation only after the preceding gates pass.
-9. Treat any interventional or patient-care study as a separate institutional/regulatory decision.
+7. Populate the evidence dependency graph so changed evidence/calibrations/models/configuration expose affected claims.
+8. Perform held-out retrospective comparison using governed partner-controlled cases.
+9. Consider prospective shadow-mode workflow evaluation only after the preceding gates pass.
+10. Treat any interventional or patient-care study as a separate institutional/regulatory decision.
 
 See:
 
+- `docs/baros/EXPERT_TECHNICAL_READOUT.md`
 - `docs/baros/TRACEABILITY_MATRIX.md`
 - `docs/baros/BAROS_IMPLEMENTATION_AND_VALIDATION_GATE.md`
 - `docs/baros/EXTERNAL_CLINICAL_VALIDATION_PROTOCOL.md`
 - `docs/baros/TRANSLATIONAL_GOVERNANCE_AND_SCIENTIFIC_ASSURANCE_V2.md`
+- `docs/baros/TRANSLATIONAL_RISK_ANALYSIS_TG100_PLAN.md`
 - `docs/baros/SPECIFIC_AIMS_TRANSLATIONAL_VALIDATION_DRAFT.md`
+- `docs/baros/FDA_PRE_SUBMISSION_QUESTIONS.md`

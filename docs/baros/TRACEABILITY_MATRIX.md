@@ -33,9 +33,26 @@ This matrix describes bounded repository behaviors only. It does **not** establi
 | BAROS-MOD-003 | observability-controllability hazard | `assess_observability_controllability` | low-O/high-C hazard tests | IMPLEMENTED IN SOFTWARE | clinically meaningful state/measurement definitions |
 | BAROS-EVID-001 | evidence dependency graph | `baros/evidence_graph.py::EvidenceDependencyGraph` | chain/cycle/unknown dependency tests | IMPLEMENTED IN SOFTWARE | populate with external evidence lineage |
 | BAROS-EVID-002 | blast-radius claim invalidation | `blast_radius`, `assess_claim` | invalid/quarantine/config-change tests | IMPLEMENTED IN SOFTWARE | link validation claims to partner artifacts/calibrations |
+| BAROS-OBS-001 | synchronized expert technical readout | `baros/expert_readout.py`, `baros/expert_cli.py` | determinism, quantitative-state, governance/model/evidence-state and Markdown tests | IMPLEMENTED IN SOFTWARE; exact-head hosted verification required | external reviewer usability and evidence-ingestion evaluation |
 | BAROS-VAL-003 | measurement/phantom QA | outside repository-only capability | none | REQUIRES LAB/PARTNER VALIDATION | medical-physics lab/clinical institution |
 | BAROS-CLIN-001 | retrospective clinical performance | no controlled clinical dataset/evidence in repo | none | NOT CURRENTLY CLAIMED | institutional retrospective protocol |
 | BAROS-CLIN-002 | prospective clinical safety/effectiveness | not established | none | NOT CURRENTLY CLAIMED | prospective study + regulatory/institutional pathway |
+
+## Expert readout requirement
+
+The expert readout integrates but does not promote the underlying evidence state. It must expose:
+
+- mathematical/model assumptions;
+- optimization and hard-constraint state;
+- DICOM/dose/robustness summary;
+- governance control state;
+- model-identifiability/experiment-design capability state;
+- evidence dependency/claim invalidation state;
+- G0-G9 required evidence and current status;
+- risk families/stop conditions;
+- partner execution package;
+- external blockers;
+- exact source evidence and runtime provenance.
 
 ## Promotion rules
 
@@ -51,6 +68,7 @@ A requirement may move only to the broadest claim state directly supported by it
 - aligned-grid summation does not establish deformable registration accuracy;
 - an information-gain ranking does not authorize an experiment;
 - local SQLite approval/replay controls do not substitute for institutional clinical authorization;
+- a detailed expert readout does not establish external validation;
 - TPS interoperability does not establish patient safety/effectiveness;
 - peer review does not establish regulatory authorization;
 - changed or quarantined evidence must invalidate dependent claims rather than leave stale promotion active;
@@ -58,6 +76,6 @@ A requirement may move only to the broadest claim state directly supported by it
 
 ## Current exit state
 
-BAROS now contains not only bounded planning/analysis functions but a translational scientific-assurance layer for intended-use locking, evidence lineage, contradiction preservation, exact-effect gate authorization, replay/stale-state control, parameter identifiability, information-gain experiment design, observability/controllability hazard detection, and dependency-aware claim invalidation.
+BAROS now contains bounded planning/analysis functions, translational scientific-assurance controls, model-assurance utilities, dependency-aware claim invalidation, and an expert-facing observability layer designed to make the entire evidence state inspectable in one artifact.
 
 The decisive next gate remains external: **independent numerical/model review, real TPS/vendor interoperability, measured-dose/end-to-end medical-physics validation, and held-out retrospective evaluation under partner control**.
