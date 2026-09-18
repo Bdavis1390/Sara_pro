@@ -6,7 +6,7 @@ ARG SARA_RELEASE_ID=UNVERIFIED
 LABEL org.opencontainers.image.title="Worldshepherd SARA Registry Monotonic Witness" \
       org.opencontainers.image.revision="${SARA_BUILD_COMMIT}" \
       org.opencontainers.image.version="${SARA_RELEASE_ID}" \
-      worldshepherd.security.boundary="MAG-1.6R" \
+      worldshepherd.security.boundary="G9D_REMOTE_REGISTRY_WITNESS" \
       worldshepherd.security.independence="deployment-evidence-required"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
