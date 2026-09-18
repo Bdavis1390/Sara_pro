@@ -9,6 +9,7 @@ from .registry_monotonic_witness import (
     REMOTE_WITNESS_MODE,
     RegistryMonotonicWitnessClient,
     RegistryWitnessConflict,
+    RegistryWitnessError,
     RegistryWitnessRollbackDetected,
     RegistryWitnessUnavailable,
 )
@@ -113,7 +114,7 @@ def enforce_registry_witness_startup(
     loader = client_loader or load_registry_witness_client_from_environment
     try:
         client = loader()
-    except RegistryWitnessRuntimeConfigError as exc:
+    except (RegistryWitnessRuntimeConfigError, RegistryWitnessError) as exc:
         wrapped = RegistryWitnessStartupError(
             "WITNESS_CONFIGURATION_INVALID",
             "required registry witness configuration is invalid",
@@ -142,6 +143,13 @@ def enforce_registry_witness_startup(
         wrapped = RegistryWitnessStartupError(
             "REGISTRY_WITNESS_UNAVAILABLE",
             "required registry witness is unavailable",
+        )
+        _append_rejection(store, wrapped)
+        raise wrapped from exc
+    except RegistryWitnessError as exc:
+        wrapped = RegistryWitnessStartupError(
+            "WITNESS_VERIFICATION_FAILED",
+            "required registry witness failed cryptographic or protocol verification",
         )
         _append_rejection(store, wrapped)
         raise wrapped from exc
