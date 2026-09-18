@@ -52,7 +52,15 @@ def _values():
     return security | utility
 
 
-def bundle(role: str, *, changes=None, environment=ENVIRONMENT, workload=WORKLOAD):
+def bundle(
+    role: str,
+    *,
+    changes=None,
+    environment=ENVIRONMENT,
+    workload=WORKLOAD,
+    implementation_class=None,
+    comparability_ref="fixture:task-equivalent-g9",
+):
     changes = changes or {}
     values = _values()
     measurements = []
@@ -70,12 +78,20 @@ def bundle(role: str, *, changes=None, environment=ENVIRONMENT, workload=WORKLOA
                 evidence_ref=f"fixture:{role.lower()}:{metric.metric_id}",
             )
         )
+    if implementation_class is None:
+        implementation_class = (
+            "HISTORICAL_IMPLEMENTATION"
+            if role == "BASELINE"
+            else "CANDIDATE_IMPLEMENTATION"
+        )
     return SdaBenchmarkMeasurementBundle(
         bundle_id=f"G9-{role}-FIXTURE",
         role=role,
+        implementation_class=implementation_class,
         source_commit=BASE_SHA if role == "BASELINE" else CANDIDATE_SHA,
         environment_id=environment,
         workload_sha256=workload,
+        comparability_ref=comparability_ref,
         measurements=measurements,
     )
 
@@ -207,3 +223,26 @@ def test_environment_workload_units_samples_and_completeness_fail_closed():
     candidate.measurements.pop()
     with pytest.raises(SdaBenchmarkError, match="measure every protocol metric"):
         evaluate_g9(p, baseline, candidate)
+
+
+def test_reference_baseline_can_be_analyzed_but_cannot_make_ten_x_claim_eligible():
+    reference = bundle(
+        "BASELINE",
+        implementation_class="REFERENCE_IMPLEMENTATION",
+    )
+    report = evaluate_g9(protocol(), reference, bundle("CANDIDATE"))
+
+    assert report.mandatory_security_passed is True
+    assert report.mandatory_utility_passed is True
+    assert len(report.ten_x_improved_metrics) == 10
+    assert report.baseline_implementation_class == "REFERENCE_IMPLEMENTATION"
+    assert report.ten_x_security_claim_eligible is False
+
+
+def test_comparability_reference_mismatch_fails_closed():
+    with pytest.raises(SdaBenchmarkError, match="comparability references differ"):
+        evaluate_g9(
+            protocol(),
+            bundle("BASELINE", comparability_ref="evidence:baseline-task"),
+            bundle("CANDIDATE", comparability_ref="evidence:different-task"),
+        )
