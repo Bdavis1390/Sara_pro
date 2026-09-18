@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worldshepherd Self-Model Snapshot",
+  "type": "object",
+  "required": ["snapshot_id","timestamp","lanes","governance"],
+  "properties": {
+    "snapshot_id": {"type":"string"},
+    "timestamp": {"type":"string"},
+    "lanes": {
+      "type":"array",
+      "items": {
+        "type":"object",
+        "required":["lane","observability","controllability","evidence_state","claim_state"],
+        "properties": {
+          "lane":{"type":"string"},
+          "observability":{"type":["number","null"],"minimum":0,"maximum":1},
+          "controllability":{"type":["number","null"],"minimum":0,"maximum":1},
+          "evidence_state":{"type":"string"},
+          "claim_state":{"type":"string"},
+          "known_gaps":{"type":"array","items":{"type":"string"}},
+          "active_experiments":{"type":"array","items":{"type":"string"}},
+          "dependencies":{"type":"array","items":{"type":"string"}}
+        }
+      }
+    },
+    "governance": {
+      "type":"object",
+      "required":["prime_required","human_root_authority","rollback_required"],
+      "properties": {
+        "prime_required":{"const":true},
+        "human_root_authority":{"const":true},
+        "rollback_required":{"const":true}
+      }
+    }
+  }
+}
