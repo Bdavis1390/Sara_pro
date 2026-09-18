@@ -407,7 +407,7 @@ def _run_g1(scenario: str) -> str:
         bad[0][1] = 1.0
         return _rejected(lambda: _g1_observation(active, covariance_6x6=bad))
     if scenario == "nonfinite_position":
-        return _blocked(
+        return _rejected(
             lambda: _g1_observation(active, position_km=(math.inf, 2.0, 3.0))
         )
     if scenario == "disabled_contract":
