@@ -1,0 +1,77 @@
+matrix_version: "0.2"
+updated: "2026-09-18"
+principle: "Do not infer a translation layer from the existence of transliteration/text data."
+
+sources:
+  CDLI:
+    mode: READING_AND_ANALYSIS_AUDIT
+    translation_status: "project/object dependent"
+    actions:
+      - "Bind artifact/transliteration state."
+      - "Use ORACC or cited edition for translation where applicable."
+  ORACC:
+    mode: FULL_TRANSLATION_AUDIT
+    translation_status: "separate ATF/translation layer; corpusjson alone is incomplete"
+    machine_signal:
+      - "metadata.formats.tr-en"
+      - "ATF translation labels / uncertainty markup"
+    actions:
+      - "Preserve supplied/uncertain/broken/untranslatable markup."
+      - "Never flatten translation markup into unqualified English."
+  UNIKEMET:
+    mode: READING_AND_ANALYSIS_AUDIT
+    translation_status: "sign-property source, not running-translation corpus"
+  TLA:
+    mode: FULL_TRANSLATION_AUDIT
+    translation_status: "lemma translations + text corpus/editorial states"
+    actions:
+      - "Preserve reading lattice and editorial verification state."
+      - "Pin corpus edition and web-app version."
+  DAMOS:
+    mode: READING_AND_ANALYSIS_AUDIT
+    translation_status: "linguistic analyses prioritized; multiple analyses may coexist"
+    actions:
+      - "Retain alternate analyses and probabilities."
+      - "Reaudit after joins/new readings."
+  CMHI:
+    mode: WITNESS_ONLY
+    translation_status: "primary monument documentation; translations depend on specialist epigraphic publications"
+    actions:
+      - "Do not generate fluent reading for unresolved glyphs."
+  IAA_DSS:
+    mode: WITNESS_ONLY
+    translation_status: "primary imaging/fragment source"
+    actions:
+      - "Keep image/witness layer separate from external scholarly editions/translations."
+  PAPYRI_INFO:
+    mode: FULL_TRANSLATION_AUDIT
+    translation_status: "DDbDP + HGV/APIS translations; update histories can diverge"
+    actions:
+      - "Scan apparatus/editorial history for revised readings."
+      - "Cross-check translation named entities and changed lexical items."
+  TRISMEGISTOS:
+    mode: METADATA_REFERENCE
+    translation_status: "identifier/cross-project infrastructure"
+  GANDHARI:
+    mode: FULL_TRANSLATION_AUDIT
+    translation_status: "text/analysis/reading history"
+    actions:
+      - "Use correction history to invalidate dependent translations/interpretations."
+  SRD:
+    mode: READING_AND_ANALYSIS_AUDIT
+    translation_status: "database-specific; verify translation field and license before bulk ingest"
+  EDH:
+    mode: READING_AND_ANALYSIS_AUDIT
+    translation_status: "epigraphic text; translations not assumed"
+  PHI_GREEK:
+    mode: METADATA_REFERENCE
+    translation_status: "searchable inscriptions; no bulk translation ingest assumed"
+  DASI:
+    mode: READING_AND_ANALYSIS_AUDIT
+    translation_status: "corpus/object dependent"
+  ETANA:
+    mode: METADATA_REFERENCE
+    translation_status: "historical editions; supporting edition-history layer"
+  PFA:
+    mode: WITNESS_ONLY
+    translation_status: "project/interface dependent"
