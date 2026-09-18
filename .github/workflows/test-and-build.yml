@@ -44,6 +44,7 @@ jobs:
           python -m pytest -q
           tests/test_sda.py
           tests/test_sda_identity.py
+          tests/test_sda_transport_identity.py
           tests/test_apnt_interface_contract.py
           tests/test_ddil_reconcile.py
           tests/test_mission_replay.py
