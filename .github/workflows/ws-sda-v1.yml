@@ -6,9 +6,11 @@ on:
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_identity.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_transport_identity.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/sda_ccsds.py"
       - "deployments/sara_verified_local_v1/tests/test_sda.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_identity.py"
       - "deployments/sara_verified_local_v1/tests/test_sda_transport_identity.py"
+      - "deployments/sara_verified_local_v1/tests/test_sda_ccsds.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/apnt*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/ddil*.py"
       - "deployments/sara_verified_local_v1/worldshepherd_sara/mission_replay.py"
@@ -67,6 +69,7 @@ jobs:
           worldshepherd_sara/sda.py
           worldshepherd_sara/sda_identity.py
           worldshepherd_sara/sda_transport_identity.py
+          worldshepherd_sara/sda_ccsds.py
           worldshepherd_sara/apnt.py
           worldshepherd_sara/apnt_adapter.py
           worldshepherd_sara/apnt_interface_contract.py
@@ -85,6 +88,7 @@ jobs:
           tests/test_sda.py
           tests/test_sda_identity.py
           tests/test_sda_transport_identity.py
+          tests/test_sda_ccsds.py
 
       - name: Run cross-project non-regression seams
         working-directory: deployments/sara_verified_local_v1
