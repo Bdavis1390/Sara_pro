@@ -79,6 +79,15 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_registry_monotonic_witness.py
 
+      - name: Test G9D remote registry witness runtime
+        working-directory: deployments/sara_verified_local_v1
+        run: >-
+          python -m pytest -q
+          tests/test_registry_remote_witness.py
+          tests/test_registry_witness_ledger_integrity.py
+          tests/test_registry_witness_runtime.py
+          tests/test_registry_witness_service_config.py
+
       - name: Validate upstream patch artifacts
         shell: bash
         run: |

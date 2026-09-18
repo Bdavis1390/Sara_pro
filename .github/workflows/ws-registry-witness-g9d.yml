@@ -1,0 +1,358 @@
+name: WS Registry Witness G9D Qualification
+
+on:
+  pull_request:
+    paths:
+      - "deployments/sara_verified_local_v1/**"
+      - ".github/workflows/ws-registry-witness-g9d.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qualify-remote-witness:
+    name: qualify-remote-witness
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install SARA test dependencies
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pip install -e '.[test]'
+
+      - name: Run generic registry witness protocol tests
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python -m pytest -q \
+            tests/test_registry_monotonic_witness.py \
+            tests/test_registry_remote_witness.py \
+            tests/test_registry_witness_ledger_integrity.py \
+            tests/test_registry_witness_runtime.py \
+            tests/test_registry_witness_service_config.py
+
+      - name: Verify registry witness CLI is packaged
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          command -v ws-registry-witness
+          ws-registry-witness --help >/dev/null
+
+      - name: Build standalone witness image
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          docker build \
+            --build-arg SARA_BUILD_COMMIT="${GITHUB_SHA}" \
+            --build-arg SARA_RELEASE_ID="G9D-CI" \
+            -f Dockerfile.registry-witness \
+            -t worldshepherd-registry-witness:g9d-ci \
+            .
+
+      - name: Generate witness identity and CA-verified TLS material
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ci-witness .ci-witness-data evidence/g9d
+          openssl genpkey -algorithm Ed25519 -out .ci-witness/witness-signing.pem
+          printf '%s\n' 'g9d-ci-service-token-0123456789abcdef0123456789' > .ci-witness/service-token
+
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out .ci-witness/ca.key
+          openssl req -x509 -new -sha256 \
+            -key .ci-witness/ca.key \
+            -out .ci-witness/ca.crt \
+            -days 1 \
+            -subj '/CN=Worldshepherd G9D CI Root'
+
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out .ci-witness/tls.key
+          openssl req -new -sha256 \
+            -key .ci-witness/tls.key \
+            -out .ci-witness/tls.csr \
+            -subj '/CN=localhost'
+
+          cat > .ci-witness/server.ext <<'EOF'
+          basicConstraints=critical,CA:FALSE
+          keyUsage=critical,digitalSignature,keyEncipherment
+          extendedKeyUsage=serverAuth
+          subjectAltName=DNS:localhost,IP:127.0.0.1
+          EOF
+
+          openssl x509 -req -sha256 \
+            -in .ci-witness/tls.csr \
+            -CA .ci-witness/ca.crt \
+            -CAkey .ci-witness/ca.key \
+            -CAcreateserial \
+            -out .ci-witness/tls.crt \
+            -days 1 \
+            -extfile .ci-witness/server.ext
+
+          openssl verify -CAfile .ci-witness/ca.crt .ci-witness/tls.crt
+          openssl x509 -in .ci-witness/tls.crt -noout -ext subjectAltName \
+            | grep -Fq 'DNS:localhost'
+
+          # The CA private key is needed only to issue the ephemeral server
+          # certificate. It must not enter the witness container mount.
+          rm -f .ci-witness/ca.key .ci-witness/tls.csr .ci-witness/ca.srl
+
+          sudo chown 10002:10002 \
+            .ci-witness/witness-signing.pem \
+            .ci-witness/service-token \
+            .ci-witness/tls.key \
+            .ci-witness-data
+          chmod 0755 .ci-witness
+          sudo chmod 0600 \
+            .ci-witness/witness-signing.pem \
+            .ci-witness/service-token \
+            .ci-witness/tls.key
+          chmod 0644 \
+            .ci-witness/ca.crt \
+            .ci-witness/tls.crt \
+            .ci-witness/server.ext
+          sudo chmod 0700 .ci-witness-data
+
+      - name: Start CA-authenticated TLS witness service
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name ws-g9d-witness --no-healthcheck \
+            -p 127.0.0.1:9540:9540 \
+            -e REGISTRY_WITNESS_ID=WS-G9D-CI \
+            -e REGISTRY_WITNESS_NAMESPACE=worldshepherd/sara/ci-registry \
+            -e REGISTRY_WITNESS_SIGNING_KEY_ID=WS-G9D-CI-KEY \
+            -e REGISTRY_WITNESS_PRIVATE_KEY_FILE=/run/witness/witness-signing.pem \
+            -e REGISTRY_WITNESS_SERVICE_TOKEN_FILE=/run/witness/service-token \
+            -e REGISTRY_WITNESS_DB_PATH=/var/lib/registry-witness/witness.db \
+            -v "$PWD/.ci-witness:/run/witness:ro" \
+            -v "$PWD/.ci-witness-data:/var/lib/registry-witness" \
+            worldshepherd-registry-witness:g9d-ci \
+            python -m uvicorn worldshepherd_sara.registry_witness_service_app:app \
+              --host 0.0.0.0 --port 9540 \
+              --ssl-keyfile /run/witness/tls.key \
+              --ssl-certfile /run/witness/tls.crt
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              --cacert .ci-witness/ca.crt \
+              https://localhost:9540/health > evidence/g9d/health.json; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs ws-g9d-witness
+          exit 1
+
+      - name: Advance and verify witness through authenticated HTTPS
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN='g9d-ci-service-token-0123456789abcdef0123456789'
+          ROOT=$(printf 'a%.0s' $(seq 1 64))
+          COMMIT=$(printf 'b%.0s' $(seq 1 64))
+
+          curl --fail --silent --show-error \
+            --cacert .ci-witness/ca.crt \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://localhost:9540/v1/public-key \
+            > evidence/g9d/public-key.json
+
+          curl --fail --silent --show-error \
+            --cacert .ci-witness/ca.crt \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"generation\":7,\"state_root_sha256\":\"${ROOT}\",\"commit_hash\":\"${COMMIT}\"}" \
+            https://localhost:9540/v1/witness \
+            > evidence/g9d/receipt-generation-7.json
+
+          curl --fail --silent --show-error \
+            --cacert .ci-witness/ca.crt \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://localhost:9540/v1/integrity \
+            > evidence/g9d/integrity-before-restart.json
+
+          python - <<'PY'
+          import json
+          import ssl
+          from pathlib import Path
+          from worldshepherd_sara.registry_monotonic_witness import (
+              RegistryMonotonicWitnessClient,
+              RegistryMonotonicWitnessVerifier,
+          )
+          from worldshepherd_sara.registry_witness_http import HttpsRegistryWitnessTransport
+
+          root = 'a' * 64
+          commit_hash = 'b' * 64
+          evidence = Path('evidence/g9d')
+          key = json.loads((evidence / 'public-key.json').read_text())
+          receipt = json.loads((evidence / 'receipt-generation-7.json').read_text())
+
+          verifier = RegistryMonotonicWitnessVerifier(
+              public_keys_b64url={key['key_id']: key['public_key_b64url']},
+              expected_witness_id=key['witness_id'],
+              expected_namespace=key['namespace'],
+          )
+          context = ssl.create_default_context(cafile='.ci-witness/ca.crt')
+          assert context.check_hostname is True
+          transport = HttpsRegistryWitnessTransport(
+              base_url='https://localhost:9540',
+              bearer_token='g9d-ci-service-token-0123456789abcdef0123456789',
+              ssl_context=context,
+          )
+          client = RegistryMonotonicWitnessClient(
+              transport=transport,
+              verifier=verifier,
+          )
+          assessment = client.check(
+              {
+                  'generation': 7,
+                  'state_root_sha256': root,
+                  'commit_hash': commit_hash,
+              },
+              require_head=True,
+          )
+          assert assessment['status'] == 'PASS'
+          assert assessment['signature_verified'] is True
+          assert assessment['witness_mode'] == 'REMOTE_WITNESS'
+          assert assessment['external_witnessed'] is False
+          assert assessment['independence_verified'] is False
+          assert verifier.verify_receipt(receipt)['receipt_sha256'] == receipt['receipt_sha256']
+          (evidence / 'https-client-verification.json').write_text(
+              json.dumps(
+                  {
+                      **assessment,
+                      'tls_ca_chain_verified': True,
+                      'tls_hostname_verified': True,
+                  },
+                  sort_keys=True,
+                  indent=2,
+              ) + '\n'
+          )
+          PY
+
+      - name: Restart witness and prove durable head persistence
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker rm -f ws-g9d-witness
+          docker run -d --name ws-g9d-witness --no-healthcheck \
+            -p 127.0.0.1:9540:9540 \
+            -e REGISTRY_WITNESS_ID=WS-G9D-CI \
+            -e REGISTRY_WITNESS_NAMESPACE=worldshepherd/sara/ci-registry \
+            -e REGISTRY_WITNESS_SIGNING_KEY_ID=WS-G9D-CI-KEY \
+            -e REGISTRY_WITNESS_PRIVATE_KEY_FILE=/run/witness/witness-signing.pem \
+            -e REGISTRY_WITNESS_SERVICE_TOKEN_FILE=/run/witness/service-token \
+            -e REGISTRY_WITNESS_DB_PATH=/var/lib/registry-witness/witness.db \
+            -v "$PWD/.ci-witness:/run/witness:ro" \
+            -v "$PWD/.ci-witness-data:/var/lib/registry-witness" \
+            worldshepherd-registry-witness:g9d-ci \
+            python -m uvicorn worldshepherd_sara.registry_witness_service_app:app \
+              --host 0.0.0.0 --port 9540 \
+              --ssl-keyfile /run/witness/tls.key \
+              --ssl-certfile /run/witness/tls.crt
+
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error \
+              --cacert .ci-witness/ca.crt \
+              https://localhost:9540/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          TOKEN='g9d-ci-service-token-0123456789abcdef0123456789'
+          curl --fail --silent --show-error \
+            --cacert .ci-witness/ca.crt \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://localhost:9540/v1/head \
+            > evidence/g9d/head-after-restart.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          evidence = Path('evidence/g9d')
+          before = json.loads((evidence / 'receipt-generation-7.json').read_text())
+          after = json.loads((evidence / 'head-after-restart.json').read_text())
+          assert after == before
+          PY
+
+          curl --fail --silent --show-error \
+            --cacert .ci-witness/ca.crt \
+            -H "Authorization: Bearer ${TOKEN}" \
+            https://localhost:9540/v1/integrity \
+            > evidence/g9d/integrity-after-restart.json
+
+      - name: Prove lower generation is rejected after restart
+        working-directory: deployments/sara_verified_local_v1
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN='g9d-ci-service-token-0123456789abcdef0123456789'
+          ROOT=$(printf 'c%.0s' $(seq 1 64))
+          COMMIT=$(printf 'd%.0s' $(seq 1 64))
+          CODE=$(curl --silent --show-error \
+            --cacert .ci-witness/ca.crt \
+            -o evidence/g9d/rollback-rejection.json \
+            -w '%{http_code}' \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H 'Content-Type: application/json' \
+            -d "{\"generation\":6,\"state_root_sha256\":\"${ROOT}\",\"commit_hash\":\"${COMMIT}\"}" \
+            https://localhost:9540/v1/witness)
+          test "${CODE}" = "409"
+          grep -q 'ROLLBACK_DETECTED' evidence/g9d/rollback-rejection.json
+
+      - name: Write claims-controlled qualification evidence
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('evidence/g9d/qualification.json')
+          path.write_text(json.dumps({
+              'schema': 'WS-G9D-REMOTE-REGISTRY-WITNESS-QUALIFICATION-V1',
+              'status': 'PASS',
+              'separate_process_exercised': True,
+              'https_transport_exercised': True,
+              'tls_ca_chain_verified': True,
+              'tls_hostname_verified': True,
+              'bearer_authentication_exercised': True,
+              'restart_persistence_exercised': True,
+              'rollback_rejection_exercised': True,
+              'signature_verification_exercised': True,
+              'external_witnessed': False,
+              'independence_verified': False,
+              'claims_boundary': (
+                  'CI proves the software protocol across a separate container using '
+                  'CA-authenticated HTTPS with hostname verification and durable restart. '
+                  'It does not establish separate administrative control, a separate '
+                  'rollback/backup domain, WORM retention, production signing-key custody, '
+                  'an availability objective, or independent third-party validation.'
+              ),
+          }, sort_keys=True, indent=2) + '\n')
+          PY
+
+      - name: Upload G9D qualification evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: g9d-remote-registry-witness-qualification
+          path: deployments/sara_verified_local_v1/evidence/g9d
+          if-no-files-found: error
+
+      - name: Capture witness logs on failure
+        if: failure()
+        working-directory: deployments/sara_verified_local_v1
+        run: docker logs ws-g9d-witness || true
+
+      - name: Clean up qualification service
+        if: always()
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          docker rm -f ws-g9d-witness >/dev/null 2>&1 || true
+          sudo rm -rf .ci-witness .ci-witness-data
