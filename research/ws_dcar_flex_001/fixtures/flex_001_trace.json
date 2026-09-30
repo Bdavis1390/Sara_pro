@@ -1,0 +1,132 @@
+{
+  "request": {
+    "requested_reduction_mw": 20.0,
+    "response_deadline_s": 300.0,
+    "required_duration_s": 1800.0,
+    "max_grid_import_mw": 80.0
+  },
+  "baseline_mw": 100.0,
+  "authorized": true,
+  "baseline_valid": true,
+  "clocks_synchronized": true,
+  "max_gap_s": 300.0,
+  "points": [
+    {
+      "timestamp_s": 0.0,
+      "grid_import_mw": 100.0,
+      "workload_pause_mw": 0.0,
+      "workload_migration_mw": 0.0,
+      "battery_discharge_mw": 0.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 0.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 60.0,
+      "grid_import_mw": 90.0,
+      "workload_pause_mw": 4.0,
+      "workload_migration_mw": 2.0,
+      "battery_discharge_mw": 2.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 2.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 180.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 480.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 780.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1080.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1380.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1680.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1980.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    }
+  ]
+}
