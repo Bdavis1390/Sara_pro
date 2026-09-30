@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from enum import Enum
 from typing import Sequence
 
@@ -69,11 +69,14 @@ def build_partner_replay_payload(
 ) -> dict:
     """Build a replay payload from partner-origin evidence without inference.
 
-    Required identifiers are folded into the evidence-validity flags. A caller
-    can explicitly mark evidence invalid even when an identifier is present;
-    an identifier alone is never treated as proof of validity.
+    Required identifiers are folded into evidence-validity flags. Declared
+    configuration and meter identities must also agree with every trace point;
+    merely supplying a label in the manifest cannot establish custody.
     """
 
+    source_identity_valid = _present(context.source_organization) and _present(
+        context.project_or_dataset_id
+    )
     request_provenance_valid = (
         context.request_provenance_valid and _present(context.request_id)
     )
@@ -83,14 +86,32 @@ def build_partner_replay_payload(
     )
     clocks_synchronized = context.clocks_synchronized and _present(context.clock_source)
     baseline_valid = context.baseline_valid and _present(context.baseline_method)
-    configuration_custody_valid = (
-        context.configuration_custody_valid and _present(context.configuration_id)
+
+    configuration_identity_matches = _present(context.configuration_id) and all(
+        point.configuration_id == context.configuration_id for point in points
     )
+    configuration_custody_valid = (
+        context.configuration_custody_valid and configuration_identity_matches
+    )
+
+    meter_identity_matches = _present(context.meter_id) and all(
+        point.meter_id == context.meter_id for point in points
+    )
+    normalized_points = [
+        replace(
+            point,
+            meter_provenance_valid=(
+                point.meter_provenance_valid and meter_identity_matches
+            ),
+        )
+        for point in points
+    ]
 
     payload = {
         "request": asdict(request),
         "baseline_mw": baseline_mw,
         "authorized": context.authorized,
+        "source_identity_valid": source_identity_valid,
         "request_provenance_valid": request_provenance_valid,
         "authorization_evidence_valid": authorization_evidence_valid,
         "clocks_synchronized": clocks_synchronized,
@@ -98,7 +119,7 @@ def build_partner_replay_payload(
         "configuration_custody_valid": configuration_custody_valid,
         "max_gap_s": max_gap_s,
         "energy_mismatch_tolerance_mwh": energy_mismatch_tolerance_mwh,
-        "points": [asdict(point) for point in points],
+        "points": [asdict(point) for point in normalized_points],
         "provenance": {
             "source_organization": context.source_organization,
             "project_or_dataset_id": context.project_or_dataset_id,
@@ -110,6 +131,8 @@ def build_partner_replay_payload(
             "baseline_method": context.baseline_method,
             "configuration_id": context.configuration_id,
             "meter_id": context.meter_id,
+            "configuration_identity_matches_trace": configuration_identity_matches,
+            "meter_identity_matches_trace": meter_identity_matches,
             "transformation_history": list(context.transformation_history),
             "limitations": list(context.limitations),
             "evidence_policy": "partner_origin_fail_closed",
