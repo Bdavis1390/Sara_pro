@@ -1,6 +1,6 @@
 # WS-DCAR-FLEX-001
 
-**Status:** `REFERENCE SOFTWARE + SYNTHETIC ADVERSARIAL TEST + EXTERNAL-SURROGATE ADAPTER / REQUIRES PARTNER VALIDATION`
+**Status:** `REFERENCE SOFTWARE + SYNTHETIC ADVERSARIAL TEST + EXTERNAL-SURROGATE ADAPTER + PARTNER-EVIDENCE CONTRACT / REQUIRES PARTNER VALIDATION`
 
 Reference experiment for **Worldshepherd Data Center Assurance & Resilience (WS-DCAR)**.
 
@@ -16,7 +16,7 @@ The reference model separates:
 - mechanism decomposition (compute, migration, battery, on-site generation, HVAC);
 - response latency and duration;
 - authorization from evidence that authorization is actually known;
-- request provenance;
+- source identity and request provenance;
 - baseline validity;
 - telemetry freshness and gap detection;
 - meter provenance and meter identity;
@@ -71,6 +71,21 @@ EXT-001 therefore treats that trace as **external processed surrogate evidence**
 
 That fail-closed result is intentional. It demonstrates that WS-DCAR can ingest useful third-party power data while preserving the distinction between **external data** and **sufficient evidence of a specific authorized flexibility event**.
 
+## Partner-evidence contract
+
+`partner_bundle.py` defines the next-stage intake boundary for NLR-001 and ANL-001. A partner event declares its source organization/project, measurement boundary, request ID, authorization record, clock source, baseline method, configuration identity, meter identity, transformation history, and known limitations.
+
+The builder is intentionally fail-closed:
+
+- missing source/project identity invalidates source custody;
+- missing request or authorization evidence cannot be inferred from the trace;
+- a declared configuration ID must match every trace point;
+- a declared meter ID must match every trace point and cannot override bad meter provenance;
+- a lower-level boundary such as `cluster` remains `cluster_only`; it is never promoted into a facility or grid claim;
+- a known unauthorized action is `NONCOMPLIANT`, whereas missing authorization evidence is `INSUFFICIENT_EVIDENCE`.
+
+The staged external-validation protocol is documented in `docs/WS_DCAR_NLR_ARGONNE_VALIDATION_PROTOCOL_2026-09-30.md`: NLR first to extend the measured-workload lineage into a bounded partner-origin event, then Argonne JLSE for a controlled flexibility sweep with power/QoS context.
+
 ## Adversarial cases
 
 The regression suite injects, among other cases:
@@ -84,26 +99,30 @@ The regression suite injects, among other cases:
 7. unauthorized control;
 8. missing authorization evidence;
 9. missing request provenance;
-10. grid-limit violation;
-11. response-deadline miss;
-12. duration shortfall;
-13. generator substitution;
-14. material rebound;
-15. mechanism decomposition mismatch;
-16. invalid negative measurement;
-17. reduction-target mismatch independent of the absolute grid cap;
-18. configuration drift within a time-series event;
-19. meter-identity change;
-20. excessive telemetry gap;
-21. time-series late response;
-22. time-series duration shortfall;
-23. time-integrated energy decomposition mismatch;
-24. replay provenance preservation;
-25. replay-hash mutation detection;
-26. external-source Git-blob mismatch;
-27. external per-unit-to-MW transformation;
-28. fail-closed external-surrogate disposition;
-29. external source/transformation provenance preservation.
+10. missing source/project identity;
+11. declared configuration identity mismatch;
+12. declared meter identity mismatch;
+13. measurement-boundary scope preservation;
+14. grid-limit violation;
+15. response-deadline miss;
+16. duration shortfall;
+17. generator substitution;
+18. material rebound;
+19. mechanism decomposition mismatch;
+20. invalid negative measurement;
+21. reduction-target mismatch independent of the absolute grid cap;
+22. configuration drift within a time-series event;
+23. meter-identity change;
+24. excessive telemetry gap;
+25. time-series late response;
+26. time-series duration shortfall;
+27. time-integrated energy decomposition mismatch;
+28. replay provenance preservation;
+29. replay-hash mutation detection;
+30. external-source Git-blob mismatch;
+31. external per-unit-to-MW transformation;
+32. fail-closed external-surrogate disposition;
+33. external source/transformation provenance preservation.
 
 ## Run
 
@@ -112,11 +131,11 @@ cd research/ws_dcar_flex_001
 python -m pytest -q
 ```
 
-The focused suite currently contains **36 passing regression tests**. A dedicated GitHub Actions workflow, `.github/workflows/ws-dcar-flex-001.yml`, compiles the reference implementation and runs this suite on relevant pull requests and pushes. External actions in that workflow are pinned to immutable commit SHAs under the repository's V23 no-regression policy.
+A dedicated GitHub Actions workflow, `.github/workflows/ws-dcar-flex-001.yml`, compiles the reference implementation and runs the focused suite on relevant pull requests and pushes. External actions in that workflow are pinned to immutable commit SHAs under the repository's V23 no-regression policy.
 
 ## Claims boundary
 
-Passing the synthetic and external-surrogate suites is **not** evidence of MW-scale field performance, utility compliance, economic benefit, or grid-reliability improvement. Those remain `REQUIRES PARTNER VALIDATION`.
+Passing the synthetic, external-surrogate, and partner-evidence-contract suites is **not** evidence of MW-scale field performance, utility compliance, economic benefit, or grid-reliability improvement. Those remain `REQUIRES PARTNER VALIDATION`.
 
 The experiment is an internal reference implementation of the Worldshepherd rule:
 
@@ -128,9 +147,9 @@ and the assurance chain:
 
 ## Next validation gate
 
-The remaining controlling gate is an authoritative event bundle that combines the fields that the public surrogate cannot establish:
+The remaining controlling gate is a partner-origin or partner-controlled event bundle that combines the fields that the public surrogate cannot establish:
 
-- actual grid-boundary meter data;
+- actual measurement at the declared boundary, with authoritative meter identity;
 - the issued request and request ID;
 - authorization evidence;
 - synchronized clock provenance;
@@ -139,4 +158,4 @@ The remaining controlling gate is an authoritative event bundle that combines th
 - mechanism telemetry where available;
 - at least one adverse or exception case.
 
-That dataset may be partner-provided real data or a partner-controlled sandbox. Until then, external-surrogate work improves interoperability and falsification coverage but does not advance the field-performance claim class.
+NLR-001 is the active first target. ANL-001 (Argonne JLSE) is queued immediately after it. Utility/grid claims remain blocked unless the event includes authoritative facility/grid-boundary evidence; node/cluster validation remains node/cluster validation.
