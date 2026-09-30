@@ -91,13 +91,13 @@ A dedicated GitHub Actions workflow, `.github/workflows/ws-dcar-flex-001.yml`, c
 
 ## Current internal evidence
 
-An earlier successful run on PR #524 at branch head `d7b5ad8fcd078aacd0d7a9dc054d4fc35b440761` compiled the reference implementation and reported:
+Exact-head pull-request CI at branch head `ce72b6bbf90d7dfc31a3505041e6bffdb26fdcfa` completed successfully. The focused WS-DCAR gate reported:
 
 ```text
-26 passed in 0.07s
+28 passed in 0.06s
 ```
 
-The repository's V23 Action Pin No-Regression gate also passed for that head. Subsequent evidence-custody changes add replay hashing and associated tests, so the current branch head must pass its own exact-head gate before those changes are treated as qualified. These are internal software-evidence results only; partner validation remains independently controlling.
+The repository's Required Test and Build, CodeQL Required Gate, Repository Freshness Gate, SARA NIST 800-171 SSP Precursor, SARA Commit Closure Evidence, SARA Operational Resilience Drill, and V23 Action Pin No-Regression gates also completed successfully for the same head. These are internal software-evidence results only; partner validation remains independently controlling.
 
 ## Claims boundary
 
