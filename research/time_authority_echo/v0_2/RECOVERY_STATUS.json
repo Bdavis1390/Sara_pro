@@ -1,0 +1,12 @@
+{
+  "lane": "TimeAuthority + ECHO v0.2",
+  "recovered_at": "2026-09-30",
+  "original_release_sha256": "168f55ca588d4bfb6189375a313c0775ebe86b5a63160c46607832daa69eb695",
+  "fresh_clean_extraction_tests": {
+    "passed": 37,
+    "failed": 0
+  },
+  "portability_patch": "hosted replay fixture path resolved relative to test file",
+  "claims_ceiling_preserved": true,
+  "source_control_state": "RECOVERY_PR_PENDING"
+}
