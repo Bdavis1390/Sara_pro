@@ -1,12 +1,23 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from dataclasses import asdict
 from pathlib import Path
 
 from model import FlexRequest
 from trace import TracePoint, verify_trace
+
+
+def _canonical_sha256(value: object) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def replay_payload(payload: dict) -> dict:
@@ -27,6 +38,9 @@ def replay_payload(payload: dict) -> dict:
     output = asdict(result)
     output["verdict"] = result.verdict.value
     output["reasons"] = list(result.reasons)
+    output["input_sha256"] = _canonical_sha256(payload)
+    output["trace_sha256"] = _canonical_sha256(payload["points"])
+    output["provenance"] = payload.get("provenance")
     return output
 
 
