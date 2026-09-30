@@ -1,0 +1,20 @@
+{
+  "schema": "WS-QCRYPTO-TSV-PARENT-BINDING-V3_5",
+  "candidate_version": "v3.5",
+  "integrated_parent_v3_4": {
+    "file": "worldshepherd_qcrypto_tsv_compliance_v3_4.zip",
+    "sha256": "806db617532dc8840dca3f39504efa4cd78f5b4312005d730e5a73e4b54fffd8",
+    "frozen_tests": 221,
+    "frozen_failures": 0
+  },
+  "qcrypto_root_parent_v3_2": {
+    "file": "worldshepherd_qcrypto_bitcoin_hardening_v3_2.zip",
+    "sha256": "e0c7c968f6d8f31278d677c881d3dea4173452ffd4b8ba07850d70970fc654bc",
+    "frozen_tests": 132,
+    "frozen_failures": 0
+  },
+  "v3_5_control_core_sha256": "4b4e1c85b80b8ad5b9326cbacec0a8754dcc80ec98cf2b2e7bc917cd921d8341",
+  "external_adversarial_bundle_sha256": "551ca894c536219189a554517cf9126e8d168ab19cb96fc5320ee03a2bb79c95",
+  "external_adversarial_pass_receipt_sha256": "0bd3861bd5090fabd2073de65504db113a1bbd71ad4bbbfa795f959a36976a8d",
+  "binding_note": "v3.5 is an additive fail-closed hardening of the exact v3.4 integrated parent. External execution uses synthetic market and issuer-delivery inputs and is not a licensed-feed or legal-compliance claim."
+}

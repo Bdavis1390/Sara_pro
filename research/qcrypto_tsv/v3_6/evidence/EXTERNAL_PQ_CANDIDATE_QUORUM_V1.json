@@ -1,0 +1,59 @@
+{
+  "schema": "WS-QCRYPTO-EXTERNAL-PQ-EVIDENCE-QUORUM-V1",
+  "candidate_challenge_sha256": "e8299f29ebf1bc616fe5a1db6ddf415800eea51d2f637e1746f1d73381ed8c96",
+  "psbt_sha256": "b90a18678d229e8961074f2d38fa3debeaec15a46d01925349bbc4cf3dcd26b4",
+  "txid": "259f20588df355fb3732c1fd4f41d5d8666d1bc512dc83c554515cc1b3d1205d",
+  "fee_sat": 1000,
+  "external_parser_receipt_sha256": "d500100cf1e291b2e8eb2d6a0fa89f0b59cb83a4cea0988541b6a02967f3c6cf",
+  "policy_epoch": "v3.2",
+  "required_algorithms": ["ML-DSA-65", "SLH-DSA-SHA2-128f"],
+  "executions": [
+    {
+      "schema": "WS-QCRYPTO-EXTERNAL-PQ-CANDIDATE-RECEIPT-V1",
+      "execution_target": "Supabase Edge Function",
+      "algorithm_id": "ML-DSA-65",
+      "standard": "FIPS 204 algorithm implementation",
+      "library": "@noble/post-quantum@0.7.1",
+      "candidate_challenge_sha256": "e8299f29ebf1bc616fe5a1db6ddf415800eea51d2f637e1746f1d73381ed8c96",
+      "public_key_bytes": 1952,
+      "signature_bytes": 3309,
+      "signature_sha256": "684a5f96b9edf39e8f66ad6c77b2a9567d29bc0c09aee6ed7fc812725ccb1f0b",
+      "sign_verify": true,
+      "tampered_signature_rejected": true,
+      "status": "PASS",
+      "timing_ms": {
+        "keygen": 18.605104999999995,
+        "sign": 10.553302000000002,
+        "verify": 4.238320999999999,
+        "total": 65.178992
+      },
+      "generated_at": "2026-09-18T21:50:41.167Z",
+      "claim_scope": "Hosted software execution evidence only; not Bitcoin consensus PQ, certification, AWS KMS, or hardware TEE validation."
+    },
+    {
+      "schema": "WS-QCRYPTO-EXTERNAL-PQ-CANDIDATE-RECEIPT-V1",
+      "execution_target": "Supabase Edge Function",
+      "algorithm_id": "SLH-DSA-SHA2-128f",
+      "standard": "FIPS 205 algorithm implementation",
+      "library": "@noble/post-quantum@0.7.1",
+      "candidate_challenge_sha256": "e8299f29ebf1bc616fe5a1db6ddf415800eea51d2f637e1746f1d73381ed8c96",
+      "public_key_bytes": 32,
+      "signature_bytes": 17088,
+      "signature_sha256": "109a5c32fd1c42f2edf9c7bbadaa4a97f7b4d0806e508547e99a109ae8396f2e",
+      "sign_verify": true,
+      "tampered_signature_rejected": true,
+      "status": "PASS",
+      "timing_ms": {
+        "keygen": 9.988464999999998,
+        "sign": 74.72974199999999,
+        "verify": 7.705467999999996,
+        "total": 98.870387
+      },
+      "generated_at": "2026-09-18T21:50:46.159Z",
+      "claim_scope": "Hosted software execution evidence only; not Bitcoin consensus PQ, certification, AWS KMS, or hardware TEE validation."
+    }
+  ],
+  "all_required_algorithms_passed": true,
+  "certification_claim": "NONE",
+  "bitcoin_consensus_pq_claim": false
+}

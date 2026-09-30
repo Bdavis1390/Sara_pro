@@ -1,0 +1,10 @@
+{
+  "schema": "WS-QCRYPTO-TSV-PARENT-BINDING-V3_6",
+  "parent_integrated_v3_5_sha256": "9b41b15e58898fe9f8fa836b258b13e93e860d20ea2c19e76693bfb3e3948653",
+  "parent_qcrypto_v3_2_sha256": "e0c7c968f6d8f31278d677c881d3dea4173452ffd4b8ba07850d70970fc654bc",
+  "v3_6_resilience_core_sha256": "b6920cfa2fb8609991b623ceabe61b8b1c0d432cb293a13082fba8eab1977dfa",
+  "supabase_resilience_bundle_sha256": "ebc3b80d92ec8afca9be7c4265811358d41fbfeddd7f016ef5ef04a1fe2732a5",
+  "floot_validation_record_sha256": "584b43a306fe6e15a1db8fab9e21e23f8dc7592952b51d7c902dd456d3967dc6",
+  "final_evidence_binding_sha256": "c4ccd1edee4fe8ff85f708ff1db6f8acdd827cb3ad0c411ae6e05d3e5cbf9c02",
+  "claims_label": "LINEAGE_AND_EVIDENCE_BINDING_ONLY"
+}
