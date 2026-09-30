@@ -10,6 +10,20 @@
   "baseline_valid": true,
   "clocks_synchronized": true,
   "max_gap_s": 300.0,
+  "provenance": {
+    "fixture_status": "SIMULATED_ONLY",
+    "purpose": "WS-DCAR FLEX-001 representative replay trace",
+    "source": "Worldshepherd synthetic reference",
+    "transformations": [
+      "100 MW nominal baseline",
+      "60 s ramp sample",
+      "20 MW target reached at 180 s",
+      "20 MW target maintained for 1800 s",
+      "mechanism decomposition preserved per sample"
+    ],
+    "partner_data": false,
+    "utility_grade_metering": false
+  },
   "points": [
     {
       "timestamp_s": 0.0,
