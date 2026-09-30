@@ -30,6 +30,24 @@ def test_trace_fixture_verifies():
     assert result["source_mismatch_mwh"] == pytest.approx(0.0)
 
 
+def test_replay_preserves_provenance_and_hashes_input():
+    payload = load_payload()
+    result = replay_payload(payload)
+    assert result["provenance"] == payload["provenance"]
+    assert len(result["input_sha256"]) == 64
+    assert len(result["trace_sha256"]) == 64
+    assert result["input_sha256"] != result["trace_sha256"]
+
+
+def test_replay_hash_changes_when_trace_changes():
+    payload = load_payload()
+    original = replay_payload(payload)
+    payload["points"][3]["grid_import_mw"] = 79.75
+    changed = replay_payload(payload)
+    assert changed["input_sha256"] != original["input_sha256"]
+    assert changed["trace_sha256"] != original["trace_sha256"]
+
+
 def test_trace_detects_configuration_drift():
     payload = load_payload()
     payload["points"][5]["configuration_id"] = "cfg-unrecorded-change"
