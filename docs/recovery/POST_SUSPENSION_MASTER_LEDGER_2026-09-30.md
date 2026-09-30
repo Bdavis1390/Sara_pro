@@ -1,15 +1,15 @@
 # Worldshepherd post-suspension master reconciliation ledger — 2026-09-30
 
-Status: **ACTIVE RECONCILIATION CONTROL DOCUMENT**  
-Canonical repository: `Bdavis1390/Sara_pro`  
-Reconciliation base: `main@24a44dafffa90b8bb001a79e4983bb85e08113f1`  
+Status: **ACTIVE RECONCILIATION CONTROL DOCUMENT**
+Canonical repository: `Bdavis1390/Sara_pro`
+Reconciliation base: `main@3182e9d19f8d63f4882ba67ede8273b0fd57d7b7` or later protected-main successor
 Scope window: GitHub disruption beginning 2026-09-17 through repository restoration and current work on 2026-09-30.
 
 ## Purpose
 
-This ledger makes post-disruption Worldshepherd work discoverable from the canonical GitHub repository without converting chat history, partner correspondence, proprietary packages, medical material, credentials, private evidence, or unvalidated hypotheses into public source by accident.
+This ledger makes post-disruption Worldshepherd work discoverable from the canonical GitHub repository without converting chat history, partner correspondence, proprietary packages, medical material, credentials, private evidence, CUI/export-controlled material, or unvalidated hypotheses into public source by accident.
 
-It is an index and release-control surface, not a claim that every referenced workstream is merged, production-ready, independently validated, physically demonstrated, clinically validated, flight-qualified, certified, accredited, or partner-approved.
+It is an index and release-control surface, not a claim that every referenced workstream is merged, production-ready, independently validated, physically demonstrated, clinically validated, flight-qualified, certified, accredited, partner-approved, or award-qualified.
 
 ## Governing recovery and claims rules
 
@@ -30,21 +30,22 @@ It is an index and release-control surface, not a claim that every referenced wo
 
 - **PR #506** — post-suspension reconciliation control plane: merged.
 - **PR #511** — TimeAuthority + ECHO Time Custody v0.2 recovery: merged.
-- **PR #509** — wall-clock-valid SDA mTLS test certificate fixture: merged as current `main` base `24a44da...`.
+- **PR #509** — wall-clock-valid SDA mTLS test certificate fixture: merged.
+- **PR #510** — Yellow-Hat / V22 controlled-build evidence gate: merged after refreshed exact-head Required Test and Build, Verified Local, CodeQL, resilience, TLS, replacement-environment, closure-evidence, NIST precursor, rollback, and V22 build checks completed successfully. Claims remain controlled-build/review evidence only.
 
 ### Active post-restoration PRs
 
 | PR | Lane | State | Evidence / boundary | Next gate |
 |---|---|---|---|---|
-| #510 | Yellow-Hat / controlled build V22 | **DRAFT** | Controlled-build workflow is passing on the refreshed branch. Claims remain controlled-build/review only. | Exact refreshed required CI set must finish green before promotion. |
-| #512 | QCRYPTO + TSV v3.6 recovery | **DRAFT** | Custody-bound replay package; 301/301 package tests and dedicated recovery gate reported passing. No live-value or PQ-certification claim. | Rebase/forward-port to current `main`, rerun repository-wide required gates, then review. |
-| #513 | UC06-P1 / EM control plane | **DRAFT** | Diagnostic/software evidence only; no hardware actuation and no convergence claim. | D5 and medium/fine recovery evidence; exact-head CI. |
-| #514 | QCRYPTO Bitcoin migration exposure baseline v0.1 | **OPEN** | Bounded migration-exposure software baseline; focused test set present. | Current CI, fixture-derived script classification, then non-broadcasting simulator gate. |
-| #507 | SPDX PQC proposal / NIST fixtures | **DRAFT** | Internal proposal and fixture work only. Upstream SPDX process requires discussion/consensus; no upstream acceptance claim. | Complete current CI and upstream discussion before any external contribution PR. |
+| #512 | QCRYPTO + TSV v3.6 recovery | **DRAFT** | 301/301 package tests; dedicated recovery, CodeQL, resilience, NIST precursor and closure gates pass. Custody replay remains source-only and claims no live-value/PQ certification. | Preserve exact custody bytes; create CI-clean derived Git projection because repository `git diff --check` rejects recovered trailing whitespace; rerun exact-head required gate. |
+| #513 | UC06-P1 / EM control plane | **DRAFT** | Diagnostic/software evidence only; no hardware actuation and no convergence claim. Branch touches current SARA service/tests as well as new research files. | Resolve current-main overlaps by content-aware merge, then D5 and medium/fine recovery evidence plus exact-head CI. |
+| #514 | QCRYPTO Bitcoin migration exposure baseline v0.1 | **OPEN** | 19 focused tests before commit; claims are exposure/migration-governance software only. The initial required gate failure was trailing-whitespace hygiene, not functional test failure; a sanitized exact head is being requalified. | Complete refreshed exact-head repository CI, then fixture-derived script classification/key-reuse reconciliation. |
+| #507 | SPDX PQC proposal / NIST fixtures | **DRAFT** | Internal proposal and fixture work only. Upstream SPDX process requires discussion/consensus; no upstream acceptance claim. | Complete current-main CI and upstream discussion before any external contribution PR. |
+| #516 | Post-suspension master ledger | **OPEN** | This public-safe reconciliation control document. | Keep synchronized to protected main and merge once exact-head CI is green. |
 
 Do not force-merge a draft or waive a failing required gate because a dedicated workstream gate passes.
 
-## Historical / recovery lanes requiring current-main disposition
+## Post-disruption workstream inventory
 
 ### SARA / PRIME / ECHO / OVERWATCH / SSPADAWANZZ
 
@@ -81,6 +82,7 @@ Do not force-merge a draft or waive a failing required gate because a dedicated 
 ### QCRYPTO / post-quantum / Bitcoin work
 
 - Preserve the recovered QCRYPTO + TSV package, Bitcoin migration-policy work, PSBT guards, crypto-agility, PQ evidence, and source-integrity controls.
+- Preserve the distinction between exact custody bytes and a CI-clean derived Git projection. Any whitespace-only sanitization must be recorded as a transformation and must not replace the immutable custody hash.
 - Preserve the distinction between software demonstration, external execution, and cryptographic/security certification.
 - No test result is represented as proof that Bitcoin, Ethereum, or another deployed network has adopted Worldshepherd mechanisms.
 
@@ -121,7 +123,7 @@ Post-disruption research intakes include quantum decay, W-state/control work, ac
 
 - Preserve white/blue/red/grey/yellow/black-hat adversarial perspectives as bounded defensive audit lenses.
 - Security work must remain authorization-bounded, testable, logged, and aimed at hardening Worldshepherd-controlled systems.
-- The Yellow-Hat V22 line is the current controlled-build/release-assurance implementation surface.
+- The Yellow-Hat V22 line is now merged as the current controlled-build/release-assurance implementation surface.
 
 ### Operating-system / workstation / environment continuity
 
@@ -169,14 +171,15 @@ A restored repository link may now be used where appropriate, but only public-sa
 
 ## GitHub completion queue
 
-1. Finish exact-head CI for #510, #513, #514, and #507.
-2. Forward-port #512 onto current `main`, rerun repository-wide gates, then promote only if green.
-3. Replay the clean WS-SDA G4–G10 stack onto current `main` sequentially; close/supersede stale parallel PRs only after their unique content is accounted for.
-4. Reconcile QPHONON #207/#441/#448, WS-QX #410, ATIP historical lane, and BAROS exact-object gaps against the restored repository without fabricated ancestry.
-5. Forward-port the validated SSPADAWANZZ admin/interface package by comparison, not overwrite.
-6. Keep private/restricted research represented by status pointers and evidence IDs rather than publishing sensitive payloads.
-7. Add a current public-safe portfolio registry mapping post-disruption research artifacts to claim state, owner lane, PR/issue/evidence, and next validation gate.
-8. Submit QSB or ECDSA.fail only after their challenge-specific official gates are actually satisfied.
+1. Finish exact-head requalification for #514 and merge only when every required gate is green.
+2. Produce the CI-clean derived projection for #512 without rewriting or relabeling its exact custody artifact; rerun repository-wide gates.
+3. Resolve #513 against current main with file-level/content-aware overlap review; keep its D5 and medium/fine scientific gates explicit.
+4. Replay the clean WS-SDA G4–G10 stack onto current `main` sequentially; close/supersede stale parallel PRs only after their unique content is accounted for.
+5. Reconcile QPHONON #207/#441/#448, WS-QX #410, ATIP historical lane, and BAROS exact-object gaps against the restored repository without fabricated ancestry.
+6. Forward-port the validated SSPADAWANZZ admin/interface package by comparison, not overwrite.
+7. Keep private/restricted research represented by status pointers and evidence IDs rather than publishing sensitive payloads.
+8. Add/maintain a current public-safe portfolio registry mapping post-disruption research artifacts to claim state, owner lane, PR/issue/evidence, and next validation gate.
+9. Submit QSB or ECDSA.fail only after their challenge-specific official gates are actually satisfied.
 
 ## Three-task execution mapping
 

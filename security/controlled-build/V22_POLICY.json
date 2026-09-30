@@ -1,0 +1,22 @@
+{
+  "schema": "WS-CONTROLLED-BUILD-POLICY-V22",
+  "date": "2026-09-30",
+  "source_of_truth": "Bdavis1390/Sara_pro protected-main tree",
+  "pip_version": "26.2.1",
+  "cyclonedx_spec_version": "1.7",
+  "candidate_evidence_only_on_pull_request": true,
+  "main_push_attestation": "GitHub actions/attest SLSA provenance",
+  "production_credit_from_ci_alone": false,
+  "monitored_paths": [
+    "deployments/sara_verified_local_v1/Dockerfile",
+    "deployments/sara_verified_local_v1/constraints-runtime.txt",
+    "deployments/sara_verified_local_v1/pyproject.toml",
+    "deployments/sara_verified_local_v1/worldshepherd_sara/__main__.py",
+    "deployments/sara_verified_local_v1/worldshepherd_sara/app.py",
+    "deployments/sara_verified_local_v1/worldshepherd_sara/auth.py",
+    "deployments/sara_verified_local_v1/worldshepherd_sara/storage.py",
+    ".github/workflows/test-and-build.yml",
+    ".github/workflows/sara-release-attestation.yml"
+  ],
+  "claims_boundary": "GitHub-controlled build and signed provenance materially strengthen supply-chain evidence but do not by themselves satisfy Worldshepherd independent-verifier, signer-custody, trusted-time, off-host rollback-anchor, host-attestation, or independent-adversarial-review gates."
+}
