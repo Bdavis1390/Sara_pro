@@ -1,0 +1,179 @@
+name: Worldshepherd V22 Controlled Build
+
+on:
+  pull_request:
+    paths:
+      - "deployments/sara_verified_local_v1/**"
+      - "tools/worldshepherd_controlled_build_v22.py"
+      - "tests/test_worldshepherd_controlled_build_v22.py"
+      - "security/controlled-build/**"
+      - ".github/workflows/worldshepherd-controlled-build-v22.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deployments/sara_verified_local_v1/**"
+      - "tools/worldshepherd_controlled_build_v22.py"
+      - "tests/test_worldshepherd_controlled_build_v22.py"
+      - "security/controlled-build/**"
+      - ".github/workflows/worldshepherd-controlled-build-v22.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ws-v22-controlled-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidate-evidence:
+    name: candidate-evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PIP_NO_INPUT: "1"
+      EVIDENCE_DIR: controlled-build-evidence-v22
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Pin resolver and test runtime
+        run: |
+          python -m pip install --upgrade "pip==26.2.1"
+          python -m pip install "pytest==8.4.2"
+          echo "WS_PIP_VERSION=$(python -m pip --version | awk '{print $2}')" >> "$GITHUB_ENV"
+
+      - name: Unit-test V22 evidence generator
+        run: python -m pytest -q tests/test_worldshepherd_controlled_build_v22.py
+
+      - name: Resolve exact current runtime graph
+        run: |
+          mkdir -p "$EVIDENCE_DIR"
+          python -m pip install \
+            --dry-run \
+            --ignore-installed \
+            --report "$EVIDENCE_DIR/resolver-report.json" \
+            -c deployments/sara_verified_local_v1/constraints-runtime.txt \
+            deployments/sara_verified_local_v1
+
+      - name: Generate candidate hash lock, SBOM, and manifest
+        run: |
+          python tools/worldshepherd_controlled_build_v22.py build \
+            --root . \
+            --report "$EVIDENCE_DIR/resolver-report.json" \
+            --output-dir "$EVIDENCE_DIR" \
+            --source-commit "$GITHUB_SHA"
+
+      - name: Replay dependency graph under require-hashes
+        run: |
+          python -m pip install \
+            --dry-run \
+            --ignore-installed \
+            --require-hashes \
+            -r "$EVIDENCE_DIR/requirements-runtime-hashed.txt"
+
+      - name: Build current SARA artifact
+        run: |
+          mkdir -p "$EVIDENCE_DIR/dist"
+          python -m pip wheel \
+            --no-deps \
+            --wheel-dir "$EVIDENCE_DIR/dist" \
+            deployments/sara_verified_local_v1
+          sha256sum "$EVIDENCE_DIR"/dist/* > "$EVIDENCE_DIR/dist/SHA256SUMS.txt"
+
+      - name: Verify pinned base image and build container
+        run: |
+          set -euo pipefail
+          BASE_REF="$(awk '/^FROM / {print $2; exit}' deployments/sara_verified_local_v1/Dockerfile)"
+          case "$BASE_REF" in
+            *@sha256:*) ;;
+            *) echo "Docker base image is not digest-pinned: $BASE_REF" >&2; exit 17 ;;
+          esac
+          docker pull "$BASE_REF"
+          docker image inspect "$BASE_REF" > "$EVIDENCE_DIR/base-image-inspect.json"
+          docker build \
+            --build-arg SARA_BUILD_COMMIT="$GITHUB_SHA" \
+            --build-arg SARA_RELEASE_ID="v22-controlled-build-$GITHUB_SHA" \
+            --iidfile "$EVIDENCE_DIR/sara-image-id.txt" \
+            -t "ws-sara-v22:${GITHUB_SHA::12}" \
+            deployments/sara_verified_local_v1
+          docker image inspect "ws-sara-v22:${GITHUB_SHA::12}" > "$EVIDENCE_DIR/sara-image-inspect.json"
+
+      - name: Freeze evidence bundle and checksums
+        run: |
+          find "$EVIDENCE_DIR" -type f ! -name 'SHA256SUMS.txt' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > "$EVIDENCE_DIR/SHA256SUMS.txt"
+          tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner \
+            -czf worldshepherd-v22-controlled-build-evidence.tar.gz "$EVIDENCE_DIR"
+          sha256sum worldshepherd-v22-controlled-build-evidence.tar.gz \
+            > worldshepherd-v22-controlled-build-evidence.tar.gz.sha256
+
+      - name: Upload candidate evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: worldshepherd-v22-controlled-build-evidence
+          path: |
+            worldshepherd-v22-controlled-build-evidence.tar.gz
+            worldshepherd-v22-controlled-build-evidence.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+  main-provenance:
+    name: main-provenance
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      PIP_NO_INPUT: "1"
+      EVIDENCE_DIR: controlled-build-evidence-v22
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Rebuild dependency evidence from exact main commit
+        run: |
+          python -m pip install --upgrade "pip==26.2.1"
+          echo "WS_PIP_VERSION=$(python -m pip --version | awk '{print $2}')" >> "$GITHUB_ENV"
+          mkdir -p "$EVIDENCE_DIR"
+          python -m pip install \
+            --dry-run --ignore-installed \
+            --report "$EVIDENCE_DIR/resolver-report.json" \
+            -c deployments/sara_verified_local_v1/constraints-runtime.txt \
+            deployments/sara_verified_local_v1
+          python tools/worldshepherd_controlled_build_v22.py build \
+            --root . \
+            --report "$EVIDENCE_DIR/resolver-report.json" \
+            --output-dir "$EVIDENCE_DIR" \
+            --source-commit "$GITHUB_SHA"
+          tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner \
+            -czf worldshepherd-v22-controlled-build-evidence.tar.gz "$EVIDENCE_DIR"
+
+      - name: Attest reviewed main evidence bundle with GitHub/Sigstore
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: worldshepherd-v22-controlled-build-evidence.tar.gz
+
+      - name: Record attestation URL
+        run: echo "${{ steps.attest.outputs.attestation-url }}" >> "$GITHUB_STEP_SUMMARY"
