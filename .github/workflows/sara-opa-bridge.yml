@@ -1,0 +1,127 @@
+name: SARA OPA Policy Bridge Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/sara-opa-bridge.yml"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/opa_bridge.py"
+      - "deployments/sara_verified_local_v1/worldshepherd_sara/opa_bridge_cli.py"
+      - "deployments/sara_verified_local_v1/tests/test_opa_bridge.py"
+      - "deployments/sara_verified_local_v1/docs/OPA_POLICY_BRIDGE_V1.md"
+      - "deployments/sara_verified_local_v1/pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  opa-bridge-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPA_VERSION: v1.20.2
+      OPA_LINUX_AMD64_SHA256: ed3127751a4c786eb407d26a952c92f45fdcc4b97e0af25cd5d721a414fab244
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install SARA package and tests
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[test]'
+
+      - name: Run bridge unit tests
+        working-directory: deployments/sara_verified_local_v1
+        run: python -m pytest -q tests/test_opa_bridge.py
+
+      - name: Download and verify pinned OPA
+        run: |
+          set -euo pipefail
+          curl -fsSLo opa "https://github.com/open-policy-agent/opa/releases/download/${OPA_VERSION}/opa_linux_amd64"
+          printf '%s  %s\n' "${OPA_LINUX_AMD64_SHA256}" opa | sha256sum --check --strict
+          chmod +x opa
+          ./opa version
+
+      - name: Exercise real OPA allow and deny decisions
+        run: |
+          set -euo pipefail
+          cat > policy.rego <<'REGO'
+          package worldshepherd
+          import rego.v1
+
+          default allow := false
+
+          allow if {
+            input.actor == "identified-operator"
+            input.action == "read"
+            input.resource == "synthetic-evidence"
+          }
+          REGO
+
+          ./opa run --server --addr=127.0.0.1:8181 policy.rego > opa-server.log 2>&1 &
+          OPA_PID=$!
+          trap 'kill "${OPA_PID}" 2>/dev/null || true' EXIT
+
+          for _ in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8181/health >/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8181/health >/dev/null
+
+          cat > allow.json <<'JSON'
+          {"actor":"identified-operator","action":"read","resource":"synthetic-evidence"}
+          JSON
+          cat > deny.json <<'JSON'
+          {"actor":"unidentified","action":"read","resource":"synthetic-evidence"}
+          JSON
+
+          ws-opa-policy-eval \
+            --endpoint http://127.0.0.1:8181/v1/data/worldshepherd/allow \
+            --input allow.json \
+            --output allow-receipt.json
+
+          set +e
+          ws-opa-policy-eval \
+            --endpoint http://127.0.0.1:8181/v1/data/worldshepherd/allow \
+            --input deny.json \
+            --output deny-receipt.json
+          DENY_EXIT=$?
+          set -e
+          test "${DENY_EXIT}" -eq 2
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          allow = json.loads(Path("allow-receipt.json").read_text())
+          deny = json.loads(Path("deny-receipt.json").read_text())
+          assert allow["decision"] == "ALLOW"
+          assert allow["opa_result"] is True
+          assert deny["decision"] == "DENY"
+          assert deny["opa_result"] is False
+          assert len(allow["request_sha256"]) == 64
+          assert len(allow["response_sha256"]) == 64
+          assert len(deny["request_sha256"]) == 64
+          assert len(deny["response_sha256"]) == 64
+          print("real OPA bridge integration: PASS")
+          PY
+
+      - name: Upload bounded OPA evidence receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sara-opa-policy-bridge-evidence
+          path: |
+            allow-receipt.json
+            deny-receipt.json
+            policy.rego
+          if-no-files-found: error
+          retention-days: 30
