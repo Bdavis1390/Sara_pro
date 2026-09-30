@@ -1,0 +1,22 @@
+Worldshepherd Time Authority / ECHO Time Custody v0.2
+Evidence state: IMPLEMENTED IN SOFTWARE / INTERNALLY TESTED / HOSTED-EVIDENCE REPLAYED
+Not merged to GitHub. Not production deployed. Not independently validated.
+
+Files:
+- worldshepherd_time_authority_v0_2.py
+- test_worldshepherd_time_authority_v0_2.py
+- worldshepherd_echo_time_v0_2.py
+- test_worldshepherd_echo_time_v0_2.py
+- combined_time_v0_2_test_output.txt
+- ws_time_xhost_replay_fixture.json
+- test_ws_time_xhost_replay_v0_2.py
+- ws_time_xhost_replay_v0_2_output.txt
+
+Primary regressions:
+- TimeAuthority v0.2: 19 PASS / 0 FAIL
+- ECHO Time Custody v0.2: 13 PASS / 0 FAIL
+- Combined v0.2: 32 PASS / 0 FAIL + compileall PASS
+- Hosted interval replay: 5 PASS / 0 FAIL
+
+Claims ceiling:
+No NTP/PTP/GNSS/atomic-clock/oscillator certification; no trusted timestamp authority; no hardware time synchronization claim; no field safety or regulatory timestamp assurance.
