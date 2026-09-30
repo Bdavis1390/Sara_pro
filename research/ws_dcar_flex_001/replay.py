@@ -28,6 +28,7 @@ def replay_payload(payload: dict) -> dict:
         float(payload["baseline_mw"]),
         points,
         authorized=bool(payload.get("authorized", True)),
+        source_identity_valid=bool(payload.get("source_identity_valid", True)),
         authorization_evidence_valid=bool(
             payload.get("authorization_evidence_valid", True)
         ),
