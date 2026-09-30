@@ -1,0 +1,87 @@
+# Worldshepherd/QCRYPTO validation fixture.
+# Source of truth: NIST FIPS 205 (final), Table 2 and signing-mode text.
+# This is NOT an SPDX production record.
+algorithm: SLH-DSA
+standard:
+  authority: NIST
+  id: FIPS-205
+  status: final
+  url: https://csrc.nist.gov/pubs/fips/205/final
+variants:
+  - id: SLH-DSA-SHA2-128s
+    nistSecurityCategory: 1
+    digestFamily: SHA2
+    profile: small-signature
+    lengths: {publicKeyLength: {sourceValue: 32, sourceUnit: bytes, normalizedValue: 256, normalizedUnit: bits}, signatureLength: {sourceValue: 7856, sourceUnit: bytes, normalizedValue: 62848, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHAKE-128s
+    nistSecurityCategory: 1
+    digestFamily: SHAKE
+    profile: small-signature
+    lengths: {publicKeyLength: {sourceValue: 32, sourceUnit: bytes, normalizedValue: 256, normalizedUnit: bits}, signatureLength: {sourceValue: 7856, sourceUnit: bytes, normalizedValue: 62848, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHA2-128f
+    nistSecurityCategory: 1
+    digestFamily: SHA2
+    profile: fast-signing
+    lengths: {publicKeyLength: {sourceValue: 32, sourceUnit: bytes, normalizedValue: 256, normalizedUnit: bits}, signatureLength: {sourceValue: 17088, sourceUnit: bytes, normalizedValue: 136704, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHAKE-128f
+    nistSecurityCategory: 1
+    digestFamily: SHAKE
+    profile: fast-signing
+    lengths: {publicKeyLength: {sourceValue: 32, sourceUnit: bytes, normalizedValue: 256, normalizedUnit: bits}, signatureLength: {sourceValue: 17088, sourceUnit: bytes, normalizedValue: 136704, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHA2-192s
+    nistSecurityCategory: 3
+    digestFamily: SHA2
+    profile: small-signature
+    lengths: {publicKeyLength: {sourceValue: 48, sourceUnit: bytes, normalizedValue: 384, normalizedUnit: bits}, signatureLength: {sourceValue: 16224, sourceUnit: bytes, normalizedValue: 129792, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHAKE-192s
+    nistSecurityCategory: 3
+    digestFamily: SHAKE
+    profile: small-signature
+    lengths: {publicKeyLength: {sourceValue: 48, sourceUnit: bytes, normalizedValue: 384, normalizedUnit: bits}, signatureLength: {sourceValue: 16224, sourceUnit: bytes, normalizedValue: 129792, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHA2-192f
+    nistSecurityCategory: 3
+    digestFamily: SHA2
+    profile: fast-signing
+    lengths: {publicKeyLength: {sourceValue: 48, sourceUnit: bytes, normalizedValue: 384, normalizedUnit: bits}, signatureLength: {sourceValue: 35664, sourceUnit: bytes, normalizedValue: 285312, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHAKE-192f
+    nistSecurityCategory: 3
+    digestFamily: SHAKE
+    profile: fast-signing
+    lengths: {publicKeyLength: {sourceValue: 48, sourceUnit: bytes, normalizedValue: 384, normalizedUnit: bits}, signatureLength: {sourceValue: 35664, sourceUnit: bytes, normalizedValue: 285312, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHA2-256s
+    nistSecurityCategory: 5
+    digestFamily: SHA2
+    profile: small-signature
+    lengths: {publicKeyLength: {sourceValue: 64, sourceUnit: bytes, normalizedValue: 512, normalizedUnit: bits}, signatureLength: {sourceValue: 29792, sourceUnit: bytes, normalizedValue: 238336, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHAKE-256s
+    nistSecurityCategory: 5
+    digestFamily: SHAKE
+    profile: small-signature
+    lengths: {publicKeyLength: {sourceValue: 64, sourceUnit: bytes, normalizedValue: 512, normalizedUnit: bits}, signatureLength: {sourceValue: 29792, sourceUnit: bytes, normalizedValue: 238336, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHA2-256f
+    nistSecurityCategory: 5
+    digestFamily: SHA2
+    profile: fast-signing
+    lengths: {publicKeyLength: {sourceValue: 64, sourceUnit: bytes, normalizedValue: 512, normalizedUnit: bits}, signatureLength: {sourceValue: 49856, sourceUnit: bytes, normalizedValue: 398848, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+  - id: SLH-DSA-SHAKE-256f
+    nistSecurityCategory: 5
+    digestFamily: SHAKE
+    profile: fast-signing
+    lengths: {publicKeyLength: {sourceValue: 64, sourceUnit: bytes, normalizedValue: 512, normalizedUnit: bits}, signatureLength: {sourceValue: 49856, sourceUnit: bytes, normalizedValue: 398848, normalizedUnit: bits}}
+    signingMode: [deterministic, hedged]
+validation:
+  relationshipPreserved: true
+  implementationValidated: false
+  sideChannelValidated: false
+  interoperabilityValidated: false
