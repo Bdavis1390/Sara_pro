@@ -1,0 +1,30 @@
+name: QCRYPTO TSV v3.6 Recovery Gate
+
+on:
+  pull_request:
+    paths:
+      - 'research/qcrypto_tsv/v3_6/**'
+      - '.github/workflows/qcrypto-tsv-v3-6-recovery.yml'
+  push:
+    paths:
+      - 'research/qcrypto_tsv/v3_6/**'
+      - '.github/workflows/qcrypto-tsv-v3-6-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run v3.6 recovered suite with OpenSSL 3.5
+        run: |
+          docker run --rm \
+            -e PYTHONDONTWRITEBYTECODE=1 \
+            -v "$PWD:/repo" \
+            -w /repo/research/qcrypto_tsv/v3_6 \
+            python:3.12-trixie \
+            sh -lc "openssl version && python -m pip install -q pytest==9.0.2 cryptography==46.0.4 boto3==1.43.18 botocore==1.43.18 && python -m pytest -q -p no:cacheprovider"
