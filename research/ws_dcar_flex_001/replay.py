@@ -28,8 +28,15 @@ def replay_payload(payload: dict) -> dict:
         float(payload["baseline_mw"]),
         points,
         authorized=bool(payload.get("authorized", True)),
+        authorization_evidence_valid=bool(
+            payload.get("authorization_evidence_valid", True)
+        ),
+        request_provenance_valid=bool(payload.get("request_provenance_valid", True)),
         baseline_valid=bool(payload.get("baseline_valid", True)),
         clocks_synchronized=bool(payload.get("clocks_synchronized", True)),
+        configuration_custody_valid=bool(
+            payload.get("configuration_custody_valid", True)
+        ),
         max_gap_s=float(payload.get("max_gap_s", 300.0)),
         energy_mismatch_tolerance_mwh=float(
             payload.get("energy_mismatch_tolerance_mwh", 0.25)
