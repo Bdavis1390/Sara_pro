@@ -35,6 +35,14 @@ def points(*, meter_valid: bool = True) -> list[TracePoint]:
             meter_id="meter-partner-001",
         ),
         TracePoint(
+            timestamp_s=420.0,
+            grid_import_mw=80.0,
+            workload_pause_mw=20.0,
+            meter_provenance_valid=meter_valid,
+            configuration_id="cfg-partner-001",
+            meter_id="meter-partner-001",
+        ),
+        TracePoint(
             timestamp_s=720.0,
             grid_import_mw=80.0,
             workload_pause_mw=20.0,
