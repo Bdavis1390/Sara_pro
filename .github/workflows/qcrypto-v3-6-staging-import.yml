@@ -19,9 +19,6 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
       - name: Read ephemeral artifact locator from open recovery PR
         shell: bash
         env:
@@ -36,7 +33,7 @@ jobs:
             --data-urlencode 'state=open' \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" \
             -o "$RUNNER_TEMP/pr.json"
-          python - <<'PY' > "$RUNNER_TEMP/recovery_url"
+          python3 - <<'PY' > "$RUNNER_TEMP/recovery_url"
           import json, os
           prs=json.load(open(os.path.join(os.environ['RUNNER_TEMP'],'pr.json')))
           if not prs:
@@ -66,7 +63,7 @@ jobs:
           set -euo pipefail
           rm -rf research/qcrypto_tsv/v3_6
           mkdir -p research/qcrypto_tsv/v3_6
-          python - <<'PY'
+          python3 - <<'PY'
           import pathlib, zipfile, os
           src=pathlib.Path(os.environ['RUNNER_TEMP'])/'qcrypto-v3.6.zip'
           dst=pathlib.Path('research/qcrypto_tsv/v3_6')
@@ -95,11 +92,15 @@ jobs:
           if len(selected) != 134:
               raise SystemExit(f'expected 134 selected files, got {len(selected)}')
           PY
-      - name: Run recovered v3.6 regression suite
-        working-directory: research/qcrypto_tsv/v3_6
+      - name: Run recovered v3.6 regression suite with OpenSSL 3.5
+        shell: bash
         run: |
-          python -m pip install -q pytest==9.0.2 cryptography==46.0.4 boto3==1.43.18 botocore==1.43.18
-          python -m pytest -q
+          set -euo pipefail
+          docker run --rm \
+            -v "$PWD:/repo" \
+            -w /repo/research/qcrypto_tsv/v3_6 \
+            python:3.12-trixie \
+            sh -lc "openssl version && python -m pip install -q pytest==9.0.2 cryptography==46.0.4 boto3==1.43.18 botocore==1.43.18 && python -m pytest -q"
       - name: Write provenance and permanent CI gate
         shell: bash
         run: |
@@ -114,7 +115,7 @@ jobs:
 
           Fresh pre-import replay: **301 PASS / 0 FAIL**. The GitHub one-shot importer re-ran the same bounded set before committing it.
 
-          Recovery CI dependency baseline: Python 3.12, pytest 9.0.2, cryptography 46.0.4, boto3 1.43.18, botocore 1.43.18.
+          Recovery CI baseline uses `python:3.12-trixie` so the live OpenSSL-backed FIPS 204/205 scope-parity test executes against an OpenSSL 3.5-capable environment. Python dependencies are pinned to pytest 9.0.2, cryptography 46.0.4, boto3 1.43.18, botocore 1.43.18.
 
           Claims remain bounded to implemented/tested software behavior. This recovery does not establish production deployment, live-value authorization, post-quantum security certification, regulatory compliance, independent validation, or movement of value.
           EOF
@@ -141,14 +142,13 @@ jobs:
               timeout-minutes: 15
               steps:
                 - uses: actions/checkout@v4
-                - uses: actions/setup-python@v5
-                  with:
-                    python-version: '3.12'
-                - name: Run v3.6 recovered suite
-                  working-directory: research/qcrypto_tsv/v3_6
+                - name: Run v3.6 recovered suite with OpenSSL 3.5
                   run: |
-                    python -m pip install -q pytest==9.0.2 cryptography==46.0.4 boto3==1.43.18 botocore==1.43.18
-                    python -m pytest -q
+                    docker run --rm \
+                      -v "$PWD:/repo" \
+                      -w /repo/research/qcrypto_tsv/v3_6 \
+                      python:3.12-trixie \
+                      sh -lc "openssl version && python -m pip install -q pytest==9.0.2 cryptography==46.0.4 boto3==1.43.18 botocore==1.43.18 && python -m pytest -q"
           EOF
           rm -f .github/workflows/qcrypto-v3-6-staging-import.yml
       - name: Commit verified replay atomically
