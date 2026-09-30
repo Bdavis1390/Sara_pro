@@ -248,6 +248,27 @@ def verify_evidence_chain(receipts: Sequence[EvidenceReceipt]) -> bool:
     return True
 
 
+def verify_evidence_chronology(
+    receipts: Sequence[EvidenceReceipt],
+    *,
+    observation: Observation,
+    assessed_at: datetime,
+) -> bool:
+    """Verify monotonic receipt time and causal bounds for the latest evidence."""
+    if not receipts:
+        return False
+    previous_emitted_at: datetime | None = None
+    for receipt in receipts:
+        emitted_at = receipt.emitted_at.astimezone(UTC)
+        if previous_emitted_at is not None and emitted_at < previous_emitted_at:
+            return False
+        previous_emitted_at = emitted_at
+    latest_emitted_at = receipts[-1].emitted_at.astimezone(UTC)
+    observation_time = observation.observed_at.astimezone(UTC)
+    assessment_time = assessed_at.astimezone(UTC)
+    return observation_time <= latest_emitted_at <= assessment_time
+
+
 class DemoCounterExecutor:
     """In-memory, bounded executor used only for the harmless v0.1A trace."""
 
@@ -401,16 +422,6 @@ def assess_conformance(
             observation=observation,
             evidence=latest_receipt,
         )
-    if age > max_observation_age:
-        return _assessment(
-            intent,
-            status=ConformanceStatus.STALE,
-            reason="observation exceeded the maximum accepted age",
-            assessed_at=assessed_at,
-            decision=decision,
-            observation=observation,
-            evidence=latest_receipt,
-        )
 
     if not receipts:
         return _assessment(
@@ -453,6 +464,20 @@ def assess_conformance(
             observation=observation,
             evidence=latest_receipt,
         )
+    if not verify_evidence_chronology(
+        receipts,
+        observation=observation,
+        assessed_at=assessed_at,
+    ):
+        return _assessment(
+            intent,
+            status=ConformanceStatus.CONFLICT,
+            reason="evidence receipt chronology conflicts with observation or assessment time",
+            assessed_at=assessed_at,
+            decision=decision,
+            observation=observation,
+            evidence=latest_receipt,
+        )
 
     if decision.outcome == DecisionOutcome.DENY:
         return _assessment(
@@ -469,6 +494,16 @@ def assess_conformance(
             intent,
             status=ConformanceStatus.VIOLATION,
             reason="allow decision predates the intent validity window",
+            assessed_at=assessed_at,
+            decision=decision,
+            observation=observation,
+            evidence=latest_receipt,
+        )
+    if decision.decided_at.astimezone(UTC) > observation.observed_at.astimezone(UTC):
+        return _assessment(
+            intent,
+            status=ConformanceStatus.VIOLATION,
+            reason="execution observation predates the allow decision",
             assessed_at=assessed_at,
             decision=decision,
             observation=observation,
@@ -499,6 +534,17 @@ def assess_conformance(
             evidence=latest_receipt,
         )
 
+    if age > max_observation_age:
+        return _assessment(
+            intent,
+            status=ConformanceStatus.STALE,
+            reason="observation exceeded the maximum accepted age",
+            assessed_at=assessed_at,
+            decision=decision,
+            observation=observation,
+            evidence=latest_receipt,
+        )
+
     if intent.action != DEMO_ACTION or intent.target != DEMO_TARGET:
         return _assessment(
             intent,
@@ -523,7 +569,10 @@ def assess_conformance(
     before = observation.before.get("counter")
     after = observation.after.get("counter")
     applied_delta = observation.result.get("applied_delta")
-    if any(isinstance(value, bool) or not isinstance(value, int) for value in (before, after, applied_delta)):
+    if any(
+        isinstance(value, bool) or not isinstance(value, int)
+        for value in (before, after, applied_delta)
+    ):
         return _assessment(
             intent,
             status=ConformanceStatus.UNKNOWN,
