@@ -1056,4 +1056,3 @@ def audit_psbt(
         rbf_signaling_input_indexes=rbf_indexes, dust_output_indexes=tuple(dust_indexes),
         op_return_output_indexes=tuple(op_return_indexes),
     )
-

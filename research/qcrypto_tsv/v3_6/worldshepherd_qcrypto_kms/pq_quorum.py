@@ -406,4 +406,3 @@ def execute_and_verify_pq_quorum(
     report["attempted_provider_count"] = len(timings)
     report["threshold_failover_used"] = bool(failures)
     return tuple(attestations), report, tuple(timings)
-
