@@ -1,0 +1,58 @@
+benchmark_id: WS-STATE-GATED-CAUSALITY-001
+status: PRE_REGISTERED
+
+question: >
+  How much intervention-response variability is reducible after measuring and
+  prospectively conditioning on latent system state?
+
+models:
+  M0_fixed:
+    inputs:
+      - stimulus
+      - target
+
+  M1_state_predictive:
+    inputs:
+      - stimulus
+      - target
+      - pre_state_metrics
+
+  M2_state_gated:
+    inputs:
+      - all_M1
+      - state_conditioned_trigger
+
+  M3_phase_intensity_adaptive:
+    inputs:
+      - all_M2
+      - oscillatory_phase
+      - pre_state_power
+      - adaptive_intensity
+
+  M4_network_closed_loop:
+    inputs:
+      - all_M3
+      - whole_brain_connectivity
+      - complexity
+      - directional_flow
+      - response_history
+
+primary_metrics:
+  - out_of_sample_R2
+  - response_variance
+  - variance_reduction
+  - calibration_error
+  - state_estimation_latency
+  - failed_trigger_rate
+
+controls:
+  - random_timing
+  - shuffled_state_labels
+  - local_state_only
+  - whole_brain_state
+  - fixed_intensity
+
+hard_rules:
+  - "Epilepsy stimulation results are not treated as proof of consciousness restoration."
+  - "Prospective variance reduction supports state-gated control, not deterministic brain behavior in general."
+  - "No unsupervised human stimulation protocols."

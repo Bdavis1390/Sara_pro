@@ -1,0 +1,144 @@
+version: "0.1.0"
+updated: "2026-09-17"
+program: "Worldshepherd Global Glyph & Stela Corpus"
+parent_issue: 378
+methodology_issue: 377
+
+policy:
+  provenance_first: true
+  default_media_action: "metadata_only_until_rights_verified"
+  undeciphered_scripts: "do_not_assign_translation_without_specialist_source"
+  inference_rule: "visual resemblance != shared origin != author intent != organizational affiliation != causal mechanism != quantitative relationship != proof"
+
+sources:
+  - id: unicode_unikemet
+    name: "Unicode Egyptian Hieroglyph Database (Unikemet)"
+    authority: "Unicode Consortium"
+    domain: [egyptian, hieroglyphs, sign_catalog]
+    url: "https://unicode.org/reports/tr57/"
+    access: "UCD Unikemet.txt; structured UTF-8 properties"
+    useful_fields: [codepoint, catalog_indexes, sources, description, function, core_status, mirroring, rotation]
+    confidence: authoritative
+
+  - id: cdli
+    name: "Cuneiform Digital Library Initiative"
+    authority: "CDLI"
+    domain: [mesopotamian, cuneiform, proto_cuneiform, tablets, sign_readings]
+    url: "https://cdli.earth/sign-readings"
+    access: "CSV, TSV, TTL, RDF/JSON, JSON; API client"
+    useful_fields: [sign_name, sign_reading, meaning, preferred_reading, object_ids]
+    confidence: authoritative
+
+  - id: oracc
+    name: "Open Richly Annotated Cuneiform Corpus"
+    authority: "Oracc scholarly cooperative"
+    domain: [sumerian, akkadian, cuneiform, transliteration, translation]
+    url: "https://oracc.museum.upenn.edu/"
+    access: "searchable richly annotated corpora"
+    useful_fields: [transliteration, lemmatization, translation, catalog_data, glossary]
+    rights: "project-specific; default Oracc projects use CC BY-SA unless otherwise stated"
+    confidence: authoritative
+
+  - id: british_museum_collection
+    name: "British Museum Collection Online"
+    authority: "British Museum"
+    domain: [egyptian, mesopotamian, levantine, seals, tablets, stelae, inscriptions]
+    url: "https://www.britishmuseum.org/collection"
+    access: "object records, identifiers, descriptions, bibliography"
+    useful_fields: [museum_number, object_type, description, date, culture, findspot, materials, technique, inscriptions, bibliography]
+    confidence: authoritative
+
+  - id: harvard_cmhi
+    name: "Corpus of Maya Hieroglyphic Inscriptions"
+    authority: "Peabody Museum, Harvard University"
+    domain: [maya, hieroglyphs, monuments, stelae, lintels, stairways]
+    url: "https://peabody.harvard.edu/corpus-maya-hieroglyphic-inscriptions"
+    access: "published monument images, line drawings and documentation from online sites"
+    useful_fields: [site_code, monument_type, monument_number, image, line_drawing, site_context]
+    rights: "image requests and reproduction terms apply"
+    confidence: authoritative
+
+  - id: edh
+    name: "Epigraphic Database Heidelberg"
+    authority: "Heidelberg University"
+    domain: [greek_roman, latin, epigraphy, stelae, inscriptions]
+    url: "https://edh.ub.uni-heidelberg.de/"
+    access: "search, CSV, per-record EpiDoc XML and JSON"
+    useful_fields: [hd_number, transcription, language, date, findspot, monument_type, material, dimensions, bibliography]
+    confidence: authoritative
+
+  - id: damos_linear_b
+    name: "DAMOS — Database of Mycenaean at Oslo"
+    authority: "University of Oslo"
+    domain: [mycenaean, linear_b, greek, tablets]
+    url: "https://damos.hf.uio.no/about/database/"
+    access: "annotated electronic corpus and searchable transliterations"
+    useful_fields: [document, transliteration, chronology, scribe, site, epigraphic_context, bibliography]
+    confidence: authoritative
+
+  - id: uppsala_runic
+    name: "Scandinavian Runic-text Database"
+    authority: "Uppsala University / Swedish National Heritage Board"
+    domain: [runic, scandinavian, inscriptions]
+    url: "https://www.uu.se/en/department/scandinavian-languages/research/research-projects/scandinavian-runic-text-database"
+    access: "Runor interface and downloadable database references"
+    useful_fields: [inscription_id, place, transliteration, interpretation, chronology]
+    confidence: authoritative
+
+  - id: british_library_oracle_bones
+    name: "British Library Oracle Bone Collection"
+    authority: "British Library"
+    domain: [shang, oracle_bones, early_chinese, inscriptions]
+    url: "https://searcharchives.bl.uk/"
+    access: "archive catalogue and digitized-content links where available"
+    useful_fields: [shelfmark, date_range, material, script, collection_context]
+    confidence: authoritative
+
+  - id: unicode_east_asian_ancient
+    name: "Unicode UAX #60 — Data for East Asian Scripts"
+    authority: "Unicode Consortium"
+    domain: [jurchen, nushu, small_seal, tangut]
+    url: "https://unicode.org/reports/tr60/"
+    access: "UCD source data files"
+    useful_fields: [codepoint, source, reading, radical_stroke, numeric]
+    confidence: authoritative
+
+  - id: smithsonian_open_access
+    name: "Smithsonian Open Access"
+    authority: "Smithsonian Institution"
+    domain: [museum_objects, fraternal, ritual, ethnographic, archaeological, manuscripts]
+    url: "https://www.si.edu/openaccess/devtools"
+    access: "public API, weekly JSON GitHub data, IIIF and open 2D/3D assets"
+    useful_fields: [edan_id, accession, title, date, culture, description, media, rights]
+    rights: "CC0 only where explicitly marked; restricted media excluded"
+    confidence: authoritative
+
+  - id: wellcome_alchemy
+    name: "Wellcome Collection — digitized alchemical manuscripts"
+    authority: "Wellcome Collection"
+    domain: [alchemy, hermetic, symbolic_diagrams, manuscripts]
+    url: "https://wellcomecollection.org/"
+    access: "online manuscript records and downloadable works"
+    useful_fields: [work_id, title, date, language, description, images, rights]
+    rights: "prefer items explicitly marked Public Domain"
+    confidence: authoritative
+
+  - id: illuminati_originalschriften_1787
+    name: "1787 printed Illuminati source collections"
+    authority: "Historical printed primary-source collections digitized from major libraries"
+    domain: [bavarian_illuminati, fraternal_context, primary_text]
+    url: "https://books.google.com/books?id=tC-XYtmLqBUC"
+    access: "full-view historical scans / searchable text where available"
+    useful_fields: [volume, page, term, named_person, office_or_grade, correspondence_context]
+    confidence: primary_source_with_context_review
+    notes: "References to Freemasons/Freemasonry establish historical context only; they do not make later Masonic imagery Illuminati imagery."
+
+  - id: current_screenshot
+    name: "Sound/Light/Frequency diagram supplied in Worldshepherd analysis"
+    authority: "modern artifact; provenance under investigation"
+    domain: [modern_symbolic, chakra_tattva_candidate, masonic_candidate, consciousness_frequency_candidate]
+    url: null
+    access: "conversation image; durable external provenance not yet captured"
+    useful_fields: [glyph_order, paired_weave, crossings, square, crescent, triangles, circle, radiating_eye_or_sun, upper_marks]
+    confidence: provenance_incomplete
+    notes: "Treat as modern artifact. Older motifs require independent tracing. Masonic or Illuminati association is a hypothesis to test, not an established provenance fact."

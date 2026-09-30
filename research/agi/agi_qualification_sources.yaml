@@ -1,0 +1,49 @@
+sources:
+  - id: DEEPMIND_LEVELS_AGI
+    title: "Levels of AGI for Operationalizing Progress on the Path to AGI"
+    venue: "ICML 2024"
+    core:
+      - "Generality and performance are separate dimensions."
+      - "Competent AGI: at least 50th percentile of skilled adults on most cognitive tasks."
+      - "Metacognitive abilities such as learning new skills are required for generality."
+      - "Consciousness is not a requirement for AGI."
+
+  - id: ARC_ASTRA_2026
+    title: "OpenAI's GPT-6 Astra on ARC-AGI-3"
+    organization: "ARC Prize Foundation"
+    date: "2026-09-03"
+    core:
+      - "62.7% ARC-AGI-3 Semi-Private with Standard harness."
+      - "99.9% with Provider Adapter harness."
+      - "Fewer actions than median human baseline on 96% of levels."
+      - "ARC Prize explicitly does not claim saturation proves AGI."
+      - "Provider Adapter preserves opaque reasoning state and context compaction."
+
+  - id: OPENAI_ASTRA_2026
+    title: "GPT-6 Astra: A new generation of intelligence"
+    organization: "OpenAI"
+    date: "2026-09"
+    core:
+      - "99.9% ARC-AGI-3 in reported evaluation."
+      - "95.0% ARC-AGI-2."
+      - "72.6% OSWorld 2.0 offline subset."
+      - "59.3% Agents' Last Exam."
+      - "57.2% Humanity's Last Exam with tools."
+
+  - id: ARC_AGI3_HUMAN_2026
+    title: "Measuring Human Performance on ARC-AGI-3"
+    organization: "ARC Prize Foundation"
+    date: "2026-04-14"
+    core:
+      - "458 human participants."
+      - "Every environment solved by at least two humans."
+      - "Human baseline uses action efficiency and first-run novel learning."
+
+  - id: METR_TIME_HORIZON_2026
+    title: "Task-Completion Time Horizons of Frontier AI Models"
+    organization: "METR"
+    last_updated: "2026-05-08"
+    core:
+      - "Measures success probability versus human expert task duration."
+      - "Current suite primarily software engineering, ML and cybersecurity."
+      - "METR cautions that capability is jagged across domains."

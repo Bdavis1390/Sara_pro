@@ -1,0 +1,34 @@
+sources:
+  - id: BERJAGA_BUISAN_2026
+    title: "Thermodynamics of consciousness: Non-equilibrium brain dynamics track conscious states"
+    journal: "Cell Reports"
+    volume: 45
+    issue: 8
+    article: 117782
+    year: 2026
+    doi: "10.1016/j.celrep.2026.117782"
+    evidence:
+      - "FDT violations track conscious state across humans and rodents."
+      - "FDT violations decrease in anesthesia and unresponsive disorders of consciousness."
+      - "FDT violations covary with perturbational complexity index."
+    code_repository: "https://github.com/tomasberjagabuisan/Thermo-Consciousness"
+    code_pipeline:
+      - "Generative Effective Connectivity"
+      - "Analytical Thermodynamics"
+      - "FDT Violations"
+    supplemental_metrics:
+      - "entropy production"
+      - "asymmetry"
+      - "irreprocity / non-equilibrium directional metrics"
+
+  - id: MASCHKE_2024
+    title: "Critical dynamics in spontaneous EEG predict anesthetic-induced loss of consciousness and perturbational complexity"
+    journal: "Communications Biology"
+    volume: 7
+    article: 946
+    year: 2024
+    doi: "10.1038/s42003-024-06613-8"
+    evidence:
+      - "Propofol/xenon unconsciousness moves dynamics away from criticality."
+      - "Ketamine with retained conscious experience remains closer to wakeful critical dynamics."
+      - "Resting-state criticality metrics predict PCI."

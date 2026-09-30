@@ -1,0 +1,39 @@
+sources:
+  - id: RABUFFO_ET_AL_2026
+    title: "Pre-stimulus brain states predict and control variability in stimulation responses"
+    journal: "Brain Stimulation"
+    volume: 19
+    issue: 4
+    article: 103118
+    doi: "10.1016/j.brs.2026.103118"
+    PMID: 42144100
+    sample:
+      patients: 36
+      sessions_approx: 320
+      single_pulse_stimulations: ">10000"
+    findings:
+      - "mean within-session explained variance 17.6% SEEG and 7.1% hd-EEG"
+      - "session maxima 85.0% SEEG and 71.8% hd-EEG"
+      - "whole-brain pre-state measures outperform local measures"
+      - "prospective closed-loop state selection reduces response variability"
+    reproducibility:
+      code: "https://github.com/grabuffo/State_Dependent_Brain_Stimulation"
+      data: "open dataset via EBRAINS / OSF"
+
+  - id: HEISS_ET_AL_2026
+    title: "Closed-loop adaptation of transcranial magnetic stimulation intensity with electroencephalography feedback"
+    journal: "NeuroImage"
+    volume: 338
+    article: 122102
+    doi: "10.1016/j.neuroimage.2026.122102"
+    PMID: 42392340
+    sample:
+      participants: 24
+      sessions_per_participant: 4
+      pulses_per_session: 1600
+    findings:
+      - "real-time 24 Hz phase targeting"
+      - "online intensity adaptation based on pre-pulse oscillatory power"
+      - "rising-flank inverse adaptation produced largest MEP increase, 31 +/- 5%"
+    caution:
+      - "motor-system physiology study, not consciousness treatment"

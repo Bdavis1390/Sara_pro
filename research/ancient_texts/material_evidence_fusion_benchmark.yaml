@@ -1,0 +1,57 @@
+benchmark_id: ATIP-OMEF-001
+status: PRE_REGISTERED
+title: "Orthogonal Material Evidence Fusion benchmark"
+
+tasks:
+  fragment_join:
+    input_channels:
+      - textual_similarity
+      - geometry
+      - paleography
+      - DNA
+    primary_metric:
+      - join_precision
+      - join_recall
+      - material_contradiction_detection
+
+  provenance:
+    input_channels:
+      - textual_language
+      - paleography
+      - substrate_genetics
+      - proteomics
+      - ink_chemistry
+    primary_metric:
+      - provenance_calibration
+      - false_convergence_rate
+
+  readability_triage:
+    input_channels:
+      - XRF
+      - carbonization_state
+      - tomography
+    decision:
+      - acquisition_priority
+    metrics:
+      - readable_yield_per_scan_hour
+      - false_skip_rate
+      - false_priority_rate
+
+  synthetic_ground_truth:
+    input_channels:
+      - known_hidden_text
+      - known_ink_composition
+      - carbonization_protocol
+      - tomography
+    evaluate:
+      - segmentation_error
+      - ink_detection_error
+      - unwrapping_error
+      - transcription_error
+
+hard_rules:
+  - "Independent channels must not be double-counted as independent when they share the same upstream source."
+  - "Material contradiction cannot be overridden by textual fluency."
+  - "Same-animal DNA is supportive, not sufficient proof of fragment adjacency."
+  - "Lead-negative does not equal unreadable."
+  - "Synthetic phantom performance is not assumed to transfer perfectly to ancient artifacts."

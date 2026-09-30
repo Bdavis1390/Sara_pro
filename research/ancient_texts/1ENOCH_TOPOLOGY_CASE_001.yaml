@@ -1,0 +1,48 @@
+case_id: ATIP-1ENOCH-TOPOLOGY-001
+status: RETROSPECTIVE_POSITIVE_CONTROL
+corpus: "1 Enoch"
+unit: "Apocalypse of Weeks"
+epistemic_class: KNOWN_DECIPHERED
+contamination_class: C2_RETROSPECTIVE
+
+surface_tradition:
+  language: "Geʿez / Ethiopic"
+  observed_structure:
+    - "1 Enoch 93:1-10 contains Weeks 1-7 sequence material"
+    - "1 Enoch 91:11-17 contains material belonging to later Weeks"
+  problem: "The sequence is split and out of order in the transmitted Geʿez form."
+
+structural_reconstruction:
+  basis:
+    - "explicit week numbering / ordered temporal scheme"
+    - "logical continuation from Weeks 1-7 to later weeks"
+    - "source-critical analysis"
+  historical_status: >
+    The original order was recognized before the publication of the Aramaic
+    Qumran witness.
+
+independent_validation:
+  witness: "4Q212"
+  language: "Aramaic"
+  date: "first century BCE manuscript"
+  result: >
+    Published Aramaic fragments confirmed the reconstructed ordering of the
+    Apocalypse of Weeks.
+  authority_sources:
+    - "Loren T. Stuckenbruck, The Apocalypse of Weeks: Periodization and Tradition-Historical Context (2021)"
+    - "Dorothy M. Peters, Noah Traditions in the Dead Sea Scrolls (discussion of 4Q212)"
+    - "J. T. Milik, The Books of Enoch: Aramaic Fragments from Qumran Cave 4 (1976)"
+
+translation_implication:
+  - "Text order is a translation dependency, not formatting metadata."
+  - "A translation can be locally lexical-correct but globally structurally misleading."
+  - "Reconstructed order must be labeled as reconstruction until independent support exists."
+
+claim:
+  supported: >
+    Relational/sequence structure preserved enough information for scholars to
+    infer an original textual order later supported by an older Aramaic witness.
+  not_claimed:
+    - "All source-critical reconstructions are reliable."
+    - "Topology alone establishes historical provenance."
+    - "ATIP independently rediscovered this ordering."

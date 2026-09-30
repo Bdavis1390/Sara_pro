@@ -1,0 +1,74 @@
+profiles:
+  consciousness:
+    epistemic_actions:
+      - task_EEG
+      - task_fMRI
+      - fNIRS
+      - TMS_EEG_PCI_when_clinically_appropriate
+    rule: "Use lower-risk discriminating modalities before invasive perturbation."
+
+  medicine:
+    epistemic_actions:
+      - targeted_lab
+      - imaging
+      - confirmatory_test
+      - longitudinal_followup
+    rule: "Optimize information subject to patient safety and clinical appropriateness."
+
+  intelligence:
+    epistemic_actions:
+      - independent_source_collection
+      - discriminating_indicator_watch
+      - temporal_crosscheck
+      - hypothesis_targeted_collection
+    rule: "Collect against competing hypotheses, not only the leading narrative."
+
+  science:
+    epistemic_actions:
+      - controlled_experiment
+      - natural_experiment
+      - targeted_measurement
+      - replication
+    rule: "Prefer experiments whose outcome distributions diverge across live models."
+
+  translation:
+    epistemic_actions:
+      - retrieve_new_witness
+      - manuscript_join_search
+      - parallel_text_search
+      - paleographic_measurement
+      - lexical_context_expansion
+    rule: "Seek evidence that separates readings; do not force one reading prematurely."
+
+  cybersecurity:
+    epistemic_actions:
+      - inspect_process_ancestry
+      - correlate_cross_host
+      - sandbox_sample
+      - isolate_reversibly
+      - query_identity_history
+    rule: "Prefer reversible validation over destructive response when safe."
+
+  finance_operations:
+    epistemic_actions:
+      - retrieve_counterparty
+      - inspect_transfer_linkage
+      - expand_account_coverage
+      - compare_recurrence
+    rule: "Resolve economic meaning before aggregating."
+
+  law_archives:
+    epistemic_actions:
+      - retrieve_controlling_text
+      - inspect_revision_history
+      - locate_primary_source
+    rule: "Resolve source state rather than multiply summaries."
+
+  artificial_agents:
+    epistemic_actions:
+      - active_query
+      - tool_use
+      - simulation
+      - reversible_environment_probe
+      - counterfactual_test
+    rule: "World-model improvement is a legitimate action objective only within authorization."

@@ -1,0 +1,130 @@
+applications:
+  image:
+    surface: pixels
+    hidden_or_relational_layers:
+      - topology
+      - object relations
+      - sequence/order
+      - provenance
+      - scale
+    common_flattening_error: "caption treated as complete representation"
+
+  text:
+    surface: tokens
+    hidden_or_relational_layers:
+      - discourse structure
+      - references
+      - chronology
+      - source lineage
+      - omissions
+      - version state
+    common_flattening_error: "bag-of-words or summary treated as source-equivalent"
+
+  scientific_dataset:
+    surface: table
+    hidden_or_relational_layers:
+      - units
+      - calibration
+      - sampling design
+      - preprocessing
+      - annotation version
+      - missingness
+      - causal structure
+    common_flattening_error: "values detached from measurement process"
+
+  software:
+    surface: source_code
+    hidden_or_relational_layers:
+      - runtime config
+      - dependency graph
+      - permissions
+      - API versions
+      - deployment topology
+      - state transitions
+    common_flattening_error: "repository code treated as deployed behavior"
+
+  medical_knowledge:
+    surface: classification
+    hidden_or_relational_layers:
+      - evidence strength
+      - review status
+      - population
+      - version
+      - conflicting submissions
+      - decision context
+    common_flattening_error: "aggregate classification treated as timeless patient-specific truth"
+
+  legal:
+    surface: quotation
+    hidden_or_relational_layers:
+      - jurisdiction
+      - authority
+      - publication state
+      - holding
+      - procedural posture
+      - later treatment
+    common_flattening_error: "quote treated as current controlling rule"
+
+  intelligence:
+    surface: judgment
+    hidden_or_relational_layers:
+      - source quality
+      - independence
+      - assumptions
+      - indicators
+      - confidence
+      - alternatives
+    common_flattening_error: "judgment detached from evidence and linchpin assumptions"
+
+  network_security:
+    surface: alert
+    hidden_or_relational_layers:
+      - process ancestry
+      - identity relationships
+      - host graph
+      - event sequence
+      - baseline
+      - privilege transitions
+      - sensor coverage
+    common_flattening_error: "single alert treated as incident"
+
+  finance_operations:
+    surface: totals
+    hidden_or_relational_layers:
+      - transaction provenance
+      - transfer linkage
+      - recurrence
+      - account coverage
+      - timing
+      - pending state
+    common_flattening_error: "aggregate treated as complete cash-flow explanation"
+
+  audio:
+    surface: transcript
+    hidden_or_relational_layers:
+      - prosody
+      - timing
+      - spectrum
+      - speaker turns
+      - noise/channel
+    common_flattening_error: "transcript treated as whole signal"
+
+  geospatial:
+    surface: coordinates
+    hidden_or_relational_layers:
+      - reachability
+      - network connectivity
+      - terrain
+      - jurisdiction
+      - temporal access
+    common_flattening_error: "straight-line proximity treated as operational closeness"
+
+  archive:
+    surface: catalog_record
+    hidden_or_relational_layers:
+      - object
+      - description version
+      - provenance
+      - digitization history
+      - newly linked evidence
+    common_flattening_error: "catalog description treated as immutable object truth"

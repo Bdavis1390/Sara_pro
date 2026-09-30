@@ -1,0 +1,25 @@
+sources:
+  - id: ROBEYNS_ET_AL_2025
+    title: "A Self-Improving Coding Agent"
+    arxiv: "2504.15228"
+    evidence_class: "preprint"
+    reported_result:
+      - "17% to 53% on a random subset of SWE-bench Verified."
+    relevance:
+      - "Shows an agent scaffold can edit itself and empirically improve benchmark performance."
+    caution:
+      - "Benchmark improvement does not establish unrestricted safe recursive self-improvement."
+
+  - id: ZHANG_ET_AL_DGM_2026
+    title: "Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents"
+    arxiv: "2505.22954"
+    current_version_date: "2026-03-12"
+    evidence_class: "preprint / released research system"
+    reported_result:
+      - "20.0% to 50.0% on SWE-bench."
+      - "14.2% to 30.7% on full Polyglot."
+    relevance:
+      - "Maintains archive of self-modified variants and empirically evaluates descendants."
+      - "Shows self-improvement can improve subsequent self-modification in the tested coding-agent setting."
+    safety_note:
+      - "Authors report sandboxing and human oversight."

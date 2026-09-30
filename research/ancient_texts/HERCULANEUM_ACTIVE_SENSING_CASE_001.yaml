@@ -1,0 +1,28 @@
+case_id: ATIP-HERCULANEUM-ACTIVE-SENSING-001
+status: SUPPORTED_BY_PEER_REVIEW
+source:
+  title: "A model carbonized papyrus scroll opens a novel path to identifying readable scrolls of the Herculaneum Library"
+  journal: PLOS One
+  date: "2026-09-16"
+  doi: "10.1371/journal.pone.0353485"
+
+demonstrated:
+  - "laboratory-made carbonized papyrus scroll with known hidden text"
+  - "controlled ink formulations with varied lead concentration"
+  - "handheld XRF detection of lead after carbonization"
+  - "X-ray tomography + custom virtual-unrolling software recovered known text"
+  - "synthetic scroll provides ground truth for algorithm development"
+
+proposed_operational_use:
+  - "screen Herculaneum scrolls for lead before expensive high-resolution acquisition"
+  - "prioritize lead-positive scrolls where contrast may improve readability"
+
+worldshepherd_implication:
+  - "measurement strategy can be selected from material evidence"
+  - "synthetic twins can validate recovery algorithms against known hidden truth"
+  - "source acquisition becomes an adaptive decision problem"
+
+claim_boundary:
+  - "Lead positivity increases expected readability; it does not guarantee complete text recovery."
+  - "Lead-negative scrolls may still be readable with carbon-ink methods."
+  - "Synthetic phantoms do not reproduce every property of ancient scrolls."

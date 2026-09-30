@@ -1,0 +1,32 @@
+sources:
+  - id: PARK_ET_AL_2026
+    title: "Sub-second fluctuations between top-down and bottom-up modes distinguish diverse human brain states"
+    journal: "Current Biology"
+    volume: 36
+    issue: 14
+    pages: "3548-3565.e8"
+    published: "2026-07-20"
+    doi: "10.1016/j.cub.2026.06.014"
+    findings:
+      - "RPA tracks whole-brain phase directionality in real time"
+      - "top-down and bottom-up modes alternate approximately every 200 ms"
+      - "directional dynamics strongest in wakefulness and weaken under anesthesia"
+      - "EEG-fMRI links top-down to higher-order networks and bottom-up to sensory networks"
+      - "coupled-oscillator model reproduces transitions"
+
+  - id: BENITEZ_STULZ_ET_AL_2026
+    title: "Phase-dependent stimulation response is shaped by the brain's dynamic functional connectivity"
+    journal: "Network Neuroscience"
+    volume: 10
+    issue: 2
+    pages: "475-507"
+    published: "2026-04-22"
+    doi: "10.1162/NETN.a.548"
+    evidence_class: "peer-reviewed computational whole-brain modeling"
+    findings:
+      - "stimulation effect depends on local phase"
+      - "response also depends on transient global functional-connectivity state"
+      - "perturbation can induce global state switching"
+      - "network-aware features improve prediction by up to 40 percent"
+    caution:
+      - "computational/modeling study; clinical benefit must be prospectively demonstrated"

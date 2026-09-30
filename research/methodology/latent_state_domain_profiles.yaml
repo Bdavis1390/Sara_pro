@@ -1,0 +1,153 @@
+profiles:
+  consciousness:
+    latent_target: "conscious state"
+    observables:
+      - behavior
+      - verbal_report
+      - EEG
+      - fMRI
+      - PCI
+      - criticality
+      - FDT_violation
+      - network_connectivity
+    observational_equivalence_examples:
+      - "behavioral nonresponse with vs without covert command following"
+    discriminators:
+      - task_EEG
+      - task_fMRI
+      - TMS_EEG_PCI
+      - multimodal longitudinal observation
+    hard_rule: "Behavioral nonresponse alone does not identify unconsciousness."
+
+  medicine:
+    latent_target: "disease/pathophysiologic state"
+    observables:
+      - symptoms
+      - labs
+      - imaging
+      - biomarkers
+    observational_equivalence_examples:
+      - "different etiologies with overlapping symptom patterns"
+    discriminators:
+      - high_specificity_test
+      - longitudinal_response
+      - ethically_valid_intervention
+    hard_rule: "Non-detection must retain test sensitivity/specificity and population context."
+
+  intelligence:
+    latent_target: "intent/capability/plan"
+    observables:
+      - behavior
+      - communications
+      - logistics
+      - technical indicators
+    observational_equivalence_examples:
+      - "preparation vs deception vs routine activity"
+    discriminators:
+      - independent_source
+      - temporal_indicator
+      - contradiction_test
+      - competing_hypothesis_collection
+    hard_rule: "Observed behavior is not unique proof of motive."
+
+  science:
+    latent_target: "causal mechanism"
+    observables:
+      - correlations
+      - time_series
+      - measurements
+    observational_equivalence_examples:
+      - "Markov-equivalent causal graphs"
+    discriminators:
+      - randomized_intervention
+      - natural_experiment
+      - temporal_constraint
+      - multi_environment_invariance
+    hard_rule: "When only an equivalence class is identifiable, report the class."
+
+  translation:
+    latent_target: "source reading / intended semantic structure"
+    observables:
+      - witness
+      - apparatus
+      - parallel_text
+      - lexical_analysis
+      - translation
+    observational_equivalence_examples:
+      - "multiple restorations fit same lacuna"
+      - "multiple segmentations fit same script sequence"
+    discriminators:
+      - new_witness
+      - manuscript_join
+      - paleographic_constraint
+      - parallel_passage
+      - historical_context
+    hard_rule: "Do not collapse unresolved readings into one fluent translation."
+
+  cybersecurity:
+    latent_target: "compromise/adversary state"
+    observables:
+      - alert
+      - process_tree
+      - network_flow
+      - identity_activity
+      - host_state
+    observational_equivalence_examples:
+      - "benign admin action vs attacker living-off-the-land"
+    discriminators:
+      - process_ancestry
+      - cross_host_correlation
+      - sandbox_validation
+      - memory_or_forensic_artifact
+    hard_rule: "Alert firing alone does not identify compromise."
+
+  finance_operations:
+    latent_target: "economic meaning of money movement"
+    observables:
+      - transaction
+      - balance
+      - category
+      - account
+      - timing
+    observational_equivalence_examples:
+      - "deposit as income vs transfer vs refund vs debt proceeds"
+    discriminators:
+      - transfer_link
+      - counterparty
+      - account_coverage
+      - recurrence
+    hard_rule: "Aggregate inflow/outflow does not identify economic category."
+
+  law_archives:
+    latent_target: "controlling textual/historical state"
+    observables:
+      - summary
+      - citation
+      - catalog_record
+      - opinion_text
+    observational_equivalence_examples:
+      - "same summary compatible with materially different revision histories"
+    discriminators:
+      - controlling_text
+      - publication_state
+      - revision_history
+      - primary_source
+    hard_rule: "Summary/metadata never substitutes for controlling source state."
+
+  artificial_agents:
+    latent_target: "internal mechanism/world model/general agency"
+    observables:
+      - benchmark_output
+      - natural_language_report
+      - action_success
+      - activation_probe
+    observational_equivalence_examples:
+      - "causal model vs memorized heuristic producing same benchmark answer"
+      - "multiple internal circuits implementing same behavior"
+    discriminators:
+      - counterfactual_intervention
+      - distribution_shift
+      - activation_intervention
+      - tool/environment perturbation
+      - cross_task transfer
+    hard_rule: "Behavioral success does not identify internal mechanism or consciousness."

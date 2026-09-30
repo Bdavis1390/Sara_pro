@@ -1,0 +1,41 @@
+sources:
+  - id: BODIEN_ET_AL_2024
+    title: "Cognitive Motor Dissociation in Disorders of Consciousness"
+    journal: "New England Journal of Medicine"
+    volume: 391
+    pages: "598-608"
+    doi: "10.1056/NEJMoa2400645"
+    cohort: 353
+    no_observable_command_response: 241
+    CMD_detected: 60
+    CMD_fraction: 0.25
+    evidence:
+      - "One quarter of participants without observable command response showed task-related cognitive activity on fMRI and/or EEG."
+
+  - id: LAIGAARD_ET_AL_2026
+    title: "Cognitive Motor Dissociation in Disorders of Consciousness: An Individual Participant Data Meta-Analysis"
+    journal: "European Journal of Neurology"
+    volume: 33
+    article: "e70713"
+    doi: "10.1111/ene.70713"
+    studies: 56
+    patients: 1248
+    evidence:
+      - "CMD detection associated with etiology and behavioral level after adjustment."
+      - "No independent association with time since injury, diagnostic modality or task paradigm after adjustment."
+
+  - id: COGITATE_2025
+    title: "Adversarial testing of global neuronal workspace and integrated information theories of consciousness"
+    journal: "Nature"
+    volume: 642
+    pages: "133-142"
+    doi: "10.1038/s41586-025-08888-1"
+    participants: 256
+    modalities:
+      - fMRI
+      - MEG
+      - iEEG
+    evidence:
+      - "Preregistered critical predictions of both IIT and GNWT were challenged."
+      - "IIT lacked predicted sustained posterior synchronization."
+      - "GNWT lacked predicted prefrontal offset ignition."

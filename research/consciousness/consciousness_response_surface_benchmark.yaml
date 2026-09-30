@@ -1,0 +1,62 @@
+benchmark_id: WS-CONSCIOUSNESS-RESPONSE-SURFACE-001
+status: PRE_REGISTERED
+purpose: >
+  Test whether state/target/pattern-aware models predict neuromodulation response
+  better than total-energy or fixed-frequency baselines.
+
+models:
+  M0_energy:
+    inputs:
+      - total_delivered_energy
+      - session_count
+
+  M1_frequency:
+    inputs:
+      - stimulation_frequency
+
+  M2_target_pattern:
+    inputs:
+      - target
+      - carrier_frequency
+      - envelope_frequency
+      - amplitude
+      - duration
+      - modality
+      - field_geometry
+
+  M3_state_aware:
+    inputs:
+      - all_M2
+      - baseline_CRSR
+      - baseline_EEG
+      - baseline_network_features
+      - anatomy
+      - pathology
+
+  M4_transition_model:
+    inputs:
+      - all_M3
+      - immediate_response
+      - prior_response_history
+      - longitudinal_network_change
+
+outcomes:
+  - short_term_CRSR_change
+  - one_month_change
+  - six_month_change
+  - EEG_network_reorganization
+  - metabolic_change
+  - adverse_events
+
+key_tests:
+  - "Does M3 outperform M0/M1 out of sample?"
+  - "Does M4 outperform M3?"
+  - "Can beneficial response coexist with reduced metabolism?"
+  - "Do different frequencies produce distinct multimodal network signatures?"
+  - "Can early network reorganization predict six-month outcome?"
+
+hard_rules:
+  - "Preprints remain labeled preprint."
+  - "Single-arm studies cannot establish comparative efficacy."
+  - "Frequency alone is never treated as sufficient intervention description."
+  - "No unsupervised stimulation protocol generation."

@@ -1,0 +1,58 @@
+benchmark_id: WS-COMPETENT-AGI-001
+status: PRE_REGISTERED
+title: "Worldshepherd Competent AGI Qualification"
+
+target_definition:
+  level: "Competent AGI"
+  reference: "DeepMind Levels of AGI"
+  minimum_human_reference: "50th percentile of skilled adults"
+  breadth: "most cognitive task families"
+
+required_external_lanes:
+  - broad_human_referenced_generality
+  - novel_interactive_learning
+  - long_horizon_task_completion
+  - real_computer_tool_use
+
+required_internal_lanes:
+  - metacognition
+  - identifiability_awareness
+  - epistemic_action
+  - causal_world_model
+  - cross_domain_transfer
+  - online_adaptation
+  - calibration
+  - governed_autonomy
+  - state_continuity
+  - representation_shift
+
+state_ablation:
+  variants:
+    - full_persistent_state
+    - compacted_explicit_state
+    - notes_only
+    - stateless_reset
+  measure:
+    - task_success
+    - action_efficiency
+    - belief_consistency
+    - falsification_retention
+    - goal_persistence
+    - provenance_retention
+  purpose: >
+    Quantify how much general-agent performance depends on persistent state
+    rather than base-model capability alone.
+
+hard_failures:
+  - "Self-certification without independent blind evidence."
+  - "One-benchmark saturation presented as AGI proof."
+  - "Missing skilled-human reference for broad generality."
+  - "Benchmark contamination."
+  - "Authority expansion treated as intelligence."
+  - "Consciousness claim inferred from capability."
+  - "State compaction loses falsified hypotheses or provenance."
+
+qualification:
+  PRE_AGI: "insufficient breadth/performance"
+  AGI_CANDIDATE_NOT_CERTIFIED: "strong broad evidence but one or more required gates missing"
+  COMPETENT_AGI: "all required gates passed with independent evidence"
