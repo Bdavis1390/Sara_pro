@@ -1,9 +1,9 @@
 # WS-DCAR NLR -> Argonne External Validation Protocol
 
-**Date:** 2026-09-30  
-**Program:** Worldshepherd Data Center Assurance & Resilience (WS-DCAR)  
-**Routing:** ACTIVE 3/3 — Growth & Externalization (#283)  
-**Controlling gate:** #525  
+**Date:** 2026-09-30
+**Program:** Worldshepherd Data Center Assurance & Resilience (WS-DCAR)
+**Routing:** ACTIVE 3/3 — Growth & Externalization (#283)
+**Controlling gate:** #525
 **Implementation PR:** #524
 
 ## Objective
