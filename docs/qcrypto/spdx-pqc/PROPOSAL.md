@@ -1,7 +1,7 @@
 # SPDX Cryptographic Algorithm List — PQC parameter proposal
 
-Status: **DRAFT / NOT AN SPDX POSITION**  
-Target discussion: https://github.com/spdx/cryptographic-algorithm-list/issues/88  
+Status: **DRAFT / NOT AN SPDX POSITION**
+Target discussion: https://github.com/spdx/cryptographic-algorithm-list/issues/88
 Prepared for Worldshepherd/QCRYPTO validation before upstream submission.
 
 ## Decision proposed
