@@ -1,0 +1,28 @@
+name: TimeAuthority ECHO v0.2 Recovery Gate
+
+on:
+  pull_request:
+    paths:
+      - 'research/time_authority_echo/v0_2/**'
+      - '.github/workflows/timeauthority-echo-v0-2-recovery.yml'
+  push:
+    paths:
+      - 'research/time_authority_echo/v0_2/**'
+      - '.github/workflows/timeauthority-echo-v0-2-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run TimeAuthority and ECHO recovery regressions
+        working-directory: research/time_authority_echo/v0_2
+        run: python -m unittest discover -v
