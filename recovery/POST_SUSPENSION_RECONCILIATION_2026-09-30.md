@@ -23,6 +23,7 @@ GitHub access is restored. This branch is the controlled replay lane for work pr
 - PR #506 generated current workflow runs. A new failed run accepted a retry, proving the current retry path.
 - The initial `Required Test and Build` failure was an expired synthetic mTLS certificate fixture, not an access failure. The test fixture was repaired in commit `c9ad583a5079321783385b188fa238e1dc9b0e65` by refreshing only the synthetic test clock; normal X.509 validity checks remain enabled.
 - `Required Test and Build` passed on commit `c9ad583a5079321783385b188fa238e1dc9b0e65`, and the repaired commit had zero failed workflow runs at verification time.
+- All nine PR workflows on reconciliation head `88fbc2d9418cb4732a1406b25b58d2aad38b0724` completed successfully before promotion.
 - Branch `recovery/agi-v1.13-2026-09-29` exists but still points to September 18 source and does not yet contain the verified v1.13 recovery package. Its name is not evidence that v1.13 is integrated.
 
 ## Highest-priority outage-era replay queue
@@ -52,4 +53,4 @@ Continuity Recovery v3 retained these anchors:
 
 ## Current gate
 
-GitHub read/write, PR, Actions-trigger, and current-run retry paths are restored and were verified on commit `c9ad583a5079321783385b188fa238e1dc9b0e65`. Outage-era source replay remains pending and must be promoted lane-by-lane only after parent/hash/provenance comparison and a GitHub-visible PR/CI result. No off-host artifact is considered merged, deployed, or GitHub-CI-passed solely because account access is restored.
+GitHub read/write, PR, Actions-trigger, and current-run retry paths are restored. The reconciliation control-plane PR is eligible for promotion after all nine observed PR workflows completed successfully. Outage-era source replay remains pending and must be promoted lane-by-lane only after parent/hash/provenance comparison and a GitHub-visible PR/CI result. No off-host artifact is considered merged, deployed, or GitHub-CI-passed solely because account access is restored.
