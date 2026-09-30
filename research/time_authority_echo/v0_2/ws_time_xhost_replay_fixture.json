@@ -1,0 +1,28 @@
+{
+  "schema": "WS-TIME-XHOST-REPLAY-FIXTURE-0.1",
+  "units": "seconds",
+  "source_record": "WS-TIME-XHOST-001",
+  "policy_max_uncertainty_s": 0.025,
+  "nodes": {
+    "qcrypto": [
+      {"utctime": [0.0110, 0.0170], "timeapi": [0.1130, 0.1720], "expected": "CONSISTENT"},
+      {"utctime": [0.0010, 0.0080], "timeapi": [-0.0005, 0.0605], "expected": "CONSISTENT"},
+      {"utctime": [0.0015, 0.0075], "timeapi": [-0.0010, 0.0600], "expected": "CONSISTENT"},
+      {"utctime": [0.0025, 0.0075], "timeapi": [-0.0005, 0.0585], "expected": "CONSISTENT"},
+      {"utctime": [0.0015, 0.0075], "timeapi": [-0.0010, 0.0590], "expected": "CONSISTENT"},
+      {"utctime": [0.0015, 0.0075], "timeapi": [-0.0010, 0.0590], "expected": "CONSISTENT"},
+      {"utctime": [0.0015, 0.0075], "timeapi": [-0.0015, 0.0585], "expected": "CONSISTENT"},
+      {"utctime": [0.0270, 0.0350], "timeapi": [-0.0005, 0.0595], "expected": "DEGRADED"}
+    ],
+    "recovery": [
+      {"utctime": [0.0125, 0.0185], "timeapi": [0.1195, 0.1795], "expected": "CONSISTENT"},
+      {"utctime": [0.0125, 0.0185], "timeapi": [0.1155, 0.1775], "expected": "CONSISTENT"},
+      {"utctime": [0.0115, 0.0175], "timeapi": [0.1150, 0.1780], "expected": "CONSISTENT"},
+      {"utctime": [0.0120, 0.0170], "timeapi": [0.1150, 0.1750], "expected": "CONSISTENT"},
+      {"utctime": [0.0130, 0.0190], "timeapi": [0.1140, 0.1720], "expected": "CONSISTENT"},
+      {"utctime": [0.0115, 0.0165], "timeapi": [0.1135, 0.1755], "expected": "CONSISTENT"},
+      {"utctime": [0.0325, 0.0375], "timeapi": [0.1165, 0.1755], "expected": "DEGRADED"},
+      {"utctime": [0.0125, 0.0175], "timeapi": [0.1155, 0.1735], "expected": "CONSISTENT"}
+    ]
+  }
+}
