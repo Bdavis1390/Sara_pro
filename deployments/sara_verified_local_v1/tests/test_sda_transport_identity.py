@@ -57,21 +57,27 @@ def _new_rsa_key():
     return rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
 
-def _certificate_now() -> datetime:
-    return datetime.now(timezone.utc)
+def _certificate_validity_window(
+    *, before: timedelta, after: timedelta
+) -> tuple[datetime, datetime]:
+    wall_now = datetime.now(timezone.utc)
+    return min(NOW, wall_now) - before, max(NOW, wall_now) + after
 
 
 def _build_ca():
     key = _new_rsa_key()
-    cert_now = _certificate_now()
+    not_before, not_after = _certificate_validity_window(
+        before=timedelta(days=1),
+        after=timedelta(days=30),
+    )
     cert = (
         x509.CertificateBuilder()
         .subject_name(_name("WS-SDA Test CA"))
         .issuer_name(_name("WS-SDA Test CA"))
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(cert_now - timedelta(days=1))
-        .not_valid_after(cert_now + timedelta(days=30))
+        .not_valid_before(not_before)
+        .not_valid_after(not_after)
         .add_extension(x509.BasicConstraints(ca=True, path_length=0), critical=True)
         .add_extension(
             x509.KeyUsage(
@@ -103,7 +109,10 @@ def _build_leaf(
     server_auth: bool = False,
 ):
     key = _new_rsa_key()
-    cert_now = _certificate_now()
+    not_before, not_after = _certificate_validity_window(
+        before=timedelta(hours=1),
+        after=timedelta(days=1),
+    )
     names: list[x509.GeneralName] = []
     if san_dns:
         names.append(x509.DNSName(san_dns))
@@ -121,8 +130,8 @@ def _build_leaf(
         .issuer_name(ca_cert.subject)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
-        .not_valid_before(cert_now - timedelta(hours=1))
-        .not_valid_after(cert_now + timedelta(days=1))
+        .not_valid_before(not_before)
+        .not_valid_after(not_after)
         .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
     )
     if names:
