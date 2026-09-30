@@ -17,11 +17,12 @@ The reference model separates:
 - response latency and duration;
 - authorization;
 - baseline validity;
-- telemetry freshness;
-- meter provenance;
+- telemetry freshness and gap detection;
+- meter provenance and meter identity;
 - clock synchronization;
-- configuration custody;
-- rebound energy.
+- configuration custody and configuration drift;
+- rebound energy;
+- integrated grid-energy reduction versus decomposed mechanism energy.
 
 ## Canonical scenario
 
@@ -37,9 +38,22 @@ The reference model separates:
 
 The clean event verifies only when evidence and authorization gates also pass.
 
+## Time-series replay
+
+`fixtures/flex_001_trace.json` is a representative synthetic trace. `trace.py` verifies continuous evidence and contract behavior across the trace rather than trusting a single aggregate observation.
+
+Replay it with:
+
+```bash
+cd research/ws_dcar_flex_001
+python replay.py fixtures/flex_001_trace.json
+```
+
+The replay reports the disposition, response latency, maintained duration, grid-energy reduction, decomposed energy, energy mismatch, minimum grid import, and sample count.
+
 ## Adversarial cases
 
-The regression suite injects:
+The regression suite injects, among other cases:
 
 1. incomplete evidence;
 2. stale telemetry;
@@ -55,7 +69,13 @@ The regression suite injects:
 12. material rebound;
 13. mechanism decomposition mismatch;
 14. invalid negative measurement;
-15. reduction-target mismatch independent of the absolute grid cap.
+15. reduction-target mismatch independent of the absolute grid cap;
+16. configuration drift within a time-series event;
+17. meter-identity change;
+18. excessive telemetry gap;
+19. time-series late response;
+20. time-series duration shortfall;
+21. time-integrated energy decomposition mismatch.
 
 ## Run
 
@@ -63,6 +83,8 @@ The regression suite injects:
 cd research/ws_dcar_flex_001
 python -m pytest -q
 ```
+
+A dedicated GitHub Actions workflow, `.github/workflows/ws-dcar-flex-001.yml`, compiles the reference implementation and runs this suite on relevant pull requests and pushes.
 
 ## Claims boundary
 
