@@ -1,0 +1,64 @@
+name: QCRYPTO TSV projection whitespace normalization
+
+on:
+  push:
+    branches:
+      - recovery/qcrypto-tsv-v3.6-20260930
+    paths:
+      - '.github/workflows/qcrypto-tsv-projection-whitespace.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  normalize-derived-projection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact recovery branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: recovery/qcrypto-tsv-v3.6-20260930
+          fetch-depth: 0
+
+      - name: Normalize EOF only in CI projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          targets = [
+              Path('research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/pq_quorum.py'),
+              Path('research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/psbt_guard.py'),
+          ]
+          for path in targets:
+              original = path.read_bytes()
+              normalized = original.rstrip(b'\r\n') + b'\n'
+              if normalized == original:
+                  print(f'UNCHANGED {path}')
+                  continue
+              path.write_bytes(normalized)
+              print(f'NORMALIZED_EOF_ONLY {path}: {len(original)} -> {len(normalized)} bytes')
+          PY
+          git diff --check
+          git diff -- research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/pq_quorum.py \
+            research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/psbt_guard.py
+
+      - name: Commit derived Git projection hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- \
+            research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/pq_quorum.py \
+            research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/psbt_guard.py; then
+            echo 'No EOF normalization required.'
+            exit 0
+          fi
+          git config user.name 'worldshepherd-ci'
+          git config user.email 'worldshepherd-ci@users.noreply.github.com'
+          git add \
+            research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/pq_quorum.py \
+            research/qcrypto_tsv/v3_6/worldshepherd_qcrypto_kms/psbt_guard.py
+          git commit -m 'Recovery projection: normalize EOF whitespace only'
+          git push origin HEAD:recovery/qcrypto-tsv-v3.6-20260930
