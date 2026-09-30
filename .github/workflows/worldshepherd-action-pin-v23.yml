@@ -35,6 +35,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Pin test harness
+        run: python -m pip install "pytest==8.4.2"
+
       - name: Self-test audit logic
         run: python -m pytest -q tests/test_github_action_pin_audit_v23.py
 
