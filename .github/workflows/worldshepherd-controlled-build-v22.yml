@@ -151,11 +151,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Rebuild dependency evidence from exact main commit
+      - name: Rebuild dependency evidence and SARA wheel from exact main commit
         run: |
           python -m pip install --upgrade "pip==26.2.1"
           echo "WS_PIP_VERSION=$(python -m pip --version | awk '{print $2}')" >> "$GITHUB_ENV"
-          mkdir -p "$EVIDENCE_DIR"
+          mkdir -p "$EVIDENCE_DIR/dist"
           python -m pip install \
             --dry-run --ignore-installed \
             --report "$EVIDENCE_DIR/resolver-report.json" \
@@ -166,14 +166,37 @@ jobs:
             --report "$EVIDENCE_DIR/resolver-report.json" \
             --output-dir "$EVIDENCE_DIR" \
             --source-commit "$GITHUB_SHA"
+          python -m pip install \
+            --dry-run --ignore-installed --require-hashes \
+            -r "$EVIDENCE_DIR/requirements-runtime-hashed.txt"
+          python -m pip wheel \
+            --no-deps \
+            --wheel-dir "$EVIDENCE_DIR/dist" \
+            deployments/sara_verified_local_v1
+          sha256sum "$EVIDENCE_DIR"/dist/*.whl > "$EVIDENCE_DIR/dist/SHA256SUMS.txt"
+          find "$EVIDENCE_DIR" -type f ! -name 'SHA256SUMS.txt' -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > "$EVIDENCE_DIR/SHA256SUMS.txt"
           tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner \
             -czf worldshepherd-v22-controlled-build-evidence.tar.gz "$EVIDENCE_DIR"
+          sha256sum worldshepherd-v22-controlled-build-evidence.tar.gz \
+            > worldshepherd-v22-controlled-build-evidence.tar.gz.sha256
 
-      - name: Attest reviewed main evidence bundle with GitHub/Sigstore
+      - name: Retain reviewed-main evidence bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: worldshepherd-v22-reviewed-main-evidence
+          path: |
+            worldshepherd-v22-controlled-build-evidence.tar.gz
+            worldshepherd-v22-controlled-build-evidence.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Attest reviewed SARA wheel with GitHub/Sigstore SLSA provenance
         id: attest
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
-          subject-path: worldshepherd-v22-controlled-build-evidence.tar.gz
+          subject-path: controlled-build-evidence-v22/dist/*.whl
 
       - name: Record attestation URL
         run: echo "${{ steps.attest.outputs.attestation-url }}" >> "$GITHUB_STEP_SUMMARY"
