@@ -1,0 +1,69 @@
+{
+  "fixture_id": "WS-MBSE-FILE-SYNTH-002",
+  "classification": "UNCLASSIFIED_SYNTHETIC_FIXTURE",
+  "claims_boundary": [
+    "Synthetic file-backed legacy corpus with known ground truth.",
+    "Not derived from AEGIS, Navy, partner, proprietary, CUI, or classified technical data.",
+    "Does not establish general document understanding, PDF/image extraction, or Cameo/MagicDraw interoperability."
+  ],
+  "ground_truth": {
+    "nodes": [
+      {"id": "power_bus", "type": "subsystem", "name": "Power Distribution"},
+      {"id": "sensor_a", "type": "sensor", "name": "Sensor A"},
+      {"id": "processor_a", "type": "compute", "name": "Mission Processor"},
+      {"id": "display_a", "type": "hmi", "name": "Operator Display"},
+      {"id": "service_track", "type": "software_service", "name": "Track Service"}
+    ],
+    "edges": [
+      {"source": "power_bus", "target": "sensor_a", "relation": "powers"},
+      {"source": "power_bus", "target": "processor_a", "relation": "powers"},
+      {"source": "sensor_a", "target": "processor_a", "relation": "ethernet_data"},
+      {"source": "processor_a", "target": "service_track", "relation": "hosts"},
+      {"source": "service_track", "target": "display_a", "relation": "publishes_track_data"}
+    ]
+  },
+  "legacy_artifacts": [
+    {
+      "artifact_id": "doc-002",
+      "kind": "technical_manual_excerpt",
+      "path": "technical_manual.txt",
+      "expected_sha256": "debaf590b93bfb18aa326eed3b7b7465724b127324650a6e734937a1a4a88655",
+      "expected_support": [
+        "Power Distribution->Sensor A:powers",
+        "Sensor A->Mission Processor:ethernet_data"
+      ]
+    },
+    {
+      "artifact_id": "bom-002",
+      "kind": "hardware_bom",
+      "path": "hardware_bom.csv",
+      "expected_sha256": "a0eca14c5ec898ef24bc528a3817119cfe305cff32dab3a385fa3663b6f374a6"
+    },
+    {
+      "artifact_id": "net-002",
+      "kind": "network_configuration",
+      "path": "network_configuration.json",
+      "expected_sha256": "0918d80f19971579722035fabdb1b3e8b16de8fc43979f24ae85d04798ae7ec7",
+      "expected_support": [
+        "Mission Processor->Track Service:hosts",
+        "Track Service->Operator Display:publishes_track_data"
+      ]
+    },
+    {
+      "artifact_id": "cable-002",
+      "kind": "cable_record",
+      "path": "cable_record.csv",
+      "expected_sha256": "74e3660ef0aa503f015e1e6054f87d076f2e2b89479f188a7f2d9b57d8d2abe1",
+      "expected_support": [
+        "Power Distribution->Mission Processor:powers"
+      ]
+    }
+  ],
+  "scoring": {
+    "entity_precision_target": 0.95,
+    "entity_recall_target": 0.95,
+    "relationship_precision_target": 0.90,
+    "relationship_recall_target": 0.90,
+    "unsupported_inference_target": 0
+  }
+}

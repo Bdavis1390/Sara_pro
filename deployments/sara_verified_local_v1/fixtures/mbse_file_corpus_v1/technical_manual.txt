@@ -1,0 +1,1 @@
+Sensor A receives 28 VDC from the Power Distribution subsystem and forwards observation messages to the Mission Processor over Ethernet.
