@@ -65,6 +65,7 @@ def verify_trace(
     points: Sequence[TracePoint],
     *,
     authorized: bool = True,
+    source_identity_valid: bool = True,
     authorization_evidence_valid: bool = True,
     request_provenance_valid: bool = True,
     baseline_valid: bool = True,
@@ -155,6 +156,8 @@ def verify_trace(
 
     timestamps = [point.timestamp_s for point in pts]
     evidence_failures: list[str] = []
+    if not source_identity_valid:
+        evidence_failures.append("source_identity_invalid")
     if not request_provenance_valid:
         evidence_failures.append("request_provenance_invalid")
     if not authorization_evidence_valid:
