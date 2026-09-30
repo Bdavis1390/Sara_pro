@@ -26,5 +26,5 @@ jobs:
             -e PYTHONDONTWRITEBYTECODE=1 \
             -v "$PWD:/repo" \
             -w /repo/research/qcrypto_tsv/v3_6 \
-            python:3.12-trixie \
+            python:3.12-trixie@sha256:4d1caded1f729ae443eb803f26ffde7b61e696aeaef62f099abb6dd6b14257c7 \
             sh -lc "openssl version && python -m pip install -q pytest==9.0.2 cryptography==46.0.4 boto3==1.43.18 botocore==1.43.18 && python -m pytest -q -p no:cacheprovider"
