@@ -1,0 +1,147 @@
+name: QCRYPTO TSV v3.6 One-Shot Recovery Import
+
+on:
+  pull_request:
+    types: [edited]
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'recovery/qcrypto-tsv-v3.6-20260930' &&
+      contains(github.event.pull_request.body, 'RECOVERY_ARTIFACT_URL=') &&
+      contains(github.event.pull_request.body, 'RECOVERY_ARTIFACT_SHA256=b5dd926055960847f4fd6fc1540214ed306bfbd93310825c7117b7355b90bfbc')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read ephemeral artifact locator
+        shell: bash
+        run: |
+          set -euo pipefail
+          BODY_FILE="$GITHUB_EVENT_PATH"
+          python - <<'PY' > "$RUNNER_TEMP/recovery_url"
+          import json, os
+          body=json.load(open(os.environ['GITHUB_EVENT_PATH']))['pull_request']['body'] or ''
+          for line in body.splitlines():
+              if line.startswith('RECOVERY_ARTIFACT_URL='):
+                  print(line.split('=',1)[1])
+                  break
+          else:
+              raise SystemExit('missing recovery artifact URL')
+          PY
+          chmod 600 "$RUNNER_TEMP/recovery_url"
+      - name: Download and verify exact custody artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="$(cat "$RUNNER_TEMP/recovery_url")"
+          curl --fail --location --silent --show-error "$URL" -o "$RUNNER_TEMP/qcrypto-v3.6.zip"
+          echo 'b5dd926055960847f4fd6fc1540214ed306bfbd93310825c7117b7355b90bfbc  '"$RUNNER_TEMP/qcrypto-v3.6.zip" | sha256sum -c -
+      - name: Extract bounded public replay set
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf research/qcrypto_tsv/v3_6
+          mkdir -p research/qcrypto_tsv/v3_6
+          python - <<'PY'
+          import pathlib, zipfile, os
+          src=pathlib.Path(os.environ['RUNNER_TEMP'])/'qcrypto-v3.6.zip'
+          dst=pathlib.Path('research/qcrypto_tsv/v3_6')
+          required={
+            'evidence/EXTERNAL_PARSER_QUORUM_RECEIPT_V1.json',
+            'evidence/EXTERNAL_PQ_CANDIDATE_QUORUM_V1.json',
+            'evidence/TSV_EXTERNAL_ADVERSARIAL_BUNDLE_V3_5.json',
+            'evidence/TSV_EXTERNAL_EXECUTION_BUNDLE_V3_4.json',
+            'evidence/TSV_EXTERNAL_RESILIENCE_BUNDLE_V3_6.json',
+          }
+          selected=[]
+          with zipfile.ZipFile(src) as z:
+              for info in z.infolist():
+                  n=info.filename
+                  if info.is_dir() or n.endswith('.log'):
+                      continue
+                  if n.startswith('evidence/') and n not in required:
+                      continue
+                  p=pathlib.PurePosixPath(n)
+                  if p.is_absolute() or '..' in p.parts:
+                      raise SystemExit(f'unsafe archive path: {n}')
+                  out=dst.joinpath(*p.parts)
+                  out.parent.mkdir(parents=True, exist_ok=True)
+                  out.write_bytes(z.read(info))
+                  selected.append(n)
+          if len(selected) != 134:
+              raise SystemExit(f'expected 134 selected files, got {len(selected)}')
+          PY
+      - name: Run recovered v3.6 regression suite
+        working-directory: research/qcrypto_tsv/v3_6
+        run: |
+          python -m pip install -q pytest
+          python -m pytest -q
+      - name: Write recovery provenance and permanent CI gate
+        shell: bash
+        run: |
+          cat > research/qcrypto_tsv/v3_6/RECOVERY_PROVENANCE_2026-09-30.md <<'EOF'
+          # QCRYPTO + TSV v3.6 recovery provenance — 2026-09-30
+
+          Original custody artifact: `worldshepherd_qcrypto_tsv_compliance_v3_6.zip`
+
+          Original SHA-256: `b5dd926055960847f4fd6fc1540214ed306bfbd93310825c7117b7355b90bfbc`
+
+          The Git replay retains all non-log source, tests, scripts, documentation, manifests, external fixtures, plus the five evidence fixtures required by the full regression suite. Historical logs and non-required evidence remain in off-host custody rather than being duplicated into Git.
+
+          Fresh pre-import replay: **301 PASS / 0 FAIL**. The GitHub one-shot importer re-runs the same bounded set before committing it.
+
+          Claims remain bounded to implemented/tested software behavior. This recovery does not establish production deployment, live-value authorization, post-quantum security certification, regulatory compliance, independent validation, or movement of value.
+          EOF
+          cat > .github/workflows/qcrypto-tsv-v3-6-recovery.yml <<'EOF'
+          name: QCRYPTO TSV v3.6 Recovery Gate
+
+          on:
+            pull_request:
+              paths:
+                - 'research/qcrypto_tsv/v3_6/**'
+                - '.github/workflows/qcrypto-tsv-v3-6-recovery.yml'
+            push:
+              paths:
+                - 'research/qcrypto_tsv/v3_6/**'
+                - '.github/workflows/qcrypto-tsv-v3-6-recovery.yml'
+            workflow_dispatch:
+
+          permissions:
+            contents: read
+
+          jobs:
+            pytest:
+              runs-on: ubuntu-latest
+              timeout-minutes: 15
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-python@v5
+                  with:
+                    python-version: '3.12'
+                - name: Run v3.6 recovered suite
+                  working-directory: research/qcrypto_tsv/v3_6
+                  run: |
+                    python -m pip install -q pytest
+                    python -m pytest -q
+          EOF
+          rm -f .github/workflows/qcrypto-v3-6-staging-import.yml
+      - name: Commit verified replay atomically
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A research/qcrypto_tsv/v3_6 .github/workflows/qcrypto-tsv-v3-6-recovery.yml .github/workflows/qcrypto-v3-6-staging-import.yml
+          git commit -m 'recovery(qcrypto): replay verified QCRYPTO TSV v3.6'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
