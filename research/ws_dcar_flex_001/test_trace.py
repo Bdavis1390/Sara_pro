@@ -93,6 +93,47 @@ def test_trace_rejects_unauthorized_success():
     assert "unauthorized_control_action" in result.reasons
 
 
+def test_trace_distinguishes_missing_authorization_evidence():
+    payload = load_payload()
+    request, points = build(payload)
+    result = verify_trace(
+        request,
+        payload["baseline_mw"],
+        points,
+        authorized=False,
+        authorization_evidence_valid=False,
+    )
+    assert result.verdict is Verdict.INSUFFICIENT_EVIDENCE
+    assert "authorization_evidence_invalid" in result.reasons
+    assert "unauthorized_control_action" not in result.reasons
+
+
+def test_trace_rejects_missing_request_provenance():
+    payload = load_payload()
+    request, points = build(payload)
+    result = verify_trace(
+        request,
+        payload["baseline_mw"],
+        points,
+        request_provenance_valid=False,
+    )
+    assert result.verdict is Verdict.INSUFFICIENT_EVIDENCE
+    assert "request_provenance_invalid" in result.reasons
+
+
+def test_trace_rejects_configuration_custody_failure():
+    payload = load_payload()
+    request, points = build(payload)
+    result = verify_trace(
+        request,
+        payload["baseline_mw"],
+        points,
+        configuration_custody_valid=False,
+    )
+    assert result.verdict is Verdict.INSUFFICIENT_EVIDENCE
+    assert "configuration_custody_invalid" in result.reasons
+
+
 def test_trace_detects_late_response():
     payload = load_payload()
     for point in payload["points"][1:3]:
