@@ -1,14 +1,16 @@
-# WS-SARA runtime constraints — pinned from green CI environment on 2026-08-26.
-# Version pinning improves repeatability; package-file hash locking remains a future hardening gate.
+# WS-SARA runtime constraints — reconciled against the controlled resolver on 2026-09-30.
+# All packages in the resolved runtime graph are exact-version constrained; V22 CI adds artifact hash locking.
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.14.2
+cffi==2.1.1
 click==8.5.0
 cryptography==50.0.1
 fastapi==0.141.1
 h11==0.16.0
 httptools==0.8.0
 idna==3.19
+pycparser==3.0
 pydantic==2.13.4
 pydantic-core==2.46.4
 python-dotenv==1.2.3
