@@ -1,0 +1,78 @@
+# Worldshepherd/QCRYPTO validation fixture.
+# Source of truth: NIST FIPS 204 (final).
+# This is NOT an SPDX production record.
+algorithm: ML-DSA
+standard:
+  authority: NIST
+  id: FIPS-204
+  status: final
+  url: https://csrc.nist.gov/pubs/fips/204/final
+variants:
+  - id: ML-DSA-44
+    nistSecurityCategory: 2
+    lengths:
+      publicKeyLength:
+        sourceValue: 1312
+        sourceUnit: bytes
+        normalizedValue: 10496
+        normalizedUnit: bits
+      privateKeyLength:
+        sourceValue: 2560
+        sourceUnit: bytes
+        normalizedValue: 20480
+        normalizedUnit: bits
+      signatureLength:
+        sourceValue: 2420
+        sourceUnit: bytes
+        normalizedValue: 19360
+        normalizedUnit: bits
+    signingMode:
+      - deterministic
+      - hedged
+  - id: ML-DSA-65
+    nistSecurityCategory: 3
+    lengths:
+      publicKeyLength:
+        sourceValue: 1952
+        sourceUnit: bytes
+        normalizedValue: 15616
+        normalizedUnit: bits
+      privateKeyLength:
+        sourceValue: 4032
+        sourceUnit: bytes
+        normalizedValue: 32256
+        normalizedUnit: bits
+      signatureLength:
+        sourceValue: 3309
+        sourceUnit: bytes
+        normalizedValue: 26472
+        normalizedUnit: bits
+    signingMode:
+      - deterministic
+      - hedged
+  - id: ML-DSA-87
+    nistSecurityCategory: 5
+    lengths:
+      publicKeyLength:
+        sourceValue: 2592
+        sourceUnit: bytes
+        normalizedValue: 20736
+        normalizedUnit: bits
+      privateKeyLength:
+        sourceValue: 4896
+        sourceUnit: bytes
+        normalizedValue: 39168
+        normalizedUnit: bits
+      signatureLength:
+        sourceValue: 4627
+        sourceUnit: bytes
+        normalizedValue: 37016
+        normalizedUnit: bits
+    signingMode:
+      - deterministic
+      - hedged
+validation:
+  relationshipPreserved: true
+  implementationValidated: false
+  sideChannelValidated: false
+  interoperabilityValidated: false

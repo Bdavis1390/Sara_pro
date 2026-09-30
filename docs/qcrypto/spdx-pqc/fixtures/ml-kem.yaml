@@ -1,0 +1,84 @@
+# Worldshepherd/QCRYPTO validation fixture.
+# Source of truth: NIST FIPS 203 (final).
+# This is NOT an SPDX production record.
+algorithm: ML-KEM
+standard:
+  authority: NIST
+  id: FIPS-203
+  status: final
+  url: https://csrc.nist.gov/pubs/fips/203/final
+variants:
+  - id: ML-KEM-512
+    nistSecurityCategory: 1
+    lengths:
+      publicKeyLength:
+        sourceValue: 800
+        sourceUnit: bytes
+        normalizedValue: 6400
+        normalizedUnit: bits
+      privateKeyLength:
+        sourceValue: 1632
+        sourceUnit: bytes
+        normalizedValue: 13056
+        normalizedUnit: bits
+      ciphertextLength:
+        sourceValue: 768
+        sourceUnit: bytes
+        normalizedValue: 6144
+        normalizedUnit: bits
+      sharedSecretLength:
+        sourceValue: 32
+        sourceUnit: bytes
+        normalizedValue: 256
+        normalizedUnit: bits
+  - id: ML-KEM-768
+    nistSecurityCategory: 3
+    lengths:
+      publicKeyLength:
+        sourceValue: 1184
+        sourceUnit: bytes
+        normalizedValue: 9472
+        normalizedUnit: bits
+      privateKeyLength:
+        sourceValue: 2400
+        sourceUnit: bytes
+        normalizedValue: 19200
+        normalizedUnit: bits
+      ciphertextLength:
+        sourceValue: 1088
+        sourceUnit: bytes
+        normalizedValue: 8704
+        normalizedUnit: bits
+      sharedSecretLength:
+        sourceValue: 32
+        sourceUnit: bytes
+        normalizedValue: 256
+        normalizedUnit: bits
+  - id: ML-KEM-1024
+    nistSecurityCategory: 5
+    lengths:
+      publicKeyLength:
+        sourceValue: 1568
+        sourceUnit: bytes
+        normalizedValue: 12544
+        normalizedUnit: bits
+      privateKeyLength:
+        sourceValue: 3168
+        sourceUnit: bytes
+        normalizedValue: 25344
+        normalizedUnit: bits
+      ciphertextLength:
+        sourceValue: 1568
+        sourceUnit: bytes
+        normalizedValue: 12544
+        normalizedUnit: bits
+      sharedSecretLength:
+        sourceValue: 32
+        sourceUnit: bytes
+        normalizedValue: 256
+        normalizedUnit: bits
+validation:
+  relationshipPreserved: true
+  implementationValidated: false
+  sideChannelValidated: false
+  interoperabilityValidated: false
