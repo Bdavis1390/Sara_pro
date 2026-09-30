@@ -1,0 +1,10 @@
+{
+  "artifact": "WS-QX",
+  "version": "0.1-rc1",
+  "branch": "ws-qx-evidence-01",
+  "state": "READY_FOR_PR_EXACT_HEAD_CI_REQUIRED",
+  "repository_published_on_main": false,
+  "physical_validation": false,
+  "external_validation": false,
+  "program_qualification": false
+}

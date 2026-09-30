@@ -1,0 +1,13 @@
+{
+  "release": "WS-QX-0.1-rc1",
+  "branch": "ws-qx-evidence-01",
+  "claims_state": "IMPLEMENTED_IN_SOFTWARE_RELEASE_CANDIDATE",
+  "physical_validation": false,
+  "external_validation": false,
+  "program_qualification": false,
+  "standards_conformance": false,
+  "profiles": ["EVIDENCE-01", "WS-SEMCAP-01"],
+  "publication_gate": "EXACT_HEAD_REQUIRED_CI",
+  "historical_g3_pr": 266,
+  "historical_g3_merged": false
+}
