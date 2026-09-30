@@ -1,0 +1,20 @@
+{
+  "schema": "WS-QCRYPTO-TSV-PARENT-BINDING-V3_3",
+  "candidate_version": "v3.3",
+  "qcrypto_parent": {
+    "file": "worldshepherd_qcrypto_bitcoin_hardening_v3_2.zip",
+    "sha256": "e0c7c968f6d8f31278d677c881d3dea4173452ffd4b8ba07850d70970fc654bc",
+    "library_file_id": "file_000000006a2081f9b9fdc2b52d52ea89",
+    "frozen_tests": 132,
+    "frozen_failures": 0
+  },
+  "tsv_parent": {
+    "file": "worldshepherd_tsv_compliance_v0_3.zip",
+    "sha256": "7c1ee785f82c5180a7920d8d34889698b3367680788aa4d80b80ed51a1babefe",
+    "library_file_id": "file_0000000099f481f9bfbd53ce2bfb3ae5",
+    "frozen_tests": 46,
+    "frozen_failures": 0
+  },
+  "external_pq_receipt_sha256": "79a124693b6c959ea9e1cf43d8fcd2e4bdf5309b562a502cec793f286fd090d3",
+  "binding_note": "Exact parent hashes were recomputed before v3.3 integration. Parent artifacts remain immutable historical inputs."
+}

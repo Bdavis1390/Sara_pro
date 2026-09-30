@@ -1,0 +1,13 @@
+{
+  "schema": "WS-QCRYPTO-OUTAGE-SOURCE-PROVENANCE-V7",
+  "candidate_version": "v3.1",
+  "classification": "RECOVERY_SCAFFOLD",
+  "parent_candidate": "worldshepherd_qcrypto_bitcoin_hardening_v3_0.zip",
+  "parent_candidate_sha256": "bff534529ea87b04e48611101752c77b95ddc48aef38da63fc13b60675c4c88c",
+  "root_ancestor_candidate": "worldshepherd_qcrypto_aws_kms_candidate_2026-09-18_v1_1.zip",
+  "root_ancestor_sha256": "4864a996c275c8556c7f8c74330d566d5cab72ff9b70409c7cf3916f751970cf",
+  "pre_suspension_known_head": "791cedf39986deb8c1c9c37fc30bbf4d9be471fe",
+  "github_integration_state": "UNAVAILABLE_DURING_BUILD",
+  "external_execution_project": "Supabase aspmlcdjnbcujsxdhwri / us-east-1",
+  "claim": "v3.1 is an outage-era recovery-scaffold derived from the frozen v3.0 candidate and extended with externally executed PQ/Bitcoin evidence plus an enforceable external dual-parser quorum receipt gate. It is not represented as recovered Git objects, a GitHub merge, Bitcoin Core code, an activated post-quantum Bitcoin consensus implementation, a hardware-backed signer, system-level FIPS validation, live AWS KMS evidence, or independent third-party certification."
+}
