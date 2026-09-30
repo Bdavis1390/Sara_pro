@@ -1,0 +1,135 @@
+{
+  "bundle_sha256": "551ca894c536219189a554517cf9126e8d168ab19cb96fc5320ee03a2bb79c95",
+  "claims_label": "EXTERNAL_SYNTHETIC_ADVERSARIAL_SOFTWARE_EVIDENCE_ONLY_NOT_LIVE_MARKET_DATA_OR_LEGAL_COMPLIANCE",
+  "execution_target": {
+    "deployed_bundle_sha256": "f8b1c8989888f546723b65696cbaba253c8e3c8d2366add9c8b9c8296aa70bc6",
+    "function_id": "2f1af029-403b-4ce9-912f-d262c613873d",
+    "function_slug": "qcrypto-tsv-v3-5-adversarial-reproducer",
+    "function_version": 1,
+    "project_ref": "aspmlcdjnbcujsxdhwri",
+    "provider": "Supabase Edge Functions",
+    "source_index_sha256": "8ea85e7eeeb83b0e1da31a4c5baa2ad7c7293f6d753da250e6a850bdb5200fbb",
+    "verify_jwt": true
+  },
+  "fail_cases": [
+    {
+      "decision": "DENY",
+      "expected_failed_check": "MARKET_FRESHNESS_CLOCK",
+      "http_status": 200,
+      "name": "MARKET_STALE",
+      "receipt_sha256": "6cad7ef1835a426bd6be6a0fc6d139c2ed2ea1bc0ac03d66daa21eb78a5fd1b8",
+      "request_id": 32
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "MARKET_SEQUENCE_GAP",
+      "http_status": 200,
+      "name": "MARKET_SEQUENCE_GAP",
+      "receipt_sha256": "5d07192cd66f27fe2b8d298776a80ef4b9b82651a30f0712cd092f900cbd9934",
+      "request_id": 33
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "MARKET_SEQUENCE_REPLAY_OR_REORDER",
+      "http_status": 200,
+      "name": "MARKET_REPLAY",
+      "receipt_sha256": "a0f28b5df5ea117809c88548e7c8512060867dfe3f1ce4b7a764117df83be080",
+      "request_id": 34
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "MARKET_SEQUENCE_EQUIVOCATION",
+      "http_status": 200,
+      "name": "MARKET_EQUIVOCATION",
+      "receipt_sha256": "8ecafbd73a8732a1d3f82a1157e1f0ac26cf913bfb033f889df9185e1b8f4586",
+      "request_id": 35
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "MARKET_STATUS_CONFLICT",
+      "http_status": 200,
+      "name": "MARKET_CONFLICT",
+      "receipt_sha256": "786ef1c5b56fe63e79978b3b0e93447352bf2b72cc8ab1bcc317f2ff1f2cdbcd",
+      "request_id": 36
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "MARKET_SOURCE_IDENTITY",
+      "http_status": 200,
+      "name": "MARKET_UNREGISTERED_SOURCE",
+      "receipt_sha256": "97036ef1ae3e98bdab816397a576436ff277fe76123e5f684724f3427ced357a",
+      "request_id": 37
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "RESUME_QUORUM",
+      "http_status": 200,
+      "name": "RESUME_QUORUM_INCOMPLETE",
+      "receipt_sha256": "d57494798c97929b31f9e1f2b2fec8137a28451d846e2dbac6a3cb416b198680",
+      "request_id": 38
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "ISSUER_NOTICE_DIGEST",
+      "http_status": 200,
+      "name": "ISSUER_NOTICE_DIGEST_MISMATCH",
+      "receipt_sha256": "40f2442865d4f5a1e7ecdadc89d988e917574104088bffec498bd05a56990a55",
+      "request_id": 39
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "ISSUER_30_DAY_WAIT",
+      "http_status": 200,
+      "name": "ISSUER_WAIT_SHORT",
+      "receipt_sha256": "209e84893abf59683adfb4a73bf1e25c72d7cd158c198337b0b6ab638809ab9d",
+      "request_id": 40
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "ISSUER_OBJECTION_HOLD",
+      "http_status": 200,
+      "name": "ISSUER_OBJECTION",
+      "receipt_sha256": "7807b0cd17d617ca36e3459b7a468a4a463c319d98e3e1eda7368ac2688c2c58",
+      "request_id": 41
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "PARENT_V34_BINDING",
+      "http_status": 200,
+      "name": "WRONG_PARENT",
+      "receipt_sha256": "e18359be8c186ee4b5a942d67df36ab428f13e7e80a8b3e7c25ee4cb0ce97aff",
+      "request_id": 42
+    }
+  ],
+  "negative_claims": {
+    "digital_signature_or_trusted_timestamp": false,
+    "independent_third_party_certification": false,
+    "legal_compliance_established": false,
+    "licensed_sip_feed_used": false,
+    "live_luld_feed_used": false,
+    "live_primary_exchange_feed_used": false,
+    "live_tsv_deployment": false,
+    "qualified_delivery_provider_attestation": false,
+    "real_value_moved": false,
+    "sec_approval_established": false
+  },
+  "parent_binding": {
+    "v3_4_release_sha256": "806db617532dc8840dca3f39504efa4cd78f5b4312005d730e5a73e4b54fffd8",
+    "v3_5_control_core_sha256": "4b4e1c85b80b8ad5b9326cbacec0a8754dcc80ec98cf2b2e7bc917cd921d8341"
+  },
+  "pass_case": {
+    "decision": "ALLOW",
+    "http_status": 200,
+    "passed_checks": [
+      "PARENT_V34_BINDING",
+      "CONTROL_CORE_BINDING",
+      "MARKET_STREAM_PRESENT",
+      "MARKET_STREAM_SEQUENCE_AND_FRESHNESS",
+      "MARKET_STATUS_CLEAR",
+      "ISSUER_DELIVERY_AND_WAIT"
+    ],
+    "receipt_sha256": "0bd3861bd5090fabd2073de65504db113a1bbd71ad4bbbfa795f959a36976a8d",
+    "request_id": 31
+  },
+  "schema": "WS-QCRYPTO-TSV-V3_5-EXTERNAL-ADVERSARIAL-BUNDLE-V1"
+}

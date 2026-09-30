@@ -1,0 +1,15 @@
+{
+  "schema": "WS-QCRYPTO-TSV-V3_6-SUPABASE-DEPLOYMENT-METADATA-V1",
+  "project_ref": "aspmlcdjnbcujsxdhwri",
+  "function_slug": "qcrypto-tsv-v3-6-resilience-reproducer",
+  "function_id": "bae89a73-ce6a-4215-ba54-7b37fdd99f7e",
+  "function_version": 1,
+  "verify_jwt": true,
+  "deployed_bundle_sha256": "01f577e4f008c40aefbc13e7acfe8bc29d1d8844d988f07d69475f024866c516",
+  "migrations": [
+    {"version": "20260919022624", "name": "qcrypto_tsv_v36_durable_cursor"},
+    {"version": "20260919022643", "name": "qcrypto_tsv_v36_cursor_test_namespace"}
+  ],
+  "test_namespace": "v36-test-20260919-a",
+  "claims_label": "SYNTHETIC_EXTERNAL_RESILIENCE_EXECUTION_ONLY"
+}

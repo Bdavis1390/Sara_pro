@@ -1,0 +1,100 @@
+{
+  "bundle_sha256": "b3773256881b1690587378d651d4d637bdc3c9d581ba204905e4675852d16625",
+  "calendar_mode": "WEEKENDS_ONLY_EXTERNAL_REPRODUCER_NOT_AUTHORITATIVE_HOLIDAY_CALENDAR",
+  "claims_label": "EXTERNAL_SOFTWARE_EXECUTION_EVIDENCE_ONLY_NOT_SEC_OR_LEGAL_COMPLIANCE_DETERMINATION",
+  "execution_target": {
+    "deployed_bundle_sha256": "a20ef60d231e2cd1afe7cc471bc40d033344684a7b428f2a054d7197f2e9e425",
+    "function_id": "8ce128d5-cf6b-4ec2-ad83-0c6393443ef7",
+    "function_slug": "qcrypto-tsv-v3-3-external-reproducer",
+    "function_version": 1,
+    "project_ref": "aspmlcdjnbcujsxdhwri",
+    "provider": "Supabase Edge Functions",
+    "verify_jwt": true
+  },
+  "fail_cases": [
+    {
+      "decision": "DENY",
+      "expected_failed_check": "EXEMPTION_WINDOW",
+      "http_status": 200,
+      "name": "EXEMPTION_EXPIRED",
+      "receipt_sha256": "e8025e8d1cbddbc52adf878f0c59a74ca0f0b5cc5db600ad0a6f1d0c9ec0f881",
+      "request_id": 19
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "INITIAL_PUBLIC_NOTICE_30_CALENDAR_DAYS",
+      "http_status": 200,
+      "name": "LATE_INITIAL_NOTICE",
+      "receipt_sha256": "e28a5c2b532ad934d630be3c880961c259780cfd199954ed14e49b0943bfe0bf",
+      "request_id": 20
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "SIGNIFICANT_OPERATIONAL_EVENT_EVIDENCE",
+      "http_status": 200,
+      "name": "OP_EVENT_SEC_NOTICE_MISSING",
+      "receipt_sha256": "4c5f14546120569b06b5edb00339a88f3df2c73719e519f9b645391ace39c629",
+      "request_id": 21
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "TRANSACTION_PUBLICATION_10_MINUTES",
+      "http_status": 200,
+      "name": "TRANSACTION_PUBLICATION_LATE",
+      "receipt_sha256": "4972757f156f2af5271dd1314fc86ae1d30e80feabc44e304d25dcf42b5f021a",
+      "request_id": 22
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "AFFILIATE_VOLUME_THRESHOLD",
+      "http_status": 200,
+      "name": "VOLUME_EXCEEDANCE",
+      "receipt_sha256": "c07b62e6006535cc279fb9190c822789d38a1a75a9881b2c2232dc880479b40b",
+      "request_id": 23
+    },
+    {
+      "decision": "DENY",
+      "expected_failed_check": "RELEASE_BINDING",
+      "http_status": 200,
+      "name": "WRONG_RELEASE_BINDING",
+      "receipt_sha256": "5488d89e260f92ba372cb3eeb1749980093bef69f36712f2627bd3181d31e812",
+      "request_id": 24
+    }
+  ],
+  "generated_from": "Supabase pg_net invocation of JWT-protected Edge Function",
+  "negative_claims": {
+    "independent_third_party_certification": false,
+    "legal_compliance_established": false,
+    "licensed_market_feed_used": false,
+    "live_trading_used": false,
+    "real_value_moved": false,
+    "sec_approval_established": false
+  },
+  "parent_binding": {
+    "v3_3_release_sha256": "fab44ddd5a1d46516f8d2b9fc759f4f23db7d811ab8a7d7a9b79da2d0400a25f",
+    "v3_3_source_manifest_sha256": "36af6e42fb78ab6e97a56678b87afc02ff71d4ea79d3d11a778eb03a31c9becc"
+  },
+  "pass_case": {
+    "aggregate_volume_share": 0.0001,
+    "created_at": "2026-09-18T22:44:49.965724Z",
+    "decision": "ALLOW",
+    "http_status": 200,
+    "passed_checks": [
+      "RELEASE_BINDING",
+      "SOURCE_MANIFEST_BINDING",
+      "EXEMPTION_WINDOW",
+      "INITIAL_PUBLIC_NOTICE_30_CALENDAR_DAYS",
+      "OPERATIONS_START_WINDOW",
+      "SEC_INITIAL_NOTICE_1_BUSINESS_DAY",
+      "ISSUER_WAIT_30_CALENDAR_DAYS",
+      "AFFILIATE_VOLUME_THRESHOLD",
+      "TRANSPARENCY_FEED_POSTURE",
+      "TRANSACTION_REQUIRED_FIELDS",
+      "TRANSACTION_PUBLICATION_10_MINUTES",
+      "SIGNIFICANT_OPERATIONAL_EVENT_EVIDENCE"
+    ],
+    "receipt_sha256": "7ef9a0174fe3f429489d258228dc91ca8475a9db7cb43434469aebdd4ec85137",
+    "request_id": 18
+  },
+  "schema": "WS-QCRYPTO-TSV-EXTERNAL-EXECUTION-BUNDLE-V1"
+}
