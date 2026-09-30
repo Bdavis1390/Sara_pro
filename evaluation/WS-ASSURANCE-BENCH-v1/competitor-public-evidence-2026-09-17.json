@@ -1,0 +1,410 @@
+{
+  "record_date": "2026-09-17",
+  "scope_warning": "This is an expandable current comparison registry for the named agent/governance/control-plane alternatives found in the 2026-09-17 market scan. It is not proof that no other competitor exists. Missing public evidence is not proof of missing capability.",
+  "records": [
+    {
+      "entity": "AWS Bedrock AgentCore",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "sources": ["https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/policy-understanding-cedar.html"],
+          "notes": "Official docs state default deny and forbid-overrides-permit policy evaluation."
+        },
+        "A02": {
+          "level": "vendor_product_documented",
+          "sources": ["https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/policy-temporal.html"],
+          "notes": "Temporal policies can require a prior approval event before a later action."
+        },
+        "A05": {
+          "level": "vendor_product_documented",
+          "coverage": 0.75,
+          "sources": ["https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/policy-temporal.html"],
+          "notes": "Session-history policies can limit repeated actions and correlate prior events; this is partial evidence for replay/duplicate control, not a universal side-effect idempotency claim."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-security-best-practices.html"],
+          "notes": "Official security guidance defines least-privilege, explicit-deny, and deployment-boundary controls; this does not by itself supply the full maturity-label scheme used by this benchmark."
+        }
+      }
+    },
+    {
+      "entity": "Microsoft Foundry Agent Service / Agent Framework",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "coverage": 0.6,
+          "sources": ["https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview"],
+          "notes": "Foundry documents enterprise identity/access and integrated safety controls; the benchmark gives partial credit rather than inferring a universal default-deny tool policy."
+        },
+        "A02": {
+          "level": "vendor_product_documented",
+          "sources": ["https://learn.microsoft.com/en-us/agent-framework/agents/tools/tool-approval"],
+          "notes": "Tool calls can be explicitly wrapped to require human approval before execution."
+        },
+        "A05": {
+          "level": "vendor_product_documented",
+          "coverage": 0.8,
+          "sources": [
+            "https://learn.microsoft.com/en-us/azure/durable-task/sdks/durable-agents-microsoft-agent-framework",
+            "https://learn.microsoft.com/en-us/agent-framework/concepts/workflows/functional"
+          ],
+          "notes": "Durable orchestration checkpoints completed agent calls/steps so recovery does not re-execute completed work; docs also describe replay/cached-step behavior."
+        },
+        "A06": {
+          "level": "vendor_product_documented",
+          "sources": [
+            "https://learn.microsoft.com/en-us/agent-framework/workflows/checkpoints",
+            "https://learn.microsoft.com/en-us/azure/durable-task/sdks/durable-agents-microsoft-agent-framework"
+          ],
+          "notes": "Checkpoints, resuming, rehydration, and durable failure recovery are documented product capabilities."
+        },
+        "A07": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview"],
+          "notes": "Agent versions are snapshotted and rollback/comparison is supported; no credit is inferred for a Worldshepherd-style evaluator dependency/evidence manifest."
+        },
+        "A08": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://learn.microsoft.com/en-us/agent-framework/"],
+          "notes": "Agent Framework documents self-hosting options; this is partial portability evidence, not independent clean-room reproduction."
+        },
+        "A10": {
+          "level": "vendor_product_documented",
+          "coverage": 0.8,
+          "sources": [
+            "https://learn.microsoft.com/en-us/agent-framework/workflows/",
+            "https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview"
+          ],
+          "notes": "Workflow observability and several open/integration protocols are documented."
+        }
+      }
+    },
+    {
+      "entity": "LangSmith",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A02": {
+          "level": "vendor_product_documented",
+          "coverage": 0.8,
+          "sources": ["https://www.langchain.com/langsmith/deployment"],
+          "notes": "Deployment advertises human-in-the-loop review/edit/approve actions."
+        },
+        "A05": {
+          "level": "vendor_product_documented",
+          "coverage": 0.5,
+          "sources": ["https://www.langchain.com/langsmith/deployment"],
+          "notes": "Durability, task queues, and double-texting control are documented; full replay/idempotency semantics are not inferred."
+        },
+        "A06": {
+          "level": "vendor_product_documented",
+          "sources": ["https://www.langchain.com/langsmith/deployment"],
+          "notes": "Durable execution and fault tolerance are documented."
+        },
+        "A07": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://www.langchain.com/langsmith/deployment"],
+          "notes": "Central agent registry with versioning and rollback is documented; no full evaluator manifest is inferred."
+        },
+        "A08": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://enterprise-hub.langchain.com/onboarding/self-hosted-overview"],
+          "notes": "Enterprise self-hosted deployment can run inside customer infrastructure."
+        },
+        "A09": {
+          "level": "documented_design",
+          "coverage": 0.5,
+          "sources": ["https://www.langchain.com/langsmith/evaluation"],
+          "notes": "Custom datasets/evaluators and human review are supported; outside evaluator challenge custody and mandatory negative-evidence retention are not established by this source."
+        },
+        "A10": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://www.langchain.com/langsmith/deployment"],
+          "notes": "A2A, MCP, and Agent Protocol support is documented."
+        }
+      }
+    },
+    {
+      "entity": "Fiddler AI Control Plane",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "sources": ["https://www.fiddler.ai/guardrails"],
+          "notes": "Runtime guardrails enforce defined allow/block policies before/after agent interactions."
+        },
+        "A04": {
+          "level": "vendor_product_documented",
+          "coverage": 0.6,
+          "sources": ["https://www.fiddler.ai/"],
+          "notes": "Fiddler documents auditable governance recording enforcement decisions; no broader file/state tamper semantics are inferred."
+        },
+        "A08": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://www.fiddler.ai/guardrails"],
+          "notes": "Guardrail evaluation is documented as running within the customer's secure environment."
+        },
+        "A10": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://www.fiddler.ai/resources/control-plane-for-ai-agents"],
+          "notes": "Standardized telemetry is listed as a core control-plane capability."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "coverage": 0.8,
+          "sources": ["https://www.fiddler.ai/control-plane"],
+          "notes": "Auditable governance and compliance-oriented traceability are documented; benchmark-specific evidence maturity labels are not inferred."
+        }
+      }
+    },
+    {
+      "entity": "Credo AI Agent Governor",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "sources": ["https://www.credo.ai/agent-governor"],
+          "notes": "Credo documents deterministic runtime enforcement inside the agent harness."
+        },
+        "A10": {
+          "level": "vendor_product_documented",
+          "coverage": 0.5,
+          "sources": ["https://www.credo.ai/agent-governor"],
+          "notes": "Cross-framework governance/telemetry is documented, but no specific public evidence schema is inferred."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "sources": ["https://www.credo.ai/agent-governor"],
+          "notes": "Governance-as-code is explicitly linked to regulatory/risk intelligence and runtime evidence."
+        }
+      }
+    },
+    {
+      "entity": "Arize Phoenix",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A08": {
+          "level": "public_testable_implementation",
+          "sources": ["https://arize.com/phoenix/"],
+          "notes": "Phoenix is open source and advertises local/self-host execution."
+        },
+        "A09": {
+          "level": "documented_design",
+          "coverage": 0.5,
+          "sources": ["https://arize.com/phoenix/"],
+          "notes": "Datasets, experiments, annotations and evals support controlled evaluation, but outside evaluator custody/negative-evidence rules are not established."
+        },
+        "A10": {
+          "level": "public_testable_implementation",
+          "coverage": 0.7,
+          "sources": ["https://arize.com/phoenix/"],
+          "notes": "Open-source tracing/evaluation platform supplies portable observability/evaluation surfaces; criterion receives partial rather than full standards-specific credit."
+        }
+      }
+    },
+    {
+      "entity": "IBM watsonx.governance / Agentic Control Plane",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "coverage": 0.5,
+          "sources": ["https://www.ibm.com/new/announcements/introducing-the-agentic-control-plane"],
+          "notes": "IBM documents centralized controls for agent behavior; no universal pre-action default-deny semantics are inferred."
+        },
+        "A08": {
+          "level": "vendor_product_documented",
+          "coverage": 0.6,
+          "sources": ["https://www.ibm.com/products/watsonx-governance/model-governance"],
+          "notes": "Cloud and on-premises deployment choice is documented for governance tooling."
+        },
+        "A10": {
+          "level": "vendor_product_documented",
+          "coverage": 0.5,
+          "sources": ["https://www.ibm.com/products/watsonx-governance"],
+          "notes": "Cross-platform governance of models/apps/agents is documented; no specific open evidence schema is inferred."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "sources": ["https://www.ibm.com/products/watsonx-governance"],
+          "notes": "Lifecycle governance, risk, GRC and continuous accountability are core documented capabilities."
+        }
+      }
+    },
+    {
+      "entity": "Google Gemini Enterprise Agent Platform / Vertex AI Agent Evaluation",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A06": {
+          "level": "vendor_product_documented",
+          "coverage": 0.5,
+          "sources": ["https://docs.cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/images/trace-example.png"],
+          "notes": "Managed runtime reliability and observability are documented; no benchmark-specific rollback/discrepancy custody is inferred."
+        },
+        "A09": {
+          "level": "vendor_product_documented",
+          "coverage": 0.4,
+          "sources": ["https://docs.cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/evaluate"],
+          "notes": "Agent evaluation datasets and trajectory/final-response metrics are documented; external evaluator custody and hidden challenge control are not established."
+        },
+        "A10": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://docs.cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/develop/custom"],
+          "notes": "OpenTelemetry-compatible instrumentation to Cloud Trace is documented."
+        }
+      }
+    },
+    {
+      "entity": "NVIDIA NeMo Guardrails / NeMo Platform",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "public_testable_implementation",
+          "sources": [
+            "https://docs.nvidia.com/nemo/guardrails/about-nemo-guardrails-library/rail-types",
+            "https://docs.nvidia.com/nemo-guardrails/index.html"
+          ],
+          "notes": "Open-source execution rails can control and validate tool/function calls before/after execution."
+        },
+        "A03": {
+          "level": "public_testable_implementation",
+          "coverage": 0.5,
+          "sources": ["https://docs.nvidia.com/nemo/guardrails/about-nemo-guardrails-library/rail-types"],
+          "notes": "Input/action validation is implemented; protected-state non-mutation semantics are not established and only partial credit is given."
+        },
+        "A08": {
+          "level": "public_testable_implementation",
+          "sources": ["https://docs.nvidia.com/nemo-guardrails/index.html"],
+          "notes": "NeMo Guardrails is an open-source toolkit runnable outside a managed-only environment."
+        },
+        "A09": {
+          "level": "documented_design",
+          "coverage": 0.5,
+          "sources": ["https://docs.nvidia.com/nemo/guardrails/evaluation/evaluation-methodology"],
+          "notes": "Policy-based evaluation with interaction datasets is documented; outside evaluator custody/negative-evidence retention is not established."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "coverage": 0.5,
+          "sources": ["https://docs.nvidia.com/nemo/guardrails/evaluation/evaluation-methodology"],
+          "notes": "Policy/evaluation boundaries are explicit, but benchmark-specific maturity and certification claim states are not inferred."
+        }
+      }
+    },
+    {
+      "entity": "Salesforce Agentforce",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "coverage": 0.6,
+          "sources": ["https://help.salesforce.com/s/articleView?id=005315874&language=en_US&type=1"],
+          "notes": "Agentforce documents identity, permissions and agent-specific guardrails under a shared-responsibility security model."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "coverage": 0.6,
+          "sources": ["https://help.salesforce.com/s/articleView?id=005315874&language=en_US&type=1"],
+          "notes": "The security boundary and administrator responsibilities are documented; the benchmark does not infer a full evidence-maturity taxonomy."
+        }
+      }
+    },
+    {
+      "entity": "WhyLabs AI Control Center / Secure",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "coverage": 0.8,
+          "sources": ["https://docs.whylabs.ai/docs/secure/whylabs-policy/"],
+          "notes": "Versioned policy documents drive guardrail rules/actions and enforcement."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "coverage": 0.6,
+          "sources": ["https://docs.whylabs.ai/docs/secure/intro/"],
+          "notes": "Secure separates monitoring/observability from additional guardrail/policy capabilities; no full benchmark maturity taxonomy is inferred."
+        }
+      }
+    },
+    {
+      "entity": "Galileo",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "vendor_product_documented",
+          "sources": ["https://galileo.ai/"],
+          "notes": "Galileo documents production guardrails where eval scores control agent actions and tool access."
+        },
+        "A02": {
+          "level": "vendor_product_documented",
+          "coverage": 0.5,
+          "sources": ["https://galileo.ai/"],
+          "notes": "Documented guardrail policies include escalation paths; this receives partial credit rather than inferring a universal human-approval gate."
+        },
+        "A08": {
+          "level": "public_testable_implementation",
+          "coverage": 0.5,
+          "sources": ["https://galileo.ai/blog/ai-governance-tools"],
+          "notes": "Galileo documents an Apache-2.0 open-source control-plane policy layer; full platform self-host portability is not inferred."
+        },
+        "A09": {
+          "level": "vendor_product_documented",
+          "coverage": 0.4,
+          "sources": ["https://galileo.ai/"],
+          "notes": "Ground-truth datasets, SME annotations, and evaluation are documented; outside evaluator custody and discrepancy-retention rules are not established."
+        },
+        "A11": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://galileo.ai/blog/ai-operational-governance-model"],
+          "notes": "Operational governance from central policy to runtime enforcement is documented."
+        }
+      }
+    },
+    {
+      "entity": "OpenAI Agents SDK / Agents API",
+      "record_date": "2026-09-17",
+      "criteria": {
+        "A01": {
+          "level": "public_testable_implementation",
+          "coverage": 0.6,
+          "sources": [
+            "https://openai.com/index/new-tools-for-building-agents/",
+            "https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/"
+          ],
+          "notes": "Open-source Agents SDK provides configurable guardrail tripwires, but official guidance notes optimistic execution by default; only partial pre-action/fail-closed credit is given."
+        },
+        "A02": {
+          "level": "vendor_product_documented",
+          "coverage": 0.7,
+          "sources": ["https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/"],
+          "notes": "Official guidance calls for human intervention on high-risk actions and failure thresholds."
+        },
+        "A08": {
+          "level": "public_testable_implementation",
+          "coverage": 0.5,
+          "sources": ["https://openai.com/index/the-next-evolution-of-the-agents-sdk/"],
+          "notes": "Open-source SDK plus controlled sandbox execution support local/custom harness integration; no independent clean-room verifier protocol is inferred."
+        },
+        "A11": {
+          "level": "documented_design",
+          "coverage": 0.6,
+          "sources": ["https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/"],
+          "notes": "Official guidance emphasizes layered guardrails, auth/access control, and human oversight; benchmark-specific maturity/certification states are not inferred."
+        }
+      }
+    }
+  ]
+}

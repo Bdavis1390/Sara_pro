@@ -1,0 +1,75 @@
+name: Worldshepherd Assurance Selection Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'evaluation/WS-ASSURANCE-BENCH-v1/**'
+      - '.github/workflows/ws-assurance-selection-benchmark.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'evaluation/WS-ASSURANCE-BENCH-v1/**'
+      - '.github/workflows/ws-assurance-selection-benchmark.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate JSON inputs
+        run: |
+          python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/benchmark.json >/dev/null
+          python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/worldshepherd-v1.1.json >/dev/null
+          python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/competitor-public-evidence-2026-09-17.json >/dev/null
+          python -m json.tool evaluation/WS-ASSURANCE-BENCH-v1/METHODOLOGY_REVIEW.json >/dev/null
+
+      - name: Score benchmark
+        run: |
+          mkdir -p build
+          python evaluation/WS-ASSURANCE-BENCH-v1/score.py \
+            --benchmark evaluation/WS-ASSURANCE-BENCH-v1/benchmark.json \
+            --records \
+              evaluation/WS-ASSURANCE-BENCH-v1/worldshepherd-v1.1.json \
+              evaluation/WS-ASSURANCE-BENCH-v1/competitor-public-evidence-2026-09-17.json \
+            --methodology-review evaluation/WS-ASSURANCE-BENCH-v1/METHODOLOGY_REVIEW.json \
+            --focal-entity 'Worldshepherd WS-SARA-EVAL-v1.1' \
+            --output build/ws-assurance-benchmark-v1.json
+
+      - name: Validate bounded public-claim gate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('build/ws-assurance-benchmark-v1.json').read_text())
+          assert result['benchmark_schema'] == 'ws-assurance-bench-v1'
+          ranking=result['ranking']
+          assert len(ranking) >= 10
+          assert any(item['entity'] == 'Worldshepherd WS-SARA-EVAL-v1.1' for item in ranking)
+          leadership=result['leadership']
+          if leadership['internal_profile_score_gate_passed']:
+              assert leadership['margin_points'] >= leadership['minimum_margin_points']
+          if leadership['public_claim_ready']:
+              assert leadership['external_methodology_reviewed'] is True
+              assert leadership['allowed_public_wording'] == 'Leads this benchmark profile under the recorded public evidence set as of the stated date.'
+          else:
+              assert leadership['allowed_public_wording'] is None
+          PY
+
+      - name: Upload benchmark result
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-assurance-benchmark-v1-${{ github.run_id }}
+          path: build/ws-assurance-benchmark-v1.json
+          retention-days: 30
