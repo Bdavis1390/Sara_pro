@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -24,6 +26,19 @@ def echo_checkpoint_key(monkeypatch: pytest.MonkeyPatch, tmp_path_factory):
     monkeypatch.setenv("ECHO_CHECKPOINT_PRIVATE_KEY_FILE", str(path.resolve()))
     monkeypatch.setenv("ECHO_CHECKPOINT_KEY_ID", "ECHO-CHECKPOINT-PYTEST-V1")
     return key, path
+
+
+@pytest.fixture(autouse=True)
+def refresh_sda_transport_identity_test_clock(monkeypatch: pytest.MonkeyPatch, request):
+    """Keep synthetic mTLS fixtures current without weakening TLS validation.
+
+    The transport-identity test module creates short-lived certificates relative
+    to its module-level NOW value. Refresh only that synthetic test clock so the
+    real TLS handshake continues to exercise normal X.509 validity checks as
+    wall-clock time advances.
+    """
+    if request.module.__name__.endswith("test_sda_transport_identity"):
+        monkeypatch.setattr(request.module, "NOW", datetime.now(timezone.utc))
 
 
 @pytest.fixture()
