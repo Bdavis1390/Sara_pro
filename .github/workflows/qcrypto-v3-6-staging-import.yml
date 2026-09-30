@@ -1,37 +1,50 @@
 name: QCRYPTO TSV v3.6 One-Shot Recovery Import
 
 on:
-  pull_request:
-    types: [edited]
+  push:
+    branches:
+      - 'recovery/qcrypto-tsv-v3.6-20260930'
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   import:
-    if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'recovery/qcrypto-tsv-v3.6-20260930' &&
-      contains(github.event.pull_request.body, 'RECOVERY_ARTIFACT_URL=') &&
-      contains(github.event.pull_request.body, 'RECOVERY_ARTIFACT_SHA256=b5dd926055960847f4fd6fc1540214ed306bfbd93310825c7117b7355b90bfbc')
+    if: github.ref_name == 'recovery/qcrypto-tsv-v3.6-20260930'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Read ephemeral artifact locator
+      - name: Read ephemeral artifact locator from open recovery PR
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          BODY_FILE="$GITHUB_EVENT_PATH"
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          curl --fail --silent --show-error --get \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            --data-urlencode "head=${OWNER}:${GITHUB_REF_NAME}" \
+            --data-urlencode 'state=open' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls" \
+            -o "$RUNNER_TEMP/pr.json"
           python - <<'PY' > "$RUNNER_TEMP/recovery_url"
           import json, os
-          body=json.load(open(os.environ['GITHUB_EVENT_PATH']))['pull_request']['body'] or ''
+          prs=json.load(open(os.path.join(os.environ['RUNNER_TEMP'],'pr.json')))
+          if not prs:
+              raise SystemExit('no open recovery PR found')
+          body=prs[0].get('body') or ''
+          expected='RECOVERY_ARTIFACT_SHA256=b5dd926055960847f4fd6fc1540214ed306bfbd93310825c7117b7355b90bfbc'
+          if expected not in body:
+              raise SystemExit('missing exact recovery hash declaration')
           for line in body.splitlines():
               if line.startswith('RECOVERY_ARTIFACT_URL='):
                   print(line.split('=',1)[1])
@@ -87,7 +100,7 @@ jobs:
         run: |
           python -m pip install -q pytest
           python -m pytest -q
-      - name: Write recovery provenance and permanent CI gate
+      - name: Write provenance and permanent CI gate
         shell: bash
         run: |
           cat > research/qcrypto_tsv/v3_6/RECOVERY_PROVENANCE_2026-09-30.md <<'EOF'
@@ -99,7 +112,7 @@ jobs:
 
           The Git replay retains all non-log source, tests, scripts, documentation, manifests, external fixtures, plus the five evidence fixtures required by the full regression suite. Historical logs and non-required evidence remain in off-host custody rather than being duplicated into Git.
 
-          Fresh pre-import replay: **301 PASS / 0 FAIL**. The GitHub one-shot importer re-runs the same bounded set before committing it.
+          Fresh pre-import replay: **301 PASS / 0 FAIL**. The GitHub one-shot importer re-ran the same bounded set before committing it.
 
           Claims remain bounded to implemented/tested software behavior. This recovery does not establish production deployment, live-value authorization, post-quantum security certification, regulatory compliance, independent validation, or movement of value.
           EOF
@@ -144,4 +157,4 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A research/qcrypto_tsv/v3_6 .github/workflows/qcrypto-tsv-v3-6-recovery.yml .github/workflows/qcrypto-v3-6-staging-import.yml
           git commit -m 'recovery(qcrypto): replay verified QCRYPTO TSV v3.6'
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin HEAD:${GITHUB_REF_NAME}
