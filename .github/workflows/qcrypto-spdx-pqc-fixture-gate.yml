@@ -32,4 +32,4 @@ jobs:
       - name: Validate authoritative proposal fixtures
         run: python scripts/validate_spdx_pqc_fixtures.py
       - name: Run negative-control tests
-        run: python -m unittest -v docs/qcrypto/spdx-pqc/tests/test_validate_fixtures.py
+        run: python docs/qcrypto/spdx-pqc/tests/test_validate_fixtures.py
