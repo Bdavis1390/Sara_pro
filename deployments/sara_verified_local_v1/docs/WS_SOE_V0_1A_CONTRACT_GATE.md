@@ -24,7 +24,7 @@ The reference action is `demo.counter.increment` against `demo.counter`, with th
 - Receipt timestamps must be monotonic; the latest receipt must not predate the supplied observation or postdate the conformance assessment.
 - Evidence-chain corruption or contradictory evidence chronology is a `CONFLICT`, not a match.
 - Missing authorization, observation, required evidence, or an unsupported conformance rule is `UNKNOWN`, not compliant.
-- Old-but-otherwise-valid observations are `STALE`, not a match; staleness never masks a stronger `CONFLICT` or `VIOLATION`.
+- `STALE` is reserved for a trace that would otherwise be `MATCH`; freshness never masks `CONFLICT`, `VIOLATION`, `UNKNOWN`, or `DEVIATION`.
 - Observed execution outside authorization is a `VIOLATION`.
 - An authorized action with a bound but incorrect outcome is a `DEVIATION`.
 - `MATCH`, `DEVIATION`, `VIOLATION`, `UNKNOWN`, `STALE`, and `CONFLICT` are independent enum states. No boolean "compliant" fallback exists.
@@ -36,13 +36,13 @@ For a valid trace, each stage can be recomputed without trusting a downstream su
 - authorization: recompute `sha256(canonical(Intent))`, compare with `Decision.intent_hash`, and verify that the decision existed before the observation;
 - execution observation: recompute the intent hash and compare with `Observation.intent_hash` plus exact action/target;
 - evidence: recompute `sha256(canonical(Observation))`, verify `EvidenceReceipt.observation_hash`, verify predecessor linkage, and verify receipt chronology;
-- conformance: recompute the supplied contract hashes and derive the state from the explicit rule set.
+- conformance: recompute the supplied contract hashes and derive the state from the explicit rule set, evaluating stronger semantic states before freshness.
 
 `ConformanceAssessment` records the independent decision, observation, and evidence digests used for that assessment.
 
 ## Adversarial acceptance tests
 
-The v0.1A tests include exact-intent mutation, replay, target substitution, expiry-boundary execution, stale observation, evidence-chain corruption, an explicit `UNKNOWN != MATCH` guard, and positive `41 → 42` conformance. They also exercise distinct `DEVIATION` and `VIOLATION` outcomes, retroactive-authorization rejection, stale-conflict and stale-violation precedence, non-monotonic evidence time, and assert that all six states remain present.
+The v0.1A tests include exact-intent mutation, replay, target substitution, expiry-boundary execution, stale observation, evidence-chain corruption, an explicit `UNKNOWN != MATCH` guard, and positive `41 → 42` conformance. They also exercise distinct `DEVIATION` and `VIOLATION` outcomes, retroactive-authorization rejection, stale-conflict and stale-violation precedence, non-monotonic evidence time, stale-unknown precedence, stale-deviation precedence, and assert that all six states remain present.
 
 ## Claims boundary
 
