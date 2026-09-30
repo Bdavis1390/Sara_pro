@@ -203,48 +203,108 @@ class TimeAuthority:
         local_wall_time: float,
         local_monotonic: float,
     ) -> CalibrationAnchorResult:
-        if decision.state != "CONSISTENT" or decision.offset\È\È›Û™HÜˆXÚ\Ú[Û‹[˜Ù\Z[WÜÈ\È›Û™N‚ˆ™]\›ˆØ[Xœ˜][Û[˜ÚÜ”™\Ý[
-ˆ˜[ÙK›Û™K›Û™K
-‘VT“SÐÐSP”USÓ—Ó“ÕÐÓÓ”ÒTÕS•‹
-Bˆ
-BˆYˆXÚ\Ú[Û‹[˜Ù\Z[WÜÈˆÙ[‹™^\›˜[ÛX^Ý[˜Ù\Z[WÜÎ‚ˆ™]\›ˆØ[Xœ˜][Û[˜ÚÜ”™\Ý[
-ˆ˜[ÙK›Û™K›Û™K
-‘VT“SÐÐSP”USÓ—ÕSÑT•RS•WÕÓ×ÕÒQH‹
-Bˆ
-B‚ˆXœÛÛ]WÝ[YHHØØ[ÝØ[Ý[YH
-ÈXÚ\Ú[Û‹›Ù™œÙ]ÜÂˆÙ[‹—Ø[˜ÚÜ—ÛÙ™œÙ]HXœÛÛ]WÝ[YHHØØ[Û[Û›ÝÛšXÂˆÙ[‹—Ø[˜ÚÜ—Û[Û›ÈHØØ[Û[Û›ÝÛšXÂˆÙ[‹—Ø[˜ÚÜ—Ý[˜Ù\Z[WÜÈHX^
-ˆÙ[‹šÛÝ™\—Ø˜\ÙWÝ[˜Ù\Z[WÜËXÚ\Ú[Û‹[˜Ù\Z[WÜÂˆ
-BˆÙ[‹—Ø[˜ÚÜ—ÜÛÝ\˜ÙHH‘VT“SÒS•T•SÐÐSP”USÓˆ‚ˆÙ[‹—ØÛX[ˆHˆ™]\›ˆØ[Xœ˜][Û[˜ÚÜ”™\Ý[
-ˆYKXœÛÛ]WÝ[YKÙ[‹—Ø[˜ÚÜ—Ý[˜Ù\Z[WÜË\J
-Bˆ
-B‚ˆYˆ]˜[X]JÙ[‹Ø[\\Îˆ]\˜X›VÐÛØÚÔØ[\WKØØ[Û[Û›ÝÛšXÎˆ›Ø]
-HOˆ[YQXÚ\Ú[ÛŽ‚ˆ™X\ÛÛœÎˆ\ÝÜÝ—HH×Bˆ\ØX›Nˆ\ÝÐÛØÚÔØ[\WHH×B‚ˆ›ÜˆÈ[ˆØ[\\Î‚ˆYˆ›ÝËœ›Ý™[˜[˜ÙWÛÚÎ‚ˆ™X\ÛÛœË˜\[™
-ˆ”“Õ‘SSÑWÔ‘R‘PÕžÜËœÛÝ\˜ÙWÚYHŠBˆÛÛ[YBˆ™]ˆHÙ[‹—Û\ÝÜÙ\K™Ù]
-ËœÛÝ\˜ÙWÚY
-BˆYˆ™]ˆ\È›Ý›Û™H[™ËœÙ\]Y[˜ÙHH™]Ž‚ˆ™X\ÛÛœË˜\[™
-ˆ”‘TVWÔ‘R‘PÕžÜËœÛÝ\˜ÙWÚYHŠBˆÛÛ[YBˆ\ØX›K˜\[™
-ÊB‚ˆ›ÜˆÈ[ˆ\ØX›N‚ˆÙ[‹—Û\ÝÜÙ\VÜËœÛÝ\˜ÙWÚYHHËœÙ\]Y[˜ÙB‚ˆYˆ[Š\ØX›JHÙ[‹›Z[—ÜÛÝ\˜Ù\Î‚ˆÙ[‹—ØÛX[ˆHˆ™]\›ˆ[YQXÚ\Ú[ÛŠˆ•SURSP“H‹›Û™K[Š\ØX›JK\J
-K›Û™K›Û™K›Û™Kˆ\J™X\ÛÛœÈ
-ÈÈ’S”ÕQ‘’PÒQS•ÔÓÕTÑTÈ—JKˆÙ[‹—Ø[˜ÚÜ—ÜÛÝ\˜ÙKÙ[‹—Ø[˜ÚÜ—Ý[˜Ù\Z[WÜËˆ
-B‚ˆÛ\Ý\ˆHÙ[‹—Û\™Ù\ÝØÛÛœÚ\Ý[ØÛ\Ý\Š\ØX›JBˆYˆ[ŠÛ\Ý\ŠHÙ[‹›Z[—ÜÛÝ\˜Ù\Î‚ˆÙ[‹—ØÛX[ˆHˆ˜[ÈHÜËœÛÝ\˜ÙWÝ[YH›ÜˆÈ[ˆ\ØX›WBˆ\ÜHX^
-˜[ÊHHZ[Š˜[ÊHYˆ[Š˜[ÊHˆH[ÙH›Û™Bˆ™]\›ˆ[YQXÚ\Ú[ÛŠˆ‘QÔQQ‹›Û™K[Š\ØX›JK\J
-K\Ü›Û™K›Û™Kˆ\J™X\ÛÛœÈ
-ÈÈ““×ÔÓÕTÑWÐÓÓ”ÑS”ÕTÈ—JKˆÙ[‹—Ø[˜ÚÜ—ÜÛÝ\˜ÙKÙ[‹—Ø[˜ÚÜ—Ý[˜Ù\Z[WÜËˆ
-B‚ˆ[Y\ÈHÜËœÛÝ\˜ÙWÝ[YH›ÜˆÈ[ˆÛ\Ý\—BˆÛÛœÙ[œÝ\ÈHÝ]\ÝXÜË›YYX[Š[Y\ÊBˆ\Ü\œÚ[ÛˆHX^
-[Y\ÊHHZ[Š[Y\ÊHYˆ[Š[Y\ÊHˆH[ÙHŒˆYÜ™YHH\JÛÜY
-ËœÛÝ\˜ÙWÚY›ÜˆÈ[ˆÛ\Ý\ŠJBˆYˆ[ŠÛ\Ý\ŠH[Š\ØX›JN‚ˆ™X\ÛÛœË˜\[™
-”ÓÕTÑWÓÕUQT—ÑVÓQQŠB‚ˆYˆÙ[‹—Ø[˜ÚÜ—ÛÙ™œÙ]\È›Û™N‚ˆYˆÙ[‹œ™\]Z\™WÙ^\›˜[Ø[˜ÚÜŽ‚ˆÙ[‹—ØÛX[ˆHˆ™X\ÛÛœË˜\[™
-‘VT“SÐSÒÔ—Ô‘TURT‘QŠBˆ™]\›ˆ[YQXÚ\Ú[ÛŠˆ‘QÔQQ‹ÛÛœÙ[œÝ\Ë[Š\ØX›JKYÜ™YK\Ü\œÚ[Û‹ˆ›Û™K›Û™K\J™X\ÛÛœÊK›Û™K›Û™Kˆ
-BˆÈ˜XÚÝØ\™XÛÛ\]X›H[\›˜[›ÛÝÝ˜\›Üˆ›Û‹\ÝšXÝ\Þ[Y[Ë‚ˆÙ[‹—Ø[˜ÚÜ—ÛÙ™œÙ]HÛÛœÙ[œÝ\ÈHØØ[Û[Û›ÝÛšXÂˆÙ[‹—Ø[˜ÚÜ—Û[Û›ÈHØØ[Û[Û›ÝÛšXÂˆÙ[‹—Ø[˜ÚÜ—Ý[˜Ù\Z[WÜÈHÙ[‹šÛÝ™\—Ø˜\ÙWÝ[˜Ù\Z[WÜÂˆÙ[‹—Ø[˜ÚÜ—ÜÛÝ\˜ÙHH’S•T“SÔÓÕTÑWÐÓTÕTˆ‚‚ˆ[˜ÚÜ—Û[Û›ÈHÙ[‹—Ø[˜ÚÜ—Û[Û›ÈYˆÙ[‹—Ø[˜ÚÜ—Û[Û›È\È›Ý›Û™H[ÙHØØ[Û[Û›ÝÛšXÂˆ[\ÙYHX^
-ŒØØ[Û[Û›ÝÛšXÈH[˜ÚÜ—Û[Û›ÊBˆ[˜ÚÜ—ÛÙ™œÙ]HÙ[‹—Ø[˜ÚÜ—ÛÙ™œÙ]YˆÙ[‹—Ø[˜ÚÜ—ÛÙ™œÙ]\È›Ý›Û™H[ÙHŒˆ^XÝYHØØ[Û[Û›ÝÛšXÈ
-È[˜ÚÜ—ÛÙ™œÙ]ˆ˜\ÙWÝ[˜Ù\Z[HHX^
-ˆÙ[‹šÛÝ™\—Ø˜\ÙWÝ[˜Ù\Z[WÜËˆÙ[‹—Ø[˜ÚÜ—Ý[˜Ù\Z[WÜÈÜˆŒˆ
-Bˆ›Ý[™H˜\ÙWÝ[˜Ù\Z[H
-È[\ÙY
-ˆÙ[‹šÛÝ™\—ÙšYÜH
-ˆYKM‚ˆ\œˆHXœÊÛÛœÙ[œÝ\ÈH^XÝY
-BˆXœ×ÛÚÈH\œˆH›Ý[™ˆYˆ›ÝXœ×ÛÚÎ‚ˆ™X\ÛÛœË˜\[™
-’ÓÕ‘T—ÔUTÒP’SUWÑRSŠB‚ˆÛÛœÙ[œÝ\×ÛÚÈH\Ü\œÚ[ÛˆHÙ[‹˜ÛÛœÙ[œÝ\×Ù\Ü\œÚ[Û—ÜÂˆYˆÛÛœÙ[œÝ\×ÛÚÈ[™Xœ×ÛÚÎ‚ˆÙ[‹—ØÛX[ˆ
-ÏHBˆ[ÙN‚ˆÙ[‹—ØÛX[ˆHˆÝ]HH••TÕQˆYˆÙ[‹—ØÛX[ˆHÙ[‹˜ÛX[—Ü™\]Z\™Y[ÙH‘QÔQQ‚ˆYˆÝ]HOH‘QÔQQˆ[™Ù[‹—ØÛX[ˆˆ‚ˆ™X\ÛÛœË˜\[™
-”‘PÓÕ‘T–WÒTÕT‘TÒTÈŠB‚ˆ™]\›ˆ[YQXÚ\Ú[ÛŠˆÝ]KÛÛœÙ[œÝ\Ë[Š\ØX›JKYÜ™YK\Ü\œÚ[Û‹\œ‹›Ý[™ˆ\J™X\ÛÛœÊKÙ[‹—Ø[˜ÚÜ—ÜÛÝ\˜ÙKÙ[‹—Ø[˜ÚÜ—Ý[˜Ù\Z[WÜËˆ
-B
+        if decision.state != "CONSISTENT" or decision.offset_s is None or decision.uncertainty_s is None:
+            return CalibrationAnchorResult(
+                False, None, None, ("EXTERNAL_CALIBRATION_NOT_CONSISTENT",)
+            )
+        if decision.uncertainty_s > self.external_max_uncertainty_s:
+            return CalibrationAnchorResult(
+                False, None, None, ("EXTERNAL_CALIBRATION_UNCERTAINTY_TOO_WIDE",)
+            )
+
+        absolute_time = local_wall_time + decision.offset_s
+        self._anchor_offset = absolute_time - local_monotonic
+        self._anchor_mono = local_monotonic
+        self._anchor_uncertainty_s = max(
+            self.holdover_base_uncertainty_s, decision.uncertainty_s
+        )
+        self._anchor_source = "EXTERNAL_INTERVAL_CALIBRATION"
+        self._clean = 0
+        return CalibrationAnchorResult(
+            True, absolute_time, self._anchor_uncertainty_s, tuple()
+        )
+
+    def evaluate(self, samples: Iterable[ClockSample], local_monotonic: float) -> TimeDecision:
+        reasons: List[str] = []
+        usable: List[ClockSample] = []
+
+        for s in samples:
+            if not s.provenance_ok:
+                reasons.append(f"PROVENANCE_REJECT:{s.source_id}")
+                continue
+            prev = self._last_seq.get(s.source_id)
+            if prev is not None and s.sequence <= prev:
+                reasons.append(f"REPLAY_REJECT:{s.source_id}")
+                continue
+            usable.append(s)
+
+        for s in usable:
+            self._last_seq[s.source_id] = s.sequence
+
+        if len(usable) < self.min_sources:
+            self._clean = 0
+            return TimeDecision(
+                "UNAVAILABLE", None, len(usable), tuple(), None, None, None,
+                tuple(reasons + ["INSUFFICIENT_SOURCES"]),
+                self._anchor_source, self._anchor_uncertainty_s,
+            )
+
+        cluster = self._largest_consistent_cluster(usable)
+        if len(cluster) < self.min_sources:
+            self._clean = 0
+            vals = [s.source_time for s in usable]
+            disp = max(vals) - min(vals) if len(vals) > 1 else None
+            return TimeDecision(
+                "DEGRADED", None, len(usable), tuple(), disp, None, None,
+                tuple(reasons + ["NO_SOURCE_CONSENSUS"]),
+                self._anchor_source, self._anchor_uncertainty_s,
+            )
+
+        times = [s.source_time for s in cluster]
+        consensus = statistics.median(times)
+        dispersion = max(times) - min(times) if len(times) > 1 else 0.0
+        agree = tuple(sorted(s.source_id for s in cluster))
+        if len(cluster) < len(usable):
+            reasons.append("SOURCE_OUTLIER_EXCLUDED")
+
+        if self._anchor_offset is None:
+            if self.require_external_anchor:
+                self._clean = 0
+                reasons.append("EXTERNAL_ANCHOR_REQUIRED")
+                return TimeDecision(
+                    "DEGRADED", consensus, len(usable), agree, dispersion,
+                    None, None, tuple(reasons), None, None,
+                )
+            # Backward-compatible internal bootstrap for non-strict deployments.
+            self._anchor_offset = consensus - local_monotonic
+            self._anchor_mono = local_monotonic
+            self._anchor_uncertainty_s = self.holdover_base_uncertainty_s
+            self._anchor_source = "INTERNAL_SOURCE_CLUSTER"
+
+        anchor_mono = self._anchor_mono if self._anchor_mono is not None else local_monotonic
+        elapsed = max(0.0, local_monotonic - anchor_mono)
+        anchor_offset = self._anchor_offset if self._anchor_offset is not None else 0.0
+        expected = local_monotonic + anchor_offset
+        base_uncertainty = max(
+            self.holdover_base_uncertainty_s,
+            self._anchor_uncertainty_s or 0.0,
+        )
+        bound = base_uncertainty + elapsed * self.holdover_drift_ppm * 1e-6
+        herr = abs(consensus - expected)
+        abs_ok = herr <= bound
+        if not abs_ok:
+            reasons.append("HOLDOVER_PLAUSIBILITY_FAIL")
+
+        consensus_ok = dispersion <= self.consensus_dispersion_s
+        if consensus_ok and abs_ok:
+            self._clean += 1
+        else:
+            self._clean = 0
+        state = "TRUSTED" if self._clean >= self.clean_required else "DEGRADED"
+        if state == "DEGRADED" and self._clean > 0:
+            reasons.append("RECOVERY_HYSTERESIS")
+
+        return TimeDecision(
+            state, consensus, len(usable), agree, dispersion, herr, bound,
+            tuple(reasons), self._anchor_source, self._anchor_uncertainty_s,
+        )
