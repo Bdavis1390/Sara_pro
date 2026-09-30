@@ -1,0 +1,224 @@
+{
+  "schema": "WS-COLLAB-CANDIDATE-SEED-V1",
+  "generated_at": "2026-09-15T21:37:00-04:00",
+  "claims_state": "PUBLIC_EVIDENCE_SEED_NOT_RECRUITMENT_OR_ENDORSEMENT",
+  "source_resolution": {
+    "web3": {
+      "status": "ACTIVE_TECHNICAL_ECOSYSTEM",
+      "note": "Web3 is treated as a broad source lane for blockchain, cryptography, protocol, interoperability, identity, custody, and governance contributors."
+    },
+    "webp3": {
+      "status": "AMBIGUOUS_OR_LOW_RELEVANCE",
+      "note": "The exact public term WebP3 primarily resolves to an unrelated Python music-server project. A separate sparse Brazilian Webp3 business reference mentions websites, apps, and Web3 products, but no attributable technical personnel were verified. Do not promote a WebP3 teammate candidate until public identity and technical-work evidence is found.",
+      "evidence_refs": [
+        "https://pypi.org/project/webp3/",
+        "https://juniorpiccin.com.br/"
+      ]
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "web3:paulmillr",
+      "display_name": "Paul Miller",
+      "candidate_type": "PERSON",
+      "source_lane": "WEB3",
+      "technical_domains": [
+        "post-quantum cryptography",
+        "auditable cryptographic libraries",
+        "software supply-chain provenance",
+        "JavaScript cryptography"
+      ],
+      "worldshepherd_lanes": ["QCRYPTO", "ECHO_PROVENANCE", "CRYPTO_AGILITY"],
+      "evidence_refs": [
+        "https://github.com/paulmillr",
+        "https://github.com/paulmillr/noble-post-quantum"
+      ],
+      "contact_surfaces": ["https://github.com/paulmillr"],
+      "observed_at": "2026-09-15",
+      "last_verified_at": "2026-09-15",
+      "public_evidence_only": true,
+      "identity_evidence_verified": true,
+      "technical_work_verified": true,
+      "freshness_verified": true,
+      "collaboration_surface_public": true,
+      "conflict_screen_complete": false,
+      "no_known_conflict": false,
+      "explicit_collaboration_interest_evidenced": false
+    },
+    {
+      "candidate_id": "web3:cryptoquick",
+      "display_name": "Hunter Beast",
+      "candidate_type": "PERSON",
+      "source_lane": "WEB3",
+      "technical_domains": [
+        "Bitcoin protocol engineering",
+        "post-quantum migration",
+        "Rust",
+        "BIP-360"
+      ],
+      "worldshepherd_lanes": ["QCRYPTO", "POO_COC", "CRYPTO_AGILITY"],
+      "evidence_refs": [
+        "https://github.com/cryptoquick",
+        "https://github.com/bitcoin/bips/blob/master/bip-0360.mediawiki"
+      ],
+      "contact_surfaces": ["https://github.com/cryptoquick"],
+      "observed_at": "2026-09-15",
+      "last_verified_at": "2026-09-15",
+      "public_evidence_only": true,
+      "identity_evidence_verified": true,
+      "technical_work_verified": true,
+      "freshness_verified": true,
+      "collaboration_surface_public": true,
+      "conflict_screen_complete": false,
+      "no_known_conflict": false,
+      "explicit_collaboration_interest_evidenced": false
+    },
+    {
+      "candidate_id": "web3:anshalshukla",
+      "display_name": "Anshal Shukla",
+      "candidate_type": "PERSON",
+      "source_lane": "WEB3",
+      "technical_domains": [
+        "Ethereum protocol engineering",
+        "post-quantum interoperability",
+        "Lean Ethereum specification",
+        "Zig client engineering"
+      ],
+      "worldshepherd_lanes": ["QCRYPTO", "SARA_INTEROP", "OVERWATCH_TESTING"],
+      "evidence_refs": [
+        "https://github.com/anshalshukla",
+        "https://github.com/ethereum/pm/issues/1962"
+      ],
+      "contact_surfaces": ["https://github.com/anshalshukla"],
+      "observed_at": "2026-09-15",
+      "last_verified_at": "2026-09-15",
+      "public_evidence_only": true,
+      "identity_evidence_verified": true,
+      "technical_work_verified": true,
+      "freshness_verified": true,
+      "collaboration_surface_public": true,
+      "conflict_screen_complete": false,
+      "no_known_conflict": false,
+      "explicit_collaboration_interest_evidenced": false
+    },
+    {
+      "candidate_id": "web3:reamlabs",
+      "display_name": "Ream Labs",
+      "candidate_type": "TEAM",
+      "source_lane": "WEB3",
+      "technical_domains": [
+        "Rust Ethereum client engineering",
+        "post-quantum interoperability",
+        "consensus testing",
+        "Lean Ethereum tooling"
+      ],
+      "worldshepherd_lanes": ["QCRYPTO", "SARA_INTEROP", "OVERWATCH_TESTING"],
+      "evidence_refs": [
+        "https://github.com/reamlabs",
+        "https://github.com/ethereum/pm/issues/2035",
+        "https://reamlabs.com/"
+      ],
+      "contact_surfaces": [
+        "https://github.com/reamlabs",
+        "https://reamlabs.com/"
+      ],
+      "observed_at": "2026-09-15",
+      "last_verified_at": "2026-09-15",
+      "public_evidence_only": true,
+      "identity_evidence_verified": true,
+      "technical_work_verified": true,
+      "freshness_verified": true,
+      "collaboration_surface_public": true,
+      "conflict_screen_complete": false,
+      "no_known_conflict": false,
+      "explicit_collaboration_interest_evidenced": true
+    },
+    {
+      "candidate_id": "web3:limechain",
+      "display_name": "LimeChain",
+      "candidate_type": "ORG",
+      "source_lane": "WEB3",
+      "technical_domains": [
+        "Ethereum engineering",
+        "post-quantum cryptography integration",
+        "ERC-4337 account abstraction",
+        "Solidity and TypeScript"
+      ],
+      "worldshepherd_lanes": ["QCRYPTO", "CRYPTO_AGILITY", "SARA_INTEROP"],
+      "evidence_refs": [
+        "https://github.com/orgs/LimeChain/repositories",
+        "https://github.com/LimeChain/noble-post-quantum-eth"
+      ],
+      "contact_surfaces": ["https://github.com/LimeChain"],
+      "observed_at": "2026-09-15",
+      "last_verified_at": "2026-09-15",
+      "public_evidence_only": true,
+      "identity_evidence_verified": true,
+      "technical_work_verified": true,
+      "freshness_verified": true,
+      "collaboration_surface_public": true,
+      "conflict_screen_complete": false,
+      "no_known_conflict": false,
+      "explicit_collaboration_interest_evidenced": false
+    },
+    {
+      "candidate_id": "web3:leanethereum",
+      "display_name": "lean Ethereum",
+      "candidate_type": "TEAM",
+      "source_lane": "WEB3",
+      "technical_domains": [
+        "post-quantum Ethereum",
+        "hash-based signatures",
+        "zkVM",
+        "protocol specifications",
+        "multi-client interoperability"
+      ],
+      "worldshepherd_lanes": ["QCRYPTO", "SARA_INTEROP", "OVERWATCH_TESTING", "ECHO_PROVENANCE"],
+      "evidence_refs": [
+        "https://github.com/leanEthereum",
+        "https://github.com/leanEthereum/leanSpec/blob/main/CONTRIBUTING.md",
+        "https://ethereum.org/roadmap/security/quantum-resistance/"
+      ],
+      "contact_surfaces": ["https://github.com/leanEthereum"],
+      "observed_at": "2026-09-15",
+      "last_verified_at": "2026-09-15",
+      "public_evidence_only": true,
+      "identity_evidence_verified": true,
+      "technical_work_verified": true,
+      "freshness_verified": true,
+      "collaboration_surface_public": true,
+      "conflict_screen_complete": false,
+      "no_known_conflict": false,
+      "explicit_collaboration_interest_evidenced": true
+    },
+    {
+      "candidate_id": "web3:isabelfoxenduke",
+      "display_name": "Isabel Foxen Duke",
+      "candidate_type": "PERSON",
+      "source_lane": "WEB3",
+      "technical_domains": [
+        "Bitcoin protocol communication",
+        "post-quantum migration",
+        "BIP-360",
+        "technical editing"
+      ],
+      "worldshepherd_lanes": ["QCRYPTO", "CLAIMS_CONTROL", "EXTERNAL_TECHNICAL_COMMUNICATION"],
+      "evidence_refs": [
+        "https://github.com/Isabelfoxenduke/",
+        "https://github.com/bitcoin/bips/blob/master/bip-0360.mediawiki",
+        "https://starkware.co/blog/bitcoins-quantum-proposal-features-starkware-co-author/"
+      ],
+      "contact_surfaces": ["https://github.com/Isabelfoxenduke/"],
+      "observed_at": "2026-09-15",
+      "last_verified_at": "2026-09-15",
+      "public_evidence_only": true,
+      "identity_evidence_verified": true,
+      "technical_work_verified": true,
+      "freshness_verified": true,
+      "collaboration_surface_public": true,
+      "conflict_screen_complete": false,
+      "no_known_conflict": false,
+      "explicit_collaboration_interest_evidenced": false
+    }
+  ]
+}

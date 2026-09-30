@@ -1,0 +1,59 @@
+name: Collaborator Intake Gate
+
+on:
+  pull_request:
+    paths:
+      - 'collaboration/**'
+      - 'tests/test_collaboration_*.py'
+      - '.github/workflows/collaborator-intake-gate.yml'
+  push:
+    branches:
+      - main
+      - 'worldshepherd-collaborator-*'
+    paths:
+      - 'collaboration/**'
+      - 'tests/test_collaboration_*.py'
+      - '.github/workflows/collaborator-intake-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  collaborator-intake-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Compile collaborator intake module
+        run: python -m compileall -q collaboration
+      - name: Run collaborator intake regressions
+        run: python -m pytest -q tests/test_collaboration_*.py
+      - name: Validate candidate seed JSON
+        run: python -m json.tool collaboration/web3_candidate_seed_2026-09-15.json >/dev/null
+      - name: Enforce authority boundaries
+        run: |
+          grep -q 'CANDIDATE_SCHEMA = "WS-COLLAB-CANDIDATE-V1"' collaboration/candidate_guard.py
+          grep -q 'REGISTRY_SCHEMA = "WS-COLLAB-REGISTRY-V1"' collaboration/candidate_guard.py
+          grep -q 'outreach_authorized=False' collaboration/candidate_guard.py
+          grep -q 'teammate_relationship_established=False' collaboration/candidate_guard.py
+          grep -q 'employment_offer_authorized=False' collaboration/candidate_guard.py
+          grep -q 'partnership_authorized=False' collaboration/candidate_guard.py
+          grep -q 'RESPONSE_SCHEMA = "WS-COLLAB-RESPONSE-V1"' collaboration/response_guard.py
+          grep -q 'COMMUNITY_CHANNEL_INVITE_AVAILABLE' collaboration/response_guard.py
+          grep -q 'PROGRAM_ELIGIBILITY_CRITERIA_RECEIVED' collaboration/response_guard.py
+          grep -q 'budget_commitment_authorized=False' collaboration/response_guard.py
+          grep -q 'outreach_expansion_authorized=False' collaboration/response_guard.py
+          grep -q 'teammate_relationship_established=False' collaboration/response_guard.py
+          grep -q 'partnership_established=False' collaboration/response_guard.py
+          grep -q 'community_membership_established=False' collaboration/response_guard.py
+          grep -q 'program_membership_established=False' collaboration/response_guard.py
+          grep -q 'technical_validation_established=False' collaboration/response_guard.py
+          grep -q 'invite_implies_membership' collaboration/response_guard.py
+          grep -q 'eligibility_criteria_imply_acceptance' collaboration/response_guard.py
+          grep -q 'program_contact_implies_technical_validation' collaboration/response_guard.py
+          grep -q 'private_message_content_stored' collaboration/response_guard.py
+          grep -q 'AMBIGUOUS_OR_LOW_RELEVANCE' collaboration/web3_candidate_seed_2026-09-15.json
