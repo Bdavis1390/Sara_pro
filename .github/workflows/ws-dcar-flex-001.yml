@@ -1,0 +1,38 @@
+name: WS-DCAR FLEX-001
+
+on:
+  pull_request:
+    paths:
+      - "docs/WS_DCAR_V0_1_2026-09-30.md"
+      - "research/ws_dcar_flex_001/**"
+      - ".github/workflows/ws-dcar-flex-001.yml"
+  push:
+    paths:
+      - "docs/WS_DCAR_V0_1_2026-09-30.md"
+      - "research/ws_dcar_flex_001/**"
+      - ".github/workflows/ws-dcar-flex-001.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flex-001:
+    name: FLEX-001 adversarial verifier
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install test dependency
+        run: python -m pip install "pytest==8.4.2"
+      - name: Compile reference implementation
+        working-directory: research/ws_dcar_flex_001
+        run: python -m compileall -q .
+      - name: Run FLEX-001 regression suite
+        working-directory: research/ws_dcar_flex_001
+        run: python -m pytest -q
