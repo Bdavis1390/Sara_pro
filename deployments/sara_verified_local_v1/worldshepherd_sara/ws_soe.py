@@ -534,17 +534,6 @@ def assess_conformance(
             evidence=latest_receipt,
         )
 
-    if age > max_observation_age:
-        return _assessment(
-            intent,
-            status=ConformanceStatus.STALE,
-            reason="observation exceeded the maximum accepted age",
-            assessed_at=assessed_at,
-            decision=decision,
-            observation=observation,
-            evidence=latest_receipt,
-        )
-
     if intent.action != DEMO_ACTION or intent.target != DEMO_TARGET:
         return _assessment(
             intent,
@@ -587,6 +576,19 @@ def assess_conformance(
             intent,
             status=ConformanceStatus.DEVIATION,
             reason="observed counter transition differs from the authorized increment",
+            assessed_at=assessed_at,
+            decision=decision,
+            observation=observation,
+            evidence=latest_receipt,
+        )
+
+    # STALE is reserved for traces that would otherwise be a MATCH. This keeps
+    # freshness from masking stronger semantic states such as UNKNOWN or DEVIATION.
+    if age > max_observation_age:
+        return _assessment(
+            intent,
+            status=ConformanceStatus.STALE,
+            reason="observation exceeded the maximum accepted age",
             assessed_at=assessed_at,
             decision=decision,
             observation=observation,
