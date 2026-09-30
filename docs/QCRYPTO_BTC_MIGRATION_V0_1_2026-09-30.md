@@ -1,9 +1,9 @@
 # Worldshepherd QCRYPTO — Bitcoin Migration Baseline v0.1
 
-Status: **IMPLEMENTED IN SOFTWARE — exact-head repository CI and external validation pending**  
-Date: 2026-09-30  
-Program: Worldshepherd / QCRYPTO  
-Runtime target: SARA / PRIME SENTINEL / ECHO SENTINEL LINK / OVERWATCH  
+Status: **IMPLEMENTED IN SOFTWARE — exact-head repository CI and external validation pending**
+Date: 2026-09-30
+Program: Worldshepherd / QCRYPTO
+Runtime target: SARA / PRIME SENTINEL / ECHO SENTINEL LINK / OVERWATCH
 Branch: `feature/qcrypto-btc-migration-v0-1`
 
 ## 1. Purpose
