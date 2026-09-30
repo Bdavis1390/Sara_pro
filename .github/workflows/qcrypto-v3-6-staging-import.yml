@@ -140,6 +140,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A research/qcrypto_tsv/v3_6
-          git diff --cached --check
           git commit -m 'recovery(qcrypto): replay verified QCRYPTO TSV v3.6'
           git push origin HEAD:${GITHUB_REF_NAME}
