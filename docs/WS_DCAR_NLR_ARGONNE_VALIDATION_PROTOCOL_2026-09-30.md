@@ -51,6 +51,10 @@ Examples of bounded interventions include a GPU power-cap change, clock-frequenc
 - Preserve raw-source identity, transformation history, resampling, scaling, filtering, and aggregation parameters.
 - Any redaction must preserve stable pseudonymous identifiers sufficient to test configuration and meter continuity.
 
+### NLR outreach state
+
+A targeted outreach draft to the NLR dataset contact is prepared. It reports the completed EXT-001 surrogate ingestion, identifies the evidence that prevented a positive field claim, and requests either a partner-origin event bundle or a small NLR-controlled bounded intervention. The message remains unsent until explicit transmission authorization.
+
 ## Stage ANL-001 — JLSE flexibility-event validation
 
 Target project: **Argonne JLSE Data Center Flexibility Dataset**, PI Wei Gao.
@@ -88,6 +92,10 @@ WS-DCAR independently emits one of:
 - `NONCOMPLIANT`
 
 The disposition must state the measurement boundary. A node/cluster result is not promoted to a facility/grid claim without authoritative higher-level metering.
+
+### Argonne outreach state
+
+A separate JLSE outreach draft is prepared for the Data Center Flexibility Dataset team. It proposes a bounded collaboration in which JLSE retains experiment authority and WS-DCAR independently evaluates one control-sweep segment. This stage is queued after NLR-001 and the message remains unsent until its turn and explicit transmission authorization.
 
 ## Common evidence contract
 
