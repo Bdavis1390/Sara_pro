@@ -58,7 +58,7 @@ jobs:
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_discord_webhook.py tests/test_discord_connector.py
 
-      - name: Test PRIME isolation, signed ECHO witness, and restriction provenance G1-G7
+      - name: Test PRIME isolation, trust-root rollback, signed ECHO witness, and restriction provenance G1-G8
         working-directory: deployments/sara_verified_local_v1
         run: >-
           python -m pytest -q
@@ -73,10 +73,15 @@ jobs:
           tests/test_restriction_signature.py
           tests/test_prime_signer_isolation.py
           tests/test_restriction_10x_quality.py
+          tests/test_trust_root_guard.py
 
       - name: Test ECHO external signer boundary
         working-directory: deployments/sara_verified_local_v1
         run: python -m pytest -q tests/test_echo_checkpoint.py tests/test_echo_checkpoint_signer_boundary.py tests/test_aws_kms_checkpoint_signer.py
+
+      - name: Validate PRIME trust-epoch integration script syntax
+        working-directory: deployments/sara_verified_local_v1
+        run: bash -n scripts/verify_prime_sentinel_integration.sh
 
       - name: Validate upstream patch artifacts
         shell: bash
