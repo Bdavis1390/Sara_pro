@@ -76,6 +76,26 @@ def test_complete_cluster_bundle_verifies_only_at_cluster_scope():
     assert result["verdict"] == Verdict.VERIFIED.value
     assert result["provenance"]["claim_scope"] == "cluster_only"
     assert result["provenance"]["measurement_boundary"] == "cluster"
+    assert result["provenance"]["configuration_identity_matches_trace"] is True
+    assert result["provenance"]["meter_identity_matches_trace"] is True
+
+
+def test_missing_source_organization_fails_closed():
+    payload = build_partner_replay_payload(
+        request(), 100.0, points(), context(source_organization="")
+    )
+    result = replay_payload(payload)
+    assert result["verdict"] == Verdict.INSUFFICIENT_EVIDENCE.value
+    assert "source_identity_invalid" in result["reasons"]
+
+
+def test_missing_project_identifier_fails_closed():
+    payload = build_partner_replay_payload(
+        request(), 100.0, points(), context(project_or_dataset_id="")
+    )
+    result = replay_payload(payload)
+    assert result["verdict"] == Verdict.INSUFFICIENT_EVIDENCE.value
+    assert "source_identity_invalid" in result["reasons"]
 
 
 def test_missing_request_identifier_fails_closed():
@@ -121,6 +141,38 @@ def test_missing_configuration_identifier_fails_closed():
     result = replay_payload(payload)
     assert result["verdict"] == Verdict.INSUFFICIENT_EVIDENCE.value
     assert "configuration_custody_invalid" in result["reasons"]
+
+
+def test_declared_configuration_must_match_trace():
+    payload = build_partner_replay_payload(
+        request(),
+        100.0,
+        points(),
+        context(configuration_id="cfg-manifest-does-not-match"),
+    )
+    result = replay_payload(payload)
+    assert result["verdict"] == Verdict.INSUFFICIENT_EVIDENCE.value
+    assert "configuration_custody_invalid" in result["reasons"]
+    assert result["provenance"]["configuration_identity_matches_trace"] is False
+
+
+def test_missing_meter_identifier_fails_closed():
+    payload = build_partner_replay_payload(
+        request(), 100.0, points(), context(meter_id=None)
+    )
+    result = replay_payload(payload)
+    assert result["verdict"] == Verdict.INSUFFICIENT_EVIDENCE.value
+    assert "meter_provenance_invalid" in result["reasons"]
+
+
+def test_declared_meter_must_match_trace():
+    payload = build_partner_replay_payload(
+        request(), 100.0, points(), context(meter_id="meter-manifest-does-not-match")
+    )
+    result = replay_payload(payload)
+    assert result["verdict"] == Verdict.INSUFFICIENT_EVIDENCE.value
+    assert "meter_provenance_invalid" in result["reasons"]
+    assert result["provenance"]["meter_identity_matches_trace"] is False
 
 
 def test_grid_boundary_label_does_not_override_bad_meter_provenance():
