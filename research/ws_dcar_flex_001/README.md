@@ -84,7 +84,19 @@ cd research/ws_dcar_flex_001
 python -m pytest -q
 ```
 
-A dedicated GitHub Actions workflow, `.github/workflows/ws-dcar-flex-001.yml`, compiles the reference implementation and runs this suite on relevant pull requests and pushes.
+A dedicated GitHub Actions workflow, `.github/workflows/ws-dcar-flex-001.yml`, compiles the reference implementation and runs this suite on relevant pull requests and pushes. External actions in that workflow are pinned to immutable commit SHAs under the repository's V23 no-regression policy.
+
+## Current internal evidence
+
+On PR #524, the dedicated `WS-DCAR FLEX-001` GitHub Actions job completed successfully on the pull-request merge ref generated from branch head `d7b5ad8fcd078aacd0d7a9dc054d4fc35b440761` and protected `main` base `069e77ff7c0671a37ee0bac265294e07f59e5aa5`.
+
+The job compiled the reference implementation and reported:
+
+```text
+26 passed in 0.07s
+```
+
+The repository's V23 Action Pin No-Regression gate also passed for that head. These are internal software-evidence results only; the broader repository gates and partner-validation boundary remain independently controlling.
 
 ## Claims boundary
 
