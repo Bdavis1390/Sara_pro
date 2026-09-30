@@ -1,0 +1,137 @@
+{
+  "bundle_sha256": "ebc3b80d92ec8afca9be7c4265811358d41fbfeddd7f016ef5ef04a1fe2732a5",
+  "cases": [
+    {
+      "decision": "ALLOW",
+      "http_status": 200,
+      "name": "PERSIST_FIRST",
+      "observed_check": "DURABLE_SEQUENCE_COMMIT",
+      "receipt_sha256": "b4058583c53f62fdb9fde755d144e8e161dc75ed45ad6ad72f579d7a4987dc4e",
+      "request_id": 44,
+      "revision": 1
+    },
+    {
+      "decision": "ALLOW",
+      "http_status": 200,
+      "name": "PERSIST_AFTER_RESTART",
+      "observed_check": "DURABLE_SEQUENCE_COMMIT",
+      "receipt_sha256": "c8b78692ea5cc9cb9057379daa3a202ad7df64f3b9d25c387e73787157fc93d3",
+      "request_id": 45,
+      "revision": 2
+    },
+    {
+      "decision": "DENY",
+      "http_status": 200,
+      "name": "PERSIST_REPLAY_AFTER_RESTART",
+      "observed_check": "DURABLE_REPLAY_OR_REORDER",
+      "receipt_sha256": "5166bac412f8d5ddba0e2db401ccfe6d6cb4a8f275b3d2eb1c4b364fbdca84b4",
+      "request_id": 46,
+      "revision": 2
+    },
+    {
+      "decision": "ALLOW",
+      "http_status": 200,
+      "name": "PRIMARY_PARTITION_FALLBACK",
+      "observed_check": "PROVIDER_SELECTION",
+      "receipt_sha256": "38b7ac70079392de24ac664dd91ce6aad406895a2e9980a3c313602db7734aca",
+      "request_id": 47,
+      "selected_provider_id": "sip-b"
+    },
+    {
+      "decision": "DENY",
+      "http_status": 200,
+      "name": "DUAL_PARTITION_CONFLICT",
+      "observed_check": "PROVIDER_PARTITION_DISAGREEMENT",
+      "receipt_sha256": "d9d33f249338c8b05cfed236512f32ee8b9daa81732b734b4a7cc483e65fd602",
+      "request_id": 48
+    },
+    {
+      "decision": "DENY",
+      "http_status": 200,
+      "name": "NO_HEALTHY_PROVIDER",
+      "observed_check": "NO_REACHABLE_PROVIDER",
+      "receipt_sha256": "903f4b3162dcef2a2a44fc013a1897ddf46906991b7f49e2d151c71f9b269587",
+      "request_id": 49
+    },
+    {
+      "decision": "ALLOW",
+      "http_status": 200,
+      "name": "CALENDAR_VALID",
+      "observed_check": "CALENDAR_EVIDENCE",
+      "receipt_sha256": "139625b5c380d193e5195e95f8599d042c3abad4127ab60a4e38e912dac4e880",
+      "request_id": 50
+    },
+    {
+      "decision": "DENY",
+      "http_status": 200,
+      "name": "CALENDAR_STALE",
+      "observed_check": "CALENDAR_FRESHNESS",
+      "receipt_sha256": "348b5288bac333aa2392e7836dc77300022c7019d28dc33ed09a8e4d75988069",
+      "request_id": 51
+    },
+    {
+      "decision": "DENY",
+      "http_status": 200,
+      "name": "CALENDAR_WRONG_PROVIDER",
+      "observed_check": "CALENDAR_PROVIDER",
+      "receipt_sha256": "d09595c034c9a9c15455273fb8a5525448e9aeaf59cdcc6719eb37da1fa26ca7",
+      "request_id": 52
+    },
+    {
+      "decision": "DENY",
+      "http_status": 200,
+      "name": "WRONG_PARENT",
+      "observed_check": "PARENT_V35_BINDING",
+      "receipt_sha256": "774123f9cd3c3fcdd26fce46966aa36f7fc6e1e5242bb2b680649c92a4eec53b",
+      "request_id": 53
+    }
+  ],
+  "claims_label": "EXTERNAL_SYNTHETIC_RESILIENCE_EVIDENCE_ONLY_NOT_LIVE_MARKET_DATA_OR_INDEPENDENT_CERTIFICATION",
+  "durable_state": {
+    "last_effective_at": "2026-09-19T02:28:28Z",
+    "last_payload_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "last_sequence": 101,
+    "revision": 2,
+    "state_sha256": "1d6aa86f93ee64bbf9a43390b36d44ab2f28bb08bbaada8dcb8299749d4c92ca",
+    "stream_key": "v36-test-20260919-a|PRIMARY_LISTING_EXCHANGE|primary-a|ABC|restart-1"
+  },
+  "durable_state_sha256": "1d6aa86f93ee64bbf9a43390b36d44ab2f28bb08bbaada8dcb8299749d4c92ca",
+  "execution_target": {
+    "deployed_bundle_sha256": "01f577e4f008c40aefbc13e7acfe8bc29d1d8844d988f07d69475f024866c516",
+    "durable_store": "Supabase Postgres",
+    "function_id": "bae89a73-ce6a-4215-ba54-7b37fdd99f7e",
+    "function_slug": "qcrypto-tsv-v3-6-resilience-reproducer",
+    "function_version": 1,
+    "migrations": [
+      {
+        "name": "qcrypto_tsv_v36_durable_cursor",
+        "version": "20260919022624"
+      },
+      {
+        "name": "qcrypto_tsv_v36_cursor_test_namespace",
+        "version": "20260919022643"
+      }
+    ],
+    "project_ref": "aspmlcdjnbcujsxdhwri",
+    "provider": "Supabase Edge Functions",
+    "verify_jwt": true
+  },
+  "generated_at": "2026-09-19T02:30:00Z",
+  "negative_claims": {
+    "authoritative_market_calendar_used": false,
+    "independent_provider_execution_completed": false,
+    "independent_third_party_certification": false,
+    "legal_compliance_established": false,
+    "licensed_market_data_used": false,
+    "live_tsv_deployment": false,
+    "qualified_delivery_provider_used": false,
+    "real_value_moved": false,
+    "sec_approval_established": false
+  },
+  "parent_binding": {
+    "v3_5_release_sha256": "9b41b15e58898fe9f8fa836b258b13e93e860d20ea2c19e76693bfb3e3948653",
+    "v3_6_resilience_core_sha256": "b6920cfa2fb8609991b623ceabe61b8b1c0d432cb293a13082fba8eab1977dfa"
+  },
+  "schema": "WS-QCRYPTO-TSV-V3_6-EXTERNAL-RESILIENCE-BUNDLE-V1",
+  "test_namespace": "v36-test-20260919-a"
+}

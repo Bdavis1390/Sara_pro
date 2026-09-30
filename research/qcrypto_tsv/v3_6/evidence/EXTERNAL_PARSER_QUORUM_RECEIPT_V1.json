@@ -1,0 +1,31 @@
+{
+  "schema": "WS-QCRYPTO-EXTERNAL-BITCOIN-PARSER-QUORUM-V1",
+  "execution_location": "Supabase Edge Function",
+  "libraries": [
+    "bitcoinjs-lib@7.0.0",
+    "@scure/btc-signer@2.4.1"
+  ],
+  "psbt_sha256": "b90a18678d229e8961074f2d38fa3debeaec15a46d01925349bbc4cf3dcd26b4",
+  "bitcoinjs": {
+    "txid": "259f20588df355fb3732c1fd4f41d5d8666d1bc512dc83c554515cc1b3d1205d",
+    "inputs": 1,
+    "outputs": 1,
+    "input_value_sat": "100000",
+    "output_value_sat": "99000",
+    "fee_sat": "1000",
+    "first_output_script": "00141111111111111111111111111111111111111111"
+  },
+  "scure": {
+    "txid": "259f20588df355fb3732c1fd4f41d5d8666d1bc512dc83c554515cc1b3d1205d",
+    "inputs": 1,
+    "outputs": 1,
+    "input_value_sat": "100000",
+    "output_value_sat": "99000",
+    "fee_sat": "1000",
+    "first_output_script": "00141111111111111111111111111111111111111111"
+  },
+  "agreement": true,
+  "release_allowed": true,
+  "verdict_sha256": "c0f3f6f4865a00c47e5b3b0f2e0ccdab7dced2e2cf340e83bb9fd0ea7749e0d6",
+  "generated_at": "2026-09-18T21:23:19.728Z"
+}
