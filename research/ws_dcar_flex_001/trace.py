@@ -65,8 +65,11 @@ def verify_trace(
     points: Sequence[TracePoint],
     *,
     authorized: bool = True,
+    authorization_evidence_valid: bool = True,
+    request_provenance_valid: bool = True,
     baseline_valid: bool = True,
     clocks_synchronized: bool = True,
+    configuration_custody_valid: bool = True,
     max_gap_s: float = 300.0,
     energy_mismatch_tolerance_mwh: float = 0.25,
 ) -> TraceVerificationResult:
@@ -75,6 +78,11 @@ def verify_trace(
     The trace gate separates evidence sufficiency, authorization, contract
     compliance, and mechanism decomposition. It is reference software only;
     utility-grade field claims require partner validation.
+
+    `authorized=False` means the action is known to be unauthorized and is a
+    compliance failure. `authorization_evidence_valid=False` means the evidence
+    is insufficient to determine authorization and therefore cannot be treated
+    as a pass or as a known unauthorized action.
     """
 
     pts = tuple(points)
@@ -147,6 +155,12 @@ def verify_trace(
 
     timestamps = [point.timestamp_s for point in pts]
     evidence_failures: list[str] = []
+    if not request_provenance_valid:
+        evidence_failures.append("request_provenance_invalid")
+    if not authorization_evidence_valid:
+        evidence_failures.append("authorization_evidence_invalid")
+    if not configuration_custody_valid:
+        evidence_failures.append("configuration_custody_invalid")
     if any(right <= left for left, right in zip(timestamps, timestamps[1:])):
         evidence_failures.append("timestamps_not_strictly_increasing")
     if any(
