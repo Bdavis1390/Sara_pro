@@ -224,6 +224,115 @@ def test_violation_is_distinct_when_execution_is_observed_after_deny():
     assert assessment.status == ConformanceStatus.VIOLATION
 
 
+def test_future_dated_allow_cannot_retroactively_authorize_execution():
+    now = datetime(2026, 9, 30, 16, 10, 0, tzinfo=UTC)
+    intent = _intent(now)
+    future_allow = authorize_intent(
+        intent,
+        decision_id="decision-future-allow",
+        authority="test-authority",
+        decided_at=now + timedelta(seconds=1),
+    )
+    observation = Observation(
+        observation_id="obs-before-allow",
+        intent_hash=canonical_sha256(intent),
+        action=intent.action,
+        target=intent.target,
+        observed_at=now,
+        before={"counter": 41},
+        after={"counter": 42},
+        result={"applied_delta": 1},
+    )
+    receipt = make_evidence_receipt(
+        intent,
+        observation,
+        receipt_id="receipt-before-allow",
+        emitted_at=now + timedelta(milliseconds=1),
+    )
+    assessment = assess_conformance(
+        intent,
+        decision=future_allow,
+        observation=observation,
+        receipts=[receipt],
+        assessed_at=now + timedelta(seconds=2),
+    )
+    assert assessment.status == ConformanceStatus.VIOLATION
+    assert "predates the allow decision" in assessment.reason
+
+
+def test_staleness_does_not_mask_evidence_chain_conflict():
+    now = datetime(2026, 9, 30, 16, 11, 0, tzinfo=UTC)
+    intent = _intent(now)
+    decision = _decision(intent, now)
+    observation = DemoCounterExecutor().execute(intent, decision, now=now, observation_id="obs-stale-conflict")
+    receipt = make_evidence_receipt(intent, observation, receipt_id="receipt-stale-conflict", emitted_at=now)
+    corrupted = receipt.model_copy(update={"previous_receipt_hash": "sha256:" + "1" * 64})
+
+    assessment = assess_conformance(
+        intent,
+        decision=decision,
+        observation=observation,
+        receipts=[corrupted],
+        assessed_at=now + timedelta(minutes=2),
+        max_observation_age=timedelta(seconds=30),
+    )
+    assert assessment.status == ConformanceStatus.CONFLICT
+
+
+def test_staleness_does_not_mask_observed_execution_after_deny():
+    now = datetime(2026, 9, 30, 16, 12, 0, tzinfo=UTC)
+    intent = _intent(now)
+    denied = _decision(intent, now, outcome=DecisionOutcome.DENY)
+    observation = Observation(
+        observation_id="obs-stale-denied",
+        intent_hash=canonical_sha256(intent),
+        action=intent.action,
+        target=intent.target,
+        observed_at=now,
+        before={"counter": 41},
+        after={"counter": 42},
+        result={"applied_delta": 1},
+    )
+    receipt = make_evidence_receipt(intent, observation, receipt_id="receipt-stale-denied", emitted_at=now)
+    assessment = assess_conformance(
+        intent,
+        decision=denied,
+        observation=observation,
+        receipts=[receipt],
+        assessed_at=now + timedelta(minutes=2),
+        max_observation_age=timedelta(seconds=30),
+    )
+    assert assessment.status == ConformanceStatus.VIOLATION
+
+
+def test_nonmonotonic_evidence_receipt_time_is_conflict():
+    now = datetime(2026, 9, 30, 16, 13, 0, tzinfo=UTC)
+    intent = _intent(now)
+    decision = _decision(intent, now)
+    observation = DemoCounterExecutor().execute(intent, decision, now=now, observation_id="obs-time-chain")
+    first = make_evidence_receipt(
+        intent,
+        observation,
+        receipt_id="receipt-time-1",
+        emitted_at=now + timedelta(seconds=2),
+    )
+    second = make_evidence_receipt(
+        intent,
+        observation,
+        receipt_id="receipt-time-2",
+        emitted_at=now + timedelta(seconds=1),
+        previous_receipt=first,
+    )
+    assessment = assess_conformance(
+        intent,
+        decision=decision,
+        observation=observation,
+        receipts=[first, second],
+        assessed_at=now + timedelta(seconds=3),
+    )
+    assert assessment.status == ConformanceStatus.CONFLICT
+
+
 def test_all_six_conformance_states_remain_explicit():
     assert {state.value for state in ConformanceStatus} == {
         "MATCH",
