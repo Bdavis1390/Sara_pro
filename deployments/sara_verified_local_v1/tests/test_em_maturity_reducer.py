@@ -77,6 +77,7 @@ def _verified_recovery(
         completed_job_count=completed,
         exit_zero_count=zero,
         nonzero_exit_count=nonzero,
+        retained_output_count=completed,
         durable_checkpoint_count=checkpoints,
         replacement_a027_fresh_output=True,
         direct_mpi_binary_topology=True,
