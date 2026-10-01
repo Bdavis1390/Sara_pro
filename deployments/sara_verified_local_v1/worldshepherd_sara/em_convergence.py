@@ -1,6 +1,6 @@
 """Frozen UC06-P1 convergence adjudication contract.
 
-This evaluator encodes the already preregistered D6-E rules.  It does not create
+This evaluator encodes the already preregistered D6-E rules. It does not create
 new scientific thresholds and contains no current recovery/fine-run result values.
 """
 
@@ -72,11 +72,23 @@ class ExecutionCompletenessEvidence(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     expected_anchor_count: Literal[EXPECTED_ANCHORS] = EXPECTED_ANCHORS
+    completed_anchor_count: int = Field(ge=0, le=54)
     exit_zero_count: int = Field(ge=0, le=54)
+    nonzero_exit_count: int = Field(ge=0, le=54)
     parseable_output_count: int = Field(ge=0, le=54)
     retained_output_count: int = Field(ge=0, le=54)
     failures_visible: bool
     automatic_retry_count: Literal[0] = 0
+
+    @model_validator(mode="after")
+    def validate_execution_counts(self) -> "ExecutionCompletenessEvidence":
+        if self.exit_zero_count + self.nonzero_exit_count != self.completed_anchor_count:
+            raise ValueError("zero + nonzero exits must equal completed_anchor_count")
+        if self.parseable_output_count > self.completed_anchor_count:
+            raise ValueError("parseable outputs cannot exceed completed anchors")
+        if self.retained_output_count > self.completed_anchor_count:
+            raise ValueError("retained outputs cannot exceed completed anchors")
+        return self
 
 
 class FrozenConvergenceInput(BaseModel):
@@ -140,14 +152,19 @@ def _pair_name(p: MediumFinePairEvidence) -> str:
 def adjudicate_frozen_convergence(data: FrozenConvergenceInput) -> FrozenConvergenceDecision:
     """Apply D6-E exactly; missing evidence never becomes an implicit pass."""
 
-    execution_complete = (
-        data.execution.exit_zero_count == EXPECTED_ANCHORS
-        and data.execution.parseable_output_count == EXPECTED_ANCHORS
-        and data.execution.retained_output_count == EXPECTED_ANCHORS
-        and data.execution.failures_visible
-        and data.execution.automatic_retry_count == 0
-    )
-    execution_status = GateStatus.PASS if execution_complete else GateStatus.NOT_EVALUABLE
+    ex = data.execution
+    if ex.completed_anchor_count < EXPECTED_ANCHORS:
+        execution_status = GateStatus.NOT_EVALUABLE
+    elif (
+        ex.nonzero_exit_count > 0
+        or ex.exit_zero_count != EXPECTED_ANCHORS
+        or ex.parseable_output_count != EXPECTED_ANCHORS
+        or ex.retained_output_count != EXPECTED_ANCHORS
+        or not ex.failures_visible
+    ):
+        execution_status = GateStatus.FAIL
+    else:
+        execution_status = GateStatus.PASS
 
     complex_failures = [
         _pair_name(p)
@@ -210,12 +227,12 @@ def adjudicate_frozen_convergence(data: FrozenConvergenceInput) -> FrozenConverg
     rationale = [
         "FROZEN_D6E_THRESHOLDS_APPLIED",
         "NO_THRESHOLD_RELAXATION",
-        "NO_POST_HOC_RETRY",
+        "NO_UNREGISTERED_RETRY",
     ]
     if overall == GateStatus.NOT_EVALUABLE:
         rationale.append("MISSING_OR_BOUNDARY_EVIDENCE_PREVENTS_CLOSURE")
     if overall == GateStatus.FAIL:
-        rationale.append("ONE_OR_MORE_FROZEN_GATES_EXCEEDED")
+        rationale.append("ONE_OR_MORE_FROZEN_GATES_FAILED")
     if overall == GateStatus.PASS:
         rationale.append("ALL_FROZEN_GATES_SATISFIED_ON_COMPLETE_EVIDENCE")
 
