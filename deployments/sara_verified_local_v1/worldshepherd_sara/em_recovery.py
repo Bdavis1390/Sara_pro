@@ -1,6 +1,6 @@
 """UC06-P1 A027-A054 power-recovery evidence contract.
 
-Execution recovery is intentionally separate from scientific convergence.  A complete
+Execution recovery is intentionally separate from scientific convergence. A complete
 recovery receipt can establish 54-anchor execution coverage but never upgrades the
 frozen convergence, energy, laboratory, or hardware-validation gates by itself.
 """
@@ -39,6 +39,7 @@ class RecoveryReceipt(BaseModel):
     completed_job_count: int = Field(ge=0, le=28)
     exit_zero_count: int = Field(ge=0, le=28)
     nonzero_exit_count: int = Field(ge=0, le=28)
+    retained_output_count: int = Field(ge=0, le=28)
     durable_checkpoint_count: int = Field(ge=0, le=28)
     replacement_a027_fresh_output: bool
     original_a027_partial_output_reused: Literal[False] = False
@@ -55,6 +56,8 @@ class RecoveryReceipt(BaseModel):
             raise ValueError("source_receipt_sha256 must be lowercase SHA-256 hex")
         if self.exit_zero_count + self.nonzero_exit_count != self.completed_job_count:
             raise ValueError("zero + nonzero exits must equal completed_job_count")
+        if self.retained_output_count > self.completed_job_count:
+            raise ValueError("retained outputs cannot exceed completed jobs")
         if self.durable_checkpoint_count > self.completed_job_count:
             raise ValueError("durable checkpoints cannot exceed completed jobs")
         return self
@@ -87,15 +90,17 @@ def evaluate_recovery_receipt(receipt: RecoveryReceipt) -> RecoveryDecision:
         unresolved.append("PALACE_STDIN_DEV_NULL")
     if not receipt.sleep_inhibitor_used:
         unresolved.append("SLEEP_INHIBITOR")
+    if receipt.retained_output_count != receipt.completed_job_count:
+        unresolved.append("RETAINED_OUTPUT_COVERAGE")
     if receipt.durable_checkpoint_count != receipt.completed_job_count:
         unresolved.append("DURABLE_CHECKPOINT_COVERAGE")
 
-    if receipt.completed_job_count < receipt.planned_job_count:
-        status = RecoveryStatus.INCOMPLETE
-        unresolved.append("A027_A054_COMPLETION")
-    elif receipt.nonzero_exit_count > 0:
+    if receipt.nonzero_exit_count > 0:
         status = RecoveryStatus.FAIL
         unresolved.append("ZERO_EXIT_ALL_RECOVERY_JOBS")
+    elif receipt.completed_job_count < receipt.planned_job_count:
+        status = RecoveryStatus.INCOMPLETE
+        unresolved.append("A027_A054_COMPLETION")
     elif unresolved:
         status = RecoveryStatus.FAIL
     else:
@@ -164,6 +169,7 @@ def recovery_contract() -> dict[str, object]:
         "mpi_stdin_none_required": True,
         "palace_stdin_dev_null_required": True,
         "sleep_inhibitor_required": True,
+        "retained_output_each_completed_job_required": True,
         "durable_checkpoint_each_completed_job_required": True,
         "read_only": True,
         "hardware_actions": False,
