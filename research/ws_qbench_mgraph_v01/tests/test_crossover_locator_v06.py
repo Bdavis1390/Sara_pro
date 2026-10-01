@@ -3,6 +3,7 @@ import unittest
 from research.ws_qbench_mgraph_v01.crossover_locator_v06 import (
     bracket_zero_crossing,
     cutoff_consensus,
+    estimate_all_crossovers,
     estimate_crossover,
 )
 
@@ -24,6 +25,18 @@ class TestCrossoverLocatorV06(unittest.TestCase):
         row = estimate_crossover([(1.0, -0.2), (1.5, 0.0), (2.0, 0.3)])
         self.assertIsNotNone(row)
         self.assertEqual(row.estimated_ratio, 1.5)
+
+    def test_reentrant_curve_preserves_all_crossings(self):
+        rows = estimate_all_crossovers(
+            [(1.0, 0.2), (2.0, -0.2), (3.0, -0.1), (4.0, 0.3)]
+        )
+        self.assertEqual(len(rows), 2)
+        self.assertAlmostEqual(rows[0].estimated_ratio, 1.5, places=15)
+        self.assertAlmostEqual(rows[1].estimated_ratio, 3.25, places=15)
+
+    def test_duplicate_ratio_is_rejected(self):
+        with self.assertRaises(ValueError):
+            estimate_all_crossovers([(1.0, -0.2), (1.0, 0.2)])
 
     def test_cutoff_consensus_retains_spread(self):
         summary = cutoff_consensus([1.9, 2.0, 2.1])
