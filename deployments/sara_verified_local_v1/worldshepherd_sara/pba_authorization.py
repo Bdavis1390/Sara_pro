@@ -141,7 +141,10 @@ class PBAAuthorizationVerifier:
     ) -> VerifiedPBAAuthorization:
         key_bytes = self._key_bytes(token.key_id)
 
-        current = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+        supplied_now = now or datetime.now(timezone.utc)
+        if supplied_now.tzinfo is None:
+            raise PBAAuthorizationError("verification time must be timezone-aware")
+        current = supplied_now.astimezone(timezone.utc)
         valid_from = token.valid_from.astimezone(timezone.utc)
         valid_until = token.valid_until.astimezone(timezone.utc)
 
