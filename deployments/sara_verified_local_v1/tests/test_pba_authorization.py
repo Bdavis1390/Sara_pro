@@ -17,6 +17,7 @@ from worldshepherd_sara.pba_authorization import (
     canonical_pba_authorization_message,
     verify_and_claim,
 )
+from worldshepherd_sara.pba_gate import authorize_delivery_once
 from worldshepherd_sara.pba_models import (
     OperatingState,
     PBAObservation,
@@ -269,6 +270,44 @@ def test_expired_and_far_future_tokens_fail_closed() -> None:
     future = signed_token(private, now=current + timedelta(minutes=5))
     with pytest.raises(PBAAuthorizationError, match="too far in the future"):
         auth_verifier.verify(future, now=current)
+
+
+def test_combined_gate_does_not_burn_token_on_transient_semantic_denial(tmp_path) -> None:
+    private, public = key_material()
+    now = datetime.now(timezone.utc)
+    token = signed_token(private, now=now, sequence=9)
+    ledger = PBAReplayLedger(tmp_path / "pba-replay.sqlite3")
+    auth_verifier = verifier(public)
+
+    stale = observation().model_copy(update={"telemetry_fresh": False})
+    denied = authorize_delivery_once(
+        verifier=auth_verifier,
+        ledger=ledger,
+        token=token,
+        observation=stale,
+        now=now,
+    )
+    assert denied.permitted is False
+    assert denied.reason == "TELEMETRY_STALE"
+
+    permitted = authorize_delivery_once(
+        verifier=auth_verifier,
+        ledger=ledger,
+        token=token,
+        observation=observation(),
+        now=now,
+    )
+    assert permitted.permitted is True
+    assert permitted.reason == "DELIVERY_AUTHORIZED"
+
+    with pytest.raises(PBAReplayError, match="authorization_id"):
+        authorize_delivery_once(
+            verifier=auth_verifier,
+            ledger=ledger,
+            token=token,
+            observation=observation(),
+            now=now,
+        )
 
 
 def test_adapter_contract_is_read_only_snapshot_boundary() -> None:
