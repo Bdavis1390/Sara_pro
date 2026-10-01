@@ -72,13 +72,20 @@ def verify_event(event: PBAEvidenceEvent, expected_previous_hash: str) -> bool:
 
 
 def verify_chain(events: list[PBAEvidenceEvent]) -> bool:
-    expected = GENESIS_HASH
-    previous_sequence: int | None = None
+    """Verify a complete mission-local chain beginning at sequence zero.
+
+    G1 deliberately validates complete chains rather than arbitrary fragments so
+    prefix truncation is detectable. Future checkpoint/anchor support may add an
+    explicit trusted-start mechanism for validating bounded fragments.
+    """
+
+    expected_hash = GENESIS_HASH
+    expected_sequence = 0
     for event in events:
-        if previous_sequence is not None and event.sequence != previous_sequence + 1:
+        if event.sequence != expected_sequence:
             return False
-        if not verify_event(event, expected):
+        if not verify_event(event, expected_hash):
             return False
-        expected = event.event_hash
-        previous_sequence = event.sequence
+        expected_hash = event.event_hash
+        expected_sequence += 1
     return True
