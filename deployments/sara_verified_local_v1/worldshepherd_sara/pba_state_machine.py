@@ -103,7 +103,13 @@ def evaluate_delivery_authorization(
 def fault_disposition(observation: PBAObservation) -> PBAState:
     """Return the fail-safe disposition for an observation during operation."""
 
-    if observation.safety_veto or observation.identity_changed or observation.configuration_changed:
+    if (
+        observation.safety_veto
+        or observation.identity_changed
+        or observation.configuration_changed
+        or not observation.transmitter_attested
+        or not observation.receiver_attested
+    ):
         return PBAState.FAULT_LATCHED
     if (
         not observation.telemetry_fresh
