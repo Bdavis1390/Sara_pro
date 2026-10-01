@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 
+from .em_d5 import router as d5_router
 from .em_intelligence import EM_SCHEMA_VERSION, router
 
 
@@ -12,6 +13,7 @@ app = FastAPI(
     redoc_url=None,
 )
 app.include_router(router)
+app.include_router(d5_router)
 
 
 @app.get("/health")
@@ -25,5 +27,7 @@ def health() -> dict[str, object]:
         "endpoints": {
             "uc06_evidence": "/v1/em/uc06/evidence",
             "contract": "/v1/em/contract",
+            "d5_status": "/v1/em/uc06/d5/status",
+            "d5_contract": "/v1/em/uc06/d5/contract",
         },
     }
