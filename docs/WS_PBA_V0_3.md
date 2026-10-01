@@ -102,7 +102,7 @@ G2 adds a verification-only Ed25519 trust boundary around `SafeToBeamAuthorizati
 - nonce; and
 - monotonic authorization sequence.
 
-A G2 verifier rejects missing, unknown, or revoked signer keys; invalid Ed25519 signatures; excessive authorization lifetime; authorizations that are too far in the future; not-yet-valid authorizations; and expired authorizations.
+A G2 verifier rejects missing, unknown, or revoked signer keys; invalid or malformed Ed25519 signatures; excessive authorization lifetime; naive verification clocks; authorizations that are too far in the future; not-yet-valid authorizations; and expired authorizations.
 
 ### Replay and rollback protection
 
@@ -114,6 +114,18 @@ A G2 verifier rejects missing, unknown, or revoked signer keys; invalid Ed25519 
 
 The replay ledger uses `BEGIN IMMEDIATE`, `synchronous=FULL`, unique constraints, and a persisted highest-sequence record so replay/rollback protection survives process restart.
 
+### Combined admission gate
+
+`authorize_delivery_once()` composes the G2 cryptographic boundary with the merged G1 semantic assurance evaluator in an explicit order:
+
+1. verify the authorization signature, key policy, and time policy;
+2. evaluate current endpoint identity, attestation, configuration, navigation, tracking, freshness, disagreement, and safety-veto state;
+3. claim the authorization in the replay ledger **only if** the semantic decision permits the transition.
+
+This ordering prevents a transient telemetry/tracking denial from prematurely consuming an otherwise valid authorization. Once a delivery transition is admitted, the token is one-use and a second attempt is rejected by the replay ledger.
+
+The combined gate still returns authorization state only; it contains no partner hardware actuation interface.
+
 ### Partner adapter contract
 
 `PBAPartnerAdapter` is deliberately read-only. An adapter may return a normalized, timestamped `PBAAdapterEnvelope`; the protocol exposes no beam, pointing, targeting, waveform, or energy-actuation method. That keeps the Worldshepherd layer on the assurance side of the control boundary.
@@ -123,15 +135,19 @@ The replay ledger uses `BEGIN IMMEDIATE`, `synchronous=FULL`, unique constraints
 The G2 branch tests cover:
 
 - valid Ed25519 verification;
-- signature tamper rejection;
-- unknown-key rejection;
-- revoked-key rejection;
+- signature tamper and malformed-signature rejection;
+- unknown-key and revoked-key rejection;
 - missing G2 key metadata rejection;
-- duplicate authorization replay rejection;
-- duplicate nonce rejection;
+- timezone-aware verification-clock enforcement;
+- maximum authorization lifetime enforcement;
+- duplicate authorization-ID and nonce rejection;
 - non-monotonic sequence rejection across ledger restart;
 - acceptance of a strictly higher sequence;
-- expired and far-future token rejection; and
+- independent sequence scopes for different missions/endpoints;
+- expired and far-future token rejection;
+- combined cryptographic + semantic admission;
+- non-consumption of a token on a transient semantic denial;
+- one-use rejection after a successful admission; and
 - conformance to the read-only partner adapter protocol.
 
 G2 remains `IMPLEMENTED IN SOFTWARE — CANDIDATE` until its branch CI completes and the PR is merged. Physical power-beaming claims remain out of scope until independent lab and partner validation exist.
