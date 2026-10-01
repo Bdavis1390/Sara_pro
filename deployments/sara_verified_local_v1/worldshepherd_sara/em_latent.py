@@ -11,6 +11,7 @@ import re
 from enum import Enum
 from typing import Literal
 
+from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
@@ -90,7 +91,7 @@ def assess_latent_observation(
     """Assess only when a preregistered physical envelope exists.
 
     The D4 low-dimensional result alone is insufficient to choose an anomaly
-    threshold.  Missing validation gates yield NOT_EVALUABLE rather than a benign
+    threshold. Missing validation gates yield NOT_EVALUABLE rather than a benign
     or anomalous label.
     """
 
@@ -160,3 +161,13 @@ def current_d4_latent_contract() -> dict[str, object]:
             "NO_HARDWARE_ANOMALY_CLAIM",
         ],
     }
+
+
+router = APIRouter(prefix="/v1/em/uc06/latent", tags=["em-latent"])
+
+
+@router.get("/contract")
+def latent_contract() -> dict[str, object]:
+    """Expose the current D4 latent claims boundary read-only."""
+
+    return current_d4_latent_contract()
