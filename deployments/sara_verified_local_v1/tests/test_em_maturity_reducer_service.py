@@ -12,9 +12,16 @@ def test_maturity_reducer_contract_is_read_only_and_fail_closed():
     assert body["persisted_state_mutation"] is False
     assert body["hardware_actions"] is False
     assert body["verified_source_bytes_required"] is True
-    assert body["currently_reducible_evidence"] == ["D5_DIAGNOSTIC", "POWER_RECOVERY"]
-    assert "FROZEN_MEDIUM_FINE_CONVERGENCE" in body["evidence_that_remains_separate"]
+    assert body["currently_reducible_evidence"] == [
+        "D5_DIAGNOSTIC",
+        "POWER_RECOVERY",
+        "FROZEN_CONVERGENCE",
+    ]
+    assert "PHYSICAL_VNA_VALIDATION" in body["evidence_that_remains_separate"]
     assert "HASH_VERIFICATION_IS_INTEGRITY_NOT_PHYSICS_VALIDATION" in body["claims_boundary"]
+    assert "FROZEN_CONVERGENCE_DECISION_IS_RECOMPUTED_FROM_TYPED_EVIDENCE" in body[
+        "claims_boundary"
+    ]
     assert "NO_HARDWARE_ACTION" in body["claims_boundary"]
 
 
