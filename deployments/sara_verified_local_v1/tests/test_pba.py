@@ -183,13 +183,16 @@ def make_event(sequence: int, previous_event_hash: str) -> PBAEvidenceEvent:
     )
 
 
-def test_evidence_chain_detects_tampering_and_sequence_breaks() -> None:
-    first = make_event(10, GENESIS_HASH)
-    second = make_event(11, first.event_hash)
+def test_evidence_chain_detects_tampering_sequence_gaps_and_prefix_truncation() -> None:
+    first = make_event(0, GENESIS_HASH)
+    second = make_event(1, first.event_hash)
     assert verify_chain([first, second])
 
     tampered = second.model_copy(update={"reason": "ALTERED"})
     assert not verify_chain([first, tampered])
 
-    skipped = make_event(13, first.event_hash)
+    skipped = make_event(3, first.event_hash)
     assert not verify_chain([first, skipped])
+
+    truncated_start = make_event(10, GENESIS_HASH)
+    assert not verify_chain([truncated_start])
