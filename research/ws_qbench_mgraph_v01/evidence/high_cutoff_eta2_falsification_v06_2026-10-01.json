@@ -1,0 +1,38 @@
+{
+  "claim_state": "SIMULATED ONLY",
+  "eta": 2.0,
+  "eigenstates": 30,
+  "stochastic_repetitions": 40,
+  "source_lock_gaps_resolved": false,
+  "physical_critical_point_claimed": false,
+  "rows": [
+    {
+      "nmax": 120,
+      "delta_sign_low_zero": 1.6393272475,
+      "delta_sign_high_zero": 3.4762762843,
+      "randomized_phase_high_zero": 3.6787135482,
+      "phase_stripped_zero": 1.9455808074
+    },
+    {
+      "nmax": 140,
+      "delta_sign_low_zero_apparent": 0.5821309519,
+      "delta_sign_low_zero_promoted": false,
+      "delta_sign_high_zero": 3.5670700244,
+      "randomized_phase_high_zero": 3.5384572384,
+      "phase_stripped_zero": 1.9464221246,
+      "low_scale_delta_sign_mean_over_standard_error_abs_max": 0.8901
+    }
+  ],
+  "nmax_140_low_scale_delta_sign": [
+    {"ratio": 0.25, "mean_effect": 0.0000023144, "ensemble_std": 0.0000164455, "mean_over_standard_error": 0.8900},
+    {"ratio": 0.5, "mean_effect": 0.0000149147, "ensemble_std": 0.0002241475, "mean_over_standard_error": 0.4208},
+    {"ratio": 0.75, "mean_effect": -0.0000304843, "ensemble_std": 0.0008536567, "mean_over_standard_error": -0.2259},
+    {"ratio": 1.0, "mean_effect": -0.0001907898, "ensemble_std": 0.0018358622, "mean_over_standard_error": -0.6573},
+    {"ratio": 1.25, "mean_effect": -0.0002231806, "ensemble_std": 0.0029517721, "mean_over_standard_error": -0.4782},
+    {"ratio": 1.35, "mean_effect": -0.0001890194, "ensemble_std": 0.0034153632, "mean_over_standard_error": -0.3500},
+    {"ratio": 1.45, "mean_effect": -0.0002408155, "ensemble_std": 0.0038886870, "mean_over_standard_error": -0.3917},
+    {"ratio": 1.5, "mean_effect": -0.0003570650, "ensemble_std": 0.0041290344, "mean_over_standard_error": -0.5469}
+  ],
+  "interpretation": "The low-scale Delta-sign re-entrant branch fails the Nmax=140 signal-strength gate and is demoted. The high-scale sign change persists and remains the surviving feature to test further.",
+  "next_gate": "larger null ensembles at Nmax>=140, eigenstate-resolved analysis, multiple eigenstate windows, Nmax>140, independent implementation, and source-locked Figure 4 normalization"
+}

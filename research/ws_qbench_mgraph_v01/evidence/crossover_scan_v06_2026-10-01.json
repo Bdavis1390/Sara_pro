@@ -1,0 +1,32 @@
+{
+  "claim_state": "SIMULATED ONLY",
+  "reference_ratio": 0.5,
+  "eigenstates": 30,
+  "stochastic_repetitions": 40,
+  "nmax_values": [60, 80, 100],
+  "eta_values": [0.5, 1.0, 2.0],
+  "method": "paired difference-in-differences with local linear interpolation across adjacent sign-changing target ratios",
+  "source_lock_gaps_resolved": false,
+  "exact_figure_4_reproduction_claimed": false,
+  "rows": [
+    {"eta": 0.5, "nmax": 60, "delta_sign_crossover": 1.9535237532, "randomized_phase_crossover": 1.7220965984},
+    {"eta": 0.5, "nmax": 80, "delta_sign_crossover": 1.9376077476, "randomized_phase_crossover": 1.6930190876},
+    {"eta": 0.5, "nmax": 100, "delta_sign_crossover": 1.9406379637, "randomized_phase_crossover": 1.7193472948},
+    {"eta": 1.0, "nmax": 60, "delta_sign_crossover": 2.9184882118, "randomized_phase_crossover": 2.2371387088},
+    {"eta": 1.0, "nmax": 80, "delta_sign_crossover": 2.8894113126, "randomized_phase_crossover": 2.2195163261},
+    {"eta": 1.0, "nmax": 100, "delta_sign_crossover": 2.8425883032, "randomized_phase_crossover": 2.2524332141},
+    {"eta": 2.0, "nmax": 60, "delta_sign_crossover": 3.4667158150, "randomized_phase_crossover": 3.9391760075},
+    {"eta": 2.0, "nmax": 80, "delta_sign_crossover": 3.4942550048, "randomized_phase_crossover": 3.6698686518},
+    {"eta": 2.0, "nmax": 100, "delta_sign_crossover": 3.5234451563, "randomized_phase_crossover": 3.6351194249}
+  ],
+  "cutoff_summaries": [
+    {"eta": 0.5, "null_family": "delta_sign", "mean": 1.9439231548, "min": 1.9376077476, "max": 1.9535237532, "spread": 0.0159160056},
+    {"eta": 0.5, "null_family": "randomized_phase", "mean": 1.7114876603, "min": 1.6930190876, "max": 1.7220965984, "spread": 0.0290775109},
+    {"eta": 1.0, "null_family": "delta_sign", "mean": 2.8834959425, "min": 2.8425883032, "max": 2.9184882118, "spread": 0.0758999086},
+    {"eta": 1.0, "null_family": "randomized_phase", "mean": 2.2363627497, "min": 2.2195163261, "max": 2.2524332141, "spread": 0.0329168881},
+    {"eta": 2.0, "null_family": "delta_sign", "mean": 3.4948053254, "min": 3.4667158150, "max": 3.5234451563, "spread": 0.0567293413},
+    {"eta": 2.0, "null_family": "randomized_phase", "mean": 3.7480546947, "min": 3.6351194249, "max": 3.9391760075, "spread": 0.3040565826}
+  ],
+  "interpretation": "crossover behavior is supported numerically, but the estimated boundary is null-family dependent and therefore is not a unique physical critical ratio",
+  "next_gate": "denser brackets, larger paired ensembles, Nmax > 100, multiple reference ratios, independent rerun, and source-locked Figure 4 normalization"
+}
