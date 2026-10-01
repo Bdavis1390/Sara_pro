@@ -34,6 +34,12 @@ class SafeToBeamAuthorization(BaseModel):
 
     This object grants permission to enter a bounded operating state. It does not
     contain beam-control, pointing, targeting, or hardware-drive instructions.
+
+    G1 treated ``signature`` as an opaque evidence field. G2 adds optional
+    ``key_id`` metadata and verifies the signature cryptographically before a
+    token may be claimed into the replay ledger. Keeping ``key_id`` optional
+    preserves the G1 schema while allowing G2 to fail closed when verification
+    is requested for an unsigned/legacy token.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -57,6 +63,7 @@ class SafeToBeamAuthorization(BaseModel):
 
     policy_id: str = Field(min_length=1, max_length=128)
     authority_id: str = Field(min_length=1, max_length=128)
+    key_id: str | None = Field(default=None, min_length=1, max_length=128)
 
     previous_event_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     nonce: str = Field(min_length=16, max_length=256)
