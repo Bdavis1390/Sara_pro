@@ -55,6 +55,7 @@ def _recovery_package(path: str, digest: str) -> RecoveryReceipt:
         completed_job_count=28,
         exit_zero_count=28,
         nonzero_exit_count=0,
+        retained_output_count=28,
         durable_checkpoint_count=28,
         replacement_a027_fresh_output=True,
         direct_mpi_binary_topology=True,
