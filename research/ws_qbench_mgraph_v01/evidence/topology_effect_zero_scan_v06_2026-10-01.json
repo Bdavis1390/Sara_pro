@@ -1,0 +1,23 @@
+{
+  "claim_state": "SIMULATED ONLY",
+  "quantity": "E(r) = IPR_source(r) - IPR_null(r)",
+  "eigenstates": 30,
+  "stochastic_repetitions": 40,
+  "nmax_values": [60, 80, 100],
+  "eta_values": [0.5, 1.0, 2.0],
+  "source_lock_gaps_resolved": false,
+  "physical_critical_point_claimed": false,
+  "rows": [
+    {"eta": 0.5, "nmax": 60, "delta_sign_zeros": [1.9991830860], "randomized_phase_zeros": [1.7168716106], "phase_stripped_zeros": [2.3097164577]},
+    {"eta": 0.5, "nmax": 80, "delta_sign_zeros": [1.9767096329], "randomized_phase_zeros": [1.7278966009], "phase_stripped_zeros": [2.3097067811]},
+    {"eta": 0.5, "nmax": 100, "delta_sign_zeros": [1.9964701460], "randomized_phase_zeros": [1.7234459577], "phase_stripped_zeros": [2.3097067700]},
+    {"eta": 1.0, "nmax": 60, "delta_sign_zeros": [2.9367361413], "randomized_phase_zeros": [2.2037439932], "phase_stripped_zeros": []},
+    {"eta": 1.0, "nmax": 80, "delta_sign_zeros": [2.8251920516], "randomized_phase_zeros": [2.2191603325], "phase_stripped_zeros": []},
+    {"eta": 1.0, "nmax": 100, "delta_sign_zeros": [2.9312896176], "randomized_phase_zeros": [2.2135315994], "phase_stripped_zeros": []},
+    {"eta": 2.0, "nmax": 60, "delta_sign_zeros": [1.6934294947, 3.5779339012], "randomized_phase_zeros": [3.6217959098], "phase_stripped_zeros": [1.9126786923]},
+    {"eta": 2.0, "nmax": 80, "delta_sign_zeros": [1.6475438535, 3.4961961572], "randomized_phase_zeros": [3.6107430055], "phase_stripped_zeros": [1.9364629736]},
+    {"eta": 2.0, "nmax": 100, "delta_sign_zeros": [1.6819159553, 3.5013962760], "randomized_phase_zeros": [3.7660090705], "phase_stripped_zeros": [1.9413469634]}
+  ],
+  "interpretation": "The direct topology effect is null-family dependent; eta=2 shows re-entrant Delta-sign behavior with two sign changes in the tested finite model.",
+  "next_gate": "Nmax > 100, larger ensembles, eigenstate-resolved analysis, alternative eigenstate windows, independent implementation, and source-locked Figure 4 normalization"
+}
