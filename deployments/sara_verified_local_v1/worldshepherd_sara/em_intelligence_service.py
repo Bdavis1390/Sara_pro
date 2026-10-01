@@ -2,10 +2,12 @@
 
 from fastapi import FastAPI
 
+from .em_convergence_contract import router as convergence_router
 from .em_d5 import router as d5_router
 from .em_intelligence import EM_SCHEMA_VERSION, router
 from .em_latent import router as latent_router
 from .em_maturity import router as maturity_router
+from .em_recovery import router as recovery_router
 
 
 app = FastAPI(
@@ -18,6 +20,8 @@ app.include_router(router)
 app.include_router(d5_router)
 app.include_router(latent_router)
 app.include_router(maturity_router)
+app.include_router(recovery_router)
+app.include_router(convergence_router)
 
 
 @app.get("/health")
@@ -35,5 +39,8 @@ def health() -> dict[str, object]:
             "d5_contract": "/v1/em/uc06/d5/contract",
             "latent_contract": "/v1/em/uc06/latent/contract",
             "maturity": "/v1/em/uc06/maturity",
+            "recovery_status": "/v1/em/uc06/recovery/status",
+            "recovery_contract": "/v1/em/uc06/recovery/contract",
+            "convergence_contract": "/v1/em/uc06/convergence/contract",
         },
     }
