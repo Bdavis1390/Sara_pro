@@ -1,7 +1,7 @@
 """Multi-objective design utilities for Worldshepherd electromagnetic R&D.
 
 The module deliberately avoids collapsing electromagnetic design quality into one
-weighted scalar.  Candidates are compared by Pareto dominance so improvements in
+weighted scalar. Candidates are compared by Pareto dominance so improvements in
 one objective cannot silently compensate for regressions in another.
 """
 
@@ -19,6 +19,7 @@ class EMDesignMetrics(BaseModel):
     minimum_reflection_magnitude: float = Field(ge=0.0, le=1.0)
     te_state_crosstalk: float = Field(ge=0.0)
     tm_refinement_uncertainty: float = Field(ge=0.0)
+    tm_oblique_refinement_uncertainty: float = Field(ge=0.0)
     loss_proxy: float = Field(ge=0.0)
 
 
@@ -42,6 +43,7 @@ _MAXIMIZE = (
 _MINIMIZE = (
     "te_state_crosstalk",
     "tm_refinement_uncertainty",
+    "tm_oblique_refinement_uncertainty",
     "loss_proxy",
 )
 
@@ -89,8 +91,13 @@ def design_objective_contract() -> dict[str, object]:
         "scalar_weighted_score": False,
         "maximize": list(_MAXIMIZE),
         "minimize": list(_MINIMIZE),
+        "oblique_design_intent": (
+            "reduce TM high-angle numerical/model uncertainty without sacrificing "
+            "TE angular observability or polarization isolation"
+        ),
         "claims_boundary": [
             "OBJECTIVES_ARE_R_AND_D_DIRECTIONAL_PREFERENCES",
+            "OBLIQUE_STABILITY_IS_A_NEXTGEN_OBJECTIVE_NOT_A_UC06_GATE",
             "NO_NEW_UC06_ACCEPTANCE_THRESHOLD",
             "NO_CANDIDATE_VALIDATED_BY_PARETO_STATUS",
             "PALACE_OR_LATER_PHYSICAL_VALIDATION_REQUIRED",
