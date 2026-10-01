@@ -1,0 +1,35 @@
+{
+  "schema": "ws-qbench-mgraph/reproduction-status-v0.4",
+  "date": "2026-10-01",
+  "paper": {
+    "title": "Magnetic graphs for cavity quantum electrodynamics",
+    "authors": ["Sunkyu Yu", "Xianji Piao", "Namkyoo Park"],
+    "journal": "Science Advances",
+    "volume": 12,
+    "article": "eaee5566",
+    "doi": "10.1126/sciadv.aee5566",
+    "arxiv": "2607.04736"
+  },
+  "gates": {
+    "displacement_matrix": "IMPLEMENTED_IN_SOFTWARE",
+    "magnetic_laplacian": "IMPLEMENTED_IN_SOFTWARE",
+    "lambda1_weak_coupling": "INDEPENDENT_NUMERICAL_CROSSCHECK_PASS",
+    "lambda1_cutoff_convergence": "PASS_WITH_DSC_CUTOFF_WARNING",
+    "figure_4c_conductance_qualitative": "CLOSE_NUMERICAL_MATCH_WITH_NULL_WARNING",
+    "figure_4c_incremental_information": "NOT_ESTABLISHED_RAW_CQ_NEAR_COMPLETE_BIPARTITE_NULL",
+    "loop_phase_quantization": "IMPLEMENTED_AND_NUMERICALLY_CHECKED",
+    "formed_loop_nontrivial_fraction": "ROBUST_NEAR_ONE_HALF_ONCE_CONNECTED",
+    "supplementary_figure_s1_pconnect": "BLOCKED_BY_EFFECTIVE_ZERO_CONVENTION",
+    "figure_4e_f_ipr_energy": "BLOCKED_BY_HAMILTONIAN_NORMALIZATION",
+    "phase_topology_lambda1_increment": "INTERNAL_NUMERICAL_CONTROL_PASS",
+    "phase_topology_ipr_increment": "PARAMETER_DEPENDENT_NOT_UNIVERSAL",
+    "hardware_implication": "REQUIRES_PARTNER_VALIDATION"
+  },
+  "source_lock_required": [
+    "loop effective-zero or hopping-order truncation convention",
+    "random-subgraph duplicate policy",
+    "Figure 4e/f h0, h_parallel, h_perp, hbar*omega0 normalization",
+    "author reproduction code or equivalent clarification"
+  ],
+  "merge_policy": "KEEP_DRAFT_UNTIL_REQUIRED_CI_AND_REVIEW_PASS; DO_NOT PROMOTE CLAIMS ABOVE MATRIX"
+}
