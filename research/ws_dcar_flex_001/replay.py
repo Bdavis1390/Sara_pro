@@ -49,6 +49,7 @@ def replay_payload(payload: dict) -> dict:
     output["input_sha256"] = _canonical_sha256(payload)
     output["trace_sha256"] = _canonical_sha256(payload["points"])
     output["provenance"] = payload.get("provenance")
+    output["auxiliary_evidence"] = payload.get("auxiliary_evidence")
     return output
 
 
