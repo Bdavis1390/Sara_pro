@@ -1,12 +1,13 @@
-"""WS-QBENCH-MGRAPH v0.6 crossover-location utilities.
+"""WS-QBENCH-MGRAPH v0.6 zero-crossing utilities.
 
-This module analyzes already-computed paired topology × scale interaction
-curves. It does not infer missing source-paper parameters and does not promote
-an exact Figure 4 reproduction claim.
+This module analyzes already-computed topology × scale curves. It applies to
+both the reference-relative interaction I(r; r0) and the direct topology effect
+E(r). It does not infer missing source-paper parameters and does not promote an
+exact Figure 4 reproduction claim.
 
-A crossover is only reported when adjacent sampled target ratios bracket zero.
-The estimate is a local linear interpolation, not a fitted critical exponent or
-phase-transition claim.
+A zero is only reported when sampled adjacent target ratios bracket zero (or a
+sample lands exactly on zero). Estimates use local linear interpolation; they
+are not fitted critical exponents or phase-transition claims.
 """
 
 from __future__ import annotations
@@ -27,36 +28,23 @@ class CrossoverEstimate:
         return asdict(self)
 
 
-def bracket_zero_crossing(
-    points: Iterable[tuple[float, float]],
-) -> tuple[tuple[float, float], tuple[float, float]] | None:
-    """Return the first adjacent sign-changing pair in ascending-ratio order."""
+def _ordered_points(points: Iterable[tuple[float, float]]) -> list[tuple[float, float]]:
     ordered = sorted((float(x), float(y)) for x, y in points)
-    if len(ordered) < 2:
-        return None
-    for left, right in zip(ordered, ordered[1:]):
-        x0, y0 = left
-        x1, y1 = right
+    for (x0, _), (x1, _) in zip(ordered, ordered[1:]):
         if x1 <= x0:
-            raise ValueError("target ratios must be strictly increasing after sorting")
-        if y0 == 0.0:
-            return left, left
-        if y1 == 0.0:
-            return right, right
-        if y0 * y1 < 0.0:
-            return left, right
-    return None
+            raise ValueError("target ratios must be unique")
+    return ordered
 
 
-def estimate_crossover(
-    points: Iterable[tuple[float, float]],
+def _interpolate(
+    left: tuple[float, float],
+    right: tuple[float, float],
 ) -> CrossoverEstimate | None:
-    """Estimate a zero crossing by linear interpolation inside a valid bracket."""
-    bracket = bracket_zero_crossing(points)
-    if bracket is None:
-        return None
-    (x0, y0), (x1, y1) = bracket
+    x0, y0 = left
+    x1, y1 = right
     if x0 == x1:
+        if y0 != 0.0:
+            return None
         root = x0
     else:
         denominator = y1 - y0
@@ -72,8 +60,68 @@ def estimate_crossover(
     )
 
 
+def estimate_all_crossovers(
+    points: Iterable[tuple[float, float]],
+) -> list[CrossoverEstimate]:
+    """Return every sampled/interpolated zero crossing in ascending-ratio order.
+
+    Multiple results are intentionally preserved so re-entrant finite-model
+    behavior cannot be collapsed into a single boundary.
+    """
+    ordered = _ordered_points(points)
+    if not ordered:
+        return []
+
+    out: list[CrossoverEstimate] = []
+    seen_exact: set[float] = set()
+    for left, right in zip(ordered, ordered[1:]):
+        x0, y0 = left
+        _x1, y1 = right
+        if y0 == 0.0 and x0 not in seen_exact:
+            row = _interpolate(left, left)
+            if row is not None:
+                out.append(row)
+            seen_exact.add(x0)
+        if y0 * y1 < 0.0:
+            row = _interpolate(left, right)
+            if row is not None:
+                out.append(row)
+
+    x_last, y_last = ordered[-1]
+    if y_last == 0.0 and x_last not in seen_exact:
+        row = _interpolate(ordered[-1], ordered[-1])
+        if row is not None:
+            out.append(row)
+    return out
+
+
+def bracket_zero_crossing(
+    points: Iterable[tuple[float, float]],
+) -> tuple[tuple[float, float], tuple[float, float]] | None:
+    """Return the first adjacent sign-changing or exact-zero bracket."""
+    ordered = _ordered_points(points)
+    for left, right in zip(ordered, ordered[1:]):
+        if left[1] == 0.0:
+            return left, left
+        if right[1] == 0.0:
+            return right, right
+        if left[1] * right[1] < 0.0:
+            return left, right
+    if ordered and ordered[-1][1] == 0.0:
+        return ordered[-1], ordered[-1]
+    return None
+
+
+def estimate_crossover(
+    points: Iterable[tuple[float, float]],
+) -> CrossoverEstimate | None:
+    """Return the first zero crossing for backward-compatible single-root use."""
+    rows = estimate_all_crossovers(points)
+    return rows[0] if rows else None
+
+
 def cutoff_consensus(estimates: Iterable[float]) -> dict[str, float | int]:
-    """Summarize crossover estimates across finite Fock cutoffs.
+    """Summarize zero estimates across finite Fock cutoffs.
 
     This is descriptive only. The spread is retained as convergence evidence;
     it is not converted into a statistical confidence interval.
