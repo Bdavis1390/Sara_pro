@@ -63,7 +63,12 @@ class SafeToBeamAuthorization(BaseModel):
 
     policy_id: str = Field(min_length=1, max_length=128)
     authority_id: str = Field(min_length=1, max_length=128)
-    key_id: str | None = Field(default=None, min_length=1, max_length=128)
+    key_id: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z0-9._:-]+$",
+    )
 
     previous_event_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     nonce: str = Field(min_length=16, max_length=256)
