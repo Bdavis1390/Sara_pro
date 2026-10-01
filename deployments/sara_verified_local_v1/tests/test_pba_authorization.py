@@ -43,6 +43,14 @@ def key_material() -> tuple[Ed25519PrivateKey, str]:
     return private, _b64url(public)
 
 
+def resign(
+    private: Ed25519PrivateKey, token: SafeToBeamAuthorization
+) -> SafeToBeamAuthorization:
+    unsigned = token.model_copy(update={"signature": "placeholder"})
+    signature = private.sign(canonical_pba_authorization_message(unsigned))
+    return unsigned.model_copy(update={"signature": _b64url(signature)})
+
+
 def signed_token(
     private: Ed25519PrivateKey,
     *,
@@ -52,11 +60,12 @@ def signed_token(
     nonce: str | None = None,
     authorization_id=None,
     receiver_id: str = "rx-001",
+    mission_id: str = "PBA-G2-TEST",
 ) -> SafeToBeamAuthorization:
     now = now or datetime.now(timezone.utc)
     unsigned = SafeToBeamAuthorization(
         authorization_id=authorization_id or uuid4(),
-        mission_id="PBA-G2-TEST",
+        mission_id=mission_id,
         transmitter_id="tx-001",
         receiver_id=receiver_id,
         transmitter_attestation="attest-tx",
@@ -75,8 +84,7 @@ def signed_token(
         sequence=sequence,
         signature="placeholder",
     )
-    signature = private.sign(canonical_pba_authorization_message(unsigned))
-    return unsigned.model_copy(update={"signature": _b64url(signature)})
+    return resign(private, unsigned)
 
 
 def verifier(public_key_b64url: str, *, revoked: set[str] | None = None) -> PBAAuthorizationVerifier:
@@ -128,6 +136,15 @@ def test_signature_tamper_is_rejected() -> None:
         verifier(public).verify(tampered, now=now)
 
 
+def test_malformed_signature_length_is_rejected() -> None:
+    private, public = key_material()
+    now = datetime.now(timezone.utc)
+    token = signed_token(private, now=now).model_copy(update={"signature": "AA"})
+
+    with pytest.raises(PBAAuthorizationError, match="must decode to 64 bytes"):
+        verifier(public).verify(token, now=now)
+
+
 def test_unknown_and_revoked_keys_fail_closed() -> None:
     private, public = key_material()
     now = datetime.now(timezone.utc)
@@ -147,6 +164,45 @@ def test_missing_g2_key_metadata_is_rejected() -> None:
 
     with pytest.raises(PBAAuthorizationError, match="no signer key_id"):
         verifier(public).verify(token, now=now)
+
+
+def test_naive_verification_clock_is_rejected() -> None:
+    private, public = key_material()
+    aware_now = datetime.now(timezone.utc)
+    token = signed_token(private, now=aware_now)
+
+    with pytest.raises(PBAAuthorizationError, match="timezone-aware"):
+        verifier(public).verify(token, now=datetime.now())
+
+
+def test_excessive_authorization_lifetime_is_rejected() -> None:
+    private, public = key_material()
+    now = datetime.now(timezone.utc)
+    token = signed_token(private, now=now)
+    overlong = token.model_copy(
+        update={
+            "valid_from": now - timedelta(seconds=5),
+            "valid_until": now + timedelta(minutes=16),
+        }
+    )
+    overlong = resign(private, overlong)
+
+    with pytest.raises(PBAAuthorizationError, match="lifetime exceeds policy"):
+        verifier(public).verify(overlong, now=now)
+
+
+def test_duplicate_authorization_id_is_rejected(tmp_path) -> None:
+    private, public = key_material()
+    now = datetime.now(timezone.utc)
+    shared_id = uuid4()
+    first = signed_token(private, now=now, sequence=1, authorization_id=shared_id)
+    second = signed_token(private, now=now, sequence=2, authorization_id=shared_id)
+    ledger = PBAReplayLedger(tmp_path / "pba-replay.sqlite3")
+    auth_verifier = verifier(public)
+
+    ledger.claim(auth_verifier.verify(first, now=now))
+    with pytest.raises(PBAReplayError, match="authorization_id"):
+        ledger.claim(auth_verifier.verify(second, now=now))
 
 
 def test_duplicate_nonce_is_rejected(tmp_path) -> None:
@@ -178,6 +234,27 @@ def test_nonmonotonic_sequence_is_rejected_across_restart(tmp_path) -> None:
 
     fresh = signed_token(private, now=now, sequence=6)
     PBAReplayLedger(ledger_path).claim(auth_verifier.verify(fresh, now=now))
+
+
+def test_sequence_scope_is_per_mission_and_endpoint_pair(tmp_path) -> None:
+    private, public = key_material()
+    now = datetime.now(timezone.utc)
+    ledger = PBAReplayLedger(tmp_path / "pba-replay.sqlite3")
+    auth_verifier = verifier(public)
+
+    first = signed_token(private, now=now, sequence=7, receiver_id="rx-001")
+    second = signed_token(private, now=now, sequence=7, receiver_id="rx-002")
+    third = signed_token(
+        private,
+        now=now,
+        sequence=7,
+        receiver_id="rx-001",
+        mission_id="PBA-G2-OTHER",
+    )
+
+    ledger.claim(auth_verifier.verify(first, now=now))
+    ledger.claim(auth_verifier.verify(second, now=now))
+    ledger.claim(auth_verifier.verify(third, now=now))
 
 
 def test_expired_and_far_future_tokens_fail_closed() -> None:
