@@ -123,18 +123,30 @@ class JacobianCampaignRegistration(BaseModel):
     frozen_convergence_adjudicated: bool = False
     energy_closure_adjudicated: bool = False
     discriminators: list[RegisteredDiscriminator] = Field(min_length=1, max_length=32)
-    states: Literal[("LOW_C", "HIGH_C", "SAFE_OPEN")] = ("LOW_C", "HIGH_C", "SAFE_OPEN")
-    polarizations: Literal[("TE", "TM")] = ("TE", "TM")
-    angles_deg: Literal[(0, 30, 60)] = (0, 30, 60)
+    states: tuple[Literal["LOW_C"], Literal["HIGH_C"], Literal["SAFE_OPEN"]] = (
+        "LOW_C",
+        "HIGH_C",
+        "SAFE_OPEN",
+    )
+    polarizations: tuple[Literal["TE"], Literal["TM"]] = ("TE", "TM")
+    angles_deg: tuple[Literal[0], Literal[30], Literal[60]] = (0, 30, 60)
     numerical_execution_authorized: Literal[False] = False
     laboratory_execution_authorized: Literal[False] = False
     scientific_gate_change: Literal[False] = False
 
     @model_validator(mode="after")
-    def validate_uniqueness(self) -> "JacobianCampaignRegistration":
+    def validate_registration(self) -> "JacobianCampaignRegistration":
         ids = [row.parameter_id for row in self.discriminators]
         if len(ids) != len(set(ids)):
             raise ValueError("parameter_id values must be unique")
+        for row in self.discriminators:
+            if (
+                row.kind == DiscriminatorKind.CATEGORICAL_MODEL
+                and row.baseline_model_id != self.retained_baseline_model_id
+            ):
+                raise ValueError(
+                    "categorical discriminator baseline_model_id must equal retained baseline model"
+                )
         return self
 
 
@@ -144,6 +156,7 @@ class PlannedCondition(BaseModel):
     condition_id: str
     parameter_id: str
     condition_role: Literal["BASELINE", "MINUS", "PLUS", "ALTERNATIVE_MODEL"]
+    reference_baseline_condition_id: str | None = None
     numeric_value: float | None = None
     units: str | None = None
     model_id: str | None = None
@@ -159,12 +172,24 @@ class JacobianPlan(BaseModel):
     executable: Literal[False] = False
     preconditions_satisfied: bool
     unresolved_preconditions: list[str]
+    baseline_condition_count: Literal[18] = 18
+    perturbation_condition_count: int = Field(ge=18)
     conditions: list[PlannedCondition]
     claims_boundary: list[str]
 
 
+def _numeric_token(value: float | None) -> str:
+    if value is None:
+        return "NONE"
+    return format(value, ".17g")
+
+
+def _baseline_id(state: str, pol: str, angle: int) -> str:
+    return f"BASELINE:{state}:{pol}:{angle}deg"
+
+
 def build_jacobian_plan(registration: JacobianCampaignRegistration) -> JacobianPlan:
-    """Build a deterministic, non-executable preregistered condition matrix."""
+    """Build a deterministic, non-executable one-factor-at-a-time condition matrix."""
 
     unresolved: list[str] = []
     if not registration.recovery_complete_evidenced:
@@ -175,28 +200,44 @@ def build_jacobian_plan(registration: JacobianCampaignRegistration) -> JacobianP
         unresolved.append("ENERGY_CLOSURE_ADJUDICATION")
 
     conditions: list[PlannedCondition] = []
+
+    # Exactly one retained baseline matrix is shared by every discriminator.
+    for state in registration.states:
+        for pol in registration.polarizations:
+            for angle in registration.angles_deg:
+                conditions.append(
+                    PlannedCondition(
+                        condition_id=_baseline_id(state, pol, angle),
+                        parameter_id="__RETAINED_BASELINE__",
+                        condition_role="BASELINE",
+                        model_id=registration.retained_baseline_model_id,
+                        state=state,
+                        polarization=pol,
+                        angle_deg=angle,
+                    )
+                )
+
+    perturbation_count = 0
     for discriminator in sorted(registration.discriminators, key=lambda row: row.parameter_id):
         if discriminator.kind == DiscriminatorKind.CONTINUOUS:
-            variants: list[tuple[str, float | None, str | None]] = [
-                ("BASELINE", discriminator.baseline_numeric_value, None),
-            ]
+            variants: list[tuple[str, float | None, str | None]] = []
             if discriminator.derivative_scheme == DerivativeScheme.CENTRAL:
                 variants.append(("MINUS", discriminator.minus_numeric_value, None))
             variants.append(("PLUS", discriminator.plus_numeric_value, None))
         else:
-            variants = [("BASELINE", None, discriminator.baseline_model_id)]
-            variants.extend(
+            variants = [
                 ("ALTERNATIVE_MODEL", None, model_id)
                 for model_id in sorted(discriminator.alternative_model_ids)
-            )
+            ]
 
         for role, numeric_value, model_id in variants:
+            value_token = model_id if model_id is not None else _numeric_token(numeric_value)
             for state in registration.states:
                 for pol in registration.polarizations:
                     for angle in registration.angles_deg:
+                        baseline_id = _baseline_id(state, pol, angle)
                         condition_id = (
-                            f"{discriminator.parameter_id}:{role}:"
-                            f"{model_id if model_id is not None else numeric_value}:"
+                            f"{discriminator.parameter_id}:{role}:{value_token}:"
                             f"{state}:{pol}:{angle}deg"
                         )
                         conditions.append(
@@ -204,6 +245,7 @@ def build_jacobian_plan(registration: JacobianCampaignRegistration) -> JacobianP
                                 condition_id=condition_id,
                                 parameter_id=discriminator.parameter_id,
                                 condition_role=role,
+                                reference_baseline_condition_id=baseline_id,
                                 numeric_value=numeric_value,
                                 units=discriminator.units,
                                 model_id=model_id,
@@ -212,14 +254,17 @@ def build_jacobian_plan(registration: JacobianCampaignRegistration) -> JacobianP
                                 angle_deg=angle,
                             )
                         )
+                        perturbation_count += 1
 
     return JacobianPlan(
         campaign_id=registration.campaign_id,
         preconditions_satisfied=not unresolved,
         unresolved_preconditions=unresolved,
+        perturbation_condition_count=perturbation_count,
         conditions=conditions,
         claims_boundary=[
             "PLAN_ONLY_NOT_EXECUTION_AUTHORIZATION",
+            "ONE_SHARED_RETAINED_BASELINE_MATRIX",
             "ONE_DISCRIMINATOR_AT_A_TIME",
             "NO_PERTURBATION_AMPLITUDE_CHOSEN_BY_SOFTWARE",
             "CATEGORICAL_MODEL_COMPARISONS_ARE_NOT_JACOBIANS",
