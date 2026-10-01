@@ -21,10 +21,9 @@ def maturity_reducer_contract() -> dict[str, object]:
         "currently_reducible_evidence": [
             "D5_DIAGNOSTIC",
             "POWER_RECOVERY",
+            "FROZEN_CONVERGENCE",
         ],
         "evidence_that_remains_separate": [
-            "FROZEN_MEDIUM_FINE_CONVERGENCE",
-            "FROZEN_ENERGY_CLOSURE",
             "PHYSICAL_VNA_VALIDATION",
             "REPEATABILITY_AND_UNCERTAINTY_VALIDATION",
             "VALIDATED_OPERATING_ENVELOPE",
@@ -34,6 +33,7 @@ def maturity_reducer_contract() -> dict[str, object]:
             "HASH_VERIFICATION_IS_INTEGRITY_NOT_PHYSICS_VALIDATION",
             "D5_INGESTION_IS_DIAGNOSTIC_ONLY",
             "RECOVERY_EXECUTION_COMPLETE_IS_NOT_CONVERGENCE",
+            "FROZEN_CONVERGENCE_DECISION_IS_RECOMPUTED_FROM_TYPED_EVIDENCE",
             "NO_H2_PROMOTION",
             "NO_FULL_CAMPAIGN_AUTHORIZATION",
             "NO_HARDWARE_ACTION",
