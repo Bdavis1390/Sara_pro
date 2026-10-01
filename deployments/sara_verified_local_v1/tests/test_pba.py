@@ -109,8 +109,8 @@ def test_nominal_delivery_authorization_passes() -> None:
 @pytest.mark.parametrize(
     ("updates", "reason", "expected_disposition"),
     [
-        ({"transmitter_attested": False}, "TRANSMITTER_NOT_ATTESTED", PBAState.DELIVERY_AUTHORIZED),
-        ({"receiver_attested": False}, "RECEIVER_NOT_ATTESTED", PBAState.DELIVERY_AUTHORIZED),
+        ({"transmitter_attested": False}, "TRANSMITTER_NOT_ATTESTED", PBAState.FAULT_LATCHED),
+        ({"receiver_attested": False}, "RECEIVER_NOT_ATTESTED", PBAState.FAULT_LATCHED),
         ({"telemetry_fresh": False}, "TELEMETRY_STALE", PBAState.RAMP_DOWN),
         ({"tracking_valid": False}, "TRACKING_INVALID", PBAState.RAMP_DOWN),
         ({"navigation_valid": False}, "NAVIGATION_INVALID", PBAState.RAMP_DOWN),
