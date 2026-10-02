@@ -1,0 +1,47 @@
+{
+  "schema": "ws-qbench-mgraph/fig4ef-author-aligned-candidate-v0.8",
+  "as_of": "2026-10-01",
+  "status": "SIMULATED ONLY",
+  "source_lock": "corresponding-author clarification; Code S1 located but not yet locally verified",
+  "mapping": {
+    "Nmax": 200,
+    "hbar": 1.0,
+    "omega0": 1.0,
+    "h0": 0.0,
+    "h_parallel": 0.0,
+    "h_perp": 0.5,
+    "eigenstates": 30,
+    "notation_caveat": "Worldshepherd h_perp mapping to the author's normal/transverse coefficient remains Code-S1-gated."
+  },
+  "independent_implementation": {
+    "displacement": "scipy.special.eval_genlaguerre diagonal construction",
+    "diagonalization": "numpy.linalg.eigh",
+    "repository_formula_crosscheck": "max |Delta K| <= 3.5e-15 at nmax=20 over eta={0.1,0.5,1,2}"
+  },
+  "summary": [
+    {"eta":0.1,"mean_ipr":0.28834681034270937,"median_ipr":0.28257677866101166,"min_ipr":0.25410389309689396,"max_ipr":0.4975372186164528,"min_energy":-0.4950125312494108,"max_energy":14.125522367785473},
+    {"eta":0.25,"mean_ipr":0.39694319905426834,"median_ipr":0.4123380100731664,"min_ipr":0.27337958254920636,"max_ipr":0.48577413791794183,"min_energy":-0.4692459048564813,"max_energy":14.194793104611483},
+    {"eta":0.5,"mean_ipr":0.4452676158589517,"median_ipr":0.45126629104155536,"min_ipr":0.347022840853401,"max_ipr":0.4805601628091606,"min_energy":-0.38329423546163,"max_energy":14.109964508560413},
+    {"eta":0.75,"mean_ipr":0.46073407809632755,"median_ipr":0.46487755430372035,"min_ipr":0.42163481018170007,"max_ipr":0.48696740267487104,"min_energy":-0.2634314126892549,"max_energy":14.037331352164973},
+    {"eta":1.0,"mean_ipr":0.4695426129177024,"median_ipr":0.4737403553862386,"min_ipr":0.4306741014707634,"max_ipr":0.489858283785859,"min_energy":-0.14794572931597672,"max_energy":14.021586143220045},
+    {"eta":1.25,"mean_ipr":0.47570446098370994,"median_ipr":0.47879084134848127,"min_ipr":0.4434815547375753,"max_ipr":0.49133854332384186,"min_energy":-0.07268945548147654,"max_energy":14.06168133649244},
+    {"eta":1.5,"mean_ipr":0.4803761479654112,"median_ipr":0.4828380782312207,"min_ipr":0.45789607272785726,"max_ipr":0.4953512154935891,"min_energy":-0.03790067596389391,"max_energy":14.078812890774321},
+    {"eta":2.0,"mean_ipr":0.48628426926112206,"median_ipr":0.4875132267280381,"min_ipr":0.4682332232917788,"max_ipr":0.4987663318131326,"min_energy":-0.016933609795516776,"max_energy":14.077601968095772},
+    {"eta":2.5,"mean_ipr":0.4901692576666701,"median_ipr":0.48979901092855926,"min_ipr":0.4738299592368625,"max_ipr":0.49953832265647347,"min_energy":-0.010438785079821128,"max_energy":14.073774098987796},
+    {"eta":3.0,"mean_ipr":0.49317233961185036,"median_ipr":0.4956812401844598,"min_ipr":0.47824956686338277,"max_ipr":0.4997875807712106,"min_energy":-0.007149126632209152,"max_energy":14.0311127503502}
+  ],
+  "cutoff_convergence": {
+    "eta_0.5":{"mean_ipr_spread_N80_to_N200":4.996003610813204e-16,"max_energy_spread":3.019806626980426e-14},
+    "eta_1.0":{"mean_ipr_spread_N80_to_N200":3.885780586188048e-16,"max_energy_spread":1.2434497875801753e-14},
+    "eta_2.0":{"mean_ipr_spread_N80_to_N200":4.0190073491430667e-14,"max_energy_spread":7.416289804496046e-12},
+    "eta_3.0":{"mean_ipr_spread_N80_to_N200":6.960765156938109e-06,"max_energy_spread":0.0007407961992296208}
+  },
+  "adjacent_gap_diagnostic": [
+    {"eta":0.1,"min_adjacent_energy_gap":0.19974477084560532,"median_adjacent_energy_gap":0.49484111923131735,"count_gap_lt_1e-3":0,"count_gap_lt_1e-2":0},
+    {"eta":0.5,"min_adjacent_energy_gap":0.030572510175066014,"median_adjacent_energy_gap":0.513270401639903,"count_gap_lt_1e-3":0,"count_gap_lt_1e-2":0},
+    {"eta":1.0,"min_adjacent_energy_gap":0.041028183892970915,"median_adjacent_energy_gap":0.36515795448472643,"count_gap_lt_1e-3":0,"count_gap_lt_1e-2":0},
+    {"eta":2.0,"min_adjacent_energy_gap":0.00035301002327507366,"median_adjacent_energy_gap":0.23420230728706226,"count_gap_lt_1e-3":1,"count_gap_lt_1e-2":2},
+    {"eta":3.0,"min_adjacent_energy_gap":1.5675896333604278e-08,"median_adjacent_energy_gap":0.19535426641761688,"count_gap_lt_1e-3":5,"count_gap_lt_1e-2":6}
+  ],
+  "claim_boundary": "Candidate source-aligned Figure 4e/f numerical cross-check, not exact figure reproduction until Code S1 is acquired, hashed, and compared."
+}
