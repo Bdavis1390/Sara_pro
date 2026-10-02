@@ -1,0 +1,137 @@
+{
+  "schema": "ws-qbench-mgraph/source-lock-v0.7",
+  "as_of": "2026-10-01",
+  "primary_source": {
+    "title": "Magnetic graphs for cavity quantum electrodynamics",
+    "authors": [
+      "Sunkyu Yu",
+      "Xianji Piao",
+      "Namkyoo Park"
+    ],
+    "journal": "Science Advances",
+    "volume": 12,
+    "article": "eaee5566",
+    "publication_date": "2026-09-25",
+    "doi": "10.1126/sciadv.aee5566",
+    "arxiv": "2607.04736"
+  },
+  "author_clarification": {
+    "corresponding_author": "Sunkyu Yu",
+    "received_date_kst": "2026-10-02",
+    "provenance": "direct email response to Worldshepherd reproduction query",
+    "scope": [
+      "G1",
+      "G2",
+      "G3",
+      "G4_location"
+    ]
+  },
+  "claims_policy": {
+    "exact_figure_reproduction_allowed": false,
+    "hardware_inference_allowed": false,
+    "allowed_states": [
+      "SUPPORTED BY LITERATURE",
+      "IMPLEMENTED IN SOFTWARE",
+      "SIMULATED ONLY",
+      "HYPOTHESIS / ADVERSARIAL CONTROL",
+      "PROVEN INTERNALLY — NUMERICAL CONTROL ONLY",
+      "NOT CURRENTLY CLAIMED",
+      "REQUIRES PARTNER VALIDATION"
+    ]
+  },
+  "locked_conventions": {
+    "Nmax": 200,
+    "random_realizations": 20000,
+    "q_values": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      30,
+      50
+    ],
+    "loop_connection": {
+      "rule": "connected iff the 2q-fold product Wq is exactly nonzero in double-precision arithmetic",
+      "numerical_tolerance": null,
+      "maximum_hopping_order_cutoff": null,
+      "hopping_elements": "closed-form Laguerre expression"
+    },
+    "loop_phase_classification": {
+      "nontrivial": "|Phi_q - pi| < 1e-9",
+      "trivial": "|Phi_q| < 1e-9"
+    },
+    "random_subgraph_sampling": "without replacement",
+    "figure4ef": {
+      "hbar": 1.0,
+      "omega0": 1.0,
+      "h0": 0.0,
+      "h_parallel_abs": 0.0,
+      "h_perpendicular_abs_over_hbar_omega0": 0.5,
+      "h_vector_over_hbar_omega0": [
+        0.0,
+        0.0,
+        0.5
+      ],
+      "transition_dipole": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "d_plus_minus": 0.0,
+      "A0": [
+        "eta",
+        0.0,
+        0.0
+      ],
+      "omega_q_over_omega0": 1.0,
+      "eigenstate_window": 30,
+      "notation_note": "The author used the label |h_normal| for the 1/2 hbar*omega0 component; Worldshepherd maps this to its transverse/perpendicular Hamiltonian coefficient pending line-by-line Code S1 verification."
+    },
+    "code_pipeline": [
+      "R003_Rabi_001_eig_Fock_data.m",
+      "R003_Rabi_001_eig_Fock_post.m",
+      "R003_Rabi_001_eig_Fock_post_plot.m"
+    ],
+    "code_location": "Science Advances Supplementary Material, Code S1"
+  },
+  "gaps": {
+    "G1_effective_zero_connected_loop": {
+      "status": "locked",
+      "basis": "corresponding-author clarification"
+    },
+    "G2_figure4ef_hamiltonian_normalization": {
+      "status": "locked",
+      "basis": "corresponding-author clarification",
+      "limitation": "Worldshepherd notation mapping remains subject to Code S1 line-by-line verification"
+    },
+    "G3_random_subgraph_duplicate_policy": {
+      "status": "locked",
+      "basis": "corresponding-author clarification"
+    },
+    "G4_author_code": {
+      "status": "located_unverified",
+      "basis": "corresponding author identified Supplementary Material Code S1 and the three-file MATLAB pipeline",
+      "required": "acquire Code S1 locally, hash the source files, and compare implementation details before enabling exact-figure-reproduction claims"
+    }
+  },
+  "reproduction_ceiling": {
+    "lambda1": "independent numerical cross-check",
+    "conductance": "source conventions substantially locked; exact figure claim still Code-S1-gated",
+    "loop_probabilities": "author numerical convention locked; exact figure claim still Code-S1-gated",
+    "figure4ef_ipr": "author normalization locked; exact figure claim still Code-S1-gated",
+    "supplementary_s1": "author numerical convention locked; exact figure claim still Code-S1-gated"
+  },
+  "evidence_files": [
+    "VALIDATION_V0_2_2026-10-01.md",
+    "PHASE_NULL_V0_3_2026-10-01.md",
+    "LOCALIZATION_ABLATION_V0_4_2026-10-01.md",
+    "SOURCE_LOCK_V0_5.json",
+    "AUTHOR_CLARIFICATION_LOCK_V0_7_2026-10-01.md"
+  ],
+  "lock_digest_sha256": "beb8cc2ac269bd8eebfa6e774adab722207c10486b351a4a2c5fe6dfe18247ac"
+}
