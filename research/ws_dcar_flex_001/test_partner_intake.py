@@ -166,6 +166,27 @@ def test_meter_provenance_must_be_explicit_per_point():
         build_partner_intake_payload(value)
 
 
+def test_missing_nullable_partner_context_field_is_rejected_as_malformed():
+    value = bundle()
+    del value["partner_context"]["authorization_record_id"]
+    with pytest.raises(ValueError, match="partner_context missing required field"):
+        build_partner_intake_payload(value)
+
+
+def test_missing_custody_field_is_rejected_as_malformed():
+    value = bundle()
+    del value["custody"]["event_start_utc"]
+    with pytest.raises(ValueError, match="custody missing required field"):
+        build_partner_intake_payload(value)
+
+
+def test_missing_source_object_field_is_rejected_as_malformed():
+    value = bundle()
+    del value["source_objects"][0]["sha256"]
+    with pytest.raises(ValueError, match=r"source_objects\[0\] missing required field"):
+        build_partner_intake_payload(value)
+
+
 def test_source_objects_are_required():
     value = bundle(source_objects=[])
     with pytest.raises(ValueError, match="source_objects"):
