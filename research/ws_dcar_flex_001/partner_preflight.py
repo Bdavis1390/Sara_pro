@@ -167,6 +167,58 @@ def preflight_partner_bundle(bundle: dict[str, Any]) -> PreflightReport:
         if context.get("authorized") is False:
             warnings.append("action_declared_unauthorized")
 
+    custody = _mapping(bundle.get("custody"))
+    if custody is None:
+        blockers.append("custody_object_missing")
+    else:
+        for field in (
+            "event_start_utc",
+            "event_end_utc",
+            "timezone",
+            "baseline_uncertainty_mw",
+            "transformation_tool",
+            "transformation_tool_version",
+            "redaction_statement",
+        ):
+            if field not in custody:
+                blockers.append(f"custody_{field}_field_missing")
+
+        for field in (
+            "event_start_utc",
+            "event_end_utc",
+            "timezone",
+            "transformation_tool",
+            "transformation_tool_version",
+        ):
+            if field in custody:
+                value = custody.get(field)
+                if value is None:
+                    warnings.append(f"custody_{field}_not_provided")
+                elif (
+                    not isinstance(value, str)
+                    or not value.strip()
+                    or _placeholder(value)
+                ):
+                    blockers.append(f"custody_{field}_invalid_or_placeholder")
+
+        if "baseline_uncertainty_mw" in custody:
+            value = custody.get("baseline_uncertainty_mw")
+            if value is None:
+                warnings.append("custody_baseline_uncertainty_mw_not_provided")
+            elif isinstance(value, bool) or not isinstance(value, (int, float)):
+                blockers.append("custody_baseline_uncertainty_mw_invalid")
+
+        if "redaction_statement" in custody:
+            value = custody.get("redaction_statement")
+            if (
+                not isinstance(value, str)
+                or not value.strip()
+                or _placeholder(value)
+            ):
+                blockers.append(
+                    "custody_redaction_statement_invalid_or_placeholder"
+                )
+
     source_objects_raw = bundle.get("source_objects")
     source_objects = source_objects_raw if isinstance(source_objects_raw, list) else []
     if not source_objects:
