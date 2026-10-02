@@ -1,0 +1,146 @@
+{
+  "request": {
+    "requested_reduction_mw": 20.0,
+    "response_deadline_s": 300.0,
+    "required_duration_s": 1800.0,
+    "max_grid_import_mw": 80.0
+  },
+  "baseline_mw": 100.0,
+  "authorized": true,
+  "baseline_valid": true,
+  "clocks_synchronized": true,
+  "max_gap_s": 300.0,
+  "provenance": {
+    "fixture_status": "SIMULATED_ONLY",
+    "purpose": "WS-DCAR FLEX-001 representative replay trace",
+    "source": "Worldshepherd synthetic reference",
+    "transformations": [
+      "100 MW nominal baseline",
+      "60 s ramp sample",
+      "20 MW target reached at 180 s",
+      "20 MW target maintained for 1800 s",
+      "mechanism decomposition preserved per sample"
+    ],
+    "partner_data": false,
+    "utility_grade_metering": false
+  },
+  "points": [
+    {
+      "timestamp_s": 0.0,
+      "grid_import_mw": 100.0,
+      "workload_pause_mw": 0.0,
+      "workload_migration_mw": 0.0,
+      "battery_discharge_mw": 0.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 0.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 60.0,
+      "grid_import_mw": 90.0,
+      "workload_pause_mw": 4.0,
+      "workload_migration_mw": 2.0,
+      "battery_discharge_mw": 2.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 2.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 180.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 480.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 780.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1080.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1380.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1680.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    },
+    {
+      "timestamp_s": 1980.0,
+      "grid_import_mw": 80.0,
+      "workload_pause_mw": 8.0,
+      "workload_migration_mw": 4.0,
+      "battery_discharge_mw": 5.0,
+      "onsite_generation_mw": 0.0,
+      "hvac_reduction_mw": 3.0,
+      "telemetry_fresh": true,
+      "meter_provenance_valid": true,
+      "configuration_id": "cfg-flex-001",
+      "meter_id": "grid-meter-001"
+    }
+  ]
+}
