@@ -38,11 +38,19 @@ def _mapping(value: object, field: str) -> Mapping[str, Any]:
     return value
 
 
+def _is_placeholder(value: str) -> bool:
+    normalized = value.strip().lower()
+    return normalized.startswith("replace-with-") or normalized.startswith("replace_with_")
+
+
 def _required_str(mapping: Mapping[str, Any], field: str) -> str:
     value = mapping.get(field)
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be a non-empty string")
-    return value.strip()
+    normalized = value.strip()
+    if _is_placeholder(normalized):
+        raise ValueError(f"{field} still contains a template placeholder")
+    return normalized
 
 
 def _optional_str(mapping: Mapping[str, Any], field: str) -> str | None:
@@ -51,7 +59,10 @@ def _optional_str(mapping: Mapping[str, Any], field: str) -> str | None:
         return None
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be null or a non-empty string")
-    return value.strip()
+    normalized = value.strip()
+    if _is_placeholder(normalized):
+        raise ValueError(f"{field} still contains a template placeholder")
+    return normalized
 
 
 def _required_bool(mapping: Mapping[str, Any], field: str) -> bool:
@@ -66,6 +77,14 @@ def _required_number(mapping: Mapping[str, Any], field: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{field} must be a number")
     return float(value)
+
+
+def _optional_number(
+    mapping: Mapping[str, Any], field: str, default: float = 0.0
+) -> float:
+    if field not in mapping:
+        return default
+    return _required_number(mapping, field)
 
 
 def _normalize_source_objects(value: object) -> list[dict[str, Any]]:
@@ -116,11 +135,11 @@ def _normalize_points(value: object) -> list[TracePoint]:
             TracePoint(
                 timestamp_s=_required_number(point, "timestamp_s"),
                 grid_import_mw=_required_number(point, "measured_power_mw"),
-                workload_pause_mw=float(point.get("workload_pause_mw", 0.0)),
-                workload_migration_mw=float(point.get("workload_migration_mw", 0.0)),
-                battery_discharge_mw=float(point.get("battery_discharge_mw", 0.0)),
-                onsite_generation_mw=float(point.get("onsite_generation_mw", 0.0)),
-                hvac_reduction_mw=float(point.get("hvac_reduction_mw", 0.0)),
+                workload_pause_mw=_optional_number(point, "workload_pause_mw"),
+                workload_migration_mw=_optional_number(point, "workload_migration_mw"),
+                battery_discharge_mw=_optional_number(point, "battery_discharge_mw"),
+                onsite_generation_mw=_optional_number(point, "onsite_generation_mw"),
+                hvac_reduction_mw=_optional_number(point, "hvac_reduction_mw"),
                 telemetry_fresh=telemetry_fresh,
                 meter_provenance_valid=meter_provenance_valid,
                 configuration_id=configuration_id,
@@ -213,9 +232,9 @@ def build_partner_intake_payload(bundle: dict[str, Any]) -> dict[str, Any]:
         baseline_mw,
         points,
         context,
-        max_gap_s=float(bundle.get("max_gap_s", 300.0)),
-        energy_mismatch_tolerance_mwh=float(
-            bundle.get("energy_mismatch_tolerance_mwh", 0.25)
+        max_gap_s=_optional_number(bundle, "max_gap_s", 300.0),
+        energy_mismatch_tolerance_mwh=_optional_number(
+            bundle, "energy_mismatch_tolerance_mwh", 0.25
         ),
     )
 
