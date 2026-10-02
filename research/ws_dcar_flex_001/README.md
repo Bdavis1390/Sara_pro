@@ -95,6 +95,8 @@ The intake layer hardens several boundaries:
 - all evidence-validity flags are explicit booleans rather than permissive defaults;
 - every measurement point must explicitly declare telemetry freshness and meter/sensor provenance;
 - at least one source object is required, with an optional SHA-256 when available;
+- the runtime enforces the same required-field presence as the published schema, including fields that may explicitly be `null`;
+- custody metadata preserves event time range, timezone, baseline uncertainty, transformation tool/version, and the partner's redaction/pseudonymization statement without inventing missing values;
 - template placeholders are rejected at runtime;
 - partner-facing `measured_power_mw` is mapped to the legacy internal trace field without changing the declared measurement boundary;
 - the canonical partner manifest receives its own SHA-256 and the source-object manifest is preserved in replay auxiliary evidence;
