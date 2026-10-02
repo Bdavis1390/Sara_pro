@@ -40,6 +40,15 @@ def bundle(**overrides):
             "transformation_history": ["none"],
             "limitations": ["cluster-only measurement boundary"],
         },
+        "custody": {
+            "event_start_utc": "2026-10-01T12:00:00Z",
+            "event_end_utc": "2026-10-01T12:12:00Z",
+            "timezone": "UTC",
+            "baseline_uncertainty_mw": 0.5,
+            "transformation_tool": "partner-export",
+            "transformation_tool_version": "1.0",
+            "redaction_statement": "none",
+        },
         "source_objects": [
             {
                 "object_id": "cluster-power.csv",
@@ -105,6 +114,10 @@ def test_complete_partner_bundle_replays_at_declared_scope():
     assert result["provenance"]["partner_measurement_field"] == "measured_power_mw"
     assert result["provenance"]["internal_trace_field"] == "grid_import_mw"
     assert len(result["provenance"]["partner_manifest_canonical_sha256"]) == 64
+    custody = result["provenance"]["partner_custody"]
+    assert custody["timezone"] == "UTC"
+    assert custody["baseline_uncertainty_mw"] == 0.5
+    assert custody["redaction_statement"] == "none"
 
 
 def test_source_object_and_partner_auxiliary_evidence_are_preserved():
@@ -173,6 +186,25 @@ def test_template_placeholders_are_rejected():
         build_partner_intake_payload(value)
 
 
+def test_custody_redaction_placeholder_is_rejected():
+    value = bundle()
+    value["custody"]["redaction_statement"] = (
+        "replace-with-redaction-or-pseudonymization-statement"
+    )
+    with pytest.raises(ValueError, match="placeholder"):
+        build_partner_intake_payload(value)
+
+
+def test_missing_optional_custody_values_are_preserved_as_unknown():
+    value = bundle()
+    value["custody"]["event_start_utc"] = None
+    value["custody"]["baseline_uncertainty_mw"] = None
+    payload = build_partner_intake_payload(value)
+    custody = payload["provenance"]["partner_custody"]
+    assert custody["event_start_utc"] is None
+    assert custody["baseline_uncertainty_mw"] is None
+
+
 def test_unknown_schema_version_is_rejected():
     value = bundle(schema_version="ws-dcar.partner-event/v9.9")
     with pytest.raises(ValueError, match="schema_version"):
@@ -197,6 +229,8 @@ def test_published_schema_matches_runtime_schema_version():
     )
     assert schema["properties"]["schema_version"]["const"] == SCHEMA_VERSION
     assert "max_measured_power_mw" in schema["properties"]["request"]["required"]
+    assert "custody" in schema["required"]
+    assert "redaction_statement" in schema["properties"]["custody"]["required"]
     point_required = schema["properties"]["points"]["items"]["required"]
     assert "measured_power_mw" in point_required
     assert "meter_provenance_valid" in point_required
