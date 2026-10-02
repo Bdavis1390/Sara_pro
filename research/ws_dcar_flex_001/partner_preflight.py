@@ -123,13 +123,18 @@ def preflight_partner_bundle(bundle: dict[str, Any]) -> PreflightReport:
             "meter_id",
         )
         for field in required_evidence_strings:
+            if field not in context:
+                blockers.append(f"{field}_field_missing")
+                continue
             value = context.get(field)
-            if (
+            if value is None:
+                warnings.append(f"{field}_not_provided")
+            elif (
                 not isinstance(value, str)
                 or not value.strip()
                 or _placeholder(value)
             ):
-                blockers.append(f"{field}_missing_or_placeholder")
+                blockers.append(f"{field}_invalid_or_placeholder")
 
         for field in (
             "authorized",
