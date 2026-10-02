@@ -107,6 +107,15 @@ cd research/ws_dcar_flex_001
 python partner_intake.py path/to/partner-event.json
 ```
 
+Before replay, a partner or operator can run the non-verdict preflight report:
+
+```bash
+cd research/ws_dcar_flex_001
+python partner_preflight.py path/to/partner-event.json
+```
+
+`partner_preflight.py` does not issue a compliance verdict. It reports whether the package is structurally ready to enter the verifier, the declared measurement boundary and resulting claim scope, blocking omissions/placeholders, non-blocking evidence warnings, source-object/hash coverage, point count, and a canonical SHA-256 of the submitted bundle. Evidence explicitly declared invalid remains replayable so the normal verifier can return `INSUFFICIENT_EVIDENCE`; missing structural fields remain preflight blockers.
+
 ## Adversarial cases
 
 The regression suite injects, among other cases:
@@ -150,7 +159,12 @@ The regression suite injects, among other cases:
 37. source-object custody and SHA-256 validation;
 38. template-placeholder rejection;
 39. lower-level measurement-name semantic preservation;
-40. partner auxiliary-evidence hash sensitivity.
+40. partner auxiliary-evidence hash sensitivity;
+41. preflight structural blocker detection;
+42. preflight scoped-claim reporting;
+43. preflight evidence-warning preservation;
+44. preflight drift/meter-change reporting;
+45. preflight bundle-hash mutation detection.
 
 ## Run
 
