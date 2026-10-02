@@ -53,7 +53,9 @@ Examples of bounded interventions include a GPU power-cap change, clock-frequenc
 
 ### NLR outreach state
 
-A targeted outreach draft to the NLR dataset contact is prepared. It reports the completed EXT-001 surrogate ingestion, identifies the evidence that prevented a positive field claim, and requests either a partner-origin event bundle or a small NLR-controlled bounded intervention. The message remains unsent until explicit transmission authorization.
+The targeted NLR-001 request was sent on 2026-10-01 to Gustavo Campos with `c2g@nlr.gov` copied. Campos returned an automatic reply stating that he is on leave through 2026-10-23 and expects to return on 2026-10-26. The shared C2G mailbox remains a parallel routing path while the direct contact is away.
+
+The request reports the completed EXT-001 surrogate ingestion, identifies the evidence that prevented a positive field claim, and asks for either a partner-origin event bundle or a small NLR-controlled bounded intervention. Outreach and acknowledgement do not constitute partner validation.
 
 ## Stage ANL-001 — JLSE flexibility-event validation
 
@@ -95,9 +97,19 @@ The disposition must state the measurement boundary. A node/cluster result is no
 
 ### Argonne outreach state
 
-A separate JLSE outreach draft is prepared for the Data Center Flexibility Dataset team. It proposes a bounded collaboration in which JLSE retains experiment authority and WS-DCAR independently evaluates one control-sweep segment. This stage is queued after NLR-001 and the message remains unsent until its turn and explicit transmission authorization.
+The ANL-001 inquiry was sent on 2026-10-01 to `help@jlse.anl.gov`. JLSE Support acknowledged receipt and opened ticket **REQ-14761** for the Data Center Flexibility Dataset validation inquiry. The request asks JLSE to route the proposal to the project team for one bounded control-action or sweep segment while JLSE retains experiment authority.
+
+Ticket creation and routing are correspondence state only; they do not constitute technical acceptance or partner validation.
 
 ## Common evidence contract
+
+The repository now includes a partner-facing intake contract:
+
+- `research/ws_dcar_flex_001/partner_event_schema.json` — JSON Schema for `ws-dcar.partner-event/v0.1`;
+- `research/ws_dcar_flex_001/partner_event_template.json` — intentionally fail-closed handoff template;
+- `research/ws_dcar_flex_001/partner_intake.py` — parser/translator into the internal FLEX-001 replay contract.
+
+The partner-facing format deliberately uses `measured_power_mw` and `max_measured_power_mw` rather than calling lower-level measurements grid import. The adapter records the semantic mapping and preserves the declared measurement boundary so device/node/cluster evidence cannot acquire a facility/grid label by field name alone.
 
 Each external event should be representable as:
 
