@@ -1,6 +1,6 @@
 # WS-DCAR-FLEX-001
 
-**Status:** `REFERENCE SOFTWARE + SYNTHETIC ADVERSARIAL TEST + EXTERNAL-SURROGATE ADAPTER + PARTNER-EVIDENCE CONTRACT / REQUIRES PARTNER VALIDATION`
+**Status:** `REFERENCE SOFTWARE + SYNTHETIC ADVERSARIAL TEST + EXTERNAL-SURROGATE ADAPTER + PARTNER-EVIDENCE CONTRACT + PARTNER-INTAKE SCHEMA / REQUIRES PARTNER VALIDATION`
 
 Reference experiment for **Worldshepherd Data Center Assurance & Resilience (WS-DCAR)**.
 
@@ -84,7 +84,28 @@ The builder is intentionally fail-closed:
 - a lower-level boundary such as `cluster` remains `cluster_only`; it is never promoted into a facility or grid claim;
 - a known unauthorized action is `NONCOMPLIANT`, whereas missing authorization evidence is `INSUFFICIENT_EVIDENCE`.
 
-The staged external-validation protocol is documented in `docs/WS_DCAR_NLR_ARGONNE_VALIDATION_PROTOCOL_2026-09-30.md`: NLR first to extend the measured-workload lineage into a bounded partner-origin event, then Argonne JLSE for a controlled flexibility sweep with power/QoS context.
+The staged external-validation protocol is documented in `docs/WS_DCAR_NLR_ARGONNE_VALIDATION_PROTOCOL_2026-09-30.md`: NLR extends the measured-workload lineage into a bounded partner-origin event, while Argonne JLSE provides a parallel controlled-flexibility path with power/QoS context.
+
+## Partner-origin intake format
+
+`partner_event_schema.json` publishes the handoff contract for `ws-dcar.partner-event/v0.1`. `partner_event_template.json` is intentionally fail-closed and must be filled with real identifiers/evidence declarations before replay. `partner_intake.py` converts a completed partner-facing bundle into the internal FLEX-001 contract and then reuses the normal replay/verdict path.
+
+The intake layer hardens several boundaries:
+
+- all evidence-validity flags are explicit booleans rather than permissive defaults;
+- every measurement point must explicitly declare telemetry freshness and meter/sensor provenance;
+- at least one source object is required, with an optional SHA-256 when available;
+- template placeholders are rejected at runtime;
+- partner-facing `measured_power_mw` is mapped to the legacy internal trace field without changing the declared measurement boundary;
+- the canonical partner manifest receives its own SHA-256 and the source-object manifest is preserved in replay auxiliary evidence;
+- partner-supplied QoS or other auxiliary evidence is retained and therefore participates in the complete replay-input hash.
+
+Replay a completed partner bundle with:
+
+```bash
+cd research/ws_dcar_flex_001
+python partner_intake.py path/to/partner-event.json
+```
 
 ## Adversarial cases
 
@@ -122,7 +143,14 @@ The regression suite injects, among other cases:
 30. external-source Git-blob mismatch;
 31. external per-unit-to-MW transformation;
 32. fail-closed external-surrogate disposition;
-33. external source/transformation provenance preservation.
+33. external source/transformation provenance preservation;
+34. partner-intake schema version enforcement;
+35. explicit evidence-validity booleans;
+36. explicit per-point meter provenance;
+37. source-object custody and SHA-256 validation;
+38. template-placeholder rejection;
+39. lower-level measurement-name semantic preservation;
+40. partner auxiliary-evidence hash sensitivity.
 
 ## Run
 
@@ -135,7 +163,7 @@ A dedicated GitHub Actions workflow, `.github/workflows/ws-dcar-flex-001.yml`, c
 
 ## Claims boundary
 
-Passing the synthetic, external-surrogate, and partner-evidence-contract suites is **not** evidence of MW-scale field performance, utility compliance, economic benefit, or grid-reliability improvement. Those remain `REQUIRES PARTNER VALIDATION`.
+Passing the synthetic, external-surrogate, partner-evidence-contract, partner-intake, and ANL-001 adapter suites is **not** evidence of MW-scale field performance, utility compliance, economic benefit, or grid-reliability improvement. Those remain `REQUIRES PARTNER VALIDATION`.
 
 The experiment is an internal reference implementation of the Worldshepherd rule:
 
@@ -158,4 +186,4 @@ The remaining controlling gate is a partner-origin or partner-controlled event b
 - mechanism telemetry where available;
 - at least one adverse or exception case.
 
-NLR-001 is the active first target. ANL-001 (Argonne JLSE) is queued immediately after it. Utility/grid claims remain blocked unless the event includes authoritative facility/grid-boundary evidence; node/cluster validation remains node/cluster validation.
+NLR-001 and ANL-001 (Argonne JLSE) are both externally active. NLR-001 is awaiting C2G routing or the direct contact's return; Argonne JLSE acknowledged ANL-001 as support ticket REQ-14761 and is awaiting substantive project-team routing. Utility/grid claims remain blocked unless an event includes authoritative facility/grid-boundary evidence; node/cluster validation remains node/cluster validation.
