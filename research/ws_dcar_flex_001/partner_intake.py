@@ -43,6 +43,16 @@ def _is_placeholder(value: str) -> bool:
     return normalized.startswith("replace-with-") or normalized.startswith("replace_with_")
 
 
+def _require_fields(
+    mapping: Mapping[str, Any], fields: tuple[str, ...], object_name: str
+) -> None:
+    missing = [field for field in fields if field not in mapping]
+    if missing:
+        raise ValueError(
+            f"{object_name} missing required field(s): {', '.join(missing)}"
+        )
+
+
 def _required_str(mapping: Mapping[str, Any], field: str) -> str:
     value = mapping.get(field)
     if not isinstance(value, str) or not value.strip():
@@ -101,6 +111,11 @@ def _normalize_source_objects(value: object) -> list[dict[str, Any]]:
     normalized: list[dict[str, Any]] = []
     for index, item in enumerate(value):
         obj = _mapping(item, f"source_objects[{index}]")
+        _require_fields(
+            obj,
+            ("object_id", "role", "raw_or_derived", "sha256", "media_type"),
+            f"source_objects[{index}]",
+        )
         object_id = _required_str(obj, "object_id")
         role = _required_str(obj, "role")
         raw_or_derived = obj.get("raw_or_derived", "raw")
@@ -182,6 +197,29 @@ def build_partner_intake_payload(bundle: dict[str, Any]) -> dict[str, Any]:
     )
 
     context_data = _mapping(bundle.get("partner_context"), "partner_context")
+    _require_fields(
+        context_data,
+        (
+            "source_organization",
+            "project_or_dataset_id",
+            "measurement_boundary",
+            "request_id",
+            "authorization_record_id",
+            "clock_source",
+            "baseline_method",
+            "configuration_id",
+            "meter_id",
+            "authorized",
+            "request_provenance_valid",
+            "authorization_evidence_valid",
+            "clocks_synchronized",
+            "baseline_valid",
+            "configuration_custody_valid",
+            "transformation_history",
+            "limitations",
+        ),
+        "partner_context",
+    )
     try:
         boundary = MeasurementBoundary(
             _required_str(context_data, "measurement_boundary")
@@ -235,6 +273,19 @@ def build_partner_intake_payload(bundle: dict[str, Any]) -> dict[str, Any]:
     baseline_mw = _required_number(bundle, "baseline_mw")
 
     custody_data = _mapping(bundle.get("custody"), "custody")
+    _require_fields(
+        custody_data,
+        (
+            "event_start_utc",
+            "event_end_utc",
+            "timezone",
+            "baseline_uncertainty_mw",
+            "transformation_tool",
+            "transformation_tool_version",
+            "redaction_statement",
+        ),
+        "custody",
+    )
     partner_custody = {
         "event_start_utc": _optional_str(custody_data, "event_start_utc"),
         "event_end_utc": _optional_str(custody_data, "event_end_utc"),
