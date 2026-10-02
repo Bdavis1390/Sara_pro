@@ -1,0 +1,54 @@
+{
+  "schema": "ws-qbench-mgraph/loop-zero-semantics-audit-v0.9",
+  "as_of": "2026-10-01",
+  "status": "SIMULATED ONLY / NEGATIVE REPRODUCTION EVIDENCE",
+  "author_locked_rule": {
+    "Nmax": 200,
+    "realizations": 20000,
+    "sampling": "without replacement within each bipartition",
+    "edge_threshold": null,
+    "maximum_hopping_order_cutoff": null,
+    "connection_rule": "2q-fold product Wq exactly nonzero in float64",
+    "phase_tolerance": 1e-9
+  },
+  "candidate_implementation": {
+    "hopping": "repository numerically stable closed-form Laguerre implementation",
+    "sampling_seed_family": "9675 + eta_index*100 + q",
+    "important_limitation": "Code S1 concrete floating-point evaluation and multiplication details are not yet locally available"
+  },
+  "selected_results": {
+    "eta_0.3": {
+      "q2": {"p_connect":0.84885,"p_nontrivial":0.343,"p_trivial":0.50585,"nontrivial_fraction_given_connected":0.4040761029628321,"binomial_se_p_connect":0.0025328213270975116},
+      "q10":{"p_connect":0.0003,"p_nontrivial":0.00015,"p_trivial":0.00015,"nontrivial_fraction_given_connected":0.5,"binomial_se_p_connect":0.00012245611458804333}
+    },
+    "eta_0.5": {
+      "q2": {"p_connect":0.95565,"p_nontrivial":0.38745,"p_trivial":0.5682,"nontrivial_fraction_given_connected":0.40543085857793126,"binomial_se_p_connect":0.0014557313883405826},
+      "q10":{"p_connect":0.0063,"p_nontrivial":0.00325,"p_trivial":0.00305,"nontrivial_fraction_given_connected":0.5158730158730159,"binomial_se_p_connect":0.0005594778816003364}
+    },
+    "eta_1.0": {
+      "q2": {"p_connect":0.9966,"p_nontrivial":0.42635,"p_trivial":0.57025,"nontrivial_fraction_given_connected":0.42780453542042945,"binomial_se_p_connect":0.0004116090378016473},
+      "q10":{"p_connect":0.26395,"p_nontrivial":0.13185,"p_trivial":0.1321,"nontrivial_fraction_given_connected":0.4995264254593673,"binomial_se_p_connect":0.003116732243071259}
+    },
+    "eta_1.5": {
+      "q2": {"p_connect":0.99985,"p_nontrivial":0.45915,"p_trivial":0.5407,"nontrivial_fraction_given_connected":0.45921888283242485,"binomial_se_p_connect":0.0000865960449443228},
+      "q10":{"p_connect":0.8062,"p_nontrivial":0.39985,"p_trivial":0.40635,"nontrivial_fraction_given_connected":0.49596874224758125,"binomial_se_p_connect":0.0027950094812003766}
+    },
+    "eta_2.0": {
+      "q2": {"p_connect":0.9998,"p_nontrivial":0.4706,"p_trivial":0.5292,"nontrivial_fraction_given_connected":0.47069413882776556,"binomial_se_p_connect":0.00009998999949994449},
+      "q10":{"p_connect":0.9892,"p_nontrivial":0.49015,"p_trivial":0.49905,"nontrivial_fraction_given_connected":0.49550141528507885,"binomial_se_p_connect":0.0007308679771340386}
+    },
+    "eta_3.0": {
+      "q2": {"p_connect":0.99975,"p_nontrivial":0.49075,"p_trivial":0.509,"nontrivial_fraction_given_connected":0.49087271817954486,"binomial_se_p_connect":0.00011178942257655069},
+      "q10":{"p_connect":0.9992,"p_nontrivial":0.4995,"p_trivial":0.4997,"nontrivial_fraction_given_connected":0.49989991993594873,"binomial_se_p_connect":0.00019991998399359966}
+    }
+  },
+  "published_crosscheck": {
+    "textual_constraints": [
+      "Supplementary Note S1 defines pConnect over 2e4 realizations and pConnect=pNontrivial+pTrivial",
+      "main text states loop formation reaches >80% for q=2 and >40% for q=10 approaching the DSC regime",
+      "Supplementary Figure S1 visibly retains q-dependent sub-unity high-coupling plateaus"
+    ],
+    "result": "The stable-formula candidate satisfies the probability identity and approximately half-nontrivial behavior at stronger coupling, but pConnect tends toward ~1 for both q=2 and q=10 by eta=2..3. This does not reproduce the visibly q-dependent sub-unity high-coupling plateau structure of Supplementary Figure S1."
+  },
+  "conclusion": "The author-stated no-threshold rule is conceptually locked, but the operational floating-zero semantics are not fully reproduced without Code S1. Exact S1 reproduction remains blocked."
+}
