@@ -1,0 +1,23 @@
+{
+  "schema": "ws-qbench-mgraph/source-lock-interpretation-patch-v0.9",
+  "as_of": "2026-10-01",
+  "applies_to": "SOURCE_LOCK_V0_7.json",
+  "G1_effective_zero_connected_loop": {
+    "rule_status": "locked",
+    "operational_reproduction_status": "code_s1_verification_required",
+    "reason": "A numerically stable closed-form implementation under the author-stated no-threshold rule does not recover the published Supplementary Figure S1 high-coupling pConnect plateau structure.",
+    "prohibited_response": "Do not introduce or fit an ad-hoc edge threshold.",
+    "required_next_evidence": [
+      "Code S1 source acquisition",
+      "cryptographic hashes of the MATLAB source files",
+      "line-by-line floating-point evaluation audit",
+      "hopping-matrix zero-mask comparison",
+      "source-code Monte Carlo rerun"
+    ]
+  },
+  "claims_policy": {
+    "exact_s1_reproduction_allowed": false,
+    "author_rule_may_be_described_as_locked": true,
+    "concrete_zero_pattern_may_be_described_as_reproduced": false
+  }
+}
