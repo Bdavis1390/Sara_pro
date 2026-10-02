@@ -10,6 +10,7 @@
     "baseline_mw",
     "partner_context",
     "source_objects",
+    "custody",
     "points"
   ],
   "properties": {
@@ -26,15 +27,36 @@
         "max_measured_power_mw"
       ],
       "properties": {
-        "requested_reduction_mw": {"type": "number", "minimum": 0},
-        "response_deadline_s": {"type": "number", "minimum": 0},
-        "required_duration_s": {"type": "number", "minimum": 0},
-        "max_measured_power_mw": {"type": "number", "minimum": 0}
+        "requested_reduction_mw": {
+          "type": "number",
+          "minimum": 0
+        },
+        "response_deadline_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "required_duration_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_measured_power_mw": {
+          "type": "number",
+          "minimum": 0
+        }
       }
     },
-    "baseline_mw": {"type": "number", "minimum": 0},
-    "max_gap_s": {"type": "number", "minimum": 0},
-    "energy_mismatch_tolerance_mwh": {"type": "number", "minimum": 0},
+    "baseline_mw": {
+      "type": "number",
+      "minimum": 0
+    },
+    "max_gap_s": {
+      "type": "number",
+      "minimum": 0
+    },
+    "energy_mismatch_tolerance_mwh": {
+      "type": "number",
+      "minimum": 0
+    },
     "partner_context": {
       "type": "object",
       "additionalProperties": false,
@@ -58,8 +80,14 @@
         "limitations"
       ],
       "properties": {
-        "source_organization": {"type": "string", "minLength": 1},
-        "project_or_dataset_id": {"type": "string", "minLength": 1},
+        "source_organization": {
+          "type": "string",
+          "minLength": 1
+        },
+        "project_or_dataset_id": {
+          "type": "string",
+          "minLength": 1
+        },
         "measurement_boundary": {
           "enum": [
             "device",
@@ -70,25 +98,79 @@
             "grid_boundary"
           ]
         },
-        "request_id": {"type": ["string", "null"], "minLength": 1},
-        "authorization_record_id": {"type": ["string", "null"], "minLength": 1},
-        "clock_source": {"type": ["string", "null"], "minLength": 1},
-        "baseline_method": {"type": ["string", "null"], "minLength": 1},
-        "configuration_id": {"type": ["string", "null"], "minLength": 1},
-        "meter_id": {"type": ["string", "null"], "minLength": 1},
-        "authorized": {"type": "boolean"},
-        "request_provenance_valid": {"type": "boolean"},
-        "authorization_evidence_valid": {"type": "boolean"},
-        "clocks_synchronized": {"type": "boolean"},
-        "baseline_valid": {"type": "boolean"},
-        "configuration_custody_valid": {"type": "boolean"},
+        "request_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "authorization_record_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "clock_source": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "baseline_method": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "configuration_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "meter_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "authorized": {
+          "type": "boolean"
+        },
+        "request_provenance_valid": {
+          "type": "boolean"
+        },
+        "authorization_evidence_valid": {
+          "type": "boolean"
+        },
+        "clocks_synchronized": {
+          "type": "boolean"
+        },
+        "baseline_valid": {
+          "type": "boolean"
+        },
+        "configuration_custody_valid": {
+          "type": "boolean"
+        },
         "transformation_history": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "limitations": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1}
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -98,16 +180,42 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["object_id", "role", "raw_or_derived", "sha256", "media_type"],
+        "required": [
+          "object_id",
+          "role",
+          "raw_or_derived",
+          "sha256",
+          "media_type"
+        ],
         "properties": {
-          "object_id": {"type": "string", "minLength": 1},
-          "role": {"type": "string", "minLength": 1},
-          "raw_or_derived": {"enum": ["raw", "derived"]},
+          "object_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "raw_or_derived": {
+            "enum": [
+              "raw",
+              "derived"
+            ]
+          },
           "sha256": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "pattern": "^[0-9a-f]{64}$"
           },
-          "media_type": {"type": ["string", "null"], "minLength": 1}
+          "media_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          }
         }
       }
     },
@@ -126,22 +234,114 @@
           "meter_id"
         ],
         "properties": {
-          "timestamp_s": {"type": "number", "minimum": 0},
-          "measured_power_mw": {"type": "number", "minimum": 0},
-          "workload_pause_mw": {"type": "number", "minimum": 0},
-          "workload_migration_mw": {"type": "number", "minimum": 0},
-          "battery_discharge_mw": {"type": "number", "minimum": 0},
-          "onsite_generation_mw": {"type": "number", "minimum": 0},
-          "hvac_reduction_mw": {"type": "number", "minimum": 0},
-          "telemetry_fresh": {"type": "boolean"},
-          "meter_provenance_valid": {"type": "boolean"},
-          "configuration_id": {"type": "string", "minLength": 1},
-          "meter_id": {"type": "string", "minLength": 1}
+          "timestamp_s": {
+            "type": "number",
+            "minimum": 0
+          },
+          "measured_power_mw": {
+            "type": "number",
+            "minimum": 0
+          },
+          "workload_pause_mw": {
+            "type": "number",
+            "minimum": 0
+          },
+          "workload_migration_mw": {
+            "type": "number",
+            "minimum": 0
+          },
+          "battery_discharge_mw": {
+            "type": "number",
+            "minimum": 0
+          },
+          "onsite_generation_mw": {
+            "type": "number",
+            "minimum": 0
+          },
+          "hvac_reduction_mw": {
+            "type": "number",
+            "minimum": 0
+          },
+          "telemetry_fresh": {
+            "type": "boolean"
+          },
+          "meter_provenance_valid": {
+            "type": "boolean"
+          },
+          "configuration_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "meter_id": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
     "auxiliary_evidence": {
       "type": "object"
+    },
+    "custody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_start_utc",
+        "event_end_utc",
+        "timezone",
+        "baseline_uncertainty_mw",
+        "transformation_tool",
+        "transformation_tool_version",
+        "redaction_statement"
+      ],
+      "properties": {
+        "event_start_utc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "event_end_utc": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "timezone": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "baseline_uncertainty_mw": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "transformation_tool": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "transformation_tool_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "redaction_statement": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     }
   }
 }
