@@ -32,6 +32,15 @@ def complete_bundle():
             "transformation_history": ["none"],
             "limitations": ["cluster-only measurement boundary"],
         },
+        "custody": {
+            "event_start_utc": "2026-10-01T12:00:00Z",
+            "event_end_utc": "2026-10-01T12:12:00Z",
+            "timezone": "UTC",
+            "baseline_uncertainty_mw": 0.5,
+            "transformation_tool": "partner-export",
+            "transformation_tool_version": "1.0",
+            "redaction_statement": "none",
+        },
         "source_objects": [
             {
                 "object_id": "cluster-power.csv",
@@ -139,6 +148,37 @@ def test_template_placeholders_are_preflight_blockers():
     report = preflight_partner_bundle(value)
     assert report.replay_ready is False
     assert "configuration_id_invalid_or_placeholder" in report.blockers
+
+
+def test_missing_optional_custody_values_are_warnings_not_blockers():
+    value = complete_bundle()
+    value["custody"]["event_start_utc"] = None
+    value["custody"]["baseline_uncertainty_mw"] = None
+    report = preflight_partner_bundle(value)
+    assert report.replay_ready is True
+    assert "custody_event_start_utc_not_provided" in report.warnings
+    assert "custody_baseline_uncertainty_mw_not_provided" in report.warnings
+
+
+def test_missing_custody_object_is_structural_blocker():
+    value = complete_bundle()
+    del value["custody"]
+    report = preflight_partner_bundle(value)
+    assert report.replay_ready is False
+    assert "custody_object_missing" in report.blockers
+
+
+def test_redaction_placeholder_is_preflight_blocker():
+    value = complete_bundle()
+    value["custody"]["redaction_statement"] = (
+        "replace-with-redaction-or-pseudonymization-statement"
+    )
+    report = preflight_partner_bundle(value)
+    assert report.replay_ready is False
+    assert (
+        "custody_redaction_statement_invalid_or_placeholder"
+        in report.blockers
+    )
 
 
 def test_missing_source_hash_is_warning_not_blocker():
