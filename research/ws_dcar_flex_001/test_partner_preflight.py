@@ -104,12 +104,23 @@ def test_preflight_does_not_replace_verdict():
     assert result["verdict"] == Verdict.NONCOMPLIANT.value
 
 
-def test_missing_authorization_identifier_blocks_replay_readiness():
+def test_explicitly_absent_authorization_identifier_is_replayable_evidence_gap():
     value = complete_bundle()
     value["partner_context"]["authorization_record_id"] = None
     report = preflight_partner_bundle(value)
+    assert report.replay_ready is True
+    assert "authorization_record_id_not_provided" in report.warnings
+    result = replay_partner_bundle(value)
+    assert result["verdict"] == Verdict.INSUFFICIENT_EVIDENCE.value
+    assert "authorization_evidence_invalid" in result["reasons"]
+
+
+def test_omitted_authorization_field_is_structural_blocker():
+    value = complete_bundle()
+    del value["partner_context"]["authorization_record_id"]
+    report = preflight_partner_bundle(value)
     assert report.replay_ready is False
-    assert "authorization_record_id_missing_or_placeholder" in report.blockers
+    assert "authorization_record_id_field_missing" in report.blockers
 
 
 def test_declared_invalid_evidence_is_warning_not_structural_blocker():
@@ -127,7 +138,7 @@ def test_template_placeholders_are_preflight_blockers():
     value["partner_context"]["configuration_id"] = "replace-with-configuration-id"
     report = preflight_partner_bundle(value)
     assert report.replay_ready is False
-    assert "configuration_id_missing_or_placeholder" in report.blockers
+    assert "configuration_id_invalid_or_placeholder" in report.blockers
 
 
 def test_missing_source_hash_is_warning_not_blocker():
