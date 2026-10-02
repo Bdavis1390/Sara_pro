@@ -1,0 +1,59 @@
+{
+  "schema_version": "ws-dcar.partner-event/v0.1",
+  "request": {
+    "requested_reduction_mw": 0.0,
+    "response_deadline_s": 0.0,
+    "required_duration_s": 0.0,
+    "max_measured_power_mw": 0.0
+  },
+  "baseline_mw": 0.0,
+  "partner_context": {
+    "source_organization": "replace-with-partner-organization",
+    "project_or_dataset_id": "replace-with-project-or-event-id",
+    "measurement_boundary": "cluster",
+    "request_id": null,
+    "authorization_record_id": null,
+    "clock_source": null,
+    "baseline_method": null,
+    "configuration_id": null,
+    "meter_id": null,
+    "authorized": false,
+    "request_provenance_valid": false,
+    "authorization_evidence_valid": false,
+    "clocks_synchronized": false,
+    "baseline_valid": false,
+    "configuration_custody_valid": false,
+    "transformation_history": [],
+    "limitations": [
+      "template only: replace placeholder values and declare evidence limitations before replay"
+    ]
+  },
+  "source_objects": [
+    {
+      "object_id": "replace-with-source-object-id",
+      "role": "primary_measurement",
+      "raw_or_derived": "raw",
+      "sha256": null,
+      "media_type": null
+    }
+  ],
+  "points": [
+    {
+      "timestamp_s": 0.0,
+      "measured_power_mw": 0.0,
+      "telemetry_fresh": false,
+      "meter_provenance_valid": false,
+      "configuration_id": "replace-with-configuration-id",
+      "meter_id": "replace-with-meter-or-sensor-id"
+    },
+    {
+      "timestamp_s": 1.0,
+      "measured_power_mw": 0.0,
+      "telemetry_fresh": false,
+      "meter_provenance_valid": false,
+      "configuration_id": "replace-with-configuration-id",
+      "meter_id": "replace-with-meter-or-sensor-id"
+    }
+  ],
+  "auxiliary_evidence": {}
+}
