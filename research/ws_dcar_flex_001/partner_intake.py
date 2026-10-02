@@ -87,6 +87,13 @@ def _optional_number(
     return _required_number(mapping, field)
 
 
+def _nullable_number(mapping: Mapping[str, Any], field: str) -> float | None:
+    value = mapping.get(field)
+    if value is None:
+        return None
+    return _required_number(mapping, field)
+
+
 def _normalize_source_objects(value: object) -> list[dict[str, Any]]:
     if not isinstance(value, list) or not value:
         raise ValueError("source_objects must contain at least one source object")
@@ -227,6 +234,25 @@ def build_partner_intake_payload(bundle: dict[str, Any]) -> dict[str, Any]:
     source_objects = _normalize_source_objects(bundle.get("source_objects"))
     baseline_mw = _required_number(bundle, "baseline_mw")
 
+    custody_data = _mapping(bundle.get("custody"), "custody")
+    partner_custody = {
+        "event_start_utc": _optional_str(custody_data, "event_start_utc"),
+        "event_end_utc": _optional_str(custody_data, "event_end_utc"),
+        "timezone": _optional_str(custody_data, "timezone"),
+        "baseline_uncertainty_mw": _nullable_number(
+            custody_data, "baseline_uncertainty_mw"
+        ),
+        "transformation_tool": _optional_str(
+            custody_data, "transformation_tool"
+        ),
+        "transformation_tool_version": _optional_str(
+            custody_data, "transformation_tool_version"
+        ),
+        "redaction_statement": _required_str(
+            custody_data, "redaction_statement"
+        ),
+    }
+
     payload = build_partner_replay_payload(
         request,
         baseline_mw,
@@ -249,6 +275,7 @@ def build_partner_intake_payload(bundle: dict[str, Any]) -> dict[str, Any]:
                 "measured_power_mw is interpreted only at the declared "
                 "measurement_boundary"
             ),
+            "partner_custody": partner_custody,
         }
     )
 
