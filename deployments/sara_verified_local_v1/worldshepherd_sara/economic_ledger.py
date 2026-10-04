@@ -68,6 +68,8 @@ class EconomicLedgerRecord:
     decision_json: str | None
     authorization_status: str
     authorization_ref: str | None
+    authorization_digest_sha256: str | None
+    authorization_nonce: str | None
     consumption_status: str
     failure_code: str | None
     adapter_receipt_ref: str | None
@@ -179,7 +181,9 @@ class EconomicAuthorizationLedger:
                     decision_json TEXT,
                     authorization_status TEXT NOT NULL
                         CHECK (authorization_status IN ('NOT_BOUND', 'PRIME_VERIFIED', 'REJECTED')),
-                    authorization_ref TEXT,
+                    authorization_ref TEXT UNIQUE,
+                    authorization_digest_sha256 TEXT UNIQUE,
+                    authorization_nonce TEXT UNIQUE,
                     consumption_status TEXT NOT NULL
                         CHECK (consumption_status IN ('UNCONSUMED', 'DRY_RUN_CONSUMED')),
                     failure_code TEXT,
@@ -494,12 +498,31 @@ class EconomicAuthorizationLedger:
         intent_id: str,
         status: AuthorizationStatus,
         authorization_ref: str | None,
+        authorization_digest_sha256: str | None = None,
+        authorization_nonce: str | None = None,
         now: datetime | None = None,
     ) -> EconomicLedgerRecord:
+        if status not in {"NOT_BOUND", "PRIME_VERIFIED", "REJECTED"}:
+            raise EconomicInvalidTransition("unknown economic authorization status")
         if status == "NOT_BOUND":
             raise EconomicInvalidTransition("NOT_BOUND is the initial state, not an authorization result")
-        if status == "PRIME_VERIFIED" and not authorization_ref:
-            raise EconomicInvalidTransition("PRIME_VERIFIED requires an authorization reference")
+        if status == "PRIME_VERIFIED":
+            if not authorization_ref:
+                raise EconomicInvalidTransition(
+                    "PRIME_VERIFIED requires an authorization reference"
+                )
+            if not authorization_nonce:
+                raise EconomicInvalidTransition(
+                    "PRIME_VERIFIED requires an authorization nonce"
+                )
+            if (
+                authorization_digest_sha256 is None
+                or len(authorization_digest_sha256) != 64
+                or any(ch not in "0123456789abcdef" for ch in authorization_digest_sha256)
+            ):
+                raise EconomicInvalidTransition(
+                    "PRIME_VERIFIED requires a lowercase SHA-256 authorization digest"
+                )
 
         connection = self._connect()
         try:
@@ -516,26 +539,66 @@ class EconomicAuthorizationLedger:
                 if (
                     record.authorization_status == status
                     and record.authorization_ref == authorization_ref
+                    and record.authorization_digest_sha256 == authorization_digest_sha256
+                    and record.authorization_nonce == authorization_nonce
                 ):
                     connection.commit()
                     return record
                 raise EconomicInvalidTransition("authorization result is already recorded")
 
+            if status == "PRIME_VERIFIED":
+                replay = connection.execute(
+                    """
+                    SELECT intent_id FROM economic_intents
+                    WHERE intent_id<>?
+                      AND (
+                        authorization_ref=?
+                        OR authorization_digest_sha256=?
+                        OR authorization_nonce=?
+                      )
+                    LIMIT 1
+                    """,
+                    (
+                        intent_id,
+                        authorization_ref,
+                        authorization_digest_sha256,
+                        authorization_nonce,
+                    ),
+                ).fetchone()
+                if replay is not None:
+                    raise EconomicReplayDetected(
+                        "PRIME economic authorization has already been bound to another intent"
+                    )
+
             authorization_at = _utc_iso(now or datetime.now(timezone.utc))
             connection.execute(
                 """
                 UPDATE economic_intents
-                SET authorization_status=?, authorization_ref=?, authorization_at=?
+                SET authorization_status=?, authorization_ref=?,
+                    authorization_digest_sha256=?, authorization_nonce=?,
+                    authorization_at=?
                 WHERE intent_id=? AND authorization_status='NOT_BOUND'
                 """,
-                (status, authorization_ref, authorization_at, intent_id),
+                (
+                    status,
+                    authorization_ref,
+                    authorization_digest_sha256,
+                    authorization_nonce,
+                    authorization_at,
+                    intent_id,
+                ),
             )
             self._append_event(
                 connection,
                 intent_id=intent_id,
                 event_type="AUTHORIZATION_RECORDED",
                 event_time=authorization_at,
-                payload={"status": status, "authorization_ref": authorization_ref},
+                payload={
+                    "status": status,
+                    "authorization_ref": authorization_ref,
+                    "authorization_digest_sha256": authorization_digest_sha256,
+                    "authorization_nonce": authorization_nonce,
+                },
             )
             connection.commit()
             updated = connection.execute(
