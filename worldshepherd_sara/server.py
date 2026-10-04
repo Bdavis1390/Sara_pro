@@ -12,6 +12,8 @@ from worldshepherd_sara.gpt_assistant import router as gpt_assistant_router
 from worldshepherd_sara.blockchain_console import router as blockchain_console_router
 from worldshepherd_sara.worldshepherd_gateway import router as worldshepherd_gateway_router
 from worldshepherd_sara.account_core import router as account_core_router
+from worldshepherd_sara.world_evidence_db import router as world_evidence_db_router
+from worldshepherd_sara.world_actual_evidence import router as world_actual_evidence_router
 
 APP_NAME = "Worldshepherd SARA / SSPADAWANZZ Admin Interface"
 DATA_DIR = Path(os.getenv("SARA_DATA_DIR", "data"))
@@ -58,6 +60,8 @@ app.include_router(gpt_assistant_router)
 app.include_router(blockchain_console_router)
 app.include_router(worldshepherd_gateway_router)
 app.include_router(account_core_router)
+app.include_router(world_evidence_db_router)
+app.include_router(world_actual_evidence_router)
 
 
 def now() -> float:
