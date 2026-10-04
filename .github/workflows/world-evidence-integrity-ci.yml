@@ -29,4 +29,6 @@ jobs:
       - name: Validate shell syntax
         run: bash -n scripts/world_memory_validate.sh
       - name: Run evidence integrity regressions
-        run: pytest -q tests/test_world_evidence_integrity.py
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python -m pytest -q tests/test_world_evidence_integrity.py
