@@ -134,6 +134,29 @@ def economic_intent_sha256(intent: EconomicPaymentIntent) -> str:
     return hashlib.sha256(canonical_economic_intent_message(intent)).hexdigest()
 
 
+def canonical_economic_policy_message(policy: EconomicAuthorizationPolicy) -> bytes:
+    """Return a deterministic policy representation that binds policy identity to content."""
+
+    payload = {
+        "schema": policy.schema,
+        "policy_id": policy.policy_id,
+        "session_id": policy.session_id,
+        "allowed_protocols": sorted(policy.allowed_protocols),
+        "allowed_networks": sorted(policy.allowed_networks),
+        "allowed_assets": sorted(policy.allowed_assets),
+        "allowed_payees": sorted(policy.allowed_payees),
+        "max_per_transaction": str(policy.max_per_transaction),
+        "max_session_total": str(policy.max_session_total),
+        "require_human_approval": policy.require_human_approval,
+        "expires_at": _utc_iso(policy.expires_at),
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def economic_policy_sha256(policy: EconomicAuthorizationPolicy) -> str:
+    return hashlib.sha256(canonical_economic_policy_message(policy)).hexdigest()
+
+
 def evaluate_economic_intent(
     intent: EconomicPaymentIntent,
     policy: EconomicAuthorizationPolicy,
