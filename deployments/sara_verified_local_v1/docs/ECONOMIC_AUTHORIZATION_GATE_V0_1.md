@@ -1,6 +1,6 @@
 # Worldshepherd Economic Authorization Gate v0.1
 
-**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE LEDGER + G2 PRIME SIGNATURE BINDING + G3 ECHO SEMANTIC PROVENANCE IMPLEMENTED ON FEATURE BRANCH
+**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE LEDGER + G2 PRIME SIGNATURE BINDING + G3 ECHO SEMANTIC PROVENANCE + G4A READ-ONLY X402 TESTNET DISCOVERY IMPLEMENTED ON FEATURE BRANCH
 **Primary umbrella:** ACTIVE 1/3 — Platform & Assurance (#281)
 **Secondary dependency:** ACTIVE 3/3 — Growth & Externalization (#283)
 
@@ -159,18 +159,46 @@ The end-to-end software test exercises:
 
 No adapter or external economic provider is contacted by G3.
 
-## G4 — sandbox adapter
+## G4A — read-only x402 testnet discovery
 
-The next gate is exactly one external sandbox/test adapter. It must:
+`worldshepherd_sara/x402_readonly_adapter.py` adds the first bounded external x402 integration surface without enabling payment.
+
+The adapter:
+
+- performs exactly one `GET` against `https://x402.org/facilitator/supported`;
+- sends no Authorization or PAYMENT-SIGNATURE header;
+- contains no wallet, private key, API credential, `/verify`, or `/settle` capability;
+- accepts only x402 v2 + `exact` + Base Sepolia `eip155:84532`;
+- ignores rather than auto-promotes mainnet or other schemes/networks;
+- bounds the response body to 64 KiB;
+- computes a deterministic semantic capability digest.
+
+A live read-only probe from the authorized Lenovo on 2026-10-04 returned HTTP 200 and confirmed the explicitly approved capability:
+
+`x402Version=2 / scheme=exact / network=eip155:84532`
+
+with semantic capability SHA-256:
+
+`88a627bbe4fc3c2e82ede88598c5ad23fedd3b48197c34d8c903d20e44cf15cc`
+
+This is capability discovery only. It is not a payment, verification, settlement, wallet, or x402 conformance claim.
+
+## G4B — sandbox challenge adapter
+
+The next payment-facing gate is a challenge-only x402 sandbox/testnet adapter. It must:
 
 - contain no production credential;
-- use a zero-value or test-only asset;
+- accept only Base Sepolia or another explicitly approved test network;
+- fetch and parse a real `402 Payment Required` challenge without signing or paying it;
+- bind the advertised amount, asset, payee, scheme, network, timeout, and resource to the G1/G2 authorization envelope;
 - prohibit mainnet/production destinations;
 - be kill-switchable;
 - preserve the G1/G2/G3 semantic contract;
 - produce deterministic evidence;
-- demonstrate denial on policy mismatch, replay, expired authorization, destination mutation, and amount escalation;
+- demonstrate denial on policy mismatch, replay, expired authorization, destination mutation, amount escalation, unsupported payment flow, and malformed challenge;
 - never reinterpret a transport/provider success as authority to exceed the Worldshepherd authorization envelope.
+
+A later gate, separate from G4B, would be required before any signed testnet payment is even considered.
 
 ## G5 — cross-protocol conformance
 
@@ -182,7 +210,7 @@ The target semantic sequence is:
 
 ## Validation
 
-The focused G1/G2/G3 test set currently covers 38 tests and passes in an isolated Python 3.12 container on the authorized Lenovo environment.
+The focused G1/G2/G3/G4A test set currently covers 46 tests and passes in an isolated Python 3.12 container on the authorized Lenovo environment.
 
 This focused result does not substitute for the repository's complete protected CI gate. The feature remains draft until the relevant GitHub checks settle successfully and human review accepts the change.
 
@@ -190,14 +218,14 @@ This focused result does not substitute for the repository's complete protected 
 
 Current feature-branch claim:
 
-**IMPLEMENTED IN SOFTWARE:** protocol-neutral dry-run economic-intent evaluation, canonical policy binding, durable replay protection, serialized session-budget reservation, dry-run consumption state, local hash-linked event evidence, public-key verification plus durable binding of PRIME economic authorization assertions, and SARA-to-ECHO semantic economic provenance with exact replay deduplication and reconciliation.
+**IMPLEMENTED IN SOFTWARE:** protocol-neutral dry-run economic-intent evaluation, canonical policy binding, durable replay protection, serialized session-budget reservation, dry-run consumption state, local hash-linked event evidence, public-key verification plus durable binding of PRIME economic authorization assertions, SARA-to-ECHO semantic economic provenance with exact replay deduplication and reconciliation, and a read-only x402 v2 Base Sepolia capability-discovery adapter.
 
 Not currently claimed:
 
 - production payment execution;
 - wallet custody;
 - production PRIME economic authorization issuance/service deployment;
-- x402/AP2/MPP conformance;
+- x402 payment/conformance, AP2 conformance, or MPP conformance;
 - financial-services compliance;
 - PCI, SOC, FedRAMP, CMMC, RMF, banking, money-transmitter, or other regulatory certification;
 - partner validation;
