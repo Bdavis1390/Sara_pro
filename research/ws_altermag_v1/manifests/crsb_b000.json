@@ -1,0 +1,40 @@
+{
+  "state": {
+    "material_id": "CrSb-reference-symmetry",
+    "model_revision": "ws-altermag-analytic-gwave-1",
+    "orientation_hkl": "bulk-reference",
+    "thickness_nm": null,
+    "temperature_K": 300.0,
+    "strain_tensor": [],
+    "interface_stack": [],
+    "execution_mode": "synthetic"
+  },
+  "physical_reference": {
+    "basis": "g-wave B1g-like angular form only",
+    "note": "Synthetic amplitudes and relaxation parameters below are not experimental CrSb values."
+  },
+  "synthetic_truth": {
+    "amplitude": 0.8,
+    "tau": 1.4
+  },
+  "noise_sigma": 0.0025,
+  "seed": 9675,
+  "measurement_grid": [
+    {"ef": -0.6, "theta_deg": 35.0, "phi_deg": 10.0},
+    {"ef": -0.6, "theta_deg": 55.0, "phi_deg": 30.0},
+    {"ef": -0.6, "theta_deg": 70.0, "phi_deg": 50.0},
+    {"ef": -0.2, "theta_deg": 35.0, "phi_deg": 10.0},
+    {"ef": -0.2, "theta_deg": 55.0, "phi_deg": 30.0},
+    {"ef": -0.2, "theta_deg": 70.0, "phi_deg": 50.0},
+    {"ef": 0.2, "theta_deg": 35.0, "phi_deg": 10.0},
+    {"ef": 0.2, "theta_deg": 55.0, "phi_deg": 30.0},
+    {"ef": 0.2, "theta_deg": 70.0, "phi_deg": 50.0},
+    {"ef": 0.6, "theta_deg": 35.0, "phi_deg": 10.0},
+    {"ef": 0.6, "theta_deg": 55.0, "phi_deg": 30.0},
+    {"ef": 0.6, "theta_deg": 70.0, "phi_deg": 50.0}
+  ],
+  "acceptance": {
+    "amplitude_abs": 0.03,
+    "tau_abs": 0.05
+  }
+}
