@@ -70,7 +70,11 @@ request_json "GET" "08_memory_verify" "$BASE/world/memory/verify"
 
 echo
 echo "[WORLD] Running smoke suites..."
-./scripts/world_controller_realtime_smoke_test.sh | tee "$OUT/09_realtime_smoke.txt"
+if [ -x ./scripts/world_controller_realtime_smoke_test.sh ]; then
+  ./scripts/world_controller_realtime_smoke_test.sh | tee "$OUT/09_realtime_smoke.txt"
+else
+  echo "[WORLD] realtime smoke suite not tracked; skipping optional legacy smoke" | tee "$OUT/09_realtime_smoke.txt"
+fi
 ./scripts/world_ingest_all_evidence_db.sh | tee "$OUT/10_ingest.json"
 ./scripts/world_evidence_db_smoke_test.sh | tee "$OUT/11_evidence_db_smoke.txt"
 

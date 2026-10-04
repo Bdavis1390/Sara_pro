@@ -5,17 +5,20 @@ import json
 import os
 import sqlite3
 import time
+from contextvars import ContextVar
 from pathlib import Path
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 
 router = APIRouter(prefix="/world", tags=["world-actual-evidence"])
+_link_token: ContextVar[str] = ContextVar("world_evidence_link_token", default="")
 
 
 def _repo_root() -> Path:
-    return Path.cwd()
+    return Path(os.environ.get("WORLD_REPO_DIR", os.getcwd())).expanduser().resolve()
 
 
 def _db_path() -> Path:
@@ -50,6 +53,7 @@ def _authorized(request: Request, token: Optional[str], x_sara_admin_token: Opti
 def _require_auth(request: Request, token: Optional[str], x_sara_admin_token: Optional[str]) -> None:
     if not _authorized(request, token, x_sara_admin_token):
         raise HTTPException(status_code=403, detail="WORLD CONTROLLER evidence access requires admin token")
+    _link_token.set((token or "").strip())
 
 
 def _connect() -> sqlite3.Connection:
@@ -108,8 +112,18 @@ def _truncate(text: Any, n: int = 600) -> str:
     return text if len(text) <= n else text[:n] + "…"
 
 
+def _auth_href(href: str) -> str:
+    token = _link_token.get()
+    if not token or not href.startswith("/"):
+        return href
+    parts = urlsplit(href)
+    query = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query.setdefault("token", token)
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
 def _link(href: str, label: str) -> str:
-    return f'<a href="{_h(href)}">{_h(label)}</a>'
+    return f'<a href="{_h(_auth_href(href))}">{_h(label)}</a>'
 
 
 def _page(title: str, body: str) -> HTMLResponse:
@@ -227,7 +241,7 @@ def evidence_index(request: Request, token: str | None = Query(default=None), x_
         <div class="card"><h3>Ark Snapshots</h3><p class="ok">{counts['ark_snapshots']}</p></div>
       </div>
     </div>
-    <div class="card"><h2>Search Actual Evidence</h2><form action="/world/evidence/search"><input type="text" name="q" placeholder="Search evidence, source paths, hashes, projects..." value="Worldshepherd"><button>Search</button></form></div>
+    <div class="card"><h2>Search Actual Evidence</h2><form action="/world/evidence/search">{f'<input type="hidden" name="token" value="{_h(token)}">' if token else ''}<input type="text" name="q" placeholder="Search evidence, source paths, hashes, projects..." value="Worldshepherd"><button>Search</button></form></div>
     <div class="card"><h2>Latest Sources</h2>{''.join(_source_card(s) for s in latest_sources) or '<p>No sources found.</p>'}</div>
     <div class="card"><h2>Latest Evidence</h2>{''.join(_evidence_card(e) for e in latest_evidence) or '<p>No evidence found.</p>'}</div>
     """
@@ -252,7 +266,7 @@ def evidence_search(request: Request, q: str = Query(default=""), token: str | N
         </div>
         """)
     body = f"""
-    <div class="card"><h2>Search Results</h2><p><b>Query:</b> {_h(q)} · <b>Results:</b> {len(results)}</p><form action="/world/evidence/search"><input type="text" name="q" value="{_h(q)}"><button>Search</button></form></div>
+    <div class="card"><h2>Search Results</h2><p><b>Query:</b> {_h(q)} · <b>Results:</b> {len(results)}</p><form action="/world/evidence/search">{f'<input type="hidden" name="token" value="{_h(token)}">' if token else ''}<input type="text" name="q" value="{_h(q)}"><button>Search</button></form></div>
     {''.join(cards) if cards else '<div class="card"><p>No matching evidence found.</p></div>'}
     """
     return _page(f"Evidence Search — {q}", body)
@@ -341,7 +355,19 @@ def evidence_project(slug: str, request: Request, token: str | None = Query(defa
     project = None
     if _table_exists(con, "projects"):
         project = _row_to_dict(con.execute("SELECT * FROM projects WHERE slug=? OR title=?", (slug, slug)).fetchone())
-    results = _search(con, slug, 100)
+    results = []
+    if _table_exists(con, "evidence"):
+        rows = con.execute(
+            """SELECT e.id, e.source_id, e.content, e.mime_type, e.dossier_category,
+                      e.created_at, s.uri, s.hash, s.source_type
+               FROM evidence e
+               LEFT JOIN sources s ON s.id=e.source_id
+               WHERE e.project_slug=?
+               ORDER BY e.updated_at DESC
+               LIMIT 100""",
+            (slug,),
+        ).fetchall()
+        results = [_row_to_dict(r) for r in rows]
     con.close()
     metadata = _safe_json_loads(project.get("metadata")) if project else None
     body = f"""

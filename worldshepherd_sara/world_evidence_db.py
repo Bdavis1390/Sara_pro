@@ -402,6 +402,22 @@ def _source_type(path: Path) -> str:
     return "local_file"
 
 
+def _rebuild_fts(con: sqlite3.Connection) -> None:
+    """Rebuild the contentless FTS index from authoritative evidence rows."""
+    try:
+        con.execute("INSERT INTO evidence_fts(evidence_fts) VALUES('delete-all')")
+        con.execute(
+            """INSERT INTO evidence_fts(rowid,content,title,project_slug,dossier_category,summary)
+               SELECT e.id,e.content,s.title,e.project_slug,e.dossier_category,
+                      COALESCE(e.summary,'')
+               FROM evidence e JOIN sources s ON s.id=e.source_id"""
+        )
+    except sqlite3.OperationalError as exc:
+        # FTS5 is optional, but a present/broken FTS table must never fail silently.
+        if "no such table" not in str(exc).lower():
+            raise
+
+
 def _upsert_doc(con: sqlite3.Connection, path: Path, force: bool = False) -> Tuple[bool, Optional[int]]:
     stat = path.stat()
     file_hash = _hash_file(path)
@@ -441,23 +457,22 @@ def _upsert_doc(con: sqlite3.Connection, path: Path, force: bool = False) -> Tup
             "UPDATE evidence SET content=?,mime_type=?,dossier_category=?,project_slug=?,risk_flags=?,summary=?,updated_at=? WHERE id=?",
             (text, mime, _source_type(path), slug, _json(risks), _json(summ), _now(), evidence_id),
         )
-        try:
-            con.execute("DELETE FROM evidence_fts WHERE rowid=?", (evidence_id,))
-        except Exception:
-            pass
+        _rebuild_fts(con)
     else:
         cur = con.execute(
             "INSERT INTO evidence(source_id,content,mime_type,dossier_category,project_slug,risk_flags,summary,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?)",
             (source_id, text, mime, _source_type(path), slug, _json(risks), _json(summ), _now(), _now()),
         )
         evidence_id = cur.lastrowid
-    try:
-        con.execute(
-            "INSERT INTO evidence_fts(rowid,content,title,project_slug,dossier_category,summary) VALUES(?,?,?,?,?,?)",
-            (evidence_id, text, path.name, slug, _source_type(path), " ".join(summ)),
-        )
-    except Exception:
-        pass
+    if not old:
+        try:
+            con.execute(
+                "INSERT INTO evidence_fts(rowid,content,title,project_slug,dossier_category,summary) VALUES(?,?,?,?,?,?)",
+                (evidence_id, text, path.name, slug, _source_type(path), " ".join(summ)),
+            )
+        except sqlite3.OperationalError as exc:
+            if "no such table" not in str(exc).lower():
+                raise
     return True, evidence_id
 
 
