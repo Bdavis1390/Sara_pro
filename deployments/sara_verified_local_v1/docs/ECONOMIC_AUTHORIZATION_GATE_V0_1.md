@@ -1,6 +1,6 @@
 # Worldshepherd Economic Authorization Gate v0.1
 
-**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE REPLAY/BUDGET LEDGER IMPLEMENTED ON FEATURE BRANCH
+**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE LEDGER + G2 PRIME SIGNATURE BINDING IMPLEMENTED ON FEATURE BRANCH
 **Primary umbrella:** ACTIVE 1/3 — Platform & Assurance (#281)
 **Secondary dependency:** ACTIVE 3/3 — Growth & Externalization (#283)
 
@@ -105,23 +105,27 @@ A dry-run decision that is `ALLOWED` reserves its amount against the bounded ses
 
 `DRY_RUN_CONSUMED` is simulation state only. It does not imply payment, settlement, wallet access, or external provider execution.
 
-## Next gate: G2 — PRIME SENTINEL signature binding
+## G2 — PRIME SENTINEL signature binding
 
-Define a separate economic-authorization assertion signed by PRIME SENTINEL and cryptographically bound to:
+`worldshepherd_sara/economic_prime_authorization.py` now implements a public-key-only verification boundary for a separate economic authorization assertion.
 
-- intent digest;
-- policy digest and policy ID;
+The signed assertion is bound to:
+
+- authorization ID and one-time authorization nonce;
+- intent ID and canonical intent digest;
+- policy ID and canonical policy digest;
 - session ID;
-- authorized amount;
-- payee;
-- protocol/network/asset;
-- expiry;
-- human-approval identity/reference;
-- one-time nonce.
+- protocol, network, asset, and payee;
+- exact authorized amount;
+- human-approval reference;
+- issuance and expiry times;
+- PRIME SENTINEL key ID.
 
-The ledger already has an authorization-state slot, but **G1 does not itself verify a PRIME signature**. `PRIME_VERIFIED` must only be written by the future G2 integration after successful cryptographic verification.
+The verifier uses the existing PRIME SENTINEL Ed25519 public-key verifier. It has no private signing key and cannot issue an authorization.
 
-Private signing key custody must remain outside SARA.
+The G2 integration helper re-checks the verified intent digest, policy binding, session, and durable `ALLOWED` decision before writing `PRIME_VERIFIED` into the G1 ledger. The ledger then enforces one-time binding of the authorization reference, signed-record digest, and authorization nonce across intents.
+
+A valid signature is necessary but not sufficient: a correctly signed assertion that changes the amount, policy digest, payee, asset, protocol, network, session, intent digest, or approval reference fails closed.
 
 ## G3 — ECHO semantic provenance
 
@@ -162,13 +166,13 @@ The target semantic sequence is:
 
 Current feature-branch claim:
 
-**IMPLEMENTED IN SOFTWARE:** protocol-neutral dry-run economic-intent evaluation, canonical policy binding, durable replay protection, serialized session-budget reservation, dry-run consumption state, and local hash-linked event evidence.
+**IMPLEMENTED IN SOFTWARE:** protocol-neutral dry-run economic-intent evaluation, canonical policy binding, durable replay protection, serialized session-budget reservation, dry-run consumption state, local hash-linked event evidence, and public-key verification plus durable binding of PRIME economic authorization assertions.
 
 Not currently claimed:
 
 - production payment execution;
 - wallet custody;
-- production PRIME economic signature binding;
+- production PRIME economic authorization issuance/service deployment;
 - x402/AP2/MPP conformance;
 - financial-services compliance;
 - PCI, SOC, FedRAMP, CMMC, RMF, banking, money-transmitter, or other regulatory certification;
