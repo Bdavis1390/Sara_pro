@@ -20,6 +20,7 @@ from worldshepherd_sara.economic_ledger import (
 from worldshepherd_sara.economic_prime_authorization import (
     EconomicPrimeAuthorizationAssertion,
     EconomicPrimeAuthorizationError,
+    bind_verified_economic_prime_authorization,
     canonical_economic_prime_authorization_message,
     verify_economic_prime_authorization,
 )
@@ -256,12 +257,9 @@ def test_verified_prime_authorization_is_bound_into_durable_ledger(tmp_path):
         policy=p,
         now=NOW,
     )
-    record = ledger.record_authorization_result(
-        intent_id=i.intent_id,
-        status="PRIME_VERIFIED",
-        authorization_ref=verified.authorization_id,
-        authorization_digest_sha256=verified.authorization_record_sha256,
-        authorization_nonce=verified.authorization_nonce,
+    record = bind_verified_economic_prime_authorization(
+        ledger,
+        verified,
         now=NOW,
     )
 
