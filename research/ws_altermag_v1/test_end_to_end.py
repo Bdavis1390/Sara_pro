@@ -33,7 +33,7 @@ def test_b000_literature_reference_adapter():
     result = validate_reference(DEFAULT_REFERENCE)
     assert result["pass"] is True
     assert result["status"] == "SUPPORTED BY LITERATURE"
-    assert result["representative_split_kT_recomputed"] == 0.41
+    assert abs(result["representative_split_kT_recomputed"] - 0.41) <= 1.0e-12
     assert all(item["is_nodal"] for item in result["phi_nodal_checks"])
     assert all(item["is_nodal"] for item in result["theta_nodal_checks"])
     assert "does not independently reproduce" in result["claim_boundary"].lower()
