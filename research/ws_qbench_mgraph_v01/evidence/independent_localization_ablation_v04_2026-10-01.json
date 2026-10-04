@@ -1,0 +1,43 @@
+{
+  "schema": "ws-qbench-mgraph/independent-localization-ablation-v0.4",
+  "date": "2026-10-01",
+  "status": "INDEPENDENT_NUMERICAL_CROSSCHECK",
+  "claim_state": [
+    "SIMULATED ONLY",
+    "PARAMETER-SENSITIVITY CONTROL",
+    "NOT AN EXACT FIGURE 4E/F REPRODUCTION"
+  ],
+  "method": {
+    "implementation": "Independent NumPy/SciPy displacement-matrix implementation using scipy.special.eval_genlaguerre",
+    "nmax": 80,
+    "omega0": 1.0,
+    "h_parallel": 0.0,
+    "h0": 0.0,
+    "eigenstates": 30,
+    "null_repetitions": 20,
+    "seed_base": 9675,
+    "hamiltonian": "Eq. (3)/End Matter E1 finite Fock-space block form with explicit h_perp/omega0 sensitivity",
+    "important_caveat": "The accessible source text does not lock the Figure 4e/f h_perp/(hbar omega0) normalization. These results are a sensitivity analysis, not a published-figure reproduction."
+  },
+  "results": [
+    {"eta":0.5,"h_perp_over_omega0":0.25,"source_mean_ipr":0.4857980465,"phase_stripped_mean_ipr":0.4861114275,"delta_sign_null_mean":0.4859321382,"delta_sign_null_std":0.0000783950,"random_phase_null_mean":0.4861303622,"source_minus_delta_null":-0.0001340918,"source_minus_phase_stripped":-0.0003133810},
+    {"eta":0.5,"h_perp_over_omega0":0.5,"source_mean_ipr":0.4452676159,"phase_stripped_mean_ipr":0.4483215468,"delta_sign_null_mean":0.4462616598,"delta_sign_null_std":0.0007979888,"random_phase_null_mean":0.4488575429,"source_minus_delta_null":-0.0009940440,"source_minus_phase_stripped":-0.0030539310},
+    {"eta":0.5,"h_perp_over_omega0":1.0,"source_mean_ipr":0.3119533078,"phase_stripped_mean_ipr":0.3421554998,"delta_sign_null_mean":0.3337682572,"delta_sign_null_std":0.0064257281,"random_phase_null_mean":0.3320895874,"source_minus_delta_null":-0.0218149494,"source_minus_phase_stripped":-0.0302021920},
+    {"eta":0.5,"h_perp_over_omega0":2.0,"source_mean_ipr":0.1778245664,"phase_stripped_mean_ipr":0.1898076177,"delta_sign_null_mean":0.1763671969,"delta_sign_null_std":0.0085238954,"random_phase_null_mean":0.1539818431,"source_minus_delta_null":0.0014573695,"source_minus_phase_stripped":-0.0119830513},
+    {"eta":0.5,"h_perp_over_omega0":5.0,"source_mean_ipr":0.1356087023,"phase_stripped_mean_ipr":0.1285606652,"delta_sign_null_mean":0.0899341547,"delta_sign_null_std":0.0054062246,"random_phase_null_mean":0.0705693691,"source_minus_delta_null":0.0456745476,"source_minus_phase_stripped":0.0070480371},
+
+    {"eta":1.0,"h_perp_over_omega0":0.25,"source_mean_ipr":0.4922667925,"phase_stripped_mean_ipr":0.4923177317,"delta_sign_null_mean":0.4922898079,"delta_sign_null_std":0.0000487909,"random_phase_null_mean":0.4922999640,"source_minus_delta_null":-0.0000230154,"source_minus_phase_stripped":-0.0000509392},
+    {"eta":1.0,"h_perp_over_omega0":0.5,"source_mean_ipr":0.4695426129,"phase_stripped_mean_ipr":0.4702549658,"delta_sign_null_mean":0.4697538938,"delta_sign_null_std":0.0006010667,"random_phase_null_mean":0.4698099507,"source_minus_delta_null":-0.0002112809,"source_minus_phase_stripped":-0.0007123529},
+    {"eta":1.0,"h_perp_over_omega0":1.0,"source_mean_ipr":0.3891119334,"phase_stripped_mean_ipr":0.3995473575,"delta_sign_null_mean":0.3933630528,"delta_sign_null_std":0.0024332912,"random_phase_null_mean":0.3925804348,"source_minus_delta_null":-0.0042511194,"source_minus_phase_stripped":-0.0104354241},
+    {"eta":1.0,"h_perp_over_omega0":2.0,"source_mean_ipr":0.2206191706,"phase_stripped_mean_ipr":0.2551091640,"delta_sign_null_mean":0.2344674917,"delta_sign_null_std":0.0090630045,"random_phase_null_mean":0.2274651983,"source_minus_delta_null":-0.0138483211,"source_minus_phase_stripped":-0.0344899934},
+    {"eta":1.0,"h_perp_over_omega0":5.0,"source_mean_ipr":0.1242717969,"phase_stripped_mean_ipr":0.1446241729,"delta_sign_null_mean":0.0976951012,"delta_sign_null_std":0.0045562071,"random_phase_null_mean":0.0833254371,"source_minus_delta_null":0.0265766957,"source_minus_phase_stripped":-0.0203523760},
+
+    {"eta":2.0,"h_perp_over_omega0":0.25,"source_mean_ipr":0.4965435090,"phase_stripped_mean_ipr":0.4965390973,"delta_sign_null_mean":0.4965313275,"delta_sign_null_std":0.0000157400,"random_phase_null_mean":0.4966049398,"source_minus_delta_null":0.0000121815,"source_minus_phase_stripped":0.0000044117},
+    {"eta":2.0,"h_perp_over_omega0":0.5,"source_mean_ipr":0.4862842693,"phase_stripped_mean_ipr":0.4862149933,"delta_sign_null_mean":0.4863101622,"delta_sign_null_std":0.0002268679,"random_phase_null_mean":0.4870198911,"source_minus_delta_null":-0.0000258929,"source_minus_phase_stripped":0.0000692760},
+    {"eta":2.0,"h_perp_over_omega0":1.0,"source_mean_ipr":0.4476228920,"phase_stripped_mean_ipr":0.4461066760,"delta_sign_null_mean":0.4472879935,"delta_sign_null_std":0.0017179198,"random_phase_null_mean":0.4498697968,"source_minus_delta_null":0.0003348985,"source_minus_phase_stripped":0.0015162160},
+    {"eta":2.0,"h_perp_over_omega0":2.0,"source_mean_ipr":0.3307765142,"phase_stripped_mean_ipr":0.3345682220,"delta_sign_null_mean":0.3384657687,"delta_sign_null_std":0.0042877529,"random_phase_null_mean":0.3437607344,"source_minus_delta_null":-0.0076892545,"source_minus_phase_stripped":-0.0037917078},
+    {"eta":2.0,"h_perp_over_omega0":5.0,"source_mean_ipr":0.1644392973,"phase_stripped_mean_ipr":0.2101174493,"delta_sign_null_mean":0.1464924444,"delta_sign_null_std":0.0111845988,"random_phase_null_mean":0.1390005583,"source_minus_delta_null":0.0179468529,"source_minus_phase_stripped":-0.0456781520}
+  ],
+  "negative_evidence": "The incremental IPR effect of the detailed source phase topology is not uniformly positive. Its sign and magnitude depend strongly on h_perp/omega0. Therefore the v0.3 lambda1 phase-null separation does not by itself establish an equally strong or normalization-independent localization advantage.",
+  "decision": "Do not claim exact Figure 4e/f localization reproduction until the source Hamiltonian normalization is locked. Treat h_perp/omega0 as an explicit sensitivity axis."
+}
