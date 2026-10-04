@@ -1,7 +1,7 @@
 # Worldshepherd Economic Authorization Gate v0.1
 
-**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE REPLAY/BUDGET LEDGER IMPLEMENTED ON FEATURE BRANCH  
-**Primary umbrella:** ACTIVE 1/3 — Platform & Assurance (#281)  
+**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE REPLAY/BUDGET LEDGER IMPLEMENTED ON FEATURE BRANCH
+**Primary umbrella:** ACTIVE 1/3 — Platform & Assurance (#281)
 **Secondary dependency:** ACTIVE 3/3 — Growth & Externalization (#283)
 
 ## Purpose
