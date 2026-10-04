@@ -1,6 +1,6 @@
 # Worldshepherd Economic Authorization Gate v0.1
 
-**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE LEDGER + G2 PRIME SIGNATURE BINDING IMPLEMENTED ON FEATURE BRANCH
+**Status:** DRY-RUN SOFTWARE GATE + G1 DURABLE LEDGER + G2 PRIME SIGNATURE BINDING + G3 ECHO SEMANTIC PROVENANCE IMPLEMENTED ON FEATURE BRANCH
 **Primary umbrella:** ACTIVE 1/3 — Platform & Assurance (#281)
 **Secondary dependency:** ACTIVE 3/3 — Growth & Externalization (#283)
 
@@ -17,8 +17,10 @@ The implementation is deliberately bounded:
 - serialize budget decisions so concurrent decisions cannot silently oversubscribe one policy budget;
 - reject consumed-intent and nonce replay;
 - maintain a hash-linked local economic event chain for tamper detection;
+- bind verified PRIME SENTINEL authorization to the exact durable intent and policy;
+- route stable, bounded semantic economic evidence through the existing SARA outbox into ECHO SENTINEL LINK;
 - fail closed for every `LIVE` payment request;
-- perform no wallet access, signing, facilitator call, token transfer, card action, or settlement.
+- perform no wallet access, production signing, facilitator call, token transfer, card action, or settlement.
 
 ## Architectural boundary
 
@@ -41,14 +43,22 @@ WS Economic Authorization Gate
 G1 Durable Economic Ledger
   replay + policy binding + budget reservation
       |
-      +--> x402 adapter       (future)
+      v
+G2 PRIME economic authorization verification
+  signed intent/policy binding
+      |
+      v
+G3 SARA economic provenance outbox
+  stable semantic evidence
+      |
+      +--> x402 adapter       (future G4)
       +--> AP2 adapter        (future)
       +--> MPP adapter        (future)
       +--> other rails        (future)
       |
       v
 ECHO SENTINEL LINK
-  semantic evidence/provenance
+  deduplication + persistence + reconciliation
       |
       v
 OVERWATCH
@@ -107,7 +117,7 @@ A dry-run decision that is `ALLOWED` reserves its amount against the bounded ses
 
 ## G2 — PRIME SENTINEL signature binding
 
-`worldshepherd_sara/economic_prime_authorization.py` now implements a public-key-only verification boundary for a separate economic authorization assertion.
+`worldshepherd_sara/economic_prime_authorization.py` implements a public-key-only verification boundary for a separate economic authorization assertion.
 
 The signed assertion is bound to:
 
@@ -129,30 +139,38 @@ A valid signature is necessary but not sufficient: a correctly signed assertion 
 
 ## G3 — ECHO semantic provenance
 
-Emit downstream semantic evidence for:
+`worldshepherd_sara/economic_provenance.py` implements a transport-neutral provenance bridge into the existing SARA event outbox and ECHO persistence path.
 
-- intent received;
-- policy evaluated;
-- decision;
-- PRIME assertion verified/rejected;
-- adapter request created;
-- provider response;
-- settlement/denial result;
-- artifact or service delivered;
-- reconciliation result.
+G3 currently records five stable semantic phases:
 
-Negative evidence and failed actions must be retained.
+- `INTENT_RECORDED`;
+- `DECISION_RECORDED`;
+- `AUTHORIZATION_RECORDED`;
+- `DRY_RUN_CONSUMED`;
+- `FAILED`.
+
+Each provenance event uses a deterministic stable event ID derived from the intent binding and phase. The existing SARA outbox provides at-least-once delivery semantics and ECHO deduplicates exact replay by stable event ID and semantic digest.
+
+The G3 payload retains decision denials, authorization rejection, and explicit failure codes as first-class negative evidence. It intentionally excludes raw provider content, wallet credentials, private signing material, and raw authorization nonces. Authorization and intent nonces are represented only by bounded identifiers or SHA-256 bindings where provenance requires them.
+
+The end-to-end software test exercises:
+
+`G1 record → G1 decision → SARA outbox → SARA audit → ECHO ingest → ECHO replay deduplication → SARA/ECHO reconciliation`.
+
+No adapter or external economic provider is contacted by G3.
 
 ## G4 — sandbox adapter
 
-Implement exactly one external sandbox/testnet adapter. The first adapter must:
+The next gate is exactly one external sandbox/test adapter. It must:
 
 - contain no production credential;
 - use a zero-value or test-only asset;
 - prohibit mainnet/production destinations;
 - be kill-switchable;
+- preserve the G1/G2/G3 semantic contract;
 - produce deterministic evidence;
-- demonstrate denial on policy mismatch, replay, expired authorization, destination mutation, and amount escalation.
+- demonstrate denial on policy mismatch, replay, expired authorization, destination mutation, and amount escalation;
+- never reinterpret a transport/provider success as authority to exceed the Worldshepherd authorization envelope.
 
 ## G5 — cross-protocol conformance
 
@@ -162,11 +180,17 @@ The target semantic sequence is:
 
 `INTENT → POLICY → AUTHORITY → EXECUTION → RECEIPT → RECONCILIATION → PROVENANCE`
 
+## Validation
+
+The focused G1/G2/G3 test set currently covers 38 tests and passes in an isolated Python 3.12 container on the authorized Lenovo environment.
+
+This focused result does not substitute for the repository's complete protected CI gate. The feature remains draft until the relevant GitHub checks settle successfully and human review accepts the change.
+
 ## Claims boundary
 
 Current feature-branch claim:
 
-**IMPLEMENTED IN SOFTWARE:** protocol-neutral dry-run economic-intent evaluation, canonical policy binding, durable replay protection, serialized session-budget reservation, dry-run consumption state, local hash-linked event evidence, and public-key verification plus durable binding of PRIME economic authorization assertions.
+**IMPLEMENTED IN SOFTWARE:** protocol-neutral dry-run economic-intent evaluation, canonical policy binding, durable replay protection, serialized session-budget reservation, dry-run consumption state, local hash-linked event evidence, public-key verification plus durable binding of PRIME economic authorization assertions, and SARA-to-ECHO semantic economic provenance with exact replay deduplication and reconciliation.
 
 Not currently claimed:
 
