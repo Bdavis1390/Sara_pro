@@ -16,6 +16,7 @@ from worldshepherd_sara.economic_ledger import (
     EconomicAuthorizationLedger,
     EconomicInvalidTransition,
     EconomicLedgerConflict,
+    EconomicLedgerError,
     EconomicReplayDetected,
 )
 
@@ -253,8 +254,5 @@ def test_database_symlink_is_rejected(tmp_path):
     ledger.db_path.rename(real_db)
     ledger.db_path.symlink_to(real_db)
 
-    with pytest.raises(EconomicInvalidTransition.__mro__[-2]):
-        pass
-
-    with pytest.raises(Exception, match="regular file"):
+    with pytest.raises(EconomicLedgerError, match="regular file"):
         EconomicAuthorizationLedger(data_dir)
