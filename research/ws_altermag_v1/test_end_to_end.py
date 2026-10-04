@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from research.ws_altermag_v1.benchmark_b000 import DEFAULT_MANIFEST, run
+from research.ws_altermag_v1.reference_b000 import DEFAULT_REFERENCE, validate_reference
 
 
 def test_b000_synthetic_end_to_end():
@@ -26,3 +27,13 @@ def test_claim_boundary_is_explicit():
     boundary = result["claim_boundary"].lower()
     assert "synthetic" in boundary
     assert "does not validate" in boundary
+
+
+def test_b000_literature_reference_adapter():
+    result = validate_reference(DEFAULT_REFERENCE)
+    assert result["pass"] is True
+    assert result["status"] == "SUPPORTED BY LITERATURE"
+    assert result["representative_split_kT_recomputed"] == 0.41
+    assert all(item["is_nodal"] for item in result["phi_nodal_checks"])
+    assert all(item["is_nodal"] for item in result["theta_nodal_checks"])
+    assert "does not independently reproduce" in result["claim_boundary"].lower()
