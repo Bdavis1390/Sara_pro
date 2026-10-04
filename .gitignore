@@ -1,2 +1,12 @@
 .env
 sara_interface.log
+# WORLD CONTROLLER generated/private runtime evidence
+data/world_evidence.db
+data/world_evidence.db-wal
+data/world_evidence.db-shm
+data/world_controller_audit.jsonl
+data/world_controller_ark/
+logs/
+__pycache__/
+*.py[cod]
+*.bak_*
