@@ -15,6 +15,7 @@ from .economic_authorization import (
     economic_intent_sha256,
     economic_policy_sha256,
 )
+from .economic_ledger import EconomicAuthorizationLedger, EconomicLedgerConflict
 from .prime_sentinel_authorization import (
     MAX_ASSERTION_LIFETIME,
     MAX_FUTURE_SKEW,
@@ -214,3 +215,51 @@ def verify_economic_prime_authorization(
         expires_at=expires,
         authorization_record_sha256=economic_prime_authorization_record_sha256(assertion),
     )
+
+
+def bind_verified_economic_prime_authorization(
+    ledger: EconomicAuthorizationLedger,
+    verified: VerifiedEconomicPrimeAuthorization,
+    *,
+    now: datetime | None = None,
+):
+    """Persist an already verified PRIME economic authorization into G1 state.
+
+    This binding step re-checks the durable intent and policy digests before
+    recording PRIME_VERIFIED, preventing a verified assertion from being
+    attached to a different durable economic intent.
+    """
+
+    record = ledger.get(verified.intent_id)
+    if record is None:
+        raise EconomicPrimeAuthorizationError(
+            "verified PRIME authorization references an unrecorded economic intent"
+        )
+    if record.intent_sha256 != verified.intent_sha256:
+        raise EconomicPrimeAuthorizationError(
+            "verified PRIME authorization intent digest does not match durable ledger"
+        )
+    if record.policy_id != verified.policy_id or record.policy_sha256 != verified.policy_sha256:
+        raise EconomicPrimeAuthorizationError(
+            "verified PRIME authorization policy binding does not match durable ledger"
+        )
+    if record.session_id != verified.session_id:
+        raise EconomicPrimeAuthorizationError(
+            "verified PRIME authorization session does not match durable ledger"
+        )
+    if record.decision_status != "ALLOWED":
+        raise EconomicPrimeAuthorizationError(
+            "verified PRIME authorization cannot bind to a non-allowed economic decision"
+        )
+
+    try:
+        return ledger.record_authorization_result(
+            intent_id=verified.intent_id,
+            status="PRIME_VERIFIED",
+            authorization_ref=verified.authorization_id,
+            authorization_digest_sha256=verified.authorization_record_sha256,
+            authorization_nonce=verified.authorization_nonce,
+            now=now,
+        )
+    except EconomicLedgerConflict as exc:
+        raise EconomicPrimeAuthorizationError(str(exc)) from exc
