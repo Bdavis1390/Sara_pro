@@ -10,7 +10,9 @@ from worldshepherd_sara.economic_authorization import (
     EconomicAuthorizationPolicy,
     EconomicPaymentIntent,
     canonical_economic_intent_message,
+    canonical_economic_policy_message,
     economic_intent_sha256,
+    economic_policy_sha256,
     evaluate_economic_intent,
 )
 
@@ -178,6 +180,22 @@ def test_canonical_intent_hash_is_stable_and_binds_material_fields():
     assert canonical_economic_intent_message(first) == canonical_economic_intent_message(same)
     assert economic_intent_sha256(first) == economic_intent_sha256(same)
     assert economic_intent_sha256(first) != economic_intent_sha256(changed)
+
+
+def test_canonical_policy_hash_is_order_independent_and_binds_limits():
+    first = _policy(
+        allowed_protocols=frozenset({"MPP", "X402", "AP2"}),
+        allowed_payees=frozenset({"merchant:test"}),
+    )
+    same = _policy(
+        allowed_protocols=frozenset({"AP2", "MPP", "X402"}),
+        allowed_payees=frozenset({"merchant:test"}),
+    )
+    changed = _policy(max_session_total=Decimal("10.01"))
+
+    assert canonical_economic_policy_message(first) == canonical_economic_policy_message(same)
+    assert economic_policy_sha256(first) == economic_policy_sha256(same)
+    assert economic_policy_sha256(first) != economic_policy_sha256(changed)
 
 
 def test_policy_cannot_set_single_limit_above_session_limit():
