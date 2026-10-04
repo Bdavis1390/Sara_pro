@@ -1,0 +1,32 @@
+name: WORLD Evidence Integrity CI
+
+on:
+  pull_request:
+    paths:
+      - "worldshepherd_sara/world_evidence_db.py"
+      - "worldshepherd_sara/world_actual_evidence.py"
+      - "scripts/world_memory_validate.sh"
+      - "tests/test_world_evidence_integrity.py"
+      - ".github/workflows/world-evidence-integrity-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install narrow test dependencies
+        run: python -m pip install --disable-pip-version-check pytest fastapi
+      - name: Compile evidence modules
+        run: python -m py_compile worldshepherd_sara/world_evidence_db.py worldshepherd_sara/world_actual_evidence.py
+      - name: Validate shell syntax
+        run: bash -n scripts/world_memory_validate.sh
+      - name: Run evidence integrity regressions
+        run: pytest -q tests/test_world_evidence_integrity.py
