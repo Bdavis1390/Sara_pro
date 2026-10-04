@@ -1,0 +1,34 @@
+{
+  "source": "Long et al., Nature 656, 854-860 (2026), doi:10.1038/s41586-026-10902-z",
+  "order_parameter": {
+    "irreducible_representation": "B1g",
+    "real_spherical_harmonic": "Y_4^-3",
+    "cartesian_form": "yz(3x^2-y^2)",
+    "spherical_form": "sin(theta)^3*cos(theta)*sin(3phi)"
+  },
+  "nodal_planes": {
+    "phi_deg": [
+      0,
+      60,
+      120
+    ],
+    "theta_deg": [
+      90
+    ]
+  },
+  "representative_split_pair": {
+    "theta_deg": 84.8,
+    "phi_deg": 21.4,
+    "f1_kT": 3.41,
+    "f2_kT": 3.82,
+    "split_kT": 0.41
+  },
+  "experiment": {
+    "measurement_temperature_K": 0.4,
+    "field_window_T": [
+      20,
+      41
+    ],
+    "note": "Reference values copied from the open-access article text; not independently digitized source-data arrays."
+  }
+}
