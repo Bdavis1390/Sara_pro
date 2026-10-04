@@ -136,7 +136,11 @@ def test_single_transaction_and_session_budget_are_both_enforced():
 
 def test_session_binding_and_expiry_fail_closed():
     decision = evaluate_economic_intent(
-        _intent(session_id="SESSION-WRONG", expires_at=_now()),
+        _intent(
+            session_id="SESSION-WRONG",
+            created_at=_now() - timedelta(minutes=2),
+            expires_at=_now() - timedelta(minutes=1),
+        ),
         _policy(),
         spent_so_far=Decimal("0"),
         now=_now(),
