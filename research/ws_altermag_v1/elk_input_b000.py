@@ -17,6 +17,8 @@ def render_elk_template(
     structure_path: Path = DEFAULT_STRUCTURE,
     *,
     bfield_au: float = DEFAULT_BFIELD_AU,
+    ngridk: tuple[int, int, int] = (43, 43, 28),
+    rgkmax: float | None = None,
 ) -> str:
     data = json.loads(structure_path.read_text(encoding="utf-8"))
     lattice = data["lattice_A"]
@@ -71,8 +73,18 @@ def render_elk_template(
         "reducebf",
         "  0.5",
         "",
+    ]
+
+    if rgkmax is not None:
+        lines.extend([
+            "rgkmax",
+            f"  {float(rgkmax):.6f}",
+            "",
+        ])
+
+    lines.extend([
         "ngridk",
-        "  43 43 28",
+        f"  {int(ngridk[0])} {int(ngridk[1])} {int(ngridk[2])}",
         "",
         "! Mandatory before execution:",
         "! 1. verify installed Elk/package/species hashes against backend_selection_b000.json",
@@ -80,7 +92,7 @@ def render_elk_template(
         "! 3. verify the symmetry-breaking field magnitude does not change converged observables",
         "! 4. preserve INFO.OUT and all relevant outputs in an ECHO provenance receipt",
         "",
-    ]
+    ])
     return "\n".join(lines)
 
 
@@ -91,8 +103,10 @@ def template_digest(text: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--kgrid", nargs=3, type=int, default=(43, 43, 28))
+    parser.add_argument("--rgkmax", type=float)
     args = parser.parse_args()
-    text = render_elk_template()
+    text = render_elk_template(ngridk=tuple(args.kgrid), rgkmax=args.rgkmax)
     if args.output:
         if args.output.name == "elk.in":
             raise SystemExit("refusing to write executable-named elk.in before execution gate clearance")
