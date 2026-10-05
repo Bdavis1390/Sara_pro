@@ -16,7 +16,23 @@
       "ubuntu_jammy_candidate": "7.2.42-2",
       "method": "all-electron full-potential LAPW",
       "status": "SELECTED_NOT_INSTALLED",
-      "reason": "Closest open, repository-packaged cross-check to the paper-native FP-LAPW methodology."
+      "reason": "Closest open, repository-packaged cross-check to the paper-native FP-LAPW methodology.",
+      "package_sha256": "6c838f8d98e5aeae80caa2aaf4fb1817e5d1f74512e1015669a039b5e089bb4a",
+      "extracted_binary_sha256": "46000e1bee29f818d673cfd29b7423c0fbbc23407115f852f7ae59d27e53594f",
+      "species_sha256": {
+        "Cr.in": "b07a87fa6a6b5cb48f4dc64da118d52e0c0258db0326bc8afee90fd2f55c08d8",
+        "Sb.in": "602162d78a0cf55ceedf739d164a1e248483932055f88dd694549208b131e94d"
+      },
+      "package_installed_size_kB": 8845,
+      "staging_status": "DOWNLOADED_AND_EXTRACTED_NOT_INSTALLED",
+      "runtime_dependency_check": {
+        "missing": [
+          "libxc.so.9",
+          "libmpi_mpifh.so.40"
+        ],
+        "status": "NOT_RUNNABLE_FROM_EXTRACTED_TREE_YET"
+      },
+      "species_path_after_install": "/usr/share/elk-lapw/species/"
     },
     "fallback": {
       "backend": "Quantum ESPRESSO",
@@ -33,7 +49,9 @@
     "home_use_percent": 96,
     "palace_active": true,
     "palace_worker_cpu_percent_approx": 89,
-    "install_now": false
+    "install_now": false,
+    "package_staged_in_var_tmp": true,
+    "home_storage_not_used_for_backend": true
   },
   "execution_policy": "Do not install or execute a competing DFT backend while the active Palace workload is consuming the Lenovo solver resources. Prefer /var/tmp or another non-home work area once cleared.",
   "claim_boundary": "Backend selection is an engineering decision only; it is not a DFT result."
