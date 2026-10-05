@@ -129,6 +129,23 @@ Active scratch remains targeted at `/var/tmp`. The attached 15 GB USB currently 
 
 Evidence: `evidence/b000_execution_gate_2026-10-05.json`.
 
+
+## B000-STARTUP-SANITY — user-space runtime reaches Elk parser
+
+Without installing packages system-wide and without providing an `elk.in`, the staged Elk runtime was extended with content-pinned OpenMPI/PMIx and supporting libraries under `/var/tmp`. A bounded five-second startup harness verified the exact Elk binary hash, launched it in an empty temporary directory and required it to reach the input parser.
+
+Observed stdout:
+
+`Elk code version 7.2.42 started`
+
+followed by the expected controlled stop:
+
+`Error(readinput): error opening elk.in`
+
+No `INFO.OUT` was created, no SCF task was supplied and no DFT work was performed. Optional OpenMPI transport plugins still emit warnings for unavailable network fabrics, but they do not prevent the local zero-input initialization path from reaching Elk itself.
+
+The gate is therefore `STARTUP_SANITY_PASS`, **not** a physics pass. Evidence: `evidence/b000_startup_sanity_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
