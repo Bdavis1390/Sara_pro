@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "fixtures": [
+    {
+      "fixture_id": "needle_guard_v1_8_isolated_replay",
+      "current_state": "AUTHENTICATED_SYNTHETIC_PIPELINE_PASSED",
+      "target_state": "ISOLATED_LAB_REPLAY",
+      "required_reproduction_class": "R2",
+      "required_evidence": [
+        "frozen_package_hash",
+        "source_commit",
+        "collector_identity",
+        "collector_public_key",
+        "windows_environment_fingerprint",
+        "raw_telemetry_hashes",
+        "complete_collection_manifest",
+        "normalization_provenance",
+        "signed_collector_receipt",
+        "policy_hash",
+        "ioc_hash",
+        "replay_engine_identity",
+        "replay_report",
+        "resource_overhead",
+        "latency",
+        "fp_fn_observations",
+        "evidence_chain_verification"
+      ],
+      "prohibited_claims": [
+        "production validated",
+        "independently reproduced",
+        "externally validated",
+        "10x more secure"
+      ]
+    },
+    {
+      "fixture_id": "qvcp_v0_7_circuit_bridge",
+      "current_state": "INTERNALLY_TESTED",
+      "target_state": "CIRCUIT_LEVEL_CONTROLLED_VALIDATION",
+      "required_evidence": [
+        "v0_6_reference_digest",
+        "explicit_encoded_15_to_1_circuit",
+        "fault_location_inventory",
+        "fault_propagation_results",
+        "detected_vs_undetected_classification",
+        "steane_flag_ftec_composition",
+        "logical_t_injection_composition",
+        "decoder_feedforward_timing",
+        "ideal_limit_equivalence"
+      ],
+      "invariant": "fault_probability=0 must reproduce the frozen v0.6 reference behavior",
+      "prohibited_claims": [
+        "hardware fault tolerance",
+        "physical threshold established",
+        "universal hardware FTQC"
+      ]
+    },
+    {
+      "fixture_id": "ws10x_baseline",
+      "current_state": "NOT_ESTABLISHED",
+      "target_state": "BASELINE_FROZEN",
+      "required_evidence": [
+        "hardware_identity",
+        "software_identity",
+        "workload",
+        "threat_model",
+        "measurement_protocol",
+        "uncertainty_policy",
+        "repetition_count",
+        "utility_constraints"
+      ],
+      "prohibited_claims": ["10x security", "10x system performance"]
+    },
+    {
+      "fixture_id": "wsminer_mainnet_progression",
+      "states": [
+        "REGTEST_VALIDATED",
+        "HIL_VALIDATED",
+        "MAINNET_NODE_READY",
+        "POOL_CONNECTED",
+        "SHARE_ACCEPTED",
+        "BLOCK_ACCEPTED",
+        "BLOCK_MATURE",
+        "PAYOUT_RECEIVED",
+        "REVENUE_RECOGNIZED"
+      ],
+      "rule": "Evidence for one state never proves the next state."
+    }
+  ]
+}
