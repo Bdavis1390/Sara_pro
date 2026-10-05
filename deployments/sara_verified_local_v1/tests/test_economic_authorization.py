@@ -208,3 +208,11 @@ def test_policy_cannot_set_single_limit_above_session_limit():
             max_per_transaction=Decimal("11.00"),
             max_session_total=Decimal("10.00"),
         )
+
+
+def test_intent_rejects_nonpositive_validity_window():
+    with pytest.raises(ValueError, match="expires_at must be after created_at"):
+        _intent(
+            created_at=_now(),
+            expires_at=_now(),
+        )
