@@ -94,6 +94,15 @@ The bounded B000-ANGULAR gate therefore passes. This is stronger than a manually
 
 Evidence: `evidence/b000_angular_2026-10-05.json`.
 
+
+## B000-DFT — first-principles reproduction contract
+
+The first-principles gate is now defined but deliberately not executed. The reference lane captures the paper-native methodology: WIEN2k FP-LAPW, GGA, a `43 x 43 x 28` k-mesh, lattice parameters `a=b=4.12 A`, `c=5.47 A`, opposite initial Cr spin polarizations, SKEAF Fermi-surface frequency extraction, and the paper's stated dogbone/web energy alignments of `-0.11 eV` and `+0.015 eV`.
+
+The contract also requires content hashes for the input structure and solver binary, verified atomic positions, solver/version capture, convergence checks, and resource clearance before execution. Current execution status is `PROPOSED_NOT_EXECUTED` because a Palace solver workload remains active on the Lenovo host.
+
+The validator passes the **contract**, not the physics. No first-principles CrSb result is presently claimed.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
