@@ -32,7 +32,22 @@
         ],
         "status": "NOT_RUNNABLE_FROM_EXTRACTED_TREE_YET"
       },
-      "species_path_after_install": "/usr/share/elk-lapw/species/"
+      "species_path_after_install": "/usr/share/elk-lapw/species/",
+      "runtime_dependencies_staged": {
+        "libopenmpi3": {
+          "version": "4.1.2-2ubuntu1",
+          "architecture": "amd64",
+          "installed_size_kB": 9760,
+          "package_sha256": "25fc67e365e70abd06146962e97fbb0aead26403f36ba59b41f63954c768d352"
+        },
+        "libxc9": {
+          "version": "5.1.7-1ubuntu1",
+          "architecture": "amd64",
+          "installed_size_kB": 11748,
+          "package_sha256": "d96bb2c83ff66ac71eab15fe84c5995a9a1313f58074bf70efdb08e9c1b300db"
+        }
+      },
+      "runtime_dependency_staging_status": "MISSING_DEPENDENCY_PACKAGES_DOWNLOADED_NOT_INSTALLED"
     },
     "fallback": {
       "backend": "Quantum ESPRESSO",
