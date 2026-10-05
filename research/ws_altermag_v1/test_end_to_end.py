@@ -38,6 +38,7 @@ def test_b000_literature_reference_adapter():
     assert all(item["is_nodal"] for item in result["theta_nodal_checks"])
     assert "does not independently reproduce" in result["claim_boundary"].lower()
 
+
 def test_source_peak_picker():
     from research.ws_altermag_v1.source_data_b000 import _two_dominant_peaks
 
@@ -58,12 +59,14 @@ def test_source_manifest_is_content_pinned():
     assert len(manifest["dataset"]["archive_sha256"]) == 64
     assert len(manifest["analysis"]["member_sha256"]) == 64
 
+
 def test_integrity_audit_pair_contract():
     from research.ws_altermag_v1.source_integrity_b000 import PAIRS
 
     assert ("fig2b.csv", "fig2f.csv", "simulated_frequency_profiles") in PAIRS
     assert ("fig2c.csv", "fig2g.csv", "selected_torque_traces") in PAIRS
     assert ("fig2d.csv", "fig2h.csv", "selected_fft_spectra") in PAIRS
+
 
 def test_angular_manifest_contract():
     import json
@@ -76,6 +79,7 @@ def test_angular_manifest_contract():
     assert angular["minimum_off_node_matches"] >= 8
     assert angular["minimum_split_correlation"] >= 0.8
 
+
 def test_dft_contract_is_complete_but_not_executed():
     from research.ws_altermag_v1.dft_contract import validate_contract
 
@@ -85,6 +89,7 @@ def test_dft_contract_is_complete_but_not_executed():
     assert result["resource_clearance"] is False
     assert "active Palace" in result["current_blocker"]
     assert "No first-principles CrSb calculation" in result["claim_boundary"]
+
 
 def test_crsb_structure_contract():
     from research.ws_altermag_v1.structure_b000 import validate_structure
@@ -98,7 +103,6 @@ def test_crsb_structure_contract():
 
 def test_backend_selection_stays_fail_closed():
     import json
-    from pathlib import Path
 
     path = Path("research/ws_altermag_v1/manifests/backend_selection_b000.json")
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -107,9 +111,9 @@ def test_backend_selection_stays_fail_closed():
     assert data["resource_snapshot"]["palace_active"] is True
     assert data["resource_snapshot"]["install_now"] is False
 
+
 def test_open_backend_package_is_content_pinned():
     import json
-    from pathlib import Path
 
     path = Path("research/ws_altermag_v1/manifests/backend_selection_b000.json")
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -123,6 +127,7 @@ def test_open_backend_package_is_content_pinned():
     assert elk["staging_status"] == "DOWNLOADED_AND_EXTRACTED_NOT_INSTALLED"
     assert elk["runtime_dependency_check"]["status"] == "NOT_RUNNABLE_FROM_EXTRACTED_TREE_YET"
 
+
 def test_elk_template_encodes_reference_geometry_without_execution():
     from research.ws_altermag_v1.elk_input_b000 import render_elk_template
 
@@ -135,3 +140,24 @@ def test_elk_template_encodes_reference_geometry_without_execution():
     assert "'Sb.in'" in rendered
     assert "1.00000000e-03" in rendered
     assert "-1.00000000e-03" in rendered
+
+def test_convergence_plan_is_deterministic_and_reference_last():
+    from research.ws_altermag_v1.convergence_b000 import build_plan
+
+    plan = build_plan()
+    assert plan["execution_status"] == "PLAN_ONLY_NOT_EXECUTED"
+    assert plan["case_count"] == 8
+    assert plan["cases"][0]["kind"] == "basis"
+    assert plan["cases"][-1]["kind"] == "reference"
+    assert plan["cases"][-1]["kgrid"] == [43, 43, 28]
+    assert plan["cases"][-1]["rgkmax"] == 8.0
+    assert all(len(case["template_sha256"]) == 64 for case in plan["cases"])
+
+
+def test_elk_template_supports_convergence_parameters():
+    from research.ws_altermag_v1.elk_input_b000 import render_elk_template
+
+    rendered = render_elk_template(ngridk=(12, 12, 8), rgkmax=7.0)
+    assert "rgkmax\n  7.000000" in rendered
+    assert "ngridk\n  12 12 8" in rendered
+    assert "NOT EXECUTION APPROVED" in rendered
