@@ -57,3 +57,10 @@ def test_source_manifest_is_content_pinned():
     assert manifest["dataset"]["repository_doi"] == "10.17863/CAM.131869"
     assert len(manifest["dataset"]["archive_sha256"]) == 64
     assert len(manifest["analysis"]["member_sha256"]) == 64
+
+def test_integrity_audit_pair_contract():
+    from research.ws_altermag_v1.source_integrity_b000 import PAIRS
+
+    assert ("fig2b.csv", "fig2f.csv", "simulated_frequency_profiles") in PAIRS
+    assert ("fig2c.csv", "fig2g.csv", "selected_torque_traces") in PAIRS
+    assert ("fig2d.csv", "fig2h.csv", "selected_fft_spectra") in PAIRS
