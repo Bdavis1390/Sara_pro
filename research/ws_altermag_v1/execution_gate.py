@@ -1,0 +1,129 @@
+from __future__ import annotations
+
+import argparse
+from hashlib import sha256
+import json
+from pathlib import Path
+import shutil
+import subprocess
+
+
+ROOT = Path(__file__).resolve().parent
+DEFAULT_BACKEND = ROOT / "manifests" / "backend_selection_b000.json"
+DEFAULT_CONVERGENCE = ROOT / "manifests" / "convergence_b000.json"
+
+
+def _sha256(path: Path) -> str:
+    h = sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _process_cmdlines() -> list[str]:
+    out = []
+    proc = Path("/proc")
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            raw = (entry / "cmdline").read_bytes().replace(b"\x00", b" ").decode("utf-8", "replace").strip()
+        except (OSError, PermissionError):
+            continue
+        if raw:
+            out.append(raw)
+    return out
+
+
+def _missing_libraries(binary: Path) -> list[str]:
+    try:
+        result = subprocess.run(
+            ["ldd", str(binary)],
+            check=False,
+            text=True,
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return ["ldd_check_failed"]
+    missing = []
+    for line in result.stdout.splitlines():
+        if "=> not found" in line:
+            missing.append(line.split("=>", 1)[0].strip())
+    return sorted(set(missing))
+
+
+def inspect_host(
+    *,
+    work_root: Path,
+    backend_binary: Path,
+    expected_backend_sha256: str,
+    blocked_process_terms: list[str],
+    minimum_free_gb: float,
+) -> dict:
+    cmdlines = _process_cmdlines()
+    blockers = sorted(
+        {
+            term
+            for term in blocked_process_terms
+            if any(term in cmd for cmd in cmdlines)
+        }
+    )
+    palace_clear = not blockers
+
+    usage = shutil.disk_usage(work_root if work_root.exists() else work_root.parent)
+    free_gb = usage.free / (1024 ** 3)
+    storage_clear = free_gb >= minimum_free_gb
+
+    backend_exists = backend_binary.exists()
+    backend_sha = _sha256(backend_binary) if backend_exists else None
+    backend_hash_clear = backend_exists and backend_sha == expected_backend_sha256
+    missing = _missing_libraries(backend_binary) if backend_exists else ["backend_missing"]
+    runtime_clear = backend_exists and not missing
+
+    clear = palace_clear and storage_clear and backend_hash_clear and runtime_clear
+    return {
+        "palace_clear": palace_clear,
+        "process_blockers": blockers,
+        "work_root": str(work_root),
+        "work_root_free_GB": free_gb,
+        "storage_clear": storage_clear,
+        "backend_binary": str(backend_binary),
+        "backend_exists": backend_exists,
+        "backend_sha256_actual": backend_sha,
+        "backend_hash_clear": backend_hash_clear,
+        "missing_runtime_libraries": missing,
+        "runtime_clear": runtime_clear,
+        "execution_clear": clear,
+        "decision": "ALLOW_PREFLIGHT_ONLY" if clear else "BLOCK_DFT_EXECUTION",
+    }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--work-root", type=Path, default=Path("/var/tmp/ws-altermag-runs"))
+    parser.add_argument(
+        "--backend-binary",
+        type=Path,
+        default=Path("/var/tmp/ws-altermag-elk-cache/pkg/usr/bin/elk-lapw"),
+    )
+    args = parser.parse_args()
+
+    backend = json.loads(DEFAULT_BACKEND.read_text(encoding="utf-8"))
+    conv = json.loads(DEFAULT_CONVERGENCE.read_text(encoding="utf-8"))
+    expected = backend["selection"]["open_crosscheck"]["extracted_binary_sha256"]
+    gate = conv["resource_gate"]
+
+    result = inspect_host(
+        work_root=args.work_root,
+        backend_binary=args.backend_binary,
+        expected_backend_sha256=expected,
+        blocked_process_terms=list(gate["block_if_process_contains"]),
+        minimum_free_gb=float(gate["minimum_work_root_free_GB"]),
+    )
+    print(json.dumps(result, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
