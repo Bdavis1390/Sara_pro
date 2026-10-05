@@ -47,7 +47,44 @@
           "package_sha256": "d96bb2c83ff66ac71eab15fe84c5995a9a1313f58074bf70efdb08e9c1b300db"
         }
       },
-      "runtime_dependency_staging_status": "MISSING_DEPENDENCY_PACKAGES_DOWNLOADED_NOT_INSTALLED"
+      "runtime_dependency_staging_status": "MISSING_DEPENDENCY_PACKAGES_DOWNLOADED_NOT_INSTALLED",
+      "transitive_runtime_packages_staged": {
+        "libhwloc15": {
+          "version": "2.7.0-2ubuntu1",
+          "package_sha256": "6749a98e4a12f6f380ee334113cbdc3384a1d8d8af6add254f6557c9a9f9bc28"
+        },
+        "libevent-core-2.1-7": {
+          "version": "2.1.12-stable-1build3",
+          "package_sha256": "9317ae74915b9e4372f7506fbd16ae2a021e0ead79a8d88f96dad49b87d94508"
+        },
+        "libevent-pthreads-2.1-7": {
+          "version": "2.1.12-stable-1build3",
+          "package_sha256": "078211a125a9ef5a9c7d24eb441761cefde8812b69889f7cee96824b0dc66831"
+        },
+        "openmpi-bin": {
+          "version": "4.1.2-2ubuntu1",
+          "package_sha256": "a6fa0b564def24fa9ecbfb7f2419e929d74847fc3c2146ea4c38e7be6369ab79"
+        },
+        "openmpi-common": {
+          "version": "4.1.2-2ubuntu1",
+          "package_sha256": "6855278856cf4ffccfed86c5bc3255592b895ea6b4bfcd8a620e828ae26fadca"
+        },
+        "libpmix2": {
+          "version": "4.1.2-2ubuntu1",
+          "package_sha256": "db7d8f79a04b5de98f4e14d05725f6744de69ccc831a14f998115d8ee1e9c3ff"
+        }
+      },
+      "staged_startup_sanity": {
+        "status": "PASS_EXPECTED_NO_INPUT_STOP",
+        "observed_version": "7.2.42",
+        "expected_stdout": [
+          "Elk code version 7.2.42 started",
+          "Error(readinput): error opening elk.in"
+        ],
+        "info_out_created": false,
+        "heavy_solver_work_performed": false,
+        "note": "MPI optional transport plugins reported missing libraries, but initialization reached Elk input parsing. No elk.in was present by design."
+      }
     },
     "fallback": {
       "backend": "Quantum ESPRESSO",
