@@ -193,3 +193,27 @@ def test_startup_sanity_rejects_real_run_artifact():
     stdout = "\nElk code version 7.2.42 started\n\nError(readinput): error opening elk.in\n"
     result = evaluate_transcript(stdout, info_out_exists=True)
     assert result["pass"] is False
+
+
+def test_elk_template_accepts_isolated_species_path():
+    from research.ws_altermag_v1.elk_input_b000 import render_elk_template
+
+    rendered = render_elk_template(
+        ngridk=(12, 12, 8),
+        rgkmax=6.0,
+        species_path="/var/tmp/staged/species/",
+    )
+    assert "sppath\n  '/var/tmp/staged/species/'" in rendered
+    assert "ngridk\n  12 12 8" in rendered
+    assert "rgkmax\n  6.000000" in rendered
+
+
+def test_first_case_is_cheapest_declared_basis_case():
+    import json
+    from research.ws_altermag_v1.convergence_b000 import DEFAULT_PLAN
+    from research.ws_altermag_v1.first_case_runner import _first_case
+
+    plan = json.loads(DEFAULT_PLAN.read_text(encoding="utf-8"))
+    case = _first_case(plan)
+    assert case["kgrid"] == [12, 12, 8]
+    assert case["rgkmax"] == 6.0
