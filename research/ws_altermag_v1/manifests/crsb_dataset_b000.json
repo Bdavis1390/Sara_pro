@@ -1,0 +1,23 @@
+{
+  "dataset": {
+    "title": "Research data supporting 3D bulk-resolved g-wave altermagnetic order parameter in CrSb",
+    "repository_doi": "10.17863/CAM.131869",
+    "article_doi": "10.1038/s41586-026-10902-z",
+    "download_url": "https://www.repository.cam.ac.uk/bitstreams/777f92a5-7943-4be9-b318-948cd9033f6d/download",
+    "archive_filename": "CrSb_QOs_Repository.zip",
+    "archive_sha256": "2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79",
+    "license": "CC BY 4.0"
+  },
+  "analysis": {
+    "member": "fig4b.csv",
+    "member_sha256": "70ea9a9a37ec2e6495599c8c330145a61a694bf17ac21d11e6633f46a4a80068",
+    "frequency_window_kT": [3.25, 3.95],
+    "minimum_peak_separation_kT": 0.20,
+    "expected_first_spectrum": {
+      "f1_kT_range": [3.38, 3.44],
+      "f2_kT_range": [3.78, 3.86],
+      "split_kT_range": [0.38, 0.44]
+    },
+    "all_spectra_split_kT_range": [0.38, 0.44]
+  }
+}
