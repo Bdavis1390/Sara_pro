@@ -122,3 +122,16 @@ def test_open_backend_package_is_content_pinned():
     assert len(elk["species_sha256"]["Sb.in"]) == 64
     assert elk["staging_status"] == "DOWNLOADED_AND_EXTRACTED_NOT_INSTALLED"
     assert elk["runtime_dependency_check"]["status"] == "NOT_RUNNABLE_FROM_EXTRACTED_TREE_YET"
+
+def test_elk_template_encodes_reference_geometry_without_execution():
+    from research.ws_altermag_v1.elk_input_b000 import render_elk_template
+
+    rendered = render_elk_template()
+    assert "NOT EXECUTION APPROVED" in rendered
+    assert "xctype\n  20" in rendered
+    assert "spinpol\n  .true." in rendered
+    assert "ngridk\n  43 43 28" in rendered
+    assert "'Cr.in'" in rendered
+    assert "'Sb.in'" in rendered
+    assert "1.00000000e-03" in rendered
+    assert "-1.00000000e-03" in rendered
