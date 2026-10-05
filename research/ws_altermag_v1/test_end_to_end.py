@@ -106,3 +106,19 @@ def test_backend_selection_stays_fail_closed():
     assert data["selection"]["open_crosscheck"]["status"] == "SELECTED_NOT_INSTALLED"
     assert data["resource_snapshot"]["palace_active"] is True
     assert data["resource_snapshot"]["install_now"] is False
+
+def test_open_backend_package_is_content_pinned():
+    import json
+    from pathlib import Path
+
+    path = Path("research/ws_altermag_v1/manifests/backend_selection_b000.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    elk = data["selection"]["open_crosscheck"]
+    assert elk["package"] == "elk-lapw"
+    assert elk["ubuntu_jammy_candidate"] == "7.2.42-2"
+    assert elk["package_sha256"] == "6c838f8d98e5aeae80caa2aaf4fb1817e5d1f74512e1015669a039b5e089bb4a"
+    assert len(elk["extracted_binary_sha256"]) == 64
+    assert len(elk["species_sha256"]["Cr.in"]) == 64
+    assert len(elk["species_sha256"]["Sb.in"]) == 64
+    assert elk["staging_status"] == "DOWNLOADED_AND_EXTRACTED_NOT_INSTALLED"
+    assert elk["runtime_dependency_check"]["status"] == "NOT_RUNNABLE_FROM_EXTRACTED_TREE_YET"
