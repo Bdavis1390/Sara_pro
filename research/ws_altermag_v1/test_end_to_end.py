@@ -175,3 +175,21 @@ def test_staged_runtime_dependency_packages_are_pinned():
     assert deps["libopenmpi3"]["package_sha256"] == "25fc67e365e70abd06146962e97fbb0aead26403f36ba59b41f63954c768d352"
     assert deps["libxc9"]["version"] == "5.1.7-1ubuntu1"
     assert deps["libxc9"]["package_sha256"] == "d96bb2c83ff66ac71eab15fe84c5995a9a1313f58074bf70efdb08e9c1b300db"
+
+
+def test_startup_sanity_transcript_is_bounded():
+    from research.ws_altermag_v1.startup_sanity_b000 import evaluate_transcript
+
+    stdout = "\nElk code version 7.2.42 started\n\nError(readinput): error opening elk.in\n"
+    result = evaluate_transcript(stdout, info_out_exists=False)
+    assert result["pass"] is True
+    assert result["version_started"] is True
+    assert result["expected_no_input_stop"] is True
+
+
+def test_startup_sanity_rejects_real_run_artifact():
+    from research.ws_altermag_v1.startup_sanity_b000 import evaluate_transcript
+
+    stdout = "\nElk code version 7.2.42 started\n\nError(readinput): error opening elk.in\n"
+    result = evaluate_transcript(stdout, info_out_exists=True)
+    assert result["pass"] is False
