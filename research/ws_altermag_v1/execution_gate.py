@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -36,7 +37,24 @@ def _process_cmdlines() -> list[str]:
     return out
 
 
-def _missing_libraries(binary: Path) -> list[str]:
+def _runtime_env(runtime_root: Path | None) -> dict[str, str]:
+    env = os.environ.copy()
+    if runtime_root is None:
+        return env
+
+    libdirs = [
+        runtime_root / "usr/lib/x86_64-linux-gnu",
+        runtime_root / "lib/x86_64-linux-gnu",
+    ]
+    staged = ":".join(str(p) for p in libdirs if p.exists())
+    existing = env.get("LD_LIBRARY_PATH", "")
+    env["LD_LIBRARY_PATH"] = staged + ((":" + existing) if staged and existing else existing)
+    env["OPAL_PREFIX"] = str(runtime_root / "usr")
+    env["PATH"] = str(runtime_root / "usr/bin") + os.pathsep + env.get("PATH", "")
+    return env
+
+
+def _missing_libraries(binary: Path, runtime_root: Path | None = None) -> list[str]:
     try:
         result = subprocess.run(
             ["ldd", str(binary)],
@@ -44,6 +62,7 @@ def _missing_libraries(binary: Path) -> list[str]:
             text=True,
             capture_output=True,
             timeout=10,
+            env=_runtime_env(runtime_root),
         )
     except (OSError, subprocess.TimeoutExpired):
         return ["ldd_check_failed"]
@@ -61,6 +80,8 @@ def inspect_host(
     expected_backend_sha256: str,
     blocked_process_terms: list[str],
     minimum_free_gb: float,
+    runtime_root: Path | None = None,
+    startup_sanity_passed: bool = False,
 ) -> dict:
     cmdlines = _process_cmdlines()
     blockers = sorted(
@@ -79,10 +100,20 @@ def inspect_host(
     backend_exists = backend_binary.exists()
     backend_sha = _sha256(backend_binary) if backend_exists else None
     backend_hash_clear = backend_exists and backend_sha == expected_backend_sha256
-    missing = _missing_libraries(backend_binary) if backend_exists else ["backend_missing"]
+    missing = (
+        _missing_libraries(backend_binary, runtime_root)
+        if backend_exists
+        else ["backend_missing"]
+    )
     runtime_clear = backend_exists and not missing
 
-    clear = palace_clear and storage_clear and backend_hash_clear and runtime_clear
+    clear = (
+        palace_clear
+        and storage_clear
+        and backend_hash_clear
+        and runtime_clear
+        and startup_sanity_passed
+    )
     return {
         "palace_clear": palace_clear,
         "process_blockers": blockers,
@@ -93,10 +124,12 @@ def inspect_host(
         "backend_exists": backend_exists,
         "backend_sha256_actual": backend_sha,
         "backend_hash_clear": backend_hash_clear,
+        "runtime_root": None if runtime_root is None else str(runtime_root),
         "missing_runtime_libraries": missing,
         "runtime_clear": runtime_clear,
+        "startup_sanity_passed": startup_sanity_passed,
         "execution_clear": clear,
-        "decision": "ALLOW_PREFLIGHT_ONLY" if clear else "BLOCK_DFT_EXECUTION",
+        "decision": "ALLOW_FIRST_CONVERGENCE_CASE" if clear else "BLOCK_DFT_EXECUTION",
     }
 
 
@@ -108,11 +141,18 @@ def main() -> None:
         type=Path,
         default=Path("/var/tmp/ws-altermag-elk-cache/pkg/usr/bin/elk-lapw"),
     )
+    parser.add_argument(
+        "--runtime-root",
+        type=Path,
+        default=Path("/var/tmp/ws-altermag-elk-cache/runtime"),
+    )
     args = parser.parse_args()
 
     backend = json.loads(DEFAULT_BACKEND.read_text(encoding="utf-8"))
     conv = json.loads(DEFAULT_CONVERGENCE.read_text(encoding="utf-8"))
-    expected = backend["selection"]["open_crosscheck"]["extracted_binary_sha256"]
+    elk = backend["selection"]["open_crosscheck"]
+    expected = elk["extracted_binary_sha256"]
+    startup_passed = elk.get("staged_startup_sanity", {}).get("status") == "PASS_EXPECTED_NO_INPUT_STOP"
     gate = conv["resource_gate"]
 
     result = inspect_host(
@@ -121,6 +161,8 @@ def main() -> None:
         expected_backend_sha256=expected,
         blocked_process_terms=list(gate["block_if_process_contains"]),
         minimum_free_gb=float(gate["minimum_work_root_free_GB"]),
+        runtime_root=args.runtime_root,
+        startup_sanity_passed=startup_passed,
     )
     print(json.dumps(result, indent=2, sort_keys=True))
 
