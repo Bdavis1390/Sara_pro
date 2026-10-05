@@ -78,6 +78,22 @@ Because the corresponding Fig. 2 panels represent different nodal and antinodal 
 
 This is a repository-level byte observation only. The implementation makes no claim about why the duplication exists and does not attribute an error to the authors. See `evidence/b000_data_integrity_2026-10-05.json`.
 
+
+## B000-ANGULAR — Fig. 3 node/split/node recovery
+
+To avoid the ambiguous Fig. 2 panel pairs, the next gate uses the unambiguous Fig. 3 tilted-plane exports. The analyzer pins both the DFT dogbone profile (`fig3b.csv`) and experimental FFT spectra (`fig3d.csv`) by SHA-256, then uses the paper's angular geometry to align the exported DFT coordinate with the measured rotation series.
+
+The branch association is explicitly **theory-guided**: local experimental FFT peaks are matched to the nearest predicted dogbone branches within a predeclared tolerance. Under that contract:
+
+- at `alpha = -60 deg`, the predicted split is `0.0076 kT` and both branches map to the same observed `3.2210 kT` peak;
+- at `alpha = 0 deg`, the predicted split is `0.0026 kT` and both branches map to the same observed `3.3951 kT` peak;
+- nine off-node orientations satisfy the branch-match and minimum-splitting gates;
+- predicted versus observed off-node splitting has correlation `r = 0.8614`.
+
+The bounded B000-ANGULAR gate therefore passes. This is stronger than a manually encoded literature check, but because DFT is used to identify the experimental branches it remains a theory-guided source-data re-analysis rather than an independent experimental replication.
+
+Evidence: `evidence/b000_angular_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
@@ -98,4 +114,4 @@ Those remain evidence-gated by `docs/CLAIMS_AND_EVIDENCE_POLICY.md`.
 
 ## Next gate
 
-Resolve the Fig. 2 source-data ambiguity by using the unambiguous Fig. 3 tilted-plane data or by obtaining corrected/clarified panel data. Keep first-principles execution deferred while the active Palace workload is consuming the Lenovo solver resources.
+B000-ANGULAR now supplies the unambiguous node/split/node source-data path. Keep the separate Fig. 2 ambiguity open for provenance, then prepare the first-principles backend contract. Actual DFT execution remains deferred while the active Palace run is consuming Lenovo solver resources.
