@@ -69,6 +69,15 @@ python -m research.ws_altermag_v1.source_data_b000 \
 
 This advances the software/data pipeline beyond manually encoded reference points, but it remains a re-analysis of published source data, **not an independent laboratory replication**.
 
+
+## B000-DATA-INTEGRITY — fail-closed source audit
+
+Before using the Fig. 2 panel exports for nodal-versus-antinodal validation, the pinned archive was audited byte-for-byte. The audit found that `fig2b.csv` and `fig2f.csv` are identical files, while `fig2c.csv`/`fig2g.csv` and `fig2d.csv`/`fig2h.csv` have different headers but identical data bodies.
+
+Because the corresponding Fig. 2 panels represent different nodal and antinodal contexts in the paper, WS-ALTERMAG does **not** treat these duplicated bodies as independent validation datasets. The automated Fig. 2 comparison is therefore placed in `BLOCKED_SOURCE_DATA_AMBIGUITY` rather than forcing a positive result.
+
+This is a repository-level byte observation only. The implementation makes no claim about why the duplication exists and does not attribute an error to the authors. See `evidence/b000_data_integrity_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
@@ -89,4 +98,4 @@ Those remain evidence-gated by `docs/CLAIMS_AND_EVIDENCE_POLICY.md`.
 
 ## Next gate
 
-Extend B000-DATA from the Fig. 4 effective-mass source data into an automated nodal-versus-antinodal test using the official angular quantum-oscillation data. After that passes, admit the first-principles CrSb solver backend.
+Resolve the Fig. 2 source-data ambiguity by using the unambiguous Fig. 3 tilted-plane data or by obtaining corrected/clarified panel data. Keep first-principles execution deferred while the active Palace workload is consuming the Lenovo solver resources.
