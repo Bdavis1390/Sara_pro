@@ -116,6 +116,19 @@ The extracted binary is not yet runnable in isolation because its system runtime
 
 Evidence: `evidence/b000_backend_staging_2026-10-05.json`.
 
+
+## B000-CONVERGENCE and execution guard
+
+The DFT path now has a machine-enforced execution guard rather than a prose-only warning. The guard checks competing Palace processes, work-root free space, the pinned Elk binary hash and dynamic runtime completeness before it can return execution clearance.
+
+On the 2026-10-05 Lenovo check, the backend hash matched and `/var/tmp` had about `13.68 GiB` free, but the gate correctly returned `BLOCK_DFT_EXECUTION` because Palace remains active and the staged Elk binary still lacks `libxc.so.9` and `libmpi_mpifh.so.40`.
+
+The predeclared convergence plan contains eight non-executed cases: three `rgkmax` basis checks at fixed `12 x 12 x 8`, four k-grid checks up through `24 x 24 x 16`, and the paper-matched `43 x 43 x 28` reference case. The initial reference `rgkmax=8.0` is not treated as validated; it may proceed only if the basis-convergence gate accepts it.
+
+Active scratch remains targeted at `/var/tmp`. The attached 15 GB USB currently has about 12 GB free and is writable, so the storage policy is to archive completed evidence/results there instead of increasing pressure on the nearly full `/home` filesystem.
+
+Evidence: `evidence/b000_execution_gate_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
