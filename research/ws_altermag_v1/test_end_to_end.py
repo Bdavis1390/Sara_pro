@@ -85,3 +85,24 @@ def test_dft_contract_is_complete_but_not_executed():
     assert result["resource_clearance"] is False
     assert "active Palace" in result["current_blocker"]
     assert "No first-principles CrSb calculation" in result["claim_boundary"]
+
+def test_crsb_structure_contract():
+    from research.ws_altermag_v1.structure_b000 import validate_structure
+
+    result = validate_structure()
+    assert result["pass"] is True
+    assert result["stoichiometry"] == {"Cr": 2, "Sb": 2}
+    assert result["compensated_initialization"] is True
+    assert all(result["position_checks"].values())
+
+
+def test_backend_selection_stays_fail_closed():
+    import json
+    from pathlib import Path
+
+    path = Path("research/ws_altermag_v1/manifests/backend_selection_b000.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["selection"]["open_crosscheck"]["backend"] == "Elk"
+    assert data["selection"]["open_crosscheck"]["status"] == "SELECTED_NOT_INSTALLED"
+    assert data["resource_snapshot"]["palace_active"] is True
+    assert data["resource_snapshot"]["install_now"] is False
