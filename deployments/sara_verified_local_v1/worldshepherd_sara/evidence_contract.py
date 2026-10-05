@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Iterable
 
@@ -29,6 +30,13 @@ class ReproductionClass(str, Enum):
     R3 = "R3"
     R4 = "R4"
     R5 = "R5"
+
+
+class EnvironmentComparability(str, Enum):
+    EQUIVALENT = "EQUIVALENT"
+    ACCEPTABLE_VARIATION = "ACCEPTABLE_VARIATION"
+    MATERIAL_VARIATION = "MATERIAL_VARIATION"
+    NONCOMPARABLE = "NONCOMPARABLE"
 
 
 REQUIRED_AST_SECTIONS = (
@@ -90,6 +98,50 @@ def ast_root_digest(record: dict[str, Any]) -> str:
     validate_ast_record(record)
     signed_view = {section: record[section] for section in REQUIRED_AST_SECTIONS}
     return sha256_digest(signed_view)
+
+
+def _parse_utc(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise EvidenceContractError("timestamps must include an explicit timezone")
+    return parsed.astimezone(timezone.utc)
+
+
+def evidence_temporal_state(
+    record: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> str:
+    """Return CURRENT, REVIEW_DUE, EXPIRED, or SUPERSEDED for evidence."""
+    now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    lifecycle = record.get("lifecycle", {})
+    if lifecycle.get("superseded_by"):
+        return "SUPERSEDED"
+    if lifecycle.get("expires_at") and now >= _parse_utc(lifecycle["expires_at"]):
+        return "EXPIRED"
+    if lifecycle.get("review_after") and now >= _parse_utc(lifecycle["review_after"]):
+        return "REVIEW_DUE"
+    return "CURRENT"
+
+
+def compare_environments(
+    reference: dict[str, Any],
+    candidate: dict[str, Any],
+    *,
+    material_keys: Iterable[str],
+    noncomparable_keys: Iterable[str] = (),
+) -> EnvironmentComparability:
+    """Classify explicit environment deltas without hiding them in a score."""
+    noncomparable = set(noncomparable_keys)
+    material = set(material_keys)
+    changed = {key for key in set(reference) | set(candidate) if reference.get(key) != candidate.get(key)}
+    if changed & noncomparable:
+        return EnvironmentComparability.NONCOMPARABLE
+    if changed & material:
+        return EnvironmentComparability.MATERIAL_VARIATION
+    if changed:
+        return EnvironmentComparability.ACCEPTABLE_VARIATION
+    return EnvironmentComparability.EQUIVALENT
 
 
 @dataclass(frozen=True)
@@ -170,6 +222,14 @@ def evaluate_transition(record: dict[str, Any], policy: PromotionPolicy | None =
     ):
         reasons.append("REPRODUCTION_LEVEL_INSUFFICIENT")
 
+    temporal_state = evidence_temporal_state(record)
+    if temporal_state == "EXPIRED":
+        reasons.append("EVIDENCE_EXPIRED")
+    elif temporal_state == "SUPERSEDED":
+        reasons.append("EVIDENCE_SUPERSEDED")
+    elif temporal_state == "REVIEW_DUE":
+        reasons.append("EVIDENCE_REVIEW_DUE")
+
     if contradiction == ContradictionSeverity.CRITICAL:
         decision = Decision.DEMOTE
         reasons.append("CRITICAL_CONTRADICTION")
@@ -216,10 +276,34 @@ class ClaimGraph:
         parents = set(parent_claims)
         if claim_id in parents:
             raise EvidenceContractError("claim cannot depend on itself")
+        if claim_id in self._claims:
+            raise EvidenceContractError(f"claim already exists: {claim_id}")
+        for parent in parents:
+            if self._would_create_cycle(claim_id, parent):
+                raise EvidenceContractError(
+                    f"dependency would create a claim cycle: {claim_id} <- {parent}"
+                )
         node = ClaimNode(claim_id, "ACTIVE", set(evidence_ids), parents)
         self._claims[claim_id] = node
         for parent in parents:
             self._children.setdefault(parent, set()).add(claim_id)
+
+    def _would_create_cycle(self, claim_id: str, parent: str) -> bool:
+        if parent == claim_id:
+            return True
+        stack = [parent]
+        seen: set[str] = set()
+        while stack:
+            current = stack.pop()
+            if current == claim_id:
+                return True
+            if current in seen:
+                continue
+            seen.add(current)
+            node = self._claims.get(current)
+            if node is not None:
+                stack.extend(node.parent_claims)
+        return False
 
     def status(self, claim_id: str) -> str:
         return self._claims[claim_id].status
