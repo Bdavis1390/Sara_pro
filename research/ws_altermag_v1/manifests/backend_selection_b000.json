@@ -84,6 +84,15 @@
         "info_out_created": false,
         "heavy_solver_work_performed": false,
         "note": "MPI optional transport plugins reported missing libraries, but initialization reached Elk input parsing. No elk.in was present by design."
+      },
+      "isolated_runtime_check": {
+        "checked_utc": "2026-10-05T19:36:16Z",
+        "runtime_root": "/var/tmp/ws-altermag-elk-cache/runtime",
+        "direct_ldd_missing": [],
+        "runtime_clear": true,
+        "startup_sanity_passed": true,
+        "system_install_required_for_first_convergence_case": false,
+        "note": "A system-wide install is not required if the isolated runtime remains content-pinned and the execution guard clears."
       }
     },
     "fallback": {
