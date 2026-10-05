@@ -50,6 +50,25 @@ python -m research.ws_altermag_v1.reference_b000
 python -m pytest -q research/ws_altermag_v1/test_end_to_end.py
 ```
 
+
+## B000-DATA — official source-data extraction
+
+The Cambridge Apollo dataset for the CrSb paper is open under CC BY 4.0 and is pinned by repository DOI, archive SHA-256, and member SHA-256. The analyzer downloads or accepts the official archive, verifies its content hash, opens `fig4b.csv`, and extracts the two dominant >3 kT quantum-oscillation peaks without storing the 8.8 MB archive in this repository.
+
+On the 2026-10-05 Lenovo execution, the 0.4-series spectrum produced `3.4175 kT` and `3.8199 kT`, a split of `0.4024 kT`. Across the six source spectra the mean extracted splitting was `0.4096 kT` (range `0.4023-0.4172 kT`), consistent with the paper's reported approximately `0.41 kT` split.
+
+The complete bounded evidence summary is stored in `evidence/b000_data_2026-10-05.json`.
+
+Run against the pinned official archive with:
+
+```bash
+python -m research.ws_altermag_v1.source_data_b000 \
+  --fetch-to /tmp/CrSb_QOs_Repository.zip \
+  --output /tmp/b000_data_evidence.json
+```
+
+This advances the software/data pipeline beyond manually encoded reference points, but it remains a re-analysis of published source data, **not an independent laboratory replication**.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
@@ -70,4 +89,4 @@ Those remain evidence-gated by `docs/CLAIMS_AND_EVIDENCE_POLICY.md`.
 
 ## Next gate
 
-Acquire and version the open source-data/supplementary datasets for the published CrSb quantum-oscillation experiment, then reproduce the nodal-versus-antinodal frequency behavior from the data rather than from manually encoded textual reference points. Only after that reference-data gate should a first-principles solver backend be admitted.
+Extend B000-DATA from the Fig. 4 effective-mass source data into an automated nodal-versus-antinodal test using the official angular quantum-oscillation data. After that passes, admit the first-principles CrSb solver backend.
