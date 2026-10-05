@@ -75,3 +75,13 @@ def test_angular_manifest_contract():
     assert angular["exported_dft_x_from_alpha"] == "x_deg = alpha_deg + 90"
     assert angular["minimum_off_node_matches"] >= 8
     assert angular["minimum_split_correlation"] >= 0.8
+
+def test_dft_contract_is_complete_but_not_executed():
+    from research.ws_altermag_v1.dft_contract import validate_contract
+
+    result = validate_contract()
+    assert result["contract_complete"] is True
+    assert result["execution_status"] == "PROPOSED_NOT_EXECUTED"
+    assert result["resource_clearance"] is False
+    assert "active Palace" in result["current_blocker"]
+    assert "No first-principles CrSb calculation" in result["claim_boundary"]
