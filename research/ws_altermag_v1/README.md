@@ -146,6 +146,17 @@ No `INFO.OUT` was created, no SCF task was supplied and no DFT work was performe
 
 The gate is therefore `STARTUP_SANITY_PASS`, **not** a physics pass. Evidence: `evidence/b000_startup_sanity_2026-10-05.json`.
 
+
+## B000-FIRST-CASE — fail-closed execution handoff
+
+The first executable convergence case is now wired as `12 x 12 x 8` with `rgkmax=6.0`. The runner resolves the staged species path, fixes BLAS/OpenMP thread counts to one, re-runs the backend/hash/runtime/storage/process gates, and will create a real `elk.in` only after every gate clears.
+
+The current Lenovo test returned exit code `3` with `BLOCK_DFT_EXECUTION` because Palace remains active. The runner created **no `elk.in`** and started **no DFT calculation**. This proves the handoff is fail-closed rather than relying on operator memory.
+
+Once Palace clears, the same runner can be invoked first without `--execute` to obtain `READY_BUT_NOT_EXECUTED`; only an explicit `--execute` will create and launch the first convergence case.
+
+Evidence: `evidence/b000_first_case_guard_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
