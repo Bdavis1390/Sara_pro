@@ -37,3 +37,23 @@ def test_b000_literature_reference_adapter():
     assert all(item["is_nodal"] for item in result["phi_nodal_checks"])
     assert all(item["is_nodal"] for item in result["theta_nodal_checks"])
     assert "does not independently reproduce" in result["claim_boundary"].lower()
+
+def test_source_peak_picker():
+    from research.ws_altermag_v1.source_data_b000 import _two_dominant_peaks
+
+    xs = [3.20, 3.30, 3.40, 3.41, 3.42, 3.55, 3.70, 3.81, 3.82, 3.83, 3.95]
+    ys = [0.0, 0.1, 0.6, 1.0, 0.5, 0.05, 0.08, 0.4, 0.8, 0.3, 0.0]
+    peaks = _two_dominant_peaks(xs, ys, 3.25, 3.95, 0.20)
+    assert len(peaks) == 2
+    assert abs(peaks[0]["frequency_kT"] - 3.41) <= 1.0e-12
+    assert abs(peaks[1]["frequency_kT"] - 3.82) <= 1.0e-12
+
+
+def test_source_manifest_is_content_pinned():
+    import json
+    from research.ws_altermag_v1.source_data_b000 import DEFAULT_MANIFEST
+
+    manifest = json.loads(DEFAULT_MANIFEST.read_text(encoding="utf-8"))
+    assert manifest["dataset"]["repository_doi"] == "10.17863/CAM.131869"
+    assert len(manifest["dataset"]["archive_sha256"]) == 64
+    assert len(manifest["analysis"]["member_sha256"]) == 64
