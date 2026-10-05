@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from datetime import datetime, timezone
 
 import pytest
 
@@ -10,9 +11,12 @@ from worldshepherd_sara.evidence_contract import (
     EvidenceContractError,
     PromotionPolicy,
     ReproductionClass,
+    EnvironmentComparability,
     ast_root_digest,
     canonical_json_bytes,
+    compare_environments,
     confidence_vector,
+    evidence_temporal_state,
     evaluate_transition,
 )
 
@@ -171,3 +175,51 @@ def test_confidence_vector_rejects_out_of_range_values(value):
     kwargs["independence"] = value
     with pytest.raises(EvidenceContractError):
         confidence_vector(**kwargs)
+
+
+def test_expired_evidence_cannot_promote():
+    record = base_record()
+    record["lifecycle"] = {"expires_at": "2026-01-01T00:00:00Z"}
+    result = evaluate_transition(
+        record,
+        PromotionPolicy(),
+    )
+    assert result.decision == Decision.HOLD
+    assert "EVIDENCE_EXPIRED" in result.reasons
+
+
+def test_superseded_evidence_cannot_promote():
+    record = base_record()
+    record["lifecycle"] = {"superseded_by": "AST-NEW-001"}
+    result = evaluate_transition(record)
+    assert result.decision == Decision.HOLD
+    assert "EVIDENCE_SUPERSEDED" in result.reasons
+
+
+def test_temporal_state_review_due():
+    record = base_record()
+    record["lifecycle"] = {"review_after": "2026-01-01T00:00:00Z"}
+    assert evidence_temporal_state(
+        record,
+        now=datetime(2026, 10, 5, tzinfo=timezone.utc),
+    ) == "REVIEW_DUE"
+
+
+def test_environment_comparison_preserves_material_deltas():
+    reference = {"os": "Windows-11", "collector": "1.8", "cpu": "A"}
+    candidate = {"os": "Windows-11", "collector": "1.9", "cpu": "B"}
+    assert compare_environments(
+        reference,
+        candidate,
+        material_keys={"collector"},
+        noncomparable_keys={"os"},
+    ) == EnvironmentComparability.MATERIAL_VARIATION
+
+
+def test_claim_graph_rejects_duplicate_and_self_cycle():
+    graph = ClaimGraph()
+    graph.add_claim("C1")
+    with pytest.raises(EvidenceContractError):
+        graph.add_claim("C1")
+    with pytest.raises(EvidenceContractError):
+        graph.add_claim("C2", parent_claims=["C2"])
