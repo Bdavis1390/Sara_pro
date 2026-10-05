@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldshepherd.local/schemas/ast-1.0.schema.json",
+  "title": "Worldshepherd Authenticated State Transition v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "identity",
+    "authority",
+    "inputs",
+    "environment",
+    "transformation",
+    "observations",
+    "verification",
+    "provenance",
+    "claims"
+  ],
+  "properties": {
+    "identity": {
+      "type": "object",
+      "required": ["ast_id", "schema_version", "project_id", "artifact_id"],
+      "properties": {
+        "ast_id": {"type": "string", "minLength": 1},
+        "schema_version": {"const": "1.0"},
+        "project_id": {"type": "string", "minLength": 1},
+        "artifact_id": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": true
+    },
+    "authority": {
+      "type": "object",
+      "required": ["actor", "role", "authorized"],
+      "properties": {
+        "actor": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1},
+        "authorized": {"type": "boolean"},
+        "human_gate_approved": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "inputs": {"type": "object"},
+    "environment": {
+      "type": "object",
+      "required": ["captured"],
+      "properties": {"captured": {"type": "boolean"}},
+      "additionalProperties": true
+    },
+    "transformation": {"type": "object"},
+    "observations": {
+      "type": "object",
+      "required": ["complete"],
+      "properties": {"complete": {"type": "boolean"}},
+      "additionalProperties": true
+    },
+    "verification": {
+      "type": "object",
+      "required": ["result"],
+      "properties": {
+        "result": {"enum": ["pass", "fail", "indeterminate"]},
+        "reproduction_class": {"enum": ["R0", "R1", "R2", "R3", "R4", "R5"]},
+        "contradiction_severity": {"enum": ["NONE", "MINOR", "MATERIAL", "CRITICAL"]}
+      },
+      "additionalProperties": true
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["integrity_ok"],
+      "properties": {"integrity_ok": {"type": "boolean"}},
+      "additionalProperties": true
+    },
+    "claims": {
+      "type": "object",
+      "required": ["requested_scope", "maximum_permitted_scope"],
+      "properties": {
+        "requested_scope": {"type": "integer", "minimum": 0},
+        "maximum_permitted_scope": {"type": "integer", "minimum": 0},
+        "permitted": {"type": "array", "items": {"type": "string"}},
+        "prohibited": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    }
+  }
+}
