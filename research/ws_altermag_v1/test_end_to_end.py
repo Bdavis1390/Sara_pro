@@ -161,3 +161,17 @@ def test_elk_template_supports_convergence_parameters():
     assert "rgkmax\n  7.000000" in rendered
     assert "ngridk\n  12 12 8" in rendered
     assert "NOT EXECUTION APPROVED" in rendered
+
+
+def test_staged_runtime_dependency_packages_are_pinned():
+    import json
+
+    path = Path("research/ws_altermag_v1/manifests/backend_selection_b000.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    elk = data["selection"]["open_crosscheck"]
+    deps = elk["runtime_dependencies_staged"]
+    assert elk["runtime_dependency_staging_status"] == "MISSING_DEPENDENCY_PACKAGES_DOWNLOADED_NOT_INSTALLED"
+    assert deps["libopenmpi3"]["version"] == "4.1.2-2ubuntu1"
+    assert deps["libopenmpi3"]["package_sha256"] == "25fc67e365e70abd06146962e97fbb0aead26403f36ba59b41f63954c768d352"
+    assert deps["libxc9"]["version"] == "5.1.7-1ubuntu1"
+    assert deps["libxc9"]["package_sha256"] == "d96bb2c83ff66ac71eab15fe84c5995a9a1313f58074bf70efdb08e9c1b300db"
