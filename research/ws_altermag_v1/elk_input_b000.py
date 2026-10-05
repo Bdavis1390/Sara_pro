@@ -19,6 +19,7 @@ def render_elk_template(
     bfield_au: float = DEFAULT_BFIELD_AU,
     ngridk: tuple[int, int, int] = (43, 43, 28),
     rgkmax: float | None = None,
+    species_path: str = "/usr/share/elk-lapw/species/",
 ) -> str:
     data = json.loads(structure_path.read_text(encoding="utf-8"))
     lattice = data["lattice_A"]
@@ -57,7 +58,7 @@ def render_elk_template(
         f"  0.0 0.0 {c_over_a:.16f}",
         "",
         "sppath",
-        "  '/usr/share/elk-lapw/species/'",
+        f"  '{species_path}'",
         "",
         "atoms",
         "  2",
