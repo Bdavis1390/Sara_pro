@@ -11,13 +11,51 @@
   "analysis": {
     "member": "fig4b.csv",
     "member_sha256": "70ea9a9a37ec2e6495599c8c330145a61a694bf17ac21d11e6633f46a4a80068",
-    "frequency_window_kT": [3.25, 3.95],
-    "minimum_peak_separation_kT": 0.20,
+    "frequency_window_kT": [
+      3.25,
+      3.95
+    ],
+    "minimum_peak_separation_kT": 0.2,
     "expected_first_spectrum": {
-      "f1_kT_range": [3.38, 3.44],
-      "f2_kT_range": [3.78, 3.86],
-      "split_kT_range": [0.38, 0.44]
+      "f1_kT_range": [
+        3.38,
+        3.44
+      ],
+      "f2_kT_range": [
+        3.78,
+        3.86
+      ],
+      "split_kT_range": [
+        0.38,
+        0.44
+      ]
     },
-    "all_spectra_split_kT_range": [0.38, 0.44]
+    "all_spectra_split_kT_range": [
+      0.38,
+      0.44
+    ]
+  },
+  "analysis_angular": {
+    "dft_member": "fig3b.csv",
+    "dft_member_sha256": "94902e633b465a92f1f532de5f356372f19193562bc255e1dc7e1d57a40ddf53",
+    "fft_member": "fig3d.csv",
+    "fft_member_sha256": "3a1234f155b4a1788caf2fe69af0a887f5e6f1f993b8f0871aa2a96b5767154b",
+    "exported_dft_x_from_alpha": "x_deg = alpha_deg + 90",
+    "frequency_window_kT": [
+      2.4,
+      4.6
+    ],
+    "minimum_peak_amplitude_above_trace_baseline": 0.01,
+    "predicted_node_split_max_kT": 0.05,
+    "observed_node_split_max_kT": 0.05,
+    "off_node_predicted_split_min_kT": 0.2,
+    "off_node_observed_split_min_kT": 0.2,
+    "max_branch_match_error_kT": 0.18,
+    "minimum_off_node_matches": 8,
+    "minimum_split_correlation": 0.8,
+    "declared_node_alpha_deg": [
+      -60,
+      0
+    ]
   }
 }
