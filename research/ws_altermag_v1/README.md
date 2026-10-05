@@ -103,6 +103,19 @@ The contract also requires content hashes for the input structure and solver bin
 
 The validator passes the **contract**, not the physics. No first-principles CrSb result is presently claimed.
 
+
+## B000-STRUCTURE and backend staging
+
+The CrSb input structure is now explicit and machine-validated rather than implicit. It uses the NiAs-type parent structure with Cr on Wyckoff 2a and Sb on 2c, lattice parameters `a=b=4.12 A`, `c=5.47 A`, and opposite initial Cr spin signs. The structure validator checks stoichiometry, fractional positions, magnetic compensation, parent symmetry and the reduced magnetic model.
+
+For the independent open-method cross-check, Elk was selected because it is an all-electron full-potential LAPW code, making it closer to the paper-native WIEN2k methodology than a pseudopotential code. The Ubuntu 22.04 package candidate `elk-lapw 7.2.42-2` has been downloaded and extracted into temporary staging without installation or solver execution. The package, extracted binary and Cr/Sb species files are all SHA-256 pinned.
+
+A fail-closed Elk input-template generator now renders the CrSb geometry, PBE GGA (`xctype=20`), spin-polarized initialization and `43 x 43 x 28` k-grid. It refuses to write a file literally named `elk.in` before the execution gate is cleared. The staged template SHA-256 is `981a11b818e85f6069b0f3707d098f2ee655f5bd6fa2bf90278b728ca9bf0402`.
+
+The extracted binary is not yet runnable in isolation because its system runtime dependencies include `libxc.so.9` and `libmpi_mpifh.so.40`. Those dependencies will be installed only after the active Palace workload clears. The backend is staged under `/var/tmp`, avoiding the nearly full home filesystem.
+
+Evidence: `evidence/b000_backend_staging_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
