@@ -64,3 +64,14 @@ def test_integrity_audit_pair_contract():
     assert ("fig2b.csv", "fig2f.csv", "simulated_frequency_profiles") in PAIRS
     assert ("fig2c.csv", "fig2g.csv", "selected_torque_traces") in PAIRS
     assert ("fig2d.csv", "fig2h.csv", "selected_fft_spectra") in PAIRS
+
+def test_angular_manifest_contract():
+    import json
+    from research.ws_altermag_v1.source_data_b000 import DEFAULT_MANIFEST
+
+    manifest = json.loads(DEFAULT_MANIFEST.read_text(encoding="utf-8"))
+    angular = manifest["analysis_angular"]
+    assert angular["declared_node_alpha_deg"] == [-60, 0]
+    assert angular["exported_dft_x_from_alpha"] == "x_deg = alpha_deg + 90"
+    assert angular["minimum_off_node_matches"] >= 8
+    assert angular["minimum_split_correlation"] >= 0.8
