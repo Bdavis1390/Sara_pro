@@ -1,8 +1,8 @@
 # SCAR AOI 03 Concept v0.1 — Worldshepherd Assurance Adapter
 
-**Opportunity:** USSF SCAR HQ0860-26-S-C008  
-**AOI focus:** AOI 03 — Antenna as a Service  
-**Official response deadline verified:** 2026-10-15 14:00 MDT  
+**Opportunity:** USSF SCAR HQ0860-26-S-C008
+**AOI focus:** AOI 03 — Antenna as a Service
+**Official response deadline verified:** 2026-10-15 14:00 MDT
 **Status:** NON-CUI CONCEPT / teaming-oriented; protected Offeror Library access remains gated
 
 ## 1. Positioning
