@@ -20,6 +20,8 @@ def render_elk_template(
     ngridk: tuple[int, int, int] = (43, 43, 28),
     rgkmax: float | None = None,
     species_path: str = "/usr/share/elk-lapw/species/",
+    tasks: tuple[int, ...] = (0,),
+    plot3d_grid: tuple[int, int, int] | None = None,
 ) -> str:
     data = json.loads(structure_path.read_text(encoding="utf-8"))
     lattice = data["lattice_A"]
@@ -41,7 +43,7 @@ def render_elk_template(
         "! PBE GGA uses Elk xctype=20; local Cr bfcmt values only seed opposite spin symmetry.",
         "",
         "tasks",
-        "  0",
+        *[f"  {int(task)}" for task in tasks],
         "",
         "xctype",
         "  20",
@@ -80,6 +82,17 @@ def render_elk_template(
         lines.extend([
             "rgkmax",
             f"  {float(rgkmax):.6f}",
+            "",
+        ])
+
+    if plot3d_grid is not None:
+        lines.extend([
+            "plot3d",
+            "  0.0 0.0 0.0",
+            "  1.0 0.0 0.0",
+            "  0.0 1.0 0.0",
+            "  0.0 0.0 1.0",
+            f"  {int(plot3d_grid[0])} {int(plot3d_grid[1])} {int(plot3d_grid[2])}",
             "",
         ])
 
