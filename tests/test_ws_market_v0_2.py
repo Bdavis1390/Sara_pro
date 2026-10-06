@@ -104,6 +104,32 @@ class AgentProbeTests(unittest.TestCase):
                 [observation, observation],
             )
 
+    def test_adapter_cannot_mutate_recorded_observation(self):
+        adapters = self.adapters()
+
+        def mutating_agent(observation):
+            observation["market_state"]["reference"] = -999
+            observation["news"].append({"headline": "injected"})
+            return {"bid": 1, "reason_code": "MUTATOR"}
+
+        adapters[0] = FunctionAgentAdapter(
+            adapters[0].descriptor,
+            mutating_agent,
+        )
+        _, ledger = run_probe(
+            self.manifest(),
+            adapters,
+            self.observations(),
+        )
+        self.assertTrue(ledger.verify())
+        observed = [
+            event.payload
+            for event in ledger.events
+            if event.kind == "observation"
+        ][0]
+        self.assertEqual(observed["market_state"]["reference"], 10)
+        self.assertEqual(len(observed["news"]), 1)
+
     def test_non_object_action_fails_closed(self):
         adapters = self.adapters()
         adapters[0] = FunctionAgentAdapter(
