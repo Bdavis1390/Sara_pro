@@ -1,6 +1,6 @@
 # Worldshepherd Evidence Crosswalk for Curious NerdworX Capture
 
-**Status date:** 2026-10-05  
+**Status date:** 2026-10-05
 **Purpose:** map current Worldshepherd evidence to proposal claims without inflating maturity.
 
 ## Crosswalk
@@ -42,13 +42,13 @@
 
 Strongest candidate product boundaries:
 
-1. **Governed Autonomous Sustainment Evidence Layer**  
+1. **Governed Autonomous Sustainment Evidence Layer**
    Human-approved machine workflows, degraded-state operation, provenance, replay, and recovery.
 
-2. **Authenticated Sensor-to-Decision Chain**  
+2. **Authenticated Sensor-to-Decision Chain**
    Evidence lineage, stale/replay detection, confidence and policy gating around partner sensors.
 
-3. **Evidence-to-Execution Assurance Gateway**  
+3. **Evidence-to-Execution Assurance Gateway**
    Converts requirements and approvals into bounded actions with immutable-ish audit and reproducible evidence.
 
 Selection rule: submit one product with one customer pain point and measurable acceptance criteria.
