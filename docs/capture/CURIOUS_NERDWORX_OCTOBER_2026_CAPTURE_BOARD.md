@@ -15,14 +15,14 @@ Default engagement envelope:
 
 | Priority | Opportunity | Route | Current posture | Immediate next action |
 |---|---|---|---|---|
-| P0 | USSF SCAR HQ0860-26-S-C008 | Direct or teaming | Active capture; AOI 03 clarification questions acknowledged by government | Complete non-CUI white-paper path now; continue corporate/CAGE/JCP/CUI-readiness closure in parallel |
+| P0 | USSF SCAR HQ0860-26-S-C008 | Teaming by default; direct only if clearance/FCL and all solicitation gates are verified | Active capture; AOI 03 clarification questions acknowledged by government | Build the non-CUI/provider-led white-paper path now; treat a direct submission as blocked unless the solicitation's Secret-or-higher clearance and active FCL gates are verified |
 | P0 | Army xTechSearch 10 | Direct small-business competition | Strong governed-autonomy / assured-operations fit | Select one narrow product claim and prepare a measurable pitch rather than presenting the full portfolio |
 | P0 | DARPA Influence Benchmarks | Direct SBIR / research | Strong fit for governance, provenance, agent-behavior evaluation, and replayable evidence | Freeze a benchmarkable product boundary and define falsifiable metrics |
 | P0 | Space Safari SYD89-26-RPO-RLSV | Teaming/subsystem RFI response | Warm government correspondence; mission-assurance concept acknowledged but outside core vehicle scope | Respond only with bounded subsystem alignment; do not claim spacecraft-prime capability |
-| P1 | DARPA QBI IV&V | Direct / consortium IV&V | Strong quantum verification and provenance fit | Package QVERIFY / reproducibility / evidence-chain capability as independent evaluation tooling |
+| P1 | DARPA QBI IV&V | Direct / consortium IV&V | Potential fit through reproducibility, evaluator-handoff, provenance, and existing QCRYPTO evidence; QBI-specific benchmark capability is not yet repository-substantiated | Package only concrete repository evidence and treat QBI-specific quantum benchmarking as proposed work until exact artifacts/tests exist |
 | P1 | NSF SBIR/STTR | Direct, conditional on program eligibility and pitch invitation | Strong civilian deep-tech lane | Select one commercializable product boundary and prepare pitch/proposal evidence |
 | P1 | AFRL AI & distributed C2 BAA | Direct white paper | Persistent fit for SARA/PRIME/ECHO/OVERWATCH | Build reusable 5-page white-paper core tied to distributed C2 and DDIL evidence |
-| P1 | AFRL Quantum Information Sciences BAA | Direct or teaming | Persistent fit for QCRYPTO/QVERIFY/QFLOQUET | Build quantum assurance / validation white-paper core |
+| P1 | AFRL Quantum Information Sciences BAA | Direct or teaming | Persistent fit for existing QCRYPTO artifacts plus proposed verification research | Build the white-paper core from concrete repository evidence; keep uncommitted quantum benchmark work explicitly proposed |
 | P1 | AFRL Extreme Computing BAA | Direct white paper | Persistent compute / distributed-assurance fit | Define measurable workload, throughput, failure-mode, and provenance contribution |
 | P1 | MDA Advanced Capability Concepts | Direct white paper / teaming | Broad long-horizon route | Map only defense-relevant bounded capabilities with explicit maturation gates |
 | P2 | JHU/APL FA9453-26-D-X003 | Subcontract / research partner | Active outreach; not a CNX prime vehicle | Continue as partner/subcontract capture only |
@@ -60,9 +60,10 @@ Private contact information, proprietary attachments, and non-public corresponde
 - Configuration custody and tamper / replay-oriented evidence patterns.
 
 ### Quantum / verification
-- QVERIFY / WS-QBENCH reproducibility and benchmark work.
-- QCRYPTO migration / cryptographic architecture.
-- QFLOQUET and related numerical / literature-backed quantum research.
+- `docs/QCRYPTO_BTC_MIGRATION_V0_1_2026-09-30.md` and repository QCRYPTO migration architecture.
+- `research/qcrypto_tsv/v3_6/` artifacts where exact files/tests support the bounded claim.
+- Evaluator-handoff, reproducibility, provenance, and evidence-chain machinery that can support future quantum IV&V work.
+- Account-level or uncommitted quantum research is **proposed work** for capture purposes until the exact artifacts and tests are present in the repository.
 
 ### Space / mission assurance
 - Bounded telemetry provenance.
@@ -91,7 +92,7 @@ Do not represent Curious NerdworX or Worldshepherd as:
 4. Produce xTech pitch core.
 5. Produce Influence Benchmarks technical concept.
 6. Produce Space Safari bounded subsystem response.
-7. Continue SAM/UEI/CAGE → SPRS/NIST boundary → JCP/DD2345 readiness sequence through qualified contracting support.
+7. Continue SAM/UEI/CAGE → SPRS/NIST boundary → JCP/DD2345 readiness through qualified contracting support, and separately verify any solicitation-specific personnel-clearance / Facility Security Clearance gates before a direct submission.
 8. Preserve every proposal assumption, version, requirement, source, and submission artifact in ECHO-compatible evidence form.
 
 ## Cost-control rule
