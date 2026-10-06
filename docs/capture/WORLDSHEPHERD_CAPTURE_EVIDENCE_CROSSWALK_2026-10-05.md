@@ -11,18 +11,20 @@
 | Human authorization / bounded automation | SARA/PRIME code and tests; governance docs | IMPLEMENTED IN SOFTWARE for tested paths | Partner/customer acceptance in representative environment |
 | Evidence provenance / lineage | ECHO and restriction-provenance docs; release evidence | IMPLEMENTED IN SOFTWARE / PROVEN INTERNALLY for bounded artifacts | Independent custody / external witness where required |
 | Replay / rollback / recovery evidence | recovery workflows, exact-head CI, deterministic replay artifacts | PROVEN INTERNALLY for tested configuration | External evaluator reproduction |
-| NIST SP 800-171 preparation | SSP-precursor workflow, security docs, control mapping | IMPLEMENTED AS PRECURSOR / internal evidence support | Real system-boundary closure, self-assessment, SPRS and external requirements |
+| NIST SP 800-171 preparation | SSP-precursor workflow, security docs, control mapping | IMPLEMENTED IN SOFTWARE for the precursor/mapping behavior that is actually tested; no compliance claim implied | Real system-boundary closure, self-assessment, SPRS and external requirements |
 | SBOM / software supply-chain evidence | SBOM linkage and release-index artifacts | IMPLEMENTED IN SOFTWARE where artifact generation is tested | Customer-specific ingestion / contractual acceptance |
 | Distributed C2 / DDIL assurance | SARA/PRIME/ECHO architecture + mission-assurance research | IMPLEMENTED IN SOFTWARE for generic governance patterns; REQUIRES PARTNER VALIDATION for operational C2 | Representative mission integration |
 | Space mission assurance | WS-FLIGHT-style provenance / anomaly / shadow-mode harnesses and related research | PROVEN INTERNALLY for synthetic/local harness behaviors | Interface access, HIL and/or flight validation |
-| Quantum verification / reproducibility | QCRYPTO docs, QVERIFY/QBENCH/QFLOQUET research artifacts | PROVEN INTERNALLY or NUMERICALLY DEMONSTRATED only where exact tests support it | Independent benchmark / hardware provider data as applicable |
-| Opportunity intelligence | PRE schemas, requirements-delta workflows, capture artifacts | IMPLEMENTED AS GOVERNANCE/SCHEMA | Official-source verification per opportunity |
+| Quantum / cryptographic evidence available in-repo | `docs/QCRYPTO_BTC_MIGRATION_V0_1_2026-09-30.md`, `research/qcrypto_tsv/v3_6/`, evaluator-handoff/reproducibility machinery | IMPLEMENTED IN SOFTWARE or PROVEN INTERNALLY only where an exact file/test supports the bounded statement; QBI-specific quantum benchmarking remains proposed work | Add exact QBI-relevant benchmark artifacts/tests, then independent benchmark / hardware-provider data as applicable |
+| Opportunity intelligence | PRE schemas, requirements-delta workflows, capture artifacts | IMPLEMENTED IN SOFTWARE for existing schemas/tools; opportunity facts still require source verification | Official-source verification per opportunity |
 | Partner integration | adapter, handoff, claims-boundary and evaluator-manifest work | IMPLEMENTED IN SOFTWARE for handoff machinery | Partner-owned system integration and acceptance |
 | Physical systems claims | research docs for RF/materials/propulsion/robotics/etc. | SUPPORTED BY LITERATURE / SIMULATED ONLY / HYPOTHESIS as applicable | Lab or partner validation |
 
 ## Opportunity mapping
 
 ### SCAR AOI 03
+
+**Route constraint:** treat provider-led teaming as the executable path unless Curious NerdworX independently verifies the solicitation's direct-offeror clearance/FCL gates and all other eligibility requirements.
 
 **Worldshepherd contribution that can be defended now**
 - bounded JAM/mission-assurance adapter concept;
@@ -84,16 +86,20 @@ Not currently claimed:
 
 ### DARPA QBI IV&V
 
-Defensible contribution:
+Defensible contribution from the current repository:
 - exact configuration capture;
-- benchmark reproducibility;
 - provenance;
 - claims/evidence separation;
-- independent evaluator handoff;
-- numerical / software validation harnesses.
+- reproducible software/evaluator handoff machinery;
+- concrete QCRYPTO artifacts where exact repository evidence supports the claim.
+
+Proposed work, not current evidence:
+- QBI-specific quantum benchmark suite;
+- provider/hardware-specific validation harnesses;
+- quantum performance or numerical claims not tied to an exact committed artifact/test.
 
 Missing gate:
-- evaluator-selected QBI workload and external hardware/provider integration.
+- commit the QBI-relevant benchmark implementation and tests, then validate against evaluator-selected workloads and external hardware/provider data.
 
 ## Proposal language rule
 
