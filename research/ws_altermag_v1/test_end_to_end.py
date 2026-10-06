@@ -466,3 +466,22 @@ def test_bxsf_adapter_fails_closed_without_periodic_endpoint(tmp_path):
     import pytest
     with pytest.raises(ValueError):
         adapt_elk_task102(src, tmp_path / "out", spin_label="UP")
+
+
+def test_qo_tilted_plane_angle_mapping_matches_reported_alpha22_point():
+    from research.ws_altermag_v1.qo_angles_b000 import alpha_to_theta_phi
+
+    theta, phi = alpha_to_theta_phi(22.0, 14.0)
+    assert abs(theta - 84.8) <= 0.15
+    assert abs(phi - 21.4) <= 0.15
+
+
+def test_qo_angle_plan_contains_fig3_source_orientations():
+    from research.ws_altermag_v1.qo_angles_b000 import build_angle_plan
+
+    plan = build_angle_plan()
+    assert plan["validation"]["pass"] is True
+    assert len(plan["angles"]) == 12
+    assert plan["angles"][-1]["alpha_deg"] == 0.0
+    assert abs(plan["angles"][-1]["theta_deg"] - 90.0) <= 1.0e-12
+    assert abs(plan["angles"][-1]["phi_deg"]) <= 1.0e-12
