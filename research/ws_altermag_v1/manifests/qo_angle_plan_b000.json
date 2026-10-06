@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-QO-ANGLES",
+  "source": {
+    "article_doi": "10.1038/s41586-026-10902-z",
+    "dataset_doi": "10.17863/CAM.131869",
+    "tilt_deg": 14.0,
+    "mapping": {
+      "cos_theta": "sin(14deg)*sin(alpha)",
+      "tan_phi": "cos(14deg)*tan(alpha)",
+      "quadrant_safe_phi": "atan2(cos(14deg)*sin(alpha), cos(alpha))"
+    },
+    "validation_point": {
+      "alpha_deg": 22.0,
+      "reported_theta_deg": 84.8,
+      "reported_phi_deg": 21.4,
+      "tolerance_deg": 0.15
+    }
+  },
+  "fig3_alpha_deg": [-72.0, -68.0, -60.0, -55.0, -50.0, -42.0, -38.0, -32.0, -24.0, -16.0, -8.0, 0.0],
+  "nodal_phi_deg": [0.0, -60.0],
+  "claim_boundary": "This maps the published tilted-plane rotator coordinate alpha into crystal theta/phi directions. It does not predict a quantum-oscillation frequency."
+}
