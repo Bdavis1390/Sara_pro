@@ -572,3 +572,33 @@ def test_qo_comparator_rejects_broken_node():
     result = compare_qo(fixture)
     assert result["pass"] is False
     assert result["nodes_pass"] is False
+
+
+def test_pyskeaf_freqvsangle_parser_preserves_writer_fields(tmp_path):
+    from research.ws_altermag_v1.pyskeaf_output_b000 import parse_freqvsangle
+
+    p = tmp_path / "qo_EF_0_freqvsangle.out"
+    p.write_text(
+        " Azimuthal(deg),  Polar(deg),  Freq(kT),  mstar(me),  Curv(kTA2),  Type(+e-h),  NumOrbCopy\n"
+        "      84.800405,    21.406417,  3.410000E+00,  1.200000E+00,  2.000000E-01,      -1.000,           2\n",
+        encoding="utf-8",
+    )
+    result = parse_freqvsangle(p)
+    assert result["row_count"] == 1
+    orbit = result["orbits"][0]
+    assert abs(orbit["writer_theta_deg"] - 84.800405) <= 1.0e-12
+    assert abs(orbit["writer_phi_deg"] - 21.406417) <= 1.0e-12
+    assert abs(orbit["frequency_kT"] - 3.41) <= 1.0e-12
+    assert orbit["orbit_type"] == -1.0
+    assert orbit["num_orbit_copies"] == 2
+
+
+def test_orbit_selection_contract_starts_fail_closed():
+    from pathlib import Path
+    from research.ws_altermag_v1.pyskeaf_output_b000 import validate_selection_manifest
+
+    p = Path("research/ws_altermag_v1/manifests/orbit_selection_b000.json")
+    result = validate_selection_manifest(p)
+    assert result["assignment_count"] == 0
+    assert result["dogbone_ready"] is False
+    assert result["decision"] == "BLOCK_DOGBONE_QO_SELECTION"
