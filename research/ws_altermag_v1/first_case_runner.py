@@ -10,6 +10,7 @@ import subprocess
 
 from .convergence_b000 import DEFAULT_PLAN
 from .elk_input_b000 import render_elk_template
+from .elk_output_b000 import summarize_run
 from .execution_gate import DEFAULT_BACKEND, inspect_host
 
 
@@ -40,6 +41,31 @@ def _first_case(plan: dict) -> dict:
         "label": "basis-rgkmax-6.0",
         "kgrid": list(plan["basis_convergence"]["fixed_kgrid"]),
         "rgkmax": float(plan["basis_convergence"]["rgkmax_values"][0]),
+    }
+
+
+def evaluate_completed_run(
+    *,
+    return_code: int | None,
+    timed_out: bool,
+    summary: dict,
+) -> dict:
+    blockers: list[str] = []
+    if timed_out:
+        blockers.append("RUN_TIMED_OUT")
+    if return_code != 0:
+        blockers.append("NONZERO_RETURN_CODE")
+    if not summary.get("energy_convergence_target_achieved"):
+        blockers.append("SCF_ENERGY_TARGET_NOT_ACHIEVED")
+    if not summary.get("parse_complete_enough_for_energy_gate"):
+        blockers.append("TOTAL_ENERGY_EVIDENCE_INCOMPLETE")
+    if not summary.get("parse_complete_enough_for_moment_gate"):
+        blockers.append("CR_LOCAL_MOMENT_EVIDENCE_INCOMPLETE")
+
+    return {
+        "usable_for_sequence": not blockers,
+        "blockers": blockers,
+        "decision": "CASE_READY_FOR_SEQUENCE" if not blockers else "CASE_HOLD",
     }
 
 
@@ -126,6 +152,18 @@ def main() -> None:
     (run_dir / "stdout.txt").write_text(stdout, encoding="utf-8")
     (run_dir / "stderr.txt").write_text(stderr, encoding="utf-8")
 
+    summary = summarize_run(run_dir)
+    summary_path = run_dir / f"{case['label']}.summary.json"
+    summary_path.write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    completion = evaluate_completed_run(
+        return_code=None if proc is None else proc.returncode,
+        timed_out=timed_out,
+        summary=summary,
+    )
+
     receipt = {
         **proposal,
         "decision": "FIRST_CASE_EXECUTED",
@@ -134,6 +172,9 @@ def main() -> None:
         "timed_out": timed_out,
         "return_code": None if proc is None else proc.returncode,
         "info_out_exists": (run_dir / "INFO.OUT").exists(),
+        "summary_path": str(summary_path),
+        "summary_sha256": _sha256(summary_path),
+        "completion": completion,
         "output_files": sorted(p.name for p in run_dir.iterdir() if p.is_file()),
         "claim_status": ["SIMULATED ONLY"],
     }
