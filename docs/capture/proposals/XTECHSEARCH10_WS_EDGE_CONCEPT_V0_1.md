@@ -1,9 +1,9 @@
 # xTech|Search 10 Concept v0.1 — WS-EDGE
 
-**Working title:** WS-EDGE — Governed Evidence-to-Decision Gateway for DDIL Operations  
-**Opportunity:** U.S. Army xTech|Search 10  
-**Official deadline verified:** 2026-10-19 17:00 ET  
-**Submission rule:** one submission per eligible entity  
+**Working title:** WS-EDGE — Governed Evidence-to-Decision Gateway for DDIL Operations
+**Opportunity:** U.S. Army xTech|Search 10
+**Official deadline verified:** 2026-10-19 17:00 ET
+**Submission rule:** one submission per eligible entity
 **Status:** CONCEPT / requires legal-entity and eligibility verification before submission
 
 ## 1. Army problem
