@@ -1,8 +1,8 @@
 # DARPA Influence Benchmarks Concept v0.1 — WS-MARKET
 
-**Working title:** WS-MARKET — Provenance-Bound Dynamic Market Testbed for AI Influence and Bias  
-**Opportunity:** DARPA SBIR DPA26BZ06-DV026, Influence Benchmarks for AI Systems  
-**Official deadline verified:** 2026-10-21  
+**Working title:** WS-MARKET — Provenance-Bound Dynamic Market Testbed for AI Influence and Bias
+**Opportunity:** DARPA SBIR DPA26BZ06-DV026, Influence Benchmarks for AI Systems
+**Official deadline verified:** 2026-10-21
 **Status:** CONCEPT / Phase I candidate; entity and DSIP eligibility must be verified before submission
 
 ## 1. Topic fit
