@@ -1,0 +1,27 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-BXSF-ADAPTER",
+  "execution_date": "2026-10-05",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "adapter": {
+    "input_fixture": "synthetic Elk task-102 style two-band periodic BXSF",
+    "adapter_digest": "5630ea94e3dbdceb5dcd66ae1e938de5f172a4fecf001d4e7880063fbb5500be",
+    "transforms": [
+      "multi-band to single-band files",
+      "strip duplicated periodic endpoint on x/y/z",
+      "Hartree to Rydberg: multiply energies by 2",
+      "Elk reciprocal bvec remove 2pi: divide vectors by 2pi"
+    ]
+  },
+  "validator": {
+    "package": "PAOFLOW 3.0.0",
+    "wheel_sha256": "27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e",
+    "module": "PAOFLOW.pyskeaf.io_bxsf.read_bxsf",
+    "outputs_accepted": 2,
+    "output_dims": [2, 2, 2],
+    "fermi_energy": 0.0
+  },
+  "decision": "SYNTHETIC_ADAPTER_PASS_REAL_ELK_VALIDATION_PENDING",
+  "claim_status": ["IMPLEMENTED IN SOFTWARE", "PROVEN INTERNALLY"],
+  "claim_boundary": "This proves compatibility for a synthetic Elk-task-102-style fixture with the pinned PySKEAF reader. It does not validate transformation fidelity on a real Elk CrSb BXSF and does not produce a quantum-oscillation frequency."
+}
