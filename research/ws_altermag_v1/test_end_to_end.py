@@ -292,3 +292,58 @@ def test_convergence_evaluator_fails_closed_when_moments_missing():
     assert result["energy_pass"] is True
     assert result["moment_pass"] is False
     assert result["decision"] == "HOLD"
+
+
+def _valid_basis_summary(energy, moments=(2.5, 2.5)):
+    return {
+        "energy_convergence_target_achieved": True,
+        "final_total_energy_ha_per_cell": energy,
+        "cr_local_moment_magnitudes_muB": list(moments),
+    }
+
+
+def test_basis_sequencer_starts_with_rgkmax_6():
+    from research.ws_altermag_v1.sequence_b000 import choose_next_basis_case
+
+    result = choose_next_basis_case({})
+    assert result["decision"] == "RUN_NEXT_BASIS_CASE"
+    assert result["next_case"]["kgrid"] == [12, 12, 8]
+    assert result["next_case"]["rgkmax"] == 6.0
+
+
+def test_basis_sequencer_never_skips_invalid_prior_case():
+    from research.ws_altermag_v1.sequence_b000 import choose_next_basis_case
+
+    bad = _valid_basis_summary(-100.0)
+    bad["energy_convergence_target_achieved"] = False
+    result = choose_next_basis_case({"basis-rgkmax-6.0": bad})
+    assert result["decision"] == "HOLD"
+    assert result["reason"] == "EARLIER_CASE_INVALID"
+
+
+def test_basis_gate_uses_highest_resolution_adjacent_pair():
+    from research.ws_altermag_v1.sequence_b000 import choose_next_basis_case
+
+    summaries = {
+        "basis-rgkmax-6.0": _valid_basis_summary(-100.0000, (2.40, 2.40)),
+        "basis-rgkmax-7.0": _valid_basis_summary(-100.0010, (2.50, 2.50)),
+        "basis-rgkmax-8.0": _valid_basis_summary(-100.00105, (2.505, 2.504)),
+    }
+    result = choose_next_basis_case(summaries)
+    assert result["coarse_6_to_7"]["pass"] is False
+    assert result["final_7_to_8"]["pass"] is True
+    assert result["decision"] == "BASIS_GATE_PASS"
+    assert result["accepted_rgkmax"] == 8.0
+
+
+def test_basis_gate_holds_when_final_pair_not_converged():
+    from research.ws_altermag_v1.sequence_b000 import choose_next_basis_case
+
+    summaries = {
+        "basis-rgkmax-6.0": _valid_basis_summary(-100.0000),
+        "basis-rgkmax-7.0": _valid_basis_summary(-100.00005),
+        "basis-rgkmax-8.0": _valid_basis_summary(-100.00100, (2.53, 2.47)),
+    }
+    result = choose_next_basis_case(summaries)
+    assert result["decision"] == "HOLD"
+    assert result["reason"] == "BASIS_NOT_CONVERGED_AT_RGKMAX_8"
