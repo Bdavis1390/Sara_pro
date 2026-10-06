@@ -245,6 +245,19 @@ The engineering comparison requires full twelve-angle coverage, both symmetry-no
 
 A perfect frozen-target fixture returns `QO_REFERENCE_MATCH`; missing-angle and broken-node controls return `HOLD`. Raw and empirically band-aligned calculations must be evaluated as separate lanes.
 
+
+## B000-ORBIT-SELECTION — no frequency-proximity shortcut
+
+The PySKEAF output format is now parsed into theta/phi writer fields, frequency, effective mass, curvature, orbit type and copy count without assigning a physical sheet identity. A separate orbit-selection manifest begins deliberately empty and blocks dogbone comparison until real Elk bands are explicitly assigned by spin, band ID, classification basis and source BXSF hash.
+
+This prevents an easy but invalid shortcut: choosing whichever computed orbit happens to lie nearest the experimental frequency and then calling it the dogbone. Orbit identity must be established from the calculated Fermi-surface topology before the frequency comparison is allowed.
+
+## B000-FIRST-CASE evidence handoff
+
+The first-case runner now performs its own bounded post-run evidence extraction. After Elk exits it hashes the outputs, writes a case summary, extracts energy and Cr local-moment evidence, and evaluates whether the result is usable by the convergence sequencer. Timeout, non-zero exit, missing SCF energy convergence, missing total energy or missing two-Cr local-moment evidence all produce `CASE_HOLD`.
+
+This means the future first real calculation can no longer silently advance merely because the Elk process returned successfully.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
