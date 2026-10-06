@@ -37,6 +37,26 @@ def _process_cmdlines() -> list[str]:
     return out
 
 
+def _memory_snapshot() -> dict[str, float]:
+    values: dict[str, float] = {}
+    try:
+        for line in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
+            if ":" not in line:
+                continue
+            key, rest = line.split(":", 1)
+            fields = rest.split()
+            if not fields:
+                continue
+            # /proc/meminfo reports these values in kB.
+            values[key] = float(fields[0]) / (1024 ** 2)
+    except (OSError, ValueError):
+        return {"MemAvailable_GB": 0.0, "SwapFree_GB": 0.0}
+    return {
+        "MemAvailable_GB": values.get("MemAvailable", 0.0),
+        "SwapFree_GB": values.get("SwapFree", 0.0),
+    }
+
+
 def _runtime_env(runtime_root: Path | None) -> dict[str, str]:
     env = os.environ.copy()
     if runtime_root is None:
@@ -80,6 +100,8 @@ def inspect_host(
     expected_backend_sha256: str,
     blocked_process_terms: list[str],
     minimum_free_gb: float,
+    minimum_mem_available_gb: float = 0.0,
+    minimum_swap_free_gb: float = 0.0,
     runtime_root: Path | None = None,
     startup_sanity_passed: bool = False,
 ) -> dict:
@@ -97,6 +119,10 @@ def inspect_host(
     free_gb = usage.free / (1024 ** 3)
     storage_clear = free_gb >= minimum_free_gb
 
+    memory = _memory_snapshot()
+    memory_clear = memory["MemAvailable_GB"] >= minimum_mem_available_gb
+    swap_clear = memory["SwapFree_GB"] >= minimum_swap_free_gb
+
     backend_exists = backend_binary.exists()
     backend_sha = _sha256(backend_binary) if backend_exists else None
     backend_hash_clear = backend_exists and backend_sha == expected_backend_sha256
@@ -110,6 +136,8 @@ def inspect_host(
     clear = (
         palace_clear
         and storage_clear
+        and memory_clear
+        and swap_clear
         and backend_hash_clear
         and runtime_clear
         and startup_sanity_passed
@@ -120,6 +148,12 @@ def inspect_host(
         "work_root": str(work_root),
         "work_root_free_GB": free_gb,
         "storage_clear": storage_clear,
+        "MemAvailable_GB": memory["MemAvailable_GB"],
+        "minimum_mem_available_GB": minimum_mem_available_gb,
+        "memory_clear": memory_clear,
+        "SwapFree_GB": memory["SwapFree_GB"],
+        "minimum_swap_free_GB": minimum_swap_free_gb,
+        "swap_clear": swap_clear,
         "backend_binary": str(backend_binary),
         "backend_exists": backend_exists,
         "backend_sha256_actual": backend_sha,
@@ -161,6 +195,8 @@ def main() -> None:
         expected_backend_sha256=expected,
         blocked_process_terms=list(gate["block_if_process_contains"]),
         minimum_free_gb=float(gate["minimum_work_root_free_GB"]),
+        minimum_mem_available_gb=float(gate["minimum_mem_available_GB"]),
+        minimum_swap_free_gb=float(gate["minimum_swap_free_GB"]),
         runtime_root=args.runtime_root,
         startup_sanity_passed=startup_passed,
     )
