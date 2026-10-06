@@ -1,0 +1,30 @@
+name: WS-MARKET v0.1
+
+on:
+  pull_request:
+    paths:
+      - "research/ws_market_v0_1/**"
+      - ".github/workflows/ws-market-v0_1.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "research/ws_market_v0_1/**"
+      - ".github/workflows/ws-market-v0_1.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run WS-MARKET bounded unit tests
+        run: python -m unittest research.ws_market_v0_1.test_ws_market -v
