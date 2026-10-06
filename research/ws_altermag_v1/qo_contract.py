@@ -24,7 +24,7 @@ def validate_qo_contract(path: Path = DEFAULT_MANIFEST) -> dict:
         and compat["pyskeaf_requires_single_band_bxsf"] is True
         and compat["elk_task102_can_emit_multiple_bands_in_one_bxsf"] is True
         and compat["pyskeaf_periodic_grid_corner_match_policy"] == "WARNING_ONLY_IN_PAOFLOW_3_0_0"
-        and gate["current_decision"] == "BLOCK_QO_EXTRACTION"
+        and gate["current_decision"].startswith("BLOCK_QO_EXTRACTION")
     )
     native_fail_closed = (
         native["status"] == "OFFICIAL_SOURCE_NOT_YET_PINNED"
@@ -39,6 +39,9 @@ def validate_qo_contract(path: Path = DEFAULT_MANIFEST) -> dict:
         "format_adapter_required": compat["adapter_required"],
         "direct_elk_to_pyskeaf_allowed": compat["direct_elk_to_pyskeaf_allowed"],
         "adapter_status": compat["adapter_status"],
+        "synthetic_adapter_validated": bool(
+            compat.get("synthetic_validation", {}).get("pyskeaf_read_bxsf_accepts_all_outputs")
+        ),
         "periodic_grid_policy": compat["pyskeaf_periodic_grid_corner_match_policy"],
         "primary_adapter_reason": compat["primary_adapter_reason"],
         "decision": gate["current_decision"],
