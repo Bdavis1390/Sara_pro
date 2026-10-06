@@ -602,3 +602,29 @@ def test_orbit_selection_contract_starts_fail_closed():
     assert result["assignment_count"] == 0
     assert result["dogbone_ready"] is False
     assert result["decision"] == "BLOCK_DOGBONE_QO_SELECTION"
+
+
+def test_first_case_completion_requires_energy_and_cr_moment_evidence():
+    from research.ws_altermag_v1.first_case_runner import evaluate_completed_run
+
+    summary = {
+        "energy_convergence_target_achieved": True,
+        "parse_complete_enough_for_energy_gate": True,
+        "parse_complete_enough_for_moment_gate": True,
+    }
+    result = evaluate_completed_run(return_code=0, timed_out=False, summary=summary)
+    assert result["usable_for_sequence"] is True
+    assert result["decision"] == "CASE_READY_FOR_SEQUENCE"
+
+
+def test_first_case_completion_holds_on_incomplete_moment_evidence():
+    from research.ws_altermag_v1.first_case_runner import evaluate_completed_run
+
+    summary = {
+        "energy_convergence_target_achieved": True,
+        "parse_complete_enough_for_energy_gate": True,
+        "parse_complete_enough_for_moment_gate": False,
+    }
+    result = evaluate_completed_run(return_code=0, timed_out=False, summary=summary)
+    assert result["usable_for_sequence"] is False
+    assert "CR_LOCAL_MOMENT_EVIDENCE_INCOMPLETE" in result["blockers"]
