@@ -3,7 +3,7 @@
 **Opportunity:** USSF SCAR HQ0860-26-S-C008
 **AOI focus:** AOI 03 — Antenna as a Service
 **Official response deadline verified:** 2026-10-15 14:00 MDT
-**Status:** NON-CUI CONCEPT / teaming-oriented; protected Offeror Library access remains gated
+**Status:** NON-CUI CONCEPT / teaming-oriented; direct submission remains blocked unless all solicitation eligibility gates, including required Secret-or-higher clearance and active Facility Security Clearance, are verified
 
 ## 1. Positioning
 
@@ -128,6 +128,10 @@ For ATLAS, RBC Signals, KSAT, SSC Space, or another qualified provider, the conc
 
 ## 9. Eligibility gates
 
-Protected Offeror Library access remains gated by the solicitation requirements and government guidance. The repository must continue to treat CAGE/JCP/DD2345/SPRS/CUI-readiness status as unverified until documentary evidence exists.
+Provider-led teaming is the default executable route.
 
-The white paper may be developed from public/non-CUI material while those gates are pursued in parallel.
+A direct Curious NerdworX submission must not be made unless the solicitation-required Secret-or-higher clearance and active Facility Security Clearance are verified at the required time, along with all other direct-offeror requirements.
+
+Protected Offeror Library access remains separately gated by the solicitation requirements and government guidance. The repository must continue to treat CAGE/JCP/DD2345/SPRS/CUI-readiness status as unverified until documentary evidence exists.
+
+The non-CUI technical package may be developed from public material while those gates are pursued in parallel.
