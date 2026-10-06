@@ -485,3 +485,36 @@ def test_qo_angle_plan_contains_fig3_source_orientations():
     assert plan["angles"][-1]["alpha_deg"] == 0.0
     assert abs(plan["angles"][-1]["theta_deg"] - 90.0) <= 1.0e-12
     assert abs(plan["angles"][-1]["phi_deg"]) <= 1.0e-12
+
+
+def test_band_alignment_declared_shifts_convert_to_rydberg():
+    from research.ws_altermag_v1.band_alignment_b000 import declared_shift_rydberg
+
+    dog = declared_shift_rydberg("dogbone_hole")
+    web = declared_shift_rydberg("web_electron")
+    assert dog < 0.0
+    assert web > 0.0
+    assert abs(dog * 13.605693122994 + 0.11) <= 1.0e-12
+    assert abs(web * 13.605693122994 - 0.015) <= 1.0e-12
+
+
+def test_band_alignment_preserves_raw_and_shifts_single_band(tmp_path):
+    from research.ws_altermag_v1.elk_bxsf_adapter import adapt_elk_task102
+    from research.ws_altermag_v1.band_alignment_b000 import shift_single_band_bxsf, declared_shift_rydberg
+
+    src = tmp_path / "FERMISURF_UP.bxsf"
+    src.write_text(_synthetic_elk_task102_bxsf(), encoding="utf-8")
+    adapted = tmp_path / "adapted"
+    adapt_elk_task102(src, adapted, spin_label="UP")
+
+    raw = adapted / "UP_band_0001.bxsf"
+    raw_before = raw.read_text(encoding="utf-8")
+    aligned = tmp_path / "aligned" / "UP_band_0001.bxsf"
+    receipt = shift_single_band_bxsf(raw, aligned, sheet_class="dogbone_hole")
+
+    assert receipt["raw_preserved"] is True
+    assert raw.read_text(encoding="utf-8") == raw_before
+    assert aligned.exists()
+    assert receipt["shifted_energy_count"] == 8
+    assert abs(receipt["shift_Ry"] - declared_shift_rydberg("dogbone_hole")) <= 1.0e-15
+    assert receipt["output_sha256"] != receipt["input_sha256"]
