@@ -44,7 +44,7 @@
     ],
     "pyskeaf_requires_single_band_bxsf": true,
     "adapter_required": true,
-    "adapter_status": "NOT_YET_IMPLEMENTED",
+    "adapter_status": "IMPLEMENTED_SYNTHETICALLY_VALIDATED",
     "direct_elk_to_pyskeaf_allowed": false,
     "pyskeaf_periodic_grid_corner_match_policy": "WARNING_ONLY_IN_PAOFLOW_3_0_0",
     "elk_task102_can_emit_multiple_bands_in_one_bxsf": true,
@@ -53,7 +53,19 @@
       "reciprocal-vector unit convention",
       "periodic endpoint layout",
       "band-by-band split fidelity"
-    ]
+    ],
+    "synthetic_validation": {
+      "paoflow_wheel_sha256": "27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e",
+      "adapter_digest": "5630ea94e3dbdceb5dcd66ae1e938de5f172a4fecf001d4e7880063fbb5500be",
+      "output_band_count": 2,
+      "pyskeaf_read_bxsf_accepts_all_outputs": true,
+      "output_dims": [
+        2,
+        2,
+        2
+      ],
+      "real_elk_validation_pending": true
+    }
   },
   "qo_gate": {
     "requires_basis_gate_pass": true,
@@ -62,7 +74,7 @@
     "requires_adapter_validation": true,
     "requires_orbit_extractor_validation": true,
     "requires_qo_grid_convergence": true,
-    "current_decision": "BLOCK_QO_EXTRACTION"
+    "current_decision": "BLOCK_QO_EXTRACTION_PENDING_REAL_ELK_BXSF_AND_ORBIT_EXTRACTOR"
   },
   "claim_boundary": "The quantum-oscillation toolchain is staged and compatibility-limited. No SKEAF/PySKEAF frequency result has been produced."
 }
