@@ -628,3 +628,22 @@ def test_first_case_completion_holds_on_incomplete_moment_evidence():
     result = evaluate_completed_run(return_code=0, timed_out=False, summary=summary)
     assert result["usable_for_sequence"] is False
     assert "CR_LOCAL_MOMENT_EVIDENCE_INCOMPLETE" in result["blockers"]
+
+
+def test_convergence_resource_gate_declares_memory_headroom():
+    import json
+
+    path = Path("research/ws_altermag_v1/manifests/convergence_b000.json")
+    gate = json.loads(path.read_text(encoding="utf-8"))["resource_gate"]
+    assert gate["minimum_mem_available_GB"] >= 1.0
+    assert gate["minimum_swap_free_GB"] >= 1.0
+    assert "engineering" in gate["memory_threshold_note"].lower()
+
+
+def test_execution_gate_memory_snapshot_has_required_fields():
+    from research.ws_altermag_v1.execution_gate import _memory_snapshot
+
+    snap = _memory_snapshot()
+    assert set(snap) == {"MemAvailable_GB", "SwapFree_GB"}
+    assert snap["MemAvailable_GB"] >= 0.0
+    assert snap["SwapFree_GB"] >= 0.0
