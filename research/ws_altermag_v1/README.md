@@ -202,7 +202,7 @@ For the orbit extractor, two lanes are preserved:
 - the paper-native SKEAF v1.3.0 r149 lane remains unpinned because the legacy WIEN2k download endpoint could not be retrieved with normal TLS verification; certificate verification was not bypassed;
 - PAOFLOW 3.0.0 / `PAOFLOW.pyskeaf` is staged as an open cross-check. Its wheel SHA-256 is `27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e`.
 
-A compatibility gate is necessary: PAOFLOW's PySKEAF reader requires single-band BXSF input and explicitly rejects obvious periodic-grid Elk/exciting-style BXSF files. Direct `Elk task 102 -> PySKEAF` execution is therefore blocked until a validated format conversion/splitting adapter exists.
+A compatibility gate is necessary: PAOFLOW 3.0.0's PySKEAF reader requires **single-band** BXSF input, whereas Elk task 102 can place multiple Fermi-crossing bands in one spin-resolved BXSF. PySKEAF 3.0.0 treats the periodic-corner equality symptom as a warning rather than a hard rejection, so the hard blocker is band splitting; reciprocal-vector units and periodic endpoint handling are additional validation requirements. Direct `Elk task 102 -> PySKEAF` execution remains blocked until a validated adapter exists.
 
 Current QO decision: `BLOCK_QO_EXTRACTION`.
 
