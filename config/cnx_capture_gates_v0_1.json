@@ -66,7 +66,10 @@
     },
     "scar_provider_team": {
       "status": "PENDING_EXTERNAL",
-      "public_note": "Provider-led teaming outreach is active; no partner relationship is claimed until accepted."
+      "public_note": "Provider-led teaming outreach is active; no partner relationship is claimed until accepted.",
+      "passing_statuses": [
+        "VERIFIED"
+      ]
     },
     "xtech_single_submission_control": {
       "status": "IN_PROGRESS",
