@@ -19,29 +19,31 @@ Unknown must never be upgraded to verified.
 
 | Gate | Status | Evidence required before `VERIFIED` | Notes |
 |---|---|---|---|
-| Curious NerdworX LLC formation | IN_PROGRESS / documentary status must be checked | State formation record and governing records | Repository visibility does not establish legal formation |
-| EIN | NOT VERIFIED HERE | IRS-issued EIN record | Do not commit EIN to public repository |
-| Business banking | NOT VERIFIED HERE | Bank account under legal entity | Keep account data private |
-| Accounting / payroll setup | NOT VERIFIED HERE | Selected system + documented treatment of owner and employees | Owner classification depends on tax election |
-| SAM.gov entity registration | NOT VERIFIED HERE | Active SAM record | Registration/renewal evidence belongs in protected business records |
-| UEI | NOT VERIFIED HERE | UEI from SAM record | Do not infer from outreach |
-| CAGE | NOT VERIFIED HERE | Active CAGE record | Required for several DoD access paths |
-| SBA small-business representations | NOT VERIFIED HERE | Current SAM/SBA representations | Verify NAICS-specific size status |
-| DSIP / DoD SBIR portal access | NOT VERIFIED HERE | Account + entity mapping | Needed for applicable DoD SBIR/STTR submissions |
-| Grants.gov | NOT VERIFIED HERE | Active organization registration / workspace access | Needed for applicable civilian grants |
-| Research.gov / NSF account | NOT VERIFIED HERE | Account + organization role | NSF submission path |
+| Curious NerdworX LLC formation | IN_PROGRESS | State formation record and governing records | Documentary state must be checked; repository visibility does not establish legal formation |
+| EIN | NOT_STARTED | IRS-issued EIN record | Do not commit EIN to public repository |
+| Business banking | NOT_STARTED | Bank account under legal entity | Keep account data private |
+| Accounting / payroll setup | NOT_STARTED | Selected system + documented treatment of owner and employees | Owner classification depends on tax election |
+| SAM.gov entity registration | NOT_STARTED | Active SAM record | Counseling is active, but registration is not treated as verified or initiated here without system-of-record evidence |
+| UEI | NOT_STARTED | UEI from SAM record | Do not infer from outreach |
+| CAGE | NOT_STARTED | Active CAGE record | Required for several DoD access paths |
+| SBA small-business representations | NOT_STARTED | Current SAM/SBA representations | Verify NAICS-specific size status |
+| DSIP / DoD SBIR portal access | NOT_STARTED | Account + entity mapping | Needed for applicable DoD SBIR/STTR submissions |
+| Grants.gov | NOT_STARTED | Active organization registration / workspace access | Needed for applicable civilian grants |
+| Research.gov / NSF account | NOT_STARTED | Account + organization role | NSF submission path |
 
 ## Cyber / CUI gates
 
 | Gate | Status | What Worldshepherd can do internally | What remains external / authoritative |
 |---|---|---|---|
 | Defined NIST SP 800-171 system boundary | IN_PROGRESS | Architecture, control mapping, evidence collection, SSP precursor | Final boundary must reflect actual people/process/technology and contract context |
-| NIST SP 800-171 Basic self-assessment | NOT VERIFIED HERE | Prepare evidence and calculate from verified control implementation | Score and submission must reflect actual environment |
-| SPRS posting | NOT VERIFIED HERE | Prepare assessment package | Authorized submission to SPRS |
-| CMMC Level 1/2 status | NOT VERIFIED HERE | Prepare controls/evidence | Certification/self-assessment status depends on current rule/contract requirement |
-| CUI-capable environment | NOT VERIFIED HERE | Design isolated boundary, logging, access control, backups, evidence | Must actually be implemented and supportable before making the assertion |
-| JCP / DD Form 2345 | NOT VERIFIED HERE | Prepare prerequisite checklist | DLA JCP approval is external |
-| Data Custodian designation | NOT VERIFIED HERE | Draft role and responsibilities | Must be formally assigned where required |
+| NIST SP 800-171 Basic self-assessment | NOT_STARTED | Prepare evidence and calculate from verified control implementation | Score and submission must reflect actual environment |
+| SPRS posting | NOT_STARTED | Prepare assessment package | Authorized submission to SPRS |
+| CMMC Level 1/2 status | NOT_STARTED | Prepare controls/evidence | Certification/self-assessment status depends on current rule/contract requirement |
+| CUI-capable environment | IN_PROGRESS | Design isolated boundary, logging, access control, backups, evidence | Design/preparation does not establish authorization or readiness |
+| JCP / DD Form 2345 | NOT_STARTED | Prepare prerequisite checklist | DLA JCP approval is external |
+| Data Custodian designation | NOT_STARTED | Draft role and responsibilities | Must be formally assigned where required |
+| Facility Security Clearance (FCL) | NOT_STARTED | Active FCL at the level required by the solicitation | Separate from CAGE/JCP/CUI readiness; cannot be self-declared |
+| Required Secret-or-higher personnel clearance | NOT_STARTED | Documentary clearance status for the personnel/roles required by the solicitation | Do not infer from prior government/industry work or correspondence |
 
 ## Opportunity-specific gates
 
@@ -49,9 +51,12 @@ Unknown must never be upgraded to verified.
 
 **Can proceed now:**
 - public / non-CUI solicitation analysis;
-- non-CUI white-paper development;
+- provider-led / teaming white-paper development;
 - teaming discussions using public information;
 - evidence packaging for Worldshepherd's bounded software contribution.
+
+**Direct-submission hard gate:**
+- do not submit Curious NerdworX as the direct SCAR offeror unless the solicitation-required Secret-or-higher clearance and active Facility Security Clearance are verified at the required time, in addition to all other eligibility requirements.
 
 **Do not claim until verified:**
 - eligibility to access EXPT/CUI Offeror Library material;
