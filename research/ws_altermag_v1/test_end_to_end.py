@@ -347,3 +347,28 @@ def test_basis_gate_holds_when_final_pair_not_converged():
     result = choose_next_basis_case(summaries)
     assert result["decision"] == "HOLD"
     assert result["reason"] == "BASIS_NOT_CONVERGED_AT_RGKMAX_8"
+
+
+def test_fermi_export_contract_is_spin_resolved_and_fail_closed():
+    from research.ws_altermag_v1.fermi_export_b000 import validate_contract
+
+    result = validate_contract()
+    assert result["contract_pass"] is True
+    assert result["task"] == 102
+    assert result["expected_outputs"] == ["FERMISURF_DN.bxsf", "FERMISURF_UP.bxsf"]
+    assert result["quantum_oscillation_stage"] == "REQUIRES_ORBIT_EXTRACTOR"
+    assert len(result["template_sha256"]) == 64
+
+
+def test_fermi_export_template_uses_task_102_and_plot3d_grid():
+    from research.ws_altermag_v1.fermi_export_b000 import render_fermi_export
+
+    rendered = render_fermi_export(
+        species_path="/var/tmp/staged/species/",
+        np3d=(43, 43, 28),
+        rgkmax=8.0,
+    )
+    assert "tasks\n  102\n" in rendered
+    assert "plot3d\n  0.0 0.0 0.0" in rendered
+    assert "  43 43 28\n" in rendered
+    assert "sppath\n  '/var/tmp/staged/species/'" in rendered
