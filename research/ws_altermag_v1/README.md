@@ -190,6 +190,22 @@ The coarse `6 -> 7` comparison is retained as trend evidence but is not allowed 
 
 Current unit coverage verifies start-of-sequence, fail-closed invalid prior cases, convergence at the highest-resolution pair, and HOLD behavior when the final pair fails.
 
+
+## B000-FERMI / B000-QO — post-SCF export is now gated
+
+The post-SCF Fermi-surface path is now explicit. After the numerical basis and k-grid gates pass, Elk task `102` is the selected spin-resolved BXSF export path. In a collinear spin-polarized run the contract expects both `FERMISURF_UP.bxsf` and `FERMISURF_DN.bxsf`, and requires hashes for the converged `STATE.OUT` and both exported surfaces before any orbit analysis can begin.
+
+The initial BXSF grid is `43 x 43 x 28` as a reproducibility checkpoint only. It is **not** declared quantum-oscillation converged; the orbit-extraction grid requires its own convergence study.
+
+For the orbit extractor, two lanes are preserved:
+
+- the paper-native SKEAF v1.3.0 r149 lane remains unpinned because the legacy WIEN2k download endpoint could not be retrieved with normal TLS verification; certificate verification was not bypassed;
+- PAOFLOW 3.0.0 / `PAOFLOW.pyskeaf` is staged as an open cross-check. Its wheel SHA-256 is `27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e`.
+
+A compatibility gate is necessary: PAOFLOW's PySKEAF reader requires single-band BXSF input and explicitly rejects obvious periodic-grid Elk/exciting-style BXSF files. Direct `Elk task 102 -> PySKEAF` execution is therefore blocked until a validated format conversion/splitting adapter exists.
+
+Current QO decision: `BLOCK_QO_EXTRACTION`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
