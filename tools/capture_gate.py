@@ -26,6 +26,7 @@ ALLOWED_STATUSES = {
     "NOT_APPLICABLE",
 }
 PASSING_STATUSES = {"VERIFIED", "NOT_APPLICABLE"}
+SCHEMA = "CNX-CAPTURE-GATE-V0.1"
 
 
 class CaptureGateError(ValueError):
@@ -69,6 +70,11 @@ def load_config(path: Path) -> dict[str, Any]:
 
 
 def validate_config(config: dict[str, Any]) -> None:
+    if config.get("schema") != SCHEMA:
+        raise CaptureGateError(
+            f"schema must be exactly {SCHEMA!r}"
+        )
+
     vocabulary = set(config.get("status_vocabulary", []))
     if vocabulary != ALLOWED_STATUSES:
         raise CaptureGateError(
