@@ -384,3 +384,72 @@ def test_qo_backend_contract_blocks_direct_elk_to_pyskeaf():
     assert result["format_adapter_required"] is True
     assert result["direct_elk_to_pyskeaf_allowed"] is False
     assert result["decision"] == "BLOCK_QO_EXTRACTION"
+
+
+def _synthetic_elk_task102_bxsf():
+    import numpy as np
+
+    base1 = np.arange(8, dtype=float).reshape(2, 2, 2) / 100.0
+    base2 = (np.arange(8, dtype=float).reshape(2, 2, 2) + 10.0) / 100.0
+
+    def periodic(base):
+        out = np.empty((3, 3, 3), dtype=float)
+        for i in range(3):
+            for j in range(3):
+                for k in range(3):
+                    out[i, j, k] = base[i % 2, j % 2, k % 2]
+        return out
+
+    bands = [periodic(base1), periodic(base2)]
+    lines = [
+        " BEGIN_INFO",
+        " Fermi Energy: 0.0000000000",
+        " END_INFO",
+        " BEGIN_BLOCK_BANDGRID_3D",
+        " band_energies",
+        " BANDGRID_3D_BANDS",
+        " 2",
+        " 3 3 3",
+        " 0.0 0.0 0.0",
+        " 6.283185307179586 0.0 0.0",
+        " 0.0 6.283185307179586 0.0",
+        " 0.0 0.0 6.283185307179586",
+    ]
+    for idx, arr in enumerate(bands, start=1):
+        lines.append(f" BAND: {idx}")
+        flat = arr.reshape(-1)
+        for j in range(0, len(flat), 6):
+            lines.append(" ".join(str(v) for v in flat[j:j+6]))
+    lines += [" END_BANDGRID_3D", " END_BLOCK_BANDGRID_3D"]
+    return "\n".join(lines) + "\n"
+
+
+def test_bxsf_adapter_splits_bands_strips_periodic_endpoint_and_converts_units(tmp_path):
+    from research.ws_altermag_v1.elk_bxsf_adapter import adapt_elk_task102
+
+    src = tmp_path / "FERMISURF_UP.bxsf"
+    src.write_text(_synthetic_elk_task102_bxsf(), encoding="utf-8")
+    outdir = tmp_path / "out"
+    result = adapt_elk_task102(src, outdir, spin_label="UP")
+
+    assert result["output_band_count"] == 2
+    assert result["source_dims"] == [3, 3, 3]
+    assert all(item["dims"] == [2, 2, 2] for item in result["outputs"])
+
+    text = (outdir / "UP_band_0001.bxsf").read_text(encoding="utf-8")
+    assert " 2 2 2\n" in text
+    assert "1.000000000000 0.000000000000 0.000000000000" in text
+    # First nonzero source energy is 0.01 Hartree -> 0.02 Rydberg.
+    assert "2.000000000000E-02" in text
+
+
+def test_bxsf_adapter_fails_closed_without_periodic_endpoint(tmp_path):
+    from research.ws_altermag_v1.elk_bxsf_adapter import adapt_elk_task102
+
+    text = _synthetic_elk_task102_bxsf().replace("0.07", "9.99", 1)
+    src = tmp_path / "bad.bxsf"
+    src.write_text(text, encoding="utf-8")
+
+    import pytest
+    with pytest.raises(ValueError):
+        adapt_elk_task102(src, tmp_path / "out", spin_label="UP")
