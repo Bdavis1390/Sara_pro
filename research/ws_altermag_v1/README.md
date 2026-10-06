@@ -157,6 +157,15 @@ Once Palace clears, the same runner can be invoked first without `--execute` to 
 
 Evidence: `evidence/b000_first_case_guard_2026-10-05.json`.
 
+
+## B000-OUTPUT — evidence extraction before interpretation
+
+The Elk output path is now prepared before any SCF run. The parser consumes `INFO.OUT` plus the dedicated `TOTENERGY.OUT`, `DTOTENERGY.OUT`, `MOMENT.OUT` and `MOMENTM.OUT` streams and hashes every file it summarizes. It also extracts the final `Moments:` block from `INFO.OUT`, including per-species/per-atom muffin-tin moments, so the two Cr local-moment magnitudes can be carried into convergence testing.
+
+The parser deliberately keeps extraction separate from interpretation: a value can be parsed without being accepted as converged. `convergence_eval.py` compares adjacent numerical settings and converts total-energy changes from Hartree per four-atom CrSb cell to meV/atom. Advancement requires **both** the predeclared energy threshold and the Cr local-moment threshold; missing moment evidence produces `HOLD`, not a pass.
+
+This removes another manual handoff from the future `rgkmax=6 -> 7 -> 8` progression.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
