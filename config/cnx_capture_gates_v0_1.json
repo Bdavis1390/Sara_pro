@@ -103,12 +103,12 @@
     "SCAR_AOI03_TEAMING": {
       "route": "teaming",
       "hard_gates": [
-        "capture_package"
-      ],
-      "development_gates": [
         "scar_provider_team"
       ],
-      "note": "Allows non-CUI provider-led capture development while external teaming acceptance remains pending."
+      "development_gates": [
+        "capture_package"
+      ],
+      "note": "Non-CUI provider-led capture development may proceed from the verified package while partner acceptance remains pending; submission/teaming representation remains blocked until acceptance is verified."
     },
     "XTECHSEARCH10_SUBMISSION": {
       "route": "direct",
