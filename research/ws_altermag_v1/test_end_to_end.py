@@ -110,7 +110,7 @@ def test_backend_selection_stays_fail_closed():
     path = Path("research/ws_altermag_v1/manifests/backend_selection_b000.json")
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["selection"]["open_crosscheck"]["backend"] == "Elk"
-    assert data["selection"]["open_crosscheck"]["status"] == "SELECTED_NOT_INSTALLED"
+    assert data["selection"]["open_crosscheck"]["status"] == "SELECTED_STAGED_ISOLATED_RUNTIME_READY"
     assert data["resource_snapshot"]["palace_active"] is True
     assert data["resource_snapshot"]["install_now"] is False
 
@@ -128,7 +128,9 @@ def test_open_backend_package_is_content_pinned():
     assert len(elk["species_sha256"]["Cr.in"]) == 64
     assert len(elk["species_sha256"]["Sb.in"]) == 64
     assert elk["staging_status"] == "DOWNLOADED_AND_EXTRACTED_NOT_INSTALLED"
-    assert elk["runtime_dependency_check"]["status"] == "NOT_RUNNABLE_FROM_EXTRACTED_TREE_YET"
+    assert elk["runtime_dependency_check"]["status"] == "RESOLVED_BY_STAGED_USERSPACE_RUNTIME"
+    assert elk["runtime_dependency_check"]["current_missing_direct_linked_libraries"] == []
+    assert elk["runtime_dependency_staging_status"] == "STAGED_USERSPACE_RUNTIME_READY"
 
 
 def test_elk_template_encodes_reference_geometry_without_execution():
