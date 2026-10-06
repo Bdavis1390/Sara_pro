@@ -217,3 +217,27 @@ def test_first_case_is_cheapest_declared_basis_case():
     case = _first_case(plan)
     assert case["kgrid"] == [12, 12, 8]
     assert case["rgkmax"] == 6.0
+
+
+def test_elk_info_parser_handles_known_output_labels():
+    from research.ws_altermag_v1.elk_output_b000 import parse_info_out
+
+    sample = """
+      -123.4567890000 : total energy per unit cell
+      total moment          :  1.0D-03  -2.0D-03  3.0D-03
+      Absolute change in total energy (target)   :  5.0E-07 ( 1.0E-06 )
+    """
+    result = parse_info_out(sample)
+    assert abs(result["total_energy_ha_per_cell"] + 123.456789) <= 1.0e-12
+    assert result["total_moment_muB"] == (0.001, -0.002, 0.003)
+    assert result["total_moment_magnitude_muB"] > 0.0
+    assert abs(result["energy_change_reported"] - 5.0e-7) <= 1.0e-15
+
+
+def test_moment_parser_preserves_numeric_rows_without_inventing_semantics():
+    from research.ws_altermag_v1.elk_output_b000 import parse_momentm_out
+
+    result = parse_momentm_out("# synthetic fixture\n1 0.1 0.2 0.3\n2 -0.1 -0.2 -0.3\n")
+    assert result["numeric_row_count"] == 2
+    assert result["last_numeric_row"] == [2.0, -0.1, -0.2, -0.3]
+    assert "RAW_NUMERIC_ONLY" in result["semantics"]
