@@ -1,6 +1,6 @@
 # Curious NerdworX LLC — October 2026 Capture Board
 
-**Status date:** 2026-10-05  
+**Status date:** 2026-10-05
 **Purpose:** convert Worldshepherd's current technical evidence, active correspondence, and federal opportunity pipeline into a bounded execution queue for Curious NerdworX LLC.
 
 ## Operating rule
