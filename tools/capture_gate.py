@@ -92,7 +92,7 @@ def validate_config(config: dict[str, Any]) -> None:
             if (
                 not isinstance(passing_statuses, list)
                 or not passing_statuses
-                or any(item not in ALLOWED_STATUSES for item in passing_statuses)
+                or any(item not in PASSING_STATUSES for item in passing_statuses)
             ):
                 raise CaptureGateError(
                     f"gate {gate_name!r} has invalid passing_statuses"
