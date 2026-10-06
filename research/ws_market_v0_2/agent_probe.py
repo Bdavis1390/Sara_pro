@@ -207,7 +207,7 @@ def run_probe(
             record = AgentActionRecord(
                 observation_id=observation.observation_id,
                 agent_id=agent_id,
-                action=action,
+                action=_json_clone(action),
                 action_hash=action_hash,
             )
             records.append(record)
@@ -217,7 +217,7 @@ def run_probe(
                 {
                     "observation_id": observation.observation_id,
                     "agent_id": agent_id,
-                    "action": action,
+                    "action": _json_clone(action),
                     "action_hash": action_hash,
                 },
             )
