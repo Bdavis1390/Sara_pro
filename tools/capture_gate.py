@@ -89,7 +89,11 @@ def validate_config(config: dict[str, Any]) -> None:
 
     for opportunity_name, opportunity in opportunities.items():
         for collection in ("hard_gates", "development_gates"):
-            names = opportunity.get(collection, [])
+            if collection not in opportunity:
+                raise CaptureGateError(
+                    f"{opportunity_name}.{collection} is required"
+                )
+            names = opportunity[collection]
             if not isinstance(names, list):
                 raise CaptureGateError(
                     f"{opportunity_name}.{collection} must be a list"
@@ -123,11 +127,11 @@ def evaluate(config: dict[str, Any], opportunity_name: str) -> OpportunityResult
 
     hard = tuple(
         _gate_result(config, gate_name)
-        for gate_name in opportunity.get("hard_gates", [])
+        for gate_name in opportunity["hard_gates"]
     )
     development = tuple(
         _gate_result(config, gate_name)
-        for gate_name in opportunity.get("development_gates", [])
+        for gate_name in opportunity["development_gates"]
     )
 
     return OpportunityResult(
