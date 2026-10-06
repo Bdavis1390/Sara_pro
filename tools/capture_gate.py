@@ -87,6 +87,17 @@ def validate_config(config: dict[str, Any]) -> None:
                 f"gate {gate_name!r} uses invalid status {status!r}"
             )
 
+        passing_statuses = gate.get("passing_statuses")
+        if passing_statuses is not None:
+            if (
+                not isinstance(passing_statuses, list)
+                or not passing_statuses
+                or any(item not in ALLOWED_STATUSES for item in passing_statuses)
+            ):
+                raise CaptureGateError(
+                    f"gate {gate_name!r} has invalid passing_statuses"
+                )
+
     for opportunity_name, opportunity in opportunities.items():
         for collection in ("hard_gates", "development_gates"):
             if collection not in opportunity:
@@ -109,10 +120,11 @@ def validate_config(config: dict[str, Any]) -> None:
 def _gate_result(config: dict[str, Any], gate_name: str) -> GateResult:
     gate = config["gates"][gate_name]
     status = gate["status"]
+    passing_statuses = set(gate.get("passing_statuses", PASSING_STATUSES))
     return GateResult(
         gate=gate_name,
         status=status,
-        passing=status in PASSING_STATUSES,
+        passing=status in passing_statuses,
         note=gate.get("public_note", ""),
     )
 
