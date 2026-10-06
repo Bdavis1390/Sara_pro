@@ -446,9 +446,21 @@ def test_bxsf_adapter_splits_bands_strips_periodic_endpoint_and_converts_units(t
 def test_bxsf_adapter_fails_closed_without_periodic_endpoint(tmp_path):
     from research.ws_altermag_v1.elk_bxsf_adapter import adapt_elk_task102
 
-    text = _synthetic_elk_task102_bxsf().replace("0.07", "9.99", 1)
+    lines = _synthetic_elk_task102_bxsf().splitlines()
+    start = lines.index(" BAND: 1") + 1
+    stop = lines.index(" BAND: 2")
+    tokens = []
+    for line in lines[start:stop]:
+        tokens.extend(line.split())
+    assert len(tokens) == 27
+    tokens[-1] = "9.99"
+
+    rebuilt = lines[:start]
+    for i in range(0, len(tokens), 6):
+        rebuilt.append(" ".join(tokens[i:i+6]))
+    rebuilt.extend(lines[stop:])
     src = tmp_path / "bad.bxsf"
-    src.write_text(text, encoding="utf-8")
+    src.write_text("\n".join(rebuilt) + "\n", encoding="utf-8")
 
     import pytest
     with pytest.raises(ValueError):
