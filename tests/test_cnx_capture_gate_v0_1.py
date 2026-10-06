@@ -47,8 +47,21 @@ class CaptureGateTests(unittest.TestCase):
         self.assertTrue(result.development_ready)
         self.assertTrue(result.submission_ready)
 
-    def test_not_applicable_is_passing(self):
+    def test_not_applicable_is_passing_by_default(self):
         result = evaluate(BASE, "TEAM")
+        states = {item.gate: item.passing for item in result.hard_gates}
+        self.assertTrue(states["na"])
+
+    def test_gate_can_require_verified_only(self):
+        config = copy.deepcopy(BASE)
+        config["gates"]["na"]["passing_statuses"] = ["VERIFIED"]
+        result = evaluate(config, "TEAM")
+        states = {item.gate: item.passing for item in result.hard_gates}
+        self.assertFalse(states["na"])
+        self.assertFalse(result.submission_ready)
+
+        config["gates"]["na"]["status"] = "VERIFIED"
+        result = evaluate(config, "TEAM")
         states = {item.gate: item.passing for item in result.hard_gates}
         self.assertTrue(states["na"])
 
