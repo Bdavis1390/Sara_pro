@@ -166,6 +166,21 @@ The parser deliberately keeps extraction separate from interpretation: a value c
 
 This removes another manual handoff from the future `rgkmax=6 -> 7 -> 8` progression.
 
+
+## B000-OFFLOAD — verified removable-media copy
+
+The staged Elk runtime, pinned CrSb source-data archive and local B000 evidence receipts are now copied to the attached USB under `Worldshepherd-WS-ALTERMAG/`. Because the USB is VFAT and cannot preserve the runtime's symbolic links directly, the backend tree is stored in an uncompressed tar container rather than as a flattened copy.
+
+The backend archive SHA-256 is:
+
+`3eceda20726e1819988aa2652a01ea8ba3168bec31edcc4a9f30c11b2b4e59d0`
+
+The copied CrSb source-data archive retains its original pinned SHA-256:
+
+`2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79`
+
+Both primary files and all six local evidence JSON files were verified from checksum manifests on the USB. This is storage/provenance protection only and carries no physics claim.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
