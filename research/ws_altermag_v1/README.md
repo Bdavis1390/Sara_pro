@@ -215,6 +215,25 @@ The adapted outputs were then read by the **actual pinned PAOFLOW 3.0.0 PySKEAF 
 
 This advances the adapter to `IMPLEMENTED_SYNTHETICALLY_VALIDATED`, but QO extraction remains blocked until a real Elk CrSb task-102 export is transformed and validated. Evidence: `evidence/b000_bxsf_adapter_2026-10-05.json` and `evidence/b000_qo_unit_contract_2026-10-05.json`.
 
+
+## B000-QO-ANGLES — crystal-frame directions are reproducible
+
+The published tilted-plane geometry is now encoded directly rather than approximated from figure axes. For sample-platform tilt `14 deg`, the mapper uses
+
+`cos(theta) = sin(14 deg) sin(alpha)`
+
+and the quadrant-safe form
+
+`phi = atan2(cos(14 deg) sin(alpha), cos(alpha))`.
+
+As a cross-check, `alpha=22 deg` maps to `theta=84.8004 deg`, `phi=21.4064 deg`, reproducing the paper's reported `84.8 deg / 21.4 deg` orientation within 0.01 degree. The twelve deposited Fig. 3 alpha orientations are now precomputed for the future orbit-extraction stage.
+
+## B000-BAND-ALIGNMENT — raw and paper-aligned lanes stay separate
+
+The paper's empirical Fermi-level alignment is now a named transform rather than an implicit modification of the DFT result. The contract records `-0.11 eV` for the dogbone hole sheets and `+0.015 eV` for the web electron sheets. The transform operates only on already split single-band BXSFs, writes a new aligned artifact, and refuses to overwrite the raw band file.
+
+Automatic sheet classification remains disabled: a band must first be explicitly identified as `dogbone_hole` or `web_electron` before the corresponding shift may be applied. Raw and aligned quantum-oscillation results must both remain reportable, because the aligned lane is an empirical comparison aid rather than an ab-initio prediction.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
