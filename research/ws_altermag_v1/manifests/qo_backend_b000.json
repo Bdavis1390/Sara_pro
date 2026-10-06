@@ -38,12 +38,22 @@
   },
   "compatibility_gate": {
     "elk_export_task": 102,
-    "elk_outputs": ["FERMISURF_UP.bxsf", "FERMISURF_DN.bxsf"],
+    "elk_outputs": [
+      "FERMISURF_UP.bxsf",
+      "FERMISURF_DN.bxsf"
+    ],
     "pyskeaf_requires_single_band_bxsf": true,
-    "pyskeaf_rejects_obvious_periodic_grid_elk_bxsf": true,
     "adapter_required": true,
     "adapter_status": "NOT_YET_IMPLEMENTED",
-    "direct_elk_to_pyskeaf_allowed": false
+    "direct_elk_to_pyskeaf_allowed": false,
+    "pyskeaf_periodic_grid_corner_match_policy": "WARNING_ONLY_IN_PAOFLOW_3_0_0",
+    "elk_task102_can_emit_multiple_bands_in_one_bxsf": true,
+    "primary_adapter_reason": "PySKEAF requires single-band BXSF input while Elk task 102 can emit multiple Fermi-crossing bands in one spin-resolved BXSF.",
+    "secondary_validation_required": [
+      "reciprocal-vector unit convention",
+      "periodic endpoint layout",
+      "band-by-band split fidelity"
+    ]
   },
   "qo_gate": {
     "requires_basis_gate_pass": true,
