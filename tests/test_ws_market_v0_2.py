@@ -1,3 +1,4 @@
+import math
 import unittest
 
 from research.ws_market_v0_2.agent_probe import (
@@ -147,6 +148,52 @@ class AgentProbeTests(unittest.TestCase):
         )
         with self.assertRaises(AgentProbeError):
             run_probe(self.manifest(), adapters, self.observations())
+
+    def test_nonfinite_float_action_fails_closed(self):
+        adapters = self.adapters()
+        adapters[0] = FunctionAgentAdapter(
+            adapters[0].descriptor,
+            lambda obs: {"bid": math.nan},
+        )
+        with self.assertRaises(AgentProbeError):
+            run_probe(self.manifest(), adapters, self.observations())
+
+    def test_nested_tuple_action_fails_closed(self):
+        adapters = self.adapters()
+        adapters[0] = FunctionAgentAdapter(
+            adapters[0].descriptor,
+            lambda obs: {"path": ("a", "b")},
+        )
+        with self.assertRaises(AgentProbeError):
+            run_probe(self.manifest(), adapters, self.observations())
+
+    def test_colon_identifiers_do_not_collide(self):
+        manifest = ExperimentManifest(
+            experiment_id="collision-test",
+            seed=1,
+            market_mechanism="probe",
+            code_revision="deadbeef",
+            prompt_template_hash="prompt",
+            scenario_hash="scenario",
+            agents=(
+                AgentDescriptor("y:z", "test", "one", "1"),
+                AgentDescriptor("z", "test", "two", "1"),
+            ),
+        )
+        adapters = [
+            FunctionAgentAdapter(
+                descriptor,
+                lambda obs: {"bid": obs["market_state"]["value"]},
+            )
+            for descriptor in manifest.agents
+        ]
+        observations = [
+            ProbeObservation("x", {"value": 1}),
+            ProbeObservation("x:y", {"value": 2}),
+        ]
+        run, ledger = run_probe(manifest, adapters, observations)
+        self.assertEqual(len(run.records), 4)
+        self.assertTrue(ledger.verify())
 
 
 if __name__ == "__main__":
