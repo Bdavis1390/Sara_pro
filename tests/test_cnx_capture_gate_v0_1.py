@@ -40,6 +40,18 @@ class CaptureGateTests(unittest.TestCase):
         )
         self.assertEqual(result.hard_blockers, ())
 
+    def test_pending_hard_gate_blocks_submission_not_development(self):
+        config = copy.deepcopy(BASE)
+        config["opportunities"]["TEAM"]["hard_gates"] = ["external"]
+        config["opportunities"]["TEAM"]["development_gates"] = ["internal"]
+        result = evaluate(config, "TEAM")
+        self.assertTrue(result.development_ready)
+        self.assertFalse(result.submission_ready)
+        self.assertEqual(
+            [item.gate for item in result.hard_blockers],
+            ["external"],
+        )
+
     def test_verified_external_gate_opens_route(self):
         config = copy.deepcopy(BASE)
         config["gates"]["external"]["status"] = "VERIFIED"
