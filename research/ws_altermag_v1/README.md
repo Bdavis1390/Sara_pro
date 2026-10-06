@@ -234,6 +234,17 @@ The paper's empirical Fermi-level alignment is now a named transform rather than
 
 Automatic sheet classification remains disabled: a band must first be explicitly identified as `dogbone_hole` or `web_electron` before the corresponding shift may be applied. Raw and aligned quantum-oscillation results must both remain reportable, because the aligned lane is an empirical comparison aid rather than an ab-initio prediction.
 
+
+## B000-QO-COMPARE — the experimental comparison target is frozen
+
+The twelve Fig. 3 experimental dogbone branch pairs are now frozen into a content-addressed comparison manifest instead of being re-selected after seeing future Elk results. The target manifest SHA-256 is `4780ad0b69cc9048b5c134a342c897da85365e91315926ec3a734bf8c9e065c2`.
+
+A computed QO result must provide two explicitly classified dogbone frequencies at every one of the twelve alpha orientations. The comparator is permutation-insensitive within each pair, but it does not perform automatic orbit classification. Missing angles, duplicate angles or invalid classifications fail closed.
+
+The engineering comparison requires full twelve-angle coverage, both symmetry-node splittings <= `0.05 kT`, split-pattern correlation >= `0.80`, and overall matched-pair MAE <= `0.20 kT`. These thresholds are Worldshepherd reproduction gates, not uncertainty bars reported by the experiment.
+
+A perfect frozen-target fixture returns `QO_REFERENCE_MATCH`; missing-angle and broken-node controls return `HOLD`. Raw and empirically band-aligned calculations must be evaluated as separate lanes.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
