@@ -83,6 +83,32 @@ class CaptureGateTests(unittest.TestCase):
         with self.assertRaises(CaptureGateError):
             validate_config(config)
 
+    def test_schema_is_required_and_exact(self):
+        missing = copy.deepcopy(BASE)
+        del missing["schema"]
+        with self.assertRaises(CaptureGateError):
+            validate_config(missing)
+
+        future = copy.deepcopy(BASE)
+        future["schema"] = "CNX-CAPTURE-GATE-V0.2"
+        with self.assertRaises(CaptureGateError):
+            validate_config(future)
+
+    def test_partner_acceptance_can_be_verified_only(self):
+        config = copy.deepcopy(BASE)
+        config["gates"]["external"]["passing_statuses"] = ["VERIFIED"]
+        config["opportunities"]["TEAM"]["hard_gates"] = ["external"]
+        config["opportunities"]["TEAM"]["development_gates"] = ["internal"]
+
+        config["gates"]["external"]["status"] = "NOT_APPLICABLE"
+        result = evaluate(config, "TEAM")
+        self.assertTrue(result.development_ready)
+        self.assertFalse(result.submission_ready)
+
+        config["gates"]["external"]["status"] = "VERIFIED"
+        result = evaluate(config, "TEAM")
+        self.assertTrue(result.submission_ready)
+
     def test_missing_gate_collection_is_rejected(self):
         config = copy.deepcopy(BASE)
         del config["opportunities"]["TEAM"]["hard_gates"]
