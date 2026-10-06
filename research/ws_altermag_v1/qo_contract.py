@@ -21,6 +21,9 @@ def validate_qo_contract(path: Path = DEFAULT_MANIFEST) -> dict:
     fail_closed = (
         compat["adapter_required"] is True
         and compat["direct_elk_to_pyskeaf_allowed"] is False
+        and compat["pyskeaf_requires_single_band_bxsf"] is True
+        and compat["elk_task102_can_emit_multiple_bands_in_one_bxsf"] is True
+        and compat["pyskeaf_periodic_grid_corner_match_policy"] == "WARNING_ONLY_IN_PAOFLOW_3_0_0"
         and gate["current_decision"] == "BLOCK_QO_EXTRACTION"
     )
     native_fail_closed = (
@@ -36,6 +39,8 @@ def validate_qo_contract(path: Path = DEFAULT_MANIFEST) -> dict:
         "format_adapter_required": compat["adapter_required"],
         "direct_elk_to_pyskeaf_allowed": compat["direct_elk_to_pyskeaf_allowed"],
         "adapter_status": compat["adapter_status"],
+        "periodic_grid_policy": compat["pyskeaf_periodic_grid_corner_match_policy"],
+        "primary_adapter_reason": compat["primary_adapter_reason"],
         "decision": gate["current_decision"],
         "contract_pass": wheel_pinned and fail_closed and native_fail_closed,
         "claim_boundary": manifest["claim_boundary"],
