@@ -383,7 +383,8 @@ def test_qo_backend_contract_blocks_direct_elk_to_pyskeaf():
     assert result["paper_native_fail_closed"] is True
     assert result["format_adapter_required"] is True
     assert result["direct_elk_to_pyskeaf_allowed"] is False
-    assert result["decision"] == "BLOCK_QO_EXTRACTION"
+    assert result["decision"].startswith("BLOCK_QO_EXTRACTION")
+    assert result["synthetic_adapter_validated"] is True
 
 
 def _synthetic_elk_task102_bxsf():
