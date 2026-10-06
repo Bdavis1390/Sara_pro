@@ -518,3 +518,57 @@ def test_band_alignment_preserves_raw_and_shifts_single_band(tmp_path):
     assert receipt["shifted_energy_count"] == 8
     assert abs(receipt["shift_Ry"] - declared_shift_rydberg("dogbone_hole")) <= 1.0e-15
     assert receipt["output_sha256"] != receipt["input_sha256"]
+
+
+def _perfect_qo_computed_fixture():
+    import json
+    from pathlib import Path
+
+    ref = json.loads(Path(
+        "research/ws_altermag_v1/manifests/qo_reference_targets_b000.json"
+    ).read_text(encoding="utf-8"))
+    return {
+        "lane": "RAW",
+        "provenance": {"fixture": "perfect-reference-copy"},
+        "angles": [
+            {
+                "alpha_deg": row["alpha_deg"],
+                "classification": "dogbone",
+                "dogbone_frequencies_kT": row["observed_frequencies_kT"],
+            }
+            for row in ref["targets"]
+        ],
+    }
+
+
+def test_qo_comparator_accepts_complete_perfect_fixture():
+    from research.ws_altermag_v1.qo_compare_b000 import compare_qo
+
+    result = compare_qo(_perfect_qo_computed_fixture())
+    assert result["pass"] is True
+    assert result["decision"] == "QO_REFERENCE_MATCH"
+    assert result["coverage"] == 12
+    assert result["overall_pair_mae_kT"] == 0.0
+    assert result["nodes_pass"] is True
+
+
+def test_qo_comparator_fails_closed_on_missing_angle():
+    from research.ws_altermag_v1.qo_compare_b000 import compare_qo
+
+    fixture = _perfect_qo_computed_fixture()
+    fixture["angles"].pop()
+    result = compare_qo(fixture)
+    assert result["pass"] is False
+    assert result["decision"] == "HOLD"
+    assert 0.0 in result["missing_alpha_deg"]
+
+
+def test_qo_comparator_rejects_broken_node():
+    from research.ws_altermag_v1.qo_compare_b000 import compare_qo
+
+    fixture = _perfect_qo_computed_fixture()
+    node = next(x for x in fixture["angles"] if x["alpha_deg"] == -60.0)
+    node["dogbone_frequencies_kT"] = [3.0, 3.3]
+    result = compare_qo(fixture)
+    assert result["pass"] is False
+    assert result["nodes_pass"] is False
