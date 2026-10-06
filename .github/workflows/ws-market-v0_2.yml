@@ -3,6 +3,7 @@ name: WS-MARKET v0.2
 on:
   pull_request:
     paths:
+      - "research/ws_market_v0_1/**"
       - "research/ws_market_v0_2/**"
       - "tests/test_ws_market_v0_2.py"
       - ".github/workflows/ws-market-v0_2.yml"
@@ -10,6 +11,7 @@ on:
     branches:
       - main
     paths:
+      - "research/ws_market_v0_1/**"
       - "research/ws_market_v0_2/**"
       - "tests/test_ws_market_v0_2.py"
       - ".github/workflows/ws-market-v0_2.yml"
@@ -24,6 +26,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
@@ -31,4 +35,4 @@ jobs:
       - name: Run WS-MARKET v0.2 bounded unit tests
         run: python -m unittest tests.test_ws_market_v0_2 -v
       - name: Reject whitespace errors
-        run: git diff --check HEAD^ -- . || git diff --check
+        run: git diff --check HEAD^ -- .
