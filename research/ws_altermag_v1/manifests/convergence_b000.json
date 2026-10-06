@@ -8,45 +8,83 @@
     "/media/sspadawanzz/80CE-1B1E/Worldshepherd-WS-ALTERMAG"
   ],
   "resource_gate": {
-    "block_if_process_contains": ["palace-x86_64", "prterun"],
-    "minimum_work_root_free_GB": 8.0,
-    "minimum_usb_free_GB_if_used": 6.0,
+    "block_if_process_contains": [
+      "palace-x86_64",
+      "prterun"
+    ],
+    "minimum_work_root_free_GB": 8,
+    "minimum_usb_free_GB_if_used": 6,
     "require_backend_runtime_complete": true,
     "require_backend_hash_match": true,
-    "require_structure_gate_pass": true
+    "require_structure_gate_pass": true,
+    "minimum_mem_available_GB": 1,
+    "minimum_swap_free_GB": 1,
+    "memory_threshold_note": "Worldshepherd engineering host-safety thresholds for the first Elk case; not paper-reported physics values."
   },
   "basis_convergence": {
-    "fixed_kgrid": [12, 12, 8],
-    "rgkmax_values": [6.0, 7.0, 8.0],
+    "fixed_kgrid": [
+      12,
+      12,
+      8
+    ],
+    "rgkmax_values": [
+      6,
+      7,
+      8
+    ],
     "acceptance": {
-      "total_energy_meV_per_atom_delta_max": 1.0,
+      "total_energy_meV_per_atom_delta_max": 1,
       "Cr_local_moment_muB_delta_max": 0.01
     }
   },
   "kgrid_convergence": {
-    "fixed_rgkmax": 8.0,
+    "fixed_rgkmax": 8,
     "kgrids": [
-      [8, 8, 6],
-      [12, 12, 8],
-      [18, 18, 12],
-      [24, 24, 16]
+      [
+        8,
+        8,
+        6
+      ],
+      [
+        12,
+        12,
+        8
+      ],
+      [
+        18,
+        18,
+        12
+      ],
+      [
+        24,
+        24,
+        16
+      ]
     ],
     "acceptance": {
-      "total_energy_meV_per_atom_delta_max": 1.0,
+      "total_energy_meV_per_atom_delta_max": 1,
       "Cr_local_moment_muB_delta_max": 0.01,
-      "dogbone_split_meV_delta_max": 10.0
+      "dogbone_split_meV_delta_max": 10
     }
   },
   "reference_run": {
-    "kgrid": [43, 43, 28],
-    "rgkmax": 8.0,
+    "kgrid": [
+      43,
+      43,
+      28
+    ],
+    "rgkmax": 8,
     "note": "Reference k-grid follows the published WIEN2k method. rgkmax=8.0 is an initial cross-check choice and must remain contingent on the basis-convergence gate."
   },
   "symmetry_breaking_field_sensitivity": {
-    "bfield_au_values": [0.0005, 0.001, 0.002],
+    "bfield_au_values": [
+      0.0005,
+      0.001,
+      0.002
+    ],
     "acceptance": {
       "converged_total_moment_muB_abs_max": 0.02,
-      "dogbone_split_meV_span_max": 10.0
+      "dogbone_split_meV_span_max": 10
     }
   },
   "claim_boundary": "These are predeclared engineering convergence thresholds for the open-method cross-check, not values reported by the CrSb paper and not physical results."
