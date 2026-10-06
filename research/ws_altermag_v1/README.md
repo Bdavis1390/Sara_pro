@@ -206,6 +206,15 @@ A compatibility gate is necessary: PAOFLOW 3.0.0's PySKEAF reader requires **sin
 
 Current QO decision: `BLOCK_QO_EXTRACTION`.
 
+
+## B000-BXSF-ADAPTER — synthetic compatibility gate passed
+
+The Elk-to-SKEAF adapter is now implemented and tested on a synthetic task-102-style two-band periodic BXSF. The transformation is explicit and provenance-visible: split to one band per file, remove Elk's duplicated periodic endpoint on each axis, convert Hartree energies to Rydberg by multiplying by two, and remove Elk's reciprocal-lattice `2*pi` factor before presenting the vectors to the SKEAF-compatible reader.
+
+The adapted outputs were then read by the **actual pinned PAOFLOW 3.0.0 PySKEAF reader** directly from wheel SHA-256 `27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e`. Both synthetic band files were accepted as `2 x 2 x 2` single-band grids.
+
+This advances the adapter to `IMPLEMENTED_SYNTHETICALLY_VALIDATED`, but QO extraction remains blocked until a real Elk CrSb task-102 export is transformed and validated. Evidence: `evidence/b000_bxsf_adapter_2026-10-05.json` and `evidence/b000_qo_unit_contract_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
