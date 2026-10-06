@@ -181,6 +181,15 @@ The copied CrSb source-data archive retains its original pinned SHA-256:
 
 Both primary files and all six local evidence JSON files were verified from checksum manifests on the USB. This is storage/provenance protection only and carries no physics claim.
 
+
+## B000-SEQUENCE — automated basis-gate progression
+
+The basis-convergence series is now a state machine rather than an operator checklist. `sequence_b000.py` enforces the ordered cases `rgkmax=6 -> 7 -> 8` at fixed `12 x 12 x 8`, refuses to skip an invalid prior run, requires the SCF energy target and exactly two Cr local-moment magnitudes, and evaluates the final `7 -> 8` adjacent pair against the declared energy and moment thresholds.
+
+The coarse `6 -> 7` comparison is retained as trend evidence but is not allowed to veto an otherwise converged `7 -> 8` pair. A basis pass therefore means only that the highest-resolution adjacent pair satisfies the numerical convergence contract; it is not a physical-validation claim.
+
+Current unit coverage verifies start-of-sequence, fail-closed invalid prior cases, convergence at the highest-resolution pair, and HOLD behavior when the final pair fails.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
