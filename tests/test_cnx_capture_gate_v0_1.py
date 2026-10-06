@@ -65,6 +65,12 @@ class CaptureGateTests(unittest.TestCase):
         states = {item.gate: item.passing for item in result.hard_gates}
         self.assertTrue(states["na"])
 
+    def test_nonpassing_state_cannot_be_configured_as_passing(self):
+        config = copy.deepcopy(BASE)
+        config["gates"]["external"]["passing_statuses"] = ["NOT_STARTED"]
+        with self.assertRaises(CaptureGateError):
+            validate_config(config)
+
     def test_missing_gate_collection_is_rejected(self):
         config = copy.deepcopy(BASE)
         del config["opportunities"]["TEAM"]["hard_gates"]
