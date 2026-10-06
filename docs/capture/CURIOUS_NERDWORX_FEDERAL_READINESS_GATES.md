@@ -1,6 +1,6 @@
 # Curious NerdworX LLC — Federal Eligibility and Readiness Gates
 
-**Status date:** 2026-10-05  
+**Status date:** 2026-10-05
 **Scope:** operational gating only. This is not legal, tax, certification, or contracting advice and does not substitute for the applicable government system of record.
 
 ## Fail-closed status model
