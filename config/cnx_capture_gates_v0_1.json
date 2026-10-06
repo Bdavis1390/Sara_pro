@@ -67,6 +67,18 @@
     "scar_provider_team": {
       "status": "PENDING_EXTERNAL",
       "public_note": "Provider-led teaming outreach is active; no partner relationship is claimed until accepted."
+    },
+    "xtech_single_submission_control": {
+      "status": "IN_PROGRESS",
+      "public_note": "One competition submission per eligible entity; final product selection must be frozen before submission."
+    },
+    "xtech_similar_federal_support_check": {
+      "status": "NOT_STARTED",
+      "public_note": "Prior, current, or pending substantially similar federal support must be checked and disclosed as required."
+    },
+    "xtech_application_final": {
+      "status": "IN_PROGRESS",
+      "public_note": "WS-EDGE concept exists; competition-specific final application and human approval remain open."
     }
   },
   "opportunities": {
@@ -99,11 +111,14 @@
       "route": "direct",
       "hard_gates": [
         "legal_entity",
-        "small_business_eligibility"
+        "small_business_eligibility",
+        "xtech_single_submission_control",
+        "xtech_similar_federal_support_check"
       ],
       "development_gates": [
         "capture_package",
-        "xtech_product_boundary"
+        "xtech_product_boundary",
+        "xtech_application_final"
       ],
       "note": "Final competition portal requirements and representations must still be verified before submission."
     },
