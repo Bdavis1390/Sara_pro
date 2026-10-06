@@ -258,6 +258,15 @@ The first-case runner now performs its own bounded post-run evidence extraction.
 
 This means the future first real calculation can no longer silently advance merely because the Elk process returned successfully.
 
+
+## B000-HOST-CAPACITY — memory is now an explicit execution gate
+
+The first-principles handoff now requires at least `1.0 GiB` of `MemAvailable` and `1.0 GiB` of free swap in addition to the existing Palace/process, storage, backend-hash, runtime and startup-sanity gates. These are Worldshepherd host-safety thresholds rather than material-model parameters.
+
+The latest Lenovo snapshot reports only `0.271 GiB` available memory while the two-rank Palace recovery calculation is active, so the current decision remains `BLOCK_DFT_EXECUTION` even independently of the Palace process-name gate. This avoids assuming that a transient process exit alone makes the two-core, 3.6-GiB host safe for Elk.
+
+Evidence: `evidence/b000_host_capacity_2026-10-05.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
