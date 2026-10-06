@@ -72,13 +72,13 @@
       "status": "IN_PROGRESS",
       "public_note": "One competition submission per eligible entity; final product selection must be frozen before submission."
     },
-    "xtech_similar_federal_support_check": {
-      "status": "NOT_STARTED",
-      "public_note": "Prior, current, or pending substantially similar federal support must be checked and disclosed as required."
-    },
     "xtech_application_final": {
       "status": "IN_PROGRESS",
       "public_note": "WS-EDGE concept exists; competition-specific final application and human approval remain open."
+    },
+    "xtech_no_disqualifying_similar_federal_support": {
+      "status": "NOT_STARTED",
+      "public_note": "VERIFIED means no substantially-similar federally funded/current/pending proposal creates a disqualifying overlap, or the Army has resolved the issue favorably in writing."
     }
   },
   "opportunities": {
@@ -113,7 +113,7 @@
         "legal_entity",
         "small_business_eligibility",
         "xtech_single_submission_control",
-        "xtech_similar_federal_support_check"
+        "xtech_no_disqualifying_similar_federal_support"
       ],
       "development_gates": [
         "capture_package",
