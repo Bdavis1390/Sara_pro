@@ -87,7 +87,10 @@ def test_dft_contract_is_complete_but_not_executed():
     assert result["contract_complete"] is True
     assert result["execution_status"] == "PROPOSED_NOT_EXECUTED"
     assert result["resource_clearance"] is False
+    assert result["open_backend_ok"] is True
+    assert result["memory_contract_ok"] is True
     assert "active Palace" in result["current_blocker"]
+    assert "MemAvailable" in result["current_blocker"]
     assert "No first-principles CrSb calculation" in result["claim_boundary"]
 
 
