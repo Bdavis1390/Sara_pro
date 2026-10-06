@@ -92,6 +92,8 @@ def main() -> None:
         expected_backend_sha256=elk["extracted_binary_sha256"],
         blocked_process_terms=list(plan["resource_gate"]["block_if_process_contains"]),
         minimum_free_gb=float(plan["resource_gate"]["minimum_work_root_free_GB"]),
+        minimum_mem_available_gb=float(plan["resource_gate"]["minimum_mem_available_GB"]),
+        minimum_swap_free_gb=float(plan["resource_gate"]["minimum_swap_free_GB"]),
         runtime_root=runtime_root,
         startup_sanity_passed=startup_ok,
     )
