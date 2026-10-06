@@ -130,6 +130,15 @@ class AgentProbeTests(unittest.TestCase):
         self.assertEqual(observed["market_state"]["reference"], 10)
         self.assertEqual(len(observed["news"]), 1)
 
+    def test_returned_action_mutation_cannot_corrupt_ledger(self):
+        run, ledger = run_probe(
+            self.manifest(),
+            self.adapters(),
+            self.observations(),
+        )
+        run.records[0].action["bid"] = -12345
+        self.assertTrue(ledger.verify())
+
     def test_non_object_action_fails_closed(self):
         adapters = self.adapters()
         adapters[0] = FunctionAgentAdapter(
