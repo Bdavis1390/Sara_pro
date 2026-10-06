@@ -54,7 +54,21 @@ def validate_contract(path: Path = DEFAULT_DFT_MANIFEST) -> dict:
             "requires_kmesh_convergence",
             "requires_energy_convergence",
             "requires_resource_clearance",
+            "requires_memory_headroom",
         )
+    )
+
+    open_lane = manifest["reproduction_lanes"]["O"]
+    open_backend_ok = (
+        open_lane.get("backend") == "Elk"
+        and open_lane.get("selection_status") == "SELECTED_AND_CONTENT_PINNED"
+        and open_lane.get("execution") == "DEFERRED"
+    )
+
+    memory_contract_ok = (
+        gate.get("requires_memory_headroom") is True
+        and float(gate.get("minimum_mem_available_GB", 0.0)) >= 1.0
+        and float(gate.get("minimum_swap_free_GB", 0.0)) >= 1.0
     )
 
     execution_deferred = (
@@ -68,6 +82,8 @@ def validate_contract(path: Path = DEFAULT_DFT_MANIFEST) -> dict:
         and lattice_ok
         and shifts_ok
         and required_gates_declared
+        and open_backend_ok
+        and memory_contract_ok
         and execution_deferred
     )
 
@@ -80,6 +96,8 @@ def validate_contract(path: Path = DEFAULT_DFT_MANIFEST) -> dict:
         "lattice_ok": lattice_ok,
         "band_alignment_ok": shifts_ok,
         "execution_status": manifest["execution_status"],
+        "open_backend_ok": open_backend_ok,
+        "memory_contract_ok": memory_contract_ok,
         "resource_clearance": gate["current_resource_clearance"],
         "current_blocker": gate["current_blocker"],
         "claim_status": ["IMPLEMENTED IN SOFTWARE", "SUPPORTED BY LITERATURE"],
