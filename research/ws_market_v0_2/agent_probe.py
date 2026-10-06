@@ -16,6 +16,11 @@ def _digest(value: Any) -> str:
     return sha256(_canonical(value).encode("utf-8")).hexdigest()
 
 
+def _json_clone(value: Any) -> Any:
+    """Return a detached JSON-compatible value or raise on invalid input."""
+    return json.loads(_canonical(value))
+
+
 class AgentProbeError(ValueError):
     """Raised when an experiment cannot be run without losing provenance."""
 
@@ -182,19 +187,21 @@ def run_probe(
             )
         seen_observations.add(observation.observation_id)
 
-        payload = observation.payload()
-        _canonical(payload)
+        payload = _json_clone(observation.payload())
         ledger.append(
             f"observation:{observation.observation_id}",
             "observation",
-            payload,
+            _json_clone(payload),
         )
 
         for agent_id in sorted(adapter_by_id):
             adapter = adapter_by_id[agent_id]
-            action = _ensure_json_object(
-                adapter.act(payload),
-                f"agent {agent_id!r}",
+            raw_action = adapter.act(_json_clone(payload))
+            action = _json_clone(
+                _ensure_json_object(
+                    raw_action,
+                    f"agent {agent_id!r}",
+                )
             )
             action_hash = _digest(action)
             record = AgentActionRecord(
