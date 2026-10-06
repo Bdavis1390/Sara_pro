@@ -112,14 +112,14 @@ For the independent open-method cross-check, Elk was selected because it is an a
 
 A fail-closed Elk input-template generator now renders the CrSb geometry, PBE GGA (`xctype=20`), spin-polarized initialization and `43 x 43 x 28` k-grid. It refuses to write a file literally named `elk.in` before the execution gate is cleared. The staged template SHA-256 is `981a11b818e85f6069b0f3707d098f2ee655f5bd6fa2bf90278b728ca9bf0402`.
 
-The extracted binary is not yet runnable in isolation because its system runtime dependencies include `libxc.so.9` and `libmpi_mpifh.so.40`. Those dependencies will be installed only after the active Palace workload clears. The backend is staged under `/var/tmp`, avoiding the nearly full home filesystem.
+The initial extracted binary was missing `libxc.so.9` and `libmpi_mpifh.so.40`. Those direct and transitive runtime dependencies were subsequently downloaded, content-pinned and extracted into an isolated user-space runtime under `/var/tmp`; no system-wide install is required. Direct linked-library checks are now clear and the pinned binary reaches Elk input parsing in the bounded startup sanity test. Execution remains blocked by the live process/resource gates rather than by runtime completeness.
 
 Evidence: `evidence/b000_backend_staging_2026-10-05.json`.
 
 
 ## B000-CONVERGENCE and execution guard
 
-The DFT path now has a machine-enforced execution guard rather than a prose-only warning. The guard checks competing Palace processes, work-root free space, the pinned Elk binary hash and dynamic runtime completeness before it can return execution clearance.
+The DFT path now has a machine-enforced execution guard rather than a prose-only warning. The guard checks competing Palace processes, work-root free space, minimum `MemAvailable`, minimum free swap, the pinned Elk binary hash, isolated runtime completeness and startup-sanity state before it can return execution clearance.
 
 On the 2026-10-05 Lenovo check, the backend hash matched and `/var/tmp` had about `13.68 GiB` free, but the gate correctly returned `BLOCK_DFT_EXECUTION` because Palace remains active and the staged Elk binary still lacks `libxc.so.9` and `libmpi_mpifh.so.40`.
 
