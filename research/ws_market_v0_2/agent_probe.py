@@ -3,13 +3,47 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
+import math
 from typing import Any, Callable, Iterable, Protocol
 
 from research.ws_market_v0_1.ws_market import EventLedger
 
 
+class AgentProbeError(ValueError):
+    """Raised when an experiment cannot be run without losing provenance."""
+
+
+def _validate_json_value(value: Any, path: str = "$") -> None:
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise AgentProbeError(f"{path} contains a non-finite float")
+        return
+    if isinstance(value, list):
+        for index, item in enumerate(value):
+            _validate_json_value(item, f"{path}[{index}]")
+        return
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise AgentProbeError(f"{path} contains a non-string object key")
+            _validate_json_value(item, f"{path}.{key}")
+        return
+    raise AgentProbeError(
+        f"{path} contains non-JSON type {type(value).__name__}"
+    )
+
+
 def _canonical(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    _validate_json_value(value)
+    return json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+        allow_nan=False,
+    )
 
 
 def _digest(value: Any) -> str:
@@ -17,12 +51,8 @@ def _digest(value: Any) -> str:
 
 
 def _json_clone(value: Any) -> Any:
-    """Return a detached JSON-compatible value or raise on invalid input."""
+    """Return a detached, standards-compatible JSON value."""
     return json.loads(_canonical(value))
-
-
-class AgentProbeError(ValueError):
-    """Raised when an experiment cannot be run without losing provenance."""
 
 
 @dataclass(frozen=True)
@@ -82,7 +112,7 @@ class BlackBoxAgent(Protocol):
     descriptor: AgentDescriptor
 
     def act(self, observation: dict[str, Any]) -> dict[str, Any]:
-        """Return one JSON-compatible action from a black-box observation."""
+        """Return one standards-compatible JSON object action."""
 
 
 @dataclass
@@ -114,7 +144,7 @@ def _ensure_json_object(value: Any, context: str) -> dict[str, Any]:
         raise AgentProbeError(f"{context} must return a JSON object")
     try:
         _canonical(value)
-    except (TypeError, ValueError) as exc:
+    except (AgentProbeError, TypeError, ValueError) as exc:
         raise AgentProbeError(
             f"{context} returned a non-JSON-compatible object"
         ) from exc
@@ -150,6 +180,15 @@ def _adapter_map(
             )
 
     return actual
+
+
+def _action_event_id(observation_id: str, agent_id: str) -> str:
+    return "action:" + _digest(
+        {
+            "observation_id": observation_id,
+            "agent_id": agent_id,
+        }
+    )
 
 
 def run_probe(
@@ -212,7 +251,7 @@ def run_probe(
             )
             records.append(record)
             ledger.append(
-                f"action:{observation.observation_id}:{agent_id}",
+                _action_event_id(observation.observation_id, agent_id),
                 "agent_action",
                 {
                     "observation_id": observation.observation_id,
