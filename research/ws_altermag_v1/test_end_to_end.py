@@ -219,25 +219,76 @@ def test_first_case_is_cheapest_declared_basis_case():
     assert case["rgkmax"] == 6.0
 
 
-def test_elk_info_parser_handles_known_output_labels():
+def test_elk_info_parser_handles_energy_and_local_moments():
     from research.ws_altermag_v1.elk_output_b000 import parse_info_out
 
     sample = """
       -123.4567890000 : total energy per unit cell
-      total moment          :  1.0D-03  -2.0D-03  3.0D-03
+
+      Moments :
+       interstitial                 :  0.0000000000
+       muffin-tins
+       species : 1 (Cr)
+       atom 1                       :  2.5000000000
+       atom 2                       : -2.5000000000
+       species : 2 (Sb)
+       atom 1                       :  0.0100000000
+       atom 2                       : -0.0100000000
+       total in muffin-tins         :  0.0000000000
+       total moment                 :  0.0000000000
+
       Absolute change in total energy (target)   :  5.0E-07 ( 1.0E-06 )
+      Energy convergence target achieved
     """
     result = parse_info_out(sample)
     assert abs(result["total_energy_ha_per_cell"] + 123.456789) <= 1.0e-12
-    assert result["total_moment_muB"] == (0.001, -0.002, 0.003)
-    assert result["total_moment_magnitude_muB"] > 0.0
-    assert abs(result["energy_change_reported"] - 5.0e-7) <= 1.0e-15
+    assert result["total_moment_muB"] == [0.0]
+    assert result["total_moment_magnitude_muB"] == 0.0
+    assert result["cr_local_moment_magnitudes_muB"] == [2.5, 2.5]
+    assert abs(result["energy_change_ha"] - 5.0e-7) <= 1.0e-15
+    assert result["energy_convergence_target_achieved"] is True
 
 
-def test_moment_parser_preserves_numeric_rows_without_inventing_semantics():
+def test_momentm_parser_uses_one_scalar_per_iteration():
     from research.ws_altermag_v1.elk_output_b000 import parse_momentm_out
 
-    result = parse_momentm_out("# synthetic fixture\n1 0.1 0.2 0.3\n2 -0.1 -0.2 -0.3\n")
-    assert result["numeric_row_count"] == 2
-    assert result["last_numeric_row"] == [2.0, -0.1, -0.2, -0.3]
-    assert "RAW_NUMERIC_ONLY" in result["semantics"]
+    result = parse_momentm_out("0.010\n0.005\n0.001\n")
+    assert result["iteration_count"] == 3
+    assert result["values_muB"] == [0.01, 0.005, 0.001]
+    assert result["final_total_moment_magnitude_muB"] == 0.001
+
+
+def test_convergence_evaluator_requires_energy_and_cr_local_moments():
+    from research.ws_altermag_v1.convergence_eval import compare_metrics
+
+    lower = {
+        "final_total_energy_ha_per_cell": -100.000000,
+        "cr_local_moment_magnitudes_muB": [2.500, 2.500],
+    }
+    higher = {
+        "final_total_energy_ha_per_cell": -100.000050,
+        "cr_local_moment_magnitudes_muB": [2.505, 2.504],
+    }
+    result = compare_metrics(
+        lower,
+        higher,
+        energy_mev_per_atom_max=1.0,
+        cr_moment_muB_delta_max=0.01,
+    )
+    assert result["energy_pass"] is True
+    assert result["moment_pass"] is True
+    assert result["decision"] == "ADVANCE"
+
+
+def test_convergence_evaluator_fails_closed_when_moments_missing():
+    from research.ws_altermag_v1.convergence_eval import compare_metrics
+
+    result = compare_metrics(
+        {"final_total_energy_ha_per_cell": -100.0, "cr_local_moment_magnitudes_muB": []},
+        {"final_total_energy_ha_per_cell": -100.0, "cr_local_moment_magnitudes_muB": []},
+        energy_mev_per_atom_max=1.0,
+        cr_moment_muB_delta_max=0.01,
+    )
+    assert result["energy_pass"] is True
+    assert result["moment_pass"] is False
+    assert result["decision"] == "HOLD"
