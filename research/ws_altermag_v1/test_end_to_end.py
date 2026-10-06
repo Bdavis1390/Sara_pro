@@ -372,3 +372,15 @@ def test_fermi_export_template_uses_task_102_and_plot3d_grid():
     assert "plot3d\n  0.0 0.0 0.0" in rendered
     assert "  43 43 28\n" in rendered
     assert "sppath\n  '/var/tmp/staged/species/'" in rendered
+
+
+def test_qo_backend_contract_blocks_direct_elk_to_pyskeaf():
+    from research.ws_altermag_v1.qo_contract import validate_qo_contract
+
+    result = validate_qo_contract()
+    assert result["contract_pass"] is True
+    assert result["wheel_pinned"] is True
+    assert result["paper_native_fail_closed"] is True
+    assert result["format_adapter_required"] is True
+    assert result["direct_elk_to_pyskeaf_allowed"] is False
+    assert result["decision"] == "BLOCK_QO_EXTRACTION"
