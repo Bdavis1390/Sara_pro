@@ -78,7 +78,10 @@
     },
     "xtech_no_disqualifying_similar_federal_support": {
       "status": "NOT_STARTED",
-      "public_note": "VERIFIED means no substantially-similar federally funded/current/pending proposal creates a disqualifying overlap, or the Army has resolved the issue favorably in writing."
+      "public_note": "VERIFIED means no substantially-similar federally funded/current/pending proposal creates a disqualifying overlap, or the Army has resolved the issue favorably in writing.",
+      "passing_statuses": [
+        "VERIFIED"
+      ]
     }
   },
   "opportunities": {
