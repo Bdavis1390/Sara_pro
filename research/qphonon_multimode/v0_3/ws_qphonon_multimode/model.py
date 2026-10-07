@@ -10,7 +10,7 @@ model and not a reproduction of any source-paper figure.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from math import expm1, isfinite, pi
+from math import exp, expm1, isfinite, pi
 import numpy as np
 from scipy.linalg import expm
 
@@ -27,8 +27,9 @@ def bose_occupation(frequency_hz: float, temperature_k: float) -> float:
     if temperature_k == 0:
         return 0.0
     x = H_PLANCK * frequency_hz / (K_BOLTZMANN * temperature_k)
-    if x > 745:
-        return 0.0
+    if x > 50:
+        y = exp(-x)
+        return y / (1.0 - y)
     return 1.0 / expm1(x)
 
 
@@ -81,6 +82,7 @@ class MultiModeModel:
     gamma_phi_a_s_inv: float = 0.0
     gamma_phi_b_s_inv: float = 0.0
     thermal_occupation_limit: float = 0.05
+    thermal_excluded_weight_limit: float = 0.01
     allow_high_thermal: bool = False
 
     def __post_init__(self):
@@ -88,19 +90,26 @@ class MultiModeModel:
             raise ValueError("at least one phonon mode is required")
         for v in (self.temperature_k, self.detuning_a_hz, self.detuning_b_hz,
                   self.gamma_phi_a_s_inv, self.gamma_phi_b_s_inv,
-                  self.thermal_occupation_limit):
+                  self.thermal_occupation_limit, self.thermal_excluded_weight_limit):
             if not isfinite(v):
                 raise ValueError("model parameters must be finite")
         if self.temperature_k < 0 or self.gamma_phi_a_s_inv < 0 or self.gamma_phi_b_s_inv < 0:
             raise ValueError("temperature and dephasing rates must be nonnegative")
-        if self.thermal_occupation_limit <= 0:
-            raise ValueError("thermal_occupation_limit must be positive")
+        if self.thermal_occupation_limit <= 0 or self.thermal_excluded_weight_limit <= 0:
+            raise ValueError("thermal validity limits must be positive")
         max_n = max(self.thermal_occupations())
-        if max_n > self.thermal_occupation_limit and not self.allow_high_thermal:
-            raise ValueError(
-                f"max thermal occupation {max_n:.6g} exceeds single-excitation limit "
-                f"{self.thermal_occupation_limit}; use a larger Fock model or explicit override"
-            )
+        excluded = self.thermal_excluded_weight()
+        if not self.allow_high_thermal:
+            if max_n > self.thermal_occupation_limit:
+                raise ValueError(
+                    f"max thermal occupation {max_n:.6g} exceeds per-mode single-excitation limit "
+                    f"{self.thermal_occupation_limit}; use a larger Fock model or explicit override"
+                )
+            if excluded > self.thermal_excluded_weight_limit:
+                raise ValueError(
+                    f"thermal multi-excitation excluded weight {excluded:.6g} exceeds limit "
+                    f"{self.thermal_excluded_weight_limit}; use a larger Fock model or explicit override"
+                )
 
     @property
     def dim(self) -> int:
@@ -125,6 +134,13 @@ class MultiModeModel:
 
     def thermal_occupations(self) -> tuple[float, ...]:
         return tuple(bose_occupation(m.frequency_hz, self.temperature_k) for m in self.modes)
+
+    def thermal_excluded_weight(self) -> float:
+        """Independent-boson thermal weight outside the global <=1 excitation sector."""
+        nbars = self.thermal_occupations()
+        p0 = float(np.prod([1.0/(1.0+n) for n in nbars]))
+        p1 = p0 * sum(n/(1.0+n) for n in nbars)
+        return float(max(0.0, min(1.0, 1.0-p0-p1)))
 
 
 def hamiltonian(model: MultiModeModel) -> np.ndarray:
@@ -260,7 +276,7 @@ def best_phase_corrected_fidelity(model: MultiModeModel, time_s: float,
     if not isinstance(phase_points, int) or phase_points < 3:
         raise ValueError("phase_points must be integer >= 3")
     outputs = channel_outputs(model, time_s)
-    phases = np.linspace(-pi, pi, phase_points)
+    phases = np.unique(np.concatenate((np.linspace(-pi, pi, phase_points), np.array([0.0]))))
     vals = []
     for phase in phases:
         fs = [_state_fidelity_pure(outputs[name], a, b, float(phase))
