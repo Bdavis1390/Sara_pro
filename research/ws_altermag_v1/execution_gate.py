@@ -8,6 +8,8 @@ from pathlib import Path
 import shutil
 import subprocess
 
+from .palace_queue_gate import inspect_palace_queue
+
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_BACKEND = ROOT / "manifests" / "backend_selection_b000.json"
@@ -104,6 +106,8 @@ def inspect_host(
     minimum_swap_free_gb: float = 0.0,
     runtime_root: Path | None = None,
     startup_sanity_passed: bool = False,
+    palace_queue_results_path: Path | None = None,
+    palace_expected_anchor_ids: list[int] | range | None = None,
 ) -> dict:
     cmdlines = _process_cmdlines()
     blockers = sorted(
@@ -114,6 +118,14 @@ def inspect_host(
         }
     )
     palace_clear = not blockers
+    if palace_queue_results_path is not None:
+        if palace_expected_anchor_ids is None:
+            raise ValueError("expected Palace anchor IDs are required with queue receipt")
+        queue = inspect_palace_queue(
+            palace_queue_results_path, palace_expected_anchor_ids
+        )
+    else:
+        queue = {"queue_clear": True, "decision": "NO_QUEUE_CONFIGURED"}
 
     usage = shutil.disk_usage(work_root if work_root.exists() else work_root.parent)
     free_gb = usage.free / (1024 ** 3)
@@ -135,6 +147,7 @@ def inspect_host(
 
     clear = (
         palace_clear
+        and queue["queue_clear"]
         and storage_clear
         and memory_clear
         and swap_clear
@@ -144,6 +157,7 @@ def inspect_host(
     )
     return {
         "palace_clear": palace_clear,
+        "palace_queue": queue,
         "process_blockers": blockers,
         "work_root": str(work_root),
         "work_root_free_GB": free_gb,
@@ -197,6 +211,11 @@ def main() -> None:
         minimum_free_gb=float(gate["minimum_work_root_free_GB"]),
         minimum_mem_available_gb=float(gate["minimum_mem_available_GB"]),
         minimum_swap_free_gb=float(gate["minimum_swap_free_GB"]),
+        palace_queue_results_path=Path(gate["palace_queue"]["results_path"]),
+        palace_expected_anchor_ids=range(
+            int(gate["palace_queue"]["expected_anchor_start"]),
+            int(gate["palace_queue"]["expected_anchor_end"]) + 1,
+        ),
         runtime_root=args.runtime_root,
         startup_sanity_passed=startup_passed,
     )
