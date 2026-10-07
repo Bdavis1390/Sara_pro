@@ -1,0 +1,52 @@
+name: QPHONON Zeno Toy Research Gate
+on:
+  pull_request:
+    paths:
+      - 'research/qphonon_zeno/**'
+      - '.github/workflows/qphonon-zeno-research-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  physics-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
+    defaults:
+      run:
+        working-directory: research/qphonon_zeno/v0_2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip check
+          mkdir -p results plots
+      - name: Run all physics tests
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee results/test_report.txt
+      - name: Run numerical health gates
+        run: |
+          set -euo pipefail
+          python run_protocol.py 2>&1 | tee results/benchmark_stdout.txt
+      - name: Upload reproducibility artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qphonon-v0-2-${{ matrix.python-version }}
+          path: |
+            research/qphonon_zeno/v0_2/results/
+            research/qphonon_zeno/v0_2/plots/
+          if-no-files-found: warn
+          retention-days: 14
