@@ -12,7 +12,7 @@ Those ranges are **literature context, not Worldshepherd measurements**. The v0.
 
 ## Thermal boundary
 
-The Hilbert space contains vacuum plus at most one excitation. Bosonic thermal upward/downward jumps are therefore only a low-occupation approximation. By default the model fails closed when any mode has `nbar > 0.05`; higher-temperature work requires a larger Fock-space implementation rather than silently extending this approximation.
+The Hilbert space contains vacuum plus at most one excitation. Bosonic thermal upward/downward jumps are therefore only a low-occupation approximation. By default the model fails closed when any mode has `nbar > 0.05` **or** when the independent-boson thermal probability outside the global zero/one-excitation sector exceeds 1%. Higher-temperature or many-mode work that violates either bound requires a larger Fock-space implementation rather than silently extending this approximation.
 
 ## Channel metric
 
