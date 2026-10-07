@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-DFT",
+  "execution_status": "PROPOSED_NOT_EXECUTED",
+  "claim_status": [
+    "SUPPORTED BY LITERATURE",
+    "REQUIRES LAB VALIDATION"
+  ],
+  "reference_method": {
+    "code": "WIEN2k",
+    "basis": "all-electron full-potential linearized augmented plane wave (FP-LAPW)",
+    "exchange_correlation": "GGA",
+    "k_mesh": [
+      43,
+      43,
+      28
+    ],
+    "lattice_A": {
+      "a": 4.12,
+      "b": 4.12,
+      "c": 5.47
+    },
+    "parent_space_group": "P63/mmc",
+    "magnetic_symmetry_model": "P3m1",
+    "magnetic_initialization": "two Cr sites initialized with opposite spin polarization; relax to compensated collinear state",
+    "fermi_surface_frequency_tool": "SKEAF",
+    "visualization_tool": "py_FS",
+    "band_alignment_eV": {
+      "dogbone_hole_sheets": -0.11,
+      "web_electron_sheets": 0.015
+    }
+  },
+  "reproduction_lanes": {
+    "R": {
+      "purpose": "paper-native methodology reproduction",
+      "backend": "WIEN2k",
+      "availability": "not present on current Lenovo host",
+      "execution": "DEFERRED"
+    },
+    "O": {
+      "purpose": "open-method cross-check",
+      "backend": "Elk",
+      "basis": "all-electron full-potential LAPW",
+      "selection_status": "SELECTED_AND_CONTENT_PINNED",
+      "execution": "DEFERRED"
+    }
+  },
+  "evidence_targets": {
+    "article_doi": "10.1038/s41586-026-10902-z",
+    "dataset_doi": "10.17863/CAM.131869",
+    "archive_sha256": "2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79",
+    "angular_dft_member": "fig3b.csv",
+    "angular_dft_member_sha256": "94902e633b465a92f1f532de5f356372f19193562bc255e1dc7e1d57a40ddf53",
+    "angular_fft_member": "fig3d.csv",
+    "angular_fft_member_sha256": "3a1234f155b4a1788caf2fe69af0a887f5e6f1f993b8f0871aa2a96b5767154b",
+    "nodal_phi_deg": [
+      0,
+      60,
+      120
+    ],
+    "nodal_theta_deg": [
+      90
+    ],
+    "order_parameter": "B1g / Y_4^-3"
+  },
+  "execution_gate": {
+    "requires_backend_present": true,
+    "requires_input_structure_hash": true,
+    "requires_solver_version": true,
+    "requires_solver_binary_hash": true,
+    "requires_atomic_positions_verified": true,
+    "requires_kmesh_convergence": true,
+    "requires_energy_convergence": true,
+    "requires_resource_clearance": true,
+    "current_resource_clearance": false,
+    "current_blocker": "active Palace solver workload on Lenovo and MemAvailable below 1.0 GiB",
+    "requires_memory_headroom": true,
+    "minimum_mem_available_GB": 1,
+    "minimum_swap_free_GB": 1
+  },
+  "prohibited_promotions_before_execution": [
+    "PROVEN INTERNALLY FOR DFT PHYSICS",
+    "LAB VALIDATED",
+    "DEVICE QUALIFIED",
+    "PRODUCTION READY"
+  ]
+}

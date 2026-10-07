@@ -1,0 +1,43 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-BACKEND-STAGING",
+  "execution_date": "2026-10-05",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "structure": {
+    "contract_digest": "3841ef119e9d2b0323d0a1d6400fc7e371d081d8ce674e559d6199d410b1bf19",
+    "material": "CrSb",
+    "parent_space_group": "P63/mmc",
+    "magnetic_model_space_group": "P3m1"
+  },
+  "backend": {
+    "name": "Elk",
+    "package": "elk-lapw",
+    "version": "7.2.42-2",
+    "package_sha256": "6c838f8d98e5aeae80caa2aaf4fb1817e5d1f74512e1015669a039b5e089bb4a",
+    "extracted_binary_sha256": "46000e1bee29f818d673cfd29b7423c0fbbc23407115f852f7ae59d27e53594f",
+    "species_sha256": {
+      "Cr.in": "b07a87fa6a6b5cb48f4dc64da118d52e0c0258db0326bc8afee90fd2f55c08d8",
+      "Sb.in": "602162d78a0cf55ceedf739d164a1e248483932055f88dd694549208b131e94d"
+    },
+    "staging_status": "DOWNLOADED_AND_EXTRACTED_NOT_INSTALLED",
+    "runtime_missing_libraries": ["libxc.so.9", "libmpi_mpifh.so.40"]
+  },
+  "input_template": {
+    "sha256": "981a11b818e85f6069b0f3707d098f2ee655f5bd6fa2bf90278b728ca9bf0402",
+    "xctype": 20,
+    "xc": "PBE GGA",
+    "ngridk": [43, 43, 28],
+    "spinpol": true,
+    "execution_approved": false
+  },
+  "resource_snapshot": {
+    "root_available_GB_approx": 14,
+    "home_available_MB_approx": 858,
+    "home_use_percent": 96,
+    "palace_active": true,
+    "palace_worker_cpu_percent_approx": 89
+  },
+  "decision": "STAGE_ONLY_NO_DFT_EXECUTION",
+  "claim_status": ["IMPLEMENTED IN SOFTWARE", "SUPPORTED BY LITERATURE"],
+  "claim_boundary": "The open backend package, species files, CrSb structure contract and input template are content-pinned. No Elk calculation has been executed and no first-principles CrSb result is claimed."
+}

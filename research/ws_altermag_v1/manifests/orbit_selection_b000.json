@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-ORBIT-SELECTION",
+  "status": "UNASSIGNED_PENDING_REAL_ELK_FERMI_SURFACE",
+  "assignments": [],
+  "required_fields": [
+    "spin",
+    "band_id",
+    "sheet_class",
+    "classification_basis",
+    "source_bxsf_sha256"
+  ],
+  "allowed_sheet_classes": [
+    "dogbone_hole",
+    "web_electron",
+    "other",
+    "unresolved"
+  ],
+  "policy": {
+    "automatic_dogbone_classification_allowed": false,
+    "dogbone_qo_comparison_requires_explicit_assignment": true,
+    "raw_assignment_must_precede_aligned_transform": true,
+    "assignment_changes_require_new_manifest_digest": true
+  },
+  "claim_boundary": "Band/sheet identity is deliberately unassigned until a real converged Elk Fermi-surface export exists. Orbit identity must not be inferred from frequency proximity to experiment."
+}

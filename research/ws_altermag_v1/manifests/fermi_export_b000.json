@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-FERMI-EXPORT",
+  "execution_status": "CONTRACT_ONLY_NOT_EXECUTED",
+  "elk": {
+    "required_task": 102,
+    "purpose": "Write spin-resolved BXSF Fermi-surface grids from a converged STATE.OUT",
+    "initial_np3d": [43, 43, 28],
+    "expected_outputs_collinear": [
+      "FERMISURF_UP.bxsf",
+      "FERMISURF_DN.bxsf"
+    ],
+    "local_binary_evidence": [
+      "fermisurfbxsf.f90",
+      "FERMISURF_UP.bxsf",
+      "FERMISURF_DN.bxsf"
+    ]
+  },
+  "prerequisites": {
+    "basis_gate": "PASS",
+    "kgrid_gate": "PASS",
+    "state_out_required": true,
+    "state_out_sha256_required": true,
+    "structure_digest_required": true,
+    "backend_hash_required": true
+  },
+  "quantum_oscillation_stage": {
+    "status": "REQUIRES_ORBIT_EXTRACTOR",
+    "paper_reference_method": "SKEAF",
+    "local_skeaf_available": false,
+    "grid_convergence_required": true,
+    "note": "The initial 43x43x28 BXSF export is a reproducibility checkpoint, not an asserted converged SKEAF grid."
+  },
+  "claim_boundary": "A spin-resolved BXSF export is a postprocessed DFT artifact. It is not a quantum-oscillation frequency result and does not reproduce the experiment by itself."
+}

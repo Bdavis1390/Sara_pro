@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-STRUCTURE",
+  "material": "CrSb",
+  "structure_type": "NiAs-type",
+  "space_group_parent": {
+    "symbol": "P63/mmc",
+    "number": 194
+  },
+  "magnetic_model_space_group": "P3m1",
+  "lattice_A": {
+    "a": 4.12,
+    "b": 4.12,
+    "c": 5.47,
+    "alpha_deg": 90.0,
+    "beta_deg": 90.0,
+    "gamma_deg": 120.0
+  },
+  "sites": [
+    {
+      "label": "Cr1",
+      "species": "Cr",
+      "wyckoff": "2a",
+      "fractional": [0.0, 0.0, 0.0],
+      "initial_spin_sign": 1
+    },
+    {
+      "label": "Cr2",
+      "species": "Cr",
+      "wyckoff": "2a",
+      "fractional": [0.0, 0.0, 0.5],
+      "initial_spin_sign": -1
+    },
+    {
+      "label": "Sb1",
+      "species": "Sb",
+      "wyckoff": "2c",
+      "fractional": [0.3333333333333333, 0.6666666666666666, 0.25],
+      "initial_spin_sign": 0
+    },
+    {
+      "label": "Sb2",
+      "species": "Sb",
+      "wyckoff": "2c",
+      "fractional": [0.6666666666666666, 0.3333333333333333, 0.75],
+      "initial_spin_sign": 0
+    }
+  ],
+  "source_basis": [
+    {
+      "doi": "10.1038/s41586-026-10902-z",
+      "supports": [
+        "NiAs-type CrSb",
+        "P63/mmc parent structure",
+        "a=b=4.12 A and c=5.47 A",
+        "two equivalent Cr and two equivalent Sb sites",
+        "opposite Cr spin initialization and P3m1 magnetic model"
+      ]
+    },
+    {
+      "doi": "10.1038/s41467-025-64322-0",
+      "supports": [
+        "Cr on Wyckoff 2a",
+        "Sb on Wyckoff 2c"
+      ]
+    },
+    {
+      "reference": "NiAs B8 prototype, space group P63/mmc",
+      "supports": [
+        "2a equivalent positions (0,0,0) and (0,0,1/2)",
+        "2c equivalent positions (1/3,2/3,1/4) and (2/3,1/3,3/4)"
+      ]
+    }
+  ],
+  "claim_boundary": "This is a literature-derived crystallographic input contract. It is not a newly refined Worldshepherd crystal structure."
+}

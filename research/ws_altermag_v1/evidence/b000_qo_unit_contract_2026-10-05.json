@@ -1,0 +1,48 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-QO-UNIT-CONTRACT",
+  "execution_date": "2026-10-05",
+  "sources": {
+    "elk_manual": {
+      "url": "https://elk.sourceforge.io/elk.pdf",
+      "observations": [
+        "Elk uses atomic units unless explicitly stated otherwise.",
+        "The atomic unit of energy is Hartree.",
+        "reciplat constructs bvec with an explicit 2*pi factor."
+      ]
+    },
+    "elk_fermisurfbxsf_source": {
+      "url": "https://elk.sourceforge.io/doxygen/html/fermisurfbxsf_8f90_source.html",
+      "observations": [
+        "Task 102 writes ngridk+1 dimensions and loops periodic endpoints with modulo indexing.",
+        "Collinear spin-polarized output is FERMISURF_UP.bxsf and FERMISURF_DN.bxsf.",
+        "Band values are evalsv-efermi."
+      ]
+    },
+    "paoflow_pyskeaf": {
+      "artifact": "paoflow-3.0.0-py3-none-any.whl",
+      "sha256": "27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e",
+      "module": "PAOFLOW/pyskeaf/io_bxsf.py",
+      "observations": [
+        "Reader requires exactly one band per BXSF.",
+        "Reader documents reciprocal vectors as a.u.^-1 without 2*pi.",
+        "Reader documents energies/Fermi energy in Rydberg convention.",
+        "Periodic corner equality is warning-only in this Python port."
+      ]
+    }
+  },
+  "declared_adapter_transforms": [
+    "split each Elk multi-band spin BXSF into single-band BXSF files",
+    "remove the duplicated +1 periodic endpoint on all three grid axes",
+    "multiply Elk Hartree energies by 2 to obtain Rydberg",
+    "divide Elk bvec by 2*pi to remove Elk's reciprocal-lattice 2*pi factor"
+  ],
+  "synthetic_crosscheck": {
+    "pinned_pyskeaf_reader_accepted_all_adapted_outputs": true,
+    "output_band_count": 2,
+    "adapter_digest": "5630ea94e3dbdceb5dcd66ae1e938de5f172a4fecf001d4e7880063fbb5500be"
+  },
+  "decision": "TRANSFORMATION_CONTRACT_SUPPORTED_SYNTHETICALLY_REAL_ELK_VALIDATION_REQUIRED",
+  "claim_status": ["IMPLEMENTED IN SOFTWARE", "SUPPORTED BY LITERATURE", "PROVEN INTERNALLY"],
+  "claim_boundary": "The unit/layout transform contract is supported by Elk documentation, pinned PySKEAF source semantics, and a synthetic cross-check. Real CrSb Elk output must still be transformed and independently validated before QO extraction."
+}
