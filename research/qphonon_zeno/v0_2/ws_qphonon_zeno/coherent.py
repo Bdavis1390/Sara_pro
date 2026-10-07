@@ -7,7 +7,7 @@ thermal reservoir, or cosmological quantum field is represented.
 from dataclasses import dataclass
 from math import exp, isfinite
 import numpy as np
-from scipy.integrate import solve_ivp
+from scipy.integrate import solve_ivp, trapezoid
 from .model import Model, density_at, liouvillian, metrics
 
 
@@ -89,7 +89,7 @@ def pulse_trajectory(pulse: Pulse, kappa=0, gamma_measure_a=0,
     eigenmins = [float(np.linalg.eigvalsh((rho+rho.conj().T)/2).min())
                  for rho in matrices]
     traces = [float(np.trace(rho).real) for rho in matrices]
-    phonon_integral = float(np.trapezoid(population[:,1],t_eval))
+    phonon_integral = float(trapezoid(population[:,1],t_eval))
     final = metrics(matrices[-1])
     return {
         'final': final,
@@ -125,7 +125,7 @@ def constant_trajectory(duration, kappa=0, gamma_measure_a=0, steps=161):
         'max_b_anytime': float(samples[:,2].max()),
         'time_of_max_b': float(times[samples[:,2].argmax()]),
         'max_phonon_population': float(samples[:,1].max()),
-        'integrated_phonon_population': float(np.trapezoid(samples[:,1],times)),
+        'integrated_phonon_population': float(trapezoid(samples[:,1],times)),
     }
 
 
