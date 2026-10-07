@@ -745,3 +745,64 @@ def test_palace_quality_audit_exit0_with_gmres_warning_holds(tmp_path):
     assert result["receipt_exit0"] is True
     assert result["gmres_nonconvergence_count"] == 1
     assert result["decision"] == "HOLD_SOLVER_NONCONVERGENCE_REVIEW"
+
+
+def test_palace_residual_profile_extracts_per_frequency_and_statistics(tmp_path):
+    from research.ws_altermag_v1.palace_residual_profile import (
+        summarize_nonconvergence_log,
+    )
+
+    p = tmp_path / "stdout.txt"
+    p.write_text(
+        "It 1/3: ω/2π = 9.200e+00 GHz\n"
+        "GMRES solver did NOT converge in 200 iterations\n"
+        "Linear solver did not converge, norm(Ax-b)/norm(b) = 1.313e-03 (norm(b) = 2.419e+01)!\n"
+        "It 2/3: ω/2π = 9.210e+00 GHz\n"
+        "GMRES solver did NOT converge in 200 iterations\n"
+        "Linear solver did not converge, norm(Ax-b)/norm(b) = 4.948e-04 (norm(b) = 2.421e+01)!\n"
+        "It 3/3: ω/2π = 9.220e+00 GHz\n"
+        "GMRES solver converged in 15 iterations\n",
+        encoding="utf-8",
+    )
+    r = summarize_nonconvergence_log(p)
+    assert r["total_frequency_points_declared"] == 3
+    assert r["frequency_points_parsed"] == 3
+    assert r["nonconverged_frequency_points"] == 2
+    assert r["residual_max"] == 1.313e-3
+    assert r["residual_median"] == (1.313e-3 + 4.948e-4) / 2
+    assert r["worst_twelve"][0]["step"] == 1
+    assert r["decision"] == "HOLD_SOLVER_NONCONVERGENCE_REVIEW"
+
+
+def test_palace_residual_profile_refuses_inconsistent_warning(tmp_path):
+    import pytest
+    from research.ws_altermag_v1.palace_residual_profile import (
+        summarize_nonconvergence_log,
+    )
+
+    p = tmp_path / "stdout.txt"
+    p.write_text(
+        "It 1/1: ω/2π = 9.200e+00 GHz\n"
+        "GMRES solver did NOT converge in 200 iterations\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="inconsistent GMRES"):
+        summarize_nonconvergence_log(p)
+
+
+def test_palace_residual_profile_refuses_noncontiguous_frequency_steps(tmp_path):
+    import pytest
+    from research.ws_altermag_v1.palace_residual_profile import (
+        summarize_nonconvergence_log,
+    )
+
+    p = tmp_path / "stdout.txt"
+    p.write_text(
+        "It 1/3: ω/2π = 9.200e+00 GHz\n"
+        "GMRES solver converged in 15 iterations\n"
+        "It 3/3: ω/2π = 9.220e+00 GHz\n"
+        "GMRES solver converged in 15 iterations\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="Non-contiguous"):
+        summarize_nonconvergence_log(p)
