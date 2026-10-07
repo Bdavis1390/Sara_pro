@@ -16,6 +16,8 @@ The Hilbert space contains vacuum plus at most one excitation. Bosonic thermal u
 
 ## Channel metric
 
+Pure-dephasing inputs are expressed as coherence-decay rates in s^-1; the benchmark maps the illustrative 5 us T2* surrogate to `gamma_phi=1/T2*`.
+
 The model preserves vacuum/excitation coherence, allowing arbitrary input qubit states `alpha|0> + beta|1_A>`. It reports a six-cardinal-state average receiver fidelity. Both raw fidelity and a best deterministic receiver `Z`-phase-corrected fidelity are reported; the phase correction is not hidden as an optimization advantage.
 
 ## Reproduce
