@@ -94,6 +94,11 @@ def main() -> None:
         minimum_free_gb=float(plan["resource_gate"]["minimum_work_root_free_GB"]),
         minimum_mem_available_gb=float(plan["resource_gate"]["minimum_mem_available_GB"]),
         minimum_swap_free_gb=float(plan["resource_gate"]["minimum_swap_free_GB"]),
+        palace_queue_results_path=Path(plan["resource_gate"]["palace_queue"]["results_path"]),
+        palace_expected_anchor_ids=range(
+            int(plan["resource_gate"]["palace_queue"]["expected_anchor_start"]),
+            int(plan["resource_gate"]["palace_queue"]["expected_anchor_end"]) + 1,
+        ),
         runtime_root=runtime_root,
         startup_sanity_passed=startup_ok,
     )
