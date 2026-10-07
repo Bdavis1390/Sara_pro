@@ -703,3 +703,45 @@ def test_palace_queue_gate_missing_receipt_fails_closed(tmp_path):
     assert r["receipt_present"] is False
     assert r["queue_clear"] is False
     assert r["missing_ids"] == [27, 28]
+
+
+def _palace_quality_fixture(tmp_path, stdout):
+    work = tmp_path / "work"
+    case = work / "A027-fixture"
+    (case / "palace-output").mkdir(parents=True)
+    (case / "palace-output" / "port-S.csv").write_text(
+        "frequency,s11\n9.20,1\n9.21,2\n9.22,3\n", encoding="utf-8"
+    )
+    (case / "stdout.txt").write_text(stdout, encoding="utf-8")
+    return work
+
+
+def test_palace_quality_audit_provisional_pass_not_physics_claim(tmp_path):
+    from research.ws_altermag_v1.palace_quality_audit import audit_case
+
+    work = _palace_quality_fixture(tmp_path, "GMRES solver converged in 15 iterations\n")
+    result = audit_case(
+        work, 27, {"exit_code": "0", "status": "EXIT0"},
+        expected_points=3
+    )
+    assert result["grid_complete"] is True
+    assert result["gmres_nonconvergence_count"] == 0
+    assert result["decision"] == "PROVISIONAL_SOLVER_LOG_PASS"
+    assert "not a mesh convergence" in result["claim_boundary"]
+
+
+def test_palace_quality_audit_exit0_with_gmres_warning_holds(tmp_path):
+    from research.ws_altermag_v1.palace_quality_audit import audit_case
+
+    work = _palace_quality_fixture(
+        tmp_path, "GMRES solver did NOT converge in 200 iterations\n"
+        "Linear solver did not converge\n",
+    )
+    result = audit_case(
+        work, 27, {"exit_code": "0", "status": "EXIT0"},
+        expected_points=3
+    )
+    assert result["grid_complete"] is True
+    assert result["receipt_exit0"] is True
+    assert result["gmres_nonconvergence_count"] == 1
+    assert result["decision"] == "HOLD_SOLVER_NONCONVERGENCE_REVIEW"
