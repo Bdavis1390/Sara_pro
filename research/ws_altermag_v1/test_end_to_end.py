@@ -652,3 +652,54 @@ def test_execution_gate_memory_snapshot_has_required_fields():
     assert set(snap) == {"MemAvailable_GB", "SwapFree_GB"}
     assert snap["MemAvailable_GB"] >= 0.0
     assert snap["SwapFree_GB"] >= 0.0
+
+
+def _palace_tsv(path, rows):
+    path.write_text(
+        "anchor_id\truntime_name\texit_code\tstatus\n"
+        + "".join(f"{i}\tA{i:03d}-fixture\t{rc}\t{status}\n" for i, rc, status in rows),
+        encoding="utf-8",
+    )
+
+
+def test_palace_queue_gate_blocks_between_completed_runs(tmp_path):
+    from research.ws_altermag_v1.palace_queue_gate import inspect_palace_queue
+
+    p = tmp_path / "job-results.tsv"
+    _palace_tsv(p, [(27, 0, "EXIT0"), (28, 0, "EXIT0")])
+    r = inspect_palace_queue(p, range(27, 55))
+    assert r["queue_clear"] is False
+    assert r["completed_ids"] == [27, 28]
+    assert r["missing_ids"][0] == 29
+    assert r["missing_ids"][-1] == 54
+    assert r["decision"] == "BLOCK_PALACE_QUEUE_INCOMPLETE"
+
+
+def test_palace_queue_gate_requires_all_expected_receipts(tmp_path):
+    from research.ws_altermag_v1.palace_queue_gate import inspect_palace_queue
+
+    p = tmp_path / "job-results.tsv"
+    _palace_tsv(p, [(27, 0, "EXIT0"), (28, 0, "EXIT0")])
+    r = inspect_palace_queue(p, [27, 28])
+    assert r["queue_clear"] is True
+    assert r["decision"] == "PALACE_QUEUE_CLEAR"
+
+
+def test_palace_queue_gate_rejects_failure_and_duplicate(tmp_path):
+    from research.ws_altermag_v1.palace_queue_gate import inspect_palace_queue
+
+    p = tmp_path / "job-results.tsv"
+    _palace_tsv(p, [(27, 0, "EXIT0"), (28, 3, "ERROR"), (28, 0, "EXIT0")])
+    r = inspect_palace_queue(p, [27, 28])
+    assert r["queue_clear"] is False
+    assert r["duplicate_ids"] == [28]
+    assert r["decision"] == "BLOCK_PALACE_QUEUE_INCOMPLETE"
+
+
+def test_palace_queue_gate_missing_receipt_fails_closed(tmp_path):
+    from research.ws_altermag_v1.palace_queue_gate import inspect_palace_queue
+
+    r = inspect_palace_queue(tmp_path / "absent.tsv", [27, 28])
+    assert r["receipt_present"] is False
+    assert r["queue_clear"] is False
+    assert r["missing_ids"] == [27, 28]
