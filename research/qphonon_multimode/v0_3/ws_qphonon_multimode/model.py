@@ -78,8 +78,8 @@ class MultiModeModel:
     temperature_k: float = 0.0
     detuning_a_hz: float = 0.0
     detuning_b_hz: float = 0.0
-    gamma_phi_a_hz: float = 0.0
-    gamma_phi_b_hz: float = 0.0
+    gamma_phi_a_s_inv: float = 0.0
+    gamma_phi_b_s_inv: float = 0.0
     thermal_occupation_limit: float = 0.05
     allow_high_thermal: bool = False
 
@@ -87,11 +87,11 @@ class MultiModeModel:
         if not self.modes:
             raise ValueError("at least one phonon mode is required")
         for v in (self.temperature_k, self.detuning_a_hz, self.detuning_b_hz,
-                  self.gamma_phi_a_hz, self.gamma_phi_b_hz,
+                  self.gamma_phi_a_s_inv, self.gamma_phi_b_s_inv,
                   self.thermal_occupation_limit):
             if not isfinite(v):
                 raise ValueError("model parameters must be finite")
-        if self.temperature_k < 0 or self.gamma_phi_a_hz < 0 or self.gamma_phi_b_hz < 0:
+        if self.temperature_k < 0 or self.gamma_phi_a_s_inv < 0 or self.gamma_phi_b_s_inv < 0:
             raise ValueError("temperature and dephasing rates must be nonnegative")
         if self.thermal_occupation_limit <= 0:
             raise ValueError("thermal_occupation_limit must be positive")
@@ -156,11 +156,13 @@ def collapse_operators(model: MultiModeModel) -> list[np.ndarray]:
             up = np.zeros((d, d), dtype=complex)
             up[j, model.idx_vac] = np.sqrt(mode.kappa_rad_s * nbar)
             ops.append(up)
-    for idx, rate_hz in ((model.idx_a, model.gamma_phi_a_hz),
-                         (model.idx_b, model.gamma_phi_b_hz)):
-        if rate_hz > 0:
+    for idx, gamma_s_inv in ((model.idx_a, model.gamma_phi_a_s_inv),
+                              (model.idx_b, model.gamma_phi_b_s_inv)):
+        if gamma_s_inv > 0:
             c = np.zeros((d, d), dtype=complex)
-            c[idx, idx] = np.sqrt(2*pi*rate_hz)
+            # Projector Lindblad with coefficient sqrt(2 gamma) gives
+            # an isolated |1><0| coherence decay rate gamma.
+            c[idx, idx] = np.sqrt(2*gamma_s_inv)
             ops.append(c)
     return ops
 
