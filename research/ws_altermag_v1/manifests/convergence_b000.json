@@ -19,7 +19,14 @@
     "require_structure_gate_pass": true,
     "minimum_mem_available_GB": 1,
     "minimum_swap_free_GB": 1,
-    "memory_threshold_note": "Worldshepherd engineering host-safety thresholds for the first Elk case; not paper-reported physics values."
+    "memory_threshold_note": "Worldshepherd engineering host-safety thresholds for the first Elk case; not paper-reported physics values.",
+    "palace_queue": {
+      "results_path": "/var/tmp/worldshepherd/solver-toolchains/uc06-p1-palace-0.17.0-12d8069/reconstruction/uc06-p1/r2r-a-r1-r1-20260928T173338Z/execution/job-results.tsv",
+      "expected_anchor_start": 27,
+      "expected_anchor_end": 54,
+      "requires_all_exit0": true,
+      "purpose": "Prevent a transient gap between queued Palace jobs from being mistaken for an idle compute host. Exit0 indicates a finished run, not physical/numerical validity."
+    }
   },
   "basis_convergence": {
     "fixed_kgrid": [
