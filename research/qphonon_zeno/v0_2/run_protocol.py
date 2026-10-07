@@ -27,14 +27,23 @@ def hashfile(path):
 
 
 def gate_check(run):
+    probabilities=[run['final'][name] for name in
+                   ('qubit_a','phonon','qubit_b','environment_loss')]
+    gated_values=[
+        run['max_trace_error'],
+        run['minimum_sampled_eigenvalue'],
+        run['loss_integral_estimate'],
+        run['final']['environment_loss'],
+        *probabilities,
+    ]
+    if not all(np.isfinite(value) for value in gated_values):
+        raise RuntimeError('QC non-finite metric gate failed')
     if run['max_trace_error'] > 1e-8:
         raise RuntimeError('QC trace gate failed')
     if run['minimum_sampled_eigenvalue'] < -1e-8:
         raise RuntimeError('QC positivity gate failed')
     if abs(run['loss_integral_estimate']-run['final']['environment_loss']) > 5e-4:
         raise RuntimeError('QC integrated-loss gate failed')
-    probabilities=[run['final'][name] for name in
-                   ('qubit_a','phonon','qubit_b','environment_loss')]
     if any(x < -1e-8 or x > 1+1e-8 for x in probabilities):
         raise RuntimeError('QC probability gate failed')
     if abs(sum(probabilities)-1)>1e-8:
@@ -109,7 +118,7 @@ def main():
         'health_gate':'trace<1e-8 eigen>-1e-8 integrated_loss_error<5e-4',
     }
     jsonpath=OUT/'protocol_results.json'
-    jsonpath.write_text(json.dumps(results,indent=2,sort_keys=True)+'\n')
+    jsonpath.write_text(json.dumps(results,indent=2,sort_keys=True,allow_nan=False)+'\n')
 
     fig,ax=plt.subplots(figsize=(8,4.5))
     for k in (.2,.5,1,2):
@@ -164,7 +173,7 @@ def main():
       'numerical_health_gates_pass':True,
       'statement':'numerical validation only; not literature figure or laboratory reproduction'
     }
-    (OUT/'provenance_manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
+    (OUT/'provenance_manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True,allow_nan=False)+'\n')
     for row in kappa_rows:
         if row['duration_times_g'] in (8,24) and row['kappa_over_g'] in (.5,1):
             print(f"κ/g={row['kappa_over_g']}, gT={row['duration_times_g']}: "
