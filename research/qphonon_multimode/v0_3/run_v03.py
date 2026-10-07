@@ -32,8 +32,8 @@ def scenario(q: float, temperature_k: float, distance_m: float,
         Mode(f0+6e6,  6e6, .25e6, .35e6, q, phases[2]),
     )
     return MultiModeModel(modes, temperature_k=temperature_k,
-                          gamma_phi_a_hz=1/5e-6,
-                          gamma_phi_b_hz=1/5e-6)
+                          gamma_phi_a_s_inv=1/5e-6,
+                          gamma_phi_b_s_inv=1/5e-6)
 
 
 def main():
