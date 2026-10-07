@@ -1,0 +1,41 @@
+name: WS Deployment Evidence Bridge PoC
+
+on:
+  pull_request:
+    paths:
+      - 'prototypes/deployment_evidence_bridge/**'
+      - '.github/workflows/ws-deployment-evidence-bridge-poc.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'prototypes/deployment_evidence_bridge/**'
+      - '.github/workflows/ws-deployment-evidence-bridge-poc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    name: Offline reference tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: prototypes/deployment_evidence_bridge
+    steps:
+      - name: Check out exact PR revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Show Python runtime
+        run: python3 --version
+      - name: Compile source
+        run: python3 -m compileall -q bridge.py tests
+      - name: Run offline, synthetic-fixture tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Smoke-test evidence export
+        run: |
+          python3 bridge.py --input examples/deployments.json --out "$RUNNER_TEMP/ws-deployment-bridge"
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"ws-deployment-bridge"/"deployment_evidence.json"; d=json.loads(p.read_text()); assert d["schema"]=="ws-deployment-evidence-bridge-poc-v0.2"; assert len(d["deployments"])==2; assert all(x["regulatory_status"]=="NO_COMPLIANCE_DETERMINATION" and not x["reported_observation"]["independently_verified"] for x in d["deployments"])'
