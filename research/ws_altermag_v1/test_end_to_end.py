@@ -806,3 +806,72 @@ def test_palace_residual_profile_refuses_noncontiguous_frequency_steps(tmp_path)
     )
     with pytest.raises(ValueError, match="Non-contiguous"):
         summarize_nonconvergence_log(p)
+
+
+def test_palace_complex_s_parser_reconstructs_magnitude_phase_and_negative_inf(tmp_path):
+    import math
+    from research.ws_altermag_v1.palace_complex_s_audit import parse_complex_s
+
+    p = tmp_path / "port-S.csv"
+    p.write_text(
+        "f (GHz),|S[8][1]| (dB),arg(S[8][1]) (deg.),"
+        "|S[9][1]| (dB),arg(S[9][1]) (deg.)\n"
+        "9.20, -20.0, 90.0, -inf, 0\n"
+        "9.21, -20.0, 0.0, -inf, 0\n",
+        encoding="utf-8",
+    )
+    result = parse_complex_s(p)
+    assert result["channels"] == ["S[8][1]", "S[9][1]"]
+    assert result["frequency_point_count"] == 2
+    initial = result["rows"][0]["channels"]["S[8][1]"]
+    assert abs(initial["amplitude_linear"] - 0.1) < 1e-12
+    assert abs(initial["real"]) < 1e-12
+    assert abs(initial["imag"] - 0.1) < 1e-12
+    second_channel = result["rows"][0]["channels"]["S[9][1]"]
+    assert second_channel["amplitude_linear"] == 0
+    assert second_channel["phase_deg"] is None
+    assert second_channel["export_negative_inf_db"] is True
+    assert result["largest_complex_gradients"][0]["complex_step_magnitude"] > 0.14
+
+
+def test_palace_complex_s_parser_fails_on_duplicate_frequency(tmp_path):
+    import pytest
+    from research.ws_altermag_v1.palace_complex_s_audit import parse_complex_s
+
+    p = tmp_path / "port-S.csv"
+    p.write_text(
+        "f (GHz),|S[8][1]| (dB),arg(S[8][1]) (deg.),"
+        "|S[9][1]| (dB),arg(S[9][1]) (deg.)\n"
+        "9.20,-20,0,-inf,0\n"
+        "9.20,-20,0,-inf,0\n", encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="strictly increasing"):
+        parse_complex_s(p)
+
+
+def test_palace_complex_spotchecks_preserve_edge_and_residual_controls():
+    from research.ws_altermag_v1.palace_complex_s_audit import propose_spotchecks
+
+    rows = [
+        {"frequency_GHz": 9.20 + i*0.01, "channels": {}}
+        for i in range(11)
+    ]
+    report = {
+        "rows": rows,
+        "largest_complex_gradients": [
+            {
+                "channel": "S[8][1]",
+                "frequency_start_GHz": 9.26,
+                "frequency_end_GHz": 9.27,
+                "complex_step_magnitude": 0.02,
+            }
+        ],
+    }
+    residual = {
+        "frequency_points_parsed": 11,
+        "worst_twelve": [{"step":2}, {"step":3}, {"step":1}, {"step":4}],
+    }
+    result = propose_spotchecks(report, residual, count=8)
+    ids = {x["step"] for x in result["selected"]}
+    assert {1, 2, 3, 6, 11}.issubset(ids)
+    assert result["status"] == "PROPOSED_ONLY_NO_SOLVER_EXECUTION"
