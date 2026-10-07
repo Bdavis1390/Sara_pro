@@ -38,8 +38,8 @@ All final probabilities are **unconditional**: lost excitations are not discarde
 
 ## Bounded validation gate
 
-- 23 local unit tests including inherited v0.1 physics tests, independent solver cross-check, Lindblad trace/positivity, integrated dissipation, monitoring-only/no-loss, solver-tolerance convergence, and detuning sensitivity.
-- Fail-closed run health checks enforce `max|trace−1| <= 1e-8`, minimum sampled eigenvalue `>= −1e-8`, and phonon-integrated loss consistency `<= 5e-4`.
+- 25 unit tests including inherited v0.1 physics tests, independent solver cross-check, Lindblad trace/positivity, integrated dissipation, monitoring-only/no-loss, solver-tolerance convergence, detuning sensitivity, and explicit NaN/Inf fail-closed regressions.
+- Fail-closed run health checks first reject non-finite metrics, then enforce `max|trace−1| <= 1e-8`, minimum sampled eigenvalue `>= −1e-8`, and phonon-integrated loss consistency `<= 5e-4`; JSON serialization also rejects NaN/Inf.
 - New-source and output SHA-256 hashes, Python/numeric-library versions, and wall-clock generation timestamp are recorded.
 - Full source-paper reproductions, device parameter calibration, two-qubit gate fidelity, and partner/laboratory validation remain **NOT CURRENTLY CLAIMED**.
 
