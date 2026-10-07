@@ -281,6 +281,12 @@ The October 6 live audit found:
 
 The two completed anchors leave 26 queued. Independently, the Lenovo's live available memory remains below the first-Elk-case 1 GiB engineering threshold. The active Palace processes, incomplete queue and memory headroom all independently block the first CrSb run. See `evidence/palace_queue_quality_2026-10-06.json`.
 
+## A027 residual prioritization — quantified and still held
+
+`palace_residual_profile.py` now extracts each solver-reported `norm(Ax-b)/norm(b)` from the A027 log and binds it to the corresponding frequency-step marker, verifies ordered/unique steps, and content-hashes the captured source. It reports **161/161 GMRES non-converged points** (despite `EXIT0`); the maximum reported residual is `1.313e-3` at 9.20 GHz, median `3.05e-6`, nearest-rank p90 `2.199e-5`, and minimum `1.784e-6` at 10.80 GHz. Exactly 6 points exceed `1e-4`, 27 exceed `1e-5`, and all 161 exceed `1e-6`.
+
+This motivates predeclared controlled spot-checks around the lowest frequencies (9.20, 9.21, 9.25 GHz), plus mid/high-band and independently selected complex S-parameter gradient controls. No such rerun has started. A linear-solver residual is **not** an error bar on observable S-parameters, and A027 remains `HOLD_SOLVER_NONCONVERGENCE_REVIEW`. The full 161-row read-only profile is at `/var/tmp/worldshepherd/palace-a027-residual-profile-2026-10-06.json` on the Lenovo; the frozen summary is `evidence/palace_a027_residual_profile_2026-10-06.json` and GitHub [issue #547](https://github.com/Bdavis1390/Sara_pro/issues/547).
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
