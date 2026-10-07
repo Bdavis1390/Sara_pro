@@ -52,8 +52,10 @@ def audit_case(
             "decision": "HOLD_MISSING_EVIDENCE",
         }
 
-    with csv_path.open(encoding="utf-8", newline="") as fh:
-        raw = list(csv.reader(fh))
+    # Capture each growing log exactly once: its digest describes the same
+    # byte snapshot used for the audit, not a potentially later append.
+    csv_snapshot = csv_path.read_bytes()
+    raw = list(csv.reader(csv_snapshot.decode("utf-8", "replace").splitlines()))
     freqs = []
     bad_rows = 0
     for row in raw[1:]:
@@ -68,7 +70,8 @@ def audit_case(
     extra = sorted(set(actual).difference(expected))
     duplicates = len(actual) - len(set(actual))
 
-    output = stdout_path.read_text(encoding="utf-8", errors="replace")
+    stdout_snapshot = stdout_path.read_bytes()
+    output = stdout_snapshot.decode("utf-8", "replace")
     warnings = output.count("GMRES solver did NOT converge")
     linear_warnings = output.count("Linear solver did not converge")
     success = (
@@ -103,8 +106,12 @@ def audit_case(
         "malformed_frequency_rows": bad_rows,
         "gmres_nonconvergence_count": warnings,
         "linear_solver_warning_count": linear_warnings,
-        "stdout_sha256": file_sha256(stdout_path),
-        "port_s_sha256": file_sha256(csv_path),
+        "stdout_sha256": sha256(stdout_snapshot).hexdigest(),
+        "port_s_sha256": sha256(csv_snapshot).hexdigest(),
+        "snapshot_warning": (
+            "An in-progress file can grow after this snapshot; re-audit at completion."
+            if receipt is None else None
+        ),
         "decision": decision,
         "claim_boundary": (
             "A completed exit-0 run with no logged GMRES warning is only a "
