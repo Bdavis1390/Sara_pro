@@ -82,6 +82,15 @@ class DynamicsTests(unittest.TestCase):
         f = six_state_average_fidelity(m, 0)
         self.assertLess(f, 0.7)
 
+    def test_pure_dephasing_rate_convention(self):
+        gamma = 1e6
+        m = MultiModeModel((Mode(25e9, 0, 0, 0, 1e30),), gamma_phi_a_s_inv=gamma)
+        rho0 = initial_qubit_density(m, 1/np.sqrt(2), 1/np.sqrt(2))
+        t = 0.25e-6
+        out = evolve(m, rho0, t)
+        expected = 0.5*np.exp(-gamma*t)
+        self.assertAlmostEqual(abs(out[m.idx_vac, m.idx_a]), expected, places=10)
+
     def test_multimode_validity(self):
         modes = (
             Mode(25e9, -4e6, .3e6, .25e6, 1e5, .1),
