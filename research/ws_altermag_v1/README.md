@@ -287,6 +287,16 @@ The two completed anchors leave 26 queued. Independently, the Lenovo's live avai
 
 This motivates predeclared controlled spot-checks around the lowest frequencies (9.20, 9.21, 9.25 GHz), plus mid/high-band and independently selected complex S-parameter gradient controls. No such rerun has started. A linear-solver residual is **not** an error bar on observable S-parameters, and A027 remains `HOLD_SOLVER_NONCONVERGENCE_REVIEW`. The full 161-row read-only profile is at `/var/tmp/worldshepherd/palace-a027-residual-profile-2026-10-06.json` on the Lenovo; the frozen summary is `evidence/palace_a027_residual_profile_2026-10-06.json` and GitHub [issue #547](https://github.com/Bdavis1390/Sara_pro/issues/547).
 
+## A027 complex S-parameter audit — weak-channel sensitivity
+
+The Palace `port-S.csv` output includes **both magnitude in dB and phase in degrees**. `palace_complex_s_audit.py` reconstructs complex values per recorded S channel using `S = 10^(dB/20) exp(i*phase)`, validates the column pairing and frequency ordering, and hashes the entire source snapshot. When an exported magnitude is `-inf dB`, its reconstructed value is zero **to export precision** and its phase is recorded as undefined; it is not interpreted as proof of a physical zero.
+
+A027's `S[8][1]` at 9.20 GHz has exported magnitude `-84.1587 dB` and phase `-175.1917 deg`: reconstructed amplitude `6.19533e-5`. The largest recorded adjacent complex change is `4.80224e-5` between 9.20 and 9.21 GHz. These observations and high residuals prioritize verification; they do **not** bound observable error in the non-converged solver output.
+
+The frozen eight-frequency spotcheck **proposal, not execution** is `[9.20, 9.21, 9.22, 9.23, 9.24, 9.25, 10.00, 10.80] GHz`, including low-band sensitivity and mid/high-band controls. No solver may execute this plan until explicit resource clearance, solver settings and numerical acceptance criteria are established.
+
+See `evidence/palace_a027_complex_s_2026-10-06.json` and [issue #547](https://github.com/Bdavis1390/Sara_pro/issues/547).
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
