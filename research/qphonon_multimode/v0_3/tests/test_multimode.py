@@ -28,6 +28,18 @@ class ThermalTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "single-excitation limit"):
             MultiModeModel((mode,), temperature_k=1.0)
 
+    def test_ultralow_temperature_is_numerically_stable(self):
+        n = bose_occupation(10e9, 0.0006666)
+        self.assertTrue(np.isfinite(n))
+        self.assertGreaterEqual(n, 0.0)
+        self.assertLess(n, 1e-300)
+
+    def test_aggregate_thermal_excluded_weight_rejected(self):
+        modes = tuple(Mode(10e9, 0, 0, 0, 1e5) for _ in range(10))
+        temperature = 6.62607015e-34*10e9/(1.380649e-23*np.log(21.0))
+        with self.assertRaisesRegex(ValueError, "multi-excitation excluded weight"):
+            MultiModeModel(modes, temperature_k=temperature)
+
 
 class PropagationTests(unittest.TestCase):
     def test_delay(self):
@@ -75,6 +87,12 @@ class DynamicsTests(unittest.TestCase):
         m = one_mode(phase=1.2)
         t = 1/(2*np.sqrt(2)*1e6)
         r = best_phase_corrected_fidelity(m, t)
+        self.assertGreaterEqual(r['phase_corrected_six_state_fidelity']+1e-12, r['raw_six_state_fidelity'])
+
+    def test_even_phase_grid_includes_raw_candidate(self):
+        m = one_mode(phase=0.0)
+        t = 1/(2*np.sqrt(2)*1e6)
+        r = best_phase_corrected_fidelity(m, t, phase_points=100)
         self.assertGreaterEqual(r['phase_corrected_six_state_fidelity']+1e-12, r['raw_six_state_fidelity'])
 
     def test_zero_time_channel_not_transfer(self):
