@@ -267,6 +267,20 @@ The latest Lenovo snapshot reports only `0.271 GiB` available memory while the t
 
 Evidence: `evidence/b000_host_capacity_2026-10-05.json`.
 
+## B000-PALACE-QUEUE — no racing the recovery scheduler
+
+The Lenovo is recovering a **28-anchor Palace queue (A027–A054)**, not merely a single A027 solve. The DFT clearance path now reads the queue's `execution/job-results.tsv` and requires an unambiguous `EXIT0` receipt for **every** expected anchor before treating that reservation as finished. A momentary lack of `prterun` between jobs is no longer sufficient to launch Elk. Missing, failed, malformed and duplicate receipts are fail-closed.
+
+This is a *resource scheduling* gate, not a Palace physics-validation gate: an `EXIT0` can coexist with unresolved numerical warnings. The separate read-only `palace_quality_audit.py` checks frequency coverage, missing/duplicate frequencies and GMRES/linear-solver warning counts, while hashing the actual captured output snapshots.
+
+The October 6 live audit found:
+
+- **A027**: 161/161 points, `EXIT0`, but 161 GMRES non-convergence warnings → `HOLD_SOLVER_NONCONVERGENCE_REVIEW`.
+- **A028**: 161/161 points, `EXIT0`, zero such warnings → `PROVISIONAL_SOLVER_LOG_PASS`. This is not mesh or experimental validation.
+- **A029**: progressing with zero warnings at the audit snapshot; no exit receipt yet.
+
+The two completed anchors leave 26 queued. Independently, the Lenovo's live available memory remains below the first-Elk-case 1 GiB engineering threshold. The active Palace processes, incomplete queue and memory headroom all independently block the first CrSb run. See `evidence/palace_queue_quality_2026-10-06.json`.
+
 ## Claim boundary
 
 A passing B000-S test supports only the bounded claim that the software can recover the known hidden state of its deterministic synthetic benchmark and can fail closed against physical claim promotion.
