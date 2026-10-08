@@ -1,0 +1,28 @@
+{
+  "deployments": [
+    {
+      "application": "sara-api",
+      "environment": "test",
+      "cluster": "demo-cluster",
+      "namespace": "worldshepherd",
+      "gitops_revision": "0123456789abcdef0123456789abcdef01234567",
+      "canonical_project_url": "https://github.com/Bdavis1390/Sara_pro",
+      "desired_image_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "observed_image_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "observation_source": "operator-supplied-example-not-live-api",
+      "observed_at": "2026-10-06T18:00:00Z",
+      "sbom_file": "sbom.json",
+      "findings_file": "findings.json"
+    },
+    {
+      "application": "edge-worker",
+      "environment": "test",
+      "cluster": "demo-cluster",
+      "namespace": "worldshepherd",
+      "gitops_revision": "fedcba9876543210fedcba9876543210fedcba98",
+      "canonical_project_url": "https://github.com/Bdavis1390/Sara_pro",
+      "desired_image_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "sbom_file": "sbom.json"
+    }
+  ]
+}
