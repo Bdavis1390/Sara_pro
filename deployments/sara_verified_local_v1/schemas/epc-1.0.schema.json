@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldshepherd.local/schemas/epc-1.0.schema.json",
+  "title": "Worldshepherd Evidence Promotion Contract v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_id",
+    "schema_version",
+    "subject",
+    "classification",
+    "maturity",
+    "provenance",
+    "measurement",
+    "reproduction",
+    "claims",
+    "lifecycle"
+  ],
+  "properties": {
+    "evidence_id": {"type": "string", "minLength": 1},
+    "schema_version": {"const": "1.0"},
+    "subject": {
+      "type": "object",
+      "required": ["project_id", "artifact_id"],
+      "properties": {
+        "project_id": {"type": "string", "minLength": 1},
+        "artifact_id": {"type": "string", "minLength": 1},
+        "source_commit": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "classification": {
+      "enum": [
+        "PROVEN INTERNALLY",
+        "IMPLEMENTED IN SOFTWARE",
+        "SUPPORTED BY LITERATURE",
+        "SIMULATED ONLY",
+        "HYPOTHESIS",
+        "SPECULATIVE EXTENSION",
+        "REQUIRES LAB VALIDATION",
+        "REQUIRES PARTNER VALIDATION",
+        "REQUIRES LEGAL REVIEW",
+        "NOT CURRENTLY CLAIMED"
+      ]
+    },
+    "maturity": {
+      "enum": [
+        "UNVERIFIED",
+        "IMPLEMENTED",
+        "INTERNALLY_TESTED",
+        "CONTROLLED_VALIDATION",
+        "ADVERSARIAL_VALIDATION",
+        "INDEPENDENT_REPRODUCTION",
+        "EXTERNAL_VALIDATION",
+        "OPERATIONAL_COMMERCIAL_EVIDENCE",
+        "UNDER_REVIEW"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["integrity_ok", "parent_evidence_ids"],
+      "properties": {
+        "integrity_ok": {"type": "boolean"},
+        "parent_evidence_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "chain_hash": {"type": ["string", "null"]},
+        "signatures": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": true
+    },
+    "measurement": {
+      "type": "object",
+      "required": ["complete"],
+      "properties": {
+        "complete": {"type": "boolean"},
+        "uncertainty_recorded": {"type": "boolean"},
+        "negative_results_retained": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    },
+    "reproduction": {
+      "type": "object",
+      "required": ["class"],
+      "properties": {
+        "class": {"enum": ["R0", "R1", "R2", "R3", "R4", "R5"]},
+        "same_code": {"type": ["boolean", "null"]},
+        "same_dataset": {"type": ["boolean", "null"]},
+        "same_hardware": {"type": ["boolean", "null"]},
+        "same_operator": {"type": ["boolean", "null"]},
+        "same_organization": {"type": ["boolean", "null"]},
+        "same_method": {"type": ["boolean", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "claims": {
+      "type": "object",
+      "required": ["permitted", "prohibited"],
+      "properties": {
+        "permitted": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "prohibited": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": true
+    },
+    "lifecycle": {
+      "type": "object",
+      "required": ["valid_from"],
+      "properties": {
+        "valid_from": {"type": "string", "format": "date-time"},
+        "review_after": {"type": ["string", "null"], "format": "date-time"},
+        "expires_at": {"type": ["string", "null"], "format": "date-time"},
+        "superseded_by": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    }
+  }
+}
