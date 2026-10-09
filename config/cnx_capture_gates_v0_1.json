@@ -1,0 +1,145 @@
+{
+  "schema": "CNX-CAPTURE-GATE-V0.1",
+  "status_vocabulary": [
+    "VERIFIED",
+    "IN_PROGRESS",
+    "PENDING_EXTERNAL",
+    "NOT_STARTED",
+    "NOT_APPLICABLE"
+  ],
+  "gates": {
+    "legal_entity": {
+      "status": "IN_PROGRESS",
+      "public_note": "Curious NerdworX LLC formation is not treated as closed until documentary evidence is checked."
+    },
+    "sam_active": {
+      "status": "NOT_STARTED",
+      "public_note": "No active SAM record is asserted by this public configuration."
+    },
+    "uei": {
+      "status": "NOT_STARTED",
+      "public_note": "No UEI is asserted by this public configuration."
+    },
+    "cage": {
+      "status": "NOT_STARTED",
+      "public_note": "No active CAGE is asserted by this public configuration."
+    },
+    "small_business_eligibility": {
+      "status": "NOT_STARTED",
+      "public_note": "Program-specific ownership, control, size and eligibility must be verified."
+    },
+    "dsip_access": {
+      "status": "NOT_STARTED",
+      "public_note": "DoD SBIR/STTR portal access is not asserted."
+    },
+    "secret_clearance_required_personnel": {
+      "status": "NOT_STARTED",
+      "public_note": "No required Secret-or-higher clearance is asserted."
+    },
+    "facility_security_clearance": {
+      "status": "NOT_STARTED",
+      "public_note": "No active FCL is asserted."
+    },
+    "jcp_dd2345": {
+      "status": "NOT_STARTED",
+      "public_note": "No active DD Form 2345/JCP approval is asserted."
+    },
+    "sprs_assessment": {
+      "status": "NOT_STARTED",
+      "public_note": "No SPRS assessment submission is asserted."
+    },
+    "cui_environment": {
+      "status": "IN_PROGRESS",
+      "public_note": "Internal architecture/evidence work does not establish a CUI-authorized environment."
+    },
+    "capture_package": {
+      "status": "VERIFIED",
+      "public_note": "The October 2026 capture/readiness package is committed to the repository."
+    },
+    "ws_market_poc": {
+      "status": "VERIFIED",
+      "public_note": "WS-MARKET v0.1 bounded software tests and CI are present."
+    },
+    "xtech_product_boundary": {
+      "status": "VERIFIED",
+      "public_note": "WS-EDGE v0.1 product concept is committed; competition-specific final submission remains separate."
+    },
+    "scar_provider_team": {
+      "status": "PENDING_EXTERNAL",
+      "public_note": "Provider-led teaming outreach is active; no partner relationship is claimed until accepted.",
+      "passing_statuses": [
+        "VERIFIED"
+      ]
+    },
+    "xtech_single_submission_control": {
+      "status": "IN_PROGRESS",
+      "public_note": "One competition submission per eligible entity; final product selection must be frozen before submission."
+    },
+    "xtech_application_final": {
+      "status": "IN_PROGRESS",
+      "public_note": "WS-EDGE concept exists; competition-specific final application and human approval remain open."
+    },
+    "xtech_no_disqualifying_similar_federal_support": {
+      "status": "NOT_STARTED",
+      "public_note": "VERIFIED means no substantially-similar federally funded/current/pending proposal creates a disqualifying overlap, or the Army has resolved the issue favorably in writing.",
+      "passing_statuses": [
+        "VERIFIED"
+      ]
+    }
+  },
+  "opportunities": {
+    "SCAR_AOI03_DIRECT": {
+      "route": "direct",
+      "hard_gates": [
+        "legal_entity",
+        "sam_active",
+        "uei",
+        "cage",
+        "secret_clearance_required_personnel",
+        "facility_security_clearance"
+      ],
+      "development_gates": [
+        "capture_package"
+      ],
+      "note": "Conservative internal gate for a direct SCAR path. Solicitation and government systems of record remain authoritative."
+    },
+    "SCAR_AOI03_TEAMING": {
+      "route": "teaming",
+      "hard_gates": [
+        "scar_provider_team"
+      ],
+      "development_gates": [
+        "capture_package"
+      ],
+      "note": "Non-CUI provider-led capture development may proceed from the verified package while partner acceptance remains pending; submission/teaming representation remains blocked until acceptance is verified."
+    },
+    "XTECHSEARCH10_SUBMISSION": {
+      "route": "direct",
+      "hard_gates": [
+        "legal_entity",
+        "small_business_eligibility",
+        "xtech_single_submission_control",
+        "xtech_no_disqualifying_similar_federal_support"
+      ],
+      "development_gates": [
+        "capture_package",
+        "xtech_product_boundary",
+        "xtech_application_final"
+      ],
+      "note": "Final competition portal requirements and representations must still be verified before submission."
+    },
+    "DARPA_INFLUENCE_BENCHMARKS_SUBMISSION": {
+      "route": "direct",
+      "hard_gates": [
+        "legal_entity",
+        "small_business_eligibility",
+        "dsip_access"
+      ],
+      "development_gates": [
+        "capture_package",
+        "ws_market_poc"
+      ],
+      "note": "The POC supports development readiness; it does not establish program acceptance or full Phase-I milestone completion."
+    }
+  }
+}
