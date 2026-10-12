@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:worldshepherd:ws-qx:evidence-01",
+  "title": "WS-QX EVIDENCE-01 Qualification Envelope",
+  "type": "object",
+  "required": [
+    "qualification_id", "qualification_version", "experiment_id", "run_id",
+    "claim_state_before", "requested_claim_state_after", "software_commit",
+    "operator_id", "authorization_record", "test_manifest_digest",
+    "raw_evidence", "dimensions", "physical_io_observed",
+    "human_safety_controls_verified", "run_complete", "claims"
+  ],
+  "properties": {
+    "qualification_id": {"type": "string", "minLength": 1},
+    "qualification_version": {"type": "string", "minLength": 1},
+    "experiment_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "claim_state_before": {"type": "string"},
+    "requested_claim_state_after": {"type": "string"},
+    "software_commit": {"type": "string", "minLength": 1},
+    "operator_id": {"type": "string", "minLength": 1},
+    "authorization_record": {"type": "string", "minLength": 1},
+    "test_manifest_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "hardware_ids": {"type": "array", "items": {"type": "string"}},
+    "model_digests": {"type": "array", "items": {"type": "string"}},
+    "configuration_digests": {"type": "array", "items": {"type": "string"}},
+    "calibration_ids": {"type": "array", "items": {"type": "string"}},
+    "raw_evidence": {"type": "array"},
+    "normalized_evidence": {"type": "array"},
+    "faults": {"type": "array"},
+    "uncertainty_budget": {"type": "object"},
+    "dimensions": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "physical_io_observed": {"type": "boolean"},
+    "human_safety_controls_verified": {"type": "boolean"},
+    "run_complete": {"type": "boolean"},
+    "external_replication_reference": {"type": ["string", "null"]},
+    "claims": {
+      "type": "object",
+      "required": ["internal_qualification", "physical_validation", "external_validation", "standards_conformance", "program_qualification"],
+      "properties": {
+        "internal_qualification": {"type": "boolean"},
+        "physical_validation": {"type": "boolean"},
+        "external_validation": {"type": "boolean"},
+        "standards_conformance": {"type": "boolean"},
+        "program_qualification": {"type": "boolean"}
+      }
+    }
+  }
+}

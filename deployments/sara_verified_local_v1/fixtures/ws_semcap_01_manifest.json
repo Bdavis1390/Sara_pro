@@ -1,0 +1,28 @@
+{
+  "qualification_id": "WS-SEMCAP-01",
+  "profile_version": "0.1",
+  "claim_state": "SIMULATED_ONLY_UNTIL_EVIDENCED",
+  "comparison_arms": {
+    "B0": "full-frame encoded stream baseline",
+    "B1": "conventional detector/ROI transmission baseline",
+    "B2": "mission-aware semantic transmission candidate"
+  },
+  "mandatory_dimensions": ["Q_P", "Q_R", "Q_S", "Q_C", "Q_D", "Q_E", "Q_X"],
+  "required_measurements": [
+    "baseline_bits", "semantic_bits", "baseline_mission_utility", "semantic_mission_utility",
+    "latency_ms", "power_w", "missed_critical_events", "false_semantic_selections",
+    "reconstruction_fidelity", "provenance_completeness"
+  ],
+  "required_bindings": [
+    "source_sequence_digest", "mission_card_digest", "codec_and_settings", "hardware_ids",
+    "software_commit", "model_digests", "configuration_digests", "link_profile", "receiver_configuration"
+  ],
+  "claims": {
+    "physical_validation": false,
+    "external_validation": false,
+    "darpa_dv019_qualification": false,
+    "direct_to_phase_ii_eligibility": false,
+    "uas_flight_validation": false,
+    "standards_conformance": false
+  }
+}
