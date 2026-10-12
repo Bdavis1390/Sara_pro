@@ -1,0 +1,94 @@
+name: OpenSSF Scorecard Baseline
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/openssf-scorecard-baseline.yml"
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Run pinned OpenSSF Scorecard
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
+        with:
+          results_file: scorecard-results.json
+          results_format: json
+          publish_results: false
+
+      - name: Summarize without hiding deductions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("scorecard-results.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          score = data.get("score")
+          checks = data.get("checks", [])
+          if score is None:
+              raise SystemExit("OpenSSF Scorecard output missing overall score")
+
+          ordered = sorted(
+              (
+                  {
+                      "name": item.get("name"),
+                      "score": item.get("score"),
+                      "reason": item.get("reason"),
+                  }
+                  for item in checks
+              ),
+              key=lambda item: (
+                  11 if item["score"] is None else item["score"],
+                  item["name"] or "",
+              ),
+          )
+          summary = {
+              "overall_score": score,
+              "checks": ordered,
+              "claims_boundary": (
+                  "This is an OpenSSF Scorecard observation of repository security practices. "
+                  "It is not a certification, security guarantee, product benchmark win, or "
+                  "substitute for Worldshepherd external evaluator evidence."
+              ),
+          }
+          Path("scorecard-summary.json").write_text(
+              json.dumps(summary, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+
+          with Path("scorecard-results.json").open("rb") as handle:
+              import hashlib
+              raw_digest = hashlib.sha256(handle.read()).hexdigest()
+          Path("scorecard-results.sha256").write_text(
+              f"{raw_digest}  scorecard-results.json\n",
+              encoding="utf-8",
+          )
+
+          print(f"OpenSSF Scorecard overall: {score}")
+          for item in ordered:
+              print(f"{item['score']}: {item['name']} — {item['reason']}")
+          PY
+
+      - name: Upload complete baseline evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: openssf-scorecard-baseline
+          path: |
+            scorecard-results.json
+            scorecard-results.sha256
+            scorecard-summary.json
+          if-no-files-found: error
+          retention-days: 30
