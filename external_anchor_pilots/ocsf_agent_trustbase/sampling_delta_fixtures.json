@@ -1,0 +1,78 @@
+{
+  "schema_status": "provisional-non-normative",
+  "issue": "ocsf/ocsf-schema#1724",
+  "cases": [
+    {
+      "name": "stable sampling config",
+      "declared": {
+        "sampling_config": {
+          "temperature": 0.2,
+          "max_output_tokens": 4096
+        }
+      },
+      "observed": {
+        "sampling_config": {
+          "temperature": 0.2,
+          "max_output_tokens": 4096
+        }
+      }
+    },
+    {
+      "name": "gateway rewrites token cap",
+      "declared": {
+        "sampling_config": {
+          "temperature": 0.0,
+          "max_output_tokens": 4096
+        }
+      },
+      "observed": {
+        "sampling_config": {
+          "temperature": 0.0,
+          "max_output_tokens": 1024
+        }
+      }
+    },
+    {
+      "name": "caller overrides temperature",
+      "declared": {
+        "sampling_config": {
+          "temperature": 0.0,
+          "top_p": 1.0
+        }
+      },
+      "observed": {
+        "sampling_config": {
+          "temperature": 1.2,
+          "top_p": 1.0
+        }
+      }
+    },
+    {
+      "name": "constraint appears only at runtime",
+      "declared": {
+        "sampling_config": {
+          "constraint_type": "none"
+        }
+      },
+      "observed": {
+        "sampling_config": {
+          "constraint_type": "json_schema",
+          "constraint": {"value": "sha256:grammar"}
+        }
+      }
+    },
+    {
+      "name": "runtime binding structurally unavailable",
+      "declared": {
+        "sampling_config": {
+          "engine_name": "gateway-policy"
+        }
+      },
+      "observed": {
+        "sampling_config": {
+          "verification_id": 4
+        }
+      }
+    }
+  ]
+}

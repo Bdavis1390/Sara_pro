@@ -1,0 +1,69 @@
+{
+  "schema_status": "provisional-non-normative",
+  "issue": "ocsf/ocsf-schema#1724",
+  "cases": [
+    {
+      "name": "local adapter digest",
+      "expected": "pass",
+      "elements": [
+        {
+          "kind": "adapter",
+          "verification_id": 1,
+          "fingerprint": {"value": "sha256:a"}
+        }
+      ]
+    },
+    {
+      "name": "provider-asserted hosted model tuple",
+      "expected": "pass",
+      "elements": [
+        {
+          "kind": "hosted_model",
+          "verification_id": 2,
+          "ai_model": {"ai_provider": "ExampleAI", "name": "model-x", "version": "2026-09"}
+        }
+      ]
+    },
+    {
+      "name": "not-observable hosted model remains identifiable",
+      "expected": "pass",
+      "elements": [
+        {
+          "kind": "hosted_model",
+          "verification_id": 4,
+          "ai_model": {"ai_provider": "ExampleAI", "name": "model-x", "version": "2026-09"}
+        }
+      ]
+    },
+    {
+      "name": "local-computed evidence without digest",
+      "expected": "fail",
+      "elements": [
+        {"kind": "tool_schema", "verification_id": 1}
+      ]
+    },
+    {
+      "name": "not-observable cannot claim local fingerprint",
+      "expected": "fail",
+      "elements": [
+        {
+          "kind": "hosted_model",
+          "verification_id": 4,
+          "fingerprint": {"value": "sha256:impossible"},
+          "ai_model": {"ai_provider": "ExampleAI", "name": "model-x", "version": "2026-09"}
+        }
+      ]
+    },
+    {
+      "name": "unsupported verification id",
+      "expected": "fail",
+      "elements": [
+        {
+          "kind": "policy_bundle",
+          "verification_id": 7,
+          "fingerprint": {"value": "sha256:b"}
+        }
+      ]
+    }
+  ]
+}

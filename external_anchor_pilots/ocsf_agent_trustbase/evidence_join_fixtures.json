@@ -1,0 +1,65 @@
+{
+  "schema_status": "provisional-non-normative",
+  "issue": "ocsf/ocsf-schema#1724",
+  "cases": [
+    {
+      "name": "integrity-protected closure to activity join",
+      "expected": "pass",
+      "trust_base_closure": {
+        "metadata": {"uid": "tb-close-1", "correlation_uid": "invocation-42"},
+        "ai_agent": {"instance_uid": "agent-session-7"},
+        "phase": "closure",
+        "attestation_list": [{"chain_uid": "agent-session-7", "fingerprint": {"value": "fp-tb-close-1"}}]
+      },
+      "activity_event": {
+        "class_uid": 6003,
+        "metadata": {"uid": "activity-1", "correlation_uid": "invocation-42"},
+        "attestation_list": [{"chain_uid": "activity-stream-3", "fingerprint": {"value": "fp-activity-1"}}]
+      }
+    },
+    {
+      "name": "closure missing correlation key",
+      "expected": "fail",
+      "trust_base_closure": {
+        "metadata": {"uid": "tb-close-2"},
+        "ai_agent": {"instance_uid": "agent-session-8"},
+        "phase": "closure",
+        "attestation_list": [{"chain_uid": "agent-session-8", "fingerprint": {"value": "fp-tb-close-2"}}]
+      },
+      "activity_event": {
+        "class_uid": 6003,
+        "metadata": {"uid": "activity-2", "correlation_uid": "invocation-43"},
+        "attestation_list": [{"chain_uid": "activity-stream-3", "fingerprint": {"value": "fp-activity-2"}}]
+      }
+    },
+    {
+      "name": "mismatched correlation keys",
+      "expected": "fail",
+      "trust_base_closure": {
+        "metadata": {"uid": "tb-close-3", "correlation_uid": "invocation-44"},
+        "ai_agent": {"instance_uid": "agent-session-9"},
+        "phase": "closure",
+        "attestation_list": [{"chain_uid": "agent-session-9", "fingerprint": {"value": "fp-tb-close-3"}}]
+      },
+      "activity_event": {
+        "class_uid": 6003,
+        "metadata": {"uid": "activity-3", "correlation_uid": "DIFFERENT"},
+        "attestation_list": [{"chain_uid": "activity-stream-3", "fingerprint": {"value": "fp-activity-3"}}]
+      }
+    },
+    {
+      "name": "activity correlation not integrity protected",
+      "expected": "fail",
+      "trust_base_closure": {
+        "metadata": {"uid": "tb-close-4", "correlation_uid": "invocation-45"},
+        "ai_agent": {"instance_uid": "agent-session-10"},
+        "phase": "closure",
+        "attestation_list": [{"chain_uid": "agent-session-10", "fingerprint": {"value": "fp-tb-close-4"}}]
+      },
+      "activity_event": {
+        "class_uid": 6003,
+        "metadata": {"uid": "activity-4", "correlation_uid": "invocation-45"}
+      }
+    }
+  ]
+}

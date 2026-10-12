@@ -1,0 +1,67 @@
+name: OCSF Agent Trust-Base Pilot
+
+on:
+  pull_request:
+    paths:
+      - "external_anchor_pilots/ocsf_agent_trustbase/**"
+      - ".github/workflows/ocsf-agent-trustbase-pilot.yml"
+  push:
+    branches:
+      - ocsf-agent-trustbase-conformance
+    paths:
+      - "external_anchor_pilots/ocsf_agent_trustbase/**"
+      - ".github/workflows/ocsf-agent-trustbase-pilot.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conformance-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile pilot scripts
+        run: |
+          python -m py_compile \
+            external_anchor_pilots/ocsf_agent_trustbase/verify_trustbase.py \
+            external_anchor_pilots/ocsf_agent_trustbase/verify_plane_separation.py \
+            external_anchor_pilots/ocsf_agent_trustbase/verify_evidence_join.py \
+            external_anchor_pilots/ocsf_agent_trustbase/verify_evidence_strength.py \
+            external_anchor_pilots/ocsf_agent_trustbase/analyze_sampling_delta.py
+
+      - name: Trust-base structural expectations
+        run: |
+          python external_anchor_pilots/ocsf_agent_trustbase/verify_trustbase.py \
+            external_anchor_pilots/ocsf_agent_trustbase/fixtures.json
+
+      - name: Behavior/configuration plane separation
+        run: |
+          python external_anchor_pilots/ocsf_agent_trustbase/verify_plane_separation.py \
+            external_anchor_pilots/ocsf_agent_trustbase/plane_separation_fixtures.json
+
+      - name: Evidence-grade activity join
+        run: |
+          python external_anchor_pilots/ocsf_agent_trustbase/verify_evidence_join.py \
+            external_anchor_pilots/ocsf_agent_trustbase/evidence_join_fixtures.json
+
+      - name: Evidence-strength consistency
+        run: |
+          python external_anchor_pilots/ocsf_agent_trustbase/verify_evidence_strength.py \
+            external_anchor_pilots/ocsf_agent_trustbase/evidence_strength_fixtures.json
+
+      - name: Sampling/runtime delta analyzer
+        run: |
+          python external_anchor_pilots/ocsf_agent_trustbase/analyze_sampling_delta.py \
+            external_anchor_pilots/ocsf_agent_trustbase/sampling_delta_fixtures.json --json \
+            > /tmp/ocsf-sampling-delta.json
+          python -m json.tool /tmp/ocsf-sampling-delta.json > /dev/null

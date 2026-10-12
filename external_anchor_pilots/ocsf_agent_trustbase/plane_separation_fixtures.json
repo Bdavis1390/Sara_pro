@@ -1,0 +1,51 @@
+{
+  "schema_status": "provisional-non-normative",
+  "purpose": "test behavior/activity vs trust-base configuration/evidence separation",
+  "cases": [
+    {
+      "name": "clean trust-base evidence with external correlation wrapper",
+      "expected": "pass",
+      "event": {
+        "correlation_ref": "harness-only-operation-123",
+        "trust_base": {
+          "declared": {
+            "artifacts": [
+              {"kind": "tool_schema", "name": "example-toolset", "fingerprint": {"value": "aaa"}}
+            ]
+          },
+          "observed": {
+            "artifacts": [
+              {"kind": "tool_schema", "name": "example-toolset", "fingerprint": {"value": "aaa"}}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "stop reason duplicated inside trust base",
+      "expected": "fail",
+      "event": {
+        "trust_base": {
+          "declared": {"artifacts": []},
+          "observed": {
+            "artifacts": [],
+            "stop_reason_id": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "tool input duplicated inside trust base",
+      "expected": "fail",
+      "event": {
+        "trust_base": {
+          "declared": {"artifacts": []},
+          "observed": {
+            "artifacts": [],
+            "ai_tool_input": {"command": "example"}
+          }
+        }
+      }
+    }
+  ]
+}
