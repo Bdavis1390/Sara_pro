@@ -27,6 +27,11 @@ key_id="PS-CI-${short_sha}"
 prime_id="PRIME-CI-${GITHUB_RUN_ID:-LOCAL}-${GITHUB_RUN_ATTEMPT:-0}-${short_sha}"
 request_id="PSREQ-CI-${GITHUB_RUN_ID:-LOCAL}-${GITHUB_RUN_ATTEMPT:-0}-${short_sha}"
 evidence_file="${PRIME_SENTINEL_EVIDENCE_FILE:-prime-sentinel-integration.json}"
+trust_epoch="${PRIME_SENTINEL_TRUST_EPOCH:-1}"
+if [[ ! "${trust_epoch}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "ERROR: PRIME_SENTINEL_TRUST_EPOCH must be a positive integer when enabling PRIME verification roots." >&2
+  exit 1
+fi
 
 secret_dir="$(mktemp -d "${RUNNER_TEMP:-/tmp}/prime-sentinel-ci.XXXXXX")"
 key_file="${secret_dir}/ed25519-private.pem"
@@ -118,17 +123,24 @@ assert '/run/worldshepherd-prime-sentinel/service-token' in mount_targets
 assert '/var/lib/prime-sentinel' in mount_targets
 PY
 
-python3 - .env "$key_id" "$public_key" <<'PY'
+python3 - .env "$key_id" "$public_key" "$trust_epoch" <<'PY'
 import json
 import sys
 from pathlib import Path
 path = Path(sys.argv[1])
 key_id = sys.argv[2]
 public_key = sys.argv[3]
+trust_epoch = sys.argv[4]
 value = json.dumps({key_id: public_key}, separators=(',', ':'))
 lines = path.read_text(encoding='utf-8').splitlines()
-lines = [line for line in lines if not line.startswith('PRIME_SENTINEL_PUBLIC_KEYS_JSON=')]
+lines = [
+    line
+    for line in lines
+    if not line.startswith('PRIME_SENTINEL_PUBLIC_KEYS_JSON=')
+    and not line.startswith('PRIME_SENTINEL_TRUST_EPOCH=')
+]
 lines.append("PRIME_SENTINEL_PUBLIC_KEYS_JSON='" + value + "'")
+lines.append("PRIME_SENTINEL_TRUST_EPOCH=" + trust_epoch)
 path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 path.chmod(0o600)
 PY
@@ -149,6 +161,19 @@ if [[ "$sara_ready" -ne 1 ]]; then
   docker compose logs --no-color --tail=100 sara >&2 || true
   exit 1
 fi
+
+curl --fail --silent --show-error "${sara_url}/health" > "${secret_dir}/sara-health.json"
+python3 - "${secret_dir}/sara-health.json" "$trust_epoch" <<'PY'
+import json
+import sys
+from pathlib import Path
+record = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+expected_epoch = int(sys.argv[2])
+guard = record['prime_trust_root_guard']
+assert guard['status'] in {'INITIALIZED', 'MATCHED'}
+assert guard['epoch'] == expected_epoch
+assert len(guard['material_sha256']) == 64
+PY
 
 sara_container="$(docker compose ps -q sara)"
 [[ -n "$sara_container" ]] || { echo "ERROR: SARA container not found." >&2; exit 1; }
