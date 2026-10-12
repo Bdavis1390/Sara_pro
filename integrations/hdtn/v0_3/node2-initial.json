@@ -1,0 +1,75 @@
+{
+  "hdtnConfigName": "WS CISNET v0.3 node2 persistent relay initial",
+  "userInterfaceOn": false,
+  "mySchemeName": "unused_scheme_name",
+  "myNodeId": 2,
+  "myBpEchoServiceId": 2047,
+  "myCustodialSsp": "unused_custodial_ssp",
+  "myCustodialServiceId": 0,
+  "myRouterServiceId": 100,
+  "isAcsAware": true,
+  "acsMaxFillsPerAcsPacket": 100,
+  "acsSendPeriodMilliseconds": 1000,
+  "retransmitBundleAfterNoCustodySignalMilliseconds": 10000,
+  "maxBundleSizeBytes": 10000000,
+  "maxIngressBundleWaitOnEgressMilliseconds": 2000,
+  "bufferRxToStorageOnLinkUpSaturation": false,
+  "maxLtpReceiveUdpPacketSizeBytes": 65536,
+  "neighborDepletedStorageDelaySeconds": 0,
+  "fragmentBundlesLargerThanBytes": 0,
+  "enforceBundlePriority": false,
+  "zmqBoundRouterPubSubPortPath": 10202,
+  "zmqBoundTelemApiPortPath": 10302,
+  "inductsConfig": {
+    "inductConfigName": "ws-v0.3-node2-induct",
+    "inductVector": [
+      {
+        "name": "tcpcl_v4_from_node1",
+        "convergenceLayer": "tcpcl_v4",
+        "boundPort": 4602,
+        "numRxCircularBufferElements": 200,
+        "numRxCircularBufferBytesPerElement": 20000,
+        "keepAliveIntervalSeconds": 15,
+        "tcpclV4MyMaxRxSegmentSizeBytes": 200000,
+        "tlsIsRequired": false,
+        "certificatePemFile": "",
+        "privateKeyPemFile": "",
+        "diffieHellmanParametersPemFile": ""
+      }
+    ]
+  },
+  "outductsConfig": {
+    "outductConfigName": "ws-v0.3-node2-outduct",
+    "outductVector": [
+      {
+        "name": "tcpcl_v4_to_node3",
+        "convergenceLayer": "tcpcl_v4",
+        "nextHopNodeId": 3,
+        "remoteHostname": "127.0.0.1",
+        "remotePort": 4603,
+        "maxNumberOfBundlesInPipeline": 50,
+        "maxSumOfBundleBytesInPipeline": 50000000,
+        "keepAliveIntervalSeconds": 17,
+        "tcpclAllowOpportunisticReceiveBundles": true,
+        "tcpclV4MyMaxRxSegmentSizeBytes": 200000,
+        "tryUseTls": false,
+        "tlsIsRequired": false,
+        "useTlsVersion1_3": false,
+        "doX509CertificateVerification": false,
+        "verifySubjectAltNameInX509Certificate": false,
+        "certificationAuthorityPemFileForVerification": ""
+      }
+    ]
+  },
+  "storageConfig": {
+    "storageImplementation": "asio_single_threaded",
+    "tryToRestoreFromDisk": false,
+    "autoDeleteFilesOnExit": false,
+    "totalStorageCapacityBytes": 134217728,
+    "storageDeletionPolicy": "never",
+    "storageDiskConfigVector": [
+      {"name": "d1", "storeFilePath": "./store1.bin"},
+      {"name": "d2", "storeFilePath": "./store2.bin"}
+    ]
+  }
+}

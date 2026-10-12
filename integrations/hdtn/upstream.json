@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/nasa/HDTN.git",
+  "release": "v3.0.0",
+  "release_published": "2026-08-18",
+  "commit": "7fbe90cdbe3c8c737efaacb5985f881f95fc7d2a",
+  "purpose": "WS-CISNET BPv7 laboratory integration"
+}

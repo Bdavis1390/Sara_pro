@@ -1,0 +1,14 @@
+{
+  "contacts": [
+    {"contact": 0, "source": 1, "dest": 2, "startTime": 0, "endTime": 180, "rateBitsPerSec": 622000000, "owlt": 1},
+    {"contact": 1, "source": 1, "dest": 2, "startTime": 300, "endTime": 420, "rateBitsPerSec": 80000000, "owlt": 1},
+    {"contact": 2, "source": 1, "dest": 2, "startTime": 510, "endTime": 900, "rateBitsPerSec": 622000000, "owlt": 1},
+    {"contact": 3, "source": 1, "dest": 2, "startTime": 910, "endTime": 1250, "rateBitsPerSec": 622000000, "owlt": 1},
+    {"contact": 4, "source": 1, "dest": 2, "startTime": 1340, "endTime": 5000, "rateBitsPerSec": 622000000, "owlt": 1},
+    {"contact": 5, "source": 2, "dest": 3, "startTime": 0, "endTime": 180, "rateBitsPerSec": 622000000, "owlt": 1},
+    {"contact": 6, "source": 2, "dest": 3, "startTime": 300, "endTime": 700, "rateBitsPerSec": 622000000, "owlt": 1},
+    {"contact": 7, "source": 2, "dest": 3, "startTime": 790, "endTime": 900, "rateBitsPerSec": 100000000, "owlt": 1},
+    {"contact": 8, "source": 2, "dest": 3, "startTime": 910, "endTime": 1250, "rateBitsPerSec": 622000000, "owlt": 1},
+    {"contact": 9, "source": 2, "dest": 3, "startTime": 1340, "endTime": 5000, "rateBitsPerSec": 622000000, "owlt": 1}
+  ]
+}

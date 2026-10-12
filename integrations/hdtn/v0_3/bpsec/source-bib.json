@@ -1,0 +1,35 @@
+{
+  "bpsecConfigName": "WS CISNET v0.3 BIB source",
+  "policyRules": [
+    {
+      "description": "Apply HMAC-SHA-384 BIB to BPv7 payload",
+      "securityPolicyRuleId": 3001,
+      "securityRole": "source",
+      "securitySource": "ipn:100.1",
+      "bundleSource": ["ipn:100.1"],
+      "bundleFinalDestination": ["ipn:4.1"],
+      "securityTargetBlockTypes": [1],
+      "securityService": "integrity",
+      "securityContext": "hmacSha",
+      "securityFailureEventSetReference": "ws_bib_integrity",
+      "securityContextParams": [
+        {"paramName": "shaVariant", "value": 384},
+        {"paramName": "keyFile", "value": "integrations/hdtn/v0_3/bpsec/ci-good.key"},
+        {"paramName": "securityBlockCrc", "value": 0},
+        {"paramName": "scopeFlags", "value": 7}
+      ]
+    }
+  ],
+  "securityFailureEventSets": [
+    {
+      "name": "ws_bib_integrity",
+      "description": "Worldshepherd CI BIB integrity events",
+      "securityOperationEvents": [
+        {
+          "eventId": "sopCorruptedAtAcceptor",
+          "actions": ["failBundleForwarding", "reportReasonCode"]
+        }
+      ]
+    }
+  ]
+}
