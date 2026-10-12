@@ -1,0 +1,5 @@
+item,part,entity_type
+Sensor A,SYN-SA-001,sensor
+Mission Processor,SYN-MP-001,compute
+Operator Display,SYN-DIS-001,hmi
+Power Distribution,SYN-PD-001,subsystem
