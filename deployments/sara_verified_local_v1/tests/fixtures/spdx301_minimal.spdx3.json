@@ -1,0 +1,55 @@
+{
+  "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+  "@graph": [
+    {
+      "type": "Person",
+      "spdxId": "urn:worldshepherd:spdx:person:validator",
+      "creationInfo": "_:creationinfo",
+      "name": "Worldshepherd Validator Fixture"
+    },
+    {
+      "type": "CreationInfo",
+      "@id": "_:creationinfo",
+      "specVersion": "3.0.1",
+      "createdBy": [
+        "urn:worldshepherd:spdx:person:validator"
+      ],
+      "created": "2026-09-16T20:00:00Z"
+    },
+    {
+      "type": "SpdxDocument",
+      "spdxId": "urn:worldshepherd:spdx:document:validator",
+      "creationInfo": "_:creationinfo",
+      "profileConformance": [
+        "core",
+        "software"
+      ],
+      "rootElement": [
+        "urn:worldshepherd:spdx:sbom:validator"
+      ],
+      "name": "Worldshepherd SPDX 3.0.1 validator fixture"
+    },
+    {
+      "type": "software_Sbom",
+      "spdxId": "urn:worldshepherd:spdx:sbom:validator",
+      "creationInfo": "_:creationinfo",
+      "profileConformance": [
+        "core",
+        "software"
+      ],
+      "rootElement": [
+        "urn:worldshepherd:spdx:package:validator"
+      ]
+    },
+    {
+      "type": "software_Package",
+      "spdxId": "urn:worldshepherd:spdx:package:validator",
+      "creationInfo": "_:creationinfo",
+      "name": "example-package",
+      "software_packageVersion": "1.2.3",
+      "software_packageUrl": "pkg:pypi/example-package@1.2.3",
+      "suppliedBy": "urn:worldshepherd:spdx:person:validator",
+      "software_primaryPurpose": "library"
+    }
+  ]
+}
