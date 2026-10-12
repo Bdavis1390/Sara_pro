@@ -35,7 +35,11 @@ def _require_string_dict(value: Any, *, field: str) -> dict[str, str]:
     return dict(value)
 
 
-def _verify_manifest_bootstrap_digest(manifest_path: Path, manifest: dict[str, Any], artifact_digests: dict[str, str]) -> str | None:
+def _verify_manifest_bootstrap_digest(
+    manifest_path: Path,
+    manifest: dict[str, Any],
+    artifact_digests: dict[str, str],
+) -> str:
     """Verify the manifest's recorded self-digest against its bootstrap form.
 
     `export_partner_screening_package()` first writes the manifest without a
@@ -45,7 +49,7 @@ def _verify_manifest_bootstrap_digest(manifest_path: Path, manifest: dict[str, A
     """
     recorded = artifact_digests.get("manifest.json")
     if recorded is None:
-        return None
+        raise ValueError(f"artifact digest missing for package file: manifest.json ({manifest_path})")
     bootstrap = dict(manifest)
     bootstrap_digests = dict(artifact_digests)
     bootstrap_digests.pop("manifest.json", None)
@@ -104,8 +108,7 @@ def verify_partner_screening_package(package_dir: Path) -> dict[str, Any]:
         checked[filename] = actual
 
     manifest_bootstrap_digest = _verify_manifest_bootstrap_digest(manifest_path, manifest, artifact_digests)
-    if manifest_bootstrap_digest:
-        checked["manifest.json"] = manifest_bootstrap_digest
+    checked["manifest.json"] = manifest_bootstrap_digest
 
     _assert_sanitized_text(_read_all_text(root))
 
@@ -125,19 +128,19 @@ def verify_partner_screening_package(package_dir: Path) -> dict[str, Any]:
 
 
 def _resolve_package_dir(batch_root: Path, record: dict[str, Any]) -> Path:
-    raw = Path(str(record.get("output_dir", "")))
     partner_id = str(record.get("partner_id", "")).lower()
     lane = str(record.get("lane", ""))
-    candidates = []
-    if raw:
-        candidates.append(raw)
-        if raw.parts and raw.parts[0] == batch_root.name:
-            candidates.append(batch_root.joinpath(*raw.parts[1:]))
-    if partner_id and lane:
-        candidates.append(batch_root / partner_id / lane)
-    for candidate in candidates:
-        if candidate.is_dir():
-            return candidate
+    if not partner_id or not lane:
+        raise ValueError(f"batch export record missing partner_id or lane: {record}")
+
+    root = batch_root.resolve()
+    candidate = (root / partner_id / lane).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"package directory escapes batch root for export record: {record}") from exc
+    if candidate.is_dir():
+        return candidate
     raise ValueError(f"could not resolve package directory for batch export record: {record}")
 
 
@@ -164,15 +167,28 @@ def verify_partner_screening_batch(batch_dir: Path) -> dict[str, Any]:
     if batch_manifest.get("package_count") != batch_manifest.get("source_bundle_count") * len(partners):
         raise ValueError("batch package_count does not match source bundles multiplied by partners")
 
+    expected_identities = {(partner_id, lane) for partner_id in partners for lane in lanes}
+    if len(expected_identities) != len(partners) * len(lanes):
+        raise ValueError("batch partners and lanes must contain unique values")
+    observed_identities: list[tuple[str, str]] = []
+    for record in exports:
+        if not isinstance(record, dict):
+            raise ValueError("batch export records must be JSON objects")
+        observed_identities.append((str(record.get("partner_id", "")), str(record.get("lane", ""))))
+    if len(set(observed_identities)) != len(observed_identities):
+        raise ValueError("batch export records contain duplicate partner/lane identities")
+    if set(observed_identities) != expected_identities:
+        raise ValueError("batch export records do not match the declared partner/lane Cartesian product")
+
     batch_digest = _verify_batch_digest(batch_manifest)
     _assert_sanitized_text(batch_manifest_path.read_text(encoding="utf-8"))
 
     package_reports = []
     for record in exports:
-        if not isinstance(record, dict):
-            raise ValueError("batch export records must be JSON objects")
         package_dir = _resolve_package_dir(root, record)
         report = verify_partner_screening_package(package_dir)
+        if record.get("partner_id") != report.get("partner_id"):
+            raise ValueError(f"partner identity mismatch for batch export record: {record}")
         if record.get("source_bundle_digest") != report.get("source_bundle_digest"):
             raise ValueError(f"source bundle digest mismatch for batch export record: {record}")
         if record.get("package_manifest_digest") != report.get("manifest_bootstrap_digest"):
