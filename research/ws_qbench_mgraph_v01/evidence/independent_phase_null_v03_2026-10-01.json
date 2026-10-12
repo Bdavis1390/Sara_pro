@@ -1,0 +1,77 @@
+{
+  "schema": "ws-qbench-mgraph/independent-phase-null-v0.3",
+  "date": "2026-10-01",
+  "status": "INDEPENDENT_NUMERICAL_CROSSCHECK",
+  "claim_state": [
+    "IMPLEMENTED IN SOFTWARE",
+    "SIMULATED ONLY",
+    "PROVEN INTERNALLY — NUMERICAL CONTROL ONLY",
+    "REQUIRES LAB / PARTNER VALIDATION FOR PHYSICAL GENERALIZATION"
+  ],
+  "method": {
+    "nmax": 150,
+    "repetitions_per_eta": 50,
+    "seed": 9675,
+    "implementation": "Independent NumPy/SciPy implementation using scipy.special.eval_genlaguerre",
+    "null": "Within each hopping-order Delta band, preserve every edge magnitude at its matrix location, the i**Delta parity phase base, matrix symmetry, and the exact positive/negative sign multiset; randomly permute sign locations within the band.",
+    "caveat": "The null is deliberately nonphysical and is a falsification control. Standardized separation is descriptive (source-null_mean)/null_std, not a calibrated p-value."
+  },
+  "results": [
+    {
+      "eta": 0.1,
+      "source_lambda1": 0.17343199595105485,
+      "null_mean": 0.13628174773380108,
+      "null_std": 0.042165462674792355,
+      "null_min": 0.030963187462577875,
+      "null_max": 0.17342924083553335,
+      "source_minus_null_mean": 0.03715024821725377,
+      "standardized_separation": 0.8811,
+      "source_above_all_50_nulls": true
+    },
+    {
+      "eta": 0.5,
+      "source_lambda1": 0.5373150284615494,
+      "null_mean": 0.41158694628096776,
+      "null_std": 0.045641152899973475,
+      "null_min": 0.32022078689695554,
+      "null_max": 0.5043091607093236,
+      "source_minus_null_mean": 0.12572808218058168,
+      "standardized_separation": 2.7547,
+      "source_above_all_50_nulls": true
+    },
+    {
+      "eta": 1.0,
+      "source_lambda1": 0.7045032238825475,
+      "null_mean": 0.5960248076529563,
+      "null_std": 0.02572082991345145,
+      "null_min": 0.506619243135271,
+      "null_max": 0.6406021133494613,
+      "source_minus_null_mean": 0.1084784162295912,
+      "standardized_separation": 4.2175,
+      "source_above_all_50_nulls": true
+    },
+    {
+      "eta": 1.5,
+      "source_lambda1": 0.7805778891738528,
+      "null_mean": 0.6876232041651404,
+      "null_std": 0.01735313920549292,
+      "null_min": 0.6447948039799046,
+      "null_max": 0.7111101764124219,
+      "source_minus_null_mean": 0.0929546850087124,
+      "standardized_separation": 5.35665,
+      "source_above_all_50_nulls": true
+    },
+    {
+      "eta": 2.0,
+      "source_lambda1": 0.8238661735709464,
+      "null_mean": 0.7393822246065334,
+      "null_std": 0.00691656070130452,
+      "null_min": 0.7237448756649975,
+      "null_max": 0.7574399668606104,
+      "source_minus_null_mean": 0.08448394896441302,
+      "standardized_separation": 12.2147,
+      "source_above_all_50_nulls": true
+    }
+  ],
+  "interpretation_boundary": "For the tested finite numerical model/settings, detailed sign topology changes lambda1 beyond what is explained by edge magnitudes, hopping-order parity phase classes, symmetry, and per-band sign counts. No experimental or hardware causality claim follows."
+}

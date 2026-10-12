@@ -1,0 +1,80 @@
+{
+  "schema": "ws-qbench-mgraph/source-lock-v0.5",
+  "as_of": "2026-10-01",
+  "primary_source": {
+    "title": "Magnetic graphs for cavity quantum electrodynamics",
+    "authors": [
+      "Sunkyu Yu",
+      "Xianji Piao",
+      "Namkyoo Park"
+    ],
+    "journal": "Science Advances",
+    "volume": 12,
+    "article": "eaee5566",
+    "publication_date": "2026-09-25",
+    "doi": "10.1126/sciadv.aee5566",
+    "arxiv": "2607.04736"
+  },
+  "claims_policy": {
+    "exact_figure_reproduction_allowed": false,
+    "hardware_inference_allowed": false,
+    "allowed_states": [
+      "SUPPORTED BY LITERATURE",
+      "IMPLEMENTED IN SOFTWARE",
+      "SIMULATED ONLY",
+      "HYPOTHESIS / ADVERSARIAL CONTROL",
+      "PROVEN INTERNALLY — NUMERICAL CONTROL ONLY",
+      "NOT CURRENTLY CLAIMED",
+      "REQUIRES PARTNER VALIDATION"
+    ]
+  },
+  "resolved": {
+    "lambda1_definition": {
+      "status": "locked",
+      "basis": "paper equations plus independent numerical cross-check"
+    },
+    "fock_cutoff_for_selected_source_analyses": {
+      "status": "partially_locked",
+      "known_value": 200,
+      "limitation": "matching Nmax alone does not establish exact reproduction"
+    },
+    "random_subgraph_sample_count_selected_analyses": {
+      "status": "partially_locked",
+      "known_value": 20000,
+      "limitation": "sampling collision/duplicate policy remains unresolved"
+    }
+  },
+  "gaps": {
+    "G1_effective_zero_connected_loop": {
+      "status": "unresolved",
+      "required": "exact numerical zero/tolerance, hopping-order truncation, or underflow convention for Figure 4d and Supplementary Figure S1"
+    },
+    "G2_figure4ef_hamiltonian_normalization": {
+      "status": "unresolved",
+      "required": "h0, |h_parallel|, |h_perp|/(hbar omega0), and energy units used in Figure 4e/f"
+    },
+    "G3_random_subgraph_duplicate_policy": {
+      "status": "unresolved",
+      "required": "without-replacement, rejection-on-collision, or other exact sampling convention"
+    },
+    "G4_author_code": {
+      "status": "unresolved",
+      "required": "author source code or minimal reproduction script for Figures 3b, 4c-f, and Supplementary Figure S1",
+      "public_search_result": "not_found_as_of_2026-10-01"
+    }
+  },
+  "reproduction_ceiling": {
+    "lambda1": "independent numerical cross-check",
+    "conductance": "simulated only; report complete-bipartite null",
+    "loop_probabilities": "threshold-sensitive; not exact reproduction",
+    "figure4ef_ipr": "parameterized ablation only; not source-locked",
+    "supplementary_s1": "not currently claimed"
+  },
+  "evidence_files": [
+    "VALIDATION_V0_2_2026-10-01.md",
+    "PHASE_NULL_V0_3_2026-10-01.md",
+    "LOCALIZATION_ABLATION_V0_4_2026-10-01.md",
+    "SOURCE_GAPS_V0_4_2026-10-01.md"
+  ],
+  "lock_digest_sha256": "0d41f977589ac8b6a23fcfb3d1c68b8baf6a9e275d9fb17a116e1ef144ef1411"
+}
