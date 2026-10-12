@@ -1,0 +1,174 @@
+name: WS PRIME-HW v0.8 Authenticated Command Envelope Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - 'hardware/prime_hw_v0_6/**'
+      - 'hardware/prime_hw_v0_7/**'
+      - 'hardware/prime_hw_v0_8/**'
+      - '.github/workflows/ws-prime-hw-v0-8-authenticated-command-envelope.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv'
+      - 'hardware/prime_hw_v0_5/**'
+      - 'hardware/prime_hw_v0_6/**'
+      - 'hardware/prime_hw_v0_7/**'
+      - 'hardware/prime_hw_v0_8/**'
+      - '.github/workflows/ws-prime-hw-v0-8-authenticated-command-envelope.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  authenticated-command-envelope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record source and claims boundary
+        run: |
+          mkdir -p build/prime_hw_v0_8
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=CONDITIONAL EXTERNAL-TRUST ENFORCEMENT IN RTL + YOSYS STRUCTURAL + BOUNDED FORMAL MODEL ONLY / NO INTERNAL CRYPTOGRAPHIC VERIFIER OR NONVOLATILE MONOTONIC ROOT"
+
+      - name: Install verification tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys z3
+          python3 --version
+          iverilog -V | head -n 2
+          yosys -V
+          z3 --version
+
+      - name: Exhaust authenticated envelope abstract classes
+        run: |
+          set -o pipefail
+          iverilog -g2012 \
+            -s tb_prime_hw_v0_8_authenticated_envelope \
+            -o build/prime_hw_v0_8/authenticated-envelope.vvp \
+            hardware/prime_hw_v0_8/prime_hw_authenticated_envelope_guard.sv \
+            hardware/prime_hw_v0_8/prime_hw_authentication_fault_latch.sv \
+            hardware/prime_hw_v0_8/tb_prime_hw_v0_8_authenticated_envelope.sv \
+            2>&1 | tee build/prime_hw_v0_8/iverilog.log
+          vvp build/prime_hw_v0_8/authenticated-envelope.vvp \
+            | tee build/prime_hw_v0_8/authenticated-envelope.log
+          grep -q 'PASS: PRIME-HW v0.8 authenticated-envelope abstract cases=512 field-mismatch dimensions=4 sticky-latch=PASS' \
+            build/prime_hw_v0_8/authenticated-envelope.log
+
+      - name: Synthesize and audit authenticated execution cones
+        run: |
+          yosys -Q -l build/prime_hw_v0_8/yosys-synthesis.log -p '
+            read_verilog -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv hardware/prime_hw_v0_7/prime_hw_sequence_pair_guard.sv hardware/prime_hw_v0_7/prime_hw_temporal_command_guard.sv hardware/prime_hw_v0_8/prime_hw_authenticated_envelope_guard.sv hardware/prime_hw_v0_8/prime_hw_authentication_fault_latch.sv hardware/prime_hw_v0_8/prime_hw_policy_controller_authenticated_hardened.sv;
+            hierarchy -check -top prime_hw_policy_controller_authenticated_hardened;
+            prep -top prime_hw_policy_controller_authenticated_hardened;
+            check;
+            stat;
+            write_json build/prime_hw_v0_8/prime_hw_v0_8.json;
+          '
+          test -s build/prime_hw_v0_8/prime_hw_v0_8.json
+          python3 hardware/prime_hw_v0_8/check_synthesized_authenticated_envelope.py \
+            build/prime_hw_v0_8/prime_hw_v0_8.json \
+            | tee build/prime_hw_v0_8/authenticated-cone-audit.log
+          grep -q 'authenticated admission cone contains every declared epoch/sequence/digest binding input' \
+            build/prime_hw_v0_8/authenticated-cone-audit.log
+          grep -q 'authentication fault capture remains sequential and feeds the SAFE-state escalation cone' \
+            build/prime_hw_v0_8/authenticated-cone-audit.log
+          grep -q 'v0.7 temporal gate consumes only the preserved authenticated admission rail' \
+            build/prime_hw_v0_8/authenticated-cone-audit.log
+
+      - name: Build v0.8 differential formal model
+        run: |
+          yosys -Q -l build/prime_hw_v0_8/yosys-formal.log -p '
+            read_verilog -formal -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv hardware/prime_hw_v0_7/prime_hw_sequence_pair_guard.sv hardware/prime_hw_v0_7/prime_hw_temporal_command_guard.sv hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened.sv hardware/prime_hw_v0_8/prime_hw_authenticated_envelope_guard.sv hardware/prime_hw_v0_8/prime_hw_authentication_fault_latch.sv hardware/prime_hw_v0_8/prime_hw_policy_controller_authenticated_hardened.sv hardware/prime_hw_v0_8/prime_hw_policy_controller_authenticated_hardened_formal.sv;
+            hierarchy -check -top prime_hw_policy_controller_authenticated_hardened_formal;
+            prep -top prime_hw_policy_controller_authenticated_hardened_formal;
+            check;
+            async2sync;
+            dffunmap;
+            write_smt2 -wires build/prime_hw_v0_8/prime_hw_v0_8_formal.smt2;
+          '
+          test -s build/prime_hw_v0_8/prime_hw_v0_8_formal.smt2
+
+      - name: Prove bounded authenticated binding and nominal v0.7 equivalence
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 70 --presat \
+            --dump-vcd build/prime_hw_v0_8/proof-failure.vcd \
+            build/prime_hw_v0_8/prime_hw_v0_8_formal.smt2 \
+            | tee build/prime_hw_v0_8/proof.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_8/proof.log
+
+      - name: Prove semantic and authentication witness reachability
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 70 -c \
+            --dump-vcd build/prime_hw_v0_8/cover.vcd \
+            build/prime_hw_v0_8/prime_hw_v0_8_formal.smt2 \
+            | tee build/prime_hw_v0_8/cover.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_8/cover.log
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_8/cover.log)
+          echo "reached_cover_statements=$reached"
+          test "$reached" -eq 16
+
+      - name: Preserve v0.8 evidence custody
+        run: |
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_8/cover.log)
+          {
+            echo "tested_sha=$(git rev-parse HEAD)"
+            echo "abstract_envelope_cases=512"
+            echo "field_mismatch_dimensions=4"
+            echo "epoch_width_bits=32"
+            echo "sequence_width_bits=8"
+            echo "digest_width_bits=64"
+            echo "formal_horizon=70"
+            echo "solver=z3"
+            echo "declared_cover_statements=16"
+            echo "reached_cover_statements=$reached"
+            echo "formal_reset_lowering=async2sync+dffunmap"
+            echo "nominal_reference=hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened.sv"
+            echo "trusted_epoch_source=EXTERNAL_ASSUMPTION_NOT_PROVEN"
+            echo "cryptographic_verifier=EXTERNAL_ASSUMPTION_NOT_PROVEN"
+            echo "conditional_cross_reset_replay_property=REQUIRES_MONOTONIC_ROLLBACK_RESISTANT_EXTERNAL_EPOCH"
+            echo "internal_cryptographic_authenticity_claim=NONE"
+            echo "internal_nonvolatile_anti_rollback_claim=NONE"
+            echo "claims_boundary=CONDITIONAL EXTERNAL-TRUST ENFORCEMENT IN RTL + YOSYS STRUCTURAL + BOUNDED FORMAL MODEL ONLY / NO INTERNAL CRYPTOGRAPHIC VERIFIER OR NONVOLATILE MONOTONIC ROOT"
+            sha256sum \
+              hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_shadow_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_dual_state_guard.sv \
+              hardware/prime_hw_v0_5/prime_hw_policy_controller_diverse.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_witness.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_voter.sv \
+              hardware/prime_hw_v0_6/prime_hw_authorization_fault_latch.sv \
+              hardware/prime_hw_v0_6/prime_hw_policy_controller_authorization_hardened.sv \
+              hardware/prime_hw_v0_7/prime_hw_sequence_pair_guard.sv \
+              hardware/prime_hw_v0_7/prime_hw_temporal_command_guard.sv \
+              hardware/prime_hw_v0_7/prime_hw_policy_controller_temporal_hardened.sv \
+              hardware/prime_hw_v0_8/prime_hw_authenticated_envelope_guard.sv \
+              hardware/prime_hw_v0_8/prime_hw_authentication_fault_latch.sv \
+              hardware/prime_hw_v0_8/prime_hw_policy_controller_authenticated_hardened.sv \
+              hardware/prime_hw_v0_8/prime_hw_policy_controller_authenticated_hardened_formal.sv \
+              hardware/prime_hw_v0_8/tb_prime_hw_v0_8_authenticated_envelope.sv \
+              hardware/prime_hw_v0_8/check_synthesized_authenticated_envelope.py \
+              build/prime_hw_v0_8/prime_hw_v0_8.json \
+              build/prime_hw_v0_8/prime_hw_v0_8_formal.smt2 \
+              build/prime_hw_v0_8/authenticated-envelope.log \
+              build/prime_hw_v0_8/authenticated-cone-audit.log \
+              build/prime_hw_v0_8/proof.log \
+              build/prime_hw_v0_8/cover.log
+          } > build/prime_hw_v0_8/evidence.txt
+
+      - name: Upload v0.8 authenticated-envelope evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-prime-hw-v0-8-authenticated-command-envelope-evidence
+          path: build/prime_hw_v0_8/
+          if-no-files-found: error

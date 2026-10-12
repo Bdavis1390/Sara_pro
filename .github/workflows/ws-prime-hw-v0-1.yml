@@ -1,0 +1,48 @@
+name: WS PRIME-HW v0.1 RTL Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_1/**'
+      - '.github/workflows/ws-prime-hw-v0-1.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_1/**'
+      - '.github/workflows/ws-prime-hw-v0-1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rtl-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record tested source and claims boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=RTL REFERENCE / SIMULATION ONLY / NO SILICON OR CERTIFICATION CLAIM"
+
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          iverilog -V
+
+      - name: Compile PRIME-HW reference RTL and testbench
+        run: |
+          iverilog -g2012 \
+            -Wall \
+            -s tb_prime_hw_policy_controller \
+            -o /tmp/prime_hw_v0_1.vvp \
+            hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
+            hardware/prime_hw_v0_1/tb_prime_hw_policy_controller.sv
+
+      - name: Run bounded RTL simulation
+        run: vvp /tmp/prime_hw_v0_1.vvp

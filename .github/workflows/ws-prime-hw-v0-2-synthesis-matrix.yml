@@ -1,0 +1,96 @@
+name: WS PRIME-HW v0.2 Synthesis Matrix Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_1/tb_prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_1/tb_prime_hw_transition_matrix.sv'
+      - 'hardware/prime_hw_v0_1/PRIME_HW_V0_2_VERIFICATION.md'
+      - '.github/workflows/ws-prime-hw-v0-2-synthesis-matrix.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_1/tb_prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_1/tb_prime_hw_transition_matrix.sv'
+      - 'hardware/prime_hw_v0_1/PRIME_HW_V0_2_VERIFICATION.md'
+      - '.github/workflows/ws-prime-hw-v0-2-synthesis-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synth-and-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record source and claims boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=VENDOR-NEUTRAL RTL SYNTHESIS + DECLARED TRANSITION-MATRIX SIMULATION ONLY"
+
+      - name: Install RTL tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys
+          iverilog -V
+          yosys -V
+
+      - name: Run PRIME-HW v0.1 bounded regression
+        run: |
+          iverilog -g2012 -Wall \
+            -s tb_prime_hw_policy_controller \
+            -o /tmp/prime_hw_v0_1.vvp \
+            hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
+            hardware/prime_hw_v0_1/tb_prime_hw_policy_controller.sv
+          vvp /tmp/prime_hw_v0_1.vvp
+
+      - name: Exhaust declared transition and authorization matrix
+        run: |
+          iverilog -g2012 -Wall \
+            -s tb_prime_hw_transition_matrix \
+            -o /tmp/prime_hw_matrix.vvp \
+            hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
+            hardware/prime_hw_v0_1/tb_prime_hw_transition_matrix.sv
+          vvp /tmp/prime_hw_matrix.vvp | tee /tmp/prime_hw_matrix.log
+          grep -q 'PASS: PRIME-HW declared transition/authorization matrix exhausted' /tmp/prime_hw_matrix.log
+
+      - name: Vendor-neutral Yosys synthesis and structural check
+        run: |
+          mkdir -p build/prime_hw_v0_2
+          yosys -Q -l build/prime_hw_v0_2/yosys.log -p '
+            read_verilog -sv hardware/prime_hw_v0_1/prime_hw_policy_controller.sv;
+            hierarchy -check -top prime_hw_policy_controller;
+            proc;
+            opt;
+            check -assert;
+            stat;
+            write_json build/prime_hw_v0_2/prime_hw_policy_controller.json;
+          '
+          test -s build/prime_hw_v0_2/prime_hw_policy_controller.json
+          grep -q 'Number of cells:' build/prime_hw_v0_2/yosys.log
+
+      - name: Preserve exact-head verification evidence
+        run: |
+          cp /tmp/prime_hw_matrix.log build/prime_hw_v0_2/transition_matrix.log
+          printf '%s\n' "tested_sha=$(git rev-parse HEAD)" > build/prime_hw_v0_2/evidence.txt
+          printf '%s\n' 'claims_boundary=VENDOR-NEUTRAL RTL SYNTHESIS + DECLARED TRANSITION-MATRIX SIMULATION ONLY' >> build/prime_hw_v0_2/evidence.txt
+          sha256sum \
+            hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
+            hardware/prime_hw_v0_1/tb_prime_hw_policy_controller.sv \
+            hardware/prime_hw_v0_1/tb_prime_hw_transition_matrix.sv \
+            build/prime_hw_v0_2/prime_hw_policy_controller.json \
+            >> build/prime_hw_v0_2/evidence.txt
+
+      - name: Upload synthesis and matrix evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-prime-hw-v0-2-synthesis-matrix-evidence
+          path: build/prime_hw_v0_2/
+          if-no-files-found: error

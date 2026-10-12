@@ -1,0 +1,149 @@
+name: WS PRIME-HW v0.4 Fault Resilience Gate
+
+on:
+  pull_request:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_4/**'
+      - '.github/workflows/ws-prime-hw-v0-4-fault-resilience.yml'
+  push:
+    paths:
+      - 'hardware/prime_hw_v0_1/prime_hw_policy_controller.sv'
+      - 'hardware/prime_hw_v0_4/**'
+      - '.github/workflows/ws-prime-hw-v0-4-fault-resilience.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fault-resilience:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact pull-request head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Record scope boundary
+        run: |
+          echo "tested_sha=$(git rev-parse HEAD)"
+          echo "claims_boundary=RTL + BOUNDED FORMAL + ENCODED-STATE FAULT-INJECTION EVIDENCE ONLY / NO SILICON FAULT QUALIFICATION"
+
+      - name: Install verification tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog yosys z3
+          python3 --version
+          iverilog -V | head -n 2
+          yosys -V
+          z3 --version
+
+      - name: Prove static state-code distance bound
+        run: |
+          mkdir -p build/prime_hw_v0_4
+          python3 hardware/prime_hw_v0_4/check_state_code_distance.py \
+            | tee build/prime_hw_v0_4/state-code-distance.log
+          grep -q 'minimum Hamming distance=4' build/prime_hw_v0_4/state-code-distance.log
+          grep -q '644 cases' build/prime_hw_v0_4/state-code-distance.log
+
+      - name: Run exhaustive encoded-state fault injection
+        run: |
+          set -o pipefail
+          iverilog -g2012 \
+            -s tb_prime_hw_v0_4_fault_injection \
+            -o build/prime_hw_v0_4/fault-injection.vvp \
+            hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+            hardware/prime_hw_v0_4/prime_hw_policy_controller_hardened.sv \
+            hardware/prime_hw_v0_4/tb_prime_hw_v0_4_fault_injection.sv \
+            2>&1 | tee build/prime_hw_v0_4/iverilog.log
+          vvp build/prime_hw_v0_4/fault-injection.vvp \
+            | tee build/prime_hw_v0_4/fault-injection.log
+          grep -q 'PASS: PRIME-HW v0.4 detected and failed closed for 644 injected' \
+            build/prime_hw_v0_4/fault-injection.log
+
+      - name: Synthesize hardened controller
+        run: |
+          yosys -Q -l build/prime_hw_v0_4/yosys-synthesis.log -p '
+            read_verilog -sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_4/prime_hw_policy_controller_hardened.sv;
+            hierarchy -check -top prime_hw_policy_controller_hardened;
+            prep -top prime_hw_policy_controller_hardened;
+            check;
+            stat;
+            write_json build/prime_hw_v0_4/prime_hw_v0_4.json;
+          '
+          test -s build/prime_hw_v0_4/prime_hw_v0_4.json
+
+      - name: Build differential formal model
+        run: |
+          yosys -Q -l build/prime_hw_v0_4/yosys-formal.log -p '
+            read_verilog -formal -sv hardware/prime_hw_v0_1/prime_hw_policy_controller.sv hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv hardware/prime_hw_v0_4/prime_hw_policy_controller_hardened.sv hardware/prime_hw_v0_4/prime_hw_policy_controller_hardened_formal.sv;
+            hierarchy -check -top prime_hw_policy_controller_hardened_formal;
+            prep -top prime_hw_policy_controller_hardened_formal;
+            check;
+            async2sync;
+            dffunmap;
+            write_smt2 -wires build/prime_hw_v0_4/prime_hw_v0_4_formal.smt2;
+          '
+          test -s build/prime_hw_v0_4/prime_hw_v0_4_formal.smt2
+
+      - name: Prove bounded safety and v0.1 nominal equivalence
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 30 --presat \
+            --dump-vcd build/prime_hw_v0_4/proof-failure.vcd \
+            build/prime_hw_v0_4/prime_hw_v0_4_formal.smt2 \
+            | tee build/prime_hw_v0_4/proof.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_4/proof.log
+
+      - name: Prove formal reachability witnesses
+        run: |
+          set -o pipefail
+          yosys-smtbmc -s z3 -t 30 -c \
+            --dump-vcd build/prime_hw_v0_4/cover.vcd \
+            build/prime_hw_v0_4/prime_hw_v0_4_formal.smt2 \
+            | tee build/prime_hw_v0_4/cover.log
+          grep -q 'Status: PASSED' build/prime_hw_v0_4/cover.log
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_4/cover.log)
+          echo "reached_cover_statements=$reached"
+          test "$reached" -eq 8
+
+      - name: Preserve verification evidence custody
+        run: |
+          reached=$(grep -c 'Reached cover statement' build/prime_hw_v0_4/cover.log)
+          {
+            echo "tested_sha=$(git rev-parse HEAD)"
+            echo "state_code_width=8"
+            echo "minimum_pairwise_hamming_distance=4"
+            echo "guaranteed_non_aliasing_corruption_bound=1_to_3_bits_per_encoded_state"
+            echo "exhaustive_injected_cases=644"
+            echo "formal_horizon=30"
+            echo "solver=z3"
+            echo "declared_cover_statements=8"
+            echo "reached_cover_statements=$reached"
+            echo "formal_reset_lowering=async2sync+dffunmap"
+            echo "nominal_reference=hardware/prime_hw_v0_1/prime_hw_policy_controller.sv"
+            echo "claims_boundary=RTL + BOUNDED FORMAL + ENCODED-STATE FAULT-INJECTION EVIDENCE ONLY / NO SILICON FAULT QUALIFICATION"
+            sha256sum \
+              hardware/prime_hw_v0_1/prime_hw_policy_controller.sv \
+              hardware/prime_hw_v0_4/prime_hw_state_code_guard.sv \
+              hardware/prime_hw_v0_4/prime_hw_policy_controller_hardened.sv \
+              hardware/prime_hw_v0_4/prime_hw_policy_controller_hardened_formal.sv \
+              hardware/prime_hw_v0_4/tb_prime_hw_v0_4_fault_injection.sv \
+              hardware/prime_hw_v0_4/check_state_code_distance.py \
+              build/prime_hw_v0_4/prime_hw_v0_4.json \
+              build/prime_hw_v0_4/prime_hw_v0_4_formal.smt2 \
+              build/prime_hw_v0_4/state-code-distance.log \
+              build/prime_hw_v0_4/fault-injection.log \
+              build/prime_hw_v0_4/proof.log \
+              build/prime_hw_v0_4/cover.log
+          } > build/prime_hw_v0_4/evidence.txt
+
+      - name: Upload v0.4 fault-resilience evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-prime-hw-v0-4-fault-resilience-evidence
+          path: build/prime_hw_v0_4/
+          if-no-files-found: error
