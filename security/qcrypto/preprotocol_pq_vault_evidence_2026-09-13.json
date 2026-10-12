@@ -1,0 +1,54 @@
+{
+  "schema": "WS-QCRYPTO-PREPROTOCOL-PQ-VAULT-v1",
+  "as_of": "2026-09-13",
+  "portfolio_assessment": "INCREMENTAL_MULTI_CHAIN_PQ_ASSET_PROTECTION_AVAILABLE",
+  "solution_principle": "Move high-value assets under chain-specific post-quantum-gated accounts or vaults before full base-layer migration, while preserving explicit residual-risk labels for consensus, exposed-key rescue, relay, wallet, audit, and interoperability gaps.",
+  "chains": [
+    {
+      "chain": "Algorand",
+      "state": "NATIVE_PQ_ACCOUNT_PATH",
+      "source": "https://algorand.co/technology/post-quantum",
+      "evidence_class": "official_protocol_mainnet",
+      "supported_claim": "Native Falcon-1024 accounts are live on mainnet and supported by SDKs, AlgoKit, and Pera Wallet.",
+      "boundary": "Account-layer PQ authorization does not establish full-protocol PQ consensus resilience."
+    },
+    {
+      "chain": "Bitcoin",
+      "state": "PRE_PROTOCOL_PQ_VAULT_PATH",
+      "source": "https://starkware.co/blog/the-first-quantum-safe-bitcoin-transaction-has-been-mined/",
+      "evidence_class": "mainnet_demonstration",
+      "supported_claim": "QSB demonstrated a hash-based quantum-resistant storage/spend construction on Bitcoin mainnet without a consensus change.",
+      "boundary": "The demonstrated path is nonstandard, requires a direct miner route, and does not rescue keys already exposed before migration."
+    },
+    {
+      "chain": "Solana",
+      "state": "PRE_PROTOCOL_PQ_VAULT_PATH",
+      "source": "https://github.com/QuantiumResistantInfra/quantum-vault",
+      "evidence_class": "project_reported_mainnet_implementation",
+      "supported_claim": "The Qubit project reports a live mainnet PDA vault authorizing SOL and SPL withdrawals with hash-based Winternitz one-time signatures.",
+      "boundary": "Independent cryptographic/security audit is not established by this evidence record; base-layer transaction and consensus authentication remain classical."
+    },
+    {
+      "chain": "Ethereum",
+      "state": "AUDITED_CRYPTO_AGILE_ACCOUNT_SUBSTRATE",
+      "source": "https://www.projecteleven.com/blog/quantum-vault---an-audited-reference-implementation-for-account-abstraction",
+      "evidence_class": "audited_reference_implementation",
+      "supported_claim": "Project Eleven released Cure53-audited libqc/quantum-vault reference implementations using ERC-4337 smart accounts and validator-swappable account architecture.",
+      "boundary": "The released validator support described by Project Eleven is currently secp256k1; ML-DSA/SLH-DSA integration is not yet a live PQ authorization path in this reference implementation."
+    }
+  ],
+  "deployment_rule": {
+    "high_value_assets": "Prefer native PQ accounts where available; otherwise use independently reviewed programmable PQ vaults once chain-specific verification and recovery gates pass.",
+    "classical_owner_key": "Do not treat an old classical owner key as a permanent root of authority after PQ migration; where architecture permits, move value into an account/vault whose spend condition is controlled by the PQ mechanism itself.",
+    "recovery": "Require tested recovery and key-rotation paths, especially for stateful one-time or limited-use signature schemes.",
+    "bridges_and_stablecoins": "Treat bridge, issuer, upgrade, oracle, and admin authorities as separate migration dependencies even when holder accounts are PQ-gated.",
+    "consensus": "Never label application/account-layer protection as full-chain PQ security while validator/consensus authentication remains classical."
+  },
+  "prohibited_inferences": [
+    "Application-layer or account-layer PQ protection does not make a blockchain fully quantum-safe.",
+    "Project-reported mainnet deployment is not independent security validation.",
+    "Audited crypto-agile substrate is not the same as a live post-quantum validator.",
+    "A vault path that protects concealed keys does not automatically rescue already-exposed classical keys.",
+    "No production quantum key break or Q-day is established by this record."
+  ]
+}

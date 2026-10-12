@@ -1,0 +1,22 @@
+name: WS-CAE CycloneDX Export
+description: Export a WS-CAE crypto-system patch as CycloneDX 1.7 JSON
+inputs:
+  patch:
+    description: Path to WS-CAE crypto-system patch JSON
+    required: true
+  output:
+    description: Output path for generated CycloneDX JSON
+    required: false
+    default: ws-cae.cdx.json
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        WS_CAE_ACTION_PATH: ${{ github.action_path }}
+        WS_CAE_PATCH: ${{ inputs.patch }}
+        WS_CAE_OUTPUT: ${{ inputs.output }}
+      run: |
+        PYTHONPATH="$WS_CAE_ACTION_PATH/../../.." \
+          python -m ws_cae.cyclonedx_cli "$WS_CAE_PATCH" --pretty > "$WS_CAE_OUTPUT"
+        python -m json.tool "$WS_CAE_OUTPUT" >/dev/null

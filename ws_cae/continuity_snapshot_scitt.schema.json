@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Bdavis1390/Sara_pro/ws_cae/continuity_snapshot_scitt.schema.json",
+  "title": "WS-CAE SCITT Continuity Snapshot Statement",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec", "media_type", "issuer", "observed_at", "snapshot_id", "snapshot"],
+  "properties": {
+    "spec": {"const": "WS-CAE-SCITT-CONTINUITY-SNAPSHOT-1"},
+    "media_type": {"const": "application/vnd.ws-cae.continuity-snapshot+json"},
+    "issuer": {"type": "string", "minLength": 1},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "snapshot_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "snapshot": {"$ref": "continuity_snapshot.schema.json"}
+  }
+}

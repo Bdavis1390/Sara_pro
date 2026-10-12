@@ -1,0 +1,78 @@
+{
+  "schema": "WS-QCRYPTO-HIGH-VALUE-PILOT-v1",
+  "as_of": "2026-09-13",
+  "pilot_name": "Worldshepherd Quantum Continuity High-Value Pilot",
+  "current_execution_state": "DRY_RUN_AND_INTEGRATION_ONLY",
+  "live_value_authorized": false,
+  "design": {
+    "primary_authenticator": "ML-DSA-65",
+    "reserve_authenticator": "SLH-DSA-SHA2-128s",
+    "provider_strategy": "separate provider boundaries for operational and reserve authenticators where practical",
+    "authorization": "signature-agnostic quorum separated from member signature algorithm",
+    "authority_identity": "stable account or vault identifier with replaceable validator/authenticator",
+    "recovery": "precommitted independent recovery path plus controlled recovery drills",
+    "execution_ladder": [
+      "notional dry-run with zero live asset exposure",
+      "public or private testnet integration",
+      "independently reviewed bounded-value canary with explicit human authorization"
+    ]
+  },
+  "evidence": [
+    {
+      "name": "Google Cloud KMS quantum-safe digital signatures",
+      "source": "https://cloud.google.com/blog/products/identity-security/future-proofing-data-integrity-quantum-safe-digital-signatures-in-cloud-kms",
+      "class": "production_service_capability",
+      "statement": "Google Cloud announced general availability of ML-DSA and SLH-DSA signatures and ML-KEM in Cloud KMS in July 2026."
+    },
+    {
+      "name": "Entrust nShield as a Service",
+      "source": "https://www.entrust.com/products/hsm/nshield-as-a-service",
+      "class": "commercial_hsm_capability",
+      "statement": "Entrust documents FIPS 140-3 nShield service support for ML-DSA and SLH-DSA through standard cryptographic interfaces."
+    },
+    {
+      "name": "NIST post-quantum standards and crypto agility",
+      "source": "https://www.nist.gov/pqc",
+      "class": "standard",
+      "statement": "ML-DSA and SLH-DSA are standardized post-quantum signature families and NIST recommends migration now with crypto-agile architecture."
+    },
+    {
+      "name": "Signature-agnostic threshold authorization",
+      "source": "https://arxiv.org/abs/2607.08226",
+      "class": "research_architecture",
+      "statement": "A 2026 design separates member authentication from distributed threshold authorization so signature-family migration can be treated as key rotation rather than custody-protocol redesign."
+    },
+    {
+      "name": "Project Eleven quantum-vault account abstraction",
+      "source": "https://www.projecteleven.com/blog/quantum-vault---an-audited-reference-implementation-for-account-abstraction",
+      "class": "audited_reference_implementation",
+      "statement": "The audited ERC-4337 reference architecture keeps account identity stable while allowing the validator responsible for signature checking to be replaced; its released validator support is still classical."
+    },
+    {
+      "name": "Sui algorithm-diversity design",
+      "source": "https://www.sui.io/blog/making-sui-quantum-ready",
+      "class": "protocol_roadmap_and_implementation",
+      "statement": "Sui is implementing ML-DSA-65 for native accounts and SLH-DSA-SHA2-128s for high-value Move vaults, explicitly using separate mathematical families for resilience."
+    }
+  ],
+  "required_before_testnet_claim": [
+    "exercise both signing providers with reproducible vectors",
+    "validate chain adapter end-to-end on a non-production network",
+    "prove fail-closed behavior when a classical bypass is attempted",
+    "verify immutable evidence capture through the Worldshepherd audit path",
+    "precommit and test the recovery authority"
+  ],
+  "required_before_any_live_value_canary": [
+    "independent review of the complete integrated path",
+    "successful recovery and provider-failover drills",
+    "documented bounded-value policy",
+    "explicit human authorization and change-control record",
+    "no unresolved critical findings"
+  ],
+  "claims_boundary": [
+    "This pilot does not make an underlying blockchain quantum-safe.",
+    "Commercial availability of PQ signing does not prove Worldshepherd integration until exercised.",
+    "No live-value transaction is authorized by this evidence record.",
+    "Base-layer consensus, bridge authorities, stablecoin administration, and validator authentication remain separate migration domains."
+  ]
+}

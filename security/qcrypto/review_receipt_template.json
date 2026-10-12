@@ -1,0 +1,21 @@
+{
+  "schema": "WS-QCRYPTO-REVIEW-RECEIPT-v1",
+  "reviewer_identity": "",
+  "reviewer_organization": "",
+  "exact_commit": "",
+  "environment": "",
+  "review_date": "",
+  "question_results": {
+    "evidence_classes_separated": null,
+    "source_provenance_preserved": null,
+    "forward_looking_evidence_not_promoted": null,
+    "implementation_distinguished_from_certification": null,
+    "migration_treated_as_systems_problem": null,
+    "exact_commit_reproduced": null,
+    "limitations_clearly_stated": null
+  },
+  "discrepancies": [],
+  "supported_claims": [],
+  "excluded_claims": [],
+  "attributable_record": ""
+}

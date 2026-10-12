@@ -1,0 +1,30 @@
+{
+  "subject_id": "urn:ws-cae:chain:solana",
+  "consensus_family": "POS_BFT",
+  "mechanism_name": "Proof of Stake with Tower BFT and Proof of History clocking",
+  "resource_proof": "HYBRID",
+  "finality_model": "TOWER_BFT_VOTE_LOCKOUTS_WITH_POH_CLOCK",
+  "participant_auth_primitive": "CLASSICAL_VALIDATOR_SIGNATURES",
+  "participant_key_agility": "UNKNOWN",
+  "local_validation_mode": "FULL_NODE_RULE_VALIDATION",
+  "consensus_pq_state": "PQ_RESEARCH_OR_PARTIAL",
+  "resource_proof_agility": "STAKE_AND_HISTORY_CLOCK_SEPARATE_FROM_SIGNATURE_MIGRATION",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "Solana consensus overview",
+      "url": "https://solana.com/developers/migrate-to-solana/consensus",
+      "claim": "Solana documents proof of stake with Tower BFT, while Proof of History provides a global clock before consensus."
+    },
+    {
+      "label": "Solana Tower BFT",
+      "url": "https://solana.com/uk/news/tower-bft--solana-s-high-performance-implementation-of-pbft",
+      "claim": "Tower BFT is a PoH-optimized PBFT-derived consensus mechanism; Proof of History is a clock before consensus rather than a complete standalone consensus mechanism."
+    },
+    {
+      "label": "Solana quantum readiness",
+      "url": "https://solana.com/tr/news/quantum-readiness",
+      "claim": "Solana has published quantum-readiness migration work; this profile does not treat consensus PQ migration as deployed."
+    }
+  ]
+}

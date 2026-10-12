@@ -1,0 +1,30 @@
+name: WS-CAE QCRYPTO Legacy Conformance Self-Test
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/ws_cae_*.py'
+      - 'security/qcrypto/ws_cae_profile.schema.json'
+      - 'security/qcrypto/ws_cae_policy.schema.json'
+      - 'security/qcrypto/examples/**'
+      - '.github/actions/ws-cae-qcrypto-conformance/**'
+      - '.github/workflows/ws-cae-qcrypto-legacy-selftest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-reference-pair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Legacy reference conformance
+        uses: ./.github/actions/ws-cae-qcrypto-conformance
+        with:
+          profile: security/qcrypto/examples/ws_cae_reference_pair.json
+      - name: Legacy consumer policy gate
+        uses: ./.github/actions/ws-cae-qcrypto-conformance
+        with:
+          profile: security/qcrypto/examples/ws_cae_reference_pair.json
+          policy: security/qcrypto/examples/ws_cae_interop_minimum_policy.json

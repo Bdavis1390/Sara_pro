@@ -1,0 +1,30 @@
+{
+  "subject_id": "urn:ws-cae:chain:avalanche-primary-network",
+  "consensus_family": "POS",
+  "mechanism_name": "Snowman/Snowman++ with stake-weighted validator sampling",
+  "resource_proof": "STAKE",
+  "finality_model": "REPEATED_SUBSAMPLED_VOTING_WITH_CONFIDENCE_THRESHOLD",
+  "participant_auth_primitive": "BLS_VALIDATOR_KEY_AND_PROOF_OF_POSSESSION",
+  "participant_key_agility": "FIXED_CLASSICAL",
+  "local_validation_mode": "FULL_NODE_RULE_VALIDATION",
+  "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+  "resource_proof_agility": "STAKE_SELECTION_SEPARATE_FROM_BLS_VALIDATOR_IDENTITY",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "Avalanche consensus protocols",
+      "url": "https://docs.avax.network/docs/nodes/architecture/consensus",
+      "claim": "Avalanche Snowman uses repeated validator subsampling and confidence thresholds to finalize linear-chain decisions."
+    },
+    {
+      "label": "Avalanche validator staking",
+      "url": "https://docs.avax.network/docs/primary-network/validate/how-to-stake",
+      "claim": "Primary Network validators are stake weighted and register a node ID, BLS key, and BLS proof of possession."
+    },
+    {
+      "label": "Avalanche node architecture",
+      "url": "https://docs.avax.network/docs/nodes",
+      "claim": "Validators participate in Snowman/Snowman++ consensus while non-validating nodes can track chains without consensus participation."
+    }
+  ]
+}

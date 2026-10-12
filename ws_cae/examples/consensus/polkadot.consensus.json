@@ -1,0 +1,25 @@
+{
+  "subject_id": "urn:ws-cae:chain:polkadot",
+  "consensus_family": "NPOS",
+  "mechanism_name": "NPoS with BABE block production and GRANDPA finality",
+  "resource_proof": "STAKE",
+  "finality_model": "BABE_PRODUCTION_PLUS_GRANDPA_DETERMINISTIC_FINALITY",
+  "participant_auth_primitive": "CLASSICAL_SESSION_KEYS_FOR_BABE_AND_GRANDPA",
+  "participant_key_agility": "ROTATABLE_CLASSICAL",
+  "local_validation_mode": "FULL_NODE_RULE_VALIDATION",
+  "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+  "resource_proof_agility": "STAKE_SELECTION_SEPARATE_FROM_BABE_GRANDPA_KEY_MIGRATION",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "Polkadot proof of stake consensus",
+      "url": "https://docs.polkadot.com/reference/polkadot-hub/consensus-and-security/pos-consensus/",
+      "claim": "Polkadot uses Nominated Proof of Stake with BABE for block production and GRANDPA for deterministic finality."
+    },
+    {
+      "label": "Polkadot validator key management",
+      "url": "https://docs.polkadot.com/node-infrastructure/run-a-validator/onboarding-and-offboarding/key-management/",
+      "claim": "Validators use protocol session keys for consensus roles including BABE and GRANDPA."
+    }
+  ]
+}

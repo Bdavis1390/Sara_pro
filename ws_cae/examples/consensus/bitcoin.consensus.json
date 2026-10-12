@@ -1,0 +1,25 @@
+{
+  "subject_id": "urn:ws-cae:chain:bitcoin",
+  "consensus_family": "POW_NAKAMOTO",
+  "mechanism_name": "Nakamoto-style proof of work",
+  "resource_proof": "WORK",
+  "finality_model": "PROBABILISTIC_CUMULATIVE_WORK",
+  "participant_auth_primitive": "",
+  "participant_key_agility": "UNKNOWN",
+  "local_validation_mode": "FULL_NODE_RULE_VALIDATION",
+  "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+  "resource_proof_agility": "HASH_FUNCTION_DEPENDENT_NO_PQ_CONSENSUS_CLAIM",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "Bitcoin Developer Guide - Block Chain",
+      "url": "https://developer.bitcoin.org/devguide/block_chain.html",
+      "claim": "Bitcoin uses proof of work and cumulative chain work while full nodes validate blocks against consensus rules."
+    },
+    {
+      "label": "Bitcoin Developer Guide - Operating Modes",
+      "url": "https://developer.bitcoin.org/devguide/operating_modes.html",
+      "claim": "Full-validation nodes independently verify blocks and transactions rather than trusting another node's validity decision."
+    }
+  ]
+}

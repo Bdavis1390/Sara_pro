@@ -1,0 +1,48 @@
+{
+  "schema": "WS-QCRYPTO-INSTITUTIONAL-CUSTODY-v1",
+  "as_of": "2026-09-13",
+  "claims_boundary": "Custody-side post-quantum readiness is tracked separately from blockchain consensus and transaction-authorization readiness. Production transport security, key wrapping, exposure scoring, or simulated PQ signing do not imply that supported blockchains accept post-quantum transaction signatures.",
+  "entities": [
+    {
+      "name": "BitGo Bank & Trust, National Association",
+      "regulatory_state": "OCC national trust bank conversion consummated/effective 2025-12-12",
+      "sources": [
+        "https://apps.occ.gov/CAS/home/details?FilingID=342474&FilingSubtypeID=1117&FilingTypeID=23",
+        "https://investors.bitgo.com/news/news-details/2026/BitGo-Announces-New-Quantum-Risk-Management-Capabilities-for-Bitcoin-Wallets/default.aspx",
+        "https://investors.bitgo.com/news/news-details/2026/BitGo-and-Silence-Laboratories-Complete-First-Post-Quantum-MPC-Transaction-Simulation-by-a-Regulated-Custodian/default.aspx"
+      ],
+      "deployed_exposure_controls": true,
+      "quantum_risk_scoring": true,
+      "exposed_address_remediation": true,
+      "pq_mpc_transaction_simulation": true,
+      "live_chain_pq_custody_signing": false,
+      "assessment": "REGULATED_CUSTODY_MIGRATION_OPERATIONALIZED",
+      "note": "BitGo has deployed Bitcoin quantum-risk scoring/remediation and separately demonstrated ML-DSA-based PQ-MPC signing in a regulated-custody simulation. The public evidence does not establish production live-chain PQ transaction signing across supported blockchains."
+    },
+    {
+      "name": "Taurus",
+      "regulatory_state": "regulated Swiss/European institutional custody provider",
+      "source": "https://www.taurushq.com/security/post-quantum-ready/",
+      "hybrid_key_exchange_in_production": true,
+      "production_hybrid_scheme": "X25519 + ML-KEM",
+      "crypto_agile_custody": true,
+      "live_chain_pq_custody_signing": false,
+      "assessment": "PRODUCTION_MIGRATION_CONTROLS_PRESENT",
+      "note": "Production hybrid transport/key-establishment readiness reduces infrastructure migration risk but does not substitute for chain-native PQ transaction authorization."
+    },
+    {
+      "name": "Thales Luna 8 HSM",
+      "source": "https://cpl.thalesgroup.com/about-us/newsroom/luna-8-thales-builds-cryptographic-security-ai-pqc-age",
+      "product_launch_date": "2026-08-04",
+      "pq_hsm_support": true,
+      "assessment": "PQ_SIGNER_INFRASTRUCTURE_AVAILABLE",
+      "note": "HSM-layer PQ capability reduces a hardware custody bottleneck but does not establish blockchain-level PQ authorization."
+    }
+  ],
+  "portfolio_assessment": {
+    "state": "INSTITUTIONAL_CUSTODY_TRANSITION_UNDERWAY",
+    "most_important_change": "A previously theoretical migration bottleneck now has deployed exposure controls, regulated PQ signing pilots, production hybrid cryptographic infrastructure, and PQ-capable HSM products.",
+    "remaining_primary_bottleneck": "CHAIN_NATIVE_PQ_AUTHORIZATION_AND_END_TO_END_INDEPENDENT_VALIDATION",
+    "urgency": "ACCELERATE_CHAIN_INTEGRATION_AND_INDEPENDENT_VALIDATION"
+  }
+}

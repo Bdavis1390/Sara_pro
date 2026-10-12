@@ -1,0 +1,47 @@
+name: QCRYPTO Risk Gate
+
+on:
+  pull_request:
+    paths:
+      - 'security/qcrypto/**'
+      - '.github/workflows/qcrypto-risk-gate.yml'
+  push:
+    branches:
+      - main
+      - 'worldshepherd-qcrypto-*'
+    paths:
+      - 'security/qcrypto/**'
+      - '.github/workflows/qcrypto-risk-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qcrypto-risk-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile claims-control modules
+        run: |
+          python -m py_compile security/qcrypto/qcrypto_guard.py
+          python -m py_compile security/qcrypto/credibility_guard.py
+          python -m py_compile security/qcrypto/bitcoin_mitigation_readiness.py
+          python -m py_compile security/qcrypto/bitcoin_qsb_mainnet_readiness.py
+          python -m py_compile security/qcrypto/migration_timeline_collision.py
+          python -m py_compile security/qcrypto/ecosystem_migration_horizon.py
+          python -m py_compile security/qcrypto/institutional_custody_readiness.py
+          python -m py_compile security/qcrypto/financial_sector_coordination.py
+      - name: Run QCRYPTO regression tests
+        run: python -m unittest discover -s security/qcrypto -p 'test_*.py' -v
+      - name: Validate structured evidence
+        run: |
+          python -m json.tool security/qcrypto/baseline_2026-09-12.json >/dev/null
+          python -m json.tool security/qcrypto/evidence_register_2026-09-12.json >/dev/null
+          python -m json.tool security/qcrypto/review_manifest_2026-09-12.json >/dev/null
+          python -m json.tool security/qcrypto/bitcoin_mitigation_stack_2026-09-12.json >/dev/null
+          python -m json.tool security/qcrypto/ecosystem_migration_horizon_2026-09-13.json >/dev/null
+          python -m json.tool security/qcrypto/institutional_custody_readiness_2026-09-13.json >/dev/null
+          python -m json.tool security/qcrypto/financial_sector_coordination_2026-09-13.json >/dev/null

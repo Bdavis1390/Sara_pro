@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rfc xmlns:xi="http://www.w3.org/2001/XInclude"
+     category="info"
+     consensus="false"
+     docName="draft-davis-scitt-digital-asset-continuity-00"
+     ipr="trust200902"
+     submissionType="IETF">
+  <front>
+    <title abbrev="SCITT Digital-Asset Continuity">A SCITT Profile for Digital-Asset Cryptographic Continuity</title>
+    <seriesInfo name="Internet-Draft" value="draft-davis-scitt-digital-asset-continuity-00"/>
+    <author fullname="Brandon R. Davis" initials="B. R." surname="Davis">
+      <organization>Worldshepherd</organization>
+      <address>
+        <email>brandonraydavis953242@gmail.com</email>
+      </address>
+    </author>
+    <date year="2026" month="September" day="13"/>
+    <area>Security</area>
+    <workgroup>Supply Chain Integrity, Transparency, and Trust</workgroup>
+    <keyword>SCITT</keyword>
+    <keyword>digital assets</keyword>
+    <keyword>cryptographic agility</keyword>
+    <keyword>post-quantum migration</keyword>
+    <abstract>
+      <t>This document defines an application profile of the Supply Chain Integrity, Transparency, and Trust (SCITT) architecture for statements about cryptographic continuity in digital-asset systems. The profile represents authority models, implementation and governance maturity, post-quantum authorization state, consensus state, recovery posture, critical dependencies, and source evidence in a content-addressed statement. It is intended to make heterogeneous blockchain and digital-asset migration states machine-comparable without defining a new cryptocurrency, consensus protocol, signature algorithm, or transparency service.</t>
+    </abstract>
+  </front>
+
+  <middle>
+    <section anchor="introduction">
+      <name>Introduction</name>
+      <t>Digital-asset systems increasingly need to change cryptographic mechanisms without losing continuity of authority, recovery, auditability, or dependent-system safety. A single label such as "post-quantum ready" is insufficient when account authorization, consensus, bridges, custodians, issuers, wallets, recovery mechanisms, and governance processes can migrate independently.</t>
+      <t>SCITT <xref target="RFC9943"/> provides a general architecture for making signed statements transparent while allowing application domains to define their own statement semantics. This document proposes such semantics for digital-asset cryptographic continuity.</t>
+      <t>The profile is deliberately read-only. It does not define transaction creation, transaction signing, key generation, asset movement, consensus participation, custody operations, exchange operations, or bridge operations.</t>
+    </section>
+
+    <section anchor="scope">
+      <name>Scope and Design Goals</name>
+      <t>The profile is intended for public or otherwise shareable assertions about the cryptographic-control state of a digital-asset subject. A subject can be a blockchain, asset, wallet, custodian, exchange, bridge, rollup, issuer, protocol, or another explicitly identified digital-asset component.</t>
+      <t>The design goals are:</t>
+      <ul spacing="normal">
+        <li>separate stable subject identity from replaceable authenticators;</li>
+        <li>separate implementation maturity from governance or protocol commitment;</li>
+        <li>separate asset/account authorization state from consensus cryptography;</li>
+        <li>represent critical dependencies instead of treating chain state as whole-system state;</li>
+        <li>bind assertions to evidence and an observation date;</li>
+        <li>provide deterministic content addressing so independent implementations can identify the same manifest bytes;</li>
+        <li>compose with SCITT transparency services without prescribing a particular service implementation.</li>
+      </ul>
+    </section>
+
+    <section anchor="terminology">
+      <name>Terminology</name>
+      <dl newline="true" spacing="normal">
+        <dt>Continuity Manifest</dt>
+        <dd>A canonical, content-addressed statement describing the observed cryptographic-control state of one digital-asset subject.</dd>
+        <dt>Critical Dependency</dt>
+        <dd>A dependency whose cryptographic or authority state can constrain the effective migration state of the subject.</dd>
+        <dt>Implementation Maturity</dt>
+        <dd>The observed deployment state of a mechanism, distinct from a roadmap or governance decision.</dd>
+        <dt>Protocol Commitment</dt>
+        <dd>The documented governance or protocol-selection state associated with a future or deployed capability.</dd>
+        <dt>Continuity Checkpoint</dt>
+        <dd>A digest over a set or append-only sequence of continuity manifest identifiers that permits a relying party to refer to an exact evaluated state.</dd>
+      </dl>
+    </section>
+
+    <section anchor="statement-profile">
+      <name>Continuity Statement Profile</name>
+      <t>A continuity statement payload consists of a profile identifier, a content identifier, and a manifest. The content identifier is computed over the canonical manifest only; it is not a claim that the manifest is truthful. Truthfulness and acceptance remain matters for issuers, transparency-service registration policy, witnesses, auditors, and relying parties.</t>
+
+      <section anchor="manifest-fields">
+        <name>Manifest Fields</name>
+        <t>The base manifest contains the following fields:</t>
+        <dl newline="true" spacing="normal">
+          <dt>subject_id</dt>
+          <dd>A stable string identifying the subject within the application domain.</dd>
+          <dt>subject_type</dt>
+          <dd>One of CHAIN, ASSET, WALLET, CUSTODIAN, EXCHANGE, BRIDGE, ROLLUP, ISSUER, PROTOCOL, or OTHER.</dd>
+          <dt>version</dt>
+          <dd>The version of the subject's manifest state.</dd>
+          <dt>as_of</dt>
+          <dd>An ISO 8601 calendar date describing when the stated observations apply.</dd>
+          <dt>authority_model</dt>
+          <dd>A machine-readable label for the subject's authority model.</dd>
+          <dt>implementation_maturity</dt>
+          <dd>A deployment-maturity label. Profiles using the reference vocabulary use ROADMAP, DRAFT, DEVNET, TESTNET, or MAINNET.</dd>
+          <dt>protocol_commitment_state</dt>
+          <dd>A governance or protocol-commitment label. The reference vocabulary uses UNSPECIFIED, RESEARCH, GOVERNANCE_SELECTED, FORK_SCHEDULED, or MAINNET.</dd>
+          <dt>pq_authorization_state</dt>
+          <dd>A label describing post-quantum authorization state. The reference vocabulary distinguishes NONE, PLUGGABLE_AUTH_ONLY, PQ_NON_MAINNET, PQ_MAINNET_LIMITED, and PQ_MAINNET.</dd>
+          <dt>consensus_pq_state</dt>
+          <dd>A separate statement about consensus-layer post-quantum state. The reference vocabulary uses CLASSICAL_OR_UNPROVEN, PQ_RESEARCH_OR_PARTIAL, or PQ_DEPLOYED.</dd>
+          <dt>crypto_agility_state</dt>
+          <dd>A label describing whether authenticators or cryptographic mechanisms are replaceable without redefining the subject identity.</dd>
+          <dt>recovery_state</dt>
+          <dd>A label describing the documented recovery posture relevant to cryptographic transition.</dd>
+          <dt>dependencies</dt>
+          <dd>An array of dependency objects containing role, subject, criticality, and readiness state.</dd>
+          <dt>evidence</dt>
+          <dd>A non-empty array of evidence references containing a label, an HTTPS URL, and a bounded claim supported by that source.</dd>
+        </dl>
+      </section>
+
+      <section anchor="content-addressing">
+        <name>Content Addressing</name>
+        <t>The reference profile serializes the manifest as UTF-8 JSON with object keys sorted lexicographically, no insignificant whitespace, and non-ASCII characters preserved. The content identifier is the lowercase hexadecimal SHA-256 digest of those bytes prefixed with "sha256:".</t>
+        <t>Implementations using another canonicalization or digest suite need a distinct profile version or explicit algorithm identifier so that two conforming implementations cannot silently derive different identifiers for the same input.</t>
+      </section>
+
+      <section anchor="example">
+        <name>Example Payload</name>
+        <figure>
+          <name>Synthetic continuity manifest envelope</name>
+          <sourcecode type="json"><![CDATA[
+{
+  "spec": "WS-CAE-CONTINUITY-MANIFEST-1",
+  "content_id": "sha256:<64-lowercase-hex-digits>",
+  "valid": true,
+  "issues": [],
+  "manifest": {
+    "subject_id": "example-chain",
+    "subject_type": "CHAIN",
+    "version": "1",
+    "as_of": "2026-09-13",
+    "authority_model": "REPLACEABLE_AUTHENTICATOR",
+    "implementation_maturity": "TESTNET",
+    "protocol_commitment_state": "GOVERNANCE_SELECTED",
+    "pq_authorization_state": "PQ_NON_MAINNET",
+    "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+    "crypto_agility_state": "AUTHENTICATOR_REPLACEABLE",
+    "recovery_state": "DOCUMENTED",
+    "dependencies": [],
+    "evidence": [
+      {
+        "label": "Example primary source",
+        "url": "https://example.invalid/evidence",
+        "claim": "Example bounded claim"
+      }
+    ]
+  }
+}
+          ]]></sourcecode>
+        </figure>
+      </section>
+    </section>
+
+    <section anchor="checkpoints">
+      <name>Checkpoints, Transparency, and Witnesses</name>
+      <t>A relying party can evaluate one manifest directly or can evaluate a checkpoint over multiple manifest identifiers. Checkpoints can be linked so that a later state explicitly commits to a predecessor state. Merkle inclusion proofs or another verifiable-data-structure mechanism can be used to prove that a particular continuity manifest is included in a checkpoint.</t>
+      <t>A checkpoint can itself be represented in a SCITT Signed Statement and registered with one or more Transparency Services. RFC 9943 permits a Signed Statement to be registered in more than one Transparency Service; this property is useful when independent transparency domains are desired.</t>
+      <t>Witness metadata can report which independent services or auditors observed an expected checkpoint. A profile must distinguish metadata assessment from cryptographic verification of receipts. Merely naming multiple witnesses does not establish independent verification.</t>
+    </section>
+
+    <section anchor="registration">
+      <name>SCITT Registration and Verification</name>
+      <t>An issuer creates a continuity payload, signs it as a SCITT Signed Statement, and submits the statement to a conforming Transparency Service according to that service's Registration Policy. The Transparency Service decides whether the statement is acceptable for registration and issues a Receipt according to SCITT.</t>
+      <t>A relying party evaluating a transparent continuity statement should:</t>
+      <ol spacing="normal">
+        <li>validate the SCITT Signed Statement and applicable Receipt;</li>
+        <li>recompute the manifest content identifier from the canonical manifest bytes;</li>
+        <li>confirm that the recomputed identifier equals the identifier carried in the statement;</li>
+        <li>evaluate evidence references under the relying party's own evidence policy;</li>
+        <li>evaluate critical dependencies independently of the subject's headline deployment state;</li>
+        <li>if a checkpoint or witness assertion is used, verify the corresponding inclusion, consistency, and receipt evidence rather than trusting witness labels alone.</li>
+      </ol>
+    </section>
+
+    <section anchor="interoperability">
+      <name>Interoperability Considerations</name>
+      <t>This profile does not require a blockchain to change consensus or transaction formats. It is intended to carry observations about heterogeneous systems through SCITT-compatible transparency infrastructure.</t>
+      <t>The continuity manifest can also be mapped into other inventory and security-event formats. Such mappings do not change the SCITT statement semantics and should preserve the content identifier so that a relying party can correlate representations of the same observed state.</t>
+    </section>
+
+    <section anchor="security">
+      <name>Security Considerations</name>
+      <t>Transparency does not make a false statement true. An issuer can make incorrect or misleading assertions, an evidence source can be wrong or later become stale, and a dependency omitted from a manifest can cause a relying party to overestimate readiness. Registration policies, independent evidence review, multiple issuers, witnesses, and audit are therefore important.</t>
+      <t>Implementations must fail closed when content identifiers are malformed, canonicalization does not reproduce the claimed digest, timestamps are invalid or lack required timezone context, checkpoint links are inconsistent, or cryptographic receipts do not verify.</t>
+      <t>A post-quantum authorization mechanism at an account or asset layer does not by itself establish post-quantum consensus, bridge, custody, recovery, issuer, or wallet security.</t>
+    </section>
+
+    <section anchor="privacy">
+      <name>Privacy Considerations</name>
+      <t>Continuity statements are intended to contain public or otherwise shareable system metadata and evidence references, not secrets, private keys, seed phrases, credentials, personal wallet balances, or protected identity data. Deployments should avoid placing personal data into append-only transparency systems unless the applicable privacy and retention implications have been addressed.</t>
+    </section>
+
+    <section anchor="iana">
+      <name>IANA Considerations</name>
+      <t>This document requests no IANA actions.</t>
+    </section>
+
+    <section anchor="implementation">
+      <name>Implementation Status</name>
+      <t>An open research reference implementation exists in the Sara_pro repository under the ws_cae package. It includes deterministic continuity manifests, transitions, lineage resolution, Merkle inclusion proofs, linked checkpoints, witness metadata, SCITT-oriented statements, and cross-language reproduction vectors. This implementation status is informative and does not imply IETF, SCITT Working Group, blockchain, regulator, or standards-body endorsement.</t>
+    </section>
+  </middle>
+
+  <back>
+    <references>
+      <name>Normative References</name>
+      <reference anchor="RFC9943" target="https://www.rfc-editor.org/info/rfc9943">
+        <front>
+          <title>An Architecture for Trustworthy and Transparent Digital Supply Chains</title>
+          <author fullname="Henk Birkholz" initials="H." surname="Birkholz"/>
+          <author fullname="Antoine Delignat-Lavaud" initials="A." surname="Delignat-Lavaud"/>
+          <author fullname="Cédric Fournet" initials="C." surname="Fournet"/>
+          <author fullname="Yogesh Deshpande" initials="Y." surname="Deshpande"/>
+          <author fullname="Steve Lasker" initials="S." surname="Lasker"/>
+          <date month="June" year="2026"/>
+        </front>
+        <seriesInfo name="RFC" value="9943"/>
+        <seriesInfo name="DOI" value="10.17487/RFC9943"/>
+      </reference>
+    </references>
+  </back>
+</rfc>

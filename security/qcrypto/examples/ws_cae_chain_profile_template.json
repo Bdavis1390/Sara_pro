@@ -1,0 +1,13 @@
+{
+  "ecosystem": "REPLACE_WITH_CHAIN_NAME",
+  "adapter_class": "REPLACE_WITH_AUTHORITY_MECHANISM",
+  "implementation_maturity": "ROADMAP",
+  "stable_authority_id": false,
+  "authenticator_replaceable": false,
+  "pq_authorization_state": "NONE",
+  "policy_state_documented": false,
+  "recovery_state_documented": false,
+  "domain_binding_documented": false,
+  "evidence_state_documented": false,
+  "consensus_pq_state": "CLASSICAL_OR_UNPROVEN"
+}

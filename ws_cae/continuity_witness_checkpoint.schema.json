@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Bdavis1390/Sara_pro/ws_cae/continuity_witness_checkpoint.schema.json",
+  "title": "WS-CAE Witnessed Continuity Checkpoint",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "content_id",
+    "spec",
+    "checkpoint",
+    "threshold",
+    "receipt_count",
+    "distinct_agreeing_witness_count",
+    "assessment_state",
+    "agreeing_issuers",
+    "rejected_receipts",
+    "equivocation_issuers",
+    "receipt_verification_boundary",
+    "receipts"
+  ],
+  "properties": {
+    "content_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "spec": {"const": "WS-CAE-WITNESSED-CHECKPOINT-1"},
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tree_size", "root_hash", "previous_tree_size", "previous_root_hash"],
+      "properties": {
+        "tree_size": {"type": "integer", "minimum": 0},
+        "root_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "previous_tree_size": {"type": ["integer", "null"], "minimum": 0},
+        "previous_root_hash": {
+          "anyOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+          ]
+        }
+      }
+    },
+    "threshold": {"type": "integer", "minimum": 1},
+    "receipt_count": {"type": "integer", "minimum": 0},
+    "distinct_agreeing_witness_count": {"type": "integer", "minimum": 0},
+    "assessment_state": {
+      "enum": [
+        "WITNESS_METADATA_THRESHOLD_SATISFIED",
+        "WITNESS_METADATA_THRESHOLD_NOT_SATISFIED"
+      ]
+    },
+    "agreeing_issuers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "rejected_receipts": {"type": "array", "items": {"type": "string"}},
+    "equivocation_issuers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "receipt_verification_boundary": {
+      "const": "EXTERNAL_RECEIPT_CRYPTOGRAPHIC_VERIFICATION_REQUIRED"
+    },
+    "receipts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "issuer",
+          "tree_size",
+          "root_hash",
+          "observed_at",
+          "verification_method",
+          "receipt_ref"
+        ],
+        "properties": {
+          "issuer": {"type": "string", "minLength": 1},
+          "tree_size": {"type": "integer", "minimum": 0},
+          "root_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "observed_at": {"type": "string", "format": "date-time"},
+          "verification_method": {"type": "string", "minLength": 1},
+          "receipt_ref": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

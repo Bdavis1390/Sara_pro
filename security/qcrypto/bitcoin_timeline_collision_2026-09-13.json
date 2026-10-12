@@ -1,0 +1,34 @@
+{
+  "schema": "WS-QCRYPTO-BITCOIN-TIMELINE-COLLISION-v1",
+  "as_of": "2026-09-13",
+  "claims_boundary": "This is a planning comparison between a draft Bitcoin transition schedule and a forward vendor hardware roadmap. It is not a Q-day prediction, proof of a CRQC, or proof that the vendor target will be achieved.",
+  "bitcoin_schedule": {
+    "name": "BIP-361 Post Quantum Migration and Legacy Signature Sunset",
+    "source": "https://github.com/bitcoin/bips/blob/master/bip-0361.mediawiki",
+    "status": "Draft",
+    "phase_a_years_after_activation": 3.0,
+    "phase_b_additional_years": 2.0,
+    "nominal_full_sunset_years_after_activation": 5.0,
+    "consensus_activated": false
+  },
+  "planning_horizon": {
+    "name": "IonQ 2028 roadmap target",
+    "source": "https://www.ionq.com/roadmap",
+    "target_year": 2028,
+    "demonstrated": false,
+    "evidence_class": "vendor_roadmap"
+  },
+  "assessment": {
+    "current_year": 2026,
+    "years_to_planning_horizon": 2.0,
+    "best_case_margin_years": -3.0,
+    "collision_state": "BEST_CASE_TRANSITION_EXCEEDS_RISK_HORIZON",
+    "urgency": "ACCELERATE_PARALLEL_MIGRATION_AND_ACTIVATION_PLANNING"
+  },
+  "interpretation": [
+    "The five-year BIP-361 schedule is measured from activation, not from proposal publication.",
+    "Because BIP-361 is not consensus-active, immediate-start modeling is optimistic; any activation delay makes the margin smaller.",
+    "The 2028 hardware roadmap is forward-looking and must never be represented as demonstrated attack capability or Q-day.",
+    "The collision is therefore a migration-schedule risk signal: protocol, wallet, custody, relay, rescue, and user migration work should proceed in parallel rather than serially."
+  ]
+}
