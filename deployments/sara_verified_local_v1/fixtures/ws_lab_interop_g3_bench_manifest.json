@@ -1,0 +1,34 @@
+{
+  "qualification_id": "WS-LAB-INTEROP-01",
+  "qualification_version": "G3-R0",
+  "capability_status": "PRE_PHYSICAL_HIL_READINESS",
+  "physical_run_executed": false,
+  "bench": {
+    "device_count_minimum": 2,
+    "requires_distinct_device_ids": true,
+    "requires_distinct_channel_ids": true,
+    "requires_calibration_ids": true,
+    "requires_clock_source": true,
+    "requires_human_estop": true,
+    "requires_safe_default": true,
+    "requires_raw_and_normalized_measurements": true,
+    "requires_uncertainty_budget": true,
+    "requires_configuration_digest": true,
+    "requires_evidence_digest": true
+  },
+  "required_uncertainty_terms": [
+    "instrument_accuracy",
+    "repeatability",
+    "quantization",
+    "timing_equivalent"
+  ],
+  "prohibited_claims": [
+    "physical validation complete",
+    "OPC UA LADS conformant",
+    "SiLA 2 conformant",
+    "production secure",
+    "certified",
+    "device-agnostic interoperability",
+    "external replication"
+  ]
+}
