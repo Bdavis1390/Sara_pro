@@ -1,0 +1,269 @@
+record_id: "WS-GLYPH-MODERN-0001"
+record_version: "0.1.0"
+
+artifact:
+  source_repository: "Worldshepherd conversation evidence"
+  source_url: null
+  accession_or_catalog_id: null
+  culture_or_tradition: "modern symbolic diagram; older motifs under investigation"
+  place: null
+  date_range: "modern; claimed historical backstory requires independent provenance"
+  material_medium: "hand-drawn diagram reproduced in screenshot"
+  object_type: "symbolic diagram"
+  rights_license: null
+  image_or_model_refs: []
+  scholarly_transcription: null
+  scholarly_translation: null
+  decipherment_status: "not_applicable"
+  provenance_status: "incomplete"
+  source_notes:
+    - "Do not treat claimed Masonic, Illuminati, intelligence-community or ancient provenance as established until independently sourced."
+    - "Image quality makes some upper marks and handwriting uncertain."
+
+motifs:
+  - motif_id: "M01_square"
+    local_sign_id: null
+    literal_geometry: ["square/rectangular enclosure"]
+    orientation: "upright"
+    handedness: null
+    topology: ["closed four-sided shape", "lowest major geometric station"]
+    repeated_elements: []
+    relative_position: ["below crescent", "on main vertical progression"]
+    counts: {sides: 4}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty: []
+
+  - motif_id: "M02_crescent"
+    local_sign_id: null
+    literal_geometry: ["crescent/arc pair"]
+    orientation: "open side uncertain"
+    handedness: null
+    topology: ["curved bounded form", "second major station"]
+    repeated_elements: []
+    relative_position: ["above square", "below triangle"]
+    counts: {}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty: ["exact orientation should be measured from source image"]
+
+  - motif_id: "M03_down_triangle"
+    local_sign_id: null
+    literal_geometry: ["triangle"]
+    orientation: "downward-pointing"
+    handedness: null
+    topology: ["closed three-sided shape"]
+    repeated_elements: []
+    relative_position: ["above crescent", "below interlocking triangles"]
+    counts: {sides: 3}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty: []
+
+  - motif_id: "M04_interlocking_triangles"
+    local_sign_id: null
+    literal_geometry: ["two overlapping/interlocking triangles", "six-point geometry"]
+    orientation: "one up / one down"
+    handedness: null
+    topology: ["intersection", "containment", "central overlap"]
+    repeated_elements: ["triangle x2"]
+    relative_position: ["above single triangle", "below circular station"]
+    counts: {triangles: 2, outer_points: 6}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty: []
+
+  - motif_id: "M05_circle"
+    local_sign_id: null
+    literal_geometry: ["circle/oval"]
+    orientation: null
+    handedness: null
+    topology: ["closed curved boundary"]
+    repeated_elements: []
+    relative_position: ["above interlocking triangles", "below upper radiating region"]
+    counts: {}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty: ["circle vs oval should be measured"]
+
+  - motif_id: "M06_paired_weave"
+    local_sign_id: null
+    literal_geometry: ["two curving lines", "central vertical axis/path"]
+    orientation: "vertical"
+    handedness: "alternating weave"
+    topology: ["paired winding", "repeated crossings", "axial organization", "connects multiple stations"]
+    repeated_elements: ["alternating left-right arcs", "crossings"]
+    relative_position: ["runs through or alongside several major geometric stations"]
+    counts: {}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty:
+      - "crossing count and phase relationship must be measured from a clean source image"
+      - "visual DNA analogy does not establish biological intent"
+
+  - motif_id: "M07_radiating_upper_oval"
+    local_sign_id: null
+    literal_geometry: ["oval/eye-like or solar form", "radiating short strokes"]
+    orientation: "horizontal-to-oblique; verify"
+    handedness: null
+    topology: ["central enclosed form", "radial exterior marks"]
+    repeated_elements: ["radial strokes"]
+    relative_position: ["upper portion of vertical progression"]
+    counts: {}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty:
+      - "may visually evoke eye, sun, halo or radiating center; no intent assigned"
+
+  - motif_id: "M08_upper_handwriting"
+    local_sign_id: null
+    literal_geometry: ["handwritten annotation resembling ajna/anja"]
+    orientation: "text-like"
+    handedness: null
+    topology: []
+    repeated_elements: []
+    relative_position: ["adjacent to upper symbolic region"]
+    counts: {}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty:
+      - "reading as Ajna is tentative until higher-resolution source or handwriting comparison is available"
+
+  - motif_id: "M09_top_mark"
+    local_sign_id: null
+    literal_geometry: ["upper glyph resembling an Om-like or calligraphic mark"]
+    orientation: "upright; verify"
+    handedness: null
+    topology: ["terminal/top station"]
+    repeated_elements: []
+    relative_position: ["above radiating/eye-like region"]
+    counts: {}
+    known_readings: []
+    documented_symbolic_meanings: []
+    observational_uncertainty:
+      - "Om identification remains a visual hypothesis, not a transcription"
+
+measurements: []
+
+layered_reasoning:
+  literal_observations:
+    - "Major shapes are arranged as a vertical sequence rather than an unordered symbol set."
+    - "Paired curving lines create repeated axial crossings through/around the sequence."
+    - "The upper region becomes more radiating/ocular/calligraphic than the lower geometric stations."
+  relational_structure:
+    - "lower closed geometry -> intermediate crossing/weave -> upper radiating/perceptual-looking forms"
+    - "paired curves imply continuity and repeated interaction between levels"
+    - "up/down triangle opposition is followed by an interlocking two-triangle form"
+  cross_domain_correspondences:
+    - target: "Shat-cakra-nirupana / later chakra-tattva diagram tradition"
+      basis:
+        - "documented square/earth correspondence in verse 5 tradition"
+        - "paired left/right channels with central sushumna are documented in verse 1 tradition"
+        - "the familiar square -> crescent -> triangle -> hexagram -> circle sequence warrants source-by-source verification"
+      strength: 0.85
+      status: "documented_parallel"
+      source_refs:
+        - "https://www.wisdomlib.org/hinduism/book/shat-cakra-nirupana-english/d/doc1144818.html"
+        - "https://www.wisdomlib.org/hinduism/book/shat-cakra-nirupana-english/d/doc1144814.html"
+    - target: "DNA double helix"
+      basis:
+        - "two lines wind around a shared axis with repeated crossings"
+      strength: 0.45
+      status: "observed_similarity"
+      source_refs: []
+    - target: "documented Masonic symbolic cluster"
+      basis:
+        - "Smithsonian Master Mason certificate documents Eye of Providence, Sun, Moon, five senses, and Geometry/Music/Astronomy in one Masonic composition"
+        - "current diagram independently contains candidate eye/sun/moon/geometry/perception/frequency themes"
+      strength: 0.55
+      status: "documented_parallel"
+      source_refs:
+        - "https://www.si.edu/object/master-mason-certificate-leroy-gilliard%3Anmaahc_2021.24.3"
+    - target: "historical Bavarian Illuminati"
+      basis:
+        - "1787 source collections document Illuminati and Freemasonry-related terms/context"
+        - "no symbol-specific match established for this diagram"
+      strength: 0.2
+      status: "possible_transmission"
+      source_refs:
+        - "https://books.google.com/books?id=tC-XYtmLqBUC"
+  process_hypotheses:
+    - id: "H01_vertical_process"
+      statement: "The sequence intentionally represents a staged ascent/transformation rather than a mere inventory of shapes."
+      prediction: "Comparable source diagrams should preserve order and connecting pathways, not only individual motifs."
+      falsifier: "Earlier/source versions show arbitrary rearrangement or purely decorative placement without process semantics."
+      status: "untested"
+    - id: "H02_weave_information_channel"
+      statement: "The paired weave encodes coupled channels or alternating flows across stations."
+      prediction: "Crossing positions or left/right alternation should correlate with named channels, phases, levels or repeated semantics in source material."
+      falsifier: "High-resolution/source versions show the lines are decorative, incidental or do not maintain consistent paired topology."
+      status: "untested"
+  scale_mapping:
+    - "symbolic/ritual scale: elemental or psycho-spiritual progression"
+    - "biological analogy scale: paired helical or bilateral pathways"
+    - "human-systems scale: sensory input -> integration -> conscious representation"
+    - "astronomical analogy scale: Earth/Moon/Sun cycles only where independently evidenced"
+  measurable_counterparts:
+    - "crossing count, spacing, node order and symmetry"
+    - "angles, aspect ratios and relative station spacing"
+    - "phase relationship of paired curves"
+    - "if an astronomical or frequency encoding is claimed: explicit numerical ratios must be recovered and tested against chance"
+  systems_dependencies:
+    - "historical provenance"
+    - "source-image quality"
+    - "chronology of each candidate comparator"
+    - "rights and collection metadata"
+    - "specialist translations for non-modern source texts"
+  testable_hypotheses:
+    - id: "T01_order_specificity"
+      statement: "The lower-to-upper shape order matches a documented historical chakra/tattva sequence more strongly than randomized shape orders."
+      prediction: "Order-aware similarity should materially exceed shuffled baselines."
+      falsifier: "Randomized orders perform equivalently or historical sources do not preserve this order."
+      status: "untested"
+    - id: "T02_masonic_cluster"
+      statement: "The diagram shares a multi-symbol conceptual cluster with documented Masonic compositions beyond generic geometric primitives."
+      prediction: "Curated Masonic objects will show statistically enriched co-occurrence of eye/sun/moon/senses/geometry/music/astronomy compared with matched non-Masonic printed material."
+      falsifier: "The same cluster is equally common in matched period controls or lacks a stable Masonic context."
+      status: "untested"
+    - id: "T03_quantitative_encoding"
+      statement: "Spacing, counts or geometry encode a recoverable quantitative relation rather than purely symbolic order."
+      prediction: "Independent measurements recover the same non-trivial ratios from multiple source copies and those ratios map to a pre-specified physical/astronomical model."
+      falsifier: "Ratios are unstable across copies, require post-hoc fitting, or are no better than random geometric coincidences."
+      status: "untested"
+  alternative_explanations:
+    - "modern syncretic diagram assembled from known chakra/tattva imagery"
+    - "Masonic-looking elements are generic Western esoteric motifs rather than organizational markers"
+    - "DNA resemblance is retrospective because many paired winding motifs resemble helices"
+    - "astronomical interpretation reflects generic sun/moon symbolism rather than encoded orbital frequencies"
+  disconfirming_evidence:
+    - "no numerical units, scale or explicit physical constants are presently visible"
+    - "no independent source currently establishes a direct Bavarian Illuminati provenance for this specific diagram"
+    - "visual similarity alone cannot establish DNA, Masonic or intelligence-community intent"
+  uncertainty:
+    - "upper handwriting and top glyph need higher-resolution verification"
+    - "original drawing date, chain of custody and artist identity are not yet independently secured"
+    - "precise curve crossings and shape ratios have not yet been measured"
+  next_validation_gate: "Obtain highest-resolution original/provenance; segment each motif; measure topology/geometry; compare order-aware against dated primary/curatorial corpora; run independent-invention controls."
+
+cross_links:
+  visual_similarity: []
+  semantic_similarity: []
+  documented_historical_transmission: []
+  independent_invention_candidates: []
+  later_reuse_or_reinterpretation: []
+  organizational_association: []
+  quantitative_correspondence: []
+
+evidence_state:
+  - "HYPOTHESIS"
+  - "SUPPORTED BY LITERATURE"
+  - "REQUIRES LAB VALIDATION"
+
+audit:
+  created_at: "2026-09-17"
+  updated_at: "2026-09-17"
+  analyst: "Worldshepherd / ChatGPT layered analysis"
+  reviewers: []
+  source_hashes: []
+  notes:
+    - "Record intentionally distinguishes observed structure, documented parallels, organizational association, causation and proof."

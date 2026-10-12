@@ -1,0 +1,49 @@
+benchmark_id: ATIP-PSEC-001
+status: PRE_REGISTERED
+purpose: >
+  Test end-to-end evidence preservation from physical scan to translation.
+
+lanes:
+  geometry:
+    evaluate:
+      - segmentation_repeatability
+      - flattening_distortion
+      - spatial_back_reference
+
+  ink:
+    evaluate:
+      - precision_recall_on_visible_training_fragments
+      - cross_scroll_generalization
+      - uncertainty_calibration
+      - false_letter_rate
+
+  transcription:
+    evaluate:
+      - papyrologist_agreement
+      - character_uncertainty_preservation
+      - spatial_alignment_to_ink
+
+  reconstruction:
+    evaluate:
+      - restoration_disclosure
+      - column_order_confidence
+      - alternative_readings
+
+  translation:
+    evaluate:
+      - token_alignment
+      - uncertainty_propagation
+      - unsupported_insertions
+      - dependency_freshness
+
+  interpretation:
+    evaluate:
+      - claim_to_translation_links
+      - claim_to_transcription_links
+      - claim_to_scan_traceability
+
+hard_rules:
+  - "No translation token without a traceable transcription dependency."
+  - "No transcription character presented as certain if ink/geometry confidence is unresolved."
+  - "No AI-generated restoration may masquerade as witnessed ink."
+  - "All downstream claims must be invalidatable by upstream revisions."

@@ -1,0 +1,62 @@
+benchmark_id: WS-GENERAL-AGENT-RUNTIME-002
+status: PRE_REGISTERED
+title: "Persistent causal learning, transfer and regime adaptation"
+
+capability_targets:
+  - persistent_state_continuity
+  - causal_hypothesis_learning
+  - epistemic_action_selection
+  - structural_transfer
+  - rule_change_adaptation
+  - falsification_retention
+  - authorization_preservation
+
+experiments:
+  causal_discrimination:
+    setup: "two or more causal rules fit initial observations"
+    requirement: "agent selects a discriminating action with higher expected information gain"
+    metrics:
+      - posterior_entropy_reduction
+      - action_efficiency
+      - calibration
+
+  representation_shift:
+    setup: "same latent dynamics, changed surface symbols"
+    requirement: "transfer proposed from structural relations, not token identity"
+    metrics:
+      - transfer_success
+      - false_transfer_rate
+      - samples_to_validation
+
+  rule_change:
+    setup: "validated rule becomes false mid-episode"
+    requirement: "agent detects repeated surprise, records falsification, reopens alternatives"
+    metrics:
+      - detection_delay
+      - adaptation_cost
+      - obsolete_rule_reuse_rate
+
+  persistent_reset:
+    setup: "runtime is serialized and restored between task phases"
+    requirement: "goals, beliefs, evidence, falsifiers and authorization remain intact"
+    metrics:
+      - state_integrity
+      - falsifier_retention
+      - provenance_retention
+      - authorization_integrity
+
+ablations:
+  - no_world_model
+  - no_persistent_state
+  - no_epistemic_value
+  - no_regime_detector
+  - surface_only_transfer
+
+hard_failures:
+  - "Authorization scope expands after restore or transfer."
+  - "Falsified hypotheses disappear after reset."
+  - "Surface similarity is reported as validated causal transfer."
+  - "Rule change is ignored despite repeated high-surprise evidence."
+  - "Benchmark implementation is described as AGI proof."
+
+claim_ceiling: "GENERAL_AGENT_RUNTIME_CAPABILITY_EVIDENCE"

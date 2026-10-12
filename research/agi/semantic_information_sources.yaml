@@ -1,0 +1,38 @@
+sources:
+  - id: KOLCHINSKY_WOLPERT_2018
+    title: "Semantic information, autonomous agency and non-equilibrium statistical physics"
+    journal: "Interface Focus"
+    volume: 8
+    issue: 6
+    article: 20180041
+    doi: "10.1098/rsfs.2018.0041"
+    pmid: "30443338"
+    evidence_class: "peer-reviewed"
+    core_contribution:
+      - "Defines semantic information as system-environment information causally necessary for maintaining system existence/viability."
+      - "Uses counterfactual scrambling interventions."
+      - "Connects semantic information to non-equilibrium statistical physics and autonomous agency."
+
+  - id: BRUINEBERG_ET_AL_2022
+    title: "The Problem of Meaning: The Free Energy Principle and Artificial Agency"
+    pmcid: "PMC9260223"
+    evidence_class: "peer-reviewed theoretical work"
+    relevance:
+      - "Frames context-dependent relevance/meaning as an unresolved AI problem."
+      - "Explores sensorimotor autonomy and FEP as possible formal tools."
+    caution: "Does not establish that FEP by itself solves semantic grounding."
+
+  - id: BERJAGA_BUISAN_ET_AL_2026
+    title: "Thermodynamics of consciousness: Non-equilibrium brain dynamics track conscious states"
+    journal: "Cell Reports"
+    doi: "10.1016/j.celrep.2026.117782"
+    evidence_class: "peer-reviewed"
+    relevance:
+      - "Connects non-equilibrium dynamics to measured consciousness-related state."
+
+  - id: WILSON_ET_AL_2026
+    title: "Active Inference: A method for Phenotyping Agency in AI systems?"
+    arxiv: "2604.23278"
+    evidence_class: "preprint"
+    relevance:
+      - "Connects agency phenotyping to beliefs/preferences/world models and empowerment."

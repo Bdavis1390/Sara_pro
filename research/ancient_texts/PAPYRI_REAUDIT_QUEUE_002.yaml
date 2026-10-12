@@ -1,0 +1,45 @@
+scan_id: ATIP-PAPYRI-REAUDIT-002
+status: CANDIDATE_REVIEW_QUEUE
+generated_from: "records with current apparatus changes plus visible English translation"
+principle: "prev. ed. + translation present => review trigger, not automatic mistranslation claim"
+
+confirmed:
+  - record: "p.tebt.2.408"
+    state: CONFIRMED_STALE
+    issue: 445
+    material_change: "sender name Hipponikos vs stale Hippolitos"
+
+candidates:
+  - record: "p.oxy.1.51"
+    trigger:
+      - "apparatus records previous-edition reading"
+      - "English translation present"
+    status: REVIEW_REQUIRED
+    note: "Determine whether changed line affects translated addressee/text or only non-semantic editorial detail."
+  - record: "p.oxy.12.1467"
+    trigger:
+      - "apparatus contains BL corrections / previous-edition readings"
+      - "English translation present"
+    status: REVIEW_REQUIRED
+    note: "Align corrected lines 25/29 to current English."
+  - record: "p.oxy.2.294"
+    trigger:
+      - "previous-edition reading at r.24"
+      - "English translation present"
+    status: REVIEW_REQUIRED
+  - record: "p.corn.18dupl"
+    trigger:
+      - "image-based current readings replace previous editions"
+      - "APIS English translation present"
+    status: REVIEW_REQUIRED
+    note: "Prioritize personal names because entity drift is directly testable."
+  - record: "sb.14.11436"
+    trigger:
+      - "image-based correction"
+      - "APIS English translation present"
+    status: REVIEW_REQUIRED
+  - record: "p.oslo.2.29"
+    trigger:
+      - "current reading differs from previous edition"
+      - "APIS English translation present"
+    status: REVIEW_REQUIRED

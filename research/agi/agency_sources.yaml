@@ -1,0 +1,34 @@
+sources:
+  - id: KLYUBIN_POLANI_NEHANIV_2005
+    title: "Empowerment: a universal agent-centric measure of control"
+    venue: "2005 IEEE Congress on Evolutionary Computation"
+    pages: "128-135"
+    doi: "10.1109/CEC.2005.1554676"
+    evidence_class: "peer-reviewed conference"
+    relevance: "Introduces empowerment as an information-theoretic measure of agent-centric control."
+
+  - id: WILSON_ET_AL_2026
+    title: "Active Inference: A method for Phenotyping Agency in AI systems?"
+    type: "arXiv preprint"
+    arxiv: "2604.23278"
+    date: "2026-04-25"
+    authors:
+      - Philip Wilson
+      - Axel Constant
+      - Mahault Albarracin
+      - Nicolás Hinrichs
+      - Jasmine Moore
+      - Daniel Polani
+      - Karl Friston
+    evidence_class: "preprint — not treated as peer reviewed"
+    relevance:
+      - "Operationalizes AI agency using intentionality, rationality and causal traceability."
+      - "Uses empowerment/channel capacity between actions and anticipated observations as an agency phenotype."
+
+  - id: BERJAGA_BUISAN_ET_AL_2026
+    title: "Thermodynamics of consciousness: Non-equilibrium brain dynamics track conscious states"
+    journal: "Cell Reports"
+    doi: "10.1016/j.celrep.2026.117782"
+    evidence_class: "peer-reviewed journal article"
+    relevance:
+      - "Links consciousness-related state to non-equilibrium dynamics and FDT violations."

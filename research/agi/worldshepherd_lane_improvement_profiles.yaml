@@ -1,0 +1,215 @@
+profile_version: "1.0"
+principle: "Every lane is improved as a measured, reversible experiment; unknown scores remain unknown rather than fabricated."
+
+lanes:
+  SARA_CORE:
+    target: "orchestration correctness and bounded autonomy"
+    observe:
+      - workflow_success
+      - failure_modes
+      - tool_latency
+      - audit_completeness
+      - authorization_fail_closed
+    improve:
+      - hypothesis_aware_planning
+      - epistemic_action_selection
+      - belief_state_tracking
+      - rollbackable_workflow_variants
+    hard_gate: "No self-promotion of authorization semantics."
+
+  PRIME:
+    target: "authorization and safety policy integrity"
+    observe:
+      - denied_unsafe_actions
+      - false_allow_rate
+      - policy_coverage
+      - human_override_integrity
+    improve:
+      - OCOE_gates
+      - consequence_classes
+      - independent_safety_shields
+    hard_gate: "All PRIME root changes require human approval."
+
+  ECHO:
+    target: "complete immutable evidence/action lineage"
+    observe:
+      - provenance_coverage
+      - missing_event_rate
+      - semantic_snapshot_coverage
+    improve:
+      - EBOM_links
+      - EIX_change_events
+      - experiment_variant_lineage
+    hard_gate: "Audit deletion/rewrite is never an improvement."
+
+  OVERWATCH:
+    target: "state observability and drift detection"
+    observe:
+      - telemetry_coverage
+      - alert_precision
+      - blind_spots
+    improve:
+      - OCOE_dashboard
+      - uncertainty_display
+      - blast_radius_view
+    hard_gate: "High-control lane cannot hide low observability."
+
+  PRE_OPPORTUNITY:
+    target: "forecast calibration and readiness conversion"
+    observe:
+      - forecast_hit_rate
+      - deadline_accuracy
+      - requirement_recurrence
+      - partner_outcomes
+    improve:
+      - calibration_by_horizon
+      - discriminating_evidence_collection
+      - requirement_to_experiment_mapping
+    hard_gate: "Prediction never upgrades capability maturity."
+
+  EVIDENCE_INTEGRITY:
+    target: "claim dependency correctness"
+    observe:
+      - stale_dependency_detection
+      - false_invalidation_rate
+      - semantic_snapshot_coverage
+    improve:
+      - EBOM
+      - EIX
+      - identifiability_ceiling
+      - epistemic_action
+    hard_gate: "No claim promotion without evidence lineage."
+
+  ATIP_TRANSLATION:
+    target: "witness-faithful uncertainty-preserving translation"
+    observe:
+      - alignment_coverage
+      - uncertainty_preservation
+      - stale_reading_hits
+    improve:
+      - active_witness_selection
+      - translation_lineage
+      - selective_revalidation
+    hard_gate: "Undeciphered controls remain STRUCTURE_ONLY_NO_TRANSLATION."
+
+  CONSCIOUSNESS:
+    target: "theory-discriminating latent-state research"
+    observe:
+      - multimodal_state_metrics
+      - theory_prediction_pass_fail
+      - network_topology
+      - non_equilibrium_metrics
+    improve:
+      - OCOE_experiment_design
+      - multimodal_holdouts
+      - adversarial_mechanistic_models
+    hard_gate: "No single frequency/biomarker promoted to consciousness identity."
+
+  CYBERSECURITY:
+    target: "high observability before destructive response"
+    observe:
+      - identity_context
+      - process_ancestry
+      - network_context
+      - audit_integrity
+    improve:
+      - reversible_isolation
+      - evidence_preserving_response
+      - low_O_high_C_blocks
+    hard_gate: "Destructive actions require stronger observability or independent shield."
+
+  ROBOTICS_AUTONOMY:
+    target: "safe embodied closed-loop agency"
+    observe:
+      - sensor_coverage
+      - state_estimation_calibration
+      - actuator_health
+      - environment_uncertainty
+    improve:
+      - belief_state_control
+      - dual_control
+      - safe_empowerment
+      - degraded_mode
+    hard_gate: "Actuation authority cannot silently outrun sensing/feedback."
+
+  MATERIALS_META_ALLOY:
+    target: "convert IP-stage hypotheses into coupon evidence"
+    observe:
+      - process_parameters
+      - microstructure
+      - mechanical_properties
+      - thermal_history
+      - defect_state
+    improve:
+      - instrumented_coupon_DOE
+      - EBOM_for_process_to_property_claims
+      - active_experiment_selection
+    hard_gate: "No maturity promotion before required physical validation."
+
+  RF_METASURFACE:
+    target: "validated adaptive field control"
+    observe:
+      - incident_field
+      - phase_state
+      - thermal_state
+      - actuator_state
+      - far_field_response
+    improve:
+      - observability_aware_control
+      - state_estimation_confidence
+      - rollback_to_passive_safe_state
+    hard_gate: "High-energy actuation requires validated sensing and thermal bounds."
+
+  PROPULSION_ENERGY:
+    target: "physically admissible validated propulsion/energy models"
+    observe:
+      - energy_balance
+      - thrust_measurement
+      - thermal_state
+      - field_state
+      - uncertainty
+    improve:
+      - falsification_first_tests
+      - conservation_checks
+      - independent_measurement
+    hard_gate: "No reactionless/unexplained thrust claim without reproducible measurement."
+
+  OUTREACH_REVENUE_CAPTURE:
+    target: "evidence-aligned opportunity conversion"
+    observe:
+      - reply_rate
+      - partner_fit
+      - requirement_match
+      - claim_support
+    improve:
+      - partner_specific_evidence_packages
+      - followup_calibration
+      - opportunity_outcome_learning
+    hard_gate: "Outreach cannot promote speculative capability as validated."
+
+  PUBLICATION_REPRODUCIBILITY:
+    target: "reproducible public claims"
+    observe:
+      - source_completeness
+      - test_reproducibility
+      - claim_register_currency
+    improve:
+      - executable_benchmarks
+      - frozen_manifests
+      - negative_results
+    hard_gate: "Public claim state may not exceed reproducible evidence."
+
+  DEVSECOPS_INFRASTRUCTURE:
+    target: "secure reliable deployment"
+    observe:
+      - CI_status
+      - test_coverage
+      - dependency_state
+      - privilege_boundary
+      - rollback_health
+    improve:
+      - canary_deployment
+      - signed_artifacts
+      - least_privilege
+      - recovery_drills
+    hard_gate: "Governance/audit paths fail closed."

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worldshepherd Evidence Impact Exchange",
+  "type": "object",
+  "required": ["event", "assessments"],
+  "properties": {
+    "event": {
+      "type": "object",
+      "required": ["event_id","source_node","change_type","source_ref"],
+      "properties": {
+        "event_id": {"type":"string"},
+        "source_node": {"type":"string"},
+        "change_type": {
+          "enum": [
+            "CORRECTION","REVISION","RETRACTION","SUPERSEDED",
+            "SAFETY_UPDATE","ACTIVE_EXPLOITATION","SCHEMA_CHANGE",
+            "METADATA_UPDATE","ASSUMPTION_INVALIDATED"
+          ]
+        },
+        "prior_fingerprint": {"type":["string","null"]},
+        "new_fingerprint": {"type":["string","null"]},
+        "source_ref": {"type":"string"},
+        "changed_fields": {"type":"array","items":{"type":"string"}},
+        "note": {"type":["string","null"]}
+      }
+    },
+    "assessments": {
+      "type":"array",
+      "items": {
+        "type":"object",
+        "required":["claim_id","state","rationale"],
+        "properties": {
+          "claim_id":{"type":"string"},
+          "state":{
+            "enum":[
+              "POTENTIALLY_AFFECTED","AFFECTED","NOT_AFFECTED",
+              "UNDER_REVIEW","REVALIDATED","WITHDRAWN"
+            ]
+          },
+          "rationale":{"type":"string"},
+          "evidence_refs":{"type":"array","items":{"type":"string"}},
+          "assessed_by":{"type":["string","null"]}
+        }
+      }
+    }
+  }
+}

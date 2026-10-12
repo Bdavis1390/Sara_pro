@@ -1,0 +1,103 @@
+ledger_version: "0.4"
+updated: "2026-09-18"
+program_issue: 469
+
+programs:
+  translation_audit:
+    issue: 432
+    state: ACTIVE
+    artifacts:
+      - translation_audit.py
+      - TRANSLATION_VERIFICATION_PROTOCOL.md
+      - TRANSLATION_AUDIT_QUEUE.yaml
+
+  version_skew:
+    issue: 445
+    state: ACTIVE
+    confirmed_cases: 1
+    negative_controls_resolved: 3
+
+  reading_uncertainty:
+    issue: 443
+    state: ACTIVE
+    examples:
+      - "Egyptian pyramid mr / mḥr"
+      - "Egyptian head tp / dp / ḏp"
+      - "Osiris Wsjr and competing published readings"
+
+  translation_lineage:
+    issue: 469
+    state: ACTIVE
+    scope: "all registered ATIP source families"
+    capabilities:
+      - witness_to_translation_dependency_graph
+      - fingerprint_based_staleness
+      - TEI_critical_apparatus_ingest
+      - ORACC_translation_layer_separation
+      - source_mode_matrix
+      - selective_papyri_revalidation
+
+  textual_topology:
+    issue: 471
+    state: ACTIVE
+    control: "1 Enoch Apocalypse of Weeks / 4Q212"
+    principle: "relational order can preserve recoverable information beyond surface manuscript sequence"
+
+  text_object_identity:
+    issue: 472
+    state: ACTIVE
+    control: "1 Enoch Aramaic/Ethiopic textual forms"
+    principle: "same traditional title does not imply same witness, recension, or translation target"
+
+  machine_translation_integrity:
+    issue: 469
+    state: PRE_REGISTERED
+    benchmark: ATIP-TRANSLATION-INTEGRITY-001
+    principle: "fluency is not evidence fidelity"
+
+source_watch:
+  DAMOS:
+    status: ACTIVE
+    triggers: [JOIN, READ, CORRECTION, alternative_readings]
+  TLA:
+    status: ACTIVE
+    triggers: [corpus_edition_change, editorial_state_verification_pending, lemma_revision, reading_lattice_change]
+  GANDHARI:
+    status: ACTIVE
+    triggers: [accepted_reading_changed, interpretation_changed, newly_published_material]
+    known_corpus_corrections_reported: 3954
+  ORACC:
+    status: ACTIVE
+    triggers: [translation_format_presence, supplied_uncertain_broken_untranslatable_markup, project_version_change]
+    representation_guard: "corpusjson does not itself contain translation"
+  PAPYRI_INFO:
+    status: ACTIVE
+    triggers: [previous_edition_apparatus, image_based_correction, editorial_history_change, named_entity_mismatch, translation_dependency_unpinned]
+  UNDECIPHERED:
+    status: ACTIVE
+    triggers: [running_translation_without_validated_decipherment]
+    action: BLOCK
+
+  physical_to_semantic_chain:
+    issue: 478
+    state: ACTIVE
+    control: "Herculaneum / Vesuvius Challenge 2026"
+    principle: "translation provenance can extend back through tomography, geometry, ink detection and transcription to the physical artifact"
+    benchmark: ATIP-PSEC-001
+    linked_method:
+      - Aeneas multimodal contextualization
+      - Herculaneum virtual unwrapping
+
+  multiplex_material_evidence:
+    issue: 483
+    state: ACTIVE
+    principle: "manuscripts carry orthogonal textual, biological, chemical, geometric and imaging evidence channels"
+    controls:
+      - "Dead Sea Scroll parchment aDNA / Cell 2020"
+      - "nondestructive DNA sampling / Manuscript Studies 2026"
+      - "Herculaneum lead/XRF synthetic-scroll experiment / PLOS One 2026"
+    capabilities:
+      - orthogonal_material_evidence_fusion
+      - adaptive_sensing
+      - synthetic_ground_truth_validation
+      - fragment_join_material_contradiction

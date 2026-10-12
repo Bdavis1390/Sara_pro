@@ -1,0 +1,28 @@
+sources:
+  - id: RAINFORTH_ET_AL_2024
+    title: "Modern Bayesian Experimental Design"
+    journal: "Statistical Science"
+    volume: 39
+    issue: 1
+    pages: "100-114"
+    doi: "10.1214/23-STS915"
+    evidence_class: "peer-reviewed review"
+    relevance:
+      - "Bayesian experimental design optimizes experiments using utilities such as information maximization."
+      - "Provides general framework for adaptive experimental design."
+
+  - id: ANNADANI_ET_AL_2024
+    title: "Amortized Active Causal Induction with Deep Reinforcement Learning"
+    venue: "NeurIPS 2024"
+    evidence_class: "peer-reviewed conference"
+    relevance:
+      - "Learns an adaptive intervention-design policy."
+      - "Intervention-acquired data improved causal graph estimates over alternatives in tested environments."
+      - "Shows zero-shot generalization to shifted design environments and intervention types."
+
+  - id: CAUSAL_STRUCTURE_LEARNING_REVIEW
+    title: "Causal Structure Learning: A Combinatorial Perspective"
+    evidence_class: "peer-reviewed review"
+    relevance:
+      - "Observational data identify equivalence classes in general."
+      - "Interventional data refine causal equivalence classes."

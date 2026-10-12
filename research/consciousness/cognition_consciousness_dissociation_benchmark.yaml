@@ -1,0 +1,63 @@
+benchmark_id: WS-COGNITION-CONSCIOUSNESS-DISSOCIATION-001
+status: PRE_REGISTERED
+
+purpose: >
+  Prevent semantic competence, prediction or learning from being treated as
+  sufficient evidence of consciousness, while testing whether large-scale
+  integration adds explanatory power.
+
+human_controls:
+  anesthesia:
+    source: "Katlowitz et al. Nature 2026"
+    expected:
+      - semantic_processing_present
+      - grammatical_processing_present
+      - prediction_present
+      - representational_plasticity_present
+      - conscious_access_not_inferred_from_these_features
+
+  disorders_of_consciousness:
+    source: "Zhu et al. Communications Medicine 2026"
+    expected:
+      - integration_disrupted
+      - segregation_disrupted
+      - residual_integration_associated_with_behavior
+      - topology_contributes_to_prognosis
+
+model_comparison:
+  M0_semantic_capacity:
+    features:
+      - semantic_decoding
+      - grammatical_decoding
+      - predictive_information
+
+  M1_local_learning:
+    features:
+      - all_M0
+      - plasticity
+      - novelty_learning
+
+  M2_global_topology:
+    features:
+      - integration
+      - segregation
+      - connectivity
+
+  M3_dynamic_global_access:
+    features:
+      - all_M2
+      - directional_flow
+      - metastability
+      - criticality
+      - phase_gated_switching
+
+questions:
+  - "Can semantic prediction persist when conscious access is absent?"
+  - "Does global topology explain behavioral consciousness beyond local semantic capacity?"
+  - "Can a model distinguish cognition from consciousness evidence?"
+
+hard_rules:
+  - "Semantic competence is not a consciousness label."
+  - "Behavioral unresponsiveness is not automatically absence of consciousness."
+  - "Anesthesia findings do not imply all cognition is preserved."
+  - "No direct inference from human anesthesia to AI phenomenal experience."

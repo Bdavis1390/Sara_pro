@@ -1,0 +1,34 @@
+sources:
+  - id: VESUVIUS_CHALLENGE_2026
+    title: "Vesuvius Challenge — Reading the Herculaneum Scrolls with AI"
+    url: "https://scrollprize.org/"
+    evidence:
+      - "45 scrolls/fragments scanned"
+      - "1 scroll fully read"
+      - "virtual unwrapping and ink detection remain active open problems"
+
+  - id: UKY_HERCULANEUM_2026
+    title: "The day the Herculaneum scrolls began speaking again"
+    organization: "University of Kentucky"
+    date: "2026-06-25"
+    url: "https://research.uky.edu/news/day-herculaneum-scrolls-began-speaking-again"
+    evidence:
+      - "PHerc. 1667 surviving portion fully virtually unwrapped"
+      - "nearly 1.5 m / 20 columns recovered"
+      - "more than 70 columns recovered from PHerc. 172"
+      - "new Philodemus works identified"
+      - "approximately 600 unopened scrolls remain"
+
+  - id: AENEAS_NATURE_2025
+    title: "Contextualizing ancient texts with generative neural networks"
+    journal: "Nature"
+    volume: 645
+    pages: "141-147"
+    year: 2025
+    doi: "10.1038/s41586-025-09292-5"
+    evidence:
+      - "multimodal Latin inscription contextualization"
+      - "arbitrary-length restoration"
+      - "historian-AI study"
+      - "90% useful research-starting-point rating for parallels"
+      - "44% improvement in historian confidence in key tasks"

@@ -1,0 +1,77 @@
+queue_version: "0.1"
+updated: "2026-09-17"
+principle: "Flag for audit; do not label a translation wrong until the witness-level comparison supports that conclusion."
+
+priority:
+  - id: ENOCH-1-OLDER-ENGLISH
+    corpus: "1 Enoch"
+    priority: P1
+    target: "Older English translations, especially pre-Qumran/public-domain editions"
+    reason:
+      - "Critical modern work incorporates Ethiopic, Greek and Qumran Aramaic evidence unavailable to early editions."
+      - "Witness variants can materially affect wording and textual reconstruction."
+    audit_classes_expected: [T4_WITNESS, T6_SUPERSEDED, T8_UNRESOLVED]
+    action: "Align selected passages across Aramaic/Greek/Ethiopic witnesses and compare older vs modern critical renderings."
+
+  - id: ENOCHIAN-CALLS
+    corpus: "Dee/Kelley Angelical Calls"
+    priority: P1
+    target: "Dee-era English sense, later standardized Enochian, Golden Dawn/Crowley and modern translations"
+    reason:
+      - "Known spelling/segmentation variants, manuscript lacunae and later pronunciation expansions."
+    audit_classes_expected: [T2_LEXICAL, T3_GRAMMATICAL, T4_WITNESS, T5_RESTORATION, T7_INTERPOLATION]
+    action: "Witness-by-witness alignment with primary manuscript layer separated from later ritual versions."
+
+  - id: LINEARB-CHANGED-READINGS
+    corpus: "Linear B"
+    priority: P1
+    target: "Translations tied to tablet readings changed by joins/new readings in DĀMOS"
+    reason:
+      - "DĀMOS exposes revised readings and supports multiple analyses with probability."
+    audit_classes_expected: [T2_LEXICAL, T3_GRAMMATICAL, T6_SUPERSEDED]
+    action: "Diff current DĀMOS transcription against cited translation's source edition."
+
+  - id: PAPYRI-EDITORIAL-HISTORY
+    corpus: "Greek/Latin papyri"
+    priority: P1
+    target: "APIS/HGV translations where DDbDP apparatus records later image-based or editorial corrections"
+    reason:
+      - "A translation may remain attached to a record whose underlying transcription has changed."
+    audit_classes_expected: [T4_WITNESS, T6_SUPERSEDED]
+    action: "Detect transcription-change events and mark attached translations STALE_PENDING_REAUDIT."
+
+  - id: GANDHARI-CORRECTIONS
+    corpus: "Gāndhārī"
+    priority: P1
+    target: "Translations/interpretations based on earlier published readings later corrected in corpus"
+    reason:
+      - "Corpus documents thousands of corrections and is integrating reading history."
+    audit_classes_expected: [T4_WITNESS, T6_SUPERSEDED]
+    action: "Use reading-history provenance to trigger automatic re-audit."
+
+  - id: EGYPTIAN-TLA-REVISION
+    corpus: "Ancient Egyptian"
+    priority: P2
+    target: "Translations whose source lemma/transliteration is verification-pending or changed in newer TLA corpus editions"
+    reason:
+      - "TLA is versioned and exposes editorial/revision state."
+    audit_classes_expected: [T2_LEXICAL, T3_GRAMMATICAL, T6_SUPERSEDED]
+    action: "Pin every translation to corpus edition and lemma verification state."
+
+  - id: CUNEIFORM-FLATTENED-UNCERTAINTY
+    corpus: "ORACC/CDLI cuneiform"
+    priority: P2
+    target: "Plain-English exports that lose ORACC uncertainty/restoration markup"
+    reason:
+      - "ORACC distinguishes supplied, uncertain, broken, restored and untranslatable content."
+    audit_classes_expected: [T5_RESTORATION, T7_INTERPOLATION, T8_UNRESOLVED]
+    action: "Reject flattened translations lacking epistemic markup."
+
+  - id: MAYA-LEGACY-READINGS
+    corpus: "Maya"
+    priority: P2
+    target: "Older epigraphic translations/phonetic readings"
+    reason:
+      - "Decipherment remains an active research process; improved photographs/scans can change readings."
+    audit_classes_expected: [T2_LEXICAL, T4_WITNESS, T6_SUPERSEDED]
+    action: "Compare legacy readings to current epigraphic documentation and specialist publications."

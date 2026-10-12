@@ -1,0 +1,41 @@
+sources:
+  - id: TOKER_ET_AL_2024
+    title: "Criticality supports cross-frequency cortical-thalamic information transfer during conscious states"
+    journal: "eLife"
+    volume: 13
+    article: "e86547"
+    doi: "10.7554/eLife.86547"
+    evidence:
+      - "Low-frequency (~1-13 Hz) signals in cortex/thalamus encoded by high-gamma (52-104 Hz) in the other region during conscious states."
+      - "Transfer diminished under propofol and generalized seizures."
+      - "Transfer enhanced under 5-MeO-DMT in tested mice."
+      - "Modeling links transfer to edge-of-chaos criticality."
+
+  - id: WARREN_ET_AL_2025
+    title: "A human brain network linked to restoration of consciousness after deep brain stimulation"
+    journal: "Nature Communications"
+    volume: 16
+    article: 6721
+    doi: "10.1038/s41467-025-61988-4"
+    cohort: 40
+    improved: 11
+    evidence:
+      - "Improvement associated with preserved tissue and specific stimulation location/network."
+      - "Programmed stimulation amplitude, frequency and pulse width did not differ between improved and non-improved groups."
+      - "Network externally aligned with independent stroke/seizure consciousness impairment datasets."
+    limitations:
+      - "uncontrolled cohort"
+      - "some localization statistics uncorrected / did not survive FDR correction"
+
+  - id: TOKER_ET_AL_2026
+    title: "Adversarial AI reveals mechanisms and treatments for disorders of consciousness"
+    journal: "Nature Neuroscience"
+    volume: 29
+    pages: "964-977"
+    doi: "10.1038/s41593-026-02220-4"
+    evidence:
+      - "Deep detector trained on >680,000 ten-second neuroelectrophysiology samples."
+      - "Validated on 565 patients, healthy volunteers and animals."
+      - "Interpretable neural-field models generated testable mechanistic predictions."
+      - "Predictions supported by DTI, RNA sequencing and electrophysiology."
+      - "High-frequency subthalamic stimulation identified as promising intervention."

@@ -1,0 +1,81 @@
+profiles:
+  scientific_databases:
+    hazard: PARTIAL_VERSIONING
+    canonical_example: NCBI_RefSeq
+    native_version_covers:
+      - sequence_change
+    may_not_cover:
+      - annotation_change
+      - associated_publication_change
+    required_snapshot_layers:
+      - accession_version
+      - annotation_release
+      - record_timestamp
+      - content_or_annotation_hash
+    rule: "Do not treat accession.version as a complete semantic snapshot."
+
+  medical_knowledge:
+    hazard: MULTI_CADENCE_AND_RECLASSIFICATION
+    canonical_example: NCBI_ClinVar
+    native_version_covers:
+      - submitted_record_update
+    additional_hazards:
+      - classification_can_change
+      - submitter_conflicts
+      - web_weekly_vs_vcf_monthly
+    required_snapshot_layers:
+      - SCV_RCV_or_VCV_accession_version
+      - date_last_evaluated
+      - dataset_release_date
+      - source_surface
+      - review_status
+    rule: "Clinical variant knowledge must be version- and release-pinned; do not infer patient-specific meaning from aggregate classification alone."
+
+  legal_text:
+    hazard: PROVISIONAL_AUTHORITY_TEXT
+    canonical_example: US_Supreme_Court_slip_opinions
+    required_snapshot_layers:
+      - docket
+      - decision_date
+      - opinion_publication_state
+      - revision_date
+      - official_report_citation_when_available
+      - text_hash
+    rule: "A slip opinion citation is revision-sensitive until superseded by later official publication states."
+
+  intelligence_analysis:
+    hazard: JUDGMENT_DEPENDENCY
+    canonical_example: ICD_203_analytic_standards
+    required_snapshot_layers:
+      - underlying_information_refs
+      - source_currency_and_quality
+      - explicit_assumptions
+      - judgment
+      - confidence
+      - likelihood
+      - indicators_that_would_alter_judgment
+    rule: "When source information, a linchpin assumption, or a defined indicator changes, dependent judgments require reassessment."
+
+  software_documentation:
+    hazard: DOC_RUNTIME_VERSION_SKEW
+    canonical_examples:
+      - GitHub_REST_API
+      - Kubernetes_API
+    required_snapshot_layers:
+      - product_runtime_version
+      - api_schema_version
+      - documentation_version
+      - deprecation_status
+      - breaking_change_log
+    rule: "Documentation is evidence about a specific interface version, not an eternal statement about the product."
+
+  historical_archives:
+    hazard: MUTABLE_CATALOG_METADATA
+    canonical_example: US_National_Archives_Catalog
+    required_snapshot_layers:
+      - archival_identifier
+      - catalog_record_timestamp
+      - description_snapshot_or_hash
+      - linked_digital_object_set
+      - source_import_or_revision_date
+    rule: "An archive identifier identifies the record, not necessarily the exact catalog description state used by a downstream claim."

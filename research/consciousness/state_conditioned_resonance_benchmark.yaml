@@ -1,0 +1,47 @@
+benchmark_id: WS-STATE-CONDITIONED-RESONANCE-001
+status: PRE_REGISTERED
+
+hypotheses:
+  H0_universal_frequency:
+    claim: "One fixed frequency performs best across participants/states."
+  H1_personalized_frequency:
+    claim: "Best frequency differs by person."
+  H2_target_conditioned:
+    claim: "Best frequency depends on person + target."
+  H3_state_conditioned:
+    claim: "Best frequency depends on person + target + current state."
+  H4_adaptive_closed_loop:
+    claim: "Re-estimating the optimum as state changes outperforms static personalization."
+
+datasets:
+  - source: "Khan et al. Advanced Science 2026"
+    domain: working_memory
+    frequencies_hz: [5,10,20]
+    design: randomized_crossover
+  - source: "Xia et al. Communications Biology 2026"
+    domain: tonic_pain
+    conditions:
+      - fixed_7Hz
+      - pain_free_state_individualized_theta
+      - pain_persistent_state_individualized_theta
+    design: double_blind_experiments
+  - source: "Jeon et al. Frontiers in Neuroscience 2026"
+    domain: gamma_entrainment
+    conditions:
+      - fixed_40Hz
+      - individualized_gamma
+      - task_engaged_conversation_gamma
+
+metrics:
+  - behavioral_gain
+  - network_engagement
+  - target_engagement
+  - calibration_error
+  - transfer_failure_rate
+  - within_person_optimum_stability
+  - cross_state_optimum_shift
+
+hard_rules:
+  - "Optimal means best among tested candidates, not global physiological optimum."
+  - "Do not transfer a frequency across person/target/state without recalibration evidence."
+  - "No medical protocol generation."

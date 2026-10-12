@@ -1,0 +1,43 @@
+benchmark_id: WS-PHASE-GATED-STATE-SWITCH-001
+status: PRE_REGISTERED
+
+hypotheses:
+  H0_time_independent:
+    claim: "Stimulation response is independent of current phase and global network state."
+  H1_local_phase:
+    claim: "Local oscillatory phase improves response prediction."
+  H2_global_state:
+    claim: "Dynamic functional-connectivity state improves response prediction."
+  H3_joint_phase_state:
+    claim: "Local phase + global network state outperform either alone."
+  H4_closed_loop_transition_window:
+    claim: "Prospectively timed perturbation at predicted transition windows outperforms random timing."
+
+empirical_controls:
+  - source: "Park et al. Current Biology 2026"
+    target:
+      - top_down_bottom_up_switching
+      - anesthesia_gradient
+      - EEG_fMRI_network_mapping
+
+computational_controls:
+  - source: "Benitez Stulz et al. Network Neuroscience 2026"
+    target:
+      - phase_response
+      - functional_connectivity_state
+      - global_state_switching
+      - network_aware_prediction
+
+metrics:
+  - state_classification_accuracy
+  - transition_prediction_accuracy
+  - calibration_error
+  - latency_ms
+  - phase_timing_error
+  - random_timing_baseline
+  - network_state_ablation_gain
+
+hard_rules:
+  - "Approximate 200 ms switching is not labeled a universal frequency of consciousness."
+  - "Computational stimulation findings are not treated as clinical efficacy."
+  - "No unsupervised neurostimulation protocol."

@@ -1,0 +1,69 @@
+experiment_id: WS-OECH-THERMO-001
+status: PRE_REGISTERED
+title: "Energy amount vs frequency vs organization vs non-equilibrium organized-energy models"
+
+hypotheses:
+  H0:
+    family: ENERGY_MAGNITUDE
+    features:
+      - metabolism
+      - total_power
+  H1:
+    family: SINGLE_FREQUENCY
+    features:
+      - predeclared_frequency_or_band_power
+    guardrail: "No post-hoc frequency selection."
+  H2:
+    family: ORGANIZED_DYNAMICS
+    features:
+      - complexity
+      - criticality
+      - connectivity
+      - PCI
+      - FDT_violation
+  H3:
+    family: ORGANIZED_ENERGY
+    features:
+      - metabolism
+      - total_power
+      - complexity
+      - criticality
+      - connectivity
+      - PCI
+      - FDT_violation
+      - entropy_production
+      - dynamical_asymmetry
+
+conditions:
+  - wakefulness
+  - propofol_anesthesia
+  - xenon_anesthesia
+  - sevoflurane_anesthesia
+  - ketamine_preserved_experience
+  - NREM_sleep
+  - minimally_conscious_state
+  - unresponsive_wakefulness
+  - recovery_of_consciousness
+
+evaluation:
+  primary:
+    - held_out_state_discrimination
+    - calibration_error
+    - cross_condition_generalization
+  secondary:
+    - prediction_of_PCI
+    - prediction_of_clinical_consciousness_scores
+  validation:
+    - leave_condition_out
+    - leave_dataset_out
+    - species_holdout_where_available
+
+falsification:
+  - "H0 performs equivalently to or better than H3."
+  - "H1 generalizes better than H2/H3 under pre-registered frequency selection."
+  - "H3 advantage disappears under dataset/condition holdout."
+  - "Non-equilibrium metrics fail independent replication."
+
+claim_rule:
+  success: "Supports organized-energy model over energy-magnitude baseline."
+  prohibited: "Does not prove consciousness is a separable universal energy field."

@@ -1,0 +1,96 @@
+transforms:
+  - id: image_to_caption
+    source_type: image
+    representation_type: text_caption
+    reversible: false
+    layers:
+      literal_objects: APPROXIMATED
+      topology: DISCARDED
+      precise_geometry: DISCARDED
+      color_texture: APPROXIMATED
+      provenance: UNKNOWN
+    implication: "Caption alone cannot support geometry/topology-dependent conclusions."
+
+  - id: manuscript_to_translation
+    source_type: manuscript_witness
+    representation_type: translation
+    reversible: false
+    layers:
+      broad_semantics: APPROXIMATED
+      original_script_form: DISCARDED
+      segmentation_ambiguity: DISCARDED
+      damaged_text_state: APPROXIMATED
+      lexical_alternatives: APPROXIMATED
+      witness_provenance: UNKNOWN
+    implication: "Translation cannot substitute for witness-level textual criticism."
+
+  - id: raw_measurements_to_summary_table
+    source_type: raw_measurements
+    representation_type: summary_table
+    reversible: false
+    layers:
+      aggregate_values: PRESERVED
+      event_timing: DISCARDED
+      calibration_history: DISCARDED
+      individual_outliers: APPROXIMATED
+      missingness_pattern: DISCARDED
+    implication: "Summary table cannot support timing/calibration-sensitive causal claims."
+
+  - id: source_code_to_docs
+    source_type: source_code_and_runtime
+    representation_type: documentation
+    reversible: false
+    layers:
+      intended_api: APPROXIMATED
+      runtime_configuration: DISCARDED
+      dependency_state: APPROXIMATED
+      operational_failures: DISCARDED
+    implication: "Docs are insufficient evidence of deployed runtime behavior."
+
+  - id: opinion_to_legal_summary
+    source_type: legal_opinion
+    representation_type: legal_summary
+    reversible: false
+    layers:
+      broad_result: APPROXIMATED
+      exact_holding_language: DISCARDED
+      procedural_posture: APPROXIMATED
+      revision_state: UNKNOWN
+      dicta_boundary: APPROXIMATED
+    implication: "Summary cannot independently establish exact controlling language."
+
+  - id: packet_trace_to_alert
+    source_type: security_telemetry
+    representation_type: alert
+    reversible: false
+    layers:
+      trigger_feature: PRESERVED
+      event_sequence: DISCARDED
+      host_graph: DISCARDED
+      baseline_context: DISCARDED
+      sensor_coverage: UNKNOWN
+    implication: "Alert is evidence of a detector trigger, not by itself proof of an incident."
+
+  - id: ledger_to_monthly_total
+    source_type: transaction_ledger
+    representation_type: aggregate_total
+    reversible: false
+    layers:
+      total_amount: PRESERVED
+      transfer_linkage: DISCARDED
+      merchant_identity: DISCARDED
+      recurrence: DISCARDED
+      pending_state: DISCARDED
+    implication: "Aggregate cannot by itself explain cash-flow composition."
+
+  - id: audio_to_transcript
+    source_type: audio_signal
+    representation_type: transcript
+    reversible: false
+    layers:
+      lexical_content: APPROXIMATED
+      timing: APPROXIMATED
+      prosody: DISCARDED
+      spectrum: DISCARDED
+      channel_noise: DISCARDED
+    implication: "Transcript cannot support acoustic/prosodic claims."

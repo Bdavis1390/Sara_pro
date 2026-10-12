@@ -1,0 +1,115 @@
+benchmark_id: WS-ENOCH-K1-RETRO-001
+mode: RETROSPECTIVE_CALIBRATION
+reason_not_blind: "Published translations were already exposed during provenance research before this benchmark was frozen."
+source_family:
+  primary_anchor: "Sloane MS 3191 ff. 1r-13r"
+  text_class: "First Angelical Key / Call"
+  date: "1584"
+
+comparison_layers:
+  - id: DEE_SENSE
+    description: "Dee-era English sense/marginal translation tradition"
+  - id: JAMES_LAYCOCK
+    description: "Later critical/lexicographic normalization and literalizing work"
+  - id: MODERN_REINTERPRETATION
+    description: "Modern semantic reinterpretations; non-consensus unless independently justified"
+
+clauses:
+  - id: K1-C01
+    source: "Ol sonf vorsg, goho Iad balt"
+    literal_reconstruction: "I / reign / over-you; says / God / justice"
+    smoothed_reconstruction: "I reign over you; says the God of justice."
+    evidence:
+      ol: "I / me / my"
+      sonf: "reign"
+      vorsg: "over you; segmentation sometimes disputed"
+      goho: "says / saith"
+      iad: "God"
+      balt: "justice"
+    differences:
+      - type: segmentation_variant
+        note: "Some editions print VORS G rather than VORSG."
+      - type: manuscript_variant
+        note: "Some Dee-oriented comparisons show GOHO absent in one witness/line presentation while later normalized texts include it."
+    assessment: "semantic backbone strongly stable"
+
+  - id: K1-C02
+    source: "lansh calz vonpho"
+    literal_reconstruction: "exalted/power ; above-firmaments ; wrath"
+    smoothed_reconstruction: "exalted in power above the firmaments of wrath"
+    evidence:
+      lansh: "exalted / in power exalted"
+      calz: "above the firmaments"
+      vonpho: "wrath in the traditional gloss"
+    differences:
+      - type: spelling_variant
+        note: "LANSH/LONSH and CALZ/KALZ occur in later editions/transcriptions."
+      - type: lexical_disagreement
+        note: "Some modern reinterpretations replace traditional 'wrath' for VONPHO with 'grief'; this is interpretive and not a consensus replacement."
+    assessment: "traditional sense recoverable; lexical decomposition is compressed"
+
+  - id: K1-C03
+    source: "sobra zol ror i ta nazpsad, graa ta malprg"
+    literal_reconstruction: "whose / hands / sun / is / as / sword; moon / as / piercing-fiery [thing]"
+    smoothed_reconstruction: "whose hands hold the sun as a sword and the moon as a piercing fire"
+    evidence:
+      sobra: "whose"
+      zol: "hands"
+      ror: "sun"
+      i: "is"
+      ta: "as"
+      nazpsad: "sword"
+      graa: "moon"
+      malprg: "fiery / through-thrusting fire in the traditional sense"
+    differences:
+      - type: editorial_expansion
+        note: "English requires articles/prepositions not overtly represented one-to-one in the compact Enochian sequence."
+      - type: transcription_variant
+        note: "NAZPSAD/NAZPAD and MALPRG/MALPURG occur across editions."
+    assessment: "high clause-level semantic correspondence with freer English syntax"
+
+  - id: K1-C04
+    source: "Pilah farzm znrza adna gono Iadpil"
+    literal_reconstruction: "moreover / lifted-raised / swore / obedience / faith / [divine referent: he-that-lives]"
+    smoothed_reconstruction: "Moreover, you raised [your voices] and swore obedience and faith to the living divine referent."
+    evidence:
+      pilah: "moreover"
+      farzm: "lift / raise in later lexica"
+      znrza: "swear / swore"
+      adna: "obedience"
+      gono: "faith"
+      iadpil: "he that lives forever / divine name in later lexica"
+    differences:
+      - type: poetic_editorial_expansion
+        note: "The traditional English supplies 'your voices' around FARZM even though the lexical compression is not transparently one-to-one."
+      - type: manuscript_lacuna_risk
+        note: "Critical editions note a lacuna in the surrounding Key 1 passage in Sloane MS 3191, with English marginalia contributing to reconstruction."
+    assessment: "meaning is substantially guided by inherited English sense; literal grammar is less secure than C01-C03"
+
+  - id: K1-C05
+    source: "Lap zirdo noco mad, hoath iaida"
+    literal_reconstruction: "for / I-am / servant / same-your-God / true-worshipper / Highest"
+    smoothed_reconstruction: "For I am the servant of the same, your God, a true worshipper of the Highest."
+    evidence:
+      lap: "for"
+      zirdo: "I am"
+      noco: "servant"
+      mad: "the same your God / your God"
+      hoath: "true worshipper"
+      iaida: "Highest"
+    differences:
+      - type: possible_copying_error
+        note: "Critical editions question whether ZIRDO NOCO may reflect a copying/segmentation problem, since ZIR is the common 'I am' form elsewhere."
+    assessment: "traditional sense clear; exact segmentation remains text-critical"
+
+manuscript_and_editorial_findings:
+  - "Later normalized versions are not identical to Dee-oriented transcriptions."
+  - "Critical notes identify at least one missing OD ('and') and other copy/segmentation problems in Key 1."
+  - "LU/UL around the 'end' clause is treated in critical editions as a probable copying error."
+  - "The English sense is frequently freer and longer than the Enochian word sequence; this weakens naive one-token/one-word decoding."
+  - "Pronunciation expansions used by Crowley/Golden Dawn traditions are not equivalent to manuscript spelling and must not be used as the base text for linguistic comparison."
+
+result:
+  conclusion: "Key 1 is not a clean cipher-decoding problem. Its lexical backbone is often recoverable, but the inherited English sense, manuscript lacunae, editorial normalization, segmentation disputes, and later occult pronunciation systems create measurable translation drift."
+  strongest_difference: "translation/editorial expansion versus compact Enochian lexical structure"
+  next_gate: "Run a genuinely blind holdout passage with the full comparison translation withheld until the frozen reconstruction is committed."

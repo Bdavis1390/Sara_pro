@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worldshepherd Relational Evidence Envelope",
+  "type": "object",
+  "required": ["object_id","modality","layers","claim_state"],
+  "properties": {
+    "object_id": {"type":"string"},
+    "modality": {"type":"string"},
+    "layers": {
+      "type":"object",
+      "properties": {
+        "literal_content": {},
+        "structure": {},
+        "relations": {"type":"array"},
+        "sequence_or_time": {"type":["array","object","null"]},
+        "state": {"type":["object","null"]},
+        "provenance": {"type":["object","null"]},
+        "transformations": {"type":"array"},
+        "context": {"type":["object","null"]},
+        "interfaces": {"type":"array"},
+        "scale_mapping": {"type":"array"},
+        "measurements": {"type":"array"},
+        "uncertainties": {"type":"array"},
+        "dependencies": {"type":"array"},
+        "alternative_explanations": {"type":"array"},
+        "falsifiers": {"type":"array"}
+      }
+    },
+    "representation_loss": {
+      "type":"array",
+      "description":"Information known or plausibly lost in the current representation."
+    },
+    "semantic_snapshot_ref": {"type":["string","null"]},
+    "ebom_ref": {"type":["string","null"]},
+    "impact_state": {"type":["string","null"]},
+    "claim_state": {"type":"array","items":{"type":"string"}},
+    "next_validation_gate": {"type":["string","null"]}
+  }
+}

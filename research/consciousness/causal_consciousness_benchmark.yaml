@@ -1,0 +1,63 @@
+benchmark_id: WS-CONSCIOUSNESS-CAUSAL-CONTROL-001
+status: PRE_REGISTERED
+purpose: >
+  Separate frequency coincidence from causal spatiotemporal control and test
+  whether state-adaptive models improve prediction of consciousness-related
+  neuromodulation outcomes.
+
+models:
+  M0_total_energy:
+    features:
+      - total_delivered_energy
+      - session_count
+
+  M1_frequency_only:
+    features:
+      - primary_frequency_or_band
+
+  M2_pattern_target:
+    features:
+      - carrier_frequency
+      - intraburst_frequency
+      - envelope_frequency
+      - amplitude
+      - waveform
+      - anatomical_target
+      - field_geometry
+      - duration
+      - session_schedule
+
+  M3_state_matched:
+    features:
+      - all_M2
+      - baseline_EEG
+      - network_connectivity
+      - PCI_if_available
+      - pathology
+      - anatomy
+
+  M4_closed_loop:
+    features:
+      - all_M3
+      - immediate_post_perturbation_response
+      - uncertainty
+      - adaptive_pattern_selection
+
+evidence_sets:
+  - "Toker et al. Nature Neuroscience 2026"
+  - "Li et al. European Journal of Medical Research 2026 piTBS pilot RCT"
+  - "NCT07539740 temporal-interference multicenter trial — protocol only until results"
+  - "future focused-ultrasound / DBS studies"
+
+primary_tests:
+  - cross_patient_outcome_prediction
+  - cross_intervention_generalization
+  - calibration
+  - dose_vs_pattern_ablation
+  - target_vs_frequency_ablation
+
+hard_rules:
+  - "Protocol-only trials contribute no efficacy result."
+  - "Pilot randomized evidence is not labeled established therapy."
+  - "Frequency coincidence without a coupling mechanism receives no causal credit."
+  - "No DIY or unsupervised neurostimulation recommendations."

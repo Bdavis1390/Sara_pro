@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worldshepherd Consciousness Evidence Record",
+  "type": "object",
+  "required": ["record_id","observations","channels","neural_state","claim_state"],
+  "properties": {
+    "record_id": {"type":"string"},
+    "observations": {
+      "type":"object",
+      "properties": {
+        "behavioral_report":{"type":["object","null"]},
+        "eeg":{"type":["object","null"]},
+        "meg":{"type":["object","null"]},
+        "fmri":{"type":["object","null"]},
+        "pet_metabolism":{"type":["object","null"]},
+        "clinical_state":{"type":["string","null"]}
+      }
+    },
+    "channels": {
+      "type":"object",
+      "properties": {
+        "vision":{"type":["string","null"]},
+        "hearing":{"type":["string","null"]},
+        "somatosensation":{"type":["string","null"]},
+        "vestibular":{"type":["string","null"]},
+        "interoception":{"type":["string","null"]},
+        "motor_output":{"type":["string","null"]}
+      }
+    },
+    "neural_state": {
+      "type":"object",
+      "properties": {
+        "metabolic_support":{"type":["object","null"]},
+        "electrochemical_activity":{"type":["object","null"]},
+        "network_organization":{"type":["object","null"]},
+        "integration_connectivity":{"type":["object","null"]},
+        "temporal_dynamics":{"type":["object","null"]}
+      }
+    },
+    "consciousness_inference": {
+      "type":"object",
+      "properties": {
+        "state_hypothesis":{"type":["string","null"]},
+        "confidence":{"type":["number","null"],"minimum":0,"maximum":1},
+        "basis":{"type":"array","items":{"type":"string"}},
+        "alternatives":{"type":"array","items":{"type":"string"}}
+      }
+    },
+    "non_identity_flags": {
+      "type":"array",
+      "items":{"type":"string"}
+    },
+    "claim_state": {
+      "type":"array",
+      "items":{"type":"string"}
+    }
+  }
+}

@@ -1,0 +1,48 @@
+cases:
+  - lemma_id: TLA-71780
+    semantic_value: "pyramid"
+    display_transliteration: "mr"
+    corpus_pragmatic_choice: true
+    reading_hypotheses:
+      - value: "mr"
+        status: CORPUS_STANDARD
+        note: "Traditional reading retained by TLA."
+      - value: "mḥr"
+        status: COMPETING_PUBLISHED
+        note: "Published alternative associated with Gardiner U23; TLA records the dispute."
+    observed_attestations_in_tla: 92
+    audit_effect: "Block sound/root/cognate inference from the surface form mr alone."
+
+  - lemma_id: TLA-170860
+    semantic_value: "head; beginning/top and related senses"
+    display_transliteration: "tp"
+    corpus_pragmatic_choice: true
+    reading_hypotheses:
+      - value: "tp"
+        status: CORPUS_STANDARD
+        note: "Traditional reading retained by TLA."
+      - value: "dp"
+        status: COMPETING_PUBLISHED
+        note: "Published alternative for Earlier and Late Egyptian."
+      - value: "ḏp"
+        status: HISTORICAL
+        note: "Proposed earlier development discussed in TLA commentary."
+    observed_attestations_in_tla: 1208
+    audit_effect: "Block phonological comparisons that assume tp is uniquely established."
+
+  - lemma_id: TLA-49461
+    semantic_value: "Osiris"
+    display_transliteration: "Wsjr"
+    corpus_pragmatic_choice: true
+    reading_hypotheses:
+      - value: "Wsjr"
+        status: CORPUS_STANDARD
+        note: "Traditional transliteration retained by TLA."
+      - value: "(W)sr(.w)"
+        status: COMPETING_PUBLISHED
+        note: "Published etymological/readings alternative noted by TLA."
+      - value: "Js-jr(j)"
+        status: COMPETING_PUBLISHED
+        note: "Alternative reading argued by J. P. Allen and noted by TLA."
+    observed_attestations_in_tla: 3124
+    audit_effect: "Name/etymology matching must use reading alternatives and source-specific evidence."

@@ -1,0 +1,50 @@
+candidate_id: GPT-6-ASTRA-2026-09
+status: AGI_CANDIDATE_NOT_CERTIFIED
+as_of: "2026-09-17"
+
+external_evidence:
+  arc_agi_3:
+    provider_adapter_semiprivate: 0.999
+    standard_harness_semiprivate: 0.627
+    human_efficiency_levels_surpassed_fraction: 0.96
+    verification: "ARC Prize verified"
+    conclusion: "human-parity interactive benchmark performance under provider adapter"
+    agi_proof: false
+
+  arc_agi_2:
+    score: 0.95
+    source: "OpenAI / ARC Prize results"
+
+  arc_agi_1:
+    score: 0.985
+    source: "OpenAI"
+
+  osworld_2_offline:
+    score: 0.726
+    source: "OpenAI"
+    human_percentile_mapping: null
+
+  agents_last_exam:
+    score: 0.593
+    source: "OpenAI"
+    human_percentile_mapping: null
+
+  humanitys_last_exam_tools:
+    score: 0.572
+    source: "OpenAI"
+    note: "Expert academic benchmark; not a broad skilled-adult human percentile."
+
+  terminal_bench_science:
+    score: 0.646
+    source: "OpenAI"
+
+qualification_gaps:
+  - "No independently established skilled-adult percentile mapping across most cognitive task families."
+  - "No single public battery shown here establishes majority-of-cognitive-tasks generality."
+  - "Long-horizon reliability evidence is not yet sufficient for Worldshepherd's cross-domain gate."
+  - "Independent new-skill learning outside ARC-style environments remains required."
+  - "Worldshepherd metacognition/calibration/governance battery not yet executed on candidate."
+
+important_note: >
+  ARC Prize explicitly states that ARC-AGI-3 saturation is not proof of AGI.
+  Worldshepherd therefore preserves AGI_CANDIDATE_NOT_CERTIFIED.

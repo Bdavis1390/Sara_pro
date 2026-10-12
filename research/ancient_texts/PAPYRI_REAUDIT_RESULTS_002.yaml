@@ -1,0 +1,73 @@
+audit_batch: ATIP-PAPYRI-REAUDIT-002
+status: PARTIALLY_RESOLVED
+reviewed_on: "2026-09-18"
+principle: >
+  An apparatus entry marked "prev. ed." is a re-audit trigger, not evidence
+  by itself that the displayed translation is stale.
+
+resolved:
+  - record: "p.tebt.2.408"
+    result: CONFIRMED_STALE
+    issue: 445
+    current_reading: "Ἱππόνικος / Hipponikos"
+    previous_reading: "Ἱππόλιτος / Hippolitos"
+    displayed_translation: "Hippolitos"
+    materiality: "sender identity"
+    note: "Translation and catalog layers retain the superseded personal name."
+
+  - record: "p.oxy.1.51"
+    result: RESOLVED_CURRENT_ON_AUDITED_CHANGE
+    current_reading: "Ἰ[σι]δ[ώρ]ωι / Isidoros"
+    previous_reading: "κ[λαυ]δ[ια]νῶι"
+    displayed_translation: "To Isidoros, strategus..."
+    materiality: "addressee identity"
+    note: >
+      The translation reflects the current reading rather than the previous
+      edition. This is a negative-control result: the existence of a previous
+      reading does not imply stale translation.
+
+  - record: "p.oslo.2.29"
+    result: RESOLVED_CURRENT_ON_AUDITED_CHANGE
+    current_reading: "Μα̣ιτωύ̣τ̣η̣ι̣ / Maitoytes"
+    previous_reading: "μα̣ιτω... (less resolved previous edition)"
+    displayed_translation: "... to ...os and Maitoytes."
+    materiality: "recipient identity"
+    note: >
+      The displayed translation contains the current resolved personal name.
+      No stale-name mismatch found on the audited change.
+
+  - record: "sb.14.11436"
+    result: RESOLVED_CURRENT_ON_AUDITED_CHANGE
+    current_reading: "Ἀρσινοείτου (normalized Ἀρσινοίτου)"
+    previous_reading: "Ἀρσινοοίτου"
+    displayed_translation: "Arsinoite nome"
+    materiality: "geographic designation"
+    note: >
+      The current correction is compatible with the displayed semantic
+      translation. No material translation drift found on this changed item.
+
+still_open:
+  - record: "p.oxy.12.1467"
+    result: MANUAL_REVIEW_REQUIRED
+    reason: >
+      Apparatus changes at lines 25 and 29 require Greek line-level alignment
+      against the 1998 English translation; do not infer stale/current solely
+      from the search snippet.
+
+  - record: "p.oxy.2.294"
+    result: MANUAL_REVIEW_REQUIRED
+    reason: "Previous-edition change at r.24 requires line-level semantic comparison."
+
+  - record: "p.corn.18dupl"
+    result: MANUAL_REVIEW_REQUIRED
+    reason: >
+      Image-based reading change of a personal name is visible; the English
+      rendering appears related but requires philological normalization before
+      declaring stable or stale.
+
+conclusion: >
+  This batch validates the Evidence Impact Exchange logic: one confirmed stale
+  translation coexists with multiple changed-source records whose translations
+  already reflect or remain compatible with the current reading. Selective
+  revalidation is therefore required; blanket invalidation would create false
+  positives.

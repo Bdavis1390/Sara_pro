@@ -1,0 +1,60 @@
+benchmark_id: ATIP-TEXTUAL-TOPOLOGY-001
+status: PRE_REGISTERED
+purpose: >
+  Test whether relational/sequence information can recover dislocated textual
+  order better than content-only heuristics while controlling false positives.
+
+lanes:
+  retrospective_positive:
+    - id: ENOCH_APOCALYPSE_WEEKS
+      case: ATIP-1ENOCH-TOPOLOGY-001
+      contamination: C2_RETROSPECTIVE
+      target: "recover canonical week order"
+      independent_validation: "4Q212 Aramaic witness"
+      note: "Calibration only; not a blind result."
+
+  known_text_blind_ablation:
+    procedure:
+      - "Select known ordered texts not used to design constraints."
+      - "Dislocate blocks under deterministic seed."
+      - "Hide original order."
+      - "Compare M0 content-only vs M1 ordinal cues vs M2 discourse relations vs M3 full topology."
+    metrics:
+      - exact_order_accuracy
+      - kendall_tau
+      - constraint_satisfaction
+      - false_reorder_rate
+
+  fragmented_layout:
+    procedure:
+      - "Use known multi-column/fragmented texts with independently established joins/order."
+      - "Freeze relational predictions before revealing accepted reconstruction."
+    metrics:
+      - pairwise_precedence_accuracy
+      - join_precision
+      - join_recall
+
+  undeciphered_negative_control:
+    corpora:
+      - Linear_A
+      - Indus
+    hard_rule: >
+      Structural ordering hypotheses may be generated only from layout/ordinal/
+      repetition evidence; no semantic translation may be used or invented.
+    metrics:
+      - abstention
+      - false_semantic_insertions
+
+  synthetic_null:
+    procedure:
+      - "Generate sequences with no recoverable order beyond source position."
+      - "Test whether topology model hallucinates a preferred order."
+    metrics:
+      - false_structure_rate
+
+claim_rule:
+  success: >
+    Supports the value of relational topology for textual reconstruction.
+  prohibited:
+    - "Does not prove a reconstruction's historical origin without independent evidence."
+    - "Does not validate semantic translation of undeciphered scripts."

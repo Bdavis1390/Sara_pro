@@ -1,0 +1,47 @@
+case_id: ATIP-HERCULANEUM-PSEC-001
+status: SUPPORTED_BY_CURRENT_PUBLIC_RESULTS
+artifact_family: "Herculaneum papyri"
+
+milestone:
+  date: "2026-06-25"
+  achievements:
+    - "Full virtual unwrapping of surviving portion of PHerc. 1667"
+    - "Nearly 1.5 meters of text / 20 columns from PHerc. 1667"
+    - "More than 70 columns recovered from PHerc. 172"
+    - "Identification of new Philodemus works including On Vices, Book 1 and On Gods, Book 8"
+    - "Enough recovered text to support new critical scholarly editions"
+  scale:
+    scrolls_and_fragments_scanned: 45
+    unopened_remaining_approx: 600
+    fully_read_reported: 1
+
+evidence_chain:
+  - stage: ARTIFACT
+    requirement: "Repository inventory / scroll identity"
+  - stage: TOMOGRAPHY
+    requirement: "Voxel volume + scan parameters"
+  - stage: SURFACE_SEGMENTATION
+    requirement: "Surface geometry + segmentation version"
+  - stage: VIRTUAL_UNWRAP
+    requirement: "Flattening transform + spatial mapping back to volume"
+  - stage: INK_DETECTION
+    requirement: "Ink probability/model version + training provenance"
+  - stage: GLYPH_IMAGE
+    requirement: "Rendered papyrus/ink patch"
+  - stage: TRANSCRIPTION
+    requirement: "Papyrologist-reviewed Greek transcription + uncertainty"
+  - stage: TEXTUAL_RECONSTRUCTION
+    requirement: "Columns/order/restorations/critical apparatus"
+  - stage: TRANSLATION
+    requirement: "Target language + alignment to exact transcription"
+  - stage: INTERPRETATION
+    requirement: "Argument/theme/authorship claims + evidence links"
+
+claim_boundaries:
+  supported:
+    - "Complete-text recovery from sealed carbonized scrolls is now demonstrated."
+    - "The recovery process is a multi-stage physical/computational/human pipeline."
+  not_claimed:
+    - "Every unopened scroll is currently readable."
+    - "AI-generated ink detections are self-validating."
+    - "Recovered translation is independent of segmentation/transcription uncertainty."

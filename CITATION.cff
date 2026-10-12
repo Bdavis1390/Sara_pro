@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use the Worldshepherd Ancient Text Intelligence Program methods or code, please cite this repository."
+title: "Worldshepherd Ancient Text Intelligence Program (ATIP): Evidence-Calibrated Symbolic Intelligence"
+type: software
+version: "0.1.0"
+date-released: "2026-09-17"
+authors:
+  - family-names: "Davis"
+    given-names: "Brandon Ray"
+repository-code: "https://github.com/Bdavis1390/Sara_pro"
+url: "https://github.com/Bdavis1390/Sara_pro"
+keywords:
+  - ancient texts
+  - epigraphy
+  - decipherment
+  - provenance
+  - translation verification
+  - symbolic reasoning
+  - computational humanities
+  - information theory
+  - knowledge graphs

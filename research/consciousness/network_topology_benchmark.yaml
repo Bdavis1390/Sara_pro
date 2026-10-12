@@ -1,0 +1,64 @@
+benchmark_id: WS-CONSCIOUS-NETWORK-001
+status: PRE_REGISTERED
+title: "Frequency vs topology vs network-state consciousness benchmark"
+
+models:
+  H0:
+    features:
+      - frequency
+    interpretation: "single-variable frequency model"
+  H1:
+    features:
+      - frequency
+      - amplitude
+      - phase
+    interpretation: "oscillation-only model"
+  H2:
+    features:
+      - frequency
+      - amplitude
+      - target_region
+      - source_region
+      - stimulation_field
+    interpretation: "spatially targeted model"
+  H3:
+    features:
+      - frequency
+      - target_region
+      - structural_connectivity
+      - functional_connectivity
+      - tissue_integrity
+    interpretation: "network-topology model"
+  H4:
+    features:
+      - frequency
+      - target_region
+      - connectivity
+      - tissue_integrity
+      - criticality
+      - FDT_violation
+      - cross_frequency_transfer
+      - baseline_state
+    interpretation: "full relational dynamical model"
+
+tests:
+  - same_frequency_different_target
+  - different_frequency_same_target
+  - same_target_different_baseline_state
+  - connectivity_ablation
+  - tissue_integrity_ablation
+  - cross_frequency_directionality_ablation
+
+primary_outcomes:
+  - CRS_R_or_state_change_where_clinical
+  - PCI_where_available
+  - consciousness_detector_score
+  - directed_information_transfer
+
+success_rule: >
+  Relational/topological models must improve held-out prediction across datasets
+  and conditions, not merely fit the training sample.
+
+claim_boundary:
+  - "Benchmark success does not prove consciousness is energy."
+  - "Benchmark success does not identify a universal consciousness frequency."

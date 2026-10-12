@@ -1,0 +1,48 @@
+sources:
+  - id: KHAN_ET_AL_2026
+    title: "Personalized Network-Guided Neuromodulation Enhances Human Working Memory"
+    journal: "Advanced Science"
+    volume: 13
+    issue: 49
+    article: e23009
+    doi: "10.1002/advs.202523009"
+    publication_type:
+      - Journal Article
+      - Randomized Controlled Trial
+    final_adaptive_cohort: 19
+    tested_frequencies_hz: [5,10,20]
+    findings:
+      - "individualized fMRI network targets"
+      - "real-time decoder selected optimal/suboptimal tested frequency"
+      - "only optimal-frequency condition significantly improved working-memory performance"
+      - "frequency alone did not explain effects"
+      - "substantial inter-individual variability"
+    caution:
+      - "optimal means best among tested 5/10/20 Hz candidates"
+      - "9 of 19 participants required predefined behavioral fallback when decoder was insufficient in real time"
+
+  - id: XIA_ET_AL_2026
+    title: "State- and frequency-specific high-definition transcranial alternating current stimulation of the dorsolateral prefrontal cortex for analgesia"
+    journal: "Communications Biology"
+    published: "2026-09-04"
+    doi: "10.1038/s42003-026-10899-1"
+    experiments:
+      - n: 40
+        comparison: "10-Hz DLPFC vs 10-Hz primary sensorimotor target"
+      - n: 40
+        comparison: "7-Hz theta vs 10-Hz alpha at DLPFC"
+      - n: 28
+        comparison: "fixed 7 Hz vs individualized theta from pain-free vs pain-persistent states"
+    finding:
+      - "analgesia depended on frequency and state used for frequency selection"
+      - "pain-persistent-state individualized theta produced strongest analgesia"
+
+  - id: JEON_ET_AL_2026
+    title: "Personalized audiovisual gamma stimulation enhances neural connectivity and entrainment beyond fixed 40 Hz protocols"
+    journal: "Frontiers in Neuroscience"
+    year: 2026
+    doi: "10.3389/fnins.2026.1787255"
+    finding:
+      - "task-engaged personalized gamma frequency produced stronger activation/connectivity than fixed 40 Hz in the reported experiment"
+    caution:
+      - "authors frame this as hypothesis-generating for future neurorehabilitation"

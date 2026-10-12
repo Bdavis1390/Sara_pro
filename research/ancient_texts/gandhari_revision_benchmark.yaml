@@ -1,0 +1,63 @@
+benchmark_id: ATIP-GANDHARI-REVISION-001
+status: PRE_REGISTERED
+source: "https://gandhari.org/main/plugins/corpus/"
+reported_corrections_improvements: 3954
+principle: "correction != mistranslation"
+
+sampling:
+  phase_1:
+    target: 100
+    strategy:
+      - random_sample_from_documented_corrections
+      - stratify_by_text_type
+      - stratify_by_change_type_if_available
+  phase_2:
+    target: 500
+    condition: "after phase-1 adjudication and reviewer agreement"
+  corpus_scale:
+    target: "all lawfully accessible documented corrections"
+    condition: "adapter + rights + provenance complete"
+
+change_classes:
+  - ORTHOGRAPHIC_NONMATERIAL
+  - SIGN_READING
+  - SEGMENTATION
+  - LEXICAL
+  - MORPHOLOGICAL
+  - SYNTACTIC
+  - NAMED_ENTITY
+  - RESTORATION
+  - OMISSION_ADDITION
+  - ORDER
+  - INTERPRETATION_ONLY
+  - UNRESOLVED
+
+prediction_task:
+  input:
+    - old_reading
+    - current_reading
+    - witness_context
+    - editor_note_if_allowed
+  hidden_until_prediction:
+    - later_translation
+    - accepted_interpretation
+  outputs:
+    - change_class
+    - translation_reaudit_required
+    - confidence
+    - rationale
+    - evidence_needed
+
+metrics:
+  - materiality_precision
+  - materiality_recall
+  - stale_translation_precision
+  - stale_translation_recall
+  - false_reaudit_rate
+  - calibration_error
+  - abstention_quality
+
+hard_rules:
+  - "No smooth-English generation for unresolved source text."
+  - "Do not count a correction as a mistranslation without dependency evidence."
+  - "Keep historical reading and current reading together."

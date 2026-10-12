@@ -1,0 +1,41 @@
+adapters:
+  ARC_AGI_3:
+    capability:
+      - novel_interactive_learning
+      - exploration
+      - world_model_construction
+      - planning
+    human_reference: "action-efficiency human baseline"
+    caveat: "Benchmark saturation is not AGI proof."
+    independent_provider: "ARC Prize Foundation"
+
+  GDPVAL:
+    capability:
+      - broad_professional_knowledge_work
+      - multimodal_deliverables
+    human_reference: "blind expert preference against experienced professional deliverables"
+    breadth: "44 occupations / 9 sectors"
+    caveat:
+      - "one-shot first version"
+      - "does not by itself test interactive skill acquisition"
+    independent_provider: false
+
+  AGENTS_LAST_EXAM:
+    capability:
+      - long_horizon_professional_workflows
+      - real_tools
+    breadth: "55 subfields / 13 industry clusters / 1K+ tasks"
+    caveat: "Use independently reproduced candidate scores where available."
+
+  METR_TIME_HORIZON:
+    capability:
+      - long_horizon_task_completion
+    human_reference: "human expert completion time"
+    caveat:
+      - "current suite primarily software engineering, ML and cybersecurity"
+      - "time horizon is task difficulty, not wall-clock autonomy duration"
+
+  OSWORLD_2:
+    capability:
+      - real_computer_use
+    caveat: "Ensure official task version and harness are pinned."

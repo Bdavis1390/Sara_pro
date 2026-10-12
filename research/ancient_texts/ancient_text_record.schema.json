@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Worldshepherd Ancient Text Record",
+  "type": "object",
+  "required": ["record_id","epistemic_class","witness","text_layers","analysis","claim_state"],
+  "properties": {
+    "record_id": {"type":"string"},
+    "epistemic_class": {"enum":["KNOWN_DECIPHERED","PARTIALLY_CONSTRAINED","UNDECIPHERED","SYNTHETIC_NULL"]},
+    "witness": {
+      "type":"object",
+      "required":["repository","catalog_id","source_reference"],
+      "properties":{
+        "repository":{"type":"string"},
+        "catalog_id":{"type":"string"},
+        "source_reference":{"type":"string"},
+        "culture":{"type":["string","null"]},
+        "language":{"type":["string","null"]},
+        "script":{"type":["string","null"]},
+        "date_range":{"type":["string","null"]},
+        "place":{"type":["string","null"]},
+        "material":{"type":["string","null"]},
+        "object_type":{"type":["string","null"]},
+        "rights_access":{"type":["string","null"]},
+        "checksum":{"type":["string","null"]},
+        "source_class":{"enum":["A_PRIMARY_AUTHORITY","B_SCHOLARLY_CORPUS","C_CURATORIAL","D_SCHOLARLY_SECONDARY","E_RECEPTION","F_UNSOURCED","UNKNOWN"]}
+      }
+    },
+    "text_layers":{
+      "type":"object",
+      "properties":{
+        "diplomatic_transcription":{"type":["string","null"]},
+        "normalized_transcription":{"type":["string","null"]},
+        "transliteration":{"type":["string","null"]},
+        "segmentation":{"type":["array","null"]},
+        "morphology":{"type":["array","null"]},
+        "syntax_hypotheses":{"type":["array","null"]},
+        "translations":{"type":"array"},
+        "interpretations":{"type":"array"}
+      }
+    },
+    "layout_topology":{
+      "type":"object",
+      "properties":{
+        "regions":{"type":"array"},
+        "reading_order_hypotheses":{"type":"array"},
+        "adjacency":{"type":"array"},
+        "registers_columns_grids":{"type":"array"},
+        "diagrams_marginalia":{"type":"array"}
+      }
+    },
+    "analysis":{
+      "type":"object",
+      "properties":{
+        "literal_observations":{"type":"array"},
+        "sequence_statistics":{"type":"object"},
+        "positional_constraints":{"type":"array"},
+        "repeated_formulae":{"type":"array"},
+        "intertextual_links":{"type":"array"},
+        "cross_domain_correspondences":{"type":"array"},
+        "chronology_contact_constraints":{"type":"array"},
+        "alternative_explanations":{"type":"array"},
+        "disconfirming_evidence":{"type":"array"},
+        "measurements":{"type":"array"},
+        "pre_registered_hypotheses":{"type":"array"}
+      }
+    },
+    "benchmark":{
+      "type":"object",
+      "properties":{
+        "contamination_class":{"enum":["C0_SESSION_BLIND","C1_PARTIAL_LEXICON","C2_RETROSPECTIVE","C3_EDITORIAL_DEPENDENT","C4_UNKNOWN"]},
+        "allowed_evidence":{"type":"array"},
+        "withheld_comparator":{"type":["string","null"]},
+        "frozen_prediction_ref":{"type":["string","null"]},
+        "difference_vector":{"type":"object"}
+      }
+    },
+    "claim_state":{"type":"array","items":{"type":"string"}},
+    "next_validation_gate":{"type":["string","null"]}
+  }
+}

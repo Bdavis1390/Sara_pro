@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Organized Energy Consciousness Experiment",
+  "type": "object",
+  "required": ["experiment_id","state","energy","organization","interfaces","hypothesis","falsifiers"],
+  "properties": {
+    "experiment_id":{"type":"string"},
+    "state":{
+      "type":"object",
+      "properties":{
+        "clinical_state":{"type":["string","null"]},
+        "behavioral_report":{"type":["string","null"]},
+        "covert_consciousness_evidence":{"type":["object","null"]}
+      }
+    },
+    "energy":{
+      "type":"object",
+      "properties":{
+        "metabolic_measure":{"type":["object","null"]},
+        "power_measure":{"type":["object","null"]},
+        "spatial_distribution":{"type":["object","null"]},
+        "flux_proxy":{"type":["object","null"]}
+      }
+    },
+    "organization":{
+      "type":"object",
+      "properties":{
+        "complexity":{"type":["object","null"]},
+        "connectivity":{"type":["object","null"]},
+        "criticality":{"type":["object","null"]},
+        "phase_coherence":{"type":["object","null"]},
+        "cross_frequency_coupling":{"type":["object","null"]}
+      }
+    },
+    "interfaces":{
+      "type":"object",
+      "properties":{
+        "sensory_channels":{"type":"array"},
+        "motor_channels":{"type":"array"},
+        "interoception":{"type":["object","null"]},
+        "environmental_couplings":{"type":"array"}
+      }
+    },
+    "hypothesis":{"type":"string"},
+    "falsifiers":{"type":"array","items":{"type":"string"}},
+    "claim_state":{"type":"array","items":{"type":"string"}}
+  }
+}
