@@ -1,0 +1,55 @@
+{
+  "program": "WORLDSHEPHERD-PALACE",
+  "benchmark": "A027-COMPLEX-S-QUALITY-DIAGNOSTIC",
+  "claim_status": [
+    "IMPLEMENTED IN SOFTWARE",
+    "PROVEN INTERNALLY"
+  ],
+  "source": "A027-MEDIUM-HIGH_C-TE-60deg/palace-output/port-S.csv",
+  "source_sha256": "e8ce6440fcccdc9185b7c7ec90fcfe4e2a80ce9fad990d11469f8342c95040e6",
+  "residual_log_sha256": "e7ac5c69872cf54931dfb9de54a09b15aa2e2d6955788d78f2772d08b8571f7e",
+  "source_frequency_count": 161,
+  "fields": [
+    "f (GHz)",
+    "|S[8][1]| (dB)",
+    "arg(S[8][1]) (deg.)",
+    "|S[9][1]| (dB)",
+    "arg(S[9][1]) (deg.)"
+  ],
+  "reconstruction": "S=10^(dB/20)*exp(i*phase_degrees*pi/180); exported -inf dB maps to machine zero with phase null",
+  "first_point": {
+    "frequency_GHz": 9.2,
+    "s_8_1_dB": -84.15870579169,
+    "s_8_1_phase_deg": -175.191681572,
+    "s_8_1_amplitude": 0.00006195333794404549,
+    "s_8_1_real": -0.00006173530556596335,
+    "s_8_1_imag": -0.000005193084737055686
+  },
+  "maximum_complex_adjacent_delta": {
+    "channel": "S[8][1]",
+    "frequency_pair_GHz": [
+      9.2,
+      9.21
+    ],
+    "delta_amplitude": 0.000048022391826514636
+  },
+  "proposed_spotcheck_GHz": [
+    9.2,
+    9.21,
+    9.22,
+    9.23,
+    9.24,
+    9.25,
+    10,
+    10.8
+  ],
+  "selection_method": "Union of largest solver residuals, highest adjacent complex S change and low/mid/high controls; capped at 8; chosen prospectively without rerunning solver.",
+  "report_path_on_lenovo": "/var/tmp/worldshepherd/palace-a027-complex-s-diagnostic-2026-10-06.json",
+  "next_gates": [
+    "Confirm acceptable differential complex-S tolerance and phase handling before reruns",
+    "No expensive solver while A027-A054 Palace queue active or RAM gate fails",
+    "Compare new runs only against preserved raw baseline with all input hashes"
+  ],
+  "current_decision": "DIAGNOSTIC_PLAN_ONLY_HOLD_SOLVER_NONCONVERGENCE_REVIEW",
+  "claim_boundary": "S values are from a nonconverged Palace calculation. Weak amplitude and adjacent changes are candidate verification priorities, not measurement truth or physical error bounds. Exported -inf dB does not prove physically zero coupling."
+}

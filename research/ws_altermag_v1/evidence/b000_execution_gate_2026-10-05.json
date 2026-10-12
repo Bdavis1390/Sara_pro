@@ -1,0 +1,44 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-EXECUTION-GATE",
+  "execution_utc": "2026-10-05T19:28:33Z",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "gate_result": {
+    "decision": "BLOCK_DFT_EXECUTION",
+    "execution_clear": false,
+    "palace_clear": false,
+    "process_blockers": ["palace-x86_64", "prterun"],
+    "runtime_clear": false,
+    "missing_runtime_libraries": ["libmpi_mpifh.so.40", "libxc.so.9"],
+    "backend_hash_clear": true,
+    "backend_sha256_actual": "46000e1bee29f818d673cfd29b7423c0fbbc23407115f852f7ae59d27e53594f",
+    "storage_clear": true,
+    "var_tmp_free_GB": 13.680408477783203
+  },
+  "storage_snapshot": {
+    "home_available_MB_approx": 857,
+    "home_use_percent": 96,
+    "usb_mount": "/media/sspadawanzz/80CE-1B1E",
+    "usb_size_GB_approx": 15,
+    "usb_used_GB_approx": 3.1,
+    "usb_available_GB_approx": 12,
+    "usb_use_percent": 21,
+    "usb_writeable": true,
+    "policy": "Use /var/tmp for active solver scratch; archive receipts/results to the USB after each completed gate rather than consuming /home."
+  },
+  "convergence_plan": {
+    "execution_status": "PLAN_ONLY_NOT_EXECUTED",
+    "case_count": 8,
+    "basis_rgkmax_values": [6.0, 7.0, 8.0],
+    "basis_fixed_kgrid": [12, 12, 8],
+    "kgrid_sequence": [[8, 8, 6], [12, 12, 8], [18, 18, 12], [24, 24, 16]],
+    "reference_kgrid": [43, 43, 28],
+    "reference_rgkmax": 8.0,
+    "reference_rgkmax_note": "Initial cross-check choice only; must be accepted by basis-convergence gate before the reference run."
+  },
+  "validation": {
+    "pytest_result": "15 passed",
+    "claim_status": ["IMPLEMENTED IN SOFTWARE"],
+    "claim_boundary": "Execution guard and convergence planning are validated in software. No Elk calculation was started and no first-principles CrSb result is claimed."
+  }
+}

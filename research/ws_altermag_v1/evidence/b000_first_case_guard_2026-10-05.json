@@ -1,0 +1,30 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-FIRST-CASE-GUARD",
+  "execution_date": "2026-10-05",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "requested_case": {
+    "label": "basis-rgkmax-6.0",
+    "kgrid": [12, 12, 8],
+    "rgkmax": 6.0
+  },
+  "gate_state": {
+    "backend_hash_clear": true,
+    "runtime_clear": true,
+    "startup_sanity_passed": true,
+    "storage_clear": true,
+    "palace_clear": false,
+    "process_blockers": ["palace-x86_64", "prterun"]
+  },
+  "runner_result": {
+    "exit_code": 3,
+    "decision": "BLOCK_DFT_EXECUTION",
+    "elk_in_created": false,
+    "DFT_started": false
+  },
+  "validation": {
+    "pytest_result": "20 passed"
+  },
+  "claim_status": ["IMPLEMENTED IN SOFTWARE"],
+  "claim_boundary": "This proves the first-case runner fails closed while Palace is active. It is not a DFT or physical CrSb result."
+}

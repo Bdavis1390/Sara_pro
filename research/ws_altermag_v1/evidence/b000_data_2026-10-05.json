@@ -1,0 +1,32 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-DATA",
+  "execution_date": "2026-10-05",
+  "execution_host": "authorized Lenovo research workstation",
+  "source": {
+    "repository_doi": "10.17863/CAM.131869",
+    "article_doi": "10.1038/s41586-026-10902-z",
+    "archive_sha256": "2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79",
+    "member": "fig4b.csv",
+    "member_sha256": "70ea9a9a37ec2e6495599c8c330145a61a694bf17ac21d11e6633f46a4a80068"
+  },
+  "extraction": {
+    "frequency_window_kT": [3.25, 3.95],
+    "minimum_peak_separation_kT": 0.2,
+    "series": [
+      {"label": 0.4, "f1_kT": 3.4175167883493627, "f2_kT": 3.8198849729103737, "split_kT": 0.402368184561011},
+      {"label": 1.5, "f1_kT": 3.41279511853479, "f2_kT": 3.8208467087943845, "split_kT": 0.4080515902595945},
+      {"label": 2.2, "f1_kT": 3.4073612308936436, "f2_kT": 3.822893088319698, "split_kT": 0.41553185742605425},
+      {"label": 2.5, "f1_kT": 3.4090905243070257, "f2_kT": 3.826264125751862, "split_kT": 0.4171736014448362},
+      {"label": 3.0, "f1_kT": 3.409148316203551, "f2_kT": 3.8213199364002923, "split_kT": 0.41217162019674136},
+      {"label": 4.2, "f1_kT": 3.4110840827326956, "f2_kT": 3.8133605577560994, "split_kT": 0.4022764750234038}
+    ],
+    "mean_split_kT": 0.4095955548186068,
+    "min_split_kT": 0.4022764750234038,
+    "max_split_kT": 0.4171736014448362
+  },
+  "pass": true,
+  "source_run_evidence_digest": "352209df7c23a3a4158fb3ba1df4d39ee1869d39a80872087e86d00847915c67",
+  "claim_status": ["PROVEN INTERNALLY", "SUPPORTED BY LITERATURE"],
+  "claim_boundary": "The bounded internal claim is source-data extraction reproducibility. This is not an independent physical replication of CrSb."
+}

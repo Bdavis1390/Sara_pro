@@ -1,0 +1,30 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-OFFLOAD",
+  "execution_date": "2026-10-05",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "destination": "/media/sspadawanzz/80CE-1B1E/Worldshepherd-WS-ALTERMAG",
+  "media": {
+    "filesystem": "vfat",
+    "size_GB_approx": 15,
+    "available_GB_before_archive_approx": 12
+  },
+  "archive": {
+    "path": "backend-staging.tar",
+    "sha256": "3eceda20726e1819988aa2652a01ea8ba3168bec31edcc4a9f30c11b2b4e59d0",
+    "reason_for_tar": "VFAT does not preserve the symlinks used by the extracted OpenMPI/Elk runtime; a tar container preserves them."
+  },
+  "source_data": {
+    "path": "source-data/CrSb_QOs_Repository.zip",
+    "sha256": "2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79"
+  },
+  "local_evidence_files": {
+    "count": 6,
+    "checksum_manifest": "SHA256SUMS.evidence",
+    "verification": "ALL_OK"
+  },
+  "primary_checksum_manifest": "SHA256SUMS.primary",
+  "primary_verification": "ALL_OK",
+  "claim_status": ["PROVEN INTERNALLY"],
+  "claim_boundary": "This is a verified storage/provenance offload only. It adds no physical or computational-validation claim."
+}

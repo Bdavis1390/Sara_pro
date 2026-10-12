@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-QO-BACKEND",
+  "execution_status": "STAGED_NOT_EXECUTED",
+  "paper_native": {
+    "backend": "SKEAF",
+    "reference_version": "1.3.0 r149",
+    "reference_url": "https://www.wien2k.at/reg_user/unsupported/skeafrelease_v1p3p0_r149.tar.gz",
+    "status": "OFFICIAL_SOURCE_NOT_YET_PINNED",
+    "retrieval_attempt": {
+      "https": "TIMED_OUT",
+      "http_redirected_tls": "CERTIFICATE_VERIFY_FAILED",
+      "tls_verification_bypassed": false
+    },
+    "note": "Do not bypass certificate verification merely to obtain the paper-native source. Preserve this lane until a trustworthy source can be pinned."
+  },
+  "open_crosscheck": {
+    "backend": "PAOFLOW.pyskeaf",
+    "package": "PAOFLOW",
+    "version": "3.0.0",
+    "artifact": "paoflow-3.0.0-py3-none-any.whl",
+    "artifact_sha256": "27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e",
+    "status": "WHEEL_PINNED_NOT_INSTALLED",
+    "requires_python": ">=3.10",
+    "core_dependencies": [
+      "numpy>=2.0,<2.5",
+      "scipy>=1.14,<2",
+      "mpi4py~=4.1",
+      "pandas>=2.2,<3"
+    ],
+    "pyskeaf_extra_dependencies": [
+      "scikit-image>=0.20",
+      "shapely>=2.0",
+      "joblib>=1.2",
+      "pandas>=2.0"
+    ]
+  },
+  "compatibility_gate": {
+    "elk_export_task": 102,
+    "elk_outputs": [
+      "FERMISURF_UP.bxsf",
+      "FERMISURF_DN.bxsf"
+    ],
+    "pyskeaf_requires_single_band_bxsf": true,
+    "adapter_required": true,
+    "adapter_status": "IMPLEMENTED_SYNTHETICALLY_VALIDATED",
+    "direct_elk_to_pyskeaf_allowed": false,
+    "pyskeaf_periodic_grid_corner_match_policy": "WARNING_ONLY_IN_PAOFLOW_3_0_0",
+    "elk_task102_can_emit_multiple_bands_in_one_bxsf": true,
+    "primary_adapter_reason": "PySKEAF requires single-band BXSF input while Elk task 102 can emit multiple Fermi-crossing bands in one spin-resolved BXSF.",
+    "secondary_validation_required": [
+      "reciprocal-vector unit convention",
+      "periodic endpoint layout",
+      "band-by-band split fidelity"
+    ],
+    "synthetic_validation": {
+      "paoflow_wheel_sha256": "27e4dbc1ae4528c769be8f0cb868d632ff525246e87e2c0a53522ccc184add8e",
+      "adapter_digest": "5630ea94e3dbdceb5dcd66ae1e938de5f172a4fecf001d4e7880063fbb5500be",
+      "output_band_count": 2,
+      "pyskeaf_read_bxsf_accepts_all_outputs": true,
+      "output_dims": [
+        2,
+        2,
+        2
+      ],
+      "real_elk_validation_pending": true
+    }
+  },
+  "qo_gate": {
+    "requires_basis_gate_pass": true,
+    "requires_kgrid_gate_pass": true,
+    "requires_spin_resolved_bxsf_hashes": true,
+    "requires_adapter_validation": true,
+    "requires_orbit_extractor_validation": true,
+    "requires_qo_grid_convergence": true,
+    "current_decision": "BLOCK_QO_EXTRACTION_PENDING_REAL_ELK_BXSF_AND_ORBIT_EXTRACTOR"
+  },
+  "claim_boundary": "The quantum-oscillation toolchain is staged and compatibility-limited. No SKEAF/PySKEAF frequency result has been produced."
+}

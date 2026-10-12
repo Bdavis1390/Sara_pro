@@ -1,0 +1,40 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-STARTUP-SANITY",
+  "execution_date": "2026-10-05",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "backend": {
+    "name": "Elk",
+    "version": "7.2.42",
+    "binary_sha256": "46000e1bee29f818d673cfd29b7423c0fbbc23407115f852f7ae59d27e53594f",
+    "system_install_performed": false,
+    "runtime_mode": "extracted packages under /var/tmp with LD_LIBRARY_PATH and OPAL_PREFIX"
+  },
+  "staged_runtime_packages": {
+    "libhwloc15": "6749a98e4a12f6f380ee334113cbdc3384a1d8d8af6add254f6557c9a9f9bc28",
+    "libevent-core-2.1-7": "9317ae74915b9e4372f7506fbd16ae2a021e0ead79a8d88f96dad49b87d94508",
+    "libevent-pthreads-2.1-7": "078211a125a9ef5a9c7d24eb441761cefde8812b69889f7cee96824b0dc66831",
+    "openmpi-bin": "a6fa0b564def24fa9ecbfb7f2419e929d74847fc3c2146ea4c38e7be6369ab79",
+    "openmpi-common": "6855278856cf4ffccfed86c5bc3255592b895ea6b4bfcd8a620e828ae26fadca",
+    "libpmix2": "db7d8f79a04b5de98f4e14d05725f6744de69ccc831a14f998115d8ee1e9c3ff"
+  },
+  "test": {
+    "elk_in_present": false,
+    "timeout_seconds": 5,
+    "return_code": 0,
+    "timed_out": false,
+    "stdout_contains": [
+      "Elk code version 7.2.42 started",
+      "Error(readinput): error opening elk.in"
+    ],
+    "info_out_created": false,
+    "optional_mpi_transport_warnings_present": true,
+    "heavy_solver_work_performed": false
+  },
+  "decision": "STARTUP_SANITY_PASS",
+  "validation": {
+    "pytest_result_after_harness": "18 passed"
+  },
+  "claim_status": ["IMPLEMENTED IN SOFTWARE"],
+  "claim_boundary": "The content-pinned Elk binary and staged user-space runtime reached Elk input parsing and stopped because elk.in was deliberately absent. This is not an SCF/DFT calculation and supplies no CrSb physics result."
+}

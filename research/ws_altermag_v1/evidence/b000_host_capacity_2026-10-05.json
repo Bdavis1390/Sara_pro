@@ -1,0 +1,36 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-HOST-CAPACITY",
+  "execution_date": "2026-10-05",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "logical_cpus": 2,
+  "memory_gate": {
+    "MemAvailable_GB": 0.27060699462890625,
+    "minimum_mem_available_GB": 1.0,
+    "memory_clear": false
+  },
+  "swap_gate": {
+    "SwapFree_GB": 1.41015625,
+    "minimum_swap_free_GB": 1.0,
+    "swap_clear": true
+  },
+  "storage_gate": {
+    "work_root_free_GB": 13.646720886230469,
+    "minimum_work_root_free_GB": 8.0,
+    "storage_clear": true
+  },
+  "process_gate": {
+    "palace_clear": false,
+    "process_blockers": ["palace-x86_64", "prterun"],
+    "recovery_queue_context": "Palace recovery runner is executing the A027-A054 sequence; A027 is still active."
+  },
+  "backend_gate": {
+    "backend_hash_clear": true,
+    "runtime_clear": true,
+    "startup_sanity_passed": true
+  },
+  "decision": "BLOCK_DFT_EXECUTION",
+  "interpretation": "The live host cannot safely add the first Elk case while Palace is active and MemAvailable is below the 1.0 GiB engineering threshold. Swap and storage remain above their declared minimums.",
+  "claim_status": ["PROVEN INTERNALLY"],
+  "claim_boundary": "This is a dynamic host-capacity receipt, not a CrSb physics result. Memory thresholds are Worldshepherd engineering safety gates."
+}

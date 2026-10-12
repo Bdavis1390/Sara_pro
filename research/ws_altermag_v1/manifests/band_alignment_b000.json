@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-BAND-ALIGNMENT",
+  "source": {
+    "article_doi": "10.1038/s41586-026-10902-z",
+    "paper_method": "Band-edge shifts applied after DFT to close/align calculated Fermi sheets with quantum-oscillation data."
+  },
+  "transforms": {
+    "dogbone_hole": {
+      "shift_eV": -0.11,
+      "reason": "Paper shifts dogbone-like hole sheets down by 0.11 eV."
+    },
+    "web_electron": {
+      "shift_eV": 0.015,
+      "reason": "Paper shifts web electron sheets up by 0.015 eV to maintain total carrier number."
+    }
+  },
+  "policy": {
+    "raw_lane_required": true,
+    "aligned_lane_required": true,
+    "overwrite_raw_forbidden": true,
+    "explicit_sheet_classification_required": true,
+    "automatic_band_classification_allowed": false,
+    "frequency_comparison_must_label_alignment_lane": true
+  },
+  "claim_boundary": "Paper-reported rigid band shifts are an empirical alignment transform, not an ab-initio prediction. Raw and aligned calculations must remain separately reportable."
+}

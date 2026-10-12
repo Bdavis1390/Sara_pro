@@ -1,0 +1,28 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-EXECUTION-GATE",
+  "execution_utc": "2026-10-05T19:36:16Z",
+  "host": "authorized Lenovo Ubuntu 22.04 LTS workstation",
+  "backend": {
+    "binary_sha256": "46000e1bee29f818d673cfd29b7423c0fbbc23407115f852f7ae59d27e53594f",
+    "backend_hash_clear": true,
+    "runtime_root": "/var/tmp/ws-altermag-elk-cache/runtime",
+    "missing_runtime_libraries": [],
+    "runtime_clear": true,
+    "startup_sanity_passed": true
+  },
+  "storage": {
+    "work_root": "/var/tmp/ws-altermag-runs",
+    "free_GB": 13.64898681640625,
+    "storage_clear": true
+  },
+  "process_gate": {
+    "palace_clear": false,
+    "blockers": ["palace-x86_64", "prterun"]
+  },
+  "decision": "BLOCK_DFT_EXECUTION",
+  "execution_clear": false,
+  "interpretation": "Backend, isolated runtime, startup sanity, hash and storage gates are now clear. The active Palace workload is the remaining execution blocker.",
+  "claim_status": ["IMPLEMENTED IN SOFTWARE"],
+  "claim_boundary": "No CrSb SCF/DFT calculation was started. This receipt records only execution-gate state."
+}

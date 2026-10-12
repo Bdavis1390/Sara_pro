@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "program": "WORLDSHEPHERD-PALACE",
+  "case": "A027-MEDIUM-HIGH_C-TE-60deg",
+  "evidence_type": "GMRES_NONCONVERGENCE_RESIDUAL_PROFILE",
+  "source_sha256": "e7ac5c69872cf54931dfb9de54a09b15aa2e2d6955788d78f2772d08b8571f7e",
+  "generated_from": "research/ws_altermag_v1/palace_residual_profile.py",
+  "full_profile_on_lenovo": "/var/tmp/worldshepherd/palace-a027-residual-profile-2026-10-06.json",
+  "source_log": "A027-MEDIUM-HIGH_C-TE-60deg/stdout.txt",
+  "total_frequency_points": 161,
+  "gmres_nonconverged_points": 161,
+  "relative_residual_stats": {
+    "min": 0.000001784,
+    "median": 0.00000305,
+    "p90_nearest_rank": 0.00002199,
+    "max": 0.001313
+  },
+  "relative_residual_threshold_count_strictly_greater": {
+    "1e-3": 1,
+    "1e-4": 6,
+    "1e-5": 27,
+    "1e-6": 161
+  },
+  "illustrative_frequency_residuals": [
+    {
+      "GHz": 9.2,
+      "residual": 0.001313
+    },
+    {
+      "GHz": 9.21,
+      "residual": 0.0004948
+    },
+    {
+      "GHz": 9.22,
+      "residual": 0.0002703
+    },
+    {
+      "GHz": 9.25,
+      "residual": 0.0001009
+    },
+    {
+      "GHz": 10.8,
+      "residual": 0.000001784
+    }
+  ],
+  "recommended_sampling_policy": "Select worst residual frequencies including 9.20,9.21,9.25 GHz, plus medium and high-band representatives. Add output-gradient or resonant hot spots based on complex S-parameter analysis; predeclare output tolerances before reruns. Do not infer physical error directly from linear residual.",
+  "software_tests": "3 passed, 52 deselected in 2.30s (focused residual parser tests on Lenovo)",
+  "decision": "HOLD_SOLVER_NONCONVERGENCE_REVIEW",
+  "claim_boundary": "Solver residual magnitude is not an observable error bound; A027 exit 0 and 161 frequency rows remain numerically unvalidated until independent controlled re-solves or defensible error analysis."
+}

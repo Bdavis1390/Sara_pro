@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "program": "WS-ALTERMAG",
+  "evidence_type": "PALACE_RESOURCE_HANDOFF_AND_NUMERICAL_QUALITY",
+  "observed_utc": "2026-10-07T00:45:03.887734+00:00",
+  "source": "authorized Lenovo Palace A027-A054 recovery queue",
+  "job_results_tsv_sha256": "cf73e568d64eef6435ff10de5674e0b55a1619b05bb943c63f64b9554dba7212",
+  "queued_anchor_range": [
+    27,
+    54
+  ],
+  "completed_anchor_ids": [
+    27,
+    28
+  ],
+  "pending_count": 26,
+  "observed_runs": [
+    {
+      "anchor": 27,
+      "points": 161,
+      "gmres_nonconvergence_count": 161,
+      "linear_solver_warning_count": 161,
+      "exit0": true,
+      "decision": "HOLD_SOLVER_NONCONVERGENCE_REVIEW",
+      "port_s_sha256": "e8ce6440fcccdc9185b7c7ec90fcfe4e2a80ce9fad990d11469f8342c95040e6",
+      "stdout_sha256": "e7ac5c69872cf54931dfb9de54a09b15aa2e2d6955788d78f2772d08b8571f7e"
+    },
+    {
+      "anchor": 28,
+      "points": 161,
+      "gmres_nonconvergence_count": 0,
+      "linear_solver_warning_count": 0,
+      "exit0": true,
+      "decision": "PROVISIONAL_SOLVER_LOG_PASS",
+      "port_s_sha256": "43f19f6a520a1345a843d0b3d8d3f2209e2ae1e8e1db81a003d2319d87ab669b",
+      "stdout_sha256": "313e5ef5e874168f41fa2e481e7c5168d516bac33dd139c55eb5345c15fec391"
+    },
+    {
+      "anchor": 29,
+      "points": 86,
+      "gmres_nonconvergence_count": 0,
+      "exit0": false,
+      "decision": "IN_PROGRESS_OR_EXIT_NOT_RECORDED",
+      "snapshot_warning": "May change as job progresses"
+    }
+  ],
+  "host_execution_gate": "BLOCK_DFT_EXECUTION",
+  "execution_blockers": [
+    "ACTIVE_PALACE_MPI",
+    "PALACE_QUEUE_INCOMPLETE",
+    "MEMAVAILABLE_BELOW_1_GIB"
+  ],
+  "provenance": "Snapshot values reproduced by research/ws_altermag_v1/palace_quality_audit.py; full live report stored on Lenovo in /var/tmp/worldshepherd/palace-quality-2026-10-06.json",
+  "claim_boundary": "Exit 0 and full frequency coverage do not guarantee numerical solver convergence or scientific validity. This receipt documents a host resource handoff and a provisional numerical log audit, not CrSb first-principles results."
+}

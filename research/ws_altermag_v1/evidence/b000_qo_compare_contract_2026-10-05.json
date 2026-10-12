@@ -1,0 +1,36 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-QO-COMPARE-CONTRACT",
+  "execution_date": "2026-10-05",
+  "target_manifest_sha256": "4780ad0b69cc9048b5c134a342c897da85365e91315926ec3a734bf8c9e065c2",
+  "comparator_sha256": "18aea3821a44242730b9442a014dacdde0482ae89b3ff33e842760b09d1acaf9",
+  "target_count": 12,
+  "engineering_acceptance": {
+    "minimum_split_correlation": 0.8,
+    "maximum_node_split_kT": 0.05,
+    "maximum_pair_mae_kT": 0.2,
+    "minimum_angle_coverage": 12
+  },
+  "synthetic_perfect_fixture": {
+    "coverage": 12,
+    "overall_pair_mae_kT": 0.0,
+    "split_correlation": 1.0,
+    "coverage_pass": true,
+    "nodes_pass": true,
+    "split_correlation_pass": true,
+    "pair_mae_pass": true,
+    "pass": true,
+    "decision": "QO_REFERENCE_MATCH"
+  },
+  "negative_controls": [
+    "missing angle -> HOLD",
+    "broken node split -> HOLD"
+  ],
+  "policy": {
+    "dogbone_classification_must_be_explicit": true,
+    "automatic_orbit_classification_allowed": false,
+    "raw_and_aligned_lanes_evaluated_separately": true
+  },
+  "claim_status": ["IMPLEMENTED IN SOFTWARE", "PROVEN INTERNALLY"],
+  "claim_boundary": "This validates the comparison machinery against frozen source-data targets and negative controls. No computed CrSb orbit frequencies have yet been compared because no real Elk CrSb run has executed."
+}

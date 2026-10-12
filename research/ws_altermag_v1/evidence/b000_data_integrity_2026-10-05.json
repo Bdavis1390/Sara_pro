@@ -1,0 +1,37 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-DATA-INTEGRITY",
+  "execution_date": "2026-10-05",
+  "archive_sha256": "2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79",
+  "findings": [
+    {
+      "pair": ["fig2b.csv", "fig2f.csv"],
+      "role": "simulated_frequency_profiles",
+      "full_equal": true,
+      "body_equal": true,
+      "body_sha256": "7307ea7e6625a92b6c5a019dae395a258ee7918c3a6f35232b07fd03574b757f"
+    },
+    {
+      "pair": ["fig2c.csv", "fig2g.csv"],
+      "role": "selected_torque_traces",
+      "full_equal": false,
+      "headers_equal": false,
+      "body_equal": true,
+      "body_sha256": "ce901aec68706739b07216cdbf5c011cf71bd9dec7eda5c5feec2a7994af371a"
+    },
+    {
+      "pair": ["fig2d.csv", "fig2h.csv"],
+      "role": "selected_fft_spectra",
+      "full_equal": false,
+      "headers_equal": false,
+      "body_equal": true,
+      "body_sha256": "40a03f7b62b2fe44f2a9c4477d14abdd0d081120ee6692c74a6e615800e4406f"
+    }
+  ],
+  "duplicate_body_pair_count": 3,
+  "nodal_vs_antinodal_gate": "BLOCKED_SOURCE_DATA_AMBIGUITY",
+  "pass": false,
+  "claim_status": ["PROVEN INTERNALLY"],
+  "claim_boundary": "Byte-level duplicate-body relationships are established for the pinned archive. Their cause is not inferred and no error is attributed to the authors.",
+  "next_gate": "Use an unambiguous source-data path or obtain clarification/corrected panel data before claiming automated Fig. 2 nodal-versus-antinodal reproduction."
+}

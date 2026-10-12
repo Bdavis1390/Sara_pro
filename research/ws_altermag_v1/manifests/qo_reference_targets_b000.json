@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0-rc0",
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-QO-COMPARE",
+  "source": {
+    "dataset_doi": "10.17863/CAM.131869",
+    "archive_sha256": "2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79",
+    "dft_member": "fig3b.csv",
+    "dft_member_sha256": "94902e633b465a92f1f532de5f356372f19193562bc255e1dc7e1d57a40ddf53",
+    "fft_member": "fig3d.csv",
+    "fft_member_sha256": "3a1234f155b4a1788caf2fe69af0a887f5e6f1f993b8f0871aa2a96b5767154b",
+    "extraction_evidence_digest": "7de9c7e13e1c3d3240eda6659c33628eb3a06ae0b08260f51041bf2d2ed745a0",
+    "reference_scope": "Frozen theory-guided branch assignment from the previously validated Fig. 3 source-data re-analysis."
+  },
+  "targets": [
+    {"alpha_deg": -72.0, "observed_frequencies_kT": [3.5701134911868504, 2.7238228519887118], "node": false},
+    {"alpha_deg": -68.0, "observed_frequencies_kT": [3.480951503123921, 2.875291443056572], "node": false},
+    {"alpha_deg": -60.0, "observed_frequencies_kT": [3.2210006248443745, 3.2210006248443745], "node": true},
+    {"alpha_deg": -55.0, "observed_frequencies_kT": [3.037786145202319, 3.444330015935715], "node": false},
+    {"alpha_deg": -50.0, "observed_frequencies_kT": [2.8521577372975355, 3.6176719351869173], "node": false},
+    {"alpha_deg": -42.0, "observed_frequencies_kT": [2.923844559767347, 3.5401451287379153], "node": false},
+    {"alpha_deg": -38.0, "observed_frequencies_kT": [2.9044800425799133, 3.450288372729159], "node": false},
+    {"alpha_deg": -32.0, "observed_frequencies_kT": [2.9753703204823854, 3.5057984556101642], "node": false},
+    {"alpha_deg": -24.0, "observed_frequencies_kT": [2.8801632604144176, 3.396556168215992], "node": false},
+    {"alpha_deg": -16.0, "observed_frequencies_kT": [3.018233886169396, 3.2930030774873384], "node": false},
+    {"alpha_deg": -8.0, "observed_frequencies_kT": [3.2277918464224697, 3.3212468442030763], "node": false},
+    {"alpha_deg": 0.0, "observed_frequencies_kT": [3.3950924734127086, 3.3950924734127086], "node": true}
+  ],
+  "engineering_acceptance": {
+    "minimum_split_correlation": 0.80,
+    "maximum_node_split_kT": 0.05,
+    "maximum_pair_mae_kT": 0.20,
+    "minimum_angle_coverage": 12
+  },
+  "policy": {
+    "two_explicit_dogbone_orbits_per_angle_required": true,
+    "automatic_orbit_classification_allowed": false,
+    "raw_and_aligned_lanes_evaluated_separately": true,
+    "missing_angle_fails_closed": true
+  },
+  "claim_boundary": "These are frozen experimental-comparison targets derived from a theory-guided source-data branch assignment. Passing this benchmark is computational agreement with that reference, not an independent experimental replication."
+}

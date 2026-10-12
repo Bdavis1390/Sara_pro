@@ -1,0 +1,41 @@
+{
+  "program": "WS-ALTERMAG",
+  "benchmark": "B000-ANGULAR",
+  "execution_date": "2026-10-05",
+  "archive_sha256": "2e7c2e4658f151b7b52dd57df24f24fcb5a5cc2ce5d6bc07c62dbc1d66111d79",
+  "members": {
+    "dft_profile": {
+      "path": "fig3b.csv",
+      "sha256": "94902e633b465a92f1f532de5f356372f19193562bc255e1dc7e1d57a40ddf53"
+    },
+    "experimental_fft": {
+      "path": "fig3d.csv",
+      "sha256": "3a1234f155b4a1788caf2fe69af0a887f5e6f1f993b8f0871aa2a96b5767154b"
+    }
+  },
+  "coordinate_contract": "exported_dft_x_deg = alpha_deg + 90",
+  "node_results": [
+    {
+      "alpha_deg": -60.0,
+      "predicted_split_kT": 0.007609857916945462,
+      "observed_frequencies_kT": [3.2210006248443745, 3.2210006248443745],
+      "observed_split_kT": 0.0
+    },
+    {
+      "alpha_deg": 0.0,
+      "predicted_split_kT": 0.002570499999999587,
+      "observed_frequencies_kT": [3.3950924734127086, 3.3950924734127086],
+      "observed_split_kT": 0.0
+    }
+  ],
+  "off_node_match_count": 9,
+  "split_correlation": 0.8613808305320605,
+  "hashes_ok": true,
+  "nodes_pass": true,
+  "off_nodes_pass": true,
+  "correlation_pass": true,
+  "pass": true,
+  "source_run_evidence_digest": "7de9c7e13e1c3d3240eda6659c33628eb3a06ae0b08260f51041bf2d2ed745a0",
+  "claim_status": ["PROVEN INTERNALLY", "SUPPORTED BY LITERATURE"],
+  "claim_boundary": "Theory-guided re-analysis of published Fig. 3 data. DFT is used to associate experimental FFT peaks with dogbone branches; this is not theory-independent physical replication."
+}
