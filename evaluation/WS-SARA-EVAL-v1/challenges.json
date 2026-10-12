@@ -1,0 +1,73 @@
+{
+  "schema": "ws-sara-eval-v1-challenges-1",
+  "artifact_id": "WS-SARA-EVAL-v1",
+  "candidate_commit": "baf10ed485440da0ca7c9d3369bfe9a82e6b80b6",
+  "candidate_ref": "refs/heads/freeze/WS-SARA-EVAL-v1",
+  "status": "PUBLIC_BASELINE_CHALLENGES_FOR_HOSTED_PREFLIGHT",
+  "claims_boundary": "These challenge classes restate behaviors already asserted by the frozen candidate tests. Passing them in Worldshepherd-controlled CI is internal/hosted evidence only. An independent evaluator should control hidden variants, execution environment, timing, seed, original evidence, and discrepancy custody.",
+  "challenge_classes": [
+    {
+      "id": "AUTH-01",
+      "objective": "Reject missing, malformed, or invalid bearer credentials on protected audit access.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_missing_malformed_and_invalid_credentials",
+      "baseline_expected_semantics": ["HTTP 401", "no privilege granted"]
+    },
+    {
+      "id": "AUTH-02",
+      "objective": "Prevent relay credentials from crossing the administrator authorization boundary.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_every_admin_endpoint_rejects_relay_credentials",
+      "baseline_expected_semantics": ["HTTP 403 on administrator endpoints", "relay credential remains non-admin"]
+    },
+    {
+      "id": "RELAY-01",
+      "objective": "Verify the relay surface records a bounded local event rather than claiming external delivery or arbitrary execution.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_relay_and_admin_credentials_can_record_local_relay",
+      "baseline_expected_semantics": ["HTTP 200 for authorized bounded request", "status equals recorded_local_only"]
+    },
+    {
+      "id": "INPUT-01",
+      "objective": "Malformed JSON must fail without mutating audit or registry state.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_malformed_json_does_not_mutate_state",
+      "baseline_expected_semantics": ["HTTP 422", "audit bytes unchanged", "registry bytes unchanged"]
+    },
+    {
+      "id": "INPUT-02",
+      "objective": "Oversized request bodies and over-limit structured payloads must fail without state mutation.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_oversized_request_does_not_mutate_state; deployments/sara_verified_local_v1/tests/test_api.py::test_relay_resource_limits_do_not_mutate_state",
+      "baseline_expected_semantics": ["HTTP 413 or 422 according to limit class", "protected state unchanged"]
+    },
+    {
+      "id": "READY-01",
+      "objective": "A persistent-storage failure must make readiness fail while liveness remains available.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_readiness_reports_storage_failure_but_liveness_survives",
+      "baseline_expected_semantics": ["readyz returns HTTP 503 and not_ready", "livez remains HTTP 200"]
+    },
+    {
+      "id": "FS-01",
+      "objective": "Reject registry or audit-file symlink substitution instead of following an attacker-controlled path.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_registry_symlink_swap_is_rejected; deployments/sara_verified_local_v1/tests/test_api.py::test_audit_symlink_swap_is_rejected",
+      "baseline_expected_semantics": ["unsafe file substitution rejected", "outside file not modified"]
+    },
+    {
+      "id": "AUDIT-01",
+      "objective": "Corrupted audit records must be surfaced as corruption rather than silently parsed as valid history.",
+      "frozen_evidence_ref": "deployments/sara_verified_local_v1/tests/test_api.py::test_corrupted_audit_lines_are_safely_labeled",
+      "baseline_expected_semantics": ["audit_corruption_detected record returned", "reason equals invalid_line"]
+    },
+    {
+      "id": "RECOVERY-01",
+      "objective": "Exercise the frozen candidate's committed deployment/recovery evidence path in a clean evaluator environment.",
+      "frozen_evidence_ref": ".github/workflows/sara-verified-local-v1.yml and deployments/sara_verified_local_v1/scripts/recovery_exercise.sh",
+      "baseline_expected_semantics": ["clean install/test path completes or discrepancy is retained", "recovery evidence is preserved rather than summarized away"]
+    }
+  ],
+  "independent_evaluator_extension": {
+    "required": true,
+    "instructions": [
+      "Generate hidden variants within or adjacent to the public challenge classes.",
+      "Control the final challenge seed or identifiers outside Worldshepherd custody before execution.",
+      "Retain failures, malformed cases, denials, unexpected passes, recovery anomalies, and environment discrepancies.",
+      "Do not treat Worldshepherd-hosted preflight results as independent reproduction."
+    ]
+  }
+}
