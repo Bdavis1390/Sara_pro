@@ -1,9 +1,9 @@
 # WS-PBA v0.3 — Power-Beaming Assurance
 
-- **Status:** G1 reference implementation candidate
+- **Status:** G1 merged/green; G2 cryptographic authorization and replay-hardening candidate
 - **Date:** 2026-10-01
 - **Owner:** Worldshepherd / SARA
-- **Claim state:** `IMPLEMENTED IN SOFTWARE` for the bounded models, state-machine logic, and evidence-chain code in this branch; `REQUIRES LAB VALIDATION` and `REQUIRES PARTNER VALIDATION` for any physical power-beaming use.
+- **Claim state:** `IMPLEMENTED IN SOFTWARE` for the merged G1 bounded models, state-machine logic, and evidence-chain code; G2 remains a branch candidate until CI passes and merge completes. Any physical power-beaming use remains `REQUIRES LAB VALIDATION` and `REQUIRES PARTNER VALIDATION`.
 
 ## Purpose
 
@@ -59,19 +59,22 @@ Direct transitions into `DELIVERY_AUTHORIZED` from `SAFE_OFF`, `DISCOVERY`, `ATT
 9. Identity, configuration, or attestation loss during operation yields a latched fault disposition.
 10. Navigation, tracking, freshness, or critical-state faults yield a controlled ramp-down disposition.
 11. Every decision can be represented as a deterministic ECHO-compatible hash-chained evidence event.
+12. Complete mission-local evidence chains begin at sequence zero; prefix truncation is rejected unless a future trusted checkpoint/anchor explicitly establishes a fragment start.
 
 ## Evidence model
 
-`PBAEvidenceEvent` records prior/requested/resulting state, the authorization identifier, normalized decision reason, configuration/navigation/tracking/interlock digests, sequence number, and the prior-event hash. `seal_event()` computes a domain-separated SHA-256 digest. `verify_chain()` rejects tampering, broken linkage, or sequence gaps.
+`PBAEvidenceEvent` records prior/requested/resulting state, the authorization identifier, normalized decision reason, configuration/navigation/tracking/interlock digests, sequence number, and the prior-event hash. `seal_event()` computes a domain-separated SHA-256 digest. `verify_chain()` rejects tampering, broken linkage, sequence gaps, and untrusted truncated starts.
 
 This provides software evidence of decision provenance. It does not prove physical beam alignment, delivered power, endpoint position, hardware safety, or flight qualification.
 
-## G1 validation scope
+## G1 validation status
 
-The branch test suite covers:
+G1 merged through PR #526 after the repository's required test/build, CodeQL, SARA Verified Local, resilience, rollback, restore, NIST-precursor, freshness, and related CI workflows completed successfully.
+
+The merged G1 test scope covers:
 
 - prohibited shortcuts into delivery;
-- nominal authorization;
+- nominal semantic authorization;
 - transmitter and receiver attestation loss;
 - stale telemetry;
 - navigation and tracking invalidity;
@@ -82,8 +85,69 @@ The branch test suite covers:
 - receiver mismatch;
 - configuration-digest mismatch;
 - authorization expiry;
-- evidence-chain tamper detection and sequence-gap detection.
+- evidence-chain tamper detection, sequence-gap detection, and prefix-truncation rejection.
 
-## G2 target
+## G2 cryptographic authorization boundary
 
-G2 is intentionally separate from G1. It should add cryptographic verification of authorization signatures, replay resistance, monotonic authorization sequence handling, signer/key policy, explicit adapter contracts, and adversarial sequence generation. Physical power-beaming claims remain out of scope until independent lab/partner validation exists.
+G2 adds a verification-only Ed25519 trust boundary around `SafeToBeamAuthorization`. The canonical signature message binds:
+
+- authorization and mission identifiers;
+- transmitter and receiver identities;
+- endpoint attestation evidence;
+- configuration, navigation, and tracking digests;
+- validity window and allowed operating state;
+- policy and authority identifiers;
+- signer key identifier;
+- prior evidence-chain head;
+- nonce; and
+- monotonic authorization sequence.
+
+A G2 verifier rejects missing, unknown, or revoked signer keys; invalid or malformed Ed25519 signatures; excessive authorization lifetime; naive verification clocks; authorizations that are too far in the future; not-yet-valid authorizations; and expired authorizations.
+
+### Replay and rollback protection
+
+`PBAReplayLedger` is a crash-persistent SQLite guard. After successful cryptographic verification it atomically rejects:
+
+- reused `authorization_id` values;
+- reused nonces; and
+- sequence values that do not strictly increase for the same `(mission_id, transmitter_id, receiver_id)` scope.
+
+The replay ledger uses `BEGIN IMMEDIATE`, `synchronous=FULL`, unique constraints, and a persisted highest-sequence record so replay/rollback protection survives process restart.
+
+### Combined admission gate
+
+`authorize_delivery_once()` composes the G2 cryptographic boundary with the merged G1 semantic assurance evaluator in an explicit order:
+
+1. verify the authorization signature, key policy, and time policy;
+2. evaluate current endpoint identity, attestation, configuration, navigation, tracking, freshness, disagreement, and safety-veto state;
+3. claim the authorization in the replay ledger **only if** the semantic decision permits the transition.
+
+This ordering prevents a transient telemetry/tracking denial from prematurely consuming an otherwise valid authorization. Once a delivery transition is admitted, the token is one-use and a second attempt is rejected by the replay ledger.
+
+The combined gate still returns authorization state only; it contains no partner hardware actuation interface.
+
+### Partner adapter contract
+
+`PBAPartnerAdapter` is deliberately read-only. An adapter may return a normalized, timestamped `PBAAdapterEnvelope`; the protocol exposes no beam, pointing, targeting, waveform, or energy-actuation method. That keeps the Worldshepherd layer on the assurance side of the control boundary.
+
+## G2 validation scope
+
+The G2 branch tests cover:
+
+- valid Ed25519 verification;
+- signature tamper and malformed-signature rejection;
+- unknown-key and revoked-key rejection;
+- missing G2 key metadata rejection;
+- timezone-aware verification-clock enforcement;
+- maximum authorization lifetime enforcement;
+- duplicate authorization-ID and nonce rejection;
+- non-monotonic sequence rejection across ledger restart;
+- acceptance of a strictly higher sequence;
+- independent sequence scopes for different missions/endpoints;
+- expired and far-future token rejection;
+- combined cryptographic + semantic admission;
+- non-consumption of a token on a transient semantic denial;
+- one-use rejection after a successful admission; and
+- conformance to the read-only partner adapter protocol.
+
+G2 remains `IMPLEMENTED IN SOFTWARE — CANDIDATE` until its branch CI completes and the PR is merged. Physical power-beaming claims remain out of scope until independent lab and partner validation exist.
