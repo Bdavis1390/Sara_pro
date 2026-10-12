@@ -1,0 +1,107 @@
+{
+  "entity": "Worldshepherd WS-SARA-EVAL-v1.1",
+  "record_date": "2026-09-17",
+  "exact_candidate_commit": "45494ddd32f96b36cef8df37dea33ab405cd4573",
+  "non_claims": [
+    "This record scores only the frozen v1.1 candidate and evidence/protocol artifacts explicitly named below.",
+    "A05 replay/duplicate/idempotency control remains not evidenced for the frozen candidate and receives zero points.",
+    "A12 independent reproduction and A13 external workflow use remain not evidenced and receive zero points.",
+    "The v1 hosted-preflight portability failure is retained and is not erased by the v1.1 remediation."
+  ],
+  "criteria": {
+    "A01": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/worldshepherd_sara/autonomy_policy.py",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/tests/test_autonomy_policy.py"
+      ],
+      "notes": "Frozen tests cover explicit DENIED dispositions and bounded automatic-execution eligibility."
+    },
+    "A02": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/worldshepherd_sara/autonomy_policy.py",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/tests/test_autonomy_policy.py"
+      ],
+      "notes": "Frozen policy requires HUMAN_REVIEW_REQUIRED for non-allowlisted/high-authority actions."
+    },
+    "A03": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/tests/test_api.py"
+      ],
+      "notes": "Frozen tests cover malformed/oversized/over-limit rejection with unchanged audit/registry state."
+    },
+    "A04": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/tests/test_api.py",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/worldshepherd_sara/storage.py"
+      ],
+      "notes": "Frozen tests reject unsafe symlink substitution and surface corrupt audit lines."
+    },
+    "A05": {
+      "level": "not_evidenced",
+      "sources": [],
+      "notes": "Frozen-tree search found no explicit replay, duplicate, idempotency, nonce, or request-id control evidence. Startup outbox replay is recovery behavior, not sufficient duplicate/side-effect control evidence."
+    },
+    "A06": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/.github/workflows/sara-verified-local-v1.yml",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/scripts/recovery_exercise.sh",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/tests/test_api.py"
+      ],
+      "notes": "Readiness/liveness separation, recovery exercise, rollback/restore-related CI evidence exist at the exact candidate head."
+    },
+    "A07": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/worldshepherd_sara/evaluator_handoff.py",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/docs/EVALUATOR_HANDOFF_MANIFEST_V1.md"
+      ],
+      "notes": "Manifest generator binds repo/ref/exact 40-character SHA, package inventory, declared dependencies, hardware assumptions, fixtures, scope, and digest."
+    },
+    "A08": {
+      "level": "vendor_product_documented",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/scripts/verify_partner_screening_artifact.sh",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/deployments/sara_verified_local_v1/tests/test_verify_partner_screening_artifact_script.py"
+      ],
+      "notes": "v1.1 contains the clean-environment interpreter-selection fix and regression tests, but the exact-v1.1 hosted preflight is still a separate gate."
+    },
+    "A09": {
+      "level": "documented_design",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/issues/155",
+        "https://github.com/Bdavis1390/Sara_pro/tree/evaluation/ws-sara-eval-v1-1-hosted-preflight/evaluation/WS-SARA-EVAL-v1.1"
+      ],
+      "notes": "Protocol reserves final hidden challenges/environment/timing/original evidence to an outside evaluator and requires failed/discrepant cases to remain retained; outside execution has not yet happened."
+    },
+    "A10": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/pull/277"
+      ],
+      "notes": "OCSF trust-base conformance fixtures are executable and received attributable external technical feedback; upstream schema adoption is not claimed."
+    },
+    "A11": {
+      "level": "public_testable_implementation",
+      "sources": [
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/docs/CLAIMS_AND_EVIDENCE_POLICY.md",
+        "https://github.com/Bdavis1390/Sara_pro/blob/45494ddd32f96b36cef8df37dea33ab405cd4573/START_HERE_EXTERNAL_REVIEW.md"
+      ],
+      "notes": "Repository applies named maturity/claims states and explicit do-not-infer boundaries."
+    },
+    "A12": {
+      "level": "not_evidenced",
+      "sources": [],
+      "notes": "No completed outside-controlled reproduction of v1.1 is claimed."
+    },
+    "A13": {
+      "level": "not_evidenced",
+      "sources": [],
+      "notes": "No named external real-workflow use of the frozen candidate with measurable acceptance criteria is claimed."
+    }
+  }
+}

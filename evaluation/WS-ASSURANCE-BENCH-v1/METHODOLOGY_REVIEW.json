@@ -1,0 +1,12 @@
+{
+  "schema": "ws-assurance-bench-methodology-review-v1",
+  "benchmark": "WS-ASSURANCE-BENCH-v1",
+  "external_methodology_reviewed": false,
+  "reviewer": null,
+  "reviewer_affiliation": null,
+  "review_date": null,
+  "review_record": null,
+  "accepted_scope": null,
+  "unresolved_objections": [],
+  "claims_boundary": "This record must remain false until an identifiable reviewer outside the Worldshepherd authoring process has examined the benchmark criteria, weights, evidence multipliers, comparison-source rules, and leadership gate. A score lead before that review is internal benchmark output only and is not public leadership evidence."
+}
