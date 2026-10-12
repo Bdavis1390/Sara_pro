@@ -1,0 +1,124 @@
+{
+  "composite_id": "best-of-breed-assurance-composite-2026-09-17",
+  "entries": [
+    {
+      "category": "provenance_specification",
+      "id": "slsa-spec",
+      "kind": "standard_reference",
+      "source": "https://slsa.dev/spec/v1.2/",
+      "version": "v1.2"
+    },
+    {
+      "category": "ci_native_attestation",
+      "commit_sha": "1e69f48acb82d1966a394da916b4c1698aa569d6",
+      "id": "github-actions-attest",
+      "kind": "git_commit",
+      "source": "https://github.com/actions/attest",
+      "version": "v4"
+    },
+    {
+      "artifact": "cosign-linux-amd64",
+      "artifact_sha256": "4629c757b7618056f8ddd7e2625ae9fdd94c0372a65049520bc7d9df9efc7f71",
+      "category": "signing_verification",
+      "id": "sigstore-cosign",
+      "kind": "release_artifact",
+      "source": "https://github.com/sigstore/cosign/releases/tag/v3.1.3",
+      "supporting_artifacts": [
+        {
+          "artifact": "cosign-linux-amd64.sigstore.json",
+          "sha256": "e16547fbee348eb23bd7e5a4d542b540395faea2e7bb1d18da01bbc3cc74d57d"
+        },
+        {
+          "artifact": "cosign-linux-amd64_3.1.3_linux_amd64.sbom.json",
+          "sha256": "d4a7d1a4f3cb5f4f87a01e81e511abb5f6f99c2e2bb7b929bde608a1ccfd14c3"
+        }
+      ],
+      "version": "v3.1.3"
+    },
+    {
+      "artifact": "in_toto-3.1.0-py3-none-any.whl",
+      "artifact_sha256": "9a5e73c8e983cdfdfb153760d532893ec0260597c09724ad875ce7950e294a79",
+      "category": "supply_chain_attestation_framework",
+      "id": "in-toto",
+      "kind": "release_artifact",
+      "source": "https://github.com/in-toto/in-toto/releases/tag/v3.1.0",
+      "version": "v3.1.0"
+    },
+    {
+      "artifact": "witness_0.12.0_linux_amd64.tar.gz",
+      "artifact_sha256": "543d05898731fe5b9c176443ec596a0242bd27f0b327d73aff60f6f7398b7dd0",
+      "category": "provenance_policy_airgap",
+      "id": "witness",
+      "kind": "release_artifact",
+      "source": "https://github.com/in-toto/witness/releases/tag/v0.12.0",
+      "supporting_artifacts": [
+        {
+          "artifact": "witness_0.12.0_linux_amd64.tar.gz.sbom.json",
+          "sha256": "e0d32d4f73d214c141c695fe6075020ece8ce867eccff2df0b0ea44811436812"
+        },
+        {
+          "artifact": "witness_0.12.0_linux_amd64.tar.gz.sigstore.json",
+          "sha256": "529bf0408a2e16884d1ddc8ba8ff119a2036699a1577834be3e71f7b691b3836"
+        }
+      ],
+      "version": "v0.12.0"
+    },
+    {
+      "artifact": "opa_linux_amd64",
+      "artifact_sha256": "ed3127751a4c786eb407d26a952c92f45fdcc4b97e0af25cd5d721a414fab244",
+      "category": "policy_engine",
+      "id": "open-policy-agent",
+      "kind": "release_artifact",
+      "source": "https://github.com/open-policy-agent/opa/releases/tag/v1.20.2",
+      "version": "v1.20.2"
+    },
+    {
+      "artifact": "guacone-linux-amd64",
+      "artifact_sha256": "fb929dfb5a96dc3e5d8c6af52806f565c465662e5de3af42926b886bac1675d2",
+      "category": "supply_chain_evidence_graph",
+      "id": "guac",
+      "kind": "release_artifact",
+      "source": "https://github.com/guacsec/guac/releases/tag/v1.1.0",
+      "supporting_artifacts": [
+        {
+          "artifact": "guacone-linux-amd64.spdx.json",
+          "sha256": "e77ddce1762a6fa58009e41a2def4a679c6cd17e91d713fbfc217bb951c99389"
+        }
+      ],
+      "version": "v1.1.0"
+    },
+    {
+      "category": "security_event_schema",
+      "commit_sha": "3ea548ce3cc16f7e374359426d48dc7ebd7b5861",
+      "id": "ocsf-schema",
+      "kind": "git_commit",
+      "source": "https://github.com/ocsf/ocsf-schema",
+      "version": "main@2026-09-15"
+    },
+    {
+      "artifact": "scorecard_5.5.0_linux_amd64.tar.gz",
+      "artifact_sha256": "83b90a05c1540ef1390db1cd5711e5fd04be9c1d8537fb84d39d02092d6a8dff",
+      "category": "project_security_evidence",
+      "id": "openssf-scorecard",
+      "kind": "release_artifact",
+      "source": "https://github.com/ossf/scorecard/releases/tag/v5.5.0",
+      "supporting_artifacts": [
+        {
+          "artifact": "multiple.intoto.jsonl",
+          "sha256": "95ae0e8e6896b088fb1134179b9cbfc1ec1fde8622e5d8d6f4a2e45779c965b3"
+        }
+      ],
+      "version": "v5.5.0"
+    }
+  ],
+  "frozen_date": "2026-09-17",
+  "non_claims": [
+    "This freeze does not score any competitor.",
+    "Selection into the comparison set does not imply endorsement, partnership, or equivalence of scope.",
+    "A standard or schema reference is not treated as an executable product.",
+    "The composite is intentionally stronger than any one listed component and is the primary comparison target."
+  ],
+  "schema_version": "ws-assurance-competitor-freeze-0.1",
+  "selection_rule": "Pre-score best-of-breed public components selected to represent provenance/attestation, signing/verification, policy, supply-chain graphing, security event schema, and project security evidence. Executable components are pinned to exact release artifacts or commits; specifications/schemas are pinned to exact published versions or commits and are not treated as executable binaries.",
+  "status": "FROZEN_COMPARISON_INPUT_NOT_SCORED"
+}

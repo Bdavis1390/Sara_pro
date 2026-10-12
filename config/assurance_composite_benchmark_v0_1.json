@@ -1,0 +1,57 @@
+{
+  "schema_version": "ws-assurance-composite-benchmark-0.1",
+  "status": "PROTOCOL_ONLY_NO_SUPERIORITY_CLAIM",
+  "scoring": {
+    "functional_capability": {"max": 3},
+    "evidence_strength": {"max": 3},
+    "interoperability": {"max": 2},
+    "external_use": {"max": 2},
+    "dimension_max": 10,
+    "unknown_policy": "NOT_EVALUATED_EXCLUDED_FROM_COMPARATIVE_ARITHMETIC"
+  },
+  "comparison_envelope": [
+    "SLSA/in-toto",
+    "Sigstore/Cosign",
+    "GitHub Artifact Attestations",
+    "Witness",
+    "Open Policy Agent",
+    "GUAC",
+    "OCSF",
+    "OpenSSF Scorecard ecosystem evidence"
+  ],
+  "dimensions": [
+    {"id": "A1", "name": "exact_artifact_release_identity", "weight": 1},
+    {"id": "A2", "name": "build_provenance_attestation", "weight": 1},
+    {"id": "A3", "name": "sbom_dependency_evidence", "weight": 1},
+    {"id": "A4", "name": "policy_authorization_human_authority", "weight": 1},
+    {"id": "A5", "name": "decision_evidence", "weight": 1},
+    {"id": "A6", "name": "tamper_detection_integrity_binding", "weight": 1},
+    {"id": "A7", "name": "replay_duplicate_semantics", "weight": 1},
+    {"id": "A8", "name": "recovery_rollback_restart_evidence", "weight": 1},
+    {"id": "A9", "name": "discrepancy_retention_negative_evidence", "weight": 1},
+    {"id": "A10", "name": "external_evaluator_independence", "weight": 1},
+    {"id": "A11", "name": "observability_trace_correlation", "weight": 1},
+    {"id": "A12", "name": "cross_domain_evidence_envelope", "weight": 1},
+    {"id": "A13", "name": "standards_native_exchange", "weight": 1},
+    {"id": "A14", "name": "offline_disconnected_verification", "weight": 1},
+    {"id": "A15", "name": "licensing_right_to_use_clarity", "weight": 1},
+    {"id": "A16", "name": "external_adoption_incorporation", "weight": 1}
+  ],
+  "standards_targets": [
+    "SLSA",
+    "in-toto",
+    "Sigstore/Cosign",
+    "SPDX",
+    "CycloneDX",
+    "OPA/Rego",
+    "OCSF",
+    "OpenTelemetry Trace Context"
+  ],
+  "claim_gate": {
+    "same_protocol_required": true,
+    "freeze_compared_versions": true,
+    "raw_results_required": true,
+    "external_reproduction_required": true,
+    "universal_superiority_claim_forbidden": true
+  }
+}
