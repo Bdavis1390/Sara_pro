@@ -1,4 +1,6 @@
 import copy
+import json
+from pathlib import Path
 import unittest
 
 from tools.capture_gate import CaptureGateError, evaluate, validate_config
@@ -38,7 +40,7 @@ class CaptureGateTests(unittest.TestCase):
             [item.gate for item in result.development_blockers],
             ["external"],
         )
-        self.assertEqual(result.hard_blockers, ())
+        self.assertEqual([x.gate for x in result.hard_blockers], ["na"])
 
     def test_pending_hard_gate_blocks_submission_not_development(self):
         config = copy.deepcopy(BASE)
@@ -55,12 +57,20 @@ class CaptureGateTests(unittest.TestCase):
     def test_verified_external_gate_opens_route(self):
         config = copy.deepcopy(BASE)
         config["gates"]["external"]["status"] = "VERIFIED"
+        config["gates"]["na"]["status"] = "VERIFIED"
         result = evaluate(config, "TEAM")
         self.assertTrue(result.development_ready)
         self.assertTrue(result.submission_ready)
 
-    def test_not_applicable_is_passing_by_default(self):
+    def test_not_applicable_is_blocked_by_default(self):
         result = evaluate(BASE, "TEAM")
+        states = {item.gate: item.passing for item in result.hard_gates}
+        self.assertFalse(states["na"])
+
+    def test_optional_gate_must_explicitly_opt_into_not_applicable(self):
+        config = copy.deepcopy(BASE)
+        config["gates"]["na"]["passing_statuses"] = ["VERIFIED", "NOT_APPLICABLE"]
+        result = evaluate(config, "TEAM")
         states = {item.gate: item.passing for item in result.hard_gates}
         self.assertTrue(states["na"])
 
@@ -106,6 +116,7 @@ class CaptureGateTests(unittest.TestCase):
         self.assertFalse(result.submission_ready)
 
         config["gates"]["external"]["status"] = "VERIFIED"
+        config["gates"]["na"]["status"] = "VERIFIED"
         result = evaluate(config, "TEAM")
         self.assertTrue(result.submission_ready)
 
@@ -115,11 +126,57 @@ class CaptureGateTests(unittest.TestCase):
         with self.assertRaises(CaptureGateError):
             validate_config(config)
 
+    def test_empty_hard_gates_rejected(self):
+        config = copy.deepcopy(BASE)
+        config["opportunities"]["TEAM"]["hard_gates"] = []
+        with self.assertRaises(CaptureGateError):
+            validate_config(config)
+
+    def test_direct_evaluate_revalidates(self):
+        config = copy.deepcopy(BASE)
+        del config["opportunities"]["TEAM"]["hard_gates"]
+        with self.assertRaises(CaptureGateError):
+            evaluate(config, "TEAM")
+
+    def test_malformed_gate_object_rejected(self):
+        config = copy.deepcopy(BASE)
+        config["gates"]["external"] = []
+        with self.assertRaises(CaptureGateError):
+            validate_config(config)
+
     def test_unknown_gate_reference_is_rejected(self):
         config = copy.deepcopy(BASE)
         config["opportunities"]["TEAM"]["hard_gates"].append("missing")
         with self.assertRaises(CaptureGateError):
             validate_config(config)
+
+    def test_real_routes_require_final_approval(self):
+        source = Path(__file__).resolve().parents[1] / "config" / "cnx_capture_gates_v0_1.json"
+        config = json.loads(source.read_text(encoding="utf-8"))
+        validate_config(config)
+        for route, final_gate in (
+            ("XTECHSEARCH10_SUBMISSION", "xtech_application_final"),
+            ("DARPA_INFLUENCE_BENCHMARKS_SUBMISSION", "darpa_application_final"),
+        ):
+            candidate = copy.deepcopy(config)
+            required = set(candidate["opportunities"][route]["hard_gates"])
+            required.update(candidate["opportunities"][route]["development_gates"])
+            for name in required:
+                candidate["gates"][name]["status"] = "VERIFIED"
+            candidate["gates"][final_gate]["status"] = "NOT_APPLICABLE"
+            result = evaluate(candidate, route)
+            self.assertFalse(result.submission_ready)
+            self.assertIn(final_gate, [x.gate for x in result.hard_blockers])
+
+    def test_real_legal_entity_cannot_be_na(self):
+        source = Path(__file__).resolve().parents[1] / "config" / "cnx_capture_gates_v0_1.json"
+        config = json.loads(source.read_text(encoding="utf-8"))
+        for name in config["opportunities"]["SCAR_AOI03_DIRECT"]["hard_gates"]:
+            config["gates"][name]["status"] = "VERIFIED"
+        config["gates"]["capture_package"]["status"] = "VERIFIED"
+        config["gates"]["legal_entity"]["status"] = "NOT_APPLICABLE"
+        result = evaluate(config, "SCAR_AOI03_DIRECT")
+        self.assertFalse(result.submission_ready)
 
     def test_noncanonical_status_is_rejected(self):
         config = copy.deepcopy(BASE)
