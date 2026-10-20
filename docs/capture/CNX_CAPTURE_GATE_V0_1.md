@@ -30,3 +30,7 @@ This gate is an internal control. It does **not** determine legal eligibility an
 - a qualified partner's own representations.
 
 The public configuration intentionally fails closed when documentary status is not established.
+
+## Conservative status semantics
+
+Every hard gate must be `VERIFIED` by default. `NOT_APPLICABLE` is **blocking** unless a specifically documented optional gate deliberately opts into `passing_statuses: ["VERIFIED", "NOT_APPLICABLE"]`; never use N/A for entity formation, program eligibility, partner acceptance, or final application/human approval. Unknown, pending, or in-progress states always block submission. Every opportunity must define at least one hard gate, and even direct programmatic calls revalidate the schema. The xTech and DARPA routes explicitly require final application review and human approval before submission; those steps do not prevent preparatory development work.
