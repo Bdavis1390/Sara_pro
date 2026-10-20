@@ -4,7 +4,7 @@
 This tool consumes a public, non-sensitive JSON configuration and reports
 whether a named capture route is ready for:
 - DEVELOPMENT: technical/capture work may continue;
-- SUBMISSION: every hard eligibility gate is VERIFIED or NOT_APPLICABLE.
+- SUBMISSION: hard eligibility gates must be explicitly VERIFIED by default.
 
 It does not replace a solicitation, contracting officer, government system of
 record, attorney, security officer, or program-specific eligibility review.
@@ -25,7 +25,8 @@ ALLOWED_STATUSES = {
     "NOT_STARTED",
     "NOT_APPLICABLE",
 }
-PASSING_STATUSES = {"VERIFIED", "NOT_APPLICABLE"}
+PASSING_STATUSES = {"VERIFIED"}
+ALLOWED_PASSING_STATUSES = {"VERIFIED", "NOT_APPLICABLE"}
 SCHEMA = "CNX-CAPTURE-GATE-V0.1"
 
 
@@ -87,6 +88,8 @@ def validate_config(config: dict[str, Any]) -> None:
         raise CaptureGateError("gates and opportunities must be objects")
 
     for gate_name, gate in gates.items():
+        if not isinstance(gate, dict):
+            raise CaptureGateError(f"gate {gate_name!r} must be an object")
         status = gate.get("status")
         if status not in ALLOWED_STATUSES:
             raise CaptureGateError(
@@ -98,13 +101,15 @@ def validate_config(config: dict[str, Any]) -> None:
             if (
                 not isinstance(passing_statuses, list)
                 or not passing_statuses
-                or any(item not in PASSING_STATUSES for item in passing_statuses)
+                or any(item not in ALLOWED_PASSING_STATUSES for item in passing_statuses)
             ):
                 raise CaptureGateError(
                     f"gate {gate_name!r} has invalid passing_statuses"
                 )
 
     for opportunity_name, opportunity in opportunities.items():
+        if not isinstance(opportunity, dict):
+            raise CaptureGateError(f"opportunity {opportunity_name!r} must be an object")
         for collection in ("hard_gates", "development_gates"):
             if collection not in opportunity:
                 raise CaptureGateError(
@@ -114,6 +119,18 @@ def validate_config(config: dict[str, Any]) -> None:
             if not isinstance(names, list):
                 raise CaptureGateError(
                     f"{opportunity_name}.{collection} must be a list"
+                )
+            if collection == "hard_gates" and not names:
+                raise CaptureGateError(
+                    f"{opportunity_name}.hard_gates must not be empty"
+                )
+            if any(not isinstance(name, str) for name in names):
+                raise CaptureGateError(
+                    f"{opportunity_name}.{collection} must contain only gate names"
+                )
+            if len(names) != len(set(names)):
+                raise CaptureGateError(
+                    f"{opportunity_name}.{collection} must not contain duplicates"
                 )
             missing = [gate_name for gate_name in names if gate_name not in gates]
             if missing:
@@ -136,6 +153,8 @@ def _gate_result(config: dict[str, Any], gate_name: str) -> GateResult:
 
 
 def evaluate(config: dict[str, Any], opportunity_name: str) -> OpportunityResult:
+    # Callers beyond the CLI must not bypass the schema and gate checks.
+    validate_config(config)
     try:
         opportunity = config["opportunities"][opportunity_name]
     except KeyError as exc:
