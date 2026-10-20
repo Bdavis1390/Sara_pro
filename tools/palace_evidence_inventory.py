@@ -31,7 +31,7 @@ def analyze_csv(path):
                     continue
                 if not math.isfinite(x):
                     nonfinite[name] = nonfinite.get(name, 0) + 1
-                elif "frequency" in name.lower():
+                elif "frequency" in name.lower() or name.strip().lower().startswith("f ("):
                     freq.append(x)
     return {"rows": n, "columns": columns, "frequency_min": min(freq) if freq else None,
             "frequency_max": max(freq) if freq else None, "nonfinite_by_column": nonfinite}
