@@ -85,6 +85,10 @@
       "passing_statuses": [
         "VERIFIED"
       ]
+    },
+    "darpa_application_final": {
+      "status": "NOT_STARTED",
+      "public_note": "DARPA-specific complete application and documented CRE1AWS human approval have not been verified."
     }
   },
   "opportunities": {
@@ -119,12 +123,12 @@
         "legal_entity",
         "small_business_eligibility",
         "xtech_single_submission_control",
-        "xtech_no_disqualifying_similar_federal_support"
+        "xtech_no_disqualifying_similar_federal_support",
+        "xtech_application_final"
       ],
       "development_gates": [
         "capture_package",
-        "xtech_product_boundary",
-        "xtech_application_final"
+        "xtech_product_boundary"
       ],
       "note": "Final competition portal requirements and representations must still be verified before submission."
     },
@@ -133,13 +137,14 @@
       "hard_gates": [
         "legal_entity",
         "small_business_eligibility",
-        "dsip_access"
+        "dsip_access",
+        "darpa_application_final"
       ],
       "development_gates": [
         "capture_package",
         "ws_market_poc"
       ],
-      "note": "The POC supports development readiness; it does not establish program acceptance or full Phase-I milestone completion."
+      "note": "The POC supports development readiness; it does not establish program acceptance or full Phase-I milestone completion. A complete DARPA application and documented human approval are mandatory for submission."
     }
   }
 }
