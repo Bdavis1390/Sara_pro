@@ -1,0 +1,27 @@
+name: WS55 Comparative Gate
+on:
+  push:
+    branches: [benchmark/ws55-comparative-gate-v01]
+    paths:
+      - 'tools/ws55_comparative_gate.py'
+      - 'tests/test_ws55_comparative_gate.py'
+      - '.github/workflows/ws55-comparative-gate.yml'
+  pull_request:
+    paths:
+      - 'tools/ws55_comparative_gate.py'
+      - 'tests/test_ws55_comparative_gate.py'
+      - '.github/workflows/ws55-comparative-gate.yml'
+permissions:
+  contents: read
+jobs:
+  ws55-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile
+        run: python -m py_compile tools/ws55_comparative_gate.py tests/test_ws55_comparative_gate.py
+      - name: Unit tests
+        run: python -m unittest discover -s tests -p 'test_ws55_comparative_gate.py' -v
