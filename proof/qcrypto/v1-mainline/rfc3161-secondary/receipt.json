@@ -1,0 +1,13 @@
+{
+  "schema": "WS-QCRYPTO-RFC3161-SECONDARY-RECEIPT-V1",
+  "bundle_sha256": "3ac4b9d6a94c50dad951ed5c33446ccaaffc876b9d9ad398aefe2a6b7e472522",
+  "tsa": "DigiCert",
+  "tsa_url": "http://timestamp.digicert.com",
+  "request_sha256": "8359370a95fc2ccd90ee4fef66196b33dde7445fb2baa49b2b510771f18f2f42",
+  "response_sha256": "5a3caa1014348af4079279fb37919e0d900bbcd22dcff37e0bfc396584179051",
+  "timestamp_utc": "2026-10-21T03:52:01Z",
+  "policy_oid": "2.16.840.1.114412.7.1",
+  "serial_hex": "2972C941C81E38B563557680B8AD56D2",
+  "openssl_verification": "OK",
+  "note": "Second/later timestamp of the same frozen bundle hash. This strengthens longitudinal custody evidence; it does not establish technical correctness, personal authorship of historical commits, patent priority, Federal compliance, or independent technical validation."
+}
