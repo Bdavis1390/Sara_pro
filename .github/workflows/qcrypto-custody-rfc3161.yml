@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Create RFC3161 query for frozen bundle digest
         run: |
@@ -221,7 +221,7 @@ jobs:
           PY
 
       - name: Upload external timestamp evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: qcrypto-rfc3161-timestamp-evidence
           path: rfc3161-evidence/
