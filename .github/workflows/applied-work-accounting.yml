@@ -5,11 +5,13 @@ on:
     paths:
       - 'tools/applied_work/**'
       - 'docs/APPLIED_WORK_ACCOUNTING_V1.md'
+      - 'docs/APPLIED_WORK_SESSION_V1.md'
       - '.github/workflows/applied-work-accounting.yml'
   push:
     paths:
       - 'tools/applied_work/**'
       - 'docs/APPLIED_WORK_ACCOUNTING_V1.md'
+      - 'docs/APPLIED_WORK_SESSION_V1.md'
       - '.github/workflows/applied-work-accounting.yml'
   workflow_dispatch:
 
@@ -30,26 +32,37 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Compile accounting module
+      - name: Compile accounting modules
         working-directory: tools/applied_work
         run: python -m compileall -q .
 
-      - name: Run dimension/provenance regressions
+      - name: Run dimension/provenance/session regressions
         working-directory: tools/applied_work
-        run: python -m unittest -v test_accounting.py
+        run: python -m unittest -v test_accounting.py test_session.py
 
       - name: Enforce claims boundary and dimensional rules in documentation
         run: |
           python - <<'PY'
           from pathlib import Path
-          text=Path('docs/APPLIED_WORK_ACCOUNTING_V1.md').read_text(encoding='utf-8')
-          required=(
+          accounting=Path('docs/APPLIED_WORK_ACCOUNTING_V1.md').read_text(encoding='utf-8')
+          session=Path('docs/APPLIED_WORK_SESSION_V1.md').read_text(encoding='utf-8')
+          accounting_required=(
               'Preserve work as a vector of dimensioned quantities.',
               'There is no automatic `total_work`',
               'explicit `CrossKindModel`',
               'Keep native quantities native.',
               '1 kWh = 3.6e6 J',
           )
-          for phrase in required:
-              assert phrase in text, phrase
+          session_required=(
+              'A quantity or model classified as `MEASURED` or `BENCHMARKED`',
+              'append-only event hash chain',
+              'exact 40-character Git source commit',
+              'It does **not** establish:',
+              'This feature is prospective.',
+              '`NOT_RECORDED`',
+          )
+          for phrase in accounting_required:
+              assert phrase in accounting, phrase
+          for phrase in session_required:
+              assert phrase in session, phrase
           PY
