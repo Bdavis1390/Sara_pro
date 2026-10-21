@@ -1,0 +1,95 @@
+name: QCRYPTO Custody Review Readiness
+
+on:
+  pull_request:
+    paths:
+      - 'proof/qcrypto/v1-mainline/VERIFY_CUSTODY.md'
+      - 'proof/qcrypto/v1-mainline/INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json'
+      - 'proof/qcrypto/v1-mainline/validate_review_receipt.py'
+      - '.github/workflows/qcrypto-custody-review-readiness.yml'
+  push:
+    branches:
+      - proof/qcrypto-v1-mainline-custody
+    paths:
+      - 'proof/qcrypto/v1-mainline/VERIFY_CUSTODY.md'
+      - 'proof/qcrypto/v1-mainline/INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json'
+      - 'proof/qcrypto/v1-mainline/validate_review_receipt.py'
+      - '.github/workflows/qcrypto-custody-review-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-receipt-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Incomplete template must fail closed
+        run: |
+          if python proof/qcrypto/v1-mainline/validate_review_receipt.py \
+            proof/qcrypto/v1-mainline/INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json; then
+            echo 'ERROR: incomplete review template was accepted' >&2
+            exit 1
+          fi
+
+      - name: Complete attributable receipt must validate
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          src=Path('proof/qcrypto/v1-mainline/INDEPENDENT_REVIEW_RECEIPT_TEMPLATE.json')
+          receipt=json.loads(src.read_text(encoding='utf-8'))
+          receipt['reviewer_identity']='SYNTHETIC-CI-REVIEWER'
+          receipt['reviewer_organization']='WORLDSHEPHERD-CI-FIXTURE'
+          receipt['reviewer_contact_or_public_profile']='https://example.invalid/synthetic-ci-reviewer'
+          receipt['review_date_utc']='2026-09-15T00:00:00Z'
+          receipt['repository_revision_reviewed']='CI-FIXTURE'
+          receipt['review_environment']={
+              'operating_system':'ubuntu-latest',
+              'git_version':'fixture',
+              'cosign_version':'3.1.3',
+              'openssl_version':'fixture',
+          }
+          receipt['custody_object']['observed_sha256']=receipt['custody_object']['expected_sha256']
+          receipt['custody_object']['hash_match']=True
+          sig=receipt['sigstore_attestation']
+          sig['artifact_zip_observed_sha256']=sig['artifact_zip_expected_sha256']
+          sig['bundle_observed_sha256']=sig['bundle_expected_sha256']
+          sig['cosign_verification_passed']=True
+          receipt['anchor_checks']={key: True for key in receipt['anchor_checks']}
+          receipt['claims_review']={key: True for key in receipt['claims_review']}
+          receipt['discrepancies']=[]
+          receipt['reviewer_notes']='Synthetic CI fixture only; not an external review.'
+          receipt['result']='INDEPENDENT_CUSTODY_REPRODUCTION_PASSED'
+          Path('/tmp/qcrypto-review-receipt-pass.json').write_text(
+              json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8'
+          )
+          PY
+          python proof/qcrypto/v1-mainline/validate_review_receipt.py \
+            /tmp/qcrypto-review-receipt-pass.json \
+            | tee qcrypto-custody-review-readiness.json
+
+      - name: Validate CI fixture boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('qcrypto-custody-review-readiness.json').read_text())
+          assert result['status']=='PASS'
+          assert result['receipt_result']=='INDEPENDENT_CUSTODY_REPRODUCTION_PASSED'
+          assert result['reviewer_identity']=='SYNTHETIC-CI-REVIEWER'
+          assert result['scope']=='CUSTODY_REPRODUCTION_ONLY'
+          PY
+
+      - name: Upload review-readiness evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qcrypto-custody-review-readiness
+          path: qcrypto-custody-review-readiness.json
+          if-no-files-found: error

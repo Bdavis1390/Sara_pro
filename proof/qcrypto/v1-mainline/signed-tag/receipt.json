@@ -1,0 +1,18 @@
+{
+  "schema": "WS-QCRYPTO-USER-CONTROLLED-SIGNED-TAG-RECEIPT-V1",
+  "tag": "qcrypto-proof-v1-20261020",
+  "tag_object_sha": "a26fb150dcd6b613bbebe5ccc39c425db27f5fad",
+  "target_commit": "22ca8074daeb8e08f55a9094c68aebf31b72269d",
+  "bundle_sha256": "3ac4b9d6a94c50dad951ed5c33446ccaaffc876b9d9ad398aefe2a6b7e472522",
+  "secondary_rfc3161_response_sha256": "5a3caa1014348af4079279fb37919e0d900bbcd22dcff37e0bfc396584179051",
+  "signer_name": "Brandon Ray Davis",
+  "signer_email": "Brandonraydavis953242@gmail.com",
+  "ssh_key_fingerprint": "SHA256:jJK6765odLucIyjUZGpEtBQEIM/zQr91/0M/mBDQxvY",
+  "ssh_public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE9kHzFyjIM32YFzEd5RtgiArNlQg69EnUpSCMbJ9Nye",
+  "github_auth_key_association_checked": true,
+  "github_ssh_signing_key_registry_empty_at_check": true,
+  "local_git_verify_tag": "Good git signature for Brandonraydavis953242@gmail.com",
+  "remote_ref_tag_object_sha": "a26fb150dcd6b613bbebe5ccc39c425db27f5fad",
+  "remote_ref_peeled_commit": "22ca8074daeb8e08f55a9094c68aebf31b72269d",
+  "note": "Cryptographically valid SSH-signed annotated tag using a user-controlled key already published by the GitHub account as an authentication key. GitHub signing-key registry was empty at check time, so this receipt does not claim GitHub UI Verified-signature status."
+}

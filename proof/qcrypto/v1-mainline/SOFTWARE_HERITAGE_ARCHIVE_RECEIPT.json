@@ -1,0 +1,60 @@
+{
+  "schema": "WS-QCRYPTO-SOFTWARE-HERITAGE-ARCHIVE-RECEIPT-V1",
+  "status": "SOFTWARE_HERITAGE_ARCHIVE_VERIFIED",
+  "origin_url": "https://github.com/Bdavis1390/Sara_pro",
+  "primary_save_request": {
+    "request_id": 2567127,
+    "save_request_date": "2026-10-21T03:53:19.527008+00:00",
+    "visit_date": "2026-10-21T03:53:27.386000+00:00",
+    "save_request_status": "accepted",
+    "save_task_status": "succeeded",
+    "visit_status": "full",
+    "snapshot_swhid": "swh:1:snp:ef1a534692acb41f358402c3e73fafea5288fad0"
+  },
+  "verified_snapshot_objects": {
+    "snapshot_branch_count": 788,
+    "custody_branch": {
+      "ref": "refs/heads/proof/qcrypto-v1-mainline-custody",
+      "target_type": "revision",
+      "target": "3bd6fca682418775e2ca9b73557f87d6069731dc",
+      "swhid": "swh:1:rev:3bd6fca682418775e2ca9b73557f87d6069731dc",
+      "directory": "6117d861a4859e7fdf5c316471e08f3236198962"
+    },
+    "frozen_primary_ref": {
+      "ref": "refs/heads/proof/qcrypto-v1-20260915",
+      "target_type": "revision",
+      "target": "22ca8074daeb8e08f55a9094c68aebf31b72269d",
+      "swhid": "swh:1:rev:22ca8074daeb8e08f55a9094c68aebf31b72269d",
+      "directory": "ffc31d2d802051c3f96baa134e73e8b744fb4969"
+    },
+    "frozen_mirror_ref": {
+      "ref": "refs/heads/proof/qcrypto-v1-20260915-mirror",
+      "target_type": "revision",
+      "target": "22ca8074daeb8e08f55a9094c68aebf31b72269d",
+      "swhid": "swh:1:rev:22ca8074daeb8e08f55a9094c68aebf31b72269d"
+    },
+    "signed_tag": {
+      "ref": "refs/tags/qcrypto-proof-v1-20261020",
+      "target_type": "release",
+      "tag_object": "a26fb150dcd6b613bbebe5ccc39c425db27f5fad",
+      "swhid": "swh:1:rel:a26fb150dcd6b613bbebe5ccc39c425db27f5fad",
+      "release_name": "qcrypto-proof-v1-20261020",
+      "target_revision": "22ca8074daeb8e08f55a9094c68aebf31b72269d",
+      "target_swhid": "swh:1:rev:22ca8074daeb8e08f55a9094c68aebf31b72269d",
+      "release_date": "2026-10-20T23:54:09-04:00"
+    }
+  },
+  "secondary_refresh_request": {
+    "request_id": 2567130,
+    "save_request_date": "2026-10-21T04:04:47.124599+00:00",
+    "state_at_receipt": "running",
+    "required_for_primary_archive_claim": false
+  },
+  "verification_method": [
+    "Software Heritage Save Code Now request status returned succeeded/full with snapshot SWHID.",
+    "Snapshot API branch-prefix queries resolved the exact custody branch, frozen proof refs, and signed tag object.",
+    "Software Heritage revision APIs resolved the custody and preservation revisions.",
+    "Software Heritage release API resolved the signed tag release object to the frozen preservation revision."
+  ],
+  "claim_boundary": "This receipt establishes external archival preservation and content-addressed Software Heritage identifiers for the observed repository objects. It does not establish independent technical validation, patent priority as a legal conclusion, Federal compliance, production deployment, WS-CAE conformance, or post-quantum security of the Ed25519 checkpoint."
+}
