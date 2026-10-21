@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Check out exact source
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Validate no retroactive resource estimates
         run: |
