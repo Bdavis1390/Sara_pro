@@ -63,9 +63,9 @@ After sealing, the in-memory session refuses mutation.
 
 ## Verification
 
-`verify_manifest()` recomputes the event payload hashes, event chain, timestamp rules, strong-evidence references, and session seal.
+`verify_manifest()` recomputes the event payload hashes, event chain, timestamp rules, strong-evidence references, and session seal. It also **replays events into a new typed ledger**, checking canonical quantity/model payloads, chronological evidence registration, duplicate identifiers, model-derived quantities, and exact equality between the replayed ledger/evidence maps and their exported summaries.
 
-A PASS means the supplied manifest is internally self-consistent under the recorded hash chain and seal.
+A PASS means the supplied manifest is internally self-consistent under the recorded hash chain, seal, and semantic replay. A valid hash chain with a mismatched ledger vector, unregistered evidence reference, or impossible derived quantity is rejected. This still does **not** independently establish the origin, accuracy, or immutable custody of the record.
 
 It does **not** establish:
 
