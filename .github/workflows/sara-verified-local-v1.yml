@@ -25,10 +25,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
 
@@ -61,7 +61,7 @@ jobs:
           bash scripts/verify_partner_screening_artifact.sh --help >/dev/null
 
       - name: Upload dependency resolution evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sara-dependency-freeze-evidence
           path: deployments/sara_verified_local_v1/dependency-freeze.txt
@@ -96,7 +96,7 @@ jobs:
 
       - name: Upload software SBOM evidence
         id: upload_software_sbom_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: software-sbom-evidence
           path: deployments/sara_verified_local_v1/sbom_evidence_ci
@@ -130,7 +130,7 @@ jobs:
 
       - name: Upload vulnerability advisory evidence
         id: upload_vulnerability_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: vulnerability-advisory-evidence
           path: deployments/sara_verified_local_v1/vulnerability_evidence_ci
@@ -165,7 +165,7 @@ jobs:
 
       - name: Upload human-review triage ledger evidence
         id: upload_human_triage_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: human-triage-ledger-evidence
           path: deployments/sara_verified_local_v1/human_triage_ci
@@ -200,7 +200,7 @@ jobs:
 
       - name: Upload intake minimum standard evidence
         id: upload_intake_minimum_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: intake-minimum-standard-evidence
           path: deployments/sara_verified_local_v1/intake_minimum_ci
@@ -267,7 +267,7 @@ jobs:
 
       - name: Upload PRE qualification evidence
         id: upload_pre_qualification_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pre-full-bloom-qualification-evidence
           path: deployments/sara_verified_local_v1/qualification_evidence_ci
@@ -275,7 +275,7 @@ jobs:
 
       - name: Upload partner-screening package evidence
         id: upload_partner_screening_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: partner-screening-batch-evidence
           path: deployments/sara_verified_local_v1/partner_screening_ci
@@ -314,7 +314,7 @@ jobs:
 
       - name: Upload recovery evidence
         id: upload_recovery_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sara-recovery-exercise-evidence
           path: deployments/sara_verified_local_v1/recovery_evidence
@@ -322,7 +322,7 @@ jobs:
 
       - name: Upload operational snapshot evidence
         id: upload_operational_snapshot_evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sara-operational-snapshot-evidence
           path: deployments/sara_verified_local_v1/operations_evidence
@@ -444,7 +444,7 @@ jobs:
 
       - name: Upload release evidence index
         id: upload_release_evidence_index
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sara-release-evidence-index
           path: deployments/sara_verified_local_v1/release_index_ci

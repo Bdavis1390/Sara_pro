@@ -67,3 +67,16 @@ def test_quotes_and_inline_comment_are_parsed():
     assert len(rows) == 1
     assert rows[0].target == "actions/setup-python"
     assert rows[0].ref == "v7"
+
+def test_sara_runtime_and_release_attestation_workflows_require_immutable_action_refs():
+    root = Path(__file__).resolve().parents[1]
+    high_trust_workflows = (
+        ".github/workflows/sara-verified-local-v1.yml",
+        ".github/workflows/sara-release-attestation.yml",
+    )
+    for workflow in high_trust_workflows:
+        text = (root / workflow).read_text(encoding="utf-8")
+        uses = v23.parse_workflow_text(text, workflow)
+        assert uses, f"missing action references in {workflow}"
+        floating = [use.raw for use in uses if not use.pinned]
+        assert not floating, f"{workflow} contains floating actions: {floating}"
