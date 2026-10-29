@@ -13,6 +13,7 @@ try:
         AppliedWorkLedger,
         CrossKindModel,
         EvidenceClass,
+        QuantityKind,
         WorkAccountingError,
         WorkQuantity,
     )
@@ -21,6 +22,7 @@ except ImportError:  # pragma: no cover - direct test execution from this direct
         AppliedWorkLedger,
         CrossKindModel,
         EvidenceClass,
+        QuantityKind,
         WorkAccountingError,
         WorkQuantity,
     )
@@ -337,6 +339,139 @@ class AppliedWorkSession:
         }
 
 
+
+def _decode_quantity(body: Any) -> WorkQuantity:
+    """Reconstruct a typed quantity; require exact, canonical event serialization."""
+    if not isinstance(body, dict):
+        raise WorkAccountingError("quantity event body is malformed")
+    try:
+        quantity = WorkQuantity(
+            quantity_id=body["quantity_id"],
+            kind=QuantityKind(body["kind"]),
+            value=Decimal(body["value"]),
+            unit=body["unit"],
+            basis=body["basis"],
+            provenance=body["provenance"],
+            evidence_class=EvidenceClass(body["evidence_class"]),
+            uncertainty=None if body["uncertainty"] is None else Decimal(body["uncertainty"]),
+            scope=body["scope"],
+            time_window=body["time_window"],
+        )
+    except (KeyError, TypeError, ValueError, AttributeError, ArithmeticError) as exc:
+        raise WorkAccountingError("quantity event body fails validation") from exc
+    if _quantity_payload(quantity) != body:
+        raise WorkAccountingError("quantity event body is not canonical")
+    return quantity
+
+
+def _decode_model(body: Any) -> CrossKindModel:
+    """Reconstruct a typed transform; reject extra fields and alternate encodings."""
+    if not isinstance(body, dict):
+        raise WorkAccountingError("model event body is malformed")
+    try:
+        model = CrossKindModel(
+            model_id=body["model_id"],
+            input_kind=QuantityKind(body["input_kind"]),
+            input_unit=body["input_unit"],
+            input_basis=body["input_basis"],
+            output_kind=QuantityKind(body["output_kind"]),
+            output_unit=body["output_unit"],
+            output_basis=body["output_basis"],
+            output_per_input=Decimal(body["output_per_input"]),
+            provenance=body["provenance"],
+            evidence_class=EvidenceClass(body["evidence_class"]),
+            assumptions=tuple(body["assumptions"]),
+            conditions=tuple(body["conditions"]),
+            model_version=body["model_version"],
+            uncertainty_fraction=(
+                None if body["uncertainty_fraction"] is None
+                else Decimal(body["uncertainty_fraction"])
+            ),
+        )
+    except (KeyError, TypeError, ValueError, AttributeError, ArithmeticError) as exc:
+        raise WorkAccountingError("model event body fails validation") from exc
+    if _model_payload(model) != body:
+        raise WorkAccountingError("model event body is not canonical")
+    return model
+
+
+def _replay_manifest_events(
+    events: list[Any], evidence: dict[str, Any], ledger_vector: dict[str, Any]
+) -> list[str]:
+    """Check actual event semantics, not just self-consistent hashes/counts.
+
+    A recomputed seal is not evidence that the summary reflects the event history.
+    This replay also requires strong evidence references to precede their use.
+    """
+    problems: list[str] = []
+    ledger = AppliedWorkLedger()
+    recorded_evidence: dict[str, dict[str, str]] = {}
+
+    def require_refs(raw: Any, evidence_class: EvidenceClass) -> None:
+        if not isinstance(raw, list) or any(not isinstance(ref, str) for ref in raw):
+            raise WorkAccountingError("evidence references must be a list of IDs")
+        if len(set(raw)) != len(raw):
+            raise WorkAccountingError("duplicate evidence reference")
+        if evidence_class in _STRONG_EVIDENCE and not raw:
+            raise WorkAccountingError("strong evidence class requires a hashed evidence reference")
+        if any(ref not in recorded_evidence for ref in raw):
+            raise WorkAccountingError("unregistered or forward evidence reference")
+
+    for index, event in enumerate(events, start=1):
+        if not isinstance(event, dict) or not isinstance(event.get("payload"), dict):
+            continue  # Structural and digest failures are reported by the caller.
+        kind = event.get("event_type")
+        subject = event.get("subject_id")
+        payload = event["payload"]
+        try:
+            if kind == "EVIDENCE_RECORDED":
+                artifact = EvidenceArtifact(**payload)
+                if artifact.evidence_id != subject or artifact.evidence_id in recorded_evidence:
+                    raise WorkAccountingError("evidence subject mismatch or duplicate ID")
+                if artifact.payload() != payload:
+                    raise WorkAccountingError("evidence payload is not canonical")
+                recorded_evidence[artifact.evidence_id] = artifact.payload()
+            elif kind == "QUANTITY_RECORDED":
+                if set(payload) != {"quantity", "evidence_ids"}:
+                    raise WorkAccountingError("quantity event has unexpected fields")
+                quantity = _decode_quantity(payload["quantity"])
+                if quantity.quantity_id != subject:
+                    raise WorkAccountingError("quantity subject mismatch")
+                require_refs(payload["evidence_ids"], quantity.evidence_class)
+                ledger.add_quantity(quantity)
+            elif kind == "MODEL_RECORDED":
+                if set(payload) != {"model", "evidence_ids"}:
+                    raise WorkAccountingError("model event has unexpected fields")
+                model = _decode_model(payload["model"])
+                if model.model_id != subject:
+                    raise WorkAccountingError("model subject mismatch")
+                require_refs(payload["evidence_ids"], model.evidence_class)
+                ledger.add_model(model)
+            elif kind == "QUANTITY_DERIVED":
+                if set(payload) != {"quantity", "input_quantity_id", "model_id"}:
+                    raise WorkAccountingError("derivation event has unexpected fields")
+                if not isinstance(subject, str):
+                    raise WorkAccountingError("derived quantity subject is invalid")
+                claimed = _decode_quantity(payload["quantity"])
+                if claimed.quantity_id != subject:
+                    raise WorkAccountingError("derived quantity subject mismatch")
+                derived = ledger.derive(
+                    payload["input_quantity_id"], payload["model_id"], output_id=subject
+                )
+                if _quantity_payload(derived) != _quantity_payload(claimed):
+                    raise WorkAccountingError("derived quantity differs from model replay")
+            else:
+                raise WorkAccountingError("unsupported or missing event type")
+        except (TypeError, ValueError, AttributeError, KeyError, ArithmeticError) as exc:
+            problems.append(f"event {index} semantic replay failure: {exc}")
+
+    if recorded_evidence != evidence:
+        problems.append("evidence map differs from recorded evidence events")
+    if ledger.vector() != ledger_vector:
+        problems.append("ledger_vector differs from recorded work-event replay")
+    return problems
+
+
 def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     reasons: list[str] = []
     if manifest.get("schema") != SESSION_SCHEMA:
@@ -431,6 +566,8 @@ def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(ledger_vector, dict):
         reasons.append("ledger_vector is malformed")
         ledger_vector = {}
+
+    reasons.extend(_replay_manifest_events(events, evidence, ledger_vector))
 
     seal_body = {
         "schema": SESSION_SCHEMA,
