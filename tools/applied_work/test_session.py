@@ -197,6 +197,38 @@ class AppliedWorkSessionTests(unittest.TestCase):
             any("derived quantity differs" in reason for reason in result["reasons"])
         )
 
+    def test_malformed_json_field_types_fail_closed_without_crashing(self):
+        item = session()
+        item.add_evidence(evidence())
+        item.add_quantity(measured_energy(), evidence_ids=("meter-run-001",))
+        item.seal(ended_at="2026-10-20T23:46:00-04:00")
+        base = item.manifest()
+
+        self.assertFalse(verify_manifest([])["ok"])
+
+        for name, path, invalid in (
+            ("event-type-list", ("events", 1, "event_type"), []),
+            ("event-type-object", ("events", 1, "event_type"), {"type": "QUANTITY_RECORDED"}),
+            ("evidence-reference-object", ("events", 1, "payload", "evidence_ids"), [{}]),
+            ("evidence-class-list", ("events", 1, "payload", "quantity", "evidence_class"), []),
+            ("boolean-sequence", ("events", 0, "sequence"), True),
+            ("subject-id-list", ("events", 1, "subject_id"), []),
+            ("evidence-map-list", ("evidence",), []),
+        ):
+            with self.subTest(name=name):
+                tampered = deepcopy(base)
+                target = tampered
+                for key in path[:-1]:
+                    target = target[key]
+                target[path[-1]] = invalid
+                result = verify_manifest(tampered)
+                self.assertFalse(result["ok"])
+                self.assertEqual(result["status"], "FAIL")
+                if name == "boolean-sequence":
+                    self.assertTrue(
+                        any("sequence mismatch" in reason for reason in result["reasons"])
+                    )
+
     def test_payload_tamper_is_detected(self):
         item = session()
         item.add_evidence(evidence())
