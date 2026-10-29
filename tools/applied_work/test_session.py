@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import replace
 from decimal import Decimal
 import unittest
 
 from accounting import CrossKindModel, EvidenceClass, QuantityKind, WorkAccountingError, WorkQuantity
-from session import AppliedWorkSession, EvidenceArtifact, verify_manifest
+from session import AppliedWorkSession, EvidenceArtifact, _quantity_payload, verify_manifest
 
 
 COMMIT = "a" * 40
@@ -131,6 +132,70 @@ class AppliedWorkSessionTests(unittest.TestCase):
         )
         item.seal(ended_at="2026-10-20T23:46:00-04:00")
         self.assertTrue(verify_manifest(item.manifest())["ok"])
+
+    def test_replay_rejects_sealed_vector_that_differs_from_events(self):
+        item = session()
+        item.add_evidence(evidence())
+        item.add_quantity(measured_energy(), evidence_ids=("meter-run-001",))
+        # The in-memory ledger can drift before sealing; a valid hash must not
+        # turn that inconsistent state into an accepted measurement record.
+        item.ledger.quantities["energy-001"] = replace(
+            measured_energy(), value=Decimal("999")
+        )
+        item.seal(ended_at="2026-10-20T23:46:00-04:00")
+        result = verify_manifest(item.manifest())
+        self.assertFalse(result["ok"])
+        self.assertTrue(
+            any("ledger_vector differs" in reason for reason in result["reasons"])
+        )
+
+    def test_replay_rejects_evidence_map_inconsistent_with_event(self):
+        item = session()
+        item.add_evidence(evidence())
+        item.add_quantity(measured_energy(), evidence_ids=("meter-run-001",))
+        item.evidence["meter-run-001"] = replace(evidence(), sha256="c" * 64)
+        item.seal(ended_at="2026-10-20T23:46:00-04:00")
+        result = verify_manifest(item.manifest())
+        self.assertFalse(result["ok"])
+        self.assertTrue(
+            any("evidence map differs" in reason for reason in result["reasons"])
+        )
+
+    def test_replay_rejects_forged_derived_quantity_with_valid_event_hashes(self):
+        item = session()
+        item.add_evidence(evidence())
+        original = benchmarked_compute()
+        item.add_quantity(original, evidence_ids=("meter-run-001",))
+        model = CrossKindModel(
+            model_id="compute-energy",
+            input_kind=QuantityKind.COMPUTE,
+            input_unit="Top",
+            input_basis="floating_point_operation",
+            output_kind=QuantityKind.ENERGY,
+            output_unit="kWh",
+            output_basis="electrical_input_energy",
+            output_per_input=Decimal("0.1"),
+            provenance="evidence:meter-run-001",
+            evidence_class=EvidenceClass.MEASURED,
+        )
+        item.add_model(model, evidence_ids=("meter-run-001",))
+        forged = replace(model.apply(original, output_id="energy-derived"), value=Decimal("0.9"))
+        item.ledger.add_quantity(forged)
+        item._append(
+            "QUANTITY_DERIVED",
+            "energy-derived",
+            {
+                "quantity": _quantity_payload(forged),
+                "input_quantity_id": "compute-001",
+                "model_id": "compute-energy",
+            },
+        )
+        item.seal(ended_at="2026-10-20T23:46:00-04:00")
+        result = verify_manifest(item.manifest())
+        self.assertFalse(result["ok"])
+        self.assertTrue(
+            any("derived quantity differs" in reason for reason in result["reasons"])
+        )
 
     def test_payload_tamper_is_detected(self):
         item = session()
