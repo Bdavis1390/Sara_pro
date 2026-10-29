@@ -229,6 +229,42 @@ class AppliedWorkSessionTests(unittest.TestCase):
                         any("sequence mismatch" in reason for reason in result["reasons"])
                     )
 
+    def test_unsealed_approval_metadata_cannot_be_laundered_through_valid_seal(self):
+        item = session()
+        item.add_evidence(evidence())
+        item.add_quantity(measured_energy(), evidence_ids=("meter-run-001",))
+        item.seal(ended_at="2026-10-20T23:46:00-04:00")
+        base = item.manifest()
+        self.assertTrue(verify_manifest(base)["ok"])
+
+        for label, mutation, expected_reason in (
+            (
+                "changed-claims",
+                lambda record: record.__setitem__("claims_boundary", "CERTIFIED FOR PRODUCTION"),
+                "manifest claims boundary mismatch",
+            ),
+            (
+                "forged-approval",
+                lambda record: record.__setitem__("approved_for_release", True),
+                "manifest schema fields mismatch",
+            ),
+            (
+                "event-approval",
+                lambda record: record["events"][1].__setitem__("human_approved", True),
+                "schema fields mismatch",
+            ),
+        ):
+            with self.subTest(label=label):
+                forged = deepcopy(base)
+                mutation(forged)
+                self.assertEqual(forged["seal_digest"], base["seal_digest"])
+                result = verify_manifest(forged)
+                self.assertFalse(result["ok"])
+                self.assertTrue(
+                    any(expected_reason in reason for reason in result["reasons"]),
+                    result["reasons"],
+                )
+
     def test_payload_tamper_is_detected(self):
         item = session()
         item.add_evidence(evidence())
