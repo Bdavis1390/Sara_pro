@@ -474,6 +474,9 @@ def _replay_manifest_events(
 
 def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     reasons: list[str] = []
+    if not isinstance(manifest, dict):
+        reasons.append("manifest root must be an object")
+        manifest = {}
     if manifest.get("schema") != SESSION_SCHEMA:
         reasons.append("unsupported session schema")
 
@@ -520,8 +523,13 @@ def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             continue
         if event.get("schema") != EVENT_SCHEMA:
             reasons.append(f"event {index} schema mismatch")
-        if event.get("sequence") != index:
+        if type(event.get("sequence")) is not int or event.get("sequence") != index:
             reasons.append(f"event sequence mismatch at position {index}")
+        event_type = event.get("event_type")
+        if not isinstance(event_type, str) or not event_type:
+            reasons.append(f"event {index} has invalid event_type")
+        if not isinstance(event.get("subject_id"), str) or not event.get("subject_id"):
+            reasons.append(f"event {index} has invalid subject_id")
         if event.get("previous_event_sha256") != previous:
             reasons.append(f"event predecessor mismatch at sequence {index}")
 
@@ -546,21 +554,23 @@ def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
             reasons.append(f"event hash mismatch at sequence {index}")
         previous = event.get("event_sha256") if isinstance(event.get("event_sha256"), str) else None
 
-        if event.get("event_type") in {"QUANTITY_RECORDED", "MODEL_RECORDED"}:
-            body_key = "quantity" if event.get("event_type") == "QUANTITY_RECORDED" else "model"
+        if isinstance(event_type, str) and event_type in {"QUANTITY_RECORDED", "MODEL_RECORDED"}:
+            body_key = "quantity" if event_type == "QUANTITY_RECORDED" else "model"
             body = payload.get(body_key)
             refs = payload.get("evidence_ids")
             if not isinstance(body, dict) or not isinstance(refs, list):
                 reasons.append(f"event {index} measurement/model payload is malformed")
                 continue
             evidence_class = body.get("evidence_class")
-            if evidence_class in {item.value for item in _STRONG_EVIDENCE} and not refs:
+            if isinstance(evidence_class, str) and evidence_class in {
+                item.value for item in _STRONG_EVIDENCE
+            } and not refs:
                 reasons.append(
                     f"event {index} promotes {evidence_class} without hashed evidence references"
                 )
             for ref in refs:
-                if ref not in evidence:
-                    reasons.append(f"event {index} references unknown evidence {ref}")
+                if not isinstance(ref, str) or ref not in evidence:
+                    reasons.append(f"event {index} references invalid/unknown evidence {ref}")
 
     ledger_vector = manifest.get("ledger_vector")
     if not isinstance(ledger_vector, dict):
