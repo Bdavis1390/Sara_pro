@@ -33,6 +33,20 @@ EVENT_SCHEMA = "WS-APPLIED-WORK-EVENT-V1"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _STRONG_EVIDENCE = frozenset({EvidenceClass.MEASURED, EvidenceClass.BENCHMARKED})
+CLAIMS_BOUNDARY = (
+    "Internal tamper-evident measurement-session record only. The seal detects "
+    "changes relative to a preserved seal digest but is not independently immutable "
+    "until the manifest or seal digest is externally anchored."
+)
+_MANIFEST_KEYS = frozenset({
+    "schema", "session_id", "subject", "source_commit", "build_identity",
+    "collector", "started_at", "ended_at", "evidence", "events",
+    "ledger_vector", "seal_digest", "claims_boundary",
+})
+_EVENT_KEYS = frozenset({
+    "schema", "sequence", "event_type", "subject_id", "payload",
+    "previous_event_sha256", "payload_sha256", "event_sha256",
+})
 
 
 def _canonical(value: Any) -> bytes:
@@ -331,11 +345,7 @@ class AppliedWorkSession:
             "events": [event.payload_record() for event in self.events],
             "ledger_vector": self.ledger.vector(),
             "seal_digest": self.seal_digest,
-            "claims_boundary": (
-                "Internal tamper-evident measurement-session record only. The seal detects "
-                "changes relative to a preserved seal digest but is not independently immutable "
-                "until the manifest or seal digest is externally anchored."
-            ),
+            "claims_boundary": CLAIMS_BOUNDARY,
         }
 
 
@@ -477,6 +487,10 @@ def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(manifest, dict):
         reasons.append("manifest root must be an object")
         manifest = {}
+    if set(manifest) != _MANIFEST_KEYS:
+        reasons.append("manifest schema fields mismatch")
+    if manifest.get("claims_boundary") != CLAIMS_BOUNDARY:
+        reasons.append("manifest claims boundary mismatch")
     if manifest.get("schema") != SESSION_SCHEMA:
         reasons.append("unsupported session schema")
 
@@ -521,6 +535,8 @@ def verify_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(event, dict):
             reasons.append(f"event {index} is malformed")
             continue
+        if set(event) != _EVENT_KEYS:
+            reasons.append(f"event {index} schema fields mismatch")
         if event.get("schema") != EVENT_SCHEMA:
             reasons.append(f"event {index} schema mismatch")
         if type(event.get("sequence")) is not int or event.get("sequence") != index:
