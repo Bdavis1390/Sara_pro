@@ -67,3 +67,18 @@ def test_quotes_and_inline_comment_are_parsed():
     assert len(rows) == 1
     assert rows[0].target == "actions/setup-python"
     assert rows[0].ref == "v7"
+
+def test_required_build_and_codeql_workflows_are_sha_pinned():
+    root = Path(__file__).resolve().parents[1]
+    workflows = (
+        ".github/workflows/test-and-build.yml",
+        ".github/workflows/codeql-required.yml",
+    )
+    for workflow in workflows:
+        uses = v23.parse_workflow_text(
+            (root / workflow).read_text(encoding="utf-8"),
+            workflow,
+        )
+        assert uses, f"no actions detected: {workflow}"
+        floating = [action.raw for action in uses if not action.pinned]
+        assert not floating, f"floating actions in {workflow}: {floating}"
