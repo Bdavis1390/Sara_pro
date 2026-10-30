@@ -82,3 +82,26 @@ def test_required_build_and_codeql_workflows_are_sha_pinned():
         assert uses, f"no actions detected: {workflow}"
         floating = [action.raw for action in uses if not action.pinned]
         assert not floating, f"floating actions in {workflow}: {floating}"
+
+def test_required_build_and_codeql_workflows_match_approved_action_commits():
+    # An arbitrary 40-hex SHA still passes the generic V23 pinning check.
+    # Lock the exact high-trust action identities and reviewed commit values.
+    approved = {
+        ".github/workflows/test-and-build.yml": [
+            ("actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1"),
+            ("actions/setup-python", "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"),
+        ],
+        ".github/workflows/codeql-required.yml": [
+            ("actions/checkout", "3d3c42e5aac5ba805825da76410c181273ba90b1"),
+            ("github/codeql-action/init", "9b3254085494b55a0f7c4c2b3d2d52cc712ce370"),
+            ("github/codeql-action/analyze", "9b3254085494b55a0f7c4c2b3d2d52cc712ce370"),
+        ],
+    }
+    root = Path(__file__).resolve().parents[1]
+    for workflow, expected in approved.items():
+        actions = v23.parse_workflow_text(
+            (root / workflow).read_text(encoding="utf-8"), workflow
+        )
+        assert [(action.target, action.ref) for action in actions] == expected, (
+            f"unreviewed GitHub Action identity/commit change: {workflow}"
+        )
