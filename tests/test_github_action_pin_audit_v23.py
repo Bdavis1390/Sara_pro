@@ -67,3 +67,18 @@ def test_quotes_and_inline_comment_are_parsed():
     assert len(rows) == 1
     assert rows[0].target == "actions/setup-python"
     assert rows[0].ref == "v7"
+
+def test_privileged_sara_commit_closure_action_identities_are_reviewed_and_pinned():
+    # The closure workflow can issue OIDC-backed attestations on qualified main runs.
+    # Require the reviewed action owners, names, and immutable commit identities.
+    workflow = ".github/workflows/sara-commit-closure-evidence.yml"
+    source = (Path(__file__).resolve().parents[1] / workflow).read_text(encoding="utf-8")
+    rows = v23.parse_workflow_text(source, workflow)
+    assert [(row.target, row.ref) for row in rows] == [
+        ("actions/checkout", "11d5960a326750d5838078e36cf38b85af677262"),
+        ("actions/upload-artifact", "ea165f8d65b6e75b540449e92b4886f43607fa02"),
+        ("actions/download-artifact", "d3f86a106a0bac45b974a628896c90dbdf5c8093"),
+        ("actions/attest", "1e69f48acb82d1966a394da916b4c1698aa569d6"),
+        ("actions/upload-artifact", "ea165f8d65b6e75b540449e92b4886f43607fa02"),
+    ]
+    assert all(row.pinned for row in rows)
