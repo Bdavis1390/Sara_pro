@@ -34,9 +34,24 @@ jobs:
         working-directory: tools/oss_health
         run: python -m unittest -v test_semantic_health.py
 
-      - name: Install canonical SARA test dependencies
+      - name: Install canonical SARA test dependencies with pinned CI constraints
         working-directory: deployments/sara_verified_local_v1
-        run: python -m pip install -e '.[test]'
+        run: |
+          # Keep this resolver in sync with SARA Verified Local v1 Gate.
+          python -m pip install 'pip==26.2.1'
+          python -m pip install -c constraints-ci.txt -e '.[test]'
+          python -m pip check
+
+      - name: Record exact required-build dependency environment
+        working-directory: deployments/sara_verified_local_v1
+        run: |
+          set -euo pipefail
+          python -m pip list --format=freeze | LC_ALL=C sort > required-build-dependencies.txt
+          test -s required-build-dependencies.txt
+          echo 'Resolved CI dependency versions:'
+          cat required-build-dependencies.txt
+          echo 'CI dependency inventory SHA-256:'
+          sha256sum required-build-dependencies.txt
 
       - name: Test WS-SDA and cross-project trust seams
         working-directory: deployments/sara_verified_local_v1
