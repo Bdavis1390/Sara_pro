@@ -56,6 +56,19 @@ def main(argv: list[str] | None = None) -> int:
     if missing:
         raise SystemExit("missing QBench source files: " + ", ".join(missing))
 
+    git_probe = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    observed_git_sha = git_probe.stdout.strip() if git_probe.returncode == 0 else None
+    if observed_git_sha is not None and observed_git_sha != args.source_sha:
+        raise SystemExit(
+            f"source SHA mismatch: declared={args.source_sha} observed={observed_git_sha}"
+        )
+
     source_files = {
         name: sha256_file(pkg / name)
         for name in CORE
@@ -70,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
         "schema": "worldshepherd.ws-qbench-mgraph.kaggle-replay.v0.11",
         "classification": "SIMULATED_NUMERICAL_INTERNAL",
         "source_sha": args.source_sha,
+        "git_source_sha_verified": observed_git_sha == args.source_sha if observed_git_sha else False,
+        "observed_git_sha": observed_git_sha,
         "python": sys.version,
         "platform": platform.platform(),
         "numpy_version": numpy_version,
@@ -82,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
             "NO_EXACT_FIGURE_4EF_REPRODUCTION_CLAIM",
             "NO_EXACT_SUPPLEMENTARY_S1_REPRODUCTION_CLAIM",
             "NEGATIVE_EVIDENCE_MUST_BE_RETAINED",
+            "SOURCE_SHA_IS_VERIFIED_ONLY_WHEN_GIT_CHECKOUT_IS_PRESENT",
         ],
     }
 
