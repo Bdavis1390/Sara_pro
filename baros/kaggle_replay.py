@@ -18,6 +18,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+EXPECTED_PYTHON = "3.12.15"
+
 EXPECTED = {
     "numpy": "2.5.3",
     "numba": "0.67.0",
@@ -57,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     if not req.is_file() or not tests:
         raise SystemExit("BAROS source/test layout incomplete")
 
+    observed_python = platform.python_version()
     observed = versions()
     mismatches = {
         name: {"expected": expected, "observed": observed.get(name)}
@@ -71,9 +74,11 @@ def main(argv: list[str] | None = None) -> int:
         "python": sys.version,
         "platform": platform.platform(),
         "requirements_sha256": sha256_file(req),
+        "expected_python": EXPECTED_PYTHON,
+        "observed_python": observed_python,
         "expected_dependencies": EXPECTED,
         "observed_dependencies": observed,
-        "environment_match": not mismatches,
+        "environment_match": (observed_python == EXPECTED_PYTHON and not mismatches),
         "dependency_mismatches": mismatches,
         "test_files": [str(p.relative_to(root)) for p in tests],
         "test_execution_performed": False,
@@ -88,7 +93,12 @@ def main(argv: list[str] | None = None) -> int:
     }
 
     rc = 3
-    if not mismatches:
+    if observed_python != EXPECTED_PYTHON:
+        receipt["python_mismatch"] = {
+            "expected": EXPECTED_PYTHON,
+            "observed": observed_python,
+        }
+    if observed_python == EXPECTED_PYTHON and not mismatches:
         proc = subprocess.run(
             [sys.executable, "-m", "pytest", "-q", *map(str, tests)],
             cwd=root,
