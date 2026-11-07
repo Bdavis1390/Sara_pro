@@ -1,0 +1,24 @@
+{
+  "schema": "ws-qbench-mgraph/code-s1-acquisition-state-v0.10",
+  "as_of": "2026-10-02",
+  "publisher": "Science Advances",
+  "doi": "10.1126/sciadv.aee5566",
+  "author_followup": {
+    "status": "received",
+    "statement": "paper and Supplementary Materials are open access and accessible via a standard web browser",
+    "attachment_provided": false
+  },
+  "automated_retrieval": {
+    "science_article_endpoint": "HTTP 403 in current automated environment",
+    "public_search_for_exact_matlab_filenames": "no usable public copies located"
+  },
+  "expected_files": [
+    "R003_Rabi_001_eig_Fock_data.m",
+    "R003_Rabi_001_eig_Fock_post.m",
+    "R003_Rabi_001_eig_Fock_post_plot.m"
+  ],
+  "local_code_s1_acquired": false,
+  "source_execution_authorized": false,
+  "exact_reproduction_allowed": false,
+  "next_action": "download Code S1 through a standard browser, then run the non-executing SHA-256/source-marker ingestion gate"
+}
