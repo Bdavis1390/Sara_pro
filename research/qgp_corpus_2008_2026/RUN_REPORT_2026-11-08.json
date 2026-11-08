@@ -95,10 +95,10 @@
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T202633Z.tar.gz",
-    "archive_bytes": 8020083,
-    "archive_sha256": "55b39c5b05b25c6d3e757657ae3a729d94467607c12fa8c98699daf8a048a670",
-    "file_count": 63,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T224746Z.tar.gz",
+    "archive_bytes": 8025069,
+    "archive_sha256": "b8e4aeb91321dea2ff6bf6e181fa40a1a107c70ba599cfc6bcc048732b369aba",
+    "file_count": 66,
     "verified": true,
     "off_device_backup": false,
     "private_prereg_excluded": true
@@ -209,6 +209,16 @@
     "normal_nonlinear_mixing_not_treated_as_new_physics": true,
     "calibration_certificates_not_verified": true,
     "real_measurements_not_conducted": true,
-    "actual_physical_discovery": "BLOCKED"
-  }
+    "actual_physical_discovery": "BLOCKED",
+    "generic_csv_provenance_control": true,
+    "holm_and_exact_signflip": true,
+    "sham_required": true
+  },
+  "critical_current_blockers": [
+    "New physics has not been demonstrated; direct calibrated original RF measurements absent",
+    "No independent experimental measurement of energy-scan isobar ratio at 19.6 GeV verified",
+    "Published five-point STAR discrepancy can be described by simple UrQMD amplitude rescaling; no unique microphysical inference",
+    "Full bin-to-bin covariance, modern alternative QCD model comparisons, external scientific replication required",
+    "Latest complete 66-file snapshot is same-device root-partition recovery, not independent off-device backup"
+  ]
 }
