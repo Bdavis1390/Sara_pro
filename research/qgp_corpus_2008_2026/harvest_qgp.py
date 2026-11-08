@@ -116,6 +116,7 @@ def run():
     ap.add_argument("--min-free-gb",type=float,default=3)
     ap.add_argument("--max-db-mb",type=int,default=128)
     ap.add_argument("--delay",type=float,default=1.3)
+    ap.add_argument("--topics",default="",help="Pipe-separated exact topics for priority harvesting")
     ap.add_argument("--refresh",action="store_true")
     ap.add_argument("--dry-run",action="store_true")
     a=ap.parse_args()
@@ -125,12 +126,15 @@ def run():
         years=list(range(first,last+1))
     else: years=[int(x) for x in a.years.split(",")]
     providers=[s.strip() for s in a.providers.split(",")]
+    selected=[s.strip() for s in a.topics.split("|") if s.strip()]
+    topics=[t for t in TOPICS if not selected or t in selected]
+    if selected and len(topics)!=len(set(selected)): ap.error("Unknown --topics value")
     if not years or min(years)<2008 or max(years)>date.year or any(p not in ("inspire","openalex") for p in providers):
         ap.error("Invalid year or source")
     if not 1<=a.per_page<=100 or a.delay<1 or a.max_requests<0:
         ap.error("Invalid limits")
     if a.dry_run:
-        print("DRY RUN:",len(TOPICS)*len(years)*len(providers),"query partitions")
+        print("DRY RUN:",len(topics)*len(years)*len(providers),"query partitions")
         print(url_for(providers[0],TOPICS[0],years[0],1,a.per_page))
         return
     out=pathlib.Path(a.out).expanduser()
@@ -141,7 +145,7 @@ def run():
     nreq=added=fail=0
     def budget():
         return nreq>=a.max_requests or time.monotonic()-start>=a.max_seconds
-    for topic in TOPICS:
+    for topic in topics:
         for year in years:
             for provider in providers:
                 page=1
