@@ -58,10 +58,37 @@ def main():
   ]:
    p=src/r
    if p.exists():files.append((r,p))
+  # STAR 2026 HEPData: guard all 26 public CC0 tables and include them in backup.
+  extroot=src/"external_models/star_baryon_2026"
+  hd=extroot/"hepdata_154708"
+  hmanifest=hd/"manifest.json"
+  if not hmanifest.exists():raise RuntimeError("STAR 2026 manifest missing")
+  h=json.loads(hmanifest.read_text())
+  if h["table_count"]!=26 or h.get("errors"):raise RuntimeError("STAR HEPData incomplete")
+  for row in h["tables"]:
+   rel="external_models/star_baryon_2026/hepdata_154708/table_%02d.json"%row["id"]
+   p=src/rel
+   if not p.is_file() or sha(p.read_bytes())!=row["sha256"]:
+    raise RuntimeError("STAR 2026 source hash mismatch: "+rel)
+   files.append((rel,p))
+  for rel in [
+   "external_models/star_baryon_2026/hepdata_154708/manifest.json",
+   "external_models/star_baryon_2026/hepdata_154708_metadata.json",
+   "external_models/star_baryon_2026/Baryon_Junction_Theoretical_curves.tar.gz",
+   "external_models/star_baryon_2026/README",
+   "external_models/star_baryon_2026/model_comparison_2026.json",
+   "external_models/star_baryon_2026/rapidity_slope_consistency.json",
+   "external_models/star_baryon_2026/star_2025_imr_fit.json",
+   "fetch_star_baryon_2026.py","analyze_baryon_transport_2026.py",
+   "fit_photonuclear_slope_2026.py","fit_star_imr_2025.py","test_science_baselines.py"
+  ]:
+   p=src/rel
+   if not p.is_file():raise RuntimeError("STAR published-source payload missing: "+rel)
+   files.append((rel,p))
   checks={name:{"sha256":sha(p.read_bytes()),"bytes":p.stat().st_size} for name,p in files}
   manifest={"created_utc":now.isoformat(),"snapshot_type":"same_machine_other_partition_not_cloud",
             "source_path":str(src),"record_counts":{"works":works,"observations":observations},
-            "sqlite_integrity":integrity,"source_files":checks,"file_count":len(files),
+            "sqlite_integrity":integrity,"source_files":checks,"file_count":len(files),"private_prereg_excluded":True,
             "staging_records":stage["total_records"],"staging_sha256":stage["jsonl_sha256"]}
   payload=(json.dumps(manifest,indent=2)+"\n").encode()
   with tarfile.open(str(target),"w:gz") as tar:
