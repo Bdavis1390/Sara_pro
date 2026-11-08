@@ -47,7 +47,8 @@ def get(url):
                 if len(raw)>6000000: raise ValueError("Too large for metadata request")
                 return raw
         except urllib.error.HTTPError as e:
-            if e.code not in (429,500,502,503,504) or attempt==2: raise
+            if e.code==429: raise  # Never retry API-budget/rate-limit exhaustion in this invocation
+            if e.code not in (500,502,503,504) or attempt==2: raise
             time.sleep(5*(attempt+1))
         except (TimeoutError,urllib.error.URLError):
             if attempt==2: raise
@@ -140,7 +141,19 @@ def run():
     out=pathlib.Path(a.out).expanduser()
     out.mkdir(parents=True,exist_ok=True)
     resource_check(out,a.min_free_gb,a.max_db_mb)
+    # Historical database was created with per_page=40. Persist a fixed page-size
+    # invariant: changing it in place would shift page boundaries and silently omit data.
+    config=out/"collection_config.json"
+    if config.exists():
+        previous=json.loads(config.read_text())
+        if previous["per_page"]!=a.per_page: ap.error("Existing DB has a different per-page size; use a new --out")
+    elif (out/"qgp.sqlite3").exists():
+        if a.per_page!=40: ap.error("Legacy DB uses per_page=40; use a new --out for other sizes")
+        config.write_text(json.dumps({"per_page":40,"version":2})+"\\n")
+    else:
+        config.write_text(json.dumps({"per_page":a.per_page,"version":2})+"\\n")
     c=connect(out)
+    blocked_providers=set()
     start=time.monotonic()
     nreq=added=fail=0
     def budget():
@@ -148,6 +161,7 @@ def run():
     for topic in topics:
         for year in years:
             for provider in providers:
+                if provider in blocked_providers: continue
                 page=1
                 while not budget() and (not a.max_pages_per_query or page<=a.max_pages_per_query):
                     old=c.execute("SELECT terminal FROM pages WHERE provider=? AND topic=? AND year=? AND page=?",(provider,topic,year,page)).fetchone()
@@ -170,6 +184,9 @@ def run():
                         page+=1
                         time.sleep(a.delay)
                     except Exception as exc:
+                        if isinstance(exc,urllib.error.HTTPError) and exc.code==429:
+                            blocked_providers.add(provider)
+                            print("RATE_LIMIT_CIRCUIT_OPEN",provider,"no further requests to provider during this run",flush=True)
                         fail+=1
                         with c:
                             c.execute("INSERT INTO errors VALUES(?,?,?,?,?,?)",(provider,topic,year,page,str(exc)[:500],STAMP()))
@@ -182,6 +199,7 @@ def run():
             "unique_works":c.execute("SELECT COUNT(*) FROM works").fetchone()[0],
             "provenance_rows":c.execute("SELECT COUNT(*) FROM observations").fetchone()[0],
             "pages":c.execute("SELECT COUNT(*) FROM pages").fetchone()[0],
+            "rate_limited_providers":sorted(blocked_providers),
             "utc":STAMP(),"cutoff":a.cutoff,"metadata_only":True}
     (out/"last_run.json").write_text(json.dumps(report,indent=2)+"\n")
     print("SUMMARY",json.dumps(report),flush=True)
