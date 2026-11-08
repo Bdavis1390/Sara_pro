@@ -1,0 +1,1202 @@
+{
+  "created_utc": "2026-11-08T23:13:25.407890+00:00",
+  "source": "https://www.hepdata.net/record/154708",
+  "hashes_verified": 26,
+  "tables": [
+    {
+      "id": 1,
+      "name": "Figure 2",
+      "source_sha256": "84d26560cd7426f646683ce9c9b739b70e7e60aed9b441314b890c23af19bbb4",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%202/json",
+      "rows": 12,
+      "dependent_groups": {
+        "0": {
+          "points": 12,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 12,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 12,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 2,
+      "name": "Figure 3",
+      "source_sha256": "2acf99ec03510c61ac812d12341a8081cd994cc871a7eb125106072eec43ce7f",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%203/json",
+      "rows": 21,
+      "dependent_groups": {
+        "0": {
+          "points": 21,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 2,
+      "zero_uncertainty_cells": 2,
+      "missing_values_or_errors": 0,
+      "flags": [
+        "HIDDEN_ERRORS_PRESENT",
+        "ZERO_UNCERTAINTIES_PRESENT"
+      ],
+      "automated_status": "REQUIRES_METADATA_REVIEW",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 3,
+      "name": "Figure 4",
+      "source_sha256": "4295b019896663ade9862921c9312e717f0b050b1104d82df79f067f00bc901a",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%204/json",
+      "rows": 5,
+      "dependent_groups": {
+        "0": {
+          "points": 5,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 4,
+      "name": "Figure S1",
+      "source_sha256": "275aba2ee8cc445153bb4512ea769507f1ca526ad616cad8825f89ec17192490",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S1/json",
+      "rows": 34,
+      "dependent_groups": {
+        "0": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "5": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "6": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "7": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "8": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "9": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "10": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "11": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "12": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "13": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "14": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "15": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "16": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "17": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "18": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "19": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "20": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "21": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "22": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "23": {
+          "points": 34,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 112,
+      "zero_uncertainty_cells": 112,
+      "missing_values_or_errors": 0,
+      "flags": [
+        "HIDDEN_ERRORS_PRESENT",
+        "ZERO_UNCERTAINTIES_PRESENT"
+      ],
+      "automated_status": "REQUIRES_METADATA_REVIEW",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 5,
+      "name": "Figure S2 Ru $\\pi^+$",
+      "source_sha256": "2e8acb2a880b47180d976dd43465f3a996e8df7eca5b1aed3654b2ce4fc7e804",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20$%5Cpi^+$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 6,
+      "name": "Figure S2 Ru $\\pi^-$",
+      "source_sha256": "33b085aa12e1dbb8a12612afe36d284c0c3a1b2deb493499f73038f49b3efaf6",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20$%5Cpi^-$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 7,
+      "name": "Figure S2 Ru $K^+$",
+      "source_sha256": "6b45d948cb1b221398035cad70183011668a512e8ce904d9c0af33467529181c",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20$K^+$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 8,
+      "name": "Figure S2 Ru $K^-$",
+      "source_sha256": "c5d94bb4acd2a44c71132c642c1c6626cb8a4bf6ccffe80c380b72094c06a123",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20$K^-$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 9,
+      "name": "Figure S2 Ru Proton",
+      "source_sha256": "3946169985ca65244c33d12b2404699a6d1f8456c103cf25f430111b22419afa",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20Proton/json",
+      "rows": 36,
+      "dependent_groups": {
+        "0": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 10,
+      "name": "Figure S2 Ru Anti-proton",
+      "source_sha256": "5f51d9e138631230478e689bda08350243b38b1d15d331ed548c7889240c9d82",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20Anti-proton/json",
+      "rows": 36,
+      "dependent_groups": {
+        "0": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 11,
+      "name": "Figure S2 Ru Deuteron",
+      "source_sha256": "6d9ec0c7b63cf15c516ab4461612e18184a831e366381d34b2cf9984a25b8b32",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20Deuteron/json",
+      "rows": 22,
+      "dependent_groups": {
+        "0": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 12,
+      "name": "Figure S2 Ru Anti-deuteron",
+      "source_sha256": "1e9ece8097535537aa5fb04622a10b2afe86e9751bef56eea10aecf4bf3100f2",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Ru%20Anti-deuteron/json",
+      "rows": 22,
+      "dependent_groups": {
+        "0": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 13,
+      "name": "Figure S2 Zr $\\pi^+$",
+      "source_sha256": "0cd2c61d405103a9fb87ff0d22ccea5c166941052356f68bbea8ee25bca77755",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20$%5Cpi^+$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 14,
+      "name": "Figure S2 Zr $\\pi^-$",
+      "source_sha256": "0cfc7b02d7a719f44be3772fa03117ad7ce2892893deac4a9c910aa5e47f828e",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20$%5Cpi^-$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 15,
+      "name": "Figure S2 Zr $K^+$",
+      "source_sha256": "f1f545f70085a613e2cf154f0f81402c2a1bcb2d53c2ba29a21cb14d7e28062d",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20$K^+$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 16,
+      "name": "Figure S2 Zr $K^-$",
+      "source_sha256": "58c4dbc41bf0b46097e5566c4e9fe476946fcde5abbc8dc7997b192ce5b7d701",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20$K^-$/json",
+      "rows": 41,
+      "dependent_groups": {
+        "0": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 41,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 17,
+      "name": "Figure S2 Zr Proton",
+      "source_sha256": "6f776b8efe84340033ed2aed43f7e0f6883c6cc5e886130594a07b70f01290b2",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20Proton/json",
+      "rows": 36,
+      "dependent_groups": {
+        "0": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 18,
+      "name": "Figure S2 Zr Anti-proton",
+      "source_sha256": "a48c97d8d59cd52bdb42cf0008a2743c56fad3f206cedfccc04ae44b2ba88a26",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20Anti-proton/json",
+      "rows": 36,
+      "dependent_groups": {
+        "0": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 36,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 19,
+      "name": "Figure S2 Zr Deuteron",
+      "source_sha256": "135c00a7ae4675e58b8414f741b4eab280453dc446c2c94da84e761846ac95e4",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20Deuteron/json",
+      "rows": 22,
+      "dependent_groups": {
+        "0": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 20,
+      "name": "Figure S2 Zr Anti-deuteron",
+      "source_sha256": "e21a8be1274a4e390abbc80525934096197d30e4cf2910e2bbe94cf2bd171510",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S2%20Zr%20Anti-deuteron/json",
+      "rows": 22,
+      "dependent_groups": {
+        "0": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 22,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 21,
+      "name": "Figure S3 Ru_Zr pion",
+      "source_sha256": "d0035921c2801e57ffc9af6a6eda17ed28f81e47d5c1cec5ff87dcd18d287690",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S3%20Ru_Zr%20pion/json",
+      "rows": 40,
+      "dependent_groups": {
+        "0": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 22,
+      "name": "Figure S3 Ru_Zr kaon",
+      "source_sha256": "1a10807c88b7c460bfe5500f5744dc7feb39b7e2307d8f64b93dc514b46fe1fc",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S3%20Ru_Zr%20kaon/json",
+      "rows": 40,
+      "dependent_groups": {
+        "0": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 40,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 23,
+      "name": "Figure S3 Ru_Zr proton",
+      "source_sha256": "671474b4057264cfc405f2ee333e3161e76774cdd496a614e9f44ecf6416678f",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S3%20Ru_Zr%20proton/json",
+      "rows": 35,
+      "dependent_groups": {
+        "0": {
+          "points": 35,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "1": {
+          "points": 35,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "2": {
+          "points": 35,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 35,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "4": {
+          "points": 35,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [],
+      "automated_status": "STRUCTURALLY_PLAUSIBLE_UNVALIDATED",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 24,
+      "name": "Figure S4",
+      "source_sha256": "2b04aa127d577e3d77c32f4a40c95b8c2a5f4b15ac4fe1fef118979e2aa0f224",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S4/json",
+      "rows": 5,
+      "dependent_groups": {
+        "0": {
+          "points": 5,
+          "all_values_identical": true,
+          "all_zero": false,
+          "common_value": 0.1
+        },
+        "1": {
+          "points": 5,
+          "all_values_identical": true,
+          "all_zero": false,
+          "common_value": 0.1
+        },
+        "2": {
+          "points": 5,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        },
+        "3": {
+          "points": 5,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 10,
+      "zero_uncertainty_cells": 10,
+      "missing_values_or_errors": 0,
+      "flags": [
+        "CONSTANT_Y_GROUPS_0,1",
+        "HIDDEN_ERRORS_PRESENT",
+        "ZERO_UNCERTAINTIES_PRESENT"
+      ],
+      "automated_status": "QUARANTINE_FOR_MANUAL_VERIFICATION",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 25,
+      "name": "Figure S5 (left)",
+      "source_sha256": "c09638677a17c2aced582d0f3ea7f5434afe123507008327bc25b2df27ba33f1",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S5%20(left)/json",
+      "rows": 5,
+      "dependent_groups": {
+        "0": {
+          "points": 5,
+          "all_values_identical": true,
+          "all_zero": true,
+          "common_value": 0.0
+        }
+      },
+      "hidden_error_cells": 5,
+      "zero_uncertainty_cells": 5,
+      "missing_values_or_errors": 0,
+      "flags": [
+        "CONSTANT_Y_GROUPS_0",
+        "HIDDEN_ERRORS_PRESENT",
+        "ZERO_UNCERTAINTIES_PRESENT",
+        "POTENTIAL_DIMENSIONLESS_OBSERVABLE_WITH_MOMENTUM_UNIT"
+      ],
+      "automated_status": "QUARANTINE_FOR_MANUAL_VERIFICATION",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    },
+    {
+      "id": 26,
+      "name": "Figure S5 (right)",
+      "source_sha256": "0ca85449081980b21e16b76db8102166b1f7ded05706a929aacc6efd687d0bbc",
+      "source_url": "https://www.hepdata.net/download/table/ins2822399/Figure%20S5%20(right)/json",
+      "rows": 5,
+      "dependent_groups": {
+        "0": {
+          "points": 5,
+          "all_values_identical": false,
+          "all_zero": false,
+          "common_value": null
+        }
+      },
+      "hidden_error_cells": 0,
+      "zero_uncertainty_cells": 0,
+      "missing_values_or_errors": 0,
+      "flags": [
+        "POTENTIAL_DIMENSIONLESS_OBSERVABLE_WITH_MOMENTUM_UNIT"
+      ],
+      "automated_status": "REQUIRES_METADATA_REVIEW",
+      "caveat": "A flagged constant may be intentional; compare against paper figures and original HEPData submission before assigning fault."
+    }
+  ],
+  "status_counts": {
+    "STRUCTURALLY_PLAUSIBLE_UNVALIDATED": 21,
+    "REQUIRES_METADATA_REVIEW": 3,
+    "QUARANTINE_FOR_MANUAL_VERIFICATION": 2
+  },
+  "independent_raw_detector_validation": false,
+  "scientific_readiness": "FLAGS_MUST_BE_REVIEWED_BEFORE_FIT_OR_CLAIM",
+  "no_new_physics_claim": true
+}
