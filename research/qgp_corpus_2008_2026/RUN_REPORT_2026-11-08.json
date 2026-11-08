@@ -86,19 +86,20 @@
     "status": "REVIEW_REQUIRED"
   },
   "safety_regression_tests": {
-    "passed": 14,
-    "total": 14,
+    "passed": 19,
+    "total": 19,
     "metadata": 5,
     "published_data_benchmarks": 4,
-    "synthetic_rf_gate": 5
+    "synthetic_rf_gate": 5,
+    "table_quality_and_design": 5
   },
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T224746Z.tar.gz",
-    "archive_bytes": 8025069,
-    "archive_sha256": "b8e4aeb91321dea2ff6bf6e181fa40a1a107c70ba599cfc6bcc048732b369aba",
-    "file_count": 66,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T231748Z.tar.gz",
+    "archive_bytes": 8031459,
+    "archive_sha256": "2eac5edf668d00dac592df3b597cd6313e77cee18f0422b47ec0d64bab73710d",
+    "file_count": 71,
     "verified": true,
     "off_device_backup": false,
     "private_prereg_excluded": true
@@ -173,7 +174,7 @@
     "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
   },
   "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
-  "new_physics_claim_status": "NOT DEMONSTRATED. Existing data support published QGP model discrepancies but do not identify a unique original mechanism; controlled RF measurement evidence is absent.",
+  "new_physics_claim_status": "NOT DEMONSTRATED. Formal falsification gates and published benchmarking improved; source data quality reviewed; original controlled physical measurement and independent replications remain absent.",
   "followup_exploratory_novelty_screen_2026_11_08": {
     "classification": "RETROSPECTIVE_EXPLORATORY_NOT_ORIGINAL_NEW_PHYSICS",
     "centrality_points": 5,
@@ -220,5 +221,58 @@
     "Published five-point STAR discrepancy can be described by simple UrQMD amplitude rescaling; no unique microphysical inference",
     "Full bin-to-bin covariance, modern alternative QCD model comparisons, external scientific replication required",
     "Latest complete 66-file snapshot is same-device root-partition recovery, not independent off-device backup"
-  ]
+  ],
+  "followup_2026_11_08": {
+    "new_primary_sources": [
+      {
+        "doi": "10.1016/j.physletb.2026.140806",
+        "finding": "Charge-conjugation-odd conserved-charge flow observables already established in external theory; not WorldShepherd novelty"
+      },
+      {
+        "doi": "10.1109/TMTT.2022.3155466",
+        "finding": "Receiver nonlinearities are a known uncertainty source in VNA measurements"
+      },
+      {
+        "doi": "10.1109/OJIM.2025.3619249",
+        "finding": "Measurement calibration and cable/system uncertainty prior art"
+      }
+    ],
+    "hepdata_quality": {
+      "record": 154708,
+      "table_count": 26,
+      "source_checksums_verified": 26,
+      "structurally_plausible_not_physically_reviewed": 21,
+      "needs_metadata_review": 3,
+      "quarantined_manual_review": 2,
+      "quarantined_tables": [
+        24,
+        25
+      ],
+      "reason": "All-zero/constant groups and hidden zero uncertainties; flag potential plotting placeholders; do not presume publication error",
+      "source": "research/qgp_corpus_2008_2026/results/hepdata_154708_quality_audit.json"
+    },
+    "synthetic_rf_test_design": {
+      "total_hypothesis_output_bands": 4,
+      "replicates_for_smallest_possible_holm_corrected_p_under_0_05": 8,
+      "simulated_detection_rate_at_n8_standardized_effect_1": 0.23,
+      "simulated_detection_rate_at_n8_standardized_effect_2": 0.823,
+      "simulated_detection_rate_at_n10_standardized_effect_1": 0.515,
+      "simulated_detection_rate_at_n12_standardized_effect_1": 0.623,
+      "synthetic_repeats_per_scenario": 400,
+      "meaning": "Simulation statistical sensitivity only, not actual RF performance; unknown drift, calibration, phase and real hardware artifacts",
+      "output": "research/qgp_corpus_2008_2026/results/rf_design_power_synthetic.json"
+    },
+    "model_target_screen": {
+      "current_status": "PRIVATE_RETROSPECTIVE_FORECAST_NO_INDEPENDENT_MEASUREMENT",
+      "source": "STAR baryon Figure 4 and source UrQMD/nuclear-overlap model",
+      "outcome": "Centrality refinement alone at assumed 0.15 R absolute new-data uncertainty yields <2 sigma separation of fitted model alternatives across correlation sensitivity scenarios.",
+      "original_new_physics": false
+    },
+    "test_suite": {
+      "passed": 19,
+      "total": 19
+    },
+    "physical_evidence_found": false,
+    "original_new_physics_demonstrated": false
+  }
 }
