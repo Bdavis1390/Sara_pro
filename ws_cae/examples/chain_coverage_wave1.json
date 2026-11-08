@@ -1,0 +1,76 @@
+{
+  "spec": "WS-CAE-CHAIN-COVERAGE-1",
+  "as_of": "2026-09-13",
+  "chains": [
+    {
+      "chain": "Solana",
+      "authorization": "ED25519_TRANSACTION_SIGNATURES",
+      "authority_model": "KEY_BACKED_ACCOUNTS_WITH_PROGRAM_DERIVED_ADDRESSES",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://solana.com/docs/core/fees/fee-structure",
+        "https://solana.com/docs/core/pda",
+        "https://solana.com/docs/rpc/json-structures"
+      ]
+    },
+    {
+      "chain": "XRP Ledger",
+      "authorization": "SECP256K1_OR_ED25519",
+      "authority_model": "ACCOUNT_WITH_REGULAR_KEY_AND_SIGNER_LIST",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://xrpl.org/docs/concepts/accounts/cryptographic-keys",
+        "https://xrpl.org/docs/references/protocol/transactions/common-fields"
+      ]
+    },
+    {
+      "chain": "Cardano",
+      "authorization": "ED25519",
+      "authority_model": "EUTXO_KEY_OR_SCRIPT_CREDENTIALS",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://developers.cardano.org/docs/developers/curriculum/fundamentals/cryptographic-primitives/",
+        "https://developers.cardano.org/docs/learn/core-concepts/addresses/",
+        "https://developers.cardano.org/docs/get-started/testnets-and-devnets/"
+      ]
+    },
+    {
+      "chain": "Stellar",
+      "authorization": "ED25519_CLASSIC_WITH_PROGRAMMABLE_CONTRACT_AUTH",
+      "authority_model": "THRESHOLD_SIGNERS_AND_CONTRACT_ACCOUNTS",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://developers.stellar.org/docs/learn/fundamentals/transactions/signatures-multisig",
+        "https://developers.stellar.org/docs/build/guides/contract-accounts",
+        "https://developers.stellar.org/docs/networks"
+      ]
+    },
+    {
+      "chain": "Avalanche",
+      "authorization": "SECP256K1_USER_IDENTITIES_WITH_BLS_VALIDATOR_MESSAGES",
+      "authority_model": "MULTI_CHAIN_NATIVE",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://build.avax.network/docs/rpcs/other/standards/cryptographic-primitives",
+        "https://build.avax.network/docs/avalanche-l1s/validator-manager/registration-flow",
+        "https://build.avax.network/docs/rpcs/p-chain/txn-format"
+      ]
+    },
+    {
+      "chain": "TRON",
+      "authorization": "SECP256K1_WITH_WEIGHTED_MULTISIGNATURE_PERMISSIONS",
+      "authority_model": "ACCOUNT_PERMISSIONS",
+      "pq_state": "NONE_ESTABLISHED",
+      "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+      "evidence": [
+        "https://developers.tron.network/docs/transaction-signature-validation",
+        "https://developers.tron.network/docs/account"
+      ]
+    }
+  ]
+}

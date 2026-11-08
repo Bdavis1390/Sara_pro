@@ -1,0 +1,13 @@
+{
+  "spec": "WS-CAE-CHAIN-COVERAGE-INDEX-1",
+  "as_of": "2026-09-13",
+  "entries": [
+    {"name":"BNB Smart Chain","kind":"CHAIN","status":"PRIMARY_EVIDENCE_COLLECTED","sources":["https://docs.bnbchain.org/bnb-smart-chain/introduction/","https://docs.bnbchain.org/bnb-smart-chain/validator/create-val/","https://docs.bnbchain.org/bnb-smart-chain/validator/manage-keys/"]},
+    {"name":"Arbitrum","kind":"L2_FAMILY","status":"PRIMARY_EVIDENCE_COLLECTED","sources":["https://docs.arbitrum.io/"]},
+    {"name":"ZKsync Era / Elastic Network","kind":"L2_FAMILY","status":"PRIMARY_EVIDENCE_COLLECTED","sources":["https://docs.zksync.io/zksync-protocol/era-vm/account-abstraction","https://docs.zksync.io/zksync-network/zksync-era/security-best-practices","https://docs.zksync.io/zksync-network"]},
+    {"name":"Optimism / OP Stack","kind":"L2_FAMILY","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Base","kind":"L2","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"},
+    {"name":"Polygon PoS","kind":"CHAIN","status":"PRIMARY_EVIDENCE_COLLECTED","architecture":"HEIMDALL_V2_COMETBFT_CONSENSUS_PLUS_BOR_EXECUTION_WITH_ETHEREUM_CHECKPOINTS","authorization":"EVM_USER_AUTH_PLUS_SECP256K1_BOR_BLOCK_PRODUCER_SIGNATURES","pq_state":"NONE_ESTABLISHED","consensus_pq_state":"CLASSICAL_OR_UNPROVEN","sources":["https://docs.polygon.technology/pos/overview","https://docs.polygon.technology/pos/architecture/overview","https://docs.polygon.technology/pos/architecture/bor/introduction"]},
+    {"name":"Starknet","kind":"L2","status":"PRIMARY_EVIDENCE_REVIEW_PENDING"}
+  ]
+}

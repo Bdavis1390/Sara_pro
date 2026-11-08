@@ -1,0 +1,12 @@
+{
+  "name": "institutional-pq-authority-minimum",
+  "minimum_maturity": "MAINNET",
+  "accepted_pq_authorization_states": ["PQ_MAINNET"],
+  "accepted_consensus_states": ["CLASSICAL_OR_UNPROVEN", "PQ_RESEARCH_OR_PARTIAL", "PQ_DEPLOYED"],
+  "require_stable_authority_id": true,
+  "require_authenticator_replaceable": true,
+  "require_policy_state_documented": true,
+  "require_recovery_state_documented": true,
+  "require_domain_binding_documented": true,
+  "require_evidence_state_documented": true
+}

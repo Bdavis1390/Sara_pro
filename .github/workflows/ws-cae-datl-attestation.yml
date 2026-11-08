@@ -1,0 +1,159 @@
+name: WS-CAE DATL Transparency Attestation
+
+on:
+  push:
+    branches:
+      - ws-cae-standalone-v0-1
+    paths:
+      - 'ws_cae/scitt_statement.py'
+      - 'ws_cae/scitt_statement_cli.py'
+      - 'ws_cae/scitt_statement.schema.json'
+      - 'ws_cae/continuity_*.py'
+      - 'ws_cae/examples/*.patch.json'
+      - '.github/workflows/ws-cae-datl-attestation.yml'
+  pull_request:
+    paths:
+      - 'ws_cae/scitt_statement.py'
+      - 'ws_cae/scitt_statement_cli.py'
+      - 'ws_cae/scitt_statement.schema.json'
+      - 'ws_cae/continuity_*.py'
+      - 'ws_cae/examples/*.patch.json'
+      - '.github/workflows/ws-cae-datl-attestation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  datl-attestation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Build deterministic DATL and continuity-snapshot statements
+        shell: bash
+        run: |
+          mkdir -p /tmp/datl-proof
+          PYTHONPATH=. python -m ws_cae.scitt_statement_cli \
+            ws_cae/examples/ethereum.patch.json \
+            --issuer https://github.com/Bdavis1390/Sara_pro \
+            --observed-at 2026-09-13T22:00:00Z \
+            --pretty > /tmp/datl-proof/datl-statement.json
+          PYTHONPATH=. python -m ws_cae.continuity_catalog \
+            ws_cae/examples/algorand.patch.json \
+            ws_cae/examples/bitcoin-qsb.patch.json \
+            ws_cae/examples/ethereum.patch.json \
+            ws_cae/examples/sui.patch.json \
+            --version 1 \
+            --as-of 2026-09-13 \
+            --pretty > /tmp/datl-proof/four-chain-snapshot.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from ws_cae.continuity_snapshot_scitt import build_snapshot_statement
+
+          snapshot = json.loads(Path('/tmp/datl-proof/four-chain-snapshot.json').read_text())
+          statement = build_snapshot_statement(
+              snapshot,
+              'https://github.com/Bdavis1390/Sara_pro',
+              '2026-09-14T00:30:00Z',
+          )
+          Path('/tmp/datl-proof/four-chain-snapshot.statement.json').write_text(
+              json.dumps(statement, indent=2, sort_keys=True) + '\n'
+          )
+          PY
+          python -m json.tool /tmp/datl-proof/datl-statement.json >/dev/null
+          python -m json.tool /tmp/datl-proof/four-chain-snapshot.statement.json >/dev/null
+          sha256sum /tmp/datl-proof/datl-statement.json > /tmp/datl-proof/datl-statement.sha256
+          sha256sum /tmp/datl-proof/four-chain-snapshot.statement.json > /tmp/datl-proof/four-chain-snapshot.statement.sha256
+
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          statement = json.loads(Path('/tmp/datl-proof/datl-statement.json').read_text())
+          digest = hashlib.sha256(Path('/tmp/datl-proof/datl-statement.json').read_bytes()).hexdigest()
+          predicate = {
+              'spec': 'WS-CAE-DATL-ATTESTATION-1',
+              'statementSha256': digest,
+              'subjectId': statement['subject']['id'],
+              'sourcePatchSha256': statement['subject']['source_patch_sha256'],
+              'claims': statement['claims'],
+              'evidenceCount': len(statement['evidence']),
+          }
+          Path('/tmp/datl-proof/datl-predicate.json').write_text(
+              json.dumps(predicate, indent=2, sort_keys=True) + '\n'
+          )
+
+          snapshot_statement = json.loads(Path('/tmp/datl-proof/four-chain-snapshot.statement.json').read_text())
+          snapshot_digest = hashlib.sha256(
+              Path('/tmp/datl-proof/four-chain-snapshot.statement.json').read_bytes()
+          ).hexdigest()
+          snapshot_predicate = {
+              'spec': 'WS-CAE-CONTINUITY-SNAPSHOT-ATTESTATION-1',
+              'statementSha256': snapshot_digest,
+              'snapshotId': snapshot_statement['snapshot_id'],
+              'asOf': snapshot_statement['snapshot']['as_of'],
+              'manifestCount': snapshot_statement['snapshot']['manifest_count'],
+              'subjects': [item['subject'] for item in snapshot_statement['snapshot']['manifests']],
+          }
+          Path('/tmp/datl-proof/four-chain-snapshot.predicate.json').write_text(
+              json.dumps(snapshot_predicate, indent=2, sort_keys=True) + '\n'
+          )
+          PY
+
+      - name: Install current Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: Keylessly attest DATL statement
+        shell: bash
+        run: |
+          cosign attest-blob --yes \
+            --predicate /tmp/datl-proof/datl-predicate.json \
+            --type urn:ws-cae:predicate:datl:v0.1 \
+            --bundle /tmp/datl-proof/datl-statement.attestation.sigstore.json \
+            /tmp/datl-proof/datl-statement.json
+
+      - name: Verify identity-bound DATL attestation
+        shell: bash
+        run: |
+          cosign verify-blob-attestation \
+            --bundle /tmp/datl-proof/datl-statement.attestation.sigstore.json \
+            --type urn:ws-cae:predicate:datl:v0.1 \
+            --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/ws-cae-datl-attestation.yml@${GITHUB_REF}" \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+            --certificate-github-workflow-repository "${GITHUB_REPOSITORY}" \
+            --certificate-github-workflow-ref "${GITHUB_REF}" \
+            /tmp/datl-proof/datl-statement.json
+
+      - name: Keylessly attest four-chain continuity snapshot
+        shell: bash
+        run: |
+          cosign attest-blob --yes \
+            --predicate /tmp/datl-proof/four-chain-snapshot.predicate.json \
+            --type urn:ws-cae:predicate:continuity-snapshot:v1 \
+            --bundle /tmp/datl-proof/four-chain-snapshot.attestation.sigstore.json \
+            /tmp/datl-proof/four-chain-snapshot.statement.json
+
+      - name: Verify identity-bound continuity snapshot attestation
+        shell: bash
+        run: |
+          cosign verify-blob-attestation \
+            --bundle /tmp/datl-proof/four-chain-snapshot.attestation.sigstore.json \
+            --type urn:ws-cae:predicate:continuity-snapshot:v1 \
+            --certificate-identity "https://github.com/${GITHUB_REPOSITORY}/.github/workflows/ws-cae-datl-attestation.yml@${GITHUB_REF}" \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+            --certificate-github-workflow-repository "${GITHUB_REPOSITORY}" \
+            --certificate-github-workflow-ref "${GITHUB_REF}" \
+            /tmp/datl-proof/four-chain-snapshot.statement.json
+
+      - name: Preserve DATL transparency proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ws-cae-datl-transparency-${{ github.sha }}
+          path: /tmp/datl-proof/
+          if-no-files-found: error
+          retention-days: 30

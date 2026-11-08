@@ -1,0 +1,6 @@
+Primary evidence URLs for the snapshot:
+Algorand: https://algorand.co/technology/post-quantum ; https://dev.algorand.co/concepts/accounts/post-quantum/
+Bitcoin: https://starkware.co/blog/the-first-quantum-safe-bitcoin-transaction-has-been-mined/ ; https://bitcoin.org/bip/360/ ; https://bitcoin.org/bip/361/
+Ethereum: https://blog.ethereum.org/2026/09/07/protocol-hegota-eips ; https://blog.ethereum.org/2026/09/07/protocol-priorities ; https://ethereum.org/roadmap/security/quantum-resistance/
+Sui: https://www.sui.io/blog/making-sui-quantum-ready ; https://www.sui.io/blog/suis-post-quantum-signature-schemes
+Independent corroboration: https://www.circle.com/pt-br/blog/the-quantum-gap-is-closing

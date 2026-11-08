@@ -1,0 +1,35 @@
+{
+  "subject_id": "urn:ws-cae:chain:chia",
+  "consensus_family": "PROOF_OF_SPACE_TIME",
+  "mechanism_name": "Proof of Space and Time",
+  "resource_proof": "STORAGE_SPACE",
+  "finality_model": "CHAIN_SELECTION_WITH_SPACE_AND_TIME_PROOFS",
+  "participant_auth_primitive": "BLS_FARMER_SIGNATURES",
+  "participant_key_agility": "FIXED_CLASSICAL",
+  "local_validation_mode": "FULL_NODE_RULE_VALIDATION",
+  "consensus_pq_state": "CLASSICAL_OR_UNPROVEN",
+  "resource_proof_agility": "PROOF_FORMAT_MIGRATION_ACTIVE",
+  "poc_subtype": "",
+  "evidence": [
+    {
+      "label": "Chia consensus basics",
+      "url": "https://docs.chia.net/consensus-basics/",
+      "claim": "Chia uses Proof of Space and Time, combining farmer proofs of space with timelord proofs of time."
+    },
+    {
+      "label": "Chia consensus introduction",
+      "url": "https://docs.chia.net/chia-blockchain/consensus/consensus-intro/",
+      "claim": "Chia consensus uses deterministic BLS signatures controlled by farmers and verifiable delay functions for proof of time."
+    },
+    {
+      "label": "Chia proof of space",
+      "url": "https://docs.chia.net/chia-blockchain/consensus/proof-of-space-1.0/",
+      "claim": "Chia proof-of-space keys use BLS aggregation and its documentation distinguishes Proof of Space from Proof of Capacity."
+    },
+    {
+      "label": "Chia new proof FAQ",
+      "url": "https://docs.chia.net/chia-blockchain/consensus/proof-of-space-2.0/new-proof-faq/",
+      "claim": "A consensus-affecting proof-format transition is scheduled, so resource-proof agility is modeled separately from PQ consensus readiness."
+    }
+  ]
+}

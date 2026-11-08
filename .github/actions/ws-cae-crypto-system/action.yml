@@ -1,0 +1,16 @@
+name: WS-CAE Crypto System Patch
+description: Read-only weakest-link assessment for cryptocurrency dependency paths
+inputs:
+  patch:
+    description: Path to a WS-CAE crypto-system patch JSON in the caller workspace
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Evaluate crypto-system dependencies
+      shell: bash
+      env:
+        WS_CAE_ROOT: ${{ github.action_path }}/../../..
+        WS_CAE_SYSTEM_PATCH: ${{ inputs.patch }}
+      run: |
+        PYTHONPATH="$WS_CAE_ROOT" python -m ws_cae.crypto_system_cli "$WS_CAE_SYSTEM_PATCH" --pretty

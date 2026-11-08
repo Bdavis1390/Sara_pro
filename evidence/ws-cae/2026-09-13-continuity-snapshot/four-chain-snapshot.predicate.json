@@ -1,0 +1,13 @@
+{
+  "asOf": "2026-09-13",
+  "manifestCount": 4,
+  "snapshotId": "sha256:dbdbb6f1588c7c380f91e8d4d054f0bb2ab19df9ed5d36ee7dd40bf9dd1cd3e7",
+  "spec": "WS-CAE-CONTINUITY-SNAPSHOT-ATTESTATION-1",
+  "statementSha256": "e3011d9a2ef7246ee8ce056a2a66e85144d7f7ceef4e0d4a2c5cecaf9e65a9eb",
+  "subjects": [
+    "Algorand",
+    "Bitcoin",
+    "Ethereum",
+    "Sui"
+  ]
+}
