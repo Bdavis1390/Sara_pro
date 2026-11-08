@@ -81,7 +81,10 @@ def main():
    "external_models/star_baryon_2026/star_2025_imr_fit.json",
    "fetch_star_baryon_2026.py","analyze_baryon_transport_2026.py",
    "fit_photonuclear_slope_2026.py","fit_star_imr_2025.py","test_science_baselines.py",
-   "rf_measurement_gate.py","test_rf_measurement_gate.py","test_harvest.py"
+   "rf_measurement_gate.py","test_rf_measurement_gate.py","test_harvest.py",
+   "audit_hepdata_quality.py","test_quality_and_power.py","rf_design_power.py",
+   "rf_design_power_synthetic.json",
+   "external_models/star_baryon_2026/hepdata_154708_quality_audit.json"
   ]:
    p=src/rel
    if not p.is_file():raise RuntimeError("STAR published-source payload missing: "+rel)
