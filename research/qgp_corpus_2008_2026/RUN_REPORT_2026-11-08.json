@@ -9,16 +9,21 @@
     "STAR HEPData 147195"
   ],
   "inspire_openalex": {
-    "unique_indexed_works": 5038,
-    "source_observations": 5697,
-    "processed_source_pages": 168,
-    "reported_request_errors": 0,
+    "unique_indexed_works": 6801,
+    "source_observations": 7789,
+    "processed_source_pages": 269,
+    "stored_errors": 5,
+    "stored_error_type": "OpenAlex HTTP 429",
+    "provider_error_rate_limit": "Circuit breaker implemented and regression tested",
+    "coverage_start_year": 2008,
+    "coverage_end_year": 2026,
+    "covered_year_count": 19,
     "mandatory_doi_pins_verified": 9
   },
   "staging": {
-    "draft_records": 5038,
-    "jsonl_bytes": 6150743,
-    "jsonl_sha256": "7842368fcf4189ae04b5bfb300a12aaa81788cb68e319f87891096bf9df0739f",
+    "draft_records": 6801,
+    "jsonl_bytes": 8333550,
+    "jsonl_sha256": "e5ab36c74ff27d3a14607dcb8dc450f4e8951336057ba3dfd8a6a12c14d86712",
     "published_to_sara": false
   },
   "hepdata": {
@@ -37,8 +42,9 @@
   },
   "runtime": {
     "host": "lenovo",
-    "database_size_approx_MB": 7.1,
-    "min_disk_free_GiB_guard": 3,
+    "home_disk_free_gb_approx": 4.3,
+    "root_disk_free_gb_approx": 7.8,
+    "metadata_dir_approx_mb": 9.3,
     "live_sara_changed": false,
     "palace_run_modified": false,
     "new_scheduled_tasks_created": 0
@@ -50,6 +56,54 @@
     "No bulk detector events downloaded",
     "The staging index remains local; no cloud backup of complete SQLite index was verified",
     "GitHub research branch separate from main",
-    "Year tags can be based on earliest preprint date instead of later journal publication year"
-  ]
+    "Year tags can be based on earliest preprint date instead of later journal publication year",
+    "Five OpenAlex rate-limit errors occurred before circuit-breaker deployment; do not retry absent provider quota/key",
+    "Publication date audit marks mismatches and requires adjudication, not silent rewriting",
+    "Title screening tags overlap and do not establish scientific relevance or any physical correlation",
+    "Same-device root-partition snapshot is not cloud/off-device recovery",
+    "OpenAlex anonymous cursor paging past first page requires a verified free API key"
+  ],
+  "as_of_utc": "2026-11-08T20:02:23Z",
+  "relevance_screening": {
+    "core_title_signal": 4153,
+    "adjacent_title_signal": 1329,
+    "unclassified_manual_review": 1319,
+    "project_title_tags": {
+      "QGP thermometry": 535,
+      "Plasma transport": 1094,
+      "QCD theory": 1406,
+      "Field response": 404,
+      "Small-system tests": 85,
+      "Junction Discrimination": 65
+    },
+    "status": "TRIAGE_TITLE_ONLY_NOT_PEER_REVIEW"
+  },
+  "publication_date_audit": {
+    "record_count": 6801,
+    "index_publication_year_discrepancies": 1767,
+    "journal_after_preprint": 1817,
+    "possible_future_publications": 3,
+    "status": "REVIEW_REQUIRED"
+  },
+  "safety_regression_tests": {
+    "passed": 5,
+    "total": 5,
+    "includes": [
+      "429 no retry",
+      "pagination size guard",
+      "dual provider DOI identity",
+      "positive title signal",
+      "negative title control"
+    ]
+  },
+  "local_recovery_snapshot": {
+    "device": "lenovo",
+    "destination_partition": "/dev/mmcblk0p2",
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T200223Z.tar.gz",
+    "archive_bytes": 7677851,
+    "archive_sha256": "5a30e93dc6682b7456577578fd170e574738214a9455be2e420a93e15248b709",
+    "file_count": 25,
+    "verified": true,
+    "off_device_backup": false
+  }
 }
