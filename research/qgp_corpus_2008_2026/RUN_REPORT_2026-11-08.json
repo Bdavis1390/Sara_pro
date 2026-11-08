@@ -86,15 +86,11 @@
     "status": "REVIEW_REQUIRED"
   },
   "safety_regression_tests": {
-    "passed": 5,
-    "total": 5,
-    "includes": [
-      "429 no retry",
-      "pagination size guard",
-      "dual provider DOI identity",
-      "positive title signal",
-      "negative title control"
-    ]
+    "passed": 14,
+    "total": 14,
+    "metadata": 5,
+    "published_data_benchmarks": 4,
+    "synthetic_rf_gate": 5
   },
   "local_recovery_snapshot": {
     "device": "lenovo",
@@ -177,5 +173,42 @@
     "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
   },
   "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
-  "new_physics_claim_status": "NOT_DEMONSTRATED: no original withheld predicted and independently confirmed deviation exists"
+  "new_physics_claim_status": "NOT DEMONSTRATED. Existing data support published QGP model discrepancies but do not identify a unique original mechanism; controlled RF measurement evidence is absent.",
+  "followup_exploratory_novelty_screen_2026_11_08": {
+    "classification": "RETROSPECTIVE_EXPLORATORY_NOT_ORIGINAL_NEW_PHYSICS",
+    "centrality_points": 5,
+    "candidate_statistical_models": 10,
+    "methodology": "WLS and leave-one-centrality-out; assumed systematic cross-bin correlation at 0, 0.5, 0.9",
+    "key_result": "One-parameter amplitude rescaling of UrQMD gives factor ~2.344; extra model complexity not established as necessary.",
+    "model_selection_null_simulations": 900,
+    "illustrative_model_search_fraction_more_extreme": 0.28967813540510545,
+    "important_limit": "This is not a confirmatory p value; these five points were seen before choosing models and exact covariance is unknown.",
+    "private_research_details_not_public": true
+  },
+  "forward_energy_scan_benchmark": {
+    "classification": "EXTERNAL_PUBLISHED_URQMD_SLOPE_EXTRAPOLATION_NOT_NEW_PHYSICS",
+    "reference_energy_GeV": 200,
+    "reference_R_0to20_rough_average": 1.7895,
+    "baseline_slope": -0.125,
+    "target_energy_GeV": 19.6,
+    "illustrative_predicted_R": 2.3931,
+    "source": "doi:10.1140/epjc/s10052-026-16282-y",
+    "qualification": "No independent 19.6 GeV Ru/Zr experimental measurement was available from the sources checked; full model uncertainty missing.",
+    "freeze_private_only": true
+  },
+  "rf_measurement_gate": {
+    "instrument_hardware_connected_verified": false,
+    "real_raw_rf_measurements_found": false,
+    "new_code": [
+      "rf_measurement_gate.py",
+      "test_rf_measurement_gate.py",
+      "RF_MEASUREMENT_CONTRACT.md"
+    ],
+    "synthetic_test_cases": 5,
+    "missing_sham_and_calibration_rejected": true,
+    "normal_nonlinear_mixing_not_treated_as_new_physics": true,
+    "calibration_certificates_not_verified": true,
+    "real_measurements_not_conducted": true,
+    "actual_physical_discovery": "BLOCKED"
+  }
 }
