@@ -19,7 +19,7 @@ class IngestSafetyTests(unittest.TestCase):
   self.assertEqual(screen_relevance.evaluate("Quark-Gluon Plasma Transport Effects")[0],"CORE_TITLE_SIGNAL")
  def test_dual_provider_identity(self):
   with tempfile.TemporaryDirectory() as td:
-   db=harvest_qgp.connect(pathlib.Path(td)/"sample.sqlite3")
+   db=harvest_qgp.connect(pathlib.Path(td))
    openalex={"id":"https://openalex.org/W1","doi":"https://doi.org/10.1234/xyz",
             "display_name":"QGP Temperature","publication_date":"2025-04-13","publication_year":2025}
    inspire={"id":"123","metadata":{"titles":[{"title":"QGP Temperature"}],
