@@ -1,0 +1,53 @@
+{
+  "artifact_id": "WS-QGP-INGEST-20261108-V2",
+  "date_utc": "2026-11-08",
+  "data_cutoff": "2026-11-08",
+  "scope": "Selected QGP/QCD metadata from 2008-2026, first-page and priority-topic sampling; NOT exhaustive",
+  "sources": [
+    "INSPIRE HEP",
+    "OpenAlex",
+    "STAR HEPData 147195"
+  ],
+  "inspire_openalex": {
+    "unique_indexed_works": 5037,
+    "source_observations": 5688,
+    "processed_source_pages": 168,
+    "reported_request_errors": 0
+  },
+  "staging": {
+    "draft_records": 5037,
+    "jsonl_bytes": 6149495,
+    "jsonl_sha256": "eb6335569536c14a452a39dda77517b204444643053b63f2dcf2a2121934aa62",
+    "published_to_sara": false
+  },
+  "hepdata": {
+    "record": 147195,
+    "table_count": 5,
+    "source_bytes": 20017,
+    "license": "CC0",
+    "github_mirror_byte_exact": true,
+    "sha256_matched": true,
+    "temperature_table_read": true
+  },
+  "math_check": {
+    "LMR_naive_weighted_MeV": 173.64,
+    "IMR_naive_weighted_MeV": 279.25,
+    "independent_full_spectrum_fit": false
+  },
+  "runtime": {
+    "host": "lenovo",
+    "database_size_approx_MB": 7.1,
+    "min_disk_free_GiB_guard": 3,
+    "live_sara_changed": false,
+    "palace_run_modified": false,
+    "new_scheduled_tasks_created": 0
+  },
+  "limitations": [
+    "Query-first-page sampling and keyword retrieval yield false positives and missed articles",
+    "OpenAlex shared anonymous API budget; rate limits apply",
+    "Authoritative STAR fit and full covariance were not reproduced",
+    "No bulk detector events downloaded",
+    "The staging index remains local; no cloud backup of complete SQLite index was verified",
+    "GitHub research branch separate from main"
+  ]
+}
