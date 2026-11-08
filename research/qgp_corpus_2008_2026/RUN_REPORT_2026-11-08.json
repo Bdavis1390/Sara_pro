@@ -99,11 +99,83 @@
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T200223Z.tar.gz",
-    "archive_bytes": 7677851,
-    "archive_sha256": "5a30e93dc6682b7456577578fd170e574738214a9455be2e420a93e15248b709",
-    "file_count": 25,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T202633Z.tar.gz",
+    "archive_bytes": 8020083,
+    "archive_sha256": "55b39c5b05b25c6d3e757657ae3a729d94467607c12fa8c98699daf8a048a670",
+    "file_count": 63,
     "verified": true,
-    "off_device_backup": false
-  }
+    "off_device_backup": false,
+    "private_prereg_excluded": true
+  },
+  "followup_validation_2026_11_08": {
+    "source_Zenodo_2026_baryon_models": {
+      "record": "10.5281/zenodo.19463261",
+      "archive_bytes": 277310,
+      "archive_md5": "7cbf93f2e57a06bc0ed7e701d4977cb3",
+      "license": "CC-BY-4.0",
+      "executed_untrusted_scripts": false
+    },
+    "star_2026_baryon_hepdata": {
+      "record": "10.17182/hepdata.154708",
+      "licensed": "CC0",
+      "tables": 26,
+      "total_json_bytes": 529957,
+      "source_hashes_verified": true,
+      "github_byte_identical_copies": 26,
+      "mirror_fails": 0
+    },
+    "star_2026_ratio_data": {
+      "centrality_pct": [
+        5,
+        15,
+        30,
+        50,
+        70
+      ],
+      "measured": [
+        1.839,
+        1.74,
+        1.54,
+        1.331,
+        1.147
+      ],
+      "urqmd": [
+        0.726596,
+        0.689124,
+        0.660145,
+        0.5822795,
+        0.567359
+      ],
+      "reported_effect_known_to_STAR": true
+    },
+    "star_2026_photonuclear_slope": {
+      "approx_fit_alpha": 1.0576380078,
+      "approx_fit_sigma": 0.1508471334,
+      "published_alpha": 1.0402,
+      "published_sigma": 0.22,
+      "bootstrap_3000_sigma": 0.1507682102,
+      "scope": "Published derived-data consistency fit, correlated normalization and assumed nuisance correlation"
+    },
+    "star_2025_dilepton_shape": {
+      "figure_3_27GeV_IMR_MeV": 280.2,
+      "figure_4_54_4GeV_IMR_MeV": 281.1,
+      "profile68_27GeV_MeV": [
+        214.6,
+        353.1
+      ],
+      "profile68_54_4GeV_MeV": [
+        213.1,
+        379.6
+      ],
+      "method": "Center-bin approximate M^1.5 exp(-M/T) fit, diagonal errors",
+      "novel_physics": false
+    },
+    "offline_regression": {
+      "passed": 9,
+      "total": 9
+    },
+    "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
+  },
+  "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
+  "new_physics_claim_status": "NOT_DEMONSTRATED: no original withheld predicted and independently confirmed deviation exists"
 }
