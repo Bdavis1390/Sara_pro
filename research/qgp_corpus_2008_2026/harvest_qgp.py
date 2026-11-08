@@ -149,9 +149,9 @@ def run():
         if previous["per_page"]!=a.per_page: ap.error("Existing DB has a different per-page size; use a new --out")
     elif (out/"qgp.sqlite3").exists():
         if a.per_page!=40: ap.error("Legacy DB uses per_page=40; use a new --out for other sizes")
-        config.write_text(json.dumps({"per_page":40,"version":2})+"\\n")
+        config.write_text(json.dumps({"per_page":40,"version":2}))
     else:
-        config.write_text(json.dumps({"per_page":a.per_page,"version":2})+"\\n")
+        config.write_text(json.dumps({"per_page":a.per_page,"version":2}))
     c=connect(out)
     blocked_providers=set()
     start=time.monotonic()
