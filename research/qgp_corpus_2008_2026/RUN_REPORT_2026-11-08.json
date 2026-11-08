@@ -9,15 +9,16 @@
     "STAR HEPData 147195"
   ],
   "inspire_openalex": {
-    "unique_indexed_works": 5037,
-    "source_observations": 5688,
+    "unique_indexed_works": 5038,
+    "source_observations": 5697,
     "processed_source_pages": 168,
-    "reported_request_errors": 0
+    "reported_request_errors": 0,
+    "mandatory_doi_pins_verified": 9
   },
   "staging": {
-    "draft_records": 5037,
-    "jsonl_bytes": 6149495,
-    "jsonl_sha256": "eb6335569536c14a452a39dda77517b204444643053b63f2dcf2a2121934aa62",
+    "draft_records": 5038,
+    "jsonl_bytes": 6150743,
+    "jsonl_sha256": "7842368fcf4189ae04b5bfb300a12aaa81788cb68e319f87891096bf9df0739f",
     "published_to_sara": false
   },
   "hepdata": {
@@ -48,6 +49,7 @@
     "Authoritative STAR fit and full covariance were not reproduced",
     "No bulk detector events downloaded",
     "The staging index remains local; no cloud backup of complete SQLite index was verified",
-    "GitHub research branch separate from main"
+    "GitHub research branch separate from main",
+    "Year tags can be based on earliest preprint date instead of later journal publication year"
   ]
 }
