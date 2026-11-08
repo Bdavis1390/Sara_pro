@@ -6,7 +6,7 @@ import argparse,collections,csv,datetime,hashlib,itertools,json,math,pathlib,sta
 
 NEEDED={"experiment_id","pair_id","replicate_id","sample_type","condition",
         "output_frequency_hz","output_power_dbm","uncertainty_db",
-        "instrument_id","calibration_id","timestamp_utc"}
+        "instrument_id","calibration_id","timestamp_utc","data_origin"}
 CONDITIONS={"OFF","A","B","AB"}
 SAMPLE_TYPES={"CANDIDATE","BLANK"}
 MIX_FAMILIES={"WS-RF-001","WS-RF-002","WS-RF-003"}
@@ -30,6 +30,9 @@ def load(path):
         raise ValueError("required columns missing: "+str(sorted(NEEDED-set(rdr.fieldnames or []))))
     grouped=collections.defaultdict(dict)
     allrows=list(rdr)
+    origins={r.get("data_origin","") for r in allrows}
+    if len(origins)!=1 or not origins.issubset({"SYNTHETIC_TEST","MEASURED_UNVERIFIED"}):
+        raise ValueError("Dataset origin must be a single explicit SYNTHETIC_TEST or MEASURED_UNVERIFIED category")
     for r in allrows:
         key=(r["pair_id"],r["output_frequency_hz"],r["replicate_id"])
         typ=r["sample_type"]
@@ -39,6 +42,8 @@ def load(path):
         for k in NEEDED:
             if not r[k].strip():raise ValueError("Missing "+k+" in "+str(key))
         if not r["calibration_id"].startswith("CAL-"):raise ValueError("Unverifiable calibration reference naming")
+        if r["data_origin"]=="MEASURED_UNVERIFIED" and "SYNTH" in r["calibration_id"]:
+            raise ValueError("Cannot mark synthetic calibration as an actual measurement")
         if (typ,cond) in grouped[key]:raise ValueError("Duplicate condition in "+str(key))
         freq=float(r["output_frequency_hz"]); pow_dbm=float(r["output_power_dbm"])
         err=float(r["uncertainty_db"])
@@ -48,6 +53,7 @@ def load(path):
         err_p=p*(math.log(10)/10)*err
         grouped[key][(typ,cond)]=(p,err_p,r["instrument_id"],r["calibration_id"])
     if not grouped:raise ValueError("Empty dataset")
+    if not any(key[0]=="SHAM" for key in grouped):raise ValueError("A sham frequency control is mandatory")
     delta=collections.defaultdict(list)
     for key,conditions in grouped.items():
         required={(typ,c) for typ in SAMPLE_TYPES for c in CONDITIONS}
@@ -63,7 +69,7 @@ def load(path):
         da,ea=mix("CANDIDATE")
         db,eb=mix("BLANK")
         delta[(key[0],key[1])].append((key[2],da-db,ea+eb))
-    return delta,hashlib.sha256(raw).hexdigest(),len(allrows)
+    return delta,hashlib.sha256(raw).hexdigest(),len(allrows),next(iter(origins))
 
 def adjust_holm(raw):
     pairs=sorted(raw.items(),key=lambda item:item[1])
@@ -74,7 +80,7 @@ def adjust_holm(raw):
     return adjusted
 
 def analyze(path):
-    delta,digest,nrows=load(path)
+    delta,digest,nrows,origin=load(path)
     summaries={};rawp={}
     for key,values in sorted(delta.items()):
         if len(values)<3:raise ValueError("Need at least 3 independent paired runs: "+str(key))
@@ -103,15 +109,16 @@ def analyze(path):
     return {
       "date_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
       "experiment_sha256":digest,"data_rows":nrows,"results":rows,
-      "is_synthetic":False,  # Caller must separately prove measurement authenticity.
+      "data_origin":origin,
+      "synthetic_test":origin=="SYNTHETIC_TEST",
+      "measurement_status":"SYNTHETIC_TEST_ONLY" if origin=="SYNTHETIC_TEST" else "UNVERIFIED_SELF_REPORTED_CSV",
       "fundamental_discovery_gate":"BLOCKED",
       "gate_reasons":["Calibration IDs are declarations and must be validated against traceable certificates",
        "No full complex S-parameters or independent absolute power closure supplied",
        "Known nonlinear mixing, interference and material response can generate this effect",
        "No independent second-laboratory replication and no prospectively specified new law",
        "The sign-flip test relies on independent exchangeable runs and symmetry under the null",
-       "A positive result must survive sham frequencies, look-elsewhere, hardware and environmental artifact tests"],
-      "measurement_status":"UNVERIFIED_SELF_REPORTED_CSV"}
+       "A positive result must survive sham frequencies, look-elsewhere, hardware and environmental artifact tests"]}
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--csv",required=True)
