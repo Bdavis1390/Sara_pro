@@ -1,0 +1,164 @@
+{
+  "date_utc": "2026-11-08T20:16:12.327294+00:00",
+  "dataset": "https://www.hepdata.net/record/154708",
+  "paper": "https://doi.org/10.1126/science.ads5962",
+  "theory": "https://doi.org/10.5281/zenodo.19463261",
+  "data_stage": "external_published_derived_not_raw",
+  "measurement_type": "scaled B/DeltaQ times Delta Z/A in Ru+Ru and Zr+Zr",
+  "centrality_centers_pct": [
+    5.0,
+    15.0,
+    30.0,
+    50.0,
+    70.0
+  ],
+  "measured_ratio": [
+    1.839,
+    1.74,
+    1.54,
+    1.331,
+    1.147
+  ],
+  "errors_per_bin_stat_sys_nofeeddown_sys_feeddown": [
+    [
+      0.017,
+      0.094,
+      0.16
+    ],
+    [
+      0.018,
+      0.089,
+      0.148
+    ],
+    [
+      0.013,
+      0.091,
+      0.117
+    ],
+    [
+      0.016,
+      0.074,
+      0.106
+    ],
+    [
+      0.021,
+      0.125,
+      0.09
+    ]
+  ],
+  "comparison": {
+    "Unit_ratio_reference": {
+      "predictions": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "diagnostic_chi2_by_correlated_sys_fraction": {
+        "0.0": 58.95686,
+        "0.5": 31.92008,
+        "1.0": 173.00101
+      },
+      "mean_difference": 0.5193999999999999,
+      "model_uncertainty": "not quantified in this check"
+    },
+    "UrQMD": {
+      "predictions": [
+        0.726596,
+        0.689124,
+        0.660145,
+        0.58228,
+        0.567359
+      ],
+      "diagnostic_chi2_by_correlated_sys_fraction": {
+        "0.0": 145.35242,
+        "0.5": 56.25343,
+        "1.0": 42.48098
+      },
+      "mean_difference": 0.8742993000000002,
+      "model_uncertainty": "UrQMD plotting-statistical only; no full model systematic"
+    },
+    "Trento_Lc20": {
+      "predictions": [
+        1.044074,
+        1.009454,
+        0.90612,
+        0.779366,
+        0.521694
+      ],
+      "diagnostic_chi2_by_correlated_sys_fraction": {
+        "0.0": 88.16248,
+        "0.5": 30.1948,
+        "1.0": 18.42845
+      },
+      "mean_difference": 0.6672585011825376,
+      "model_uncertainty": "not quantified in this check"
+    },
+    "Trento_Lc47": {
+      "predictions": [
+        1.069604,
+        1.030559,
+        0.886514,
+        0.728929,
+        0.496088
+      ],
+      "diagnostic_chi2_by_correlated_sys_fraction": {
+        "0.0": 91.92602,
+        "0.5": 31.75652,
+        "1.0": 30.84019
+      },
+      "mean_difference": 0.6770612024302309,
+      "model_uncertainty": "not quantified in this check"
+    },
+    "Trento_Lc70": {
+      "predictions": [
+        1.055552,
+        0.993131,
+        0.840804,
+        0.635205,
+        0.450985
+      ],
+      "diagnostic_chi2_by_correlated_sys_fraction": {
+        "0.0": 106.83795,
+        "0.5": 37.83079,
+        "1.0": 77.2387
+      },
+      "mean_difference": 0.7242646724953785,
+      "model_uncertainty": "not quantified in this check"
+    },
+    "Trento_band_optimistic": {
+      "envelope_min": [
+        1.044074,
+        0.993131,
+        0.840804,
+        0.635205,
+        0.450985
+      ],
+      "envelope_max": [
+        1.055552,
+        1.009454,
+        0.90612,
+        0.779366,
+        0.521694
+      ],
+      "distance_outside_band": [
+        0.783448,
+        0.730546,
+        0.63388,
+        0.551634,
+        0.625306
+      ],
+      "caveat": "Bin-wise envelope projection is not one globally coherent physical parameter fit"
+    }
+  },
+  "assumptions": [
+    "No global STAR covariance matrix supplied in HEPData figure table",
+    "Systematic components are modeled as either independent, 50% or fully coherent; actual correlations unknown",
+    "Model curves do not span every plausible valence or junction explanation",
+    "Chi-square is a descriptive diagnostic, not a new-physics discovery significance",
+    "The data/model disagreement is already reported by STAR",
+    "A novel mechanism requires prospectively withheld, independent test data"
+  ],
+  "evidence_state": "PUBLISHED_MODEL_COMPARISON_REPRODUCED_NO_NEW_PHYSICS"
+}
