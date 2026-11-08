@@ -1,0 +1,316 @@
+{
+  "access_count": {
+    "sum": 669
+  },
+  "additional_resources": true,
+  "breadcrumb_text": "Aboona, B.E. et al.",
+  "coordinator": 85,
+  "data_tables": [
+    {
+      "data": {
+        "csv": "https://www.hepdata.net/download/table/ins2755369/Table 1/csv",
+        "json": "https://www.hepdata.net/download/table/ins2755369/Table 1/json",
+        "root": "https://www.hepdata.net/download/table/ins2755369/Table 1/root",
+        "yaml": "https://www.hepdata.net/download/table/ins2755369/Table 1/yaml",
+        "yoda": "https://www.hepdata.net/download/table/ins2755369/Table 1/yoda",
+        "yoda.h5": "https://www.hepdata.net/download/table/ins2755369/Table 1/yoda.h5",
+        "yoda1": "https://www.hepdata.net/download/table/ins2755369/Table 1/yoda1"
+      },
+      "description": "The inclusive dielectron invariant mass spectra of 27 GeV in 0-80% centrality.",
+      "doi": "10.17182/hepdata.147195.v1/t1",
+      "id": 1811118,
+      "location": "Au+Au@27 GeV Data from Figure 3(a)",
+      "messages": false,
+      "name": "Table 1",
+      "processed_name": "Table1",
+      "resources": []
+    },
+    {
+      "data": {
+        "csv": "https://www.hepdata.net/download/table/ins2755369/Table 2/csv",
+        "json": "https://www.hepdata.net/download/table/ins2755369/Table 2/json",
+        "root": "https://www.hepdata.net/download/table/ins2755369/Table 2/root",
+        "yaml": "https://www.hepdata.net/download/table/ins2755369/Table 2/yaml",
+        "yoda": "https://www.hepdata.net/download/table/ins2755369/Table 2/yoda",
+        "yoda.h5": "https://www.hepdata.net/download/table/ins2755369/Table 2/yoda.h5",
+        "yoda1": "https://www.hepdata.net/download/table/ins2755369/Table 2/yoda1"
+      },
+      "description": "The inclusive dielectron invariant mass spectra of 54.4 GeV in 0-80% centrality.",
+      "doi": "10.17182/hepdata.147195.v1/t2",
+      "id": 1811119,
+      "location": "Au+Au@54.4 GeV Data from Figure 3(a)",
+      "messages": false,
+      "name": "Table 2",
+      "processed_name": "Table2",
+      "resources": []
+    },
+    {
+      "data": {
+        "csv": "https://www.hepdata.net/download/table/ins2755369/Table 3/csv",
+        "json": "https://www.hepdata.net/download/table/ins2755369/Table 3/json",
+        "root": "https://www.hepdata.net/download/table/ins2755369/Table 3/root",
+        "yaml": "https://www.hepdata.net/download/table/ins2755369/Table 3/yaml",
+        "yoda": "https://www.hepdata.net/download/table/ins2755369/Table 3/yoda",
+        "yoda.h5": "https://www.hepdata.net/download/table/ins2755369/Table 3/yoda.h5",
+        "yoda1": "https://www.hepdata.net/download/table/ins2755369/Table 3/yoda1"
+      },
+      "description": "The charged multiplicity normalzied excess yield of 27 GeV in 0-80% centrality.",
+      "doi": "10.17182/hepdata.147195.v1/t3",
+      "id": 1811120,
+      "location": "Au+Au@27 GeV Data from Figure 3(b)",
+      "messages": false,
+      "name": "Table 3",
+      "processed_name": "Table3",
+      "resources": []
+    },
+    {
+      "data": {
+        "csv": "https://www.hepdata.net/download/table/ins2755369/Table 4/csv",
+        "json": "https://www.hepdata.net/download/table/ins2755369/Table 4/json",
+        "root": "https://www.hepdata.net/download/table/ins2755369/Table 4/root",
+        "yaml": "https://www.hepdata.net/download/table/ins2755369/Table 4/yaml",
+        "yoda": "https://www.hepdata.net/download/table/ins2755369/Table 4/yoda",
+        "yoda.h5": "https://www.hepdata.net/download/table/ins2755369/Table 4/yoda.h5",
+        "yoda1": "https://www.hepdata.net/download/table/ins2755369/Table 4/yoda1"
+      },
+      "description": "The charged multiplicity normalzied excess yield of 54.4 GeV in 0-80% centrality.",
+      "doi": "10.17182/hepdata.147195.v1/t4",
+      "id": 1811121,
+      "location": "Au+Au@54.4 GeV Data from Figure 3(b)",
+      "messages": false,
+      "name": "Table 4",
+      "processed_name": "Table4",
+      "resources": []
+    },
+    {
+      "data": {
+        "csv": "https://www.hepdata.net/download/table/ins2755369/Table 5/csv",
+        "json": "https://www.hepdata.net/download/table/ins2755369/Table 5/json",
+        "root": "https://www.hepdata.net/download/table/ins2755369/Table 5/root",
+        "yaml": "https://www.hepdata.net/download/table/ins2755369/Table 5/yaml",
+        "yoda": "https://www.hepdata.net/download/table/ins2755369/Table 5/yoda",
+        "yoda.h5": "https://www.hepdata.net/download/table/ins2755369/Table 5/yoda.h5",
+        "yoda1": "https://www.hepdata.net/download/table/ins2755369/Table 5/yoda1"
+      },
+      "description": "T vs. uB from 27 GeV and 54.4 GeV",
+      "doi": "10.17182/hepdata.147195.v1/t5",
+      "id": 1811122,
+      "location": "Data from Figure 4",
+      "messages": false,
+      "name": "Table 5",
+      "processed_name": "Table5",
+      "resources": []
+    }
+  ],
+  "mode": "record",
+  "overall_status": "finished",
+  "participant_count": 2,
+  "recid": 147195,
+  "record": {
+    "abstract": "In a Quark-Gluon Plasma (QGP), the fundamental building blocks of matter, quarks and gluons, are under extreme conditions of temperature and density. A QGP could exist in the early stages of the Universe, and in various objects and events in the cosmos. The thermodynamic and hydrodynamic properties of the QGP are described by Quantum Chromodynamics (QCD) and can be studied in heavy-ion collisions. Despite being a key thermodynamic parameter, the QGP temperature is still poorly known. Thermal lepton pairs ($e^+e^-$ and $\\mu^+\\mu^-$) are ideal penetrating probes of the true temperature of the emitting source, since their invariant-mass spectra suffer neither from strong final-state interactions nor from blue-shift effects due to rapid expansion. Here we measure the QGP temperature using thermal $e^+e^-$ production at the Relativistic Heavy Ion Collider (RHIC). The average temperature from the low-mass region (in-medium $\\rho^0$ vector-meson dominant) is $(1.99 \\pm 0.24) \\times 10^{12}$ K, consistent with the chemical freeze-out temperature from statistical models and the phase transition temperature from LQCD. The average temperature from the intermediate mass region (above the $\\rho^0$ mass, QGP dominant) is significantly higher at $(3.40 \\pm 0.55)\\times 10^{12}$ K. This work provides essential experimental thermodynamic measurements to map out the QCD phase diagram and understand the properties of matter under extreme conditions.",
+    "access_urls": {
+      "links": {
+        "csv": "https://www.hepdata.net/download/submission/ins2755369/1/csv",
+        "json": "https://www.hepdata.net/download/submission/ins2755369/1/json",
+        "root": "https://www.hepdata.net/download/submission/ins2755369/1/root",
+        "yaml": "https://www.hepdata.net/download/submission/ins2755369/1/yaml",
+        "yoda": "https://www.hepdata.net/download/submission/ins2755369/1/yoda",
+        "yoda-h5": "https://www.hepdata.net/download/submission/ins2755369/1/yoda.h5"
+      }
+    },
+    "analyses": [],
+    "arxiv_id": "arXiv:2402.01998",
+    "collaborations": [
+      "STAR"
+    ],
+    "control_number": "147195",
+    "creation_date": "2024-02-02",
+    "data_abstract": "",
+    "data_keywords": {
+      "cmenergies": [
+        {
+          "gte": 27.0,
+          "lte": 27.0
+        },
+        {
+          "gte": 54.4,
+          "lte": 54.4
+        }
+      ],
+      "observables": [
+        "IncY",
+        "NormExY",
+        "Temperature"
+      ],
+      "phrases": [
+        "QGP",
+        "in-medium vector meson",
+        "temperature",
+        "QCD phase transition",
+        "Thermal diletons"
+      ],
+      "reactions": [
+        "Au+Au Collisions"
+      ]
+    },
+    "doc_type": "publication",
+    "doi": "10.1038/s41467-025-63216-5",
+    "first_author": {
+      "affiliation": "Texas A-M",
+      "full_name": "Aboona, B.E."
+    },
+    "hepdata_doi": "10.17182/hepdata.147195.v1",
+    "id": 147195,
+    "inspire_id": "2755369",
+    "journal_info": "Nature Commun. 16 (2025) 9098",
+    "keywords": [
+      {
+        "schema": "INSPIRE",
+        "value": "experimental results"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "quark gluon: plasma"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "freeze-out: chemical"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "freeze-out: temperature"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "quantum chromodynamics: critical phenomena"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "critical phenomena: temperature"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "heavy ion: scattering"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "model: statistical"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "thermodynamical"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "thermal"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "rho(770)"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "density"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "lepton: pair production"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "lattice field theory"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "Brookhaven RHIC Coll"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "hydrodynamics"
+      },
+      {
+        "schema": "INSPIRE",
+        "value": "final-state interaction"
+      }
+    ],
+    "last_updated": "Mon, 03 Nov 2025 17:12:10 GMT",
+    "parent_child_join": {
+      "name": "parent_publication"
+    },
+    "publication_date": "2025-09-17T00:00:00",
+    "recid": 147195,
+    "resources": [
+      {
+        "description": "Created with hepdata_lib 0.18.0",
+        "type": "zenodo",
+        "url": "https://doi.org/10.5281/zenodo.1217998"
+      }
+    ],
+    "subject_area": [
+      "hep-ph",
+      "hep-ex",
+      "nucl-ex"
+    ],
+    "summary_authors": [
+      {
+        "affiliation": "Texas A-M",
+        "full_name": "Aboona, B.E."
+      },
+      {
+        "affiliation": "Prague, Tech. U.",
+        "full_name": "Adam, J."
+      },
+      {
+        "affiliation": "AGH-UST, Cracow",
+        "full_name": "Adamczyk, L."
+      },
+      {
+        "affiliation": "Panjab U., Chandigarh",
+        "full_name": "Aggarwal, I."
+      },
+      {
+        "affiliation": "Panjab U., Chandigarh",
+        "full_name": "Aggarwal, M.M."
+      },
+      {
+        "affiliation": "Calcutta, VECC",
+        "full_name": "Ahammed, Z."
+      },
+      {
+        "affiliation": "Kent State U.",
+        "full_name": "Alshammri, A.K."
+      },
+      {
+        "affiliation": "Brookhaven",
+        "full_name": "Aschenauer, E.C."
+      },
+      {
+        "affiliation": "Fudan U.",
+        "full_name": "Aslam, S."
+      },
+      {
+        "affiliation": "Abilene Christian U.",
+        "full_name": "Atchison, J."
+      }
+    ],
+    "title": "Temperature Measurement of Quark-Gluon Plasma at Different Stages",
+    "type": [
+      "article"
+    ],
+    "uuid": "235a5492-5b9d-4257-af1e-63f519635dd9",
+    "version": 1,
+    "year": "2025"
+  },
+  "record_type": "publication",
+  "related_recids": [],
+  "related_to_this_recids": [],
+  "resources_with_doi": [],
+  "reviewers_notified": true,
+  "site_url": "https://www.hepdata.net",
+  "status": "finished",
+  "table_id_to_show": 1811118,
+  "table_name_to_show": "Table 1",
+  "version": 1,
+  "version_count": 1,
+  "watched": false
+}
