@@ -1,0 +1,293 @@
+{
+  "date_utc": "2026-11-08T23:14:29.198191+00:00",
+  "state": "SIMULATED_DESIGN_SENSITIVITY_NOT_PHYSICAL_MEASUREMENT",
+  "random_seed": 20261108,
+  "simulations": [
+    {
+      "n_independent_replicates": 6,
+      "effect_size_mean_over_run_sd": 0.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.03125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 6,
+      "effect_size_mean_over_run_sd": 0.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.03125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 6,
+      "effect_size_mean_over_run_sd": 1.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.03125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 6,
+      "effect_size_mean_over_run_sd": 1.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.03125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 6,
+      "effect_size_mean_over_run_sd": 2.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.03125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 7,
+      "effect_size_mean_over_run_sd": 0.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.015625,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0625,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 7,
+      "effect_size_mean_over_run_sd": 0.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.015625,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0625,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 7,
+      "effect_size_mean_over_run_sd": 1.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.015625,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0625,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 7,
+      "effect_size_mean_over_run_sd": 1.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.015625,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0625,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 7,
+      "effect_size_mean_over_run_sd": 2.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0,
+      "at_least_one_false_positive_rate": 0.0,
+      "ideal_smallest_two_sided_raw_p": 0.015625,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0625,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 8,
+      "effect_size_mean_over_run_sd": 0.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.0025,
+      "at_least_one_false_positive_rate": 0.015,
+      "ideal_smallest_two_sided_raw_p": 0.0078125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.03125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 8,
+      "effect_size_mean_over_run_sd": 0.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.055,
+      "at_least_one_false_positive_rate": 0.005,
+      "ideal_smallest_two_sided_raw_p": 0.0078125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.03125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 8,
+      "effect_size_mean_over_run_sd": 1.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.23,
+      "at_least_one_false_positive_rate": 0.025,
+      "ideal_smallest_two_sided_raw_p": 0.0078125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.03125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 8,
+      "effect_size_mean_over_run_sd": 1.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.6175,
+      "at_least_one_false_positive_rate": 0.0375,
+      "ideal_smallest_two_sided_raw_p": 0.0078125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.03125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 8,
+      "effect_size_mean_over_run_sd": 2.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.8225,
+      "at_least_one_false_positive_rate": 0.0475,
+      "ideal_smallest_two_sided_raw_p": 0.0078125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.03125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 10,
+      "effect_size_mean_over_run_sd": 0.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.01,
+      "at_least_one_false_positive_rate": 0.04,
+      "ideal_smallest_two_sided_raw_p": 0.001953125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0078125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 10,
+      "effect_size_mean_over_run_sd": 0.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.105,
+      "at_least_one_false_positive_rate": 0.0375,
+      "ideal_smallest_two_sided_raw_p": 0.001953125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0078125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 10,
+      "effect_size_mean_over_run_sd": 1.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.515,
+      "at_least_one_false_positive_rate": 0.05,
+      "ideal_smallest_two_sided_raw_p": 0.001953125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0078125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 10,
+      "effect_size_mean_over_run_sd": 1.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.8975,
+      "at_least_one_false_positive_rate": 0.025,
+      "ideal_smallest_two_sided_raw_p": 0.001953125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0078125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 10,
+      "effect_size_mean_over_run_sd": 2.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.9975,
+      "at_least_one_false_positive_rate": 0.045,
+      "ideal_smallest_two_sided_raw_p": 0.001953125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.0078125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 12,
+      "effect_size_mean_over_run_sd": 0.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.01,
+      "at_least_one_false_positive_rate": 0.025,
+      "ideal_smallest_two_sided_raw_p": 0.00048828125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.001953125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 12,
+      "effect_size_mean_over_run_sd": 0.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.2125,
+      "at_least_one_false_positive_rate": 0.025,
+      "ideal_smallest_two_sided_raw_p": 0.00048828125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.001953125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 12,
+      "effect_size_mean_over_run_sd": 1.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.6225,
+      "at_least_one_false_positive_rate": 0.0475,
+      "ideal_smallest_two_sided_raw_p": 0.00048828125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.001953125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 12,
+      "effect_size_mean_over_run_sd": 1.5,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 0.9675,
+      "at_least_one_false_positive_rate": 0.04,
+      "ideal_smallest_two_sided_raw_p": 0.00048828125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.001953125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    },
+    {
+      "n_independent_replicates": 12,
+      "effect_size_mean_over_run_sd": 2.0,
+      "simulation_repetitions": 400,
+      "familywise_tested_outputs": 4,
+      "candidate_detection_rate": 1.0,
+      "at_least_one_false_positive_rate": 0.0675,
+      "ideal_smallest_two_sided_raw_p": 0.00048828125,
+      "ideal_smallest_bonferroni_4_adjusted_p": 0.001953125,
+      "a_detectable_standard_nonlinearity_is_not_new_physics": true
+    }
+  ],
+  "interpretation": "Four tested output regions including sham. One synthetically shifted channel, all other channels null; Holm familywise p<0.05. No instrument systematic error, correlations, drifts or power closure modeled.",
+  "sample_size_note": "n=8 is mathematical minimum for ideal all-same-sign paired results with four-test Bonferroni threshold; it is not a recommended minimum for power.",
+  "scientific_claim": "NONE",
+  "new_physics": false,
+  "limitations": [
+    "Gaussian synthetic independent runs only",
+    "Independence and exchangeability unverified in hardware",
+    "Effect size is normalized to run-to-run standard deviation, not a physical unit",
+    "Sham rejection is a negative-control failure, not an interesting effect",
+    "No apparatus available on the tested Lenovo for actual calibrated GHz measurements"
+  ]
+}
