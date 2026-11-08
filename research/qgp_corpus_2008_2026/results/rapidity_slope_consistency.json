@@ -1,0 +1,49 @@
+{
+  "source": "https://hepdata.net/record/154708",
+  "date_utc": "2026-11-08T20:18:47.044275+00:00",
+  "slope_model": "log dN/dy = ln A + alpha * y_center",
+  "published_comparator": {
+    "label": "$\\gamma^*$ + Au Data Au+Au 54.4 GeV",
+    "slope": 1.0402,
+    "sigma": 0.22
+  },
+  "correlated_normalization_uncertainty_fraction": 0.06,
+  "systematic_cross_bin_correlation_scan": {
+    "0": {
+      "amplitude": 0.2853165634481843,
+      "slope": 1.0576380077773637,
+      "slope_sigma_assumed": 0.15084713339200878,
+      "chi2": 2.4355685326226015,
+      "dof": 10
+    },
+    "0.5": {
+      "amplitude": 0.29859578038032547,
+      "slope": 1.0798917084662898,
+      "slope_sigma_assumed": 0.11258206462552356,
+      "chi2": 4.087866983341188,
+      "dof": 10
+    },
+    "1.0": {
+      "amplitude": 0.3122746989302571,
+      "slope": 1.1296791364650782,
+      "slope_sigma_assumed": 0.02604944564351102,
+      "chi2": 117.54396066247406,
+      "dof": 10
+    }
+  },
+  "bootstrap_rho0": {
+    "seed": 20261108,
+    "replicates": 3000,
+    "sd": 0.15076821015881167,
+    "range_2_5_to_97_5": [
+      0.7684126180376533,
+      1.3557579941406268
+    ]
+  },
+  "qualifications": [
+    "Log-linear approximation; STAR fit may integrate bins and include other detector and fit details",
+    "Covariance assumptions are scenarios, not measured STAR covariance",
+    "No new physics claim; this checks published observations against a published model"
+  ],
+  "evidence_state": "COMPATIBLE_IN_APPROXIMATE_ANALYSIS"
+}
