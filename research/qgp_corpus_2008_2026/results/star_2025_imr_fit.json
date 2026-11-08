@@ -1,0 +1,86 @@
+{
+  "created_utc": "2026-11-08T20:24:04.622209+00:00",
+  "source": "https://doi.org/10.17182/hepdata.147195",
+  "paper": "https://doi.org/10.1038/s41467-025-63216-5",
+  "result": {
+    "27_GeV": {
+      "primary": {
+        "T_MeV": 280.2,
+        "nominal_delta_chi2_1_interval_MeV": [
+          214.6,
+          353.1
+        ],
+        "chi2": 1.2090685224837372,
+        "dof": 4,
+        "fitted_normalization": 1.2350824534832543e-06,
+        "points": 6
+      },
+      "leave_one_mass_out_T_MeV": {
+        "1.03": 282.6,
+        "1.175": 276.3,
+        "1.375": 284.2,
+        "1.7": 300.6,
+        "2.2": 247.4,
+        "2.725": 276.2
+      },
+      "mass_bin_centers_GeV": [
+        1.03,
+        1.175,
+        1.375,
+        1.7,
+        2.2,
+        2.725
+      ],
+      "data_sha256": "87dd737417adc2d3ae792bb4673d69694fefad2764ced99d4476100f80041bf2",
+      "assumed_covariance": "diagonal of stat^2+syst^2",
+      "fit_range": "1.0<M<2.9 GeV"
+    },
+    "54.4_GeV": {
+      "primary": {
+        "T_MeV": 281.1,
+        "nominal_delta_chi2_1_interval_MeV": [
+          213.1,
+          379.6
+        ],
+        "chi2": 4.591694439507925,
+        "dof": 5,
+        "fitted_normalization": 1.4471697314666515e-06,
+        "points": 7
+      },
+      "leave_one_mass_out_T_MeV": {
+        "1.02": 291.1,
+        "1.15": 284.1,
+        "1.3": 290.1,
+        "1.5": 283.0,
+        "2.0": 407.0,
+        "2.6": 244.4,
+        "2.875": 265.7
+      },
+      "mass_bin_centers_GeV": [
+        1.02,
+        1.15,
+        1.3,
+        1.5,
+        2.0,
+        2.6,
+        2.875
+      ],
+      "data_sha256": "7facd22098c263b30562d8cf94361708ac7d2417d22a994e4b77a5d1737fbd8a",
+      "assumed_covariance": "diagonal of stat^2+syst^2",
+      "fit_range": "1.0<M<2.9 GeV"
+    }
+  },
+  "baseline_published_IMR_T_MeV": {
+    "27_GeV": 273.57,
+    "54.4_GeV": 287.3
+  },
+  "scope": "independent approximate shape fit of published derived spectra, not detector-pipeline reproduction",
+  "limitations": [
+    "Bin centers rather than STAR bin-integrated theoretical template",
+    "Systematics combined diagonally, missing original covariance",
+    "No subtraction/refit of raw cocktail backgrounds",
+    "Delta-chi-square=1 intervals nominal under Gaussian assumptions",
+    "These QGP temperatures were already reported by STAR; no new physics"
+  ],
+  "novel_physics": false
+}
