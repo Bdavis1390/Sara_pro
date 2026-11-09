@@ -1,0 +1,50 @@
+{
+  "claim_id": "WS-SYNTHETIC-DEMO-001",
+  "requested_status": "SIMULATED ONLY",
+  "runs": [
+    {
+      "id": "run-001",
+      "kind": "control",
+      "outcome": "PASS",
+      "config_sha256": "eb3d1a128c867c4652236f7972e8646d5486f4c225206657b7ab14011c8c49ed",
+      "artifact": {
+        "path": "raw/linear.json",
+        "sha256": "9a625e0c846f352ebd1b2e68e21c920f06c94ca16044ecde8b7470a29b3f5b4b"
+      },
+      "control": "linear_detector"
+    },
+    {
+      "id": "run-002",
+      "kind": "control",
+      "outcome": "PASS",
+      "config_sha256": "eb3d1a128c867c4652236f7972e8646d5486f4c225206657b7ab14011c8c49ed",
+      "artifact": {
+        "path": "raw/nonlinear_blank.json",
+        "sha256": "9528253fcf24835ef4a62e4edfdc13b442d9a858210bb429660199f9418441be"
+      },
+      "control": "nonlinear_blank"
+    },
+    {
+      "id": "run-003",
+      "kind": "simulation",
+      "outcome": "INCONCLUSIVE",
+      "config_sha256": "eb3d1a128c867c4652236f7972e8646d5486f4c225206657b7ab14011c8c49ed",
+      "artifact": {
+        "path": "raw/study.json",
+        "sha256": "2409a4e71a33a29db4bdc7cee56446ad96b56b02b766e220f529f892546feec7"
+      }
+    }
+  ],
+  "summary": {
+    "counts": {
+      "PASS": 2,
+      "FAIL": 0,
+      "INCONCLUSIVE": 1
+    },
+    "run_ids": [
+      "run-001",
+      "run-002",
+      "run-003"
+    ]
+  }
+}
