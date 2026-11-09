@@ -92,6 +92,8 @@ def main():
    "rf_phase_cycle_gate.py","test_rf_phase_cycle_gate.py",
    "rf_four_tone_beating_baseline.py","test_rf_four_tone_beating_baseline.py",
    "rf_four_tone_beating_baseline.json",
+   "mosaic_rf_reference_gate.py","test_mosaic_rf_reference_gate.py",
+   "mosaic_rf_reference_geometry_result.json",
    "external_models/star_baryon_2026/hepdata_154708_quality_audit.json"
   ]:
    p=src/rel
