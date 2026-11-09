@@ -11,8 +11,8 @@ def make_rows(pair,mode,include_blank=True,collinear=False,mixed_origin=False):
  l=float(lo)*1e9;h=float(hi)*1e9
  rng=random.Random(20261109)
  rows=[]
- for a in (-3e6,0,3e6):
-  for b in (-4e6,0,4e6):
+ for ai,a in enumerate((-3e6,0,3e6)):
+  for bi,b in enumerate((-4e6,0,4e6)):
    if collinear:b=a
    for sample in (["CANDIDATE","BLANK"] if include_blank else ["CANDIDATE"]):
     if mode=="mix":
@@ -22,7 +22,7 @@ def make_rows(pair,mode,include_blank=True,collinear=False,mixed_origin=False):
     else:raise ValueError("Unknown synthetic mode")
     f+=rng.uniform(-350,350)
     rows.append({"pair_id":pair,"sample_type":sample,
-      "detune_id":f"D{int(a)}_{int(b)}",
+      "detune_id":f"D{ai}_{bi}",
       "f_low_hz":str(l+a),"f_high_hz":str(h+b),
       "observed_peak_hz":str(f),"frequency_uncertainty_hz":"20000",
       "instrument_id":"SYNTHETIC_NO_HARDWARE",
