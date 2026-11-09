@@ -86,6 +86,9 @@ def main():
    "rf_design_power_synthetic.json",
    "rf_intermod_prior.py","rf_detuning_gate.py","test_rf_detuning_gate.py",
    "rf_intermod_prior_results.json",
+   "rf_coincidence_nulls.py","test_rf_coincidence_nulls.py","rf_coincidence_nulls_results.json",
+   "rf_power_balance_gate.py","test_rf_power_balance_gate.py",
+   "rf_receiver_attenuation_gate.py","test_rf_receiver_attenuation_gate.py",
    "external_models/star_baryon_2026/hepdata_154708_quality_audit.json"
   ]:
    p=src/rel
