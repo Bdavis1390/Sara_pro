@@ -1,0 +1,78 @@
+{
+  "created_utc": "2026-11-09T01:04:53.401292+00:00",
+  "source_input": "Operator-proposed WorldShepherd GHz pairs, not calibrated observations",
+  "input_frequency_pairs_GHz": [
+    [
+      3.96993,
+      9.53242
+    ],
+    [
+      0.242,
+      0.953
+    ],
+    [
+      0.396,
+      0.993
+    ]
+  ],
+  "products": "First through third order mixed products abs(m*low+n*high), abs(m)+abs(n)<=3, both m,n != 0",
+  "observed_exploratory_closest_separation_MHz": 2.5599999999998957,
+  "selected_pair_difference_MHz": 2.5599999999998957,
+  "null_scenarios": [
+    {
+      "independent_frequency_variation_fraction": 0.02,
+      "number_of_simulated_frequency_sets": 50000,
+      "any_pair_min_separation_MHz_quantiles": [
+        2.5989056898841794,
+        12.485676456293614,
+        24.57537336117188,
+        37.94466577089434,
+        55.02950819975006
+      ],
+      "any_cross_pair_product_within_observed_2_56_MHz_fraction": 0.04908,
+      "preselected_specific_cross_pair_product_within_2_56_MHz_fraction": 0.0133,
+      "any_cross_pair_product_within_10_MHz_fraction": 0.19856,
+      "monte_carlo_fraction_standard_error_max": 0.00223606797749979
+    },
+    {
+      "independent_frequency_variation_fraction": 0.1,
+      "number_of_simulated_frequency_sets": 50000,
+      "any_pair_min_separation_MHz_quantiles": [
+        1.2571512008672794,
+        6.932686177695463,
+        15.950073536589615,
+        29.267513553507317,
+        52.54161925363592
+      ],
+      "any_cross_pair_product_within_observed_2_56_MHz_fraction": 0.10042,
+      "preselected_specific_cross_pair_product_within_2_56_MHz_fraction": 0.00276,
+      "any_cross_pair_product_within_10_MHz_fraction": 0.34418,
+      "monte_carlo_fraction_standard_error_max": 0.00223606797749979
+    },
+    {
+      "independent_frequency_variation_fraction": 0.3,
+      "number_of_simulated_frequency_sets": 50000,
+      "any_pair_min_separation_MHz_quantiles": [
+        1.4467669076222824,
+        8.03896419033151,
+        19.063215588612348,
+        36.31445183621178,
+        70.51820494855124
+      ],
+      "any_cross_pair_product_within_observed_2_56_MHz_fraction": 0.08612,
+      "preselected_specific_cross_pair_product_within_2_56_MHz_fraction": 0.00118,
+      "any_cross_pair_product_within_10_MHz_fraction": 0.30064,
+      "monte_carlo_fraction_standard_error_max": 0.00223606797749979
+    }
+  ],
+  "scientific_validity": "EXPLORATORY_SENSITIVITY_TO_ARBITRARY_REFERENCE_GENERATORS",
+  "critical_limitations": [
+    "Historical frequencies were not sampled randomly, and were chosen before this analysis",
+    "A simulation under arbitrary \u00b12, \u00b110 and \u00b130 percent independent variation is not a calibrated null distribution for real resonances",
+    "Search space and 10 MHz window were chosen post hoc; numerical fractions are NOT confirmatory p-values",
+    "No RF amplitude, phase, linewidth, uncertainty, material or power measurement was used",
+    "Exact spectral coincidences may arise in conventional devices, unrelated signals, cable/electronic spurs or bookkeeping",
+    "No independent held-out experimental validation and NO new physical interaction demonstrated"
+  ],
+  "new_physics": false
+}
