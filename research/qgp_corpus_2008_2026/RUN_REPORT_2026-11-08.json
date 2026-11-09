@@ -86,20 +86,21 @@
     "status": "REVIEW_REQUIRED"
   },
   "safety_regression_tests": {
-    "passed": 19,
-    "total": 19,
+    "passed": 27,
+    "total": 27,
     "metadata": 5,
     "published_data_benchmarks": 4,
     "synthetic_rf_gate": 5,
-    "table_quality_and_design": 5
+    "table_quality_and_design": 5,
+    "synthetic_detuning_and_catalog": 8
   },
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261108T231748Z.tar.gz",
-    "archive_bytes": 8031459,
-    "archive_sha256": "2eac5edf668d00dac592df3b597cd6313e77cee18f0422b47ec0d64bab73710d",
-    "file_count": 71,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261109T003145Z.tar.gz",
+    "archive_bytes": 8039841,
+    "archive_sha256": "b33ea8776ce9f86d45fcfd75eb6a81b2e45e761f26fb73b33f05bc5d1781eb2c",
+    "file_count": 75,
     "verified": true,
     "off_device_backup": false,
     "private_prereg_excluded": true
@@ -174,7 +175,7 @@
     "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
   },
   "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
-  "new_physics_claim_status": "NOT DEMONSTRATED. Formal falsification gates and published benchmarking improved; source data quality reviewed; original controlled physical measurement and independent replications remain absent.",
+  "new_physics_claim_status": "NOT DEMONSTRATED. One near-coincident conventional 3rd-order RF mixing prediction identified, no calibrated measurements and no original physical deviation established.",
   "followup_exploratory_novelty_screen_2026_11_08": {
     "classification": "RETROSPECTIVE_EXPLORATORY_NOT_ORIGINAL_NEW_PHYSICS",
     "centrality_points": 5,
@@ -274,5 +275,37 @@
     },
     "physical_evidence_found": false,
     "original_new_physics_demonstrated": false
+  },
+  "rf_imd_detuning_expansion": {
+    "date_local": "2026-11-08",
+    "historical_frequency_pairs": 3,
+    "precomputed_conventional_mixing_products_total": 36,
+    "third_order_cross_pair_nearby_products": [
+      {
+        "frequency_GHz_A": 1.59256,
+        "frequency_GHz_B": 1.59,
+        "separation_MHz": 2.56,
+        "source_pair_A": "WS-RF-001",
+        "source_pair_B": "WS-RF-003",
+        "class": "POST_HOC_ARITHMETIC_NOT_PHYSICAL_OBSERVATION"
+      }
+    ],
+    "exploratory_max_pair_separation_MHz": 10,
+    "threshold_selected_after_historical_source_frequencies_known": true,
+    "rough_quality_factor_for_width_approx_separation": 621.6,
+    "thermal_QCD_scale_MeV": 150,
+    "highest_pair_photon_energy_eV_approx": 0.00003942,
+    "QCD_thermal_scale_to_max_single_rf_photon_energy_ratio_approx": 3804900000000,
+    "qa": {
+      "frequency_catalog_python": "rf_intermod_prior.py",
+      "detuning_validator": "rf_detuning_gate.py",
+      "synthetic_control_tests": "test_rf_detuning_gate.py",
+      "test_cases": 8,
+      "passing": 8
+    },
+    "measurement": false,
+    "physical_coupling": false,
+    "novel_physics": false,
+    "safety": "Unexplained frequency tracks do not prove new physics; higher-order nonlinearities, instrumental spur artifacts, linewidth, phase and power accounting must be verified"
   }
 }
