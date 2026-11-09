@@ -1,0 +1,198 @@
+{
+  "created_utc": "2026-11-09T16:01:03.907678+00:00",
+  "provenance": {
+    "doi": "10.3390/s21072557",
+    "url": "https://www.mdpi.com/1424-8220/21/7/2557",
+    "paper_year": 2021,
+    "paper_title": "Design of Minimum Nonlinear Distortion Reconfigurable Antennas for Next-Generation Communication Systems",
+    "numeric_status": "EXTERNAL_PUBLISHED_BENCHMARK_NOT_WORLDSHEPHERD_MEASUREMENT"
+  },
+  "benchmark": {
+    "nominal_frequency_GHz": 3.5,
+    "source_switch_configurations_count": 9,
+    "direction_set": [
+      {
+        "id": "broadside",
+        "theta_deg": 0.0,
+        "phi_deg": 0.0
+      },
+      {
+        "id": "offaxis_azimuth_0",
+        "theta_deg": 40.0,
+        "phi_deg": 0.0
+      },
+      {
+        "id": "offaxis_azimuth_45",
+        "theta_deg": 40.0,
+        "phi_deg": 45.0
+      },
+      {
+        "id": "offaxis_azimuth_90",
+        "theta_deg": 40.0,
+        "phi_deg": 90.0
+      },
+      {
+        "id": "offaxis_azimuth_135",
+        "theta_deg": 40.0,
+        "phi_deg": 135.0
+      },
+      {
+        "id": "offaxis_azimuth_180",
+        "theta_deg": 40.0,
+        "phi_deg": 180.0
+      },
+      {
+        "id": "offaxis_azimuth_225",
+        "theta_deg": 40.0,
+        "phi_deg": 225.0
+      },
+      {
+        "id": "offaxis_azimuth_270",
+        "theta_deg": 40.0,
+        "phi_deg": 270.0
+      },
+      {
+        "id": "offaxis_azimuth_315",
+        "theta_deg": 40.0,
+        "phi_deg": 315.0
+      }
+    ],
+    "physical_mode_to_direction_map": "NOT_ASSERTED_FROM_DIRECTION_SET",
+    "published_port_data_mode_labels": [
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "M5",
+      "M6",
+      "M7",
+      "M8",
+      "M9"
+    ],
+    "S11_dB": [
+      -11.95,
+      -7.8,
+      -16.81,
+      -13.19,
+      -12.18,
+      -8.59,
+      -11.95,
+      -12.24,
+      -11.67
+    ],
+    "S21_dB": [
+      -14.63,
+      -19.49,
+      -13.32,
+      -10.41,
+      -10.47,
+      -19.39,
+      -11.62,
+      -10.73,
+      -10.25
+    ],
+    "S22_dB": [
+      -11.3,
+      -11.53,
+      -13.32,
+      -9.82,
+      -10.24,
+      -12.29,
+      -9.95,
+      -10.39,
+      -11.37
+    ],
+    "power_margin_dB": [
+      13.37,
+      5.5,
+      7.66,
+      7.75,
+      6.98,
+      5.52,
+      7.04,
+      7.66,
+      6.94
+    ],
+    "mean_power_margin_dB_arithmetic": 7.602222222222222,
+    "mean_power_margin_dB_linear_power_ratio": 8.343173912017365,
+    "mean_power_margin_convention": "10log10(mean(10^(dB/10))) reconciles published 8.34 dB; direct arithmetic mean of dB is 7.60 dB",
+    "published_rounded_mean_margin_dB": 8.34
+  },
+  "same_radiation_objective_test": {
+    "pointing_tolerance_deg": 10.0,
+    "angle_metric": "3D angular distance between unit boresight directions, not difference of elevation angles",
+    "number_of_distinct_direction_pairs": 36,
+    "number_of_equivalent_direction_pairs": 0,
+    "minimum_3D_separation_deg": 28.480004986899388,
+    "closest_pairs": [
+      {
+        "direction_a": "offaxis_azimuth_135",
+        "direction_b": "offaxis_azimuth_180",
+        "separation_deg": 28.480004986899388,
+        "equivalent_under_pointing_tolerance": false
+      },
+      {
+        "direction_a": "offaxis_azimuth_225",
+        "direction_b": "offaxis_azimuth_270",
+        "separation_deg": 28.480004986899388,
+        "equivalent_under_pointing_tolerance": false
+      },
+      {
+        "direction_a": "offaxis_azimuth_0",
+        "direction_b": "offaxis_azimuth_45",
+        "separation_deg": 28.480004986899402,
+        "equivalent_under_pointing_tolerance": false
+      },
+      {
+        "direction_a": "offaxis_azimuth_45",
+        "direction_b": "offaxis_azimuth_90",
+        "separation_deg": 28.480004986899402,
+        "equivalent_under_pointing_tolerance": false
+      },
+      {
+        "direction_a": "offaxis_azimuth_90",
+        "direction_b": "offaxis_azimuth_135",
+        "separation_deg": 28.480004986899402,
+        "equivalent_under_pointing_tolerance": false
+      },
+      {
+        "direction_a": "offaxis_azimuth_180",
+        "direction_b": "offaxis_azimuth_225",
+        "separation_deg": 28.480004986899402,
+        "equivalent_under_pointing_tolerance": false
+      },
+      {
+        "direction_a": "offaxis_azimuth_270",
+        "direction_b": "offaxis_azimuth_315",
+        "separation_deg": 28.480004986899402,
+        "equivalent_under_pointing_tolerance": false
+      },
+      {
+        "direction_a": "offaxis_azimuth_0",
+        "direction_b": "offaxis_azimuth_315",
+        "separation_deg": 28.480004986899413,
+        "equivalent_under_pointing_tolerance": false
+      }
+    ],
+    "outcome": "NO_EQUIVALENT_BEAM_STATES_IN_PUBLISHED_NINE_DIRECTION_SET"
+  },
+  "MOSAIC_R4_gate": {
+    "supports_original_state_equivalence_H1": false,
+    "requires_redundant_state_configurations_for_same_objective": true,
+    "requires_fullwave_model_and_convergence": true,
+    "requires_device_nonlinearity_model": true,
+    "requires_real_IM3_and_full_radiation_pattern_data": true,
+    "requires_heldout_state_power_temperature_prediction": true,
+    "source_paper_port_data_are_not_IM3_measurements": true,
+    "novel_physics_demonstrated": false,
+    "evidence_state": "BENCHMARK_GEOMETRY_AUDITED_NO_ORIGINAL_EXPERIMENT"
+  },
+  "limits": [
+    "The published nine configurations point into nine geometrically different directions. They are not automatically equal beam objectives.",
+    "True far-field objective equivalence also requires pattern shape, gain, polarization, side lobes, bandwidth and tolerance, not pointing alone.",
+    "Published power margin is a derived external metric, NOT measured modal susceptibility or new response.",
+    "Additional switch configurations on one common beam objective require source CAD/current models or new physical device and are not inferred here.",
+    "No unpublished device geometry, local field or nonlinear characteristic current was fabricated or claimed.",
+    "A novel efficient distortion-aware state controller may be valuable engineering while remaining within standard Maxwell electrodynamics."
+  ]
+}
