@@ -52,6 +52,7 @@ def build(tol_deg=10.):
     matches=[p for p in pairs if p["equivalent_under_pointing_tolerance"]]
     closest=sorted(pairs,key=lambda p:p["separation_deg"])[:8]
     mean_margin=statistics.mean(POWER_MARGIN_DB)
+    mean_linear_power_db=10*math.log10(statistics.mean(10**(v/10) for v in POWER_MARGIN_DB))
     return {
       "created_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
       "provenance":{"doi":DOI,"url":SOURCE_URL,"paper_year":2021,
@@ -64,7 +65,9 @@ def build(tol_deg=10.):
          "published_port_data_mode_labels":list(MODES),
          "S11_dB":list(S11_DB),"S21_dB":list(S21_DB),"S22_dB":list(S22_DB),
          "power_margin_dB":list(POWER_MARGIN_DB),
-         "mean_power_margin_dB_recomputed":mean_margin,
+         "mean_power_margin_dB_arithmetic":mean_margin,
+         "mean_power_margin_dB_linear_power_ratio":mean_linear_power_db,
+         "mean_power_margin_convention":"10log10(mean(10^(dB/10))) reconciles published 8.34 dB; direct arithmetic mean of dB is 7.60 dB",
          "published_rounded_mean_margin_dB":8.34},
       "same_radiation_objective_test":{
          "pointing_tolerance_deg":tol_deg,
@@ -109,6 +112,7 @@ def main():
         "direction_pairs":geo["number_of_distinct_direction_pairs"],
         "nearest_separation_deg":round(geo["minimum_3D_separation_deg"],6),
         "equivalent_pairs_at_tolerance":geo["number_of_equivalent_direction_pairs"],
-        "mean_power_margin_dB":round(statistics.mean(POWER_MARGIN_DB),4),
+        "mean_power_margin_dB_direct":round(statistics.mean(POWER_MARGIN_DB),4),
+        "mean_power_margin_dB_power_domain":round(10*math.log10(statistics.mean(10**(v/10) for v in POWER_MARGIN_DB)),4),
         "MOSAIC_R4_closed":False,"novel_physics":False}))
 if __name__=="__main__":main()
