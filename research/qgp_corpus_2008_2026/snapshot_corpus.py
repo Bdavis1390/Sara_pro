@@ -84,6 +84,8 @@ def main():
    "rf_measurement_gate.py","test_rf_measurement_gate.py","test_harvest.py",
    "audit_hepdata_quality.py","test_quality_and_power.py","rf_design_power.py",
    "rf_design_power_synthetic.json",
+   "rf_intermod_prior.py","rf_detuning_gate.py","test_rf_detuning_gate.py",
+   "rf_intermod_prior_results.json",
    "external_models/star_baryon_2026/hepdata_154708_quality_audit.json"
   ]:
    p=src/rel
