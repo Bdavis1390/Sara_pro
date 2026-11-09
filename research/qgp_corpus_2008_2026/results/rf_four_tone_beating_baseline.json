@@ -1,0 +1,102 @@
+{
+  "created_utc": "2026-11-09T02:08:12.405887+00:00",
+  "source_provenance": "historical operator frequency pairs, unvalidated hardware hypotheses",
+  "model": "Independent conventional cubic-mixing outputs that are linearly superposed at a receiver; no coupling term",
+  "branch_A_frequency_hz": 1592560000.0,
+  "branch_C_frequency_hz": 1590000000.0,
+  "frequency_separation_hz": 2560000.0,
+  "baseband_beat_period_s": 3.90625e-07,
+  "baseband_beat_period_ns": 390.625,
+  "nominal_normalized_amplitudes": [
+    1,
+    1
+  ],
+  "relative_phase_formula": "(phi_high_A - 2 phi_low_A) - (2 phi_high_C - phi_low_C)",
+  "intensity": "|A exp(i*(2pi*(fA-fC)*t +phiA))+C exp(i*phiC)|^2",
+  "predicted_normalized_mean_power": 2.0,
+  "numerical_time_mean_normalized_power": 2.0000000000000004,
+  "numerical_min_normalized_power": 1.5325481138853143e-36,
+  "numerical_max_normalized_power": 4.0,
+  "relative_phase_pi_over_2_at_t0_power": 2.0000000000000004,
+  "sample_envelope": [
+    {
+      "relative_beat_cycles": 0.0,
+      "normalized_intensity": 4.0
+    },
+    {
+      "relative_beat_cycles": 0.125,
+      "normalized_intensity": 3.4142136
+    },
+    {
+      "relative_beat_cycles": 0.25,
+      "normalized_intensity": 2.0
+    },
+    {
+      "relative_beat_cycles": 0.375,
+      "normalized_intensity": 0.5857864
+    },
+    {
+      "relative_beat_cycles": 0.5,
+      "normalized_intensity": 0.0
+    },
+    {
+      "relative_beat_cycles": 0.625,
+      "normalized_intensity": 0.5857864
+    },
+    {
+      "relative_beat_cycles": 0.75,
+      "normalized_intensity": 2.0
+    },
+    {
+      "relative_beat_cycles": 0.875,
+      "normalized_intensity": 3.4142136
+    },
+    {
+      "relative_beat_cycles": 1.0,
+      "normalized_intensity": 4.0
+    },
+    {
+      "relative_beat_cycles": 1.125,
+      "normalized_intensity": 3.4142136
+    },
+    {
+      "relative_beat_cycles": 1.25,
+      "normalized_intensity": 2.0
+    },
+    {
+      "relative_beat_cycles": 1.375,
+      "normalized_intensity": 0.5857864
+    },
+    {
+      "relative_beat_cycles": 1.5,
+      "normalized_intensity": 0.0
+    },
+    {
+      "relative_beat_cycles": 1.625,
+      "normalized_intensity": 0.5857864
+    },
+    {
+      "relative_beat_cycles": 1.75,
+      "normalized_intensity": 2.0
+    },
+    {
+      "relative_beat_cycles": 1.875,
+      "normalized_intensity": 3.4142136
+    },
+    {
+      "relative_beat_cycles": 2.0,
+      "normalized_intensity": 4.0
+    }
+  ],
+  "baseband_phase_shift_intensity_mean": 2.0,
+  "scope": "CALCULATED_NORMALIZED_INTERFERENCE_NO_MEASUREMENTS",
+  "new_physics": false,
+  "warnings": [
+    "Beat intensity occurs without physical energy transfer between the independent RF generation branches",
+    "Actual interference requires phase coherence and coherent combining in the receiver observation path",
+    "Spectral resolution and physical bandwidth/noise sensitivity must be measured to resolve the two nearby lines",
+    "A second-harmonic or third-order intermodulation output can be created by source, combiner, sample or analyzer",
+    "Envelope intensity is a normalized field-squared quantity, not certified output power in watts",
+    "Real power conservation and an actual nonlinear material susceptibility need separately calibrated measurements"
+  ]
+}
