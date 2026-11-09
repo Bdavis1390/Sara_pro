@@ -3,7 +3,7 @@
 import csv,pathlib,tempfile,unittest
 from rf_receiver_attenuation_gate import NEEDED,analyze
 def rows(cand_slope=-1.,blank_slope=-3.,invalid_tone=False,missing_pad=False,
-         bad_origin=False,noise_margin=18.):
+         bad_origin=False,noise_margin=18.,changed_sources=False):
  result=[]
  for k in range(3):
   for s in ("CANDIDATE","BLANK"):
@@ -20,7 +20,7 @@ def rows(cand_slope=-1.,blank_slope=-3.,invalid_tone=False,missing_pad=False,
      "spur_above_noise_margin_db":str(noise_margin),
      "pad_calibration_id":"CAL-SYNTHETIC_PAD",
      "receiver_calibration_id":"CAL-SYNTHETIC_RX",
-     "source_setting_id":"FIXED_2_TONE",
+     "source_setting_id":"DIFFERENT" if changed_sources and s=="BLANK" else "FIXED_2_TONE",
      "timestamp_utc":"2026-11-09T00:00:00Z",
      "data_origin":"MEASURED_UNVERIFIED" if bad_origin else "SYNTHETIC_TEST"
     }
@@ -54,6 +54,9 @@ class AttenuationTests(unittest.TestCase):
  def test_tone_power_check_rejects_wrong_attenuator_location(self):
   with self.assertRaisesRegex(ValueError,"Incident tone-power"):
    run_case(invalid_tone=True)
+ def test_changed_source_between_sample_and_blank_rejected(self):
+  with self.assertRaisesRegex(ValueError,"Source settings differ"):
+   run_case(changed_sources=True)
  def test_low_snr_rejected(self):
   with self.assertRaisesRegex(ValueError,"Censored/low-SNR"):
    run_case(noise_margin=2)
