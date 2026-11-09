@@ -1,0 +1,19 @@
+{
+  "claim_id": "WS-SYNTHETIC-DEMO-001",
+  "claim_type": "physical",
+  "statement": "A nonlinear software transform can generate spectral intermodulation components in synthetic data.",
+  "null_hypothesis": "Detected components may originate in detector or analysis nonlinearity rather than a material effect.",
+  "observable": "Spectral peaks in toy synthetic data (not measured laboratory power).",
+  "comparison": "Compare ideal linear control, nonlinear detector blank, and simulated study.",
+  "falsification_rule": "A material-specific interpretation is not established if a matched blank reproduces the peak or if calibrated energy accounting is absent.",
+  "required_controls": [
+    "linear_detector",
+    "nonlinear_blank"
+  ],
+  "limitations": [
+    "SYNTHETIC ONLY",
+    "no material sample",
+    "no calibrated instruments",
+    "no independently verified witness"
+  ]
+}
