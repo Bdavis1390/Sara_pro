@@ -69,6 +69,14 @@ def parse(path):
   a={v["pad_loss_db"] for v in by[(pair,rep,"CANDIDATE")]}
   b={v["pad_loss_db"] for v in by[(pair,rep,"BLANK")]}
   if a!=b:raise ValueError("Candidate and blank pad schedules differ")
+  # Keep the source operating state and pad calibration identical across the
+  # paired sample/blank comparison, not merely within each sample scan.
+  source_ids={r["source_setting_id"] for typ in ("CANDIDATE","BLANK")
+              for r in by[(pair,rep,typ)]}
+  if len(source_ids)!=1:raise ValueError("Source settings differ between candidate and blank")
+  pad_ids={r["pad_calibration_id"] for typ in ("CANDIDATE","BLANK")
+           for r in by[(pair,rep,typ)]}
+  if len(pad_ids)!=1:raise ValueError("Pad calibration differs between candidate and blank")
  return by,hashlib.sha256(raw).hexdigest(),next(iter(origin)),len(rs)
 def analyze(path):
  by,digest,origin,nrows=parse(path)
