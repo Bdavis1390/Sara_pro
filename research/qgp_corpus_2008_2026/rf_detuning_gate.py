@@ -61,7 +61,7 @@ def validate_and_group(path):
     raise ValueError("Source changes are collinear; both tones must vary independently")
    if np.ptp(low)<4*max(sigma) or np.ptp(high)<4*max(sigma):
     raise ValueError("Frequency detuning smaller than instrument uncertainty")
-   seq[s]={r["detune_id"]:(r["f_low_hz"],r["f_high_hz"]) for r in rs}
+   seq[sample]={r["detune_id"]:(r["f_low_hz"],r["f_high_hz"]) for r in rs}
   if seq["CANDIDATE"]!=seq["BLANK"]:
    raise ValueError("Candidate and blank need the same source-detuning schedule")
  return bypair,hashlib.sha256(raw).hexdigest(),next(iter(origin)),len(rows)
