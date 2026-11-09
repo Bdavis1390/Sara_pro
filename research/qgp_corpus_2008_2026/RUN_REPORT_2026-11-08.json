@@ -86,8 +86,8 @@
     "status": "REVIEW_REQUIRED"
   },
   "safety_regression_tests": {
-    "passed": 57,
-    "total": 57,
+    "passed": 64,
+    "total": 64,
     "metadata": 5,
     "published_data_benchmarks": 4,
     "synthetic_rf_gate": 5,
@@ -97,15 +97,16 @@
     "power_balance": 5,
     "receiver_attenuation": 8,
     "phase_cycle": 8,
-    "zero_coupling_beat": 5
+    "zero_coupling_beat": 5,
+    "mosaic_reference_geometry": 7
   },
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261109T021144Z.tar.gz",
-    "archive_bytes": 8054968,
-    "archive_sha256": "5e3b627ecfd42d369c9e01d6db6ab823851b0af2ef86d524e965f7782d9eca24",
-    "file_count": 87,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261109T160359Z.tar.gz",
+    "archive_bytes": 8059120,
+    "archive_sha256": "bbff00cbfd7797a6731816af166b72c766f17939545b327dd350e4dd48b4db17",
+    "file_count": 90,
     "verified": true,
     "off_device_backup": false,
     "private_prereg_excluded": true
@@ -180,7 +181,7 @@
     "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
   },
   "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
-  "new_physics_claim_status": "NOT DEMONSTRATED. 57 software tests PASS; 87 verified locally archived files. Source-linked phase and 2.56MHz beating are fully compatible with conventional interference, without inter-pair coupling. Independent calibrated samples are required.",
+  "new_physics_claim_status": "NOT DEMONSTRATED. MOSAIC published beam-state set lacks same-objective pairs at 10° tolerance; 2021 paper power margin aggregation reconciled. No original calibrated RF dataset identified in searched sources.",
   "followup_exploratory_novelty_screen_2026_11_08": {
     "classification": "RETROSPECTIVE_EXPLORATORY_NOT_ORIGINAL_NEW_PHYSICS",
     "centrality_points": 5,
@@ -422,5 +423,55 @@
       "Independently generated spectral components can beat without a mechanism of energy exchange",
       "No original material/hardware data or independently replicated novel physical law"
     ]
+  },
+  "mosaic_rf_2026_11_09": {
+    "source": "https://doi.org/10.3390/s21072557",
+    "reference_concept_document": "https://docs.google.com/document/d/1lZtRo0heF36d_IBaG5Q37ehPBtzlBQP9i1Ba7PGjaes/edit",
+    "source_beams": {
+      "broadside": 1,
+      "theta40_deg_azimuth_45deg_steps": 8
+    },
+    "tests": {
+      "pair_count": 36,
+      "nearest_3d_angular_separation_deg": 28.480004986899388,
+      "tolerance_deg": 10,
+      "accepted_equivalent_state_pairs": 0
+    },
+    "reported_power_margin_values_dB": [
+      13.37,
+      5.5,
+      7.66,
+      7.75,
+      6.98,
+      5.52,
+      7.04,
+      7.66,
+      6.94
+    ],
+    "power_margin_aggregation": {
+      "naive_arithmetic_dB": 7.602222222222222,
+      "linear_ratio_mean_to_dB": 8.343173912017365,
+      "source_reported_rounded_dB": 8.34
+    },
+    "scientific_interpretation": "Reported 8.34 dB is reconciled by linear power-ratio averaging, not a physical inconsistency. Nine distinct beam directions do not establish paired equal-radiation-objective states.",
+    "r4_state": "NOT_CLOSED",
+    "physically_verified_worldshepherd_data": false,
+    "original_new_physics": false,
+    "source_integrity": "MDPI original paper checked; exact mode to azimuth switch map NOT asserted",
+    "code": [
+      "mosaic_rf_reference_gate.py",
+      "test_mosaic_rf_reference_gate.py",
+      "results/mosaic_rf_reference_geometry_result.json"
+    ]
+  },
+  "cross_workspace_original_rf_measurement_audit": {
+    "date_utc": "2026-11-09T15:56:50Z",
+    "search_scope": "Lenovo under /home/sspadawanzz excluding .git caches and known code dependencies; GitHub default-branch code search and connected Drive metadata/keyword search",
+    "verified_native_instrument_trace_files": 0,
+    "found_local_fixture_name": "rf_sparams_synthetic_v1.json",
+    "fixture_evidence_class": "SYNTHETIC_SOFTWARE_TEST_DATA_NOT_PHYSICAL_MEASUREMENT",
+    "includes_all_unmounted_archive_contents": false,
+    "includes_all_repository_branches": false,
+    "evidence_gap": "No inspected, independently calibrated original DUT complex S-parameters, IQ, raw spectral trace, instrument or certificate records identified"
   }
 }
