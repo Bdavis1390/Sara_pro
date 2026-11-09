@@ -86,21 +86,24 @@
     "status": "REVIEW_REQUIRED"
   },
   "safety_regression_tests": {
-    "passed": 27,
-    "total": 27,
+    "passed": 44,
+    "total": 44,
     "metadata": 5,
     "published_data_benchmarks": 4,
     "synthetic_rf_gate": 5,
     "table_quality_and_design": 5,
-    "synthetic_detuning_and_catalog": 8
+    "detuning_and_catalog": 8,
+    "coincidence": 4,
+    "power_balance": 5,
+    "receiver_attenuation": 8
   },
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261109T003145Z.tar.gz",
-    "archive_bytes": 8039841,
-    "archive_sha256": "b33ea8776ce9f86d45fcfd75eb6a81b2e45e761f26fb73b33f05bc5d1781eb2c",
-    "file_count": 75,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261109T011311Z.tar.gz",
+    "archive_bytes": 8049017,
+    "archive_sha256": "c49d344bfbfded137ad65616f00334c74528b9f4590dd3117b7a7f17566710bc",
+    "file_count": 82,
     "verified": true,
     "off_device_backup": false,
     "private_prereg_excluded": true
@@ -175,7 +178,7 @@
     "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
   },
   "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
-  "new_physics_claim_status": "NOT DEMONSTRATED. One near-coincident conventional 3rd-order RF mixing prediction identified, no calibrated measurements and no original physical deviation established.",
+  "new_physics_claim_status": "NOT DEMONSTRATED; historical frequency similarity has plausible chance occurrence under illustrative source-frequency randomizations, and no calibrated sample-vs-blank physical evidence has been acquired.",
   "followup_exploratory_novelty_screen_2026_11_08": {
     "classification": "RETROSPECTIVE_EXPLORATORY_NOT_ORIGINAL_NEW_PHYSICS",
     "centrality_points": 5,
@@ -307,5 +310,60 @@
     "physical_coupling": false,
     "novel_physics": false,
     "safety": "Unexplained frequency tracks do not prove new physics; higher-order nonlinearities, instrumental spur artifacts, linewidth, phase and power accounting must be verified"
+  },
+  "rf_conventional_exclusion_2026_11_09": {
+    "generated_at_utc": "2026-11-09T01:13:11Z",
+    "source_hypotheses": "Three historical operator-proposed frequency pairs, no calibrated measurements",
+    "exploratory_frequency_coincidence": {
+      "frequency_1_GHz": 1.59256,
+      "frequency_2_GHz": 1.59,
+      "separation_MHz": 2.56,
+      "simulated_frequency_sets_per_null_scenario": 50000,
+      "source_window_fraction": [
+        0.02,
+        0.1,
+        0.3
+      ],
+      "random_sets_with_any_cross_pair_separation_leq_2_56MHz": [
+        0.0491,
+        0.1004,
+        0.0861
+      ],
+      "evidence_kind": "POST_HOC_SENSITIVITY_TO_ARBITRARY_NULL_DISTRIBUTIONS",
+      "scientifically_valid_confirmatory_p_value": false,
+      "measured_interaction": false,
+      "physical_novelty": false
+    },
+    "power_balance": {
+      "code": "rf_power_balance_gate.py",
+      "tests_passed": 5,
+      "measured_real_input_power": false,
+      "published_discovery": false,
+      "classification": "NONCLOSURE_REVIEW_REQUIRED if |residual|>3 user-declared independent sigma",
+      "active_pumped_systems_rejected": true
+    },
+    "receiver_attenuation": {
+      "code": "rf_receiver_attenuation_gate.py",
+      "tests_passed": 8,
+      "source_locked_passive_pad_slope_db_per_db": -1,
+      "weak_cubic_receiver_im3_slope_db_per_db": -3,
+      "independently_authenticated_receiver": false,
+      "caveat": "These are instrument/signal localization diagnostics under perturbative assumptions; both source/combiner spurs and material spurs can be upstream."
+    },
+    "new_files": [
+      "rf_coincidence_nulls.py",
+      "test_rf_coincidence_nulls.py",
+      "results/rf_coincidence_nulls_results.json",
+      "rf_power_balance_gate.py",
+      "test_rf_power_balance_gate.py",
+      "rf_receiver_attenuation_gate.py",
+      "test_rf_receiver_attenuation_gate.py",
+      "RF_CONVENTIONAL_EXCLUSION_PLAN_2026-11-08.md"
+    ],
+    "regressions": {
+      "passed": 44,
+      "total": 44
+    },
+    "scientific_evidence_state": "NO_NEW_PHYSICS_DEMONSTRATED"
   }
 }
