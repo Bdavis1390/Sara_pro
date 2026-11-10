@@ -2,7 +2,7 @@
 
 **State:** PROPOSED REVIEW PROTOCOL / NOT EXECUTED / NOT INDEPENDENTLY VALIDATED  
 **Scope:** Synthetic, local-only software behavior  
-**Parent controls:** [#155 — frozen evaluator baseline](../../issues/155) · [#281 — Platform & Assurance](../../issues/281) · [#283 — Growth & Externalization](../../issues/283)  
+**Parent controls:** [#155 — frozen evaluator baseline](https://github.com/Bdavis1390/Sara_pro/issues/155) · [#281 — Platform & Assurance](https://github.com/Bdavis1390/Sara_pro/issues/281) · [#283 — Growth & Externalization](https://github.com/Bdavis1390/Sara_pro/issues/283)  
 **General reviewer entry:** [START_HERE_EXTERNAL_REVIEW.md](../../START_HERE_EXTERNAL_REVIEW.md)  
 **Handoff specification:** [Evaluator Handoff Manifest v1](../../deployments/sara_verified_local_v1/docs/EVALUATOR_HANDOFF_MANIFEST_V1.md)
 
