@@ -1,6 +1,6 @@
 # WorldShepherd: Modern Web Guidance 1.0 — audit-only rollout
 
-**State:** STAGED ON REVIEW BRANCH; **NOT** installed or executed on a Lenovo system.
+**State:** Lenovo GUI v0.8.0 audited; Codex user-level skill installed. The script and documentation remain staged in a draft PR; no GUI production code was edited.
 **Scope:** browser-facing code only. This is not a Palace solver, SARA runtime, defense, or quantum-research change.
 **Authority:** a baseline improvement is accepted only after code review and evidence-backed tests.
 
@@ -59,12 +59,27 @@ is deliberately not that installation.
 - Keep production changes on reviewed branches; no protected-main merge, deployment,
   external disclosure, or solver interruption during audit.
 
-## Laptop connection limitation
+## Verified Lenovo execution (2026-11-11, America/New_York)
 
-GitHub-hosted runners are **not** Lenovo. This branch only stages a reusable audit tool.
-Running it on Lenovo still requires an authenticated command channel, or a trusted
-operator invoking it locally. Retain preexisting SSH keys, device identities and host
-fingerprints. Avoid port forwarding to the public internet and avoid credential resets.
+- Desktop Commander remote session **connected** on Lenovo, agent version 0.3.2.
+- Verified Node v22.23.3 and npm v10.9.9.
+- Scanned real frontend `/home/sspadawanzz/worldshepherd_gui_v0_8_0/gui` using `modern-web-guidance@1.0.0 legacy-scan ... --json`, with `DISABLE_TELEMETRY=1`.
+- Scanner exit code **0**; **0 legacy findings**, 35 active rules, 33 guides, about 20% of total guidance corpus. This is a *partial heuristic scan*, not a clean security or accessibility certification.
+- Report saved locally to `/home/sspadawanzz/.local/state/worldshepherd/mwg/lenovo-gui-v08-20261111/legacy-scan.json` (not uploaded).
+- SHA-256 before/after comparison of six frontend files matched; no scan-time modifications to source code.
+- Installed `modern-web-guidance` as a **user-scoped Codex agent skill** in `~/.agents/skills/modern-web-guidance`; verified the `SKILL.md` and 209 Markdown guide files. Agent guidance only, not an application deployment.
+- Verified the existing Palace diagnostics bash process remained present after scan and installation; full Palace solver completion was **not** established.
+- Operator identified the intermittent network route as Lenovo relying on **Samsung USB-tethered internet**. Network-path instability is a plausible cause of the earlier `fetch failed` after authentication, but its precise hop/cause has not been instrumented. Avoid unnecessary credential resets and do not treat the cloud agent as independently powered by Lenovo.
+
+Next gate: manual accessibility and security assessment of the actual UI, benchmarked compatibility and performance tests, review of false-negative/unsupported patterns, and a separate reviewed code-change proposal. This scan and skill install do not establish the target 55% gain.
+
+## Remote access resilience
+
+GitHub-hosted runners are **not** Lenovo. The current audit was run through a live,
+authorized Desktop Commander session. Keep Samsung USB-tether availability, physical
+connection, routing, and upstream mobile network state visible when diagnosing future
+session drops. Retain existing SSH keys, device identities and host fingerprints.
+Avoid opening public inbound ports or resetting credentials as a first response.
 
 ## Primary references
 
