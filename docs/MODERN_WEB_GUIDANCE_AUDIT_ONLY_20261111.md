@@ -17,9 +17,9 @@ Preserve existing system functionality and the current protected branch.
    Do not assume that static sample HTML is the deployed dashboard.
 2. Confirm a responsive, authorized execution host and enough free disk space for npm cache
    and private audit output. Do **not** restart or kill existing workloads.
-3. Use a dedicated frontend subtree. Do **not** point a scanner at `/`, a user home,
+3. Confirm Node.js 22 or newer (required by the published 1.0.0 CLI). Use a dedicated frontend subtree. Do **not** point a scanner at `/`, a user home,
    backup archives, or a running Palace workload.
-4. Keep provider telemetry disabled: `DISABLE_TELEMETRY=1`. npm may still contact
+4. The wrapper pins the npm package to `modern-web-guidance@1.0.0` for reproducibility. Keep provider telemetry disabled: `DISABLE_TELEMETRY=1`. npm may still contact
    its registry to retrieve the package. Do not upload proprietary code or raw findings.
 5. Do not enable Origin Trials, volatile single-engine web features, or auto-refactors.
 
@@ -33,8 +33,8 @@ bash scripts/mwg_readonly_audit.sh /absolute/path/to/frontend
 
 The wrapper:
 - resolves and guards the target directory;
-- records CLI version, Node version, timestamp, and exit status;
-- runs `legacy-scan <path> --json` at reduced CPU priority with a 180-second timeout;
+- records CLI version, Node version, timestamp, and exit status (pin: 1.0.0; Node >=22);
+- runs `legacy-scan <path> --json` at reduced CPU priority with a 180-second timeout and a bounded termination grace period;
 - saves private output in `~/.local/state/worldshepherd/mwg/`;
 - does not deliberately edit source, install to the project, create commits, run tests,
   deploy software, or alter workloads. `npx` may update its local cache.
@@ -70,3 +70,4 @@ fingerprints. Avoid port forwarding to the public internet and avoid credential 
 
 - https://developer.chrome.com/docs/modern-web-guidance/modernization-workflow
 - https://github.com/GoogleChrome/modern-web-guidance
+- https://www.npmjs.com/package/modern-web-guidance
