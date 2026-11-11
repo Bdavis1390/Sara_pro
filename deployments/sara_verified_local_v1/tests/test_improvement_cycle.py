@@ -2,6 +2,7 @@ import pytest
 from pydantic import ValidationError
 
 from worldshepherd_sara.improvement_cycle import (
+    ImprovementAssessment,
     ImprovementProposal,
     ImprovementRisk,
     ImprovementState,
@@ -189,3 +190,92 @@ def test_human_transition_revalidates_existing_forbidden_claim_flag():
             qualification_refs=["WS-QE-2026-0001"],
             authorization_ref="PRIME-AUTH-1",
         )
+
+
+def test_assessment_is_bound_to_unmodified_proposal():
+    proposal = make_proposal()
+    assessment = assess_improvement(
+        proposal,
+        {"test_schema": ResultStatus.PASS, "test_fail_closed": ResultStatus.PASS},
+    )
+    changed = proposal.model_copy(update={"proposed_change": "Changed after testing"})
+    with pytest.raises(ValueError, match="bound to the exact current proposal"):
+        apply_assessment(changed, assessment)
+
+
+def test_legacy_assessment_without_proposal_binding_fails_closed():
+    proposal = make_proposal()
+    assessment = assess_improvement(
+        proposal,
+        {"test_schema": ResultStatus.PASS, "test_fail_closed": ResultStatus.PASS},
+    )
+    unbound = assessment.model_copy(update={"proposal_digest": ""})
+    with pytest.raises(ValueError, match="bound to the exact current proposal"):
+        apply_assessment(proposal, unbound)
+
+
+def test_forged_review_ready_disposition_cannot_hide_failed_test():
+    proposal = make_proposal()
+    assessment = assess_improvement(
+        proposal,
+        {"test_schema": ResultStatus.PASS, "test_fail_closed": ResultStatus.FAIL},
+    )
+    forged = assessment.model_copy(update={"disposition": ImprovementState.HUMAN_REVIEW_REQUIRED})
+    with pytest.raises(ValueError, match="assessment result, disposition or digest mismatch"):
+        apply_assessment(proposal, forged)
+
+
+def test_forged_review_ready_without_all_required_tests_is_rejected():
+    proposal = make_proposal()
+    assessment = assess_improvement(proposal, {"test_schema": ResultStatus.PASS})
+    forged = assessment.model_copy(
+        update={"disposition": ImprovementState.HUMAN_REVIEW_REQUIRED}
+    )
+    with pytest.raises(ValueError, match="assessment result, disposition or digest mismatch"):
+        apply_assessment(proposal, forged)
+
+
+def test_assessment_rejects_duplicate_or_unknown_test_identifiers():
+    proposal = make_proposal()
+    assessment = assess_improvement(
+        proposal,
+        {"test_schema": ResultStatus.PASS, "test_fail_closed": ResultStatus.PASS},
+    )
+    duplicated = assessment.model_copy(
+        update={"passed_tests": ["test_schema", "test_schema", "test_fail_closed"]}
+    )
+    with pytest.raises(ValueError, match="unknown or duplicate"):
+        apply_assessment(proposal, duplicated)
+    unexpected = assessment.model_copy(
+        update={"passed_tests": ["test_schema", "test_fail_closed", "not_required"]}
+    )
+    with pytest.raises(ValueError, match="unknown or duplicate"):
+        apply_assessment(proposal, unexpected)
+
+
+def test_assessment_rejects_digest_metadata_and_omitted_results():
+    proposal = make_proposal()
+    assessment = assess_improvement(
+        proposal,
+        {"test_schema": ResultStatus.PASS, "test_fail_closed": ResultStatus.PASS},
+    )
+    altered_digest = assessment.model_copy(update={"assessment_digest": "0" * 64})
+    with pytest.raises(ValueError, match="assessment result, disposition or digest mismatch"):
+        apply_assessment(proposal, altered_digest)
+    omitted = assessment.model_copy(update={"passed_tests": ["test_schema"]})
+    with pytest.raises(ValueError, match="does not account for every required test"):
+        apply_assessment(proposal, omitted)
+
+
+def test_assessment_rejects_unfounded_execution_and_claim_flags():
+    proposal = make_proposal()
+    assessment = assess_improvement(
+        proposal,
+        {"test_schema": ResultStatus.PASS, "test_fail_closed": ResultStatus.PASS},
+    )
+    forged = assessment.model_copy(update={"external_execution_performed": True})
+    with pytest.raises(ValueError, match="assessment result, disposition or digest mismatch"):
+        apply_assessment(proposal, forged)
+    forged = assessment.model_copy(update={"claim_promotion_performed": True})
+    with pytest.raises(ValueError, match="assessment result, disposition or digest mismatch"):
+        apply_assessment(proposal, forged)
