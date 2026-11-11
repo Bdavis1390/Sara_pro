@@ -111,6 +111,7 @@ class ImprovementProposal(BaseModel):
 class ImprovementAssessment(BaseModel):
     schema: str = "ws-recursive-improvement-assessment-1"
     improvement_id: str
+    proposal_digest: str = ""  # legacy/unbound assessments cannot be applied
     disposition: ImprovementState
     passed_tests: list[str] = Field(default_factory=list)
     failed_tests: list[str] = Field(default_factory=list)
@@ -190,6 +191,7 @@ def assess_improvement(
     payload = {
         "schema": "ws-recursive-improvement-assessment-1",
         "improvement_id": proposal.improvement_id,
+        "proposal_digest": proposal_digest(proposal),
         "disposition": disposition.value,
         "passed_tests": passed,
         "failed_tests": failed,
@@ -201,6 +203,7 @@ def assess_improvement(
     }
     return ImprovementAssessment(
         improvement_id=proposal.improvement_id,
+        proposal_digest=payload["proposal_digest"],
         disposition=disposition,
         passed_tests=passed,
         failed_tests=failed,
@@ -225,6 +228,32 @@ def apply_assessment(
         ImprovementState.QUARANTINED,
     }:
         raise ValueError("assessment disposition is not an automated validation state")
+    if assessment.proposal_digest != proposal_digest(proposal):
+        raise ValueError("assessment is not bound to the exact current proposal")
+
+    # Reconstruct the complete test result set and independently recalculate
+    # the disposition. A caller-provided review-ready flag is not test evidence.
+    required = set(proposal.required_tests)
+    observed: dict[str, ResultStatus | None] = {}
+    for outcome, names in (
+        (ResultStatus.PASS, assessment.passed_tests),
+        (ResultStatus.FAIL, assessment.failed_tests),
+        (ResultStatus.INCONCLUSIVE, assessment.inconclusive_tests),
+        (None, assessment.missing_tests),
+    ):
+        for test_id in names:
+            if test_id not in required or test_id in observed:
+                raise ValueError("assessment has unknown or duplicate test identifiers")
+            observed[test_id] = outcome
+    if set(observed) != required:
+        raise ValueError("assessment does not account for every required test")
+
+    recovered_results = {
+        name: outcome for name, outcome in observed.items() if outcome is not None
+    }
+    expected = assess_improvement(proposal, recovered_results)
+    if assessment.model_dump(mode="json") != expected.model_dump(mode="json"):
+        raise ValueError("assessment result, disposition or digest mismatch")
     return _validated_update(proposal, state=assessment.disposition)
 
 
