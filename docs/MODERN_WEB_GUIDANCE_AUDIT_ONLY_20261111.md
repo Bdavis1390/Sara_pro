@@ -86,3 +86,26 @@ Avoid opening public inbound ports or resetting credentials as a first response.
 - https://developer.chrome.com/docs/modern-web-guidance/modernization-workflow
 - https://github.com/GoogleChrome/modern-web-guidance
 - https://www.npmjs.com/package/modern-web-guidance
+
+## Lenovo GUI v0.8.0 focused security review (2026-11-11)
+
+**Security issue identified (candidate only):** The separately maintained GUI's globe detail-rendering routines used `innerHTML` with raw track metadata (label, callsign, category, operator, status and timestamps). If untrusted track data reaches that boundary, DOM-based script injection could occur. Google's 35-rule legacy scan did not detect this; its zero findings are not a clean bill of health.
+
+**Mitigation prepared privately on Lenovo:** An isolated copy was modified to use `document.createElement`, `textContent`, `replaceChildren`, and a four-value CSS category allowlist. The original GUI files and this public repository's deployed code were **not** edited. No source patch is published here because the standalone GUI's sharing/IP status has not been reviewed.
+
+**Private evidence locations:**
+
+- Candidate root: `~/.local/state/worldshepherd/mwg/gui-v08-security-candidate-20261111/`
+- Local patch: `gui-v08-globe-dom-safety.patch` (SHA-256 `62362bc5ddda3eabcb551ba302af06571269d5597d6380f42ab313bbb7a744ff`)
+- Regression test: `tests/globe_dom_safety_regression.cjs` (SHA-256 `45e7bf95f5357f6d2aa9e347b69bf75bdba2f0dfd012291c68b4a8c227d3edea`)
+- Original `gui/globe.js` SHA-256: `54277117f848cab2bf9e97ece1e6035b876099496b9597dceb53ca61395d2c80` (unchanged after review)
+- Tests: isolated-copy Python `unittest discover -s tests -q` **55/55 pass** after including required launcher fixture; Node VM regression with hostile sample strings **pass**; Node `--check` **pass**. The initial one-error test run was a copy-fixture omission, not a source regression.
+- Limitation: Node VM assertions establish safe DOM construction for the exercised panel; a live browser security audit and authorization tests are still needed.
+
+**Next manual audit gates, before deployment:**
+1. Verify destination URL schemes/origins for official-source links and embedded media; HTML attribute escaping alone does not validate a `javascript:` or other unsafe URL scheme.
+2. Evaluate removing the administrator bearer token from browser `sessionStorage` and hardening credential lifetimes; prioritize because any remaining XSS would increase its exposure.
+3. Design compatible CSP report-only deployment and keyboard-accessible tab navigation; first confirm map/Street View integrations, framing needs and supported browsers.
+4. Run browser-based integration, keyboard/screen-reader, responsive, and negative-authorization tests on a dedicated reviewed build. Preserve a rollback copy.
+
+**IP boundary:** These findings describe security behavior without publishing the standalone local GUI source. Explicitly decide where that code should live before integrating or disclosing it publicly.
