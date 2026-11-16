@@ -92,6 +92,7 @@ def audit_package(pkg, prereg, root, pinned_sha256):
     run_ids = set()
     valid_kinds = set()
     good_controls = set()
+    failed_controls = set()
     verified_artifacts = 0
     for idx, run in enumerate(runs):
         if not isinstance(run, dict):
@@ -103,9 +104,9 @@ def audit_package(pkg, prereg, root, pinned_sha256):
         if isinstance(rid, str):
             run_ids.add(rid)
         kind, outcome = run.get('kind'), run.get('outcome')
-        if kind not in KINDS:
+        if not isinstance(kind, str) or kind not in KINDS:
             errors.append(f'INVALID_KIND:{rid}')
-        if outcome not in OUTCOMES:
+        if not isinstance(outcome, str) or outcome not in OUTCOMES:
             errors.append(f'INVALID_OUTCOME:{rid}')
         else:
             counts[outcome] += 1
@@ -125,10 +126,13 @@ def audit_package(pkg, prereg, root, pinned_sha256):
                     verified_artifacts += 1
             except (OSError, ValueError, TypeError, KeyError) as ex:
                 errors.append(f'ARTIFACT_UNAVAILABLE:{rid}:{ex}')
-        if valid_artifact and kind in KINDS:
+        if valid_artifact and isinstance(kind, str) and kind in KINDS:
             valid_kinds.add(kind)
-            if kind == 'control' and outcome == 'PASS' and isinstance(run.get('control'), str):
+        if kind == 'control' and isinstance(run.get('control'), str):
+            if valid_artifact and outcome == 'PASS':
                 good_controls.add(run['control'])
+            else:
+                failed_controls.add(run['control'])
     summary = pkg.get('summary')
     if not isinstance(summary, dict) or summary.get('counts') != counts:
         errors.append('SUMMARY_EVENT_RECONCILIATION_FAILED')
@@ -137,10 +141,12 @@ def audit_package(pkg, prereg, root, pinned_sha256):
     for control in controls:
         if control not in good_controls:
             errors.append(f'REQUIRED_CONTROL_NOT_PASSED:{control}')
+        if control in failed_controls:
+            errors.append(f'REQUIRED_CONTROL_HAS_FAILED_RUN:{control}')
     requested = pkg.get('requested_status', 'HYPOTHESIS')
-    if requested not in STATUS.get(claim_type, {'HYPOTHESIS'}):
+    if not isinstance(requested, str) or requested not in STATUS.get(claim_type, {'HYPOTHESIS'}):
         errors.append(f'UNSUPPORTED_CLAIM_PROMOTION:{requested}')
-    required_kind = STATUS_KIND.get(requested)
+    required_kind = STATUS_KIND.get(requested) if isinstance(requested, str) else None
     if required_kind and required_kind not in valid_kinds:
         errors.append(f'REQUESTED_STATUS_HAS_NO_VERIFIED_ARTIFACT:{required_kind}')
     if any(isinstance(r, dict) and r.get('outcome') != 'PASS' for r in runs):
@@ -149,6 +155,7 @@ def audit_package(pkg, prereg, root, pinned_sha256):
         warnings.append('An anchor reference is recorded but NOT cryptographically verified')
     else:
         warnings.append('No separately verified independent witness; local integrity only')
+    warnings.append('Configuration SHA-256 format is checked but configuration bytes are NOT verified by this v0.2 prototype')
     warnings.append('Structural audit does not prove scientific truth, novelty, calibration, or independent replication')
     return {
         'audit_version': 'WS-CLAIM-GATE-0.2',
