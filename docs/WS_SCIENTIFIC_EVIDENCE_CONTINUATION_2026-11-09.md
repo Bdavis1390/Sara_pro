@@ -13,7 +13,7 @@ Convert Worldshepherd's scientific-discovery objective into a repeatable protoco
 | Workstream | Evidence available or historical state | Current defensible description | Specific next gate | Umbrella |
 | --- | --- | --- | --- | --- |
 | SARA / PRIME / ECHO / OVERWATCH | Canonical local runtime, CI and governance/provenance documentation in this repository | Implemented software for explicitly tested boundaries; partner/operational assertions require their own tests | Exact-commit clean clone, independent witness verification, controlled SARA adapter review | #281 |
-| Scientific claim gate | Local v0.2 standard-library reference implementation; synthetic example; 17 local regression tests passing on 2026-11-09 | Internal test of evidence envelope integrity, **not** scientific truth or formal assurance | Protected CI, supply-chain review, signed ECHO anchor, schema compatibility, human review | #281 |
+| Scientific claim gate | Local v0.2 standard-library reference implementation; synthetic example; 23 adversarial regression tests independently rerun in a local container on 2026-11-16 | Internal test of evidence envelope integrity, **not** scientific truth or formal assurance | Protected CI, supply-chain review, signed ECHO anchor, schema compatibility, human review | #281 |
 | RF / resonance and adaptive materials | Hypotheses, models and relevant published research; no newly confirmed calibrated material energy-exchange result from this work session | HYPOTHESIS / SIMULATED ONLY as appropriate to each artifact | Predeclared blind comparison, detector-nonlinearity controls, calibrated RF power ledger, phase/reference and uncertainty budget, independent replicate | #282 |
 | Quantum formal reasoning | Public AI-assisted formal proof methods offer reusable verification patterns; no Worldshepherd independent kernel replay completed here | Methodology and reproducibility target, not Worldshepherd theorem proof | Pin Lean/compiler/dependency versions; theorem-statement correspondence audit; reproduce kernel checks; check assumptions | #282 |
 | Original Palace 54-anchor campaign | Private recovery README records zero exit codes for A001–A036 but 12 60° GMRES nonconvergences; A037/A038 failed; A039 hit a memory gate; A040–A054 unexecuted at recorded checkpoint | **INCOMPLETE**, process exit is not solver convergence; historical state may have changed after that record | Reconcile latest private logs; independently check tolerances/residuals/boundary conditions; supervised A039; resume remaining cases only within approved compute budget | #282 |
@@ -35,11 +35,12 @@ Convert Worldshepherd's scientific-discovery objective into a repeatable protoco
 
 - 100% of declared raw artifacts verified against their recorded SHA-256 in a bounded test snapshot.
 - Exact preregistered schema hash must match a **separately trusted** pre-run pin; shipping the pin with the package is not independent anchoring.
-- All required controls must be verified `kind=control` and `PASS`; an incorrect or absent hash fails the control.
+- All required control records must be `kind=control`, declare `PASS`, and have matching artifact hashes; if a required control has any failed run, the audit blocks even if a duplicate passed. The audit does not execute the underlying control or validate whether `PASS` is scientifically justified.
 - Status requests must match claim types and contain a verified artifact of the corresponding evidence class.
 - Summary/event count and event IDs must reconcile.
 - Outcome is always `claim_automatically_proven=false`, `external_independence_verified=false`, `requires_human_review=true`.
-- Local test result is only local; no GitHub CI, hardware experiment, certified system, independently validated scientific result, or partner endorsement is claimed until evidence is attached.
+- Run `config_sha256` values are checked for digest syntax only in v0.2, not verified against actual configuration bytes. This remains a pre-integration blocker.
+- The 23 regression tests passed **locally** on 2026-11-16. GitHub-hosted CI status must be checked separately; no hardware experiment, certified system, independently validated scientific result, or partner endorsement is claimed until evidence is attached.
 
 ## Release / confidentiality
 
