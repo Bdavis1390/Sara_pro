@@ -67,9 +67,15 @@ def bind_research_identifiability(
         condition_limit=condition_limit,
     )
     bound_state = replace(state, model_identifiable=assessment.locally_identifiable)
+    normalized_assessment = asdict(assessment)
+    # Rank deficiency legitimately yields condition_number=inf. JSON does not
+    # permit Infinity; serialize it as an explicit typed sentinel instead of
+    # relaxing the canonical-hash finite-number requirement.
+    if not math.isfinite(normalized_assessment["condition_number"]):
+        normalized_assessment["condition_number"] = "INFINITE_NONIDENTIFIABLE"
     payload = {
         "state": asdict(bound_state),
-        "assessment": asdict(assessment),
+        "assessment": normalized_assessment,
         "jacobian": rows,
         "parameters": names,
         "condition_limit": condition_limit,
