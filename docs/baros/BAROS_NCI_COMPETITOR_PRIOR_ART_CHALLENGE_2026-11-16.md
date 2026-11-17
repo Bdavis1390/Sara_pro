@@ -39,6 +39,26 @@ Sources:
 - https://pubmed.ncbi.nlm.nih.gov/42099895/
 - https://doi.org/10.3389/fonc.2025.1637198
 
+## November 17 product-market competitor assessment (public descriptions; not bench-tested)
+
+Potential *customers* already have commercial automated plan-check and quality-management systems. A defensible product positioning must be falsified against **existing vendor functionality**, not an artificially weakened software comparator:
+
+| Vendor/product | Publicly advertised baseline | What cannot be inferred | Specific validation requirement |
+|---|---|---|---|
+| **Radformation ClearCheck** | Automated and in-depth plan evaluation, plan comparisons and documentation; marketed as supporting TG-275-related review | No basis to assume it lacks data-provenance controls or equivalent upstream biological checks solely because its public description emphasizes plan review | Ask customers which *longitudinal biology input failures*, if any, are already flagged in their actual ClearCheck/TPS workflows; never claim BAROS superiority without a fair approved study |
+| **Sun Nuclear SunCHECK Patient** | Plan checks, independent/secondary calculations, pre-treatment QA and in-vivo monitoring within a treatment-quality management workflow | The product page does not establish any tested head-to-head comparator or disclose proprietary features | Independent physicists compare coverage of overlapping failure modes and workflow burden; preserve vendor access/licensing requirements |
+| **RayStation / Ethos / Elekta Unity-Monaco** | Established adaptive planning, robust/anatomy-aware optimization, clinical QA and trained treatment planning/delivery pipelines | These systems already perform substantial planning control; clinical biomedical state qualification may or may not be handled elsewhere in a department | Define a *specific* external biological measurement quality/identifiability failure that is not adequately resolved by the actual selected TPS and institutional process, then independently test |
+| **BAROS EvidenceGate (candidate, research-only)** | Synthetic pre-TPS qualification of longitudinal biological inputs, explicit software abstention and replay, bounded abstract research planning-priority intent | No real biomarker calibration, independent TPS adapter, physical dose calculation, clinical utility, customer, validated cost saving or regulatory approval | Clinician adjudication + partner-controlled TPS/phantom study + customer interview evidence + realistic published-method comparator |
+
+**No public product description proves a competitor lacks a particular capability**, and no unnamed tool should be described as clinically unsafe. The null commercial hypothesis is that **existing institution/vendor safeguards are sufficient**, making BAROS unnecessary. Five genuinely independent, non-leading buyer interviews plus one externally controlled study must challenge that null hypothesis. Measures should include critical false-proceed, eligible proposal recall, staff review time, operator burden, failure explanation quality, integration cost and real willingness to evaluate/pay. No price or benefit percentage has been established.
+
+Public sources:
+- https://www.radformation.com/clearcheck/clearcheck
+- https://www.sunnuclear.com/products/suncheck-patient
+- https://www.raysearchlabs.com/raystation/
+- https://pmc.ncbi.nlm.nih.gov/articles/PMC13575499/ (2026 automated online adaptive platform review)
+- https://pmc.ncbi.nlm.nih.gov/articles/PMC9012523/ (AAPM TG-275: independent clinical physics plan/chart review)
+
 ## Honest candidate differentiator, to attempt to falsify
 
 A versioned *evidence contract* that binds sequential biological inputs to validated registration/reference identity, quantitative model identifiability, uncertainty calibration, explicit event-time ordering, data provenance, and a reversible abstention/fallback action before TPS proposal. It cannot transfer treatment authority; partner-controlled QA remains required. Novelty must be shown by **incremental failures detected over named baselines**, not by addition of a novel acronym.
