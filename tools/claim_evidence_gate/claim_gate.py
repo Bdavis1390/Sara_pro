@@ -1,4 +1,4 @@
-"""WorldShepherd claim evidence gate v0.2: structural validation, never proof.
+"""WorldShepherd claim evidence gate v0.3: structural validation, never proof.
 
 Standard library only. Claims are always bounded by evidence type and human review.
 """
@@ -74,7 +74,7 @@ def audit_package(pkg, prereg, root, pinned_sha256):
         if prereg.get(key) in (None, '', []):
             errors.append(f'PREREG_FIELD_MISSING:{key}')
     claim_type = prereg.get('claim_type')
-    if claim_type not in STATUS:
+    if not isinstance(claim_type, str) or claim_type not in STATUS:
         errors.append('UNKNOWN_CLAIM_TYPE')
     if prereg.get('claim_id') != pkg.get('claim_id'):
         errors.append('CLAIM_ID_MISMATCH')
@@ -94,6 +94,7 @@ def audit_package(pkg, prereg, root, pinned_sha256):
     good_controls = set()
     failed_controls = set()
     verified_artifacts = 0
+    verified_run_configs = 0
     for idx, run in enumerate(runs):
         if not isinstance(run, dict):
             errors.append(f'INVALID_RUN:{idx}')
@@ -112,6 +113,23 @@ def audit_package(pkg, prereg, root, pinned_sha256):
             counts[outcome] += 1
         if not valid_sha(run.get('config_sha256')):
             errors.append(f'CONFIG_DIGEST_MISSING:{rid}')
+        config_artifact = run.get('config_artifact')
+        valid_config = False
+        if not isinstance(config_artifact, dict) or set(config_artifact) != {'path', 'sha256'}:
+            errors.append(f'CONFIG_DESCRIPTOR_MALFORMED:{rid}')
+        else:
+            try:
+                actual_config = file_sha(root, config_artifact['path'])
+                if (not valid_sha(config_artifact['sha256'])
+                        or actual_config != config_artifact['sha256'].lower()
+                        or not valid_sha(run.get('config_sha256'))
+                        or actual_config != run['config_sha256'].lower()):
+                    errors.append(f'CONFIG_HASH_MISMATCH:{rid}')
+                else:
+                    valid_config = True
+                    verified_run_configs += 1
+            except (OSError, ValueError, TypeError, KeyError) as ex:
+                errors.append(f'CONFIG_UNAVAILABLE:{rid}:{ex}')
         artifact = run.get('artifact')
         valid_artifact = False
         if not isinstance(artifact, dict) or set(artifact) != {'path', 'sha256'}:
@@ -126,10 +144,10 @@ def audit_package(pkg, prereg, root, pinned_sha256):
                     verified_artifacts += 1
             except (OSError, ValueError, TypeError, KeyError) as ex:
                 errors.append(f'ARTIFACT_UNAVAILABLE:{rid}:{ex}')
-        if valid_artifact and isinstance(kind, str) and kind in KINDS:
+        if valid_artifact and valid_config and isinstance(kind, str) and kind in KINDS:
             valid_kinds.add(kind)
         if kind == 'control' and isinstance(run.get('control'), str):
-            if valid_artifact and outcome == 'PASS':
+            if valid_artifact and valid_config and outcome == 'PASS':
                 good_controls.add(run['control'])
             else:
                 failed_controls.add(run['control'])
@@ -155,10 +173,10 @@ def audit_package(pkg, prereg, root, pinned_sha256):
         warnings.append('An anchor reference is recorded but NOT cryptographically verified')
     else:
         warnings.append('No separately verified independent witness; local integrity only')
-    warnings.append('Configuration SHA-256 format is checked but configuration bytes are NOT verified by this v0.2 prototype')
+    warnings.append('Configuration file bytes match recorded SHA-256, but this does NOT prove those bytes were used by the executable or frozen before the run')
     warnings.append('Structural audit does not prove scientific truth, novelty, calibration, or independent replication')
     return {
-        'audit_version': 'WS-CLAIM-GATE-0.2',
+        'audit_version': 'WS-CLAIM-GATE-0.3',
         'claim_id': pkg.get('claim_id'),
         'preregistration_sha256': claim_hash,
         'integrity': 'PASS' if not errors else 'BLOCKED',
@@ -166,6 +184,7 @@ def audit_package(pkg, prereg, root, pinned_sha256):
         'warnings': sorted(warnings),
         'event_counts': counts,
         'artifacts_verified_sha256': verified_artifacts,
+        'run_configurations_verified_sha256': verified_run_configs,
         'requested_status': requested,
         'claim_automatically_proven': False,
         'requires_human_review': True,
