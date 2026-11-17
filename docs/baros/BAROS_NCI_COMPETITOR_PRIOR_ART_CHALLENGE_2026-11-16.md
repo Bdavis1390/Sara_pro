@@ -28,6 +28,17 @@ A new generic `baros/locked_risk_coverage.py` interface permits an evaluator to 
 
 Reference: https://doi.org/10.3389/fonc.2025.1637198 and https://pubmed.ncbi.nlm.nih.gov/41613551/ .
 
+## May 2026 head-and-neck outcome-prediction uncertainty evidence
+
+A directly relevant 2026 study, *An evaluation of uncertainty quantification methods and measures for deep learning outcome prediction models in head and neck cancer radiotherapy* (Physics and Imaging in Radiation Oncology, DOI 10.1016/j.phro.2026.100978, PubMed 42099895), evaluated Monte Carlo dropout, deep ensembles and test-time augmentation, together with entropy, variance and mutual information, for head-and-neck radiotherapy outcome models. Its reported conclusion supports the practical value of several uncertainty techniques, while noting that mutual information was less stable in that study. **These results are external prior art, not BAROS validation or clinical-benefit evidence.** The paper's tumor-control/normal-tissue-complication predictions also differ from BAROS's proposed serial hypoxia qualified state.
+
+The repository now contains `baros/uncertainty_reference.py`, a pure-Python mathematical implementation of predictive entropy H(mean p) and epistemic mutual information H(mean p) minus mean H(p) for *supplied stochastic class probability vectors*. It normalizes the metric to [0,1] using log(number of classes) and permits a predeclared PE or MI score to enter the locked external-risk interface. Tests cover deterministic, maximally disagreeing, uniform, three-class and malformed probability vectors. **This does not train either paper's models, reproduce their cohorts, reconstruct voxel segmentation uncertainty maps, validate FMISO imaging, or reproduce their reported results.** Any threshold tuning must use evaluator-owned training/calibration data rather than a held-out test cohort.
+
+Sources:
+- https://doi.org/10.1016/j.phro.2026.100978
+- https://pubmed.ncbi.nlm.nih.gov/42099895/
+- https://doi.org/10.3389/fonc.2025.1637198
+
 ## Honest candidate differentiator, to attempt to falsify
 
 A versioned *evidence contract* that binds sequential biological inputs to validated registration/reference identity, quantitative model identifiability, uncertainty calibration, explicit event-time ordering, data provenance, and a reversible abstention/fallback action before TPS proposal. It cannot transfer treatment authority; partner-controlled QA remains required. Novelty must be shown by **incremental failures detected over named baselines**, not by addition of a novel acronym.
