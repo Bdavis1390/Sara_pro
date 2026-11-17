@@ -17,6 +17,7 @@ import hashlib
 import hmac
 import json
 import math
+import re
 from typing import Mapping, Sequence
 
 from .phase1_evaluation import Rate, _rate
@@ -43,6 +44,7 @@ class LockedScoreSubmission:
     risk_scores: tuple[RiskScore, ...]
     thresholds: tuple[float, ...]
     commitment_sha256: str
+    challenge_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -72,6 +74,7 @@ def _submission_body(submission: LockedScoreSubmission) -> dict[str, object]:
         "comparator_id": submission.comparator_id,
         "risk_scores": [asdict(x) for x in submission.risk_scores],
         "thresholds": list(submission.thresholds),
+        "challenge_sha256": submission.challenge_sha256,
     }
 
 
@@ -81,11 +84,17 @@ def lock_external_risk_scores(
     thresholds: Sequence[float],
     protocol_id: str,
     comparator_id: str,
+    challenge_sha256: str | None = None,
 ) -> LockedScoreSubmission:
     """Commit risk scores and decision thresholds BEFORE evaluator unblinding."""
     for name, value in (("protocol_id", protocol_id), ("comparator_id", comparator_id)):
         if not isinstance(value, str) or not (0 < len(value.strip()) <= 96):
             raise ValueError(f"{name} must be a non-empty, short identifier")
+    if challenge_sha256 is not None and (
+        not isinstance(challenge_sha256, str)
+        or re.fullmatch(r"[0-9a-f]{64}", challenge_sha256) is None
+    ):
+        raise ValueError("challenge_sha256 must be a lowercase SHA-256 digest")
     scores = tuple(scores)
     if not 1 <= len(scores) <= 10_000:
         raise ValueError("risk score list must contain 1..10000 cases")
@@ -107,9 +116,12 @@ def lock_external_risk_scores(
         raise ValueError("thresholds must be finite and within [0, 1]")
     if len(set(thresholds)) != len(thresholds) or tuple(sorted(thresholds)) != thresholds:
         raise ValueError("thresholds must be strictly ascending with no duplicates")
-    stub = LockedScoreSubmission(protocol_id, comparator_id, scores, thresholds, "")
+    stub = LockedScoreSubmission(
+        protocol_id, comparator_id, scores, thresholds, "", challenge_sha256
+    )
     return LockedScoreSubmission(
-        protocol_id, comparator_id, scores, thresholds, _commit(_submission_body(stub))
+        protocol_id, comparator_id, scores, thresholds,
+        _commit(_submission_body(stub)), challenge_sha256,
     )
 
 
@@ -139,6 +151,7 @@ def score_external_after_unblinding(
         thresholds=submission.thresholds,
         protocol_id=submission.protocol_id,
         comparator_id=submission.comparator_id,
+        challenge_sha256=submission.challenge_sha256,
     )
     if not hmac.compare_digest(reconstructed.commitment_sha256, submission.commitment_sha256):
         raise ValueError("invalid locked score fields")
