@@ -18,6 +18,22 @@ The independent medical-physics team—not WorldShepherd—must select and freez
 - **Primary metrics and denominators:** critical false-proceed, eligible proposal recall, unjustified abstention, no-trigger false proposal, failure reason accuracy, record replay equality, decision latency, workflow burden and physician/physicist interpretability. Report exact counts, statistical uncertainty, all negative results and audit hashes. Five synthetic cases cannot establish clinical reliability.
 - **No prohibited clinical actions:** no dose escalation, prescription/fractionation change, hardware commands, interpretation as a physician order, or patient plan approval.
 
+## Stage A2 — paired, locked uncertainty/comparator challenge (developer interface built; NOT independently run)
+
+A paired scorer is now available in `baros/paired_comparator.py` with unit tests. Its purpose is **case-matched comparison under a single frozen research challenge**, NOT a clinical head-to-head study. This design closes a source of avoidable benchmark bias: separate cohorts, mismatched IDs or post-hoc thresholds can create misleading performance improvements.
+
+**Pre-unblinding requirements controlled by the evaluator:**
+
+1. Freeze the same `protocol_id` and SHA-256 *challenge manifest* for the full BAROS proposal submission and independent `LockedScoreSubmission`. The comparator's `challenge_sha256` is mandatory for paired claims; standalone exploratory comparator reports may omit it.
+2. Independently determine the *triggered* research case cohort **before** either system sees hidden labels. Its two reference strata are qualified-trigger and disqualified-trigger. **No-trigger cases form a separate, independently preregistered stratum** using the three-class blinded scorer; never discard them after scores are inspected.
+3. Secure institutional protocol approvals, intended-use and data rights. Lock the exact experimental stimulus, biomarker interpretation, uncertainty method, dose/TPS boundaries, reference labels in separate custody and a scientific baseline algorithm. The comparator's quantitative risk score must come from the **actual documented method**, not a developer-selected toy score.
+4. Freeze a prespecified operating threshold **or complete sorted grid** before label release, and report **all grid points**, including null findings. Do not optimize on the held-out set and then advertise the best point without separate validation.
+5. Lock the exact BAROS commit/build, external method version/calibration population, dependencies, environment, challenge digest, each submission digest and independent holdout label manifest before unblinding. Software SHA-256 is *integrity metadata*, **not authenticated or independently witnessed custody**.
+6. After release, score with `compare_frozen_research_submissions(...)`. Demand exact common protocol, challenge digest and case-ID set; reject mismatches, invalid samples, tampered records and any treatment authority. Report disqualified-proposal rates, eligible proposal recall, total coverage and **paired discordant cases**, with numerator/denominator and appropriate uncertainty. The paired discordance counts are descriptive; there is **no significance test, causal proof, device-certification inference or probability-of-patient-harm estimate**.
+7. If the external method is an uncertainty/OOD segmenter from the 2026 MR-guided ART literature, acknowledge that its *prostate MRI segmentation outputs are not calibrated FMISO-PET hypoxia measurements*. The physicist must determine whether that is a defensible scientific comparator for the chosen target before running any clinical study. Otherwise report it as an exploratory software-method comparison and seek a better matched baseline.
+
+**Acceptance remains OPEN:** no independent method scores, evaluator-owned cases/labels, or authorized clinical measurements have yet been supplied. The current test fixtures in this repository are developer-authored synthetics and are **not** an independent challenge. One observed difference in these fixtures does not demonstrate competitive superiority, let alone patient benefit.
+
 ## Stage B — conditional independent TPS and physical feasibility
 
 Proceed only with an institution-approved workshare, legally accessible data, responsible clinical team and successful Stage A.
