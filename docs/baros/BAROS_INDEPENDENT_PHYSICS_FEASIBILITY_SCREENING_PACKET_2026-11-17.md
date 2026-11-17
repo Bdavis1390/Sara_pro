@@ -1,5 +1,5 @@
 # BAROS EvidenceGate — independent clinical-physics feasibility screening packet
-**Prepared:** 2026-11-17 | **One-page-style technical intake, NONCONFIDENTIAL / NONBINDING / RESEARCH ONLY**  
+**Prepared:** 2026-11-17 | **One-page-style technical intake, NONCONFIDENTIAL / NONBINDING / RESEARCH ONLY**
 **Stage:** prospective partner screening, NOT a signed study, NIH application, clinical protocol or request for patient data.
 
 ## Research question for an independent radiation-oncology / medical-physics team
