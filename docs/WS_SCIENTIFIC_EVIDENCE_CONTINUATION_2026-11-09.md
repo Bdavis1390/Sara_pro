@@ -6,14 +6,14 @@
 
 Convert Worldshepherd's scientific-discovery objective into a repeatable protocol: propose a falsifiable question, preregister a claim and null hypothesis, retain failed controls, verify data lineage, reproduce results, challenge interpretations, and submit evidence to human/independent review. Prediction, AI-generated rationale, paper, simulation, and physical observation are different evidence categories.
 
-**Policy source of truth:** `docs/CLAIMS_AND_EVIDENCE_POLICY.md`; supporting maturity map: `docs/WORLDSHEPHERD_CAPABILITY_MAP.md`. The v0.2 candidate under `tools/claim_evidence_gate/` is a **standalone adapter** and must not be described as an installed SARA subsystem.
+**Policy source of truth:** `docs/CLAIMS_AND_EVIDENCE_POLICY.md`; supporting maturity map: `docs/WORLDSHEPHERD_CAPABILITY_MAP.md`. The v0.3 candidate under `tools/claim_evidence_gate/` is a **standalone adapter** and must not be described as an installed SARA subsystem.
 
 ## Current evidence ledger and next gates
 
 | Workstream | Evidence available or historical state | Current defensible description | Specific next gate | Umbrella |
 | --- | --- | --- | --- | --- |
 | SARA / PRIME / ECHO / OVERWATCH | Canonical local runtime, CI and governance/provenance documentation in this repository | Implemented software for explicitly tested boundaries; partner/operational assertions require their own tests | Exact-commit clean clone, independent witness verification, controlled SARA adapter review | #281 |
-| Scientific claim gate | Local v0.2 standard-library reference implementation; synthetic example; 23 adversarial regression tests independently rerun in a local container on 2026-11-16 | Internal test of evidence envelope integrity, **not** scientific truth or formal assurance | Protected CI, supply-chain review, signed ECHO anchor, schema compatibility, human review | #281 |
+| Scientific claim gate | Standalone v0.3 standard-library reference implementation; synthetic example; 32 regression cases committed for GitHub CI evaluation, extending the earlier v0.2 23-test result | Internal test of evidence envelope integrity, **not** scientific truth or formal assurance | Protected CI, supply-chain review, signed ECHO anchor, schema compatibility, human review | #281 |
 | RF / resonance and adaptive materials | Hypotheses, models and relevant published research; no newly confirmed calibrated material energy-exchange result from this work session | HYPOTHESIS / SIMULATED ONLY as appropriate to each artifact | Predeclared blind comparison, detector-nonlinearity controls, calibrated RF power ledger, phase/reference and uncertainty budget, independent replicate | #282 |
 | Quantum formal reasoning | Public AI-assisted formal proof methods offer reusable verification patterns; no Worldshepherd independent kernel replay completed here | Methodology and reproducibility target, not Worldshepherd theorem proof | Pin Lean/compiler/dependency versions; theorem-statement correspondence audit; reproduce kernel checks; check assumptions | #282 |
 | Original Palace 54-anchor campaign | Private recovery README records zero exit codes for A001–A036 but 12 60° GMRES nonconvergences; A037/A038 failed; A039 hit a memory gate; A040–A054 unexecuted at recorded checkpoint | **INCOMPLETE**, process exit is not solver convergence; historical state may have changed after that record | Reconcile latest private logs; independently check tolerances/residuals/boundary conditions; supervised A039; resume remaining cases only within approved compute budget | #282 |
@@ -31,7 +31,7 @@ Convert Worldshepherd's scientific-discovery objective into a repeatable protoco
 6. **Scientific review:** separate software integrity, numerical convergence, proof soundness, empirical calibration, novelty, and independent reproduction.
 7. **Human approval:** promote claims only within observed scope; failed tests are never deleted.
 
-## Gate acceptance criteria for prototype v0.2
+## Gate acceptance criteria for prototype v0.3
 
 - 100% of declared raw artifacts verified against their recorded SHA-256 in a bounded test snapshot.
 - Exact preregistered schema hash must match a **separately trusted** pre-run pin; shipping the pin with the package is not independent anchoring.
@@ -39,8 +39,8 @@ Convert Worldshepherd's scientific-discovery objective into a repeatable protoco
 - Status requests must match claim types and contain a verified artifact of the corresponding evidence class.
 - Summary/event count and event IDs must reconcile.
 - Outcome is always `claim_automatically_proven=false`, `external_independence_verified=false`, `requires_human_review=true`.
-- Run `config_sha256` values are checked for digest syntax only in v0.2, not verified against actual configuration bytes. This remains a pre-integration blocker.
-- The 23 regression tests passed **locally** on 2026-11-16. GitHub-hosted CI status must be checked separately; no hardware experiment, certified system, independently validated scientific result, or partner endorsement is claimed until evidence is attached.
+- Every run's declared configuration file is read and its SHA-256 compared against the `config_artifact.sha256` and `config_sha256` values; missing, altered, symlinked or traversing paths block acceptance. **Execution-time use, pre-run freeze and immutable custody are not verified** and remain pre-integration blockers.
+- The earlier v0.2 23-test suite passed locally on 2026-11-16, and eight v0.2 GitHub workflows passed at commit `bdb35c0389010a43e4c3702fb23c1b20e8e364c8`. **v0.3 requires fresh exact-head CI results**; no hardware experiment, certified system, independently validated scientific result, or partner endorsement is claimed.
 
 ## Release / confidentiality
 
