@@ -46,6 +46,8 @@ jobs:
           report=json.loads(Path('/tmp/ws-audit.json').read_text())
           assert report['integrity']=='PASS'
           assert report['artifacts_verified_sha256']==3
+          assert report['run_configurations_verified_sha256']==3
+          assert report['audit_version']=='WS-CLAIM-GATE-0.3'
           assert report['event_counts']=={'FAIL':0,'INCONCLUSIVE':1,'PASS':2}
           assert report['claim_automatically_proven'] is False
           assert report['external_independence_verified'] is False
