@@ -82,6 +82,9 @@ def evaluate_cases(
     Comparators:
       gated: current BAROS decision contract.
       trigger_only: allow any triggered proposal, ignoring data qualification.
+      quality_only: synthetic quality / uncertainty / OOD gate; NO geometry or
+          identifiability check. This is a deliberately limited heuristic,
+          NOT a published/vendor implementation.
       abstain_all: never allow a proposal (trivially safe but not useful).
     """
     cases = tuple(cases)
@@ -104,9 +107,17 @@ def evaluate_cases(
         )
         decisions.append(decision)
     is_triggered = tuple(d.triggered for d in decisions)
+    quality_only = tuple(
+        d.triggered
+        and not c.current.out_of_distribution
+        and c.current.measurement_quality >= thresholds.min_measurement_quality
+        and max(c.current.uncertainty) <= thresholds.max_uncertainty
+        for c, d in zip(cases, decisions)
+    )
     proposals = (
         ("gated", tuple(d.proposal_allowed for d in decisions)),
         ("trigger_only", is_triggered),
+        ("quality_only", quality_only),
         ("abstain_all", (False,) * len(decisions)),
     )
     results = []
