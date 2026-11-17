@@ -1,0 +1,82 @@
+name: WorldShepherd Scientific Claim Evidence Gate
+
+on:
+  pull_request:
+    paths:
+      - 'tools/claim_evidence_gate/**'
+      - '.github/workflows/ws-claim-evidence-gate.yml'
+  push:
+    paths:
+      - 'tools/claim_evidence_gate/**'
+      - '.github/workflows/ws-claim-evidence-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structural-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Python syntax validation
+        run: python -m py_compile tools/claim_evidence_gate/claim_gate.py tools/claim_evidence_gate/bounded_execution.py tools/claim_evidence_gate/tests/test_claim_gate.py tools/claim_evidence_gate/tests/test_bounded_execution.py
+      - name: Run adversarial structural-audit tests
+        run: python -m unittest discover -s tools/claim_evidence_gate/tests -v
+      - name: Reproduce synthetic fixture audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          PIN="$(cat tools/claim_evidence_gate/examples/PREREG_PIN.sha256)"
+          python tools/claim_evidence_gate/claim_gate.py \
+            --prereg tools/claim_evidence_gate/examples/preregistration.json \
+            --package tools/claim_evidence_gate/examples/package.json \
+            --root tools/claim_evidence_gate/examples \
+            --pinned-prereg-sha256 "$PIN" \
+            --out /tmp/ws-audit.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('/tmp/ws-audit.json').read_text())
+          assert report['integrity']=='PASS'
+          assert report['artifacts_verified_sha256']==3
+          assert report['run_configurations_verified_sha256']==3
+          assert report['audit_version']=='WS-CLAIM-GATE-0.3'
+          assert report['event_counts']=={'FAIL':0,'INCONCLUSIVE':1,'PASS':2}
+          assert report['claim_automatically_proven'] is False
+          assert report['external_independence_verified'] is False
+          assert report['requires_human_review'] is True
+          PY
+
+      - name: Recompute a bounded synthetic execution receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$(mktemp -d)"
+          trap 'rm -rf "$ROOT"' EXIT
+          cp tools/claim_evidence_gate/examples/bounded_exec/*.json "$ROOT/"
+          python tools/claim_evidence_gate/bounded_execution.py run \
+            --root "$ROOT" --config config.json --input input.json --run-id ci-demo > "$ROOT/run-cli.json"
+          python tools/claim_evidence_gate/bounded_execution.py verify \
+            --root "$ROOT" --receipt runs/ci-demo.receipt.json > "$ROOT/verify-cli.json"
+          python - "$ROOT" <<'PY'
+          import json
+          import pathlib
+          import sys
+          root = pathlib.Path(sys.argv[1])
+          receipt = json.loads((root/"run-cli.json").read_text())
+          verified = json.loads((root/"verify-cli.json").read_text())
+          assert receipt["self_reported"] is True
+          assert receipt["independent_witness"] is False
+          assert verified["status"] == "PASS"
+          assert verified["configuration_bytes_recomputed"] is True
+          assert verified["independent_witness_verified"] is False
+          assert verified["independent_process_attestation"] is False
+          assert verified["preexecution_freeze_verified"] is False
+          PY
