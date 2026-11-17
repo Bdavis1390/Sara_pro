@@ -6,32 +6,44 @@
       "id": "run-001",
       "kind": "control",
       "outcome": "PASS",
-      "config_sha256": "eb3d1a128c867c4652236f7972e8646d5486f4c225206657b7ab14011c8c49ed",
+      "config_sha256": "0f4b64294d5e5883e0b0cead843cf3e434054e50d3c69f2237655c7717253ced",
       "artifact": {
         "path": "raw/linear.json",
         "sha256": "5ee0e024401ed6441c7e7dbda922a7b3792614dc7eff6e96bbc4da93d380345c"
       },
-      "control": "linear_detector"
+      "control": "linear_detector",
+      "config_artifact": {
+        "path": "config/run_config.json",
+        "sha256": "0f4b64294d5e5883e0b0cead843cf3e434054e50d3c69f2237655c7717253ced"
+      }
     },
     {
       "id": "run-002",
       "kind": "control",
       "outcome": "PASS",
-      "config_sha256": "eb3d1a128c867c4652236f7972e8646d5486f4c225206657b7ab14011c8c49ed",
+      "config_sha256": "0f4b64294d5e5883e0b0cead843cf3e434054e50d3c69f2237655c7717253ced",
       "artifact": {
         "path": "raw/nonlinear_blank.json",
         "sha256": "8aea939261370914675bf69e9eebe08f2e563d87865997aac9d7fa8c41509afe"
       },
-      "control": "nonlinear_blank"
+      "control": "nonlinear_blank",
+      "config_artifact": {
+        "path": "config/run_config.json",
+        "sha256": "0f4b64294d5e5883e0b0cead843cf3e434054e50d3c69f2237655c7717253ced"
+      }
     },
     {
       "id": "run-003",
       "kind": "simulation",
       "outcome": "INCONCLUSIVE",
-      "config_sha256": "eb3d1a128c867c4652236f7972e8646d5486f4c225206657b7ab14011c8c49ed",
+      "config_sha256": "0f4b64294d5e5883e0b0cead843cf3e434054e50d3c69f2237655c7717253ced",
       "artifact": {
         "path": "raw/study.json",
         "sha256": "2a979f94ab499409dacee8e915538902b356d8535abf64b817e67d8297f5b46a"
+      },
+      "config_artifact": {
+        "path": "config/run_config.json",
+        "sha256": "0f4b64294d5e5883e0b0cead843cf3e434054e50d3c69f2237655c7717253ced"
       }
     }
   ],
