@@ -50,4 +50,34 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-ver
 4. Separate structural integrity from scientific-domain validation gates.
 5. Integrate into canonical SARA only after PRIME authorization contract and OVERWATCH reporting/rollback tests pass.
 
+
+## Bounded execution/custody reference (separate from the v0.3 claim gate)
+
+\`bounded_execution.py\` demonstrates a **fixed synthetic affine transform**. It reads configuration and input bytes once into memory, hashes those exact byte objects, and uses the same objects for deterministic calculation. It writes a self-reported receipt and output in a new run-specific directory. The verifier rereads configuration, input and output bytes; verifies their digests; independently recomputes the fixed calculation; checks the recorded code digest against the locally installed module; and refuses a receipt that claims independent witnessing. It does **not** authenticate an external instrument or certify that a separate physical process obeyed these settings.
+
+To reproduce without modifying tracked fixtures:
+
+\`\`\`bash
+TMP="$(mktemp -d)"
+cp tools/claim_evidence_gate/examples/bounded_exec/*.json "$TMP/"
+python tools/claim_evidence_gate/bounded_execution.py run \
+  --root "$TMP" --config config.json --input input.json --run-id demo1
+python tools/claim_evidence_gate/bounded_execution.py verify \
+  --root "$TMP" --receipt runs/demo1.receipt.json
+rm -rf "$TMP"
+\`\`\`
+
+The bounded runner has **no arbitrary-execution feature**, reads files only within the selected root, rejects symlinks and traversal, and fails if an existing run would be overwritten. The additional regression tests exercise malformed configuration, bad input, incorrect output, forged self-attestation, source substitution, and post-run tampering.
+
+### Limits of this reference
+
+- The receiver has **not** authenticated which operating-system process produced the original receipt. The source digest only compares the current verifier to a self-reported source identity.
+- No independent clock, ECHO checkpoint, externally pinned public-key identity, isolated hardware or remote attestation is involved.
+- A process with write access to all local files can replace inputs, output and a self-reported receipt; recomputing a digest is not a substitute for externally trusted custody.
+- The bounded runner is **not wired into** \`claim_gate.py\` or the canonical SARA runtime. The existing v0.3 audit still evaluates declared software evidence and must not claim this separate test ran for an unrelated scientific artifact.
+- File-based validation on a hostile mutable filesystem remains susceptible to TOCTOU races. The reference does not attempt sandbox process isolation or guarantee durable transactional writes.
+- This test establishes only bounded synthetic software behavior. No material property, resonant-field effect, numerical solver convergence, mathematical theorem, scientific novelty or independent laboratory result is established.
+
+**Next trust boundary:** define a PRIME-authorized invocation that binds a pre-run digest; emit an ECHO-consumable semantic event including exact execution identity and read-byte hashes; verify inclusion in a signed checkpoint against a separately pinned ECHO public-key fingerprint; separately evaluate whether physical instrumentation actually used the intended settings.
+
 **Security:** public repository, synthetic fixtures only. Never commit original private Palace archives, unpublished laboratory raw data, partner IP, credentials, regulated material, or private contact details.
