@@ -71,8 +71,8 @@ LIMITS = AdaptationThresholds(
 
 def handoff(prior=None, current=None, **overrides):
     params = dict(
-        previous=state(0),
-        current=state(1, hypoxia=(0.2, 0.5)),
+        previous=state(0) if prior is None else prior,
+        current=state(1, hypoxia=(0.2, 0.5)) if current is None else current,
         previous_fmiso=observation(0),
         current_fmiso=observation(1),
         thresholds=LIMITS,
