@@ -22,9 +22,13 @@
 - exact tracer token `18F-FMISO`, per-timepoint SHA-256 image fingerprints and frozen acquisition/quantification/reference-frame digests;
 - unique, clearly synthetic study and reader tokens, strict advancing phase indexes, two declared reads per phase, independently reviewed registration **as asserted by the test fixture**, reader training **as asserted by the fixture**;
 - block on reuse of an image digest as a purported separate serial observation, differing study, mismatched protocol/reference, reader disagreement, unknown/indeterminate read, missing declared training or unreviewed registration;
-- a wrapper that permits the existing synthetic abstract priority-intent mapping **only after** mock assay-eligibility and model-input qualifications. On disqualification it produces no priority, no planning proposal and no export/clinical authority.
+- a wrapper that permits the existing synthetic abstract priority-intent mapping **only after** mock assay-eligibility and model-input qualifications. It additionally **holds an FMISO-specific research proposal when the current two-reader interpretation is negative, when only anatomy/non-FMISO variables trigger, when the synthetic hypoxia index decreases without a positive priority, or when a zero-cap policy produces no priority**. Negative reads remain eligible *observations* but do not imply a clinically authorized adaptation. On assay disqualification it produces no priority, no planning proposal and no export/clinical authority.
 
 `tests/test_baros_fmiso_interpretation_gate.py` uses invented samples **only** to exercise the contract. Source hash and training flags are **unauthenticated statements**, not evidence of image authenticity or professional competency. Its `independently_validated=False` output is unconditional by design. This module **does not** read a PET DICOM or infer a tumor voxel, estimate tracer variability or validate the biology-state values supplied by another developer.
+
+## Independent statistical analysis protocol now drafted
+
+`BAROS_FMISO_INDEPENDENT_ASSAY_STATISTICAL_ANALYSIS_PLAN_V1_2026-11-17.md` records a proposed evaluator-owned analysis: participant-level holdout to prevent scan/voxel leakage, reader agreement, **true no-treatment test–retest variability separately from on-treatment changes**, spatial overlap and geometric uncertainty, explicit qualified/disqualified/no-trigger case denominators, paired comparator discordances, false abstention, and workflow burden. **No real cohort is enrolled and no institution has approved this SAP.** Any first-study patient count, acceptable measurement cutoff, physical TPS dose tolerance, and corresponding statistical precision must be chosen and justified by its qualified investigators, not copied from the cited 2024 papers.
 
 ## Minimum independent study acceptance design (to be set by qualified investigators)
 
