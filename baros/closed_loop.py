@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+from numbers import Integral
 from typing import Sequence
 
 
@@ -35,8 +36,13 @@ class BiologicalState:
     out_of_distribution: bool = False
 
     def validate(self) -> None:
-        if self.phase_index < 0:
-            raise ValueError("phase_index must be non-negative")
+        if isinstance(self.phase_index, bool) or not isinstance(self.phase_index, Integral) or self.phase_index < 0:
+            raise ValueError("phase_index must be a non-negative integer")
+        # Strings such as "false" are truthy in Python and could silently
+        # bypass a clinical-research qualification gate unless rejected.
+        for field_name in ("geometry_qualified", "model_identifiable", "out_of_distribution"):
+            if not isinstance(getattr(self, field_name), bool):
+                raise ValueError(f"{field_name} must be a boolean")
         lengths = {
             len(self.alpha_per_gy),
             len(self.beta_per_gy2),
@@ -146,6 +152,8 @@ def assess_triggers(
     manual_force: bool = False,
 ) -> TriggerAssessment:
     """Evaluate explicit anatomy/biology/uncertainty/motion adaptation triggers."""
+    if not isinstance(manual_force, bool):
+        raise ValueError("manual_force must be a boolean")
     previous.validate()
     current.validate()
     thresholds.validate()
