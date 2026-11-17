@@ -169,6 +169,33 @@ def test_negative_no_change_keeps_no_adaptation():
     assert not result.intent.proposal_allowed
 
 
+def test_anatomical_trigger_without_biologic_priority_is_not_fmiso_replan():
+    from dataclasses import replace
+    current = replace(state(1), anatomy_delta_mm=4.0)
+    result = handoff(current=current)
+    assert result.assay.eligible
+    assert result.intent.decision_action == "HOLD_LAST_VALID"
+    assert not result.intent.proposal_allowed
+    assert result.intent.region_priorities == ()
+    assert "no positive" in result.intent.next_step
+
+
+def test_biologic_decrease_without_positive_priority_does_not_propose():
+    result = handoff(current=state(1, hypoxia=(0.2, 0.1)))
+    assert result.assay.eligible
+    assert result.intent.decision_action == "HOLD_LAST_VALID"
+    assert not result.intent.proposal_allowed
+    assert result.intent.region_priorities == ()
+
+
+def test_zero_priority_cap_cannot_create_actionable_research_proposal():
+    result = handoff(policy=ResearchPriorityPolicy(0.5, 0.0))
+    assert result.assay.eligible
+    assert not result.intent.proposal_allowed
+    assert result.intent.region_priorities == ()
+    assert not result.intent.tps_export_allowed
+
+
 @pytest.mark.parametrize("wrong", ["18F-FDG", "FDG", "fmiso", "", None])
 def test_fmiso_is_not_replaced_by_another_biomarker(wrong):
     with pytest.raises(ValueError, match="tracer"):
