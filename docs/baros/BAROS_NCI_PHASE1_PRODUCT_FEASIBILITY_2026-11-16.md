@@ -46,6 +46,14 @@ A new **synthetic combinatorial negative-control regression** is included in thi
 
 **Still missing:** independent negative corpus, fixed biological biomarker interpretation and calibration, partner-approved data access, independent TPS testing, phantom measurements, medical physicist adjudication, comparative utility and buyer discovery, a formed eligible applicant, and institution-approved workshare.
 
+## Regulatory and independent-physics feasibility gate (added 2026-11-17)
+
+**FDA scope cannot be inferred from this prototype.** The current product is explicitly limited to research-only pre-TPS decision qualification. FDA's January 2026 Clinical Decision Support final guidance applies function-specific criteria; FDA Digital Health guidance identifies patient-specific radiation dosage planning among potentially regulated device software functions. Human sign-off, lack of direct dose delivery and saying 'research-only' do NOT automatically exempt a future commercial patient-specific module. A qualified device regulatory assessment is required before commercial clinical claims or integration. See `BAROS_FDA_INTENDED_USE_AND_CLAIMS_BOUNDARY_2026-11-17.md` and the FDA sources linked there.
+
+**Independent partner candidate packet:** `BAROS_INDEPENDENT_PHYSICS_FEASIBILITY_SCREENING_PACKET_2026-11-17.md` defines Stage A synthetic/phantom research interface tests and conditional Stage B partner-owned commissioned TPS plus physical dosimetry. AAPM MPPG 5.b identifies TG-119 mock head-and-neck and C-shape plans for planning/measurement QA, *not as a substitute for clinical commissioning or end-to-end independent measurements*. **No physics partner, licensed data path, hospital TPS access, actual dose comparison or approved protocol has been secured.** Do not count drafting this packet as an interview, letter of support or external validation.
+
+**Go/no-go addition:** No SBIR/STTR submission should claim a regulated or exempt clinical product without a written intended-use and regulatory review rationale, a feasible external validation plan and documented commercialization hypothesis. This regulatory uncertainty belongs in the feasibility risk and workplan, not hidden from reviewers.
+
 ## NIH mechanism / eligibility
 
 Current NCI parent routes include `PA-27-100` (SBIR) and `PA-27-102` (STTR); these are *funding announcements*, not awards or acceptance. Next standard due date shown as **2027-01-05**. No application is ready to file.
