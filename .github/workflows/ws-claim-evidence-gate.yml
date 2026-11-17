@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Python syntax validation
-        run: python -m py_compile tools/claim_evidence_gate/claim_gate.py tools/claim_evidence_gate/tests/test_claim_gate.py
+        run: python -m py_compile tools/claim_evidence_gate/claim_gate.py tools/claim_evidence_gate/bounded_execution.py tools/claim_evidence_gate/tests/test_claim_gate.py tools/claim_evidence_gate/tests/test_bounded_execution.py
       - name: Run adversarial structural-audit tests
         run: python -m unittest discover -s tools/claim_evidence_gate/tests -v
       - name: Reproduce synthetic fixture audit
@@ -52,4 +52,31 @@ jobs:
           assert report['claim_automatically_proven'] is False
           assert report['external_independence_verified'] is False
           assert report['requires_human_review'] is True
+          PY
+
+      - name: Recompute a bounded synthetic execution receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$(mktemp -d)"
+          trap 'rm -rf "$ROOT"' EXIT
+          cp tools/claim_evidence_gate/examples/bounded_exec/*.json "$ROOT/"
+          python tools/claim_evidence_gate/bounded_execution.py run \
+            --root "$ROOT" --config config.json --input input.json --run-id ci-demo > "$ROOT/run-cli.json"
+          python tools/claim_evidence_gate/bounded_execution.py verify \
+            --root "$ROOT" --receipt runs/ci-demo.receipt.json > "$ROOT/verify-cli.json"
+          python - "$ROOT" <<'PY'
+          import json
+          import pathlib
+          import sys
+          root = pathlib.Path(sys.argv[1])
+          receipt = json.loads((root/"run-cli.json").read_text())
+          verified = json.loads((root/"verify-cli.json").read_text())
+          assert receipt["self_reported"] is True
+          assert receipt["independent_witness"] is False
+          assert verified["status"] == "PASS"
+          assert verified["configuration_bytes_recomputed"] is True
+          assert verified["independent_witness_verified"] is False
+          assert verified["independent_process_attestation"] is False
+          assert verified["preexecution_freeze_verified"] is False
           PY
