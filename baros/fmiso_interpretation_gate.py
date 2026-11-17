@@ -237,4 +237,22 @@ def mock_fmiso_research_handoff(
                 "hold research proposal pending independent clinician review"
             ),
         )
+    # A different research trigger (e.g. anatomical motion), a falling
+    # hypoxia index, or a zero-cap policy may create a generic proposal with
+    # no positive biological priority. Such a result is NOT an FMISO-driven
+    # planning intent and must not be promoted through this specialized gate.
+    if intent.proposal_allowed and not any(
+        priority.abstract_priority_delta > 0.0
+        for priority in intent.region_priorities
+    ):
+        intent = replace(
+            intent,
+            decision_action="HOLD_LAST_VALID",
+            proposal_allowed=False,
+            region_priorities=(),
+            next_step=(
+                "no positive synthetic FMISO biological priority was defined; "
+                "hold research proposal; clinician-controlled protocol required"
+            ),
+        )
     return FMISOResearchHandoff(assay=assay, intent=intent)
