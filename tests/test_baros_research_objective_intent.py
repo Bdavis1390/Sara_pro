@@ -45,14 +45,15 @@ def state(phase, *, hypoxia=(0.20, 0.30), quality=0.95):
 
 
 def make(previous=None, current=None, **changes):
-    return make_synthetic_research_objective_intent(
+    kwargs = dict(
         previous=state(0) if previous is None else previous,
         current=state(1, hypoxia=(0.20, 0.50)) if current is None else current,
         thresholds=LIMITS,
         policy=POLICY,
         region_ids=REGIONS,
-        **changes,
     )
+    kwargs.update(changes)
+    return make_synthetic_research_objective_intent(**kwargs)
 
 
 def test_bounded_qualified_positive_biology_produces_inspectable_priority_only():
