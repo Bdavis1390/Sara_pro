@@ -69,8 +69,10 @@ def test_comparators_make_both_false_proceed_and_overabstention_visible():
     report = evaluate_cases(_cases(), LIMITS)
     assert report.cases == 12
     assert (report.eligible_cases, report.disqualified_cases, report.no_trigger_cases) == (5, 5, 2)
-    gated, trigger_only, abstain_all = report.results
-    assert [r.strategy for r in report.results] == ["gated", "trigger_only", "abstain_all"]
+    gated, trigger_only, quality_only, abstain_all = report.results
+    assert [r.strategy for r in report.results] == [
+        "gated", "trigger_only", "quality_only", "abstain_all"
+    ]
 
     assert (gated.critical_false_proceed.numerator, gated.critical_false_proceed.denominator) == (0, 5)
     assert (gated.eligible_proposal_recall.numerator, gated.eligible_proposal_recall.denominator) == (5, 5)
@@ -78,6 +80,11 @@ def test_comparators_make_both_false_proceed_and_overabstention_visible():
 
     assert trigger_only.critical_false_proceed.numerator == 5
     assert trigger_only.eligible_proposal_recall.numerator == 5
+    # This deliberately narrow quality/OOD heuristic misses geometry and
+    # model-identifiability faults. It is NOT a commercial TPS comparison.
+    assert quality_only.critical_false_proceed.numerator == 2
+    assert quality_only.critical_false_proceed.denominator == 5
+    assert quality_only.eligible_proposal_recall.numerator == 5
     assert abstain_all.critical_false_proceed.numerator == 0
     assert abstain_all.eligible_proposal_recall.numerator == 0
     assert not report.treatment_authority_ever_granted
