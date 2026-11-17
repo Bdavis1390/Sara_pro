@@ -1,4 +1,4 @@
-"""Adversarial regression tests for WorldShepherd structural evidence-gate v0.2."""
+"""Adversarial regression tests for WorldShepherd structural evidence-gate v0.3."""
 import copy
 import json
 import shutil
@@ -42,6 +42,7 @@ class GateTests(unittest.TestCase):
         r = self.audit()
         self.assertEqual(r["integrity"], "PASS")
         self.assertEqual(r["artifacts_verified_sha256"], 3)
+        self.assertEqual(r["run_configurations_verified_sha256"], 3)
         self.assertFalse(r["claim_automatically_proven"])
         self.assertTrue(r["requires_human_review"])
         self.assertFalse(r["external_independence_verified"])
@@ -58,6 +59,7 @@ class GateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             shutil.copytree(self.example_root / "raw", root / "raw")
+            shutil.copytree(self.example_root / "config", root / "config")
             (root / "raw/study.json").write_text("tampered")
             self.has_error(self.audit(root=root), "ARTIFACT_HASH_MISMATCH:run-003")
 
@@ -131,6 +133,7 @@ class GateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             shutil.copytree(self.example_root / "raw", root / "raw")
+            shutil.copytree(self.example_root / "config", root / "config")
             (root / "raw/linear.json").unlink()
             (root / "raw/linear.json").symlink_to(self.example_root / "raw/linear.json")
             self.has_error(self.audit(root=root), "ARTIFACT_UNAVAILABLE")
@@ -162,9 +165,69 @@ class GateTests(unittest.TestCase):
         self.assertFalse(r["external_independence_verified"])
         self.assertTrue(any("NOT cryptographically verified" in w for w in r["warnings"]))
 
-    def test_config_digest_not_claimed_verified(self):
+    def test_config_runtime_custody_not_overclaimed(self):
         r = self.audit()
-        self.assertTrue(any("NOT verified" in w for w in r["warnings"]))
+        self.assertTrue(any("NOT prove those bytes were used" in w for w in r["warnings"]))
+
+
+    def test_missing_config_artifact_blocks(self):
+        p = copy.deepcopy(self.package)
+        del p["runs"][0]["config_artifact"]
+        r = self.audit(package=p)
+        self.has_error(r, "CONFIG_DESCRIPTOR_MALFORMED:run-001")
+        self.has_error(r, "REQUIRED_CONTROL_NOT_PASSED:linear_detector")
+
+    def test_config_bytes_modified_blocks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shutil.copytree(self.example_root / "raw", root / "raw")
+            shutil.copytree(self.example_root / "config", root / "config")
+            (root / "config/run_config.json").write_text('{"model":"altered"}\\n')
+            r = self.audit(root=root)
+            self.has_error(r, "CONFIG_HASH_MISMATCH:run-001")
+            self.assertEqual(r["run_configurations_verified_sha256"], 0)
+
+    def test_config_reference_changed_blocks(self):
+        p = copy.deepcopy(self.package)
+        p["runs"][0]["config_artifact"]["sha256"] = "0" * 64
+        self.has_error(self.audit(package=p), "CONFIG_HASH_MISMATCH:run-001")
+
+    def test_config_digest_disagreement_blocks(self):
+        p = copy.deepcopy(self.package)
+        p["runs"][0]["config_sha256"] = "1" * 64
+        r = self.audit(package=p)
+        self.has_error(r, "CONFIG_HASH_MISMATCH:run-001")
+        self.has_error(r, "REQUIRED_CONTROL_NOT_PASSED:linear_detector")
+
+    def test_configuration_missing_file_blocks(self):
+        p = copy.deepcopy(self.package)
+        p["runs"][0]["config_artifact"]["path"] = "config/absent.json"
+        self.has_error(self.audit(package=p), "CONFIG_UNAVAILABLE:run-001")
+
+    def test_configuration_path_traversal_blocks(self):
+        p = copy.deepcopy(self.package)
+        p["runs"][0]["config_artifact"]["path"] = "../outside.json"
+        self.has_error(self.audit(package=p), "CONFIG_UNAVAILABLE:run-001")
+
+    def test_configuration_symlink_blocks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shutil.copytree(self.example_root / "raw", root / "raw")
+            shutil.copytree(self.example_root / "config", root / "config")
+            (root / "config/run_config.json").unlink()
+            (root / "config/run_config.json").symlink_to(self.example_root / "config/run_config.json")
+            self.has_error(self.audit(root=root), "CONFIG_UNAVAILABLE:run-001")
+
+    def test_bad_claim_type_fails_closed(self):
+        pre = copy.deepcopy(self.prereg)
+        pre["claim_type"] = ["physical"]
+        self.has_error(self.audit(prereg=pre, pin=digest(canonical(pre))), "UNKNOWN_CLAIM_TYPE")
+
+    def test_inconclusive_simulation_with_bad_config_cannot_qualify_status(self):
+        p = copy.deepcopy(self.package)
+        p["runs"][2]["config_sha256"] = "0" * 64
+        r = self.audit(package=p)
+        self.has_error(r, "REQUESTED_STATUS_HAS_NO_VERIFIED_ARTIFACT:simulation")
 
 
 if __name__ == "__main__":
