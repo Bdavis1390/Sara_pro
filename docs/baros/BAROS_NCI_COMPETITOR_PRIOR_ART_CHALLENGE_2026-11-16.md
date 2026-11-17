@@ -27,7 +27,7 @@ A versioned *evidence contract* that binds sequential biological inputs to valid
 For a fixed disease site, single chosen biomarker and TPS workflow:
 
 1. **Method A: trigger-only research proposal.** Declares adaptation on predeclared biological/anatomical trigger even when evidence is poor. Negative straw baseline only; NOT a vendor's clinical decision algorithm.
-2. **Method B: uncertainty/OOD-only rejection**, with independently chosen thresholds. A realistic scientific baseline; to be implemented only after tracing literature controls.
+2. **Method B: quality/uncertainty/OOD-only rejection**, initially a transparent synthetic heuristic without geometry or identifiability gating. It is implemented for deterministic comparison, **not** as a faithful reproduction of a peer-reviewed method, vendor product, or independent benchmark. A separately validated scientific baseline is still required.
 3. **Method C: full EvidenceGate**, adding reference/provenance, identifiability, quality gates and explicit proposal/hold decisions.
 4. **Method D: abstain-all**, a negative-utility floor. This prevents inflating 'safety' by prohibiting all useful adaptation.
 5. **External clinical workflow comparator**, as defined by a qualified partner; not implementable without access to the system, trained staff, and a permitted protocol.
@@ -37,8 +37,8 @@ For a fixed disease site, single chosen biomarker and TPS workflow:
 ### Current software-only evidence / limitations
 
 - The repository CI currently exercises 125+ bounded synthetic software tests (including all 32 combinations of five quality-control flags) on the first product-scope candidate.
-- A comparator utility and tests (`baros/phase1_evaluation.py`) score a frozen developer-authored 12-case suite against trigger-only and abstain-all policies, reporting Wilson intervals. Results describe *synthetic contract agreement*, not measured patient safety or product superiority.
-- **Missing:** method B implemented from a peer-reviewed baseline; independent labels/challenge design; end-user acceptance/utility data; installed and externally governed TPS, external measured dose; evidence of legal commercial dataset use; medical physicist and radiation oncologist support; claim chart and counsel review.
+- A comparator utility and tests (`baros/phase1_evaluation.py`) score a frozen developer-authored 12-case suite against trigger-only, limited quality/OOD-only, and abstain-all policies, reporting Wilson intervals. The heuristic misses deliberately introduced synthetic geometry/identifiability faults, but this is not evidence of advantage over published uncertainty methods. Results describe *synthetic contract agreement*, not measured patient safety or product superiority.
+- **Missing:** a faithful implementation of a peer-reviewed uncertainty/OOD comparator and independent calibration; independent labels/challenge design; end-user acceptance/utility data; installed and externally governed TPS, external measured dose; evidence of legal commercial dataset use; medical physicist and radiation oncologist support; claim chart and counsel review.
 
 ## Decision rule
 
