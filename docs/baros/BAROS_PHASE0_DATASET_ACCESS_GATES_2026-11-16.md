@@ -15,11 +15,17 @@ Split the proposed HNSCC/18F-FMISO product demonstration into two **non-intercha
 
 | Collection / source | Verified published description | Potential purpose | Access / blocker | Decision |
 |---|---|---|---|---|
-| TCIA HNC-IMRT-70-33, DOI 10.7937/ahqh-xc79 | 211 patients; planning CT + RTSTRUCT + RTPLAN + RTDOSE; 23.27 GB; one institution and uniform 70 Gy / 33 fraction primary PTV prescription | Research DICOM-reference and plan/dose integrity fixtures, subject to terms | Confirm legal imaging access, distribution restrictions, per-case DICOM linkage and institutional review; **no serial FMISO established** | Candidate Phase 0 technical dataset; not a biologic-adaptation validation set |
+| TCIA HNC-IMRT-70-33, DOI 10.7937/ahqh-xc79 | 211 patients; planning CT + RTSTRUCT + RTPLAN + RTDOSE; 23.27 GB; one institution and uniform 70 Gy / 33 fraction primary PTV prescription | Research DICOM-reference and plan/dose integrity fixtures, subject to terms | **NIH CONTROLLED DATA ACCESS REQUIRED for images**, including face-reconstructable CT. Request authorization through current NCI/NIH controlled-data access process; no image acquisition or commercial reuse without written terms. Confirm institutional approval, per-case DICOM linkage; **no serial FMISO established** | Candidate Phase 0 technical dataset; not a biologic-adaptation validation set |
 | TCIA HEAD-NECK-PET-CT | 298 subjects in imaging table; PET/CT, RTPLAN/RTDOSE/RTSTRUCT present; predominant FDG imaging | Modalities/registration *research* and some DICOM plan checks | NIH controlled access; PET uptake does not establish hypoxia | Conditional technical source, not a FMISO dataset |
 | TCIA QIN-HEADNECK | 279 participants, multi-timepoint 18F-FDG PET/CT | Longitudinal PET dataset-transport tests | TCIA restricted license; lacks a verified paired FMISO+RTPLAN/RTDOSE structure for the proposed claim | Not an FMISO validation source |
 | TCIA HEAD-NECK-RADIOMICS-HN1 | 137 subjects, CT/RTSTRUCT/PET etc. | Research geometry / annotation QA | Restricted image access, explicit non-commercial terms in collection description; no commercial rights assumed | Avoid for commercial product testing absent license approval |
 | Partner-provided serial FMISO | No actual institutional dataset agreement identified | Test signal-specific uncertainty and abstention | Site availability, PET protocol, temporal/registration repeatability, clinical governance, permissible reuse and appropriate RT reference objects remain unknown | **Hard STOP** on biomarker-specific validation until independently confirmed |
+
+## Correction: Controlled access is a hard pre-download gate
+
+**As checked 17 Nov 2026:** TCIA labels the **HNC-IMRT-70-33 DICOM imaging row** with the *NIH Controlled Data Access Policy*. In contrast, its separate **Standardized OAR Name List (CSV)** is listed **CC BY 4.0**. The open license on the CSV is **not** a license for the patient CT/RTSTRUCT/RTPLAN/RTDOSE images. TCIA now routes controlled datasets through NCI CRDC/dbGaP or another specified current data access process; verify the applicable current path and institutional authorizations. Do not obtain, mirror, train on, redistribute, or commercially exploit the imaging files unless permitted. See https://www.cancerimagingarchive.net/nih-controlled-data-access-policy/ and https://www.cancerimagingarchive.net/data-usage-policies-and-restrictions/ .
+
+**Immediate test strategy:** continue to use the existing patient-free synthetic DICOM fixtures under tests/test_baros_dicom_rt.py for research parsing and reference-linkage testing. A synthetic DICOM-RT object is not a measured dose or independently commissioned TPS plan. If considering third-party sample files, confirm the exact license, absence of PHI, and research/commercial permissions *before* importing them. No clinical images have been retrieved for this draft.
 
 ## Evidence against premature biomarker positioning
 
@@ -36,7 +42,7 @@ The 2024 narrative review by Sambasivan et al. (PMID 39286295) reports cost/acce
 
 ## Proposed go/no-go milestones
 
-**Gate 0A (can begin before a partner):** secure a permitted DICOM-RT research sample; create a reproducible non-clinical plan/structure/dose metadata validation report with exact dataset identifiers, software hashes and negative-control corruption fixtures. This verifies an **interface adapter**, not delivery accuracy.
+**Gate 0A (can begin before a partner):** run the existing synthetic, patient-free DICOM-RT research fixtures and negative-controls, preserving hashes/validation reports. Moving to actual TCIA HNC-IMRT images requires separately confirmed controlled-access authorization and institution-approved data handling. Once permitted, create a reproducible research plan/structure/dose metadata validation report with exact collection identifiers and software hashes. This verifies an **interface adapter**, not delivery accuracy.
 
 **Gate 0B:** demonstrate synthetic proposal/abstention correctness with both disqualified and qualified positive scenarios; compare against trigger-only and abstain-all policies, report denominator and statistical uncertainty; no clinical extrapolation.
 
