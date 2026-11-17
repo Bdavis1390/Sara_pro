@@ -162,7 +162,8 @@ def audit_package(pkg, prereg, root, pinned_sha256):
         if control in failed_controls:
             errors.append(f'REQUIRED_CONTROL_HAS_FAILED_RUN:{control}')
     requested = pkg.get('requested_status', 'HYPOTHESIS')
-    if not isinstance(requested, str) or requested not in STATUS.get(claim_type, {'HYPOTHESIS'}):
+    permitted_statuses = STATUS.get(claim_type, {'HYPOTHESIS'}) if isinstance(claim_type, str) else {'HYPOTHESIS'}
+    if not isinstance(requested, str) or requested not in permitted_statuses:
         errors.append(f'UNSUPPORTED_CLAIM_PROMOTION:{requested}')
     required_kind = STATUS_KIND.get(requested) if isinstance(requested, str) else None
     if required_kind and required_kind not in valid_kinds:
