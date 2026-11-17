@@ -1,4 +1,4 @@
-# WorldShepherd Claim-Evidence Gate — Standalone v0.2 Prototype
+# WorldShepherd Claim-Evidence Gate — Standalone v0.3 Prototype
 
 **Scope:** software-level validation of a structured research evidence envelope. It does not certify science, instrument calibration, operational security, mathematical correctness, originality, or independent replication.
 
@@ -20,11 +20,12 @@ python tools/claim_evidence_gate/claim_gate.py \
   --out /tmp/ws-claim-gate-audit.json
 ```
 
-Expected synthetic example: 3 matching SHA-256 artifact digests, 2 self-declared passing synthetic control records, 1 inconclusive synthetic simulation record, and `integrity=PASS`. **This is structural consistency only.** All scientific result promotion still requires identified human review.
+Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-verifiable run configuration bindings**, 2 self-declared passing synthetic control records, 1 inconclusive synthetic simulation record, and `integrity=PASS`. **This is structural consistency only.** All scientific result promotion still requires identified human review.
 
 ## Validated in the current prototype
 
 - SHA-256 of declared artifact files matches claimed hashes.
+- Every run must provide `config_artifact` (`path`, `sha256`) and `config_sha256`; the bytes at the referenced path must match **both** hashes. Unavailable, symlinked, traversing, or altered configuration files fail closed, and cannot support a control or evidence-class promotion.
 - Preregistration canonical JSON digest matches the caller-supplied pin.
 - Required control records exist, have verifiable artifacts and PASS outcomes; a failed run cannot be masked by a different passing run of the same required control.
 - Summary event IDs and outcome totals reconcile with records.
@@ -34,7 +35,7 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, 2 self-declared
 ## Explicitly NOT verified
 
 - The in-repository example pin is *not* externally timestamped or independently anchored. Use a trusted separately retained preregistration digest for real experiments.
-- `config_sha256` is **syntax checked only**; this version does not read and bind configuration bytes to the digest. This is a documented release blocker for operational use.
+- The prototype verifies actual **recorded** configuration file bytes, but it does **not** prove an experiment or executable consumed that configuration, that the bytes were frozen before execution, or that the snapshot is immutable. This remains a documented integration blocker for operational use.
 - Outcome PASS/FAIL labels are supplied by the record; the tool does not execute physical controls or prove test correctness.
 - A string in `independent_attestation_anchor` is not verified as a cryptographic signature.
 - File reads have a potential time-of-check/time-of-use race on hostile mutable filesystems; use immutable snapshots and stronger custody controls for untrusted sources.
@@ -44,7 +45,7 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, 2 self-declared
 ## Integration path
 
 1. Validate exact-commit source through reviewable GitHub CI.
-2. Bind run configuration and software environment to verified actual bytes.
+2. Independently bind runtime execution and its environment identity to the already verified recorded configuration bytes, retaining an immutable pre-run custody record.
 3. Add an externally verified ECHO witness and preregistration freeze.
 4. Separate structural integrity from scientific-domain validation gates.
 5. Integrate into canonical SARA only after PRIME authorization contract and OVERWATCH reporting/rollback tests pass.
