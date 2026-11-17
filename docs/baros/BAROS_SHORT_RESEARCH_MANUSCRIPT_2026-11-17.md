@@ -1,8 +1,8 @@
 # BAROS EvidenceGate: A Research-Stage, Fail-Closed Biological-Evidence Qualification Boundary for Adaptive Radiotherapy
 
-**Short methods manuscript — DRAFT v0.1, 2026-11-17.**  
-**Author:** Brandon Ray Davis, WorldShepherd R&D, USA. Technical drafting and editorial assistance from an AI system; the human author is responsible for source verification and all scientific claims.  
-**Category:** preclinical software-methods / translational engineering. **Not a clinical evaluation, peer-reviewed article, FDA submission, or independent dosimetric validation.**  
+**Short methods manuscript — DRAFT v0.1, 2026-11-17.**
+**Author:** Brandon Ray Davis, WorldShepherd R&D, USA. Technical drafting and editorial assistance from an AI system; the human author is responsible for source verification and all scientific claims.
+**Category:** preclinical software-methods / translational engineering. **Not a clinical evaluation, peer-reviewed article, FDA submission, or independent dosimetric validation.**
 **Prior work:** a 761-page May 2026 BAROS technical monograph exists separately; it is not incorporated wholesale and does not independently establish any result reported here.
 
 ## Abstract (≈200 words)
@@ -95,14 +95,14 @@ We supply a reproducible software prototype and a falsifiable pre-TPS evidence-q
 
 ## References (source checking required before submission)
 
-[1] Sambasivan et al., “Is there a role for [18F]-FMISO PET to guide dose adaptive radiotherapy in head and neck cancer?”, EJNMMI Radiopharm. Chem. (2024). https://pubmed.ncbi.nlm.nih.gov/39286295/  
-[2] Welz et al., randomized phase II dynamic FMISO PET dose-escalation study, Radiother. Oncol. (2022). https://pubmed.ncbi.nlm.nih.gov/35395276/  
-[3] RaySearch Laboratories, RayStation product and robust optimization descriptions (commercial technical baseline; not independent comparative test). https://www.raysearchlabs.com/raystation/  
-[4] Adaptive radiotherapy end-to-end QA with Ethos, public research. https://pmc.ncbi.nlm.nih.gov/articles/PMC12005670/  
-[5] ASTRO adaptive-radiotherapy safety white paper. https://pubmed.ncbi.nlm.nih.gov/39424080/  
-[6] DICOM PS3.3, radiotherapy plan information object definitions (2026b). https://dicom.nema.org/medical/dicom/2026b/output/chtml/part03/sect_C.8.8.9.html  
-[7] WorldShepherd BAROS source, closed loop/clinical governance/evaluation and regression tests. https://github.com/Bdavis1390/Sara_pro/pull/565  
-[8] NIH SEED: Understanding SBIR and STTR. https://seed.nih.gov/small-business-funding/small-business-program-basics/understanding-sbir-sttr  
-[9] NCI Parent SBIR/STTR announcements PA-27-100 / PA-27-102. https://sbir.cancer.gov/small-business-funding/grants/omnibus-solicitation  
+[1] Sambasivan et al., “Is there a role for [18F]-FMISO PET to guide dose adaptive radiotherapy in head and neck cancer?”, EJNMMI Radiopharm. Chem. (2024). https://pubmed.ncbi.nlm.nih.gov/39286295/
+[2] Welz et al., randomized phase II dynamic FMISO PET dose-escalation study, Radiother. Oncol. (2022). https://pubmed.ncbi.nlm.nih.gov/35395276/
+[3] RaySearch Laboratories, RayStation product and robust optimization descriptions (commercial technical baseline; not independent comparative test). https://www.raysearchlabs.com/raystation/
+[4] Adaptive radiotherapy end-to-end QA with Ethos, public research. https://pmc.ncbi.nlm.nih.gov/articles/PMC12005670/
+[5] ASTRO adaptive-radiotherapy safety white paper. https://pubmed.ncbi.nlm.nih.gov/39424080/
+[6] DICOM PS3.3, radiotherapy plan information object definitions (2026b). https://dicom.nema.org/medical/dicom/2026b/output/chtml/part03/sect_C.8.8.9.html
+[7] WorldShepherd BAROS source, closed loop/clinical governance/evaluation and regression tests. https://github.com/Bdavis1390/Sara_pro/pull/565
+[8] NIH SEED: Understanding SBIR and STTR. https://seed.nih.gov/small-business-funding/small-business-program-basics/understanding-sbir-sttr
+[9] NCI Parent SBIR/STTR announcements PA-27-100 / PA-27-102. https://sbir.cancer.gov/small-business-funding/grants/omnibus-solicitation
 
 **Editorial release gate:** expert review, references verification, disclosure/IP clearance, citation and methods checks required before presenting as externally reviewed or submitting to any journal.
