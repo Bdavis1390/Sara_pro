@@ -128,6 +128,45 @@ def test_agreed_negative_calls_are_not_invented_as_positive_hypoxia():
     # is scientifically correct; real biological-calibration validation is open.
     assert result.assay.eligible
     assert result.assay.independently_validated is False
+    # Reader agreement on an FMISO-negative current scan is a valid negative
+    # interpretation, but must not translate a conflicting synthetic
+    # quantitative increase into any adaptation proposal or priority.
+    assert result.intent.decision_action == "HOLD_LAST_VALID"
+    assert not result.intent.proposal_allowed
+    assert result.intent.region_priorities == ()
+    assert "negative" in result.intent.next_step
+    assert not result.intent.tps_export_allowed
+
+
+def test_prior_negative_to_current_positive_still_allows_synthetic_policy_when_qualified():
+    result = handoff(
+        previous_fmiso=observation(0, readers=(reader("A", "negative"), reader("B", "negative"))),
+        current_fmiso=observation(1),
+    )
+    assert result.assay.eligible
+    assert result.intent.proposal_allowed
+    assert not result.intent.treatment_authority
+
+
+def test_current_negative_with_decreasing_hypoxia_still_cannot_authorize_adaptation():
+    result = handoff(
+        current=state(1, hypoxia=(0.2, 0.1)),
+        current_fmiso=observation(1, readers=(reader("A", "negative"), reader("B", "negative"))),
+    )
+    assert result.assay.eligible
+    assert result.intent.decision_action == "HOLD_LAST_VALID"
+    assert not result.intent.proposal_allowed
+    assert result.intent.region_priorities == ()
+
+
+def test_negative_no_change_keeps_no_adaptation():
+    result = handoff(
+        current=state(1),
+        current_fmiso=observation(1, readers=(reader("A", "negative"), reader("B", "negative"))),
+    )
+    assert result.assay.eligible
+    assert result.intent.decision_action == "NO_ADAPTATION"
+    assert not result.intent.proposal_allowed
 
 
 @pytest.mark.parametrize("wrong", ["18F-FDG", "FDG", "fmiso", "", None])
