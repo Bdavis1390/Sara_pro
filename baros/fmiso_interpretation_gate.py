@@ -12,7 +12,7 @@ Source digests and training flags are self-reported, not authenticated.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from hashlib import sha256
 import json
 import re
@@ -212,13 +212,29 @@ def mock_fmiso_research_handoff(
                 + "; independent clinician review required, no patient use",
             ),
         )
-    return FMISOResearchHandoff(
-        assay=assay,
-        intent=make_synthetic_research_objective_intent(
-            previous=previous,
-            current=current,
-            thresholds=thresholds,
-            policy=policy,
-            region_ids=region_ids,
-        ),
+    intent = make_synthetic_research_objective_intent(
+        previous=previous,
+        current=current,
+        thresholds=thresholds,
+        policy=policy,
+        region_ids=region_ids,
     )
+    # A coherent FMISO-negative current interpretation does not authorize
+    # a biological research adaptation just because an arbitrary synthetic
+    # numeric hypoxia index changed. No negative-signal planning policy
+    # is clinically established by these developer-authored fixtures.
+    if intent.proposal_allowed and all(
+        r.interpretation == "negative" for r in current_fmiso.readers
+    ):
+        intent = replace(
+            intent,
+            decision_action="HOLD_LAST_VALID",
+            proposal_allowed=False,
+            region_priorities=(),
+            next_step=(
+                "current FMISO interpretation unanimously negative; "
+                "no validated negative-signal planning policy exists; "
+                "hold research proposal pending independent clinician review"
+            ),
+        )
+    return FMISOResearchHandoff(assay=assay, intent=intent)
