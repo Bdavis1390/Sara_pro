@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
+from numbers import Integral
 from typing import Sequence
 
 
@@ -35,8 +36,13 @@ class BiologicalState:
     out_of_distribution: bool = False
 
     def validate(self) -> None:
-        if self.phase_index < 0:
-            raise ValueError("phase_index must be non-negative")
+        if isinstance(self.phase_index, bool) or not isinstance(self.phase_index, Integral) or self.phase_index < 0:
+            raise ValueError("phase_index must be a non-negative integer")
+        # Strings such as "false" are truthy in Python and could silently
+        # bypass a clinical-research qualification gate unless rejected.
+        for field_name in ("geometry_qualified", "model_identifiable", "out_of_distribution"):
+            if not isinstance(getattr(self, field_name), bool):
+                raise ValueError(f"{field_name} must be a boolean")
         lengths = {
             len(self.alpha_per_gy),
             len(self.beta_per_gy2),
@@ -146,6 +152,8 @@ def assess_triggers(
     manual_force: bool = False,
 ) -> TriggerAssessment:
     """Evaluate explicit anatomy/biology/uncertainty/motion adaptation triggers."""
+    if not isinstance(manual_force, bool):
+        raise ValueError("manual_force must be a boolean")
     previous.validate()
     current.validate()
     thresholds.validate()
@@ -161,15 +169,15 @@ def assess_triggers(
     reasons: list[str] = []
     if manual_force:
         reasons.append("manual_force")
-    if hypoxia_delta >= thresholds.hypoxia_change:
+    if hypoxia_delta > 0.0 and hypoxia_delta >= thresholds.hypoxia_change:
         reasons.append("hypoxia_change")
-    if resistance_delta >= thresholds.resistance_change:
+    if resistance_delta > 0.0 and resistance_delta >= thresholds.resistance_change:
         reasons.append("resistance_change")
-    if uncertainty_delta >= thresholds.uncertainty_change:
+    if uncertainty_delta > 0.0 and uncertainty_delta >= thresholds.uncertainty_change:
         reasons.append("uncertainty_change")
-    if current.anatomy_delta_mm >= thresholds.anatomy_change_mm:
+    if current.anatomy_delta_mm > 0.0 and current.anatomy_delta_mm >= thresholds.anatomy_change_mm:
         reasons.append("anatomy_change")
-    if current.motion_mm >= thresholds.motion_mm:
+    if current.motion_mm > 0.0 and current.motion_mm >= thresholds.motion_mm:
         reasons.append("motion")
 
     return TriggerAssessment(
@@ -283,7 +291,15 @@ def decide_adaptation(
         raise ValueError("last_valid_plan_identity must be non-empty when supplied")
 
     trigger = assess_triggers(previous, current, thresholds, manual_force=manual_force)
-    qualification = qualify_state(current, thresholds)
+    # A longitudinal difference cannot be trusted if either endpoint is
+    # disqualified. In particular, a bad historical observation must not be
+    # promoted simply because the new observation has good quality flags.
+    previous_qualification = qualify_state(previous, thresholds)
+    current_qualification = qualify_state(current, thresholds)
+    blockers = (
+        tuple("previous_" + item for item in previous_qualification.blockers)
+        + current_qualification.blockers
+    )
     safe_plan = last_valid_plan_identity or standard_plan_identity
 
     if not trigger.triggered:
@@ -291,20 +307,20 @@ def decide_adaptation(
             action="NO_ADAPTATION",
             triggered=False,
             trigger_reasons=(),
-            qualification_blockers=qualification.blockers,
+            qualification_blockers=blockers,
             proposal_allowed=False,
             treatment_authority=False,
             selected_plan_identity=safe_plan,
             required_next_steps=("continue governed monitoring",),
         )
 
-    if not qualification.qualified:
+    if blockers:
         action = "HOLD_LAST_VALID" if last_valid_plan_identity else "FALLBACK_STANDARD"
         return AdaptiveDecision(
             action=action,
             triggered=True,
             trigger_reasons=trigger.reasons,
-            qualification_blockers=qualification.blockers,
+            qualification_blockers=blockers,
             proposal_allowed=False,
             treatment_authority=False,
             selected_plan_identity=safe_plan,
