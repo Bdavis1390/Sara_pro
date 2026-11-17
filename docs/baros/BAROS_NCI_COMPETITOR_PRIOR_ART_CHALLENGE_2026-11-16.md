@@ -18,6 +18,16 @@ Dr. Ming Zhao's 2026-11-13 NCI feedback explicitly requests a product that addre
 | Software chart checking and upstream physics review (2025–26) | Real deployed or evaluated automated chart checks and plan review workflows | Basic pre-treatment automated approval checks are not differentiated | Examine whether biology-specific longitudinal state and uncertainty dependencies make the proposed tool nonredundant |
 | Abstention/selective prediction literature | Risk–coverage and false-rejection trade-offs are established | Saying 'abstain on uncertainty' is not technical novelty | Report BOTH critical false-proceed and unnecessary abstention, with cost/workflow burden, across independently authored cases |
 
+## 2026 source-specific published comparator boundary
+
+van Lente et al., *Frontiers in Oncology* (published 14 Jan 2026, DOI 10.3389/fonc.2025.1637198; PMCID PMC12846928), investigated **Monte Carlo dropout predictive entropy** for MRI-based prostate-segmentation uncertainty and **mutual information** for out-of-distribution detection in online adaptive radiotherapy. It is evidence that uncertainty and OOD classification are **prior art** in adaptive radiotherapy. Its MRI prostate segmentation signals and labels are **not biological hypoxia measurements**, and results cannot be copied into an HNSCC/FMISO benchmark or treated as head-to-head clinical scores.
+
+A faithful method comparator would require an actual segmentation model, stochastic inference predictions, the specified PE/MI computation, an independently designated calibration/training split, and medically appropriate evaluator reference labels and thresholds. The current simple quality-only heuristic is **not** an implementation of van Lente et al.
+
+A new generic `baros/locked_risk_coverage.py` interface permits an evaluator to supply its own finite risk score per case and preregister a strictly ascending threshold grid **before** labels are unblinded. It calculates coverage, rate of disqualified proposals, recall among qualified proposals and failure among accepted proposals, leaving selective risk **undefined** if nothing is accepted. This is a reusable scoring tool, **not** a published-method reproduction, validated risk score or independently authored experiment. The test fixtures are synthetic. A SHA-256 commitment does not authenticate custody, prove an evaluator controlled the threshold choices, or prevent a person with the ability to rewrite both data and hash from forging provenance.
+
+Reference: https://doi.org/10.3389/fonc.2025.1637198 and https://pubmed.ncbi.nlm.nih.gov/41613551/ .
+
 ## Honest candidate differentiator, to attempt to falsify
 
 A versioned *evidence contract* that binds sequential biological inputs to validated registration/reference identity, quantitative model identifiability, uncertainty calibration, explicit event-time ordering, data provenance, and a reversible abstention/fallback action before TPS proposal. It cannot transfer treatment authority; partner-controlled QA remains required. Novelty must be shown by **incremental failures detected over named baselines**, not by addition of a novel acronym.
@@ -36,7 +46,7 @@ For a fixed disease site, single chosen biomarker and TPS workflow:
 
 ### Current software-only evidence / limitations
 
-- The repository CI currently exercises 125+ bounded synthetic software tests (including all 32 combinations of five quality-control flags) on the first product-scope candidate.
+- At frozen commit `0136fd31840e141ad465766a6652bd004473ea7d`, CI passed 185 bounded developer-controlled research tests (two warnings), including 1,024 synthetic combinations of prior/current qualification flags. This is software-policy verification, not externally measured clinical evidence.
 - A comparator utility and tests (`baros/phase1_evaluation.py`) score a frozen developer-authored 12-case suite against trigger-only, limited quality/OOD-only, and abstain-all policies, reporting Wilson intervals. The heuristic misses deliberately introduced synthetic geometry/identifiability faults, but this is not evidence of advantage over published uncertainty methods. Results describe *synthetic contract agreement*, not measured patient safety or product superiority.
 - **Missing:** a faithful implementation of a peer-reviewed uncertainty/OOD comparator and independent calibration; independent labels/challenge design; end-user acceptance/utility data; installed and externally governed TPS, external measured dose; evidence of legal commercial dataset use; medical physicist and radiation oncologist support; claim chart and counsel review.
 
