@@ -42,9 +42,9 @@ Commercial TPS offerings already include robust optimization and adaptive radiot
 
 An existing hosted BAROS research workflow at 2026-11-08 tested 82 bounded software tests (two warnings) and 1,000/1,000 synthetic bounded acceptance cases. The main product code includes `decide_adaptation`, model qualification, and governance/evidence gates. **Internal software verification only.**
 
-A new **synthetic combinatorial negative-control regression** is included in this candidate branch at `tests/test_baros_phase1_qualification_matrix.py`. It covers all 32 combinations of five input-quality/qualification states, manual-force override rejection, no-trigger behavior, invalid time order, and invalid uncertainty values. These are **developer-authored programmatic fixtures**, not externally authored clinical challenges; do not call them independent evidence. CI must pass before reporting results.
+An updated software-boundary verification at frozen commit `d1dfd1f7936991c506f5904fa9b56fabc5d06926` reports **258 passing bounded tests, two warnings and successful required GitHub workflows**. Tests include 1,024 combinations of two-timepoint qualification flags, blinded challenge and entropy/MI reference calculations, and the **synthetic-only abstract biological-to-priority adapter** at `baros/research_objective_intent.py`. Its dimensionless output is NOT a clinically valid objective/TPS adapter, prescribed dose, clinical plan or treatment authorization. Tests remain developer-authored and should not be called independent evidence.
 
-**Still missing:** independent negative corpus, fixed biological biomarker interpretation and calibration, partner-approved data access, independent TPS testing, phantom measurements, medical physicist adjudication, comparative utility and buyer discovery, a formed eligible applicant, and institution-approved workshare.
+**Still missing:** independent negative corpus, fixed biological biomarker interpretation and calibration, partner-approved data access, independent TPS testing, phantom measurements, medical physicist adjudication, comparative utility and buyer discovery, a verified eligible small-business applicant and required registrations (a legitimate sole proprietorship may be an option), and institution-approved workshare.
 
 ## Regulatory and independent-physics feasibility gate (added 2026-11-17)
 
@@ -60,7 +60,7 @@ Current NCI parent routes include `PA-27-100` (SBIR) and `PA-27-102` (STTR); the
 
 - NIH SBIR Phase I: generally at least two-thirds of the research effort at the applicant small business; primary PI employment with the company.
 - NIH STTR: eligible small business performs at least 40% and a qualified nonprofit research institution at least 30%; PI can be employed by either as NIH permits. IP and workshare need separately agreed contracts.
-- An **unformed LLC is not presumed an eligible SBIR/STTR applicant**. No application, grant, clinical data request, contract or institutional commitment may be represented as submitted or secured.
+- An **unformed LLC cannot itself be represented as a formed applicant**, but NIH's March 2026 eligibility policy lists a genuine qualifying **individual proprietorship** as a permitted small-business legal form. The sole-proprietorship path is **unverified**, and both that path and a user-authorized future LLC path require compliant ownership/control, registrations, PI and workshare evidence. No application, filing, grant, clinical data request, contract or institutional commitment is submitted or secured. See `BAROS_PHASE0_CUSTOMER_AND_ELIGIBILITY_GATES_2026-11-17.md`.
 
 ## Decision questions for independent review
 
