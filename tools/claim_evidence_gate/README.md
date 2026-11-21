@@ -51,6 +51,27 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-ver
 5. Integrate into canonical SARA only after PRIME authorization contract and OVERWATCH reporting/rollback tests pass.
 
 
+
+## Signed ECHO scientific-event inclusion candidate
+
+\`scientific_echo_witness.py\` reuses **canonical** \`worldshepherd_sara.echo_event_store.semantic_sha256\`, \`AuditRecord\`, and \`worldshepherd_sara.echo_checkpoint_verify.verify_bundle\`. It constructs a narrowly scoped scientific-event candidate after the bounded runner's receipt is locally reproduced, then checks whether the **exact semantic event** appears in an Ed25519-signed ECHO checkpoint verified against a caller-supplied **trusted** key fingerprint.
+
+The separate \`integration/test_scientific_echo_witness.py\` suite uses an isolated ECHO event store and a disposable test-only Ed25519 signer. It checks valid membership, wrong key pin, corrupted signature/manifest, missing event, altered semantic fields, forged authorization flags, replay timestamp stability, invalid preregistration pin, source/raw receipt tampering, and same-ID/different-content conflict. The CI \`signed-echo-witness\` job installs the canonical SARA runtime package and exercises **real cryptographic verification**, not a stub.
+
+Run in a supported Python environment with the canonical package installed:
+
+\`\`\`bash
+python -m pip install -c deployments/sara_verified_local_v1/constraints-ci.txt -e deployments/sara_verified_local_v1
+python -m unittest discover -s tools/claim_evidence_gate/integration -v
+\`\`\`
+
+**Critical distinctions:**
+- A valid checkpoint proves only inclusion of the exact semantic event under the **supplied pinned key**. It does not establish that the key is independently controlled, that signer identity is hardware-backed, or that event contents correspond to physical truth.
+- The positive test's trusted key fingerprint is provided by its own isolated test setup; this is **not third-party witnessing or external preregistration anchoring**.
+- The adapter has **no live ECHO ingestion**, no dedicated authorization issuance, no PRIME signature verification and no deployment to production SARA.
+- The event permanently says \`prime_authorization_verified=false\` and \`preexecution_freeze_verified=false\`. The verifier's receipt permanently reports \`third_party_witness_verified=false\`, \`independent_process_attestation_verified=false\`, and \`scientific_claim_proven=false\`.
+- Signatures and local evidence checks remain separate from measurement validation and scientific review.
+
 ## Bounded execution/custody reference (separate from the v0.3 claim gate)
 
 \`bounded_execution.py\` demonstrates a **fixed synthetic affine transform**. It reads configuration and input bytes once into memory, hashes those exact byte objects, and uses the same objects for deterministic calculation. It writes a self-reported receipt and output in a new run-specific directory. The verifier rereads configuration, input and output bytes; verifies their digests; independently recomputes the fixed calculation; checks the recorded code digest against the locally installed module; and refuses a receipt that claims independent witnessing. It does **not** authenticate an external instrument or certify that a separate physical process obeyed these settings.
