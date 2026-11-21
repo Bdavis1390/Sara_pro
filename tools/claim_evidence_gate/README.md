@@ -52,6 +52,23 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-ver
 
 
 
+
+## Dedicated PRIME-scoped synthetic scientific authorization (candidate)
+
+\`scientific_prime_authorization.py\` defines \`WS-PRIME-SCIENTIFIC-EXECUTION-AUTHZ-V1\` and \`SCIENTIFIC_EXECUTION_SYNTHETIC\` independently of the canonical \`REQUALIFICATION_RELEASE\` assertion. The verifier uses the existing **canonical** \`PrimeSentinelVerifier.verify_detached_signature\` and its revoked/unknown-key rejection, but introduces a domain-separated signing message and a strictly bounded synthetic-science scope. The signing private key is not accepted or stored by the verifier.
+
+The grant binds **claim ID, caller-provided preregistration digest, exact run ID, actual configuration/input bytes, executor source digest, 15-minute maximum lifetime, nonce, one named operation and maximum number of samples**. The caller must separately provide and trust the signing-key fingerprint; merely using the public key included in an untrusted grant is not independent validation.
+
+The \`integration/test_scientific_prime_authorization.py\` suite uses an ephemeral test Ed25519 signer and checks expired, revoked, future-dated, stale/replayed-in-memory, mismatched payload, tampered signatures, bad source digest, over-budget input, and attempted substitution of an existing non-science PRIME action.
+
+**Remaining authorization boundaries:**
+- **No production grant issuer exists in this candidate.** Real operator authorization and approved signing-key ownership must be designed and reviewed before operational use.
+- \`verify_scientific_authorization\` verifies a proposed grant and returns \`authorized_run_executed=false\`. It does **not** call \`run_bounded\`, change canonical SARA, or modify the signed ECHO-science event.
+- The optional consumed nonce/ID sets are **caller-managed negative-test hooks** only. They are neither a durable reservation/consumption ledger nor a concurrency control; **replay resistance is not established**.
+- A caller-supplied preregistration digest is checked for equality, but no independently timestamped pre-run freeze is provided or validated.
+- Execution with verified in-memory configuration bytes, fail-closed grant reservation, and independent postexecution witness remain separate required integration steps.
+- No real-world laboratory instrument, telescope, RF apparatus, material or compute job has been authorized or executed by this candidate.
+
 ## Signed ECHO scientific-event inclusion candidate
 
 \`scientific_echo_witness.py\` reuses **canonical** \`worldshepherd_sara.echo_event_store.semantic_sha256\`, \`AuditRecord\`, and \`worldshepherd_sara.echo_checkpoint_verify.verify_bundle\`. It constructs a narrowly scoped scientific-event candidate after the bounded runner's receipt is locally reproduced, then checks whether the **exact semantic event** appears in the final checkpoint of a **complete, predecessor-verified Ed25519-signed ECHO checkpoint chain** (beginning at sequence 1) under a separately supplied **trusted** key fingerprint.
