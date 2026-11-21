@@ -53,6 +53,17 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-ver
 
 
 
+## Local one-time grant reservation (candidate)
+
+\`local_grant_ledger.py\` provides an isolated **single-host SQLite reservation ledger** for results already accepted by the science-specific PRIME verifier. It uses a private directory, 0600 database, unique authorization IDs and nonces, and an atomic \`BEGIN IMMEDIATE\` transaction so a duplicate cannot successfully reserve again in the same unchanged local store. Reservations are retained across process restarts and may be marked \`FINISHED\` but not reused. The integration suite tests restart persistence, duplicate IDs/nonces, concurrent requests, corrupt schema, symlinks and unsafe permissions.
+
+**Boundaries:**
+- \`LocalGrantLedger.reserve\` accepts a **caller-supplied verification result dict**; it does not cryptographically authenticate that dict independently. Production must couple verification and reservation in an isolated trusted controller with an authenticated typed handoff.
+- This ledger is not connected to \`run_bounded\` or SARA execution and does not make the existing runner authorization-enforcing.
+- A privileged local operator can replace/restore a database, and another device can accept the same grant. This is not distributed replay prevention or rollback resistance.
+- A reserved grant does not mean its action was performed. A crash after reservation leaves it unusable until a separately designed recovery protocol reconciles the attempt. This fail-closed behavior is intentional.
+- No authenticated ECHO event, independent timestamp, WORM storage, hardware attestation, PRIME production signer, or scientific truth follows from this local reservation.
+
 ## Dedicated PRIME-scoped synthetic scientific authorization (candidate)
 
 \`scientific_prime_authorization.py\` defines \`WS-PRIME-SCIENTIFIC-EXECUTION-AUTHZ-V1\` and \`SCIENTIFIC_EXECUTION_SYNTHETIC\` independently of the canonical \`REQUALIFICATION_RELEASE\` assertion. The verifier uses the existing **canonical** \`PrimeSentinelVerifier.verify_detached_signature\` and its revoked/unknown-key rejection, but introduces a domain-separated signing message and a strictly bounded synthetic-science scope. The signing private key is not accepted or stored by the verifier.
