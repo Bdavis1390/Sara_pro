@@ -1,6 +1,6 @@
 # WorldShepherd — Scientific execution-custody integration contract v0.1
 
-**State:** proposed interface contract; **not implemented as an operational SARA/ECHO integration**. Child of existing #281 Platform & Assurance and #282 Science & Validation. No new top-level task. Public-safe architecture only.
+**State:** proposed operational interface contract; a narrow **standalone signed ECHO scientific-event inclusion verification adapter** now exists under `tools/claim_evidence_gate/scientific_echo_witness.py` with test-only ECHO signing. **No live SARA ingestion, PRIME scientific authorization or operational activation** is implemented. Child of #281 Platform & Assurance and #282 Science & Validation; no fourth top-level task. Public-safe architecture only.
 
 ## Authority and evidence are separate trust boundaries
 
