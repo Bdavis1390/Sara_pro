@@ -63,6 +63,13 @@ class LocalGrantLedger:
                 raise LocalGrantLedgerError("ledger database has invalid type or owner")
             if stat.S_IMODE(status.st_mode) & 0o077:
                 raise LocalGrantLedgerError("ledger database permissions too broad")
+        else:
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+            try:
+                fd = os.open(self.db_path, flags, 0o600)
+            except OSError as exc:
+                raise LocalGrantLedgerError("unable to create private ledger file") from exc
+            os.close(fd)
         with self._connect() as conn:
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS metadata (name TEXT PRIMARY KEY, value TEXT NOT NULL);
