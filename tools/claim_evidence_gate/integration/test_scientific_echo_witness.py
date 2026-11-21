@@ -51,12 +51,26 @@ class ScientificEchoWitnessTests(unittest.TestCase):
         manager = EchoCheckpointManager(store, private_key=private, key_id="test-science-echo-key")
         return manager.create_checkpoint(), manager.fingerprint_sha256
 
+    def checkpoint_chain(self):
+        store = EchoEventStore((self.root / "echo-chain").resolve())
+        store.ingest(AuditRecord(**self.record))
+        manager = EchoCheckpointManager(
+            store, private_key=Ed25519PrivateKey.generate(), key_id="test-chain-echo-key"
+        )
+        first = manager.create_checkpoint()
+        second_event = create_scientific_event(
+            self.root, self.receipt, claim_id="WS-TEST-LATER", prereg_sha256=PREREG_PIN
+        )
+        store.ingest(AuditRecord(**second_event))
+        second = manager.create_checkpoint()
+        return [first, second], manager.fingerprint_sha256
+
     def verify(self, bundle, fingerprint, *, record=None, receipt=None, claim=CLAIM, prereg=PREREG_PIN):
         return verify_scientific_echo_witness(
             self.root,
             self.receipt if receipt is None else receipt,
             self.record if record is None else record,
-            bundle,
+            bundle if isinstance(bundle, list) else [bundle],
             expected_claim_id=claim,
             expected_prereg_sha256=prereg,
             expected_checkpoint_key_fingerprint_sha256=fingerprint,
@@ -178,6 +192,45 @@ class ScientificEchoWitnessTests(unittest.TestCase):
         changed["receipt_sha256"] = "a" * 64
         with self.assertRaisesRegex(ScientificEchoWitnessError, "not locally reproducible"):
             self.verify(bundle, fingerprint, receipt=changed)
+
+
+    def test_two_checkpoint_chain_proves_continuity_and_event(self):
+        chain, fingerprint = self.checkpoint_chain()
+        report = self.verify(chain, fingerprint)
+        self.assertEqual(report["checkpoint_count"], 2)
+        self.assertTrue(report["echo_signed_checkpoint_chain_verified"])
+
+    def test_second_checkpoint_alone_cannot_claim_full_history(self):
+        chain, fingerprint = self.checkpoint_chain()
+        with self.assertRaisesRegex(ScientificEchoWitnessError, "chain authentication"):
+            self.verify([chain[-1]], fingerprint)
+
+    def test_reversed_checkpoint_order_rejected(self):
+        chain, fingerprint = self.checkpoint_chain()
+        with self.assertRaisesRegex(ScientificEchoWitnessError, "chain authentication"):
+            self.verify(list(reversed(chain)), fingerprint)
+
+    def test_repeated_first_checkpoint_rejected(self):
+        chain, fingerprint = self.checkpoint_chain()
+        with self.assertRaisesRegex(ScientificEchoWitnessError, "chain authentication"):
+            self.verify([chain[0], chain[0]], fingerprint)
+
+    def test_wrong_signing_key_in_full_chain_rejected(self):
+        chain, _ = self.checkpoint_chain()
+        with self.assertRaises(ScientificEchoWitnessError):
+            self.verify(chain, "0" * 64)
+
+    def test_empty_checkpoint_chain_rejected(self):
+        with self.assertRaisesRegex(ScientificEchoWitnessError, "chain"):
+            self.verify([], "0" * 64)
+
+    def test_bad_predecessor_field_fails_closed(self):
+        chain, fingerprint = self.checkpoint_chain()
+        forged = copy.deepcopy(chain)
+        forged[1]["manifest"]["previous_checkpoint_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ScientificEchoWitnessError, "chain authentication"):
+            self.verify(forged, fingerprint)
+
 
 
 if __name__ == "__main__":
