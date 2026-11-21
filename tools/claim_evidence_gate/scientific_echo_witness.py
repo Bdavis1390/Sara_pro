@@ -14,6 +14,7 @@ from typing import Any
 from worldshepherd_sara.echo_checkpoint_verify import (
     EchoCheckpointVerificationError,
     verify_bundle,
+    verify_chain,
 )
 from worldshepherd_sara.echo_event_store import EchoEventStoreError, semantic_sha256
 from worldshepherd_sara.models import AuditRecord
@@ -107,7 +108,7 @@ def verify_scientific_echo_witness(
     root: str | Path,
     receipt: dict[str, Any],
     record: dict[str, Any],
-    checkpoint_bundle: dict[str, Any],
+    checkpoint_bundles: list[dict[str, Any]],
     *,
     expected_claim_id: str,
     expected_prereg_sha256: str,
@@ -141,12 +142,13 @@ def verify_scientific_echo_witness(
         raise ScientificEchoWitnessError("science audit record failed semantic verification") from exc
 
     try:
-        verified = verify_bundle(
-            checkpoint_bundle,
-            _expect_digest(expected_checkpoint_key_fingerprint_sha256, "checkpoint fingerprint"),
-        )
-    except (EchoCheckpointVerificationError, ValueError, TypeError, KeyError) as exc:
-        raise ScientificEchoWitnessError("checkpoint authentication failed") from exc
+        trusted_key = _expect_digest(expected_checkpoint_key_fingerprint_sha256, "checkpoint fingerprint")
+        if not isinstance(checkpoint_bundles, list) or not checkpoint_bundles:
+            raise ScientificEchoWitnessError("complete checkpoint chain required")
+        verified_chain = verify_chain(checkpoint_bundles, trusted_key)
+        verified = verify_bundle(checkpoint_bundles[-1], trusted_key)
+    except (EchoCheckpointVerificationError, ValueError, TypeError, KeyError, IndexError) as exc:
+        raise ScientificEchoWitnessError("checkpoint chain authentication failed") from exc
 
     event_id = expected_payload["_outbox_event_id"]
     matching = [item for item in verified["events"] if item["event_id"] == event_id]
@@ -163,6 +165,8 @@ def verify_scientific_echo_witness(
         "event_semantic_sha256": semantic_digest,
         "checkpoint_sha256": verified["checkpoint_sha256"],
         "checkpoint_sequence": verified["sequence"],
+        "checkpoint_count": verified_chain["checkpoint_count"],
+        "echo_signed_checkpoint_chain_verified": True,
         "checkpoint_key_fingerprint_sha256": verified["key_fingerprint_sha256"],
         "receipt_locally_reproduced": True,
         "echo_signed_event_inclusion_verified": True,
@@ -173,8 +177,9 @@ def verify_scientific_echo_witness(
         "scientific_claim_proven": False,
         "claims_boundary": (
             "PASS establishes reproducibility of the narrow synthetic calculation "
-            "and signed inclusion of its self-reported semantic event under the "
-            "caller-pinned ECHO checkpoint key. It does NOT establish that PRIME "
+            "and signed inclusion of its self-reported semantic event in a full "
+            "predecessor-checked checkpoint chain under the caller-pinned ECHO key. "
+            "It does NOT establish that PRIME "
             "authorized execution, independent pre-run freeze, third-party witness, "
             "trusted hardware, external retention, or scientific/physical validity."
         ),
