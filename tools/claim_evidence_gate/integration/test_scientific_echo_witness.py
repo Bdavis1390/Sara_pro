@@ -91,7 +91,7 @@ class ScientificEchoWitnessTests(unittest.TestCase):
 
     def test_wrong_pinned_fingerprint_rejected(self):
         bundle, _ = self.checkpoint()
-        with self.assertRaisesRegex(ScientificEchoWitnessError, "checkpoint authentication"):
+        with self.assertRaisesRegex(ScientificEchoWitnessError, "checkpoint chain authentication"):
             self.verify(bundle, "0" * 64)
 
     def test_signed_checkpoint_tamper_rejected(self):
