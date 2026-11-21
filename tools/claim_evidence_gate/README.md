@@ -53,6 +53,12 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-ver
 
 
 
+## Coupled grant verification and reservation (candidate)
+
+\`scientific_prime_reservation.py\` exposes a single \`verify_and_reserve_science_grant\` entrypoint. It **verifies the signed, bounded PRIME-science grant before calling the local atomic ledger**. A bad signature, revoked key, wrong preregistration digest, changed input/config, or expired grant therefore fails before the ledger is modified. The additional integration suite tests these failures, one-time reservation and replay rejection after reopening the ledger.
+
+This adapter **never invokes execution** and always reports \`execution_performed: false\`. Python callers can still bypass this adapter by importing lower-level modules; it is not a secure authorization enforcement point until protected SARA orchestration restricts every execution path to a separately trusted controller. The local ledger is not an authenticated signing service and cannot independently prove the integrity of a caller-supplied verification result.
+
 ## Local one-time grant reservation (candidate)
 
 \`local_grant_ledger.py\` provides an isolated **single-host SQLite reservation ledger** for results already accepted by the science-specific PRIME verifier. It uses a private directory, 0600 database, unique authorization IDs and nonces, and an atomic \`BEGIN IMMEDIATE\` transaction so a duplicate cannot successfully reserve again in the same unchanged local store. Reservations are retained across process restarts and may be marked \`FINISHED\` but not reused. The integration suite tests restart persistence, duplicate IDs/nonces, concurrent requests, corrupt schema, symlinks and unsafe permissions.
