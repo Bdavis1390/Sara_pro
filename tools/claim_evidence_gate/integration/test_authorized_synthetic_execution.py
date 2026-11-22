@@ -9,7 +9,7 @@ import sys
 import tempfile
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -52,7 +52,9 @@ class AuthorizedSyntheticExecutionTests(unittest.TestCase):
         )
         self.fingerprint = hashlib.sha256(pub).hexdigest()
         self.verifier = PrimeSentinelVerifier(public_keys_b64url={"science-test": encode(pub)})
-        self.instant = datetime(2030, 1, 1, 12, 0, tzinfo=timezone.utc)
+        self.instant = datetime.now(timezone.utc)
+        self.issued_at = (self.instant - timedelta(seconds=20)).isoformat(timespec='seconds').replace('+00:00', 'Z')
+        self.expires_at = (self.instant + timedelta(minutes=5)).isoformat(timespec='seconds').replace('+00:00', 'Z')
         self.grant = {
             "schema": SCHEMA,
             "issuer": "PRIME_SENTINEL",
@@ -68,8 +70,8 @@ class AuthorizedSyntheticExecutionTests(unittest.TestCase):
             "input_sha256": hashlib.sha256((self.root/"input.json").read_bytes()).hexdigest(),
             "executor_sha256": hashlib.sha256((ROOT/"bounded_execution.py").read_bytes()).hexdigest(),
             "max_samples": 4,
-            "issued_at": "2030-01-01T11:59:00Z",
-            "expires_at": "2030-01-01T12:08:00Z",
+            "issued_at": self.issued_at,
+            "expires_at": self.expires_at,
             "signature_b64url": "",
         }
         self.sign()
@@ -90,7 +92,6 @@ class AuthorizedSyntheticExecutionTests(unittest.TestCase):
             expected_claim_id="WS-LOCAL-SYNTHETIC-001",
             expected_prereg_sha256="a" * 64,
             expected_signer_key_fingerprint_sha256=self.fingerprint,
-            now=self.instant,
         )
         args.update(overrides)
         return execute_authorized_synthetic(**args)
@@ -175,7 +176,7 @@ class AuthorizedSyntheticExecutionTests(unittest.TestCase):
         self.assertIsNone(self.ledger.state("science-grant-1001"))
 
     def test_expired_signature_rejected(self):
-        self.grant["expires_at"] = "2030-01-01T12:00:00Z"
+        self.grant["expires_at"] = (datetime.now(timezone.utc) - timedelta(seconds=2)).isoformat(timespec="seconds").replace("+00:00", "Z")
         self.sign()
         with self.assertRaises(ScientificPrimeAuthorizationError):
             self.execute()
@@ -263,6 +264,13 @@ class AuthorizedSyntheticExecutionTests(unittest.TestCase):
         receipt["authorization"]["grant_sha256"] = "0" * 64
         with self.assertRaisesRegex(ExecutionCustodyError, "receipt digest"):
             verify_receipt(self.root, receipt)
+
+
+    def test_execution_entrypoint_does_not_accept_caller_supplied_clock(self):
+        with self.assertRaises(TypeError):
+            self.execute(now=datetime(2030, 1, 1, tzinfo=timezone.utc))
+        self.assertIsNone(self.ledger.state("science-grant-1001"))
+
 
 
 if __name__ == "__main__":
