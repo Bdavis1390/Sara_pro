@@ -84,6 +84,30 @@ A green CI check, valid cryptographic signature, passing software fixture, or si
 - Offline/degraded replay without correct once-per-semantic-record reconciliation.
 - Attempted scientific-status upgrade solely from verification or custody pass.
 
+## 2026-11-22 — bounded end-to-end software execution reference
+
+The draft PR now contains \`authorized_synthetic_execution.py\`, a Python reference controller that checks a **new, narrowly scoped** PRIME Ed25519 scientific grant, atomically reserves its ID and nonce, runs the **fixed synthetic affine operation on the same in-memory configuration/input byte objects used for signature/scope checking**, records a local receipt, and marks the grant finished only after local output reproduction succeeds.
+
+There is also an **isolated test-only end-to-end custody path**: the result is represented as a SARA-shaped scientific event, ingested into a temporary local ECHO event store, signed by an **ephemeral test key**, and independently verified for event inclusion and complete checkpoint-chain continuity under a test-supplied trusted fingerprint. Neither step is operational SARA integration.
+
+**Status distinctions:**
+
+| Control | Implemented reference software | Still not established |
+| --- | --- | --- |
+| PRIME scientific authorization | Standalone exact-scope Ed25519 verification and revoked-key rejection | Production issuer, actual operator consent, regulated-use approval |
+| Local execution | Verify → reserve → execute fixed synthetic computation with same byte objects | Privilege-isolated runtime, hardware/process attestation, calibrated physical experiment |
+| Replay | Single-host SQLite duplicate ID/nonce rejection after restarts | Cross-host replay prevention; privileged rollback resistance |
+| Time | Host-clock expiry validation at execution entrypoint | Attested clock, external trusted timestamp |
+| ECHO evidence | Temporary test store, signed checkpoint-chain verification | Live ECHO service ingestion, independent key custody, third-party witnessing |
+| Pre-registration | Expected hash equality against caller-provided pin | Independently frozen and time-ordered preregistration |
+| Scientific outcome | Reproducible toy arithmetic and bounded structural assertions | Numerical solver convergence, experimental uncertainty/calibration, theorem proof, novelty, independent replication |
+
+**Fail-closed crash rule:** if the calculation, file write, or post-write consistency check fails after reservation, the grant remains consumed (\`RESERVED\`), never automatically reusable. An isolated recovery/incident workflow and external event reconciliation are required before any production operation.
+
+**Clock boundary:** the local execution entrypoint cannot accept a caller-injected authorization clock. Lower-level pure verification tests can inject time deliberately; the host clock used by the controller remains unauthenticated.
+
+No claim should say that signed checkpoint verification cryptographically proves the original process used the declared bytes. The only binding demonstrated here is the audited reference controller's own software control path, not independently measured execution.
+
 ## Implementation / release boundary
 
 1. Treat \`bounded_execution.py\` and its tests as a local synthetic execution demonstration only.
