@@ -58,7 +58,7 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-ver
 \`authorized_synthetic_execution.py\` is a **deliberately opt-in, local Python reference controller**, not a deployed or privilege-isolated SARA service. It combines previously separate controls for a **fixed synthetic affine operation**:
 
 1. Read a bounded configuration and input file into memory *once*, rejecting traversal and symlinked inputs.
-2. Verify the detached, domain-separated PRIME scientific grant against the caller's separately trusted key fingerprint, claim ID, preregistration digest, exact run ID, bounded sample count, source digest, and **the actual in-memory input/configuration bytes**.
+2. Canonically snapshot the caller's signed grant, then verify its detached, domain-separated PRIME signature against the separately trusted key fingerprint, claim ID, preregistration digest, exact run ID, bounded sample count, source digest, and **the actual in-memory input/configuration bytes**. The same snapshotted grant identity is later recorded in the receipt.
 3. Atomically reserve the grant ID and nonce in the local SQLite ledger **before** evaluating the fixed operation.
 4. Execute the deterministic numeric transform against the **same byte objects passed to authorization**, not a fresh file read; generate an exclusive per-run synthetic output and self-reported receipt.
 5. Recompute the written output through \`verify_receipt\` and mark the grant \`FINISHED\`. A failure after reservation leaves the grant \`RESERVED\` and non-reusable; no automatic rollback or silent re-execution is permitted.
