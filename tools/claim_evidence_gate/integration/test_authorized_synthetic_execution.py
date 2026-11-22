@@ -273,5 +273,30 @@ class AuthorizedSyntheticExecutionTests(unittest.TestCase):
 
 
 
+    def test_mutating_caller_grant_after_verification_cannot_change_receipt_identity(self):
+        import authorized_synthetic_execution as controller
+        from scientific_prime_authorization import canonical_scientific_authorization
+        original = hashlib.sha256(canonical_scientific_authorization(self.grant)).hexdigest()
+        real_reserve = controller.verify_and_reserve_science_grant
+        def mutate_after_reservation(grant, **kwargs):
+            result = real_reserve(grant, **kwargs)
+            self.grant["claim_id"] = "WS-ATTACKER-CLAIM"
+            self.grant["nonce"] = "changed-nonce-after-signature"
+            return result
+        with patch("authorized_synthetic_execution.verify_and_reserve_science_grant",
+                   side_effect=mutate_after_reservation):
+            result = self.execute()
+        self.assertEqual(result["receipt"]["authorization"]["grant_sha256"], original)
+        self.assertEqual(self.ledger.state("science-grant-1001"), "FINISHED")
+
+    def test_non_json_grant_fails_before_reservation(self):
+        broken = dict(self.grant)
+        broken["unsupported"] = {1, 2}
+        with self.assertRaisesRegex(AuthorizedSyntheticExecutionError, "canonical JSON"):
+            self.execute(assertion=broken)
+        self.assertIsNone(self.ledger.state("science-grant-1001"))
+
+
+
 if __name__ == "__main__":
     unittest.main()
