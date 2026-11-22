@@ -59,14 +59,13 @@ def execute_authorized_synthetic(
     expected_claim_id: str,
     expected_prereg_sha256: str,
     expected_signer_key_fingerprint_sha256: str,
-    now: datetime | None = None,
 ) -> dict[str, Any]:
     """Perform a fixed synthetic transform only after verified reservation.
 
-    The optional 'now' argument enables deterministic tests, not an
-    independently authenticated clock. This function has no arbitrary command
-    or module loading capability. The caller controls a local filesystem and
-    must protect the source and directory from mutation.
+    Verification uses the host's current clock; callers cannot override
+    authorization time through this entrypoint. The clock is NOT independently
+    attested. This function has no arbitrary command or module loading.
+    The caller must protect the local filesystem from mutation.
     """
     if not isinstance(assertion, dict):
         raise AuthorizedSyntheticExecutionError("signed grant required")
@@ -94,7 +93,6 @@ def execute_authorized_synthetic(
         expected_input_bytes=input_raw,
         expected_executor_sha256=source_digest,
         expected_signer_key_fingerprint_sha256=expected_signer_key_fingerprint_sha256,
-        now=now,
     )
     # From this point, any exception deliberately leaves the grant RESERVED.
     output_raw = calculated_output(config_raw, input_raw)
