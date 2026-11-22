@@ -53,6 +53,28 @@ Expected synthetic example: 3 matching SHA-256 artifact digests, **3 SHA-256-ver
 
 
 
+## Controlled local synthetic execution — end-to-end candidate
+
+\`authorized_synthetic_execution.py\` is a **deliberately opt-in, local Python reference controller**, not a deployed or privilege-isolated SARA service. It combines previously separate controls for a **fixed synthetic affine operation**:
+
+1. Read a bounded configuration and input file into memory *once*, rejecting traversal and symlinked inputs.
+2. Verify the detached, domain-separated PRIME scientific grant against the caller's separately trusted key fingerprint, claim ID, preregistration digest, exact run ID, bounded sample count, source digest, and **the actual in-memory input/configuration bytes**.
+3. Atomically reserve the grant ID and nonce in the local SQLite ledger **before** evaluating the fixed operation.
+4. Execute the deterministic numeric transform against the **same byte objects passed to authorization**, not a fresh file read; generate an exclusive per-run synthetic output and self-reported receipt.
+5. Recompute the written output through \`verify_receipt\` and mark the grant \`FINISHED\`. A failure after reservation leaves the grant \`RESERVED\` and non-reusable; no automatic rollback or silent re-execution is permitted.
+
+\`integration/test_authorized_synthetic_execution.py\` provides adversarial tests including tampered signatures, expired/revoked grants, wrong inputs/configuration, bad executable digest, overbudget samples, unexpected output identity, symlinks, concurrent attempts, crash-injected calculation, and the identity of the byte objects handed from authorization into computation.
+
+**This prototype's exact claims boundary:**
+
+- The controller **does execute a bounded toy software function** after local grant verification and reservation. It **does not run arbitrary code, instruments, numerical solvers, physical experiments, or production workloads**.
+- This Python API has no OS privilege separation, service-level access control, container confinement, or independent runtime measurement; other imports could bypass it. A self-reported local source hash is not trusted hardware attestation.
+- The verification clock may be injected for deterministic tests; production execution would require a trusted clock and separated authorized issuer, neither supplied here.
+- There is **no independently frozen preregistration, third-party timestamp, production PRIME signer, post-run ECHO checkpoint from this controller, rollback-proof grant ledger, or distributed replay protection**.
+- Exclusive file creation reduces accidental overwrites; hostile mutable filesystems can race file checks. A crash can leave incomplete output and a consumed grant. No transactional filesystem/ECHO consistency or safe recovery orchestration is claimed.
+- An existing \`scientific_echo_witness.py\` verifier can test signed inclusion of a *separate* scientific event, but this controller does **not** ingest into live ECHO or make that event assert a successfully authorized run. Further reviewed schema and authority coupling are required.
+- All tests are public-safe and synthetic. No scientific measurement, theory, novelty or independent replication is established by these passes.
+
 ## Coupled grant verification and reservation (candidate)
 
 \`scientific_prime_reservation.py\` exposes a single \`verify_and_reserve_science_grant\` entrypoint. It **verifies the signed, bounded PRIME-science grant before calling the local atomic ledger**. A bad signature, revoked key, wrong preregistration digest, changed input/config, or expired grant therefore fails before the ledger is modified. The additional integration suite tests these failures, one-time reservation and replay rejection after reopening the ledger.
