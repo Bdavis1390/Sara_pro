@@ -10,6 +10,7 @@ experiment, and not independently witnessed or preregistered.
 from __future__ import annotations
 
 import hashlib
+import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -69,7 +70,13 @@ def execute_authorized_synthetic(
     """
     if not isinstance(assertion, dict):
         raise AuthorizedSyntheticExecutionError("signed grant required")
-    run_id = assertion.get("run_id")
+    try:
+        # Freeze a canonical JSON snapshot so the caller cannot alter the
+        # authorized event while this process is reserving/executing it.
+        grant = json.loads(canonical(assertion))
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise AuthorizedSyntheticExecutionError("signed grant must be canonical JSON") from exc
+    run_id = grant.get("run_id")
     if not isinstance(run_id, str) or bounded_execution.RUN_PATTERN.fullmatch(run_id) is None:
         raise AuthorizedSyntheticExecutionError("invalid run ID")
     root = Path(root)
@@ -83,7 +90,7 @@ def execute_authorized_synthetic(
     # Verification uses the exact in-memory bytes later passed to calculation.
     # No computation, output, or grant consumption occurs before validation.
     reserved = verify_and_reserve_science_grant(
-        assertion,
+        grant,
         ledger=ledger,
         prime_verifier=prime_verifier,
         expected_claim_id=expected_claim_id,
@@ -113,7 +120,7 @@ def execute_authorized_synthetic(
         "independent_witness": False,
         "authorization": {
             "authorization_id": reserved["authorization"]["authorization_id"],
-            "grant_sha256": hashlib.sha256(canonical_scientific_authorization(assertion)).hexdigest(),
+            "grant_sha256": hashlib.sha256(canonical_scientific_authorization(grant)).hexdigest(),
             "prime_signature_verified": True,
             "local_reservation_committed": True,
             "scope": reserved["authorization"]["scope"],
