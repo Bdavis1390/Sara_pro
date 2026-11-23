@@ -99,6 +99,35 @@ def main():
    p=src/rel
    if not p.is_file():raise RuntimeError("STAR published-source payload missing: "+rel)
    files.append((rel,p))
+  # EXTERNAL REAL MEASURED TERRAMETA RF DATA (local archive ONLY).
+  # The source license metadata was not asserted. Never put raw source into GitHub.
+  terr=src/"external_measured/terrameta_20186567"
+  terr_manifest=terr/"terrameta_local_manifest.json"
+  terr_meta=json.loads(terr_manifest.read_text())
+  if terr_meta["verified_file_count"]!=12:
+   raise RuntimeError("Third-party measured RF source count incomplete")
+  if terr_meta["license_reuse_status"]!="UNVERIFIED_PRESERVE_RAW_FILES_LOCALLY_NO_REPUBLICATION":
+   raise RuntimeError("Unexpected third-party license policy changed")
+  for entry in terr_meta["raw_s2p_files"]:
+   name=entry["filename"]
+   if "/" in name or "\\" in name or not name.endswith(".S2P"):
+    raise RuntimeError("Unsafe third-party filename")
+   rel="external_measured/terrameta_20186567/raw/"+name
+   p=src/rel
+   if not p.is_file() or p.stat().st_size!=entry["size"] or sha(p.read_bytes())!=entry["local_sha256"]:
+    raise RuntimeError("Measured external S2P integrity failure: "+name)
+   files.append((rel,p))
+  for rel in [
+   "fetch_terrameta_measured_rf.py","analyze_terrameta_measured_rf.py",
+   "test_terrameta_measured_rf.py","rf_series_shunt_baseline.py",
+   "test_rf_series_shunt_baseline.py",
+   "external_measured/terrameta_20186567/terrameta_local_manifest.json",
+   "external_measured/terrameta_20186567/state_analysis.json",
+   "external_measured/terrameta_20186567/series_shunt_reference_check.json"
+  ]:
+   p=src/rel
+   if not p.is_file():raise RuntimeError("Measured external RF analysis missing: "+rel)
+   files.append((rel,p))
   checks={name:{"sha256":sha(p.read_bytes()),"bytes":p.stat().st_size} for name,p in files}
   manifest={"created_utc":now.isoformat(),"snapshot_type":"same_machine_other_partition_not_cloud",
             "source_path":str(src),"record_counts":{"works":works,"observations":observations},
