@@ -1,0 +1,202 @@
+{
+  "created_utc": "2026-11-23T14:24:08.064551+00:00",
+  "nist_data_reference": "https://doi.org/10.18434/mds2-2628",
+  "publication": "McNulty et al. 2022 EuCAP DOI 10.23919/EuCAP53622.2022.9769373",
+  "measurement_type": "THIRD_PARTY_NIST_MEASURED_IQ_RECEIVER_NONLINEARITY",
+  "remote_archive": "imd3%20sdr0.zip",
+  "full_source_archive_downloaded": false,
+  "zip_member_CRCs_verified_on_full_decompression": true,
+  "independent_source_sha256_for_each_uncompressed_capture": true,
+  "waveform_storage": "NONE: stream, analyze in RAM; no IQ files persisted",
+  "selected_samples": [
+    {
+      "index": 1,
+      "source_input_power_each_dBm": -20.0,
+      "source_input_power_other_dBm": -20.0,
+      "source_input_frequency_Hz": [
+        1702500000.0,
+        2702499877.9222364
+      ],
+      "receiver_center_frequency_Hz": 701500000.0,
+      "expected_intermod_frequency_Hz": 702500122.0777636,
+      "measurement": {
+        "target_IF_hz": 1000122.0777635574,
+        "peak_IF_hz": 999498.3673095703,
+        "peak_minus_target_hz": -623.7104539871216,
+        "peak_amplitude_db_relative_to_unscaled_ADC": -114.2907356095243,
+        "median_neighbor_noise_amplitude_db": -125.77435397583317,
+        "peak_SNR_dB_relative_to_median_single_bin_noise": 11.483618366308871,
+        "IQ_sample_count": 524288,
+        "sample_rate_Hz": 5000000.0,
+        "window": "Hann",
+        "frequency_resolution_hz": 9.5367431640625,
+        "calibrated_output_power_dBm": false
+      },
+      "integrity": {
+        "uncompressed_bytes": 40000000,
+        "member_sha256": "e5440d52d85960d7aed1d0d4457e90ebf1651edfb49f22d5cccb691f4d2b1c1a",
+        "zip_member_crc32": "661967ab",
+        "source": "2f1-f2/test_1.bin"
+      }
+    },
+    {
+      "index": 4,
+      "source_input_power_each_dBm": -16.0,
+      "source_input_power_other_dBm": -16.0,
+      "source_input_frequency_Hz": [
+        1702500000.0,
+        2702499877.9222364
+      ],
+      "receiver_center_frequency_Hz": 701500000.0,
+      "expected_intermod_frequency_Hz": 702500122.0777636,
+      "measurement": {
+        "target_IF_hz": 1000122.0777635574,
+        "peak_IF_hz": 992126.46484375,
+        "peak_minus_target_hz": -7995.612919807434,
+        "peak_amplitude_db_relative_to_unscaled_ADC": -115.09107758316809,
+        "median_neighbor_noise_amplitude_db": -125.73385218395893,
+        "peak_SNR_dB_relative_to_median_single_bin_noise": 10.642774600790847,
+        "IQ_sample_count": 524288,
+        "sample_rate_Hz": 5000000.0,
+        "window": "Hann",
+        "frequency_resolution_hz": 9.5367431640625,
+        "calibrated_output_power_dBm": false
+      },
+      "integrity": {
+        "uncompressed_bytes": 40000000,
+        "member_sha256": "67eb77d9ff44af4aa7359a4201ad06823ee42b95a032d2ba9329e086de2cf252",
+        "zip_member_crc32": "8acc4c86",
+        "source": "2f1-f2/test_4.bin"
+      }
+    },
+    {
+      "index": 7,
+      "source_input_power_each_dBm": -12.0,
+      "source_input_power_other_dBm": -12.0,
+      "source_input_frequency_Hz": [
+        1702500000.0,
+        2702499877.9222364
+      ],
+      "receiver_center_frequency_Hz": 701500000.0,
+      "expected_intermod_frequency_Hz": 702500122.0777636,
+      "measurement": {
+        "target_IF_hz": 1000122.0777635574,
+        "peak_IF_hz": 1001548.7670898438,
+        "peak_minus_target_hz": 1426.689326286316,
+        "peak_amplitude_db_relative_to_unscaled_ADC": -103.36404383916452,
+        "median_neighbor_noise_amplitude_db": -125.7578665515843,
+        "peak_SNR_dB_relative_to_median_single_bin_noise": 22.39382271241977,
+        "IQ_sample_count": 524288,
+        "sample_rate_Hz": 5000000.0,
+        "window": "Hann",
+        "frequency_resolution_hz": 9.5367431640625,
+        "calibrated_output_power_dBm": false
+      },
+      "integrity": {
+        "uncompressed_bytes": 40000000,
+        "member_sha256": "4831de9f47b561306beb6d240dee1ce0964fa4715ce09384752e230221920135",
+        "zip_member_crc32": "c00e4767",
+        "source": "2f1-f2/test_7.bin"
+      }
+    },
+    {
+      "index": 10,
+      "source_input_power_each_dBm": -9.0,
+      "source_input_power_other_dBm": -9.0,
+      "source_input_frequency_Hz": [
+        1702500000.0,
+        2702499877.9222364
+      ],
+      "receiver_center_frequency_Hz": 701500000.0,
+      "expected_intermod_frequency_Hz": 702500122.0777636,
+      "measurement": {
+        "target_IF_hz": 1000122.0777635574,
+        "peak_IF_hz": 1001539.2303466797,
+        "peak_minus_target_hz": 1417.1525831222534,
+        "peak_amplitude_db_relative_to_unscaled_ADC": -93.49552446404405,
+        "median_neighbor_noise_amplitude_db": -125.7417388773176,
+        "peak_SNR_dB_relative_to_median_single_bin_noise": 32.246214413273535,
+        "IQ_sample_count": 524288,
+        "sample_rate_Hz": 5000000.0,
+        "window": "Hann",
+        "frequency_resolution_hz": 9.5367431640625,
+        "calibrated_output_power_dBm": false
+      },
+      "integrity": {
+        "uncompressed_bytes": 40000000,
+        "member_sha256": "c5940452bef3e40b2294af1d92bf7bf01341daa7dd28fae1b0097c1a8beda724",
+        "zip_member_crc32": "088e404f",
+        "source": "2f1-f2/test_10.bin"
+      }
+    },
+    {
+      "index": 13,
+      "source_input_power_each_dBm": -7.0,
+      "source_input_power_other_dBm": -7.0,
+      "source_input_frequency_Hz": [
+        1702500000.0,
+        2702499877.9222364
+      ],
+      "receiver_center_frequency_Hz": 701500000.0,
+      "expected_intermod_frequency_Hz": 702500122.0777636,
+      "measurement": {
+        "target_IF_hz": 1000122.0777635574,
+        "peak_IF_hz": 1001529.6936035156,
+        "peak_minus_target_hz": 1407.615839958191,
+        "peak_amplitude_db_relative_to_unscaled_ADC": -86.61822283504813,
+        "median_neighbor_noise_amplitude_db": -125.69591679170067,
+        "peak_SNR_dB_relative_to_median_single_bin_noise": 39.07769395665254,
+        "IQ_sample_count": 524288,
+        "sample_rate_Hz": 5000000.0,
+        "window": "Hann",
+        "frequency_resolution_hz": 9.5367431640625,
+        "calibrated_output_power_dBm": false
+      },
+      "integrity": {
+        "uncompressed_bytes": 40000000,
+        "member_sha256": "77311788c1050bbb08fa15dfccac91908d6a9dce7607b7194068046650a22aef",
+        "zip_member_crc32": "00b014a6",
+        "source": "2f1-f2/test_13.bin"
+      }
+    }
+  ],
+  "terminated_receiver_reference": {
+    "target_IF_hz": 1000122.0777635574,
+    "peak_IF_hz": 1013727.1881103516,
+    "peak_minus_target_hz": 13605.110346794128,
+    "peak_amplitude_db_relative_to_unscaled_ADC": -113.96089698159223,
+    "median_neighbor_noise_amplitude_db": -125.57222061938411,
+    "peak_SNR_dB_relative_to_median_single_bin_noise": 11.611323637791884,
+    "IQ_sample_count": 524288,
+    "sample_rate_Hz": 5000000.0,
+    "window": "Hann",
+    "frequency_resolution_hz": 9.5367431640625,
+    "calibrated_output_power_dBm": false
+  },
+  "slope_of_relative_IM3_amplitude_dB_per_input_dBm": 2.2637619510535636,
+  "minimum_spur_SNR_dB": 10.642774600790847,
+  "input_power_levels_dBm": [
+    -20.0,
+    -16.0,
+    -12.0,
+    -9.0,
+    -7.0
+  ],
+  "receiver_linearity_claims": "NO_CALIBRATED_ABSOLUTE_OUTPUT_POWER",
+  "source_zip_sha256_verified": false,
+  "bytes_transferred_over_HTTP_range": 79632843,
+  "HTTP_range_requests": 76,
+  "claims": {
+    "receiver_distortion_possible": true,
+    "proves_original_sample_interaction": false,
+    "new_fundamental_physics": false
+  },
+  "critical_limitations": [
+    "IQ ADC raw units not traceable dBm without independent receiver transfer calibration",
+    "Spectral peak from short initial window can depend on drift, spurious tones, IQ balance, window leakage",
+    "Zip member CRC-32 and local uncompressed SHA-256 verified; full ~773 MB archive SHA-256 NOT verified",
+    "Two-tone source frequency read from NIST public JSON; phase-coherence and port calibration not newly measured",
+    "Small selected input power range and no independent run-to-run uncertainty: slope is descriptive, not a statistical discovery result",
+    "This is established receiver-generated nonlinear physics, not a new WorldShepherd sample effect"
+  ]
+}
