@@ -86,24 +86,24 @@
     "status": "REVIEW_REQUIRED"
   },
   "safety_regression_tests": {
-    "passed": 76,
-    "total": 76,
-    "previous": 64,
-    "measured_rf": 8,
-    "series_shunt_model": 4
+    "passed": 86,
+    "total": 86,
+    "prior": 76,
+    "nist_spectral_tests": 5,
+    "nist_noise_quality_tests": 5
   },
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261123T030607Z.tar.gz",
-    "archive_bytes": 8706109,
-    "archive_sha256": "ebf57b4cb62f3f4b0f21d9a9b8385f44306197531ead9051dd57097c62ebc698",
-    "file_count": 110,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261123T143209Z.tar.gz",
+    "archive_bytes": 8724815,
+    "archive_sha256": "41bd37cd6792eda83697b2f0901499081c3acd3bb41a0eb037bf9ea0edbcee1e",
+    "file_count": 120,
     "verified": true,
     "off_device_backup": false,
     "private_prereg_excluded": true,
-    "contains_local_restricted_redistribution_thirdparty_measured_data": true,
-    "archive_data_redistribution_policy": "PRIVATE LOCAL RECOVERY ONLY"
+    "includes_thirdparty_measured_S2P": true,
+    "includes_large_NIST_IQ_waveforms": false
   },
   "followup_validation_2026_11_08": {
     "source_Zenodo_2026_baryon_models": {
@@ -175,7 +175,7 @@
     "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
   },
   "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
-  "new_physics_claim_status": "NOT DEMONSTRATED. First verified third-party real GHz memristor S-parameter data ingested; expected switching contrast and a conventional series-element low-band relationship observed; high-band apparent passivity violations also in reference THRU. No new interaction established.",
+  "new_physics_claim_status": "NOT DEMONSTRATED. Independently reanalyzed real NIST two-tone SDR receiver IQ data and 50-ohm controls; after excluding low-SNR search peaks, two receiver platforms show ~3.34 and ~3.00 relative IM3 amplitude slopes, consistent with ordinary cubic instrument nonlinearity.",
   "followup_exploratory_novelty_screen_2026_11_08": {
     "classification": "RETROSPECTIVE_EXPLORATORY_NOT_ORIGINAL_NEW_PHYSICS",
     "centrality_points": 5,
@@ -515,5 +515,80 @@
     "public_summary": "TERRAMETA_EXTERNAL_MEASUREMENTS_FIRST_PASS_2026-11-22.md",
     "scientific_scope": "Independent laboratory MEASURED linear two-port state comparison; original WorldShepherd laboratory RF measurement not established; no novel physics.",
     "prereg_future": "Need physically distinct same-objective reconfigurable aperture configurations, actual modal current and two-tone nonlinear measurements, receiver artifact controls and independent replication."
+  },
+  "nist_measured_two_tone_receiver_IM3_2026_11_23": {
+    "date_local": "2026-11-23",
+    "source_dataset": "https://doi.org/10.18434/mds2-2628",
+    "scientific_publication": "https://doi.org/10.23919/EuCAP53622.2022.9769373",
+    "original_source": "NIST 2022, not WorldShepherd hardware measurement",
+    "NIST_open_license_declared": true,
+    "source_archives": [
+      {
+        "name": "imd3 sdr0.zip",
+        "size_bytes": 772741579,
+        "entries": 50
+      },
+      {
+        "name": "imd3 sdr1.zip",
+        "size_bytes": 975535369,
+        "entries": 69
+      }
+    ],
+    "archive_download_policy": "HTTPS Range only; no full 773MB/976MB ZIP download",
+    "selected_IQ_samples": {
+      "sdr0": 5,
+      "sdr1": 4,
+      "terminated_nulls": 2
+    },
+    "source_waveform_per_capture_uncompressed_bytes": 40000000,
+    "selected_capture_zip_member_CRC_verified": true,
+    "independent_uncompressed_capture_SHA256_in_reports": true,
+    "full_source_ZIP_SHA256_verified": false,
+    "sampled_IQ_window": 524288,
+    "sample_rate_hz": 5000000,
+    "spectral_bin_resolution_hz": 9.5367431640625,
+    "target_expected_IF_hz": 1000122.0777635574,
+    "posthoc_gate": {
+      "signal_requirement": "At least 6dB above largest 50-ohm terminated reference peak within +-15kHz search window AND stable peak frequency within 250Hz of posthoc strong-signal anchor",
+      "posthoc_not_confirmatory": true,
+      "sdr0": {
+        "qualified": 3,
+        "excluded": 2,
+        "raw_unfiltered_amplitude_slope_dB_per_dB": 2.2637619510535636,
+        "quality_filtered_slope_dB_per_dB": 3.3444543790509242,
+        "residual_rms_dB": 0.0838,
+        "estimated_clock_offset_hz": 1417
+      },
+      "sdr1": {
+        "qualified": 4,
+        "excluded": 0,
+        "raw_unfiltered_amplitude_slope_dB_per_dB": 2.996276406285379,
+        "quality_filtered_slope_dB_per_dB": 2.996276406285379,
+        "residual_rms_dB": 0.0312,
+        "estimated_clock_offset_hz": 1455
+      }
+    },
+    "claim": "Real independent NIST receiver IQ data compatible with conventional cubic IM3; WorldShepherd original fundamental physics NOT demonstrated.",
+    "public_code": [
+      "nist_range_zip_metadata.py",
+      "nist_im3_iq_selected_analysis.py",
+      "nist_im3_quality_gate.py",
+      "test_nist_im3_iq.py",
+      "test_nist_im3_quality_gate.py"
+    ],
+    "derived_outputs": [
+      "results/nist_imd3_sdr0_index.json",
+      "results/nist_imd3_sdr1_index.json",
+      "results/sdr0_selected_im3_real_iq.json",
+      "results/sdr1_selected_im3_real_iq.json",
+      "results/receiver_pair_crosscheck.json"
+    ],
+    "research_memo": "NIST_RECEIVER_IM3_MEASURED_AUDIT_2026-11-23.md",
+    "important_limitations": [
+      "Known receiver distortion, not a device-under-test material response",
+      "No absolute IQ-to-RF power traceability, no full source archive SHA256",
+      "Posthoc signal-quality threshold with one terminated null per receiver",
+      "Selected short drive window, no independent replicate statistical uncertainty"
+    ]
   }
 }
