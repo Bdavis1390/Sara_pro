@@ -1,0 +1,179 @@
+{
+  "analysis": "POSTHOC_NIST_RECEIVER_IM3_QA",
+  "sources": [
+    {
+      "analysis_utc": "2026-11-23T14:28:01.330961+00:00",
+      "source_report": "external_measured/nist_2628/sdr0_selected_im3_real_iq.json",
+      "NIST_original_data": "https://doi.org/10.18434/mds2-2628",
+      "experiment_platform": "imd3%20sdr0.zip",
+      "method": "RETROSPECTIVE_STRONG_SIGNAL_QUALITY_GATE_NOT_INDEPENDENTLY_BLINDED",
+      "null_max_SNR_dB_in_preselected_30kHz_scan": 11.611323637791884,
+      "discovery_style_margin_above_null_max_dB": 6.0,
+      "qualified_SNR_min_dB": 17.611323637791884,
+      "posthoc_frequency_anchor_Hz": 1001539.2303466797,
+      "frequency_anchor_tolerance_Hz": 250,
+      "total_selected_captures": 5,
+      "qualified_captures": 3,
+      "excluded_captures": 2,
+      "fit_linear_slope_dB_output_per_dB_input": 3.3444543790509242,
+      "fit_intercept_relative_ADC_units": -63.277689508276914,
+      "fit_rms_residual_dB": 0.08381189269419893,
+      "all_pairwise_power_slopes": [
+        3.28950645837349,
+        3.349164200823279,
+        3.4386508144979615
+      ],
+      "source_power_interval_dBm": [
+        -12.0,
+        -7.0
+      ],
+      "per_capture": [
+        {
+          "source_index": 1,
+          "input_per_tone_dBm": -20.0,
+          "peak_IF_Hz": 999498.3673095703,
+          "peak_amplitude_relative_ADC_dB": -114.2907356095243,
+          "peak_SNR_dB": 11.483618366308871,
+          "exceeds_null_search_max_by_6dB": false,
+          "stays_within_250Hz_of_posthoc_anchor": false,
+          "accepted_for_exploratory_slope": false
+        },
+        {
+          "source_index": 4,
+          "input_per_tone_dBm": -16.0,
+          "peak_IF_Hz": 992126.46484375,
+          "peak_amplitude_relative_ADC_dB": -115.09107758316809,
+          "peak_SNR_dB": 10.642774600790847,
+          "exceeds_null_search_max_by_6dB": false,
+          "stays_within_250Hz_of_posthoc_anchor": false,
+          "accepted_for_exploratory_slope": false
+        },
+        {
+          "source_index": 7,
+          "input_per_tone_dBm": -12.0,
+          "peak_IF_Hz": 1001548.7670898438,
+          "peak_amplitude_relative_ADC_dB": -103.36404383916452,
+          "peak_SNR_dB": 22.39382271241977,
+          "exceeds_null_search_max_by_6dB": true,
+          "stays_within_250Hz_of_posthoc_anchor": true,
+          "accepted_for_exploratory_slope": true
+        },
+        {
+          "source_index": 10,
+          "input_per_tone_dBm": -9.0,
+          "peak_IF_Hz": 1001539.2303466797,
+          "peak_amplitude_relative_ADC_dB": -93.49552446404405,
+          "peak_SNR_dB": 32.246214413273535,
+          "exceeds_null_search_max_by_6dB": true,
+          "stays_within_250Hz_of_posthoc_anchor": true,
+          "accepted_for_exploratory_slope": true
+        },
+        {
+          "source_index": 13,
+          "input_per_tone_dBm": -7.0,
+          "peak_IF_Hz": 1001529.6936035156,
+          "peak_amplitude_relative_ADC_dB": -86.61822283504813,
+          "peak_SNR_dB": 39.07769395665254,
+          "exceeds_null_search_max_by_6dB": true,
+          "stays_within_250Hz_of_posthoc_anchor": true,
+          "accepted_for_exploratory_slope": true
+        }
+      ],
+      "interpretation": "Ordinary instrument/source IM3 is the relevant null. A near-cubic relative slope over a narrow range does not demonstrate a new response.",
+      "limitations": [
+        "Threshold and peak-frequency anchor chosen AFTER inspecting measured candidate captures and 50-ohm control; no confirmatory p-value",
+        "Only 1 NIST terminated capture used for maximum-bin noise benchmark; no null distribution or multiple independent sessions",
+        "No absolute receiver RF calibration of IQ ADC values, only relative output amplitude",
+        "Two-tone source/receiver clocks can be offset and drift; peak frequency is selected by search not guaranteed tone tracking",
+        "No independently verified instrument phase calibration and no original WorldShepherd material sample",
+        "Tiny selected range does not establish a fundamental cubic law across all drive powers",
+        "Frequency and gain transfer function/covariance not estimated; results cannot support discovery statistical significance"
+      ],
+      "new_physics_demonstrated": false
+    },
+    {
+      "analysis_utc": "2026-11-23T14:28:01.331918+00:00",
+      "source_report": "external_measured/nist_2628/sdr1_selected_im3_real_iq.json",
+      "NIST_original_data": "https://doi.org/10.18434/mds2-2628",
+      "experiment_platform": "imd3%20sdr1.zip",
+      "method": "RETROSPECTIVE_STRONG_SIGNAL_QUALITY_GATE_NOT_INDEPENDENTLY_BLINDED",
+      "null_max_SNR_dB_in_preselected_30kHz_scan": 10.409755747593113,
+      "discovery_style_margin_above_null_max_dB": 6.0,
+      "qualified_SNR_min_dB": 16.409755747593113,
+      "posthoc_frequency_anchor_Hz": 1001577.3773193359,
+      "frequency_anchor_tolerance_Hz": 250,
+      "total_selected_captures": 4,
+      "qualified_captures": 4,
+      "excluded_captures": 0,
+      "fit_linear_slope_dB_output_per_dB_input": 2.996276406285379,
+      "fit_intercept_relative_ADC_units": -49.504278720610294,
+      "fit_rms_residual_dB": 0.031204271251658457,
+      "all_pairwise_power_slopes": [
+        2.9993696341533607,
+        2.988611514300889,
+        2.999600889598017,
+        2.9742673544975937,
+        2.9997858939537423,
+        3.038063703137965
+      ],
+      "source_power_interval_dBm": [
+        -16.0,
+        -7.0
+      ],
+      "per_capture": [
+        {
+          "source_index": 4,
+          "input_per_tone_dBm": -16.0,
+          "peak_IF_Hz": 1001577.3773193359,
+          "peak_amplitude_relative_ADC_dB": -97.44186097552493,
+          "peak_SNR_dB": 21.8931224228309,
+          "exceeds_null_search_max_by_6dB": true,
+          "stays_within_250Hz_of_posthoc_anchor": true,
+          "accepted_for_exploratory_slope": true
+        },
+        {
+          "source_index": 7,
+          "input_per_tone_dBm": -12.0,
+          "peak_IF_Hz": 1001577.3773193359,
+          "peak_amplitude_relative_ADC_dB": -85.44438243891149,
+          "peak_SNR_dB": 33.62058597559253,
+          "exceeds_null_search_max_by_6dB": true,
+          "stays_within_250Hz_of_posthoc_anchor": true,
+          "accepted_for_exploratory_slope": true
+        },
+        {
+          "source_index": 10,
+          "input_per_tone_dBm": -9.0,
+          "peak_IF_Hz": 1001577.3773193359,
+          "peak_amplitude_relative_ADC_dB": -76.52158037541871,
+          "peak_SNR_dB": 42.419707377988416,
+          "exceeds_null_search_max_by_6dB": true,
+          "stays_within_250Hz_of_posthoc_anchor": true,
+          "accepted_for_exploratory_slope": true
+        },
+        {
+          "source_index": 13,
+          "input_per_tone_dBm": -7.0,
+          "peak_IF_Hz": 1001577.3773193359,
+          "peak_amplitude_relative_ADC_dB": -70.44545296914278,
+          "peak_SNR_dB": 48.48306665991315,
+          "exceeds_null_search_max_by_6dB": true,
+          "stays_within_250Hz_of_posthoc_anchor": true,
+          "accepted_for_exploratory_slope": true
+        }
+      ],
+      "interpretation": "Ordinary instrument/source IM3 is the relevant null. A near-cubic relative slope over a narrow range does not demonstrate a new response.",
+      "limitations": [
+        "Threshold and peak-frequency anchor chosen AFTER inspecting measured candidate captures and 50-ohm control; no confirmatory p-value",
+        "Only 1 NIST terminated capture used for maximum-bin noise benchmark; no null distribution or multiple independent sessions",
+        "No absolute receiver RF calibration of IQ ADC values, only relative output amplitude",
+        "Two-tone source/receiver clocks can be offset and drift; peak frequency is selected by search not guaranteed tone tracking",
+        "No independently verified instrument phase calibration and no original WorldShepherd material sample",
+        "Tiny selected range does not establish a fundamental cubic law across all drive powers",
+        "Frequency and gain transfer function/covariance not estimated; results cannot support discovery statistical significance"
+      ],
+      "new_physics_demonstrated": false
+    }
+  ],
+  "new_physics": false
+}
