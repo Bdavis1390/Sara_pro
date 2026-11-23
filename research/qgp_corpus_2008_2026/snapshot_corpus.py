@@ -128,6 +128,22 @@ def main():
    p=src/rel
    if not p.is_file():raise RuntimeError("Measured external RF analysis missing: "+rel)
    files.append((rel,p))
+  # NIST 2022 independently collected REAL RECEIVER IQ measurements:
+  # keep ZIP-member provenance hashes and compact derived spectra only, no huge
+  # third-party waveform ZIPs or invented raw measurements.
+  for rel in [
+   "nist_range_zip_metadata.py","nist_im3_iq_selected_analysis.py",
+   "nist_im3_quality_gate.py","test_nist_im3_iq.py",
+   "test_nist_im3_quality_gate.py",
+   "external_measured/nist_2628/nist_imd3_sdr0_index.json",
+   "external_measured/nist_2628/nist_imd3_sdr1_index.json",
+   "external_measured/nist_2628/sdr0_selected_im3_real_iq.json",
+   "external_measured/nist_2628/sdr1_selected_im3_real_iq.json",
+   "external_measured/nist_2628/receiver_pair_crosscheck.json"
+  ]:
+   p=src/rel
+   if not p.is_file(): raise RuntimeError("Missing NIST receiver provenance/control: "+rel)
+   files.append((rel,p))
   checks={name:{"sha256":sha(p.read_bytes()),"bytes":p.stat().st_size} for name,p in files}
   manifest={"created_utc":now.isoformat(),"snapshot_type":"same_machine_other_partition_not_cloud",
             "source_path":str(src),"record_counts":{"works":works,"observations":observations},
