@@ -1,0 +1,955 @@
+{
+  "as_of_utc": "2026-11-23T14:20:30.052309+00:00",
+  "NIST_dataset": "https://doi.org/10.18434/mds2-2628",
+  "nist_2022_source": "https://data.nist.gov/od/id/mds2-2628",
+  "archive": "imd3%20sdr0.zip",
+  "zip_total_bytes": 772741579,
+  "entries": 50,
+  "uncompressed_bytes": 1840010511,
+  "compressed_bytes_of_entries": 772735789,
+  "index": [
+    {
+      "name": "2f1-f2/test_0.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11862486,
+      "crc32_hex": "9c77e58c"
+    },
+    {
+      "name": "2f1-f2/test_1.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11857644,
+      "crc32_hex": "661967ab"
+    },
+    {
+      "name": "2f1-f2/test_10.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11871124,
+      "crc32_hex": "088e404f"
+    },
+    {
+      "name": "2f1-f2/test_11.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11887304,
+      "crc32_hex": "8133d9cb"
+    },
+    {
+      "name": "2f1-f2/test_12.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11884607,
+      "crc32_hex": "1a924404"
+    },
+    {
+      "name": "2f1-f2/test_13.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11903683,
+      "crc32_hex": "00b014a6"
+    },
+    {
+      "name": "2f1-f2/test_14.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11957324,
+      "crc32_hex": "f0f4561d"
+    },
+    {
+      "name": "2f1-f2/test_2.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11854226,
+      "crc32_hex": "23a8a75e"
+    },
+    {
+      "name": "2f1-f2/test_3.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11857074,
+      "crc32_hex": "08ff4654"
+    },
+    {
+      "name": "2f1-f2/test_4.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11856060,
+      "crc32_hex": "8acc4c86"
+    },
+    {
+      "name": "2f1-f2/test_5.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11852121,
+      "crc32_hex": "d8d7af44"
+    },
+    {
+      "name": "2f1-f2/test_6.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11857554,
+      "crc32_hex": "98d14799"
+    },
+    {
+      "name": "2f1-f2/test_7.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11859443,
+      "crc32_hex": "c00e4767"
+    },
+    {
+      "name": "2f1-f2/test_8.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11860308,
+      "crc32_hex": "43d7f405"
+    },
+    {
+      "name": "2f1-f2/test_9.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11867815,
+      "crc32_hex": "c1bdf2df"
+    },
+    {
+      "name": "50_omega_term/test_0.bin",
+      "uncompressed_bytes": 39997440,
+      "compressed_bytes": 11866220,
+      "crc32_hex": "69b1de69"
+    },
+    {
+      "name": "f2-f1/test_15.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11850805,
+      "crc32_hex": "39df967c"
+    },
+    {
+      "name": "f2-f1/test_16.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11853180,
+      "crc32_hex": "56f7df58"
+    },
+    {
+      "name": "f2-f1/test_17.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11855565,
+      "crc32_hex": "beb3fe09"
+    },
+    {
+      "name": "f2-f1/test_18.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11855641,
+      "crc32_hex": "74147d45"
+    },
+    {
+      "name": "f2-f1/test_19.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11855410,
+      "crc32_hex": "9e39f6a9"
+    },
+    {
+      "name": "f2-f1/test_20.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11854369,
+      "crc32_hex": "d6bb5d68"
+    },
+    {
+      "name": "f2-f1/test_21.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11858219,
+      "crc32_hex": "37333e5b"
+    },
+    {
+      "name": "f2-f1/test_22.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11860262,
+      "crc32_hex": "368006e9"
+    },
+    {
+      "name": "f2-f1/test_23.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11858672,
+      "crc32_hex": "b0956d15"
+    },
+    {
+      "name": "f2-f1/test_24.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11865732,
+      "crc32_hex": "d2c0582d"
+    },
+    {
+      "name": "f2-f1/test_25.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11867666,
+      "crc32_hex": "3485d0a6"
+    },
+    {
+      "name": "f2-f1/test_26.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11869416,
+      "crc32_hex": "30d9927b"
+    },
+    {
+      "name": "f2-f1/test_27.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11873277,
+      "crc32_hex": "14a5301d"
+    },
+    {
+      "name": "f2-f1/test_28.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 11875072,
+      "crc32_hex": "33ec2cf0"
+    },
+    {
+      "name": "f2-f1/test_29.bin",
+      "uncompressed_bytes": 39997440,
+      "compressed_bytes": 11882421,
+      "crc32_hex": "b5e0d8ea"
+    },
+    {
+      "name": "fundemental/test_0.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 17445553,
+      "crc32_hex": "36153343"
+    },
+    {
+      "name": "fundemental/test_1.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 19528760,
+      "crc32_hex": "e208f4f5"
+    },
+    {
+      "name": "fundemental/test_10.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 33512452,
+      "crc32_hex": "db40f436"
+    },
+    {
+      "name": "fundemental/test_11.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 33549673,
+      "crc32_hex": "e2fa5cd0"
+    },
+    {
+      "name": "fundemental/test_12.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 28963893,
+      "crc32_hex": "5179f0fb"
+    },
+    {
+      "name": "fundemental/test_13.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 26942643,
+      "crc32_hex": "f018a700"
+    },
+    {
+      "name": "fundemental/test_14.bin",
+      "uncompressed_bytes": 39997440,
+      "compressed_bytes": 26874702,
+      "crc32_hex": "6ea2dbf7"
+    },
+    {
+      "name": "fundemental/test_2.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 21087762,
+      "crc32_hex": "950fb859"
+    },
+    {
+      "name": "fundemental/test_3.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 23063623,
+      "crc32_hex": "a4354357"
+    },
+    {
+      "name": "fundemental/test_4.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 25215490,
+      "crc32_hex": "14eb19d2"
+    },
+    {
+      "name": "fundemental/test_5.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 27083189,
+      "crc32_hex": "f1436f9b"
+    },
+    {
+      "name": "fundemental/test_6.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 28597522,
+      "crc32_hex": "281e9fd5"
+    },
+    {
+      "name": "fundemental/test_7.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 29638217,
+      "crc32_hex": "c66ce2f3"
+    },
+    {
+      "name": "fundemental/test_8.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 30988447,
+      "crc32_hex": "d95e56aa"
+    },
+    {
+      "name": "fundemental/test_9.bin",
+      "uncompressed_bytes": 40000000,
+      "compressed_bytes": 32351709,
+      "crc32_hex": "6c57f579"
+    },
+    {
+      "name": "measurement_space_50Omega_term.json",
+      "uncompressed_bytes": 532,
+      "compressed_bytes": 180,
+      "crc32_hex": "88d782fd"
+    },
+    {
+      "name": "measurement_space_fundemental.json",
+      "uncompressed_bytes": 5491,
+      "compressed_bytes": 385,
+      "crc32_hex": "72947d6d"
+    },
+    {
+      "name": "measurement_space_imd3_imd2.json",
+      "uncompressed_bytes": 11031,
+      "compressed_bytes": 611,
+      "crc32_hex": "2a22b05a"
+    },
+    {
+      "name": "sdr0.json",
+      "uncompressed_bytes": 1137,
+      "compressed_bytes": 278,
+      "crc32_hex": "fdcf4d52"
+    }
+  ],
+  "json_metadata": {
+    "measurement_space_50Omega_term.json": {
+      "sha256": "bb0d0f8e685be727ec169a32c3400ea30936f0f0355ba007ddea7aa8401e7d26",
+      "content": {
+        "generators": [
+          "nisg_0",
+          "nisg_1"
+        ],
+        "data_acquisition": [
+          "sdr0",
+          "powermeter_0"
+        ],
+        "parameters": [
+          {
+            "index": 0,
+            "powermeter_0_power": -30.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -30.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -1000.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          }
+        ]
+      }
+    },
+    "measurement_space_fundemental.json": {
+      "sha256": "89f8b359de807a01f1d6cb9fc4c6da4dfd6ad8d29f3903ed68a8b120fa09173f",
+      "content": {
+        "generators": [
+          "nisg_0",
+          "nisg_1"
+        ],
+        "data_acquisition": [
+          "sdr0",
+          "powermeter_0"
+        ],
+        "parameters": [
+          {
+            "index": 0,
+            "powermeter_0_power": -30.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -30.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -30.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 1,
+            "powermeter_0_power": -25.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -25.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -25.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 2,
+            "powermeter_0_power": -21.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -21.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -21.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 3,
+            "powermeter_0_power": -17.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -17.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -17.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 4,
+            "powermeter_0_power": -13.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -13.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -13.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 5,
+            "powermeter_0_power": -10.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -10.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -10.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 6,
+            "powermeter_0_power": -7.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -7.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -7.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 7,
+            "powermeter_0_power": -4.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -4.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -4.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 8,
+            "powermeter_0_power": -1.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -1.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -1.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 9,
+            "powermeter_0_power": 1.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": 1.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": 1.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 10,
+            "powermeter_0_power": 3.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": 3.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": 3.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 11,
+            "powermeter_0_power": 5.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": 5.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": 5.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 12,
+            "powermeter_0_power": 7.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": 7.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": 7.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 13,
+            "powermeter_0_power": 9.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": 9.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": 9.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          },
+          {
+            "index": 14,
+            "powermeter_0_power": 10.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": 10.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": 10.0,
+            "nisg_1_power": -1000.0,
+            "nisg_0_freq": 702500000.0,
+            "nisg_1_freq": 702000000.0
+          }
+        ]
+      }
+    },
+    "measurement_space_imd3_imd2.json": {
+      "sha256": "c480ddfcba32084b9c26d137fb7c9d71a9293fbbe9fd4fd3df63ab617686d047",
+      "content": {
+        "generators": [
+          "nisg_0",
+          "nisg_1"
+        ],
+        "data_acquisition": [
+          "sdr0",
+          "powermeter_0"
+        ],
+        "parameters": [
+          {
+            "index": 0,
+            "powermeter_0_power": -18.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -18.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -21.0,
+            "nisg_1_power": -21.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 1,
+            "powermeter_0_power": -17.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -17.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -20.0,
+            "nisg_1_power": -20.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 2,
+            "powermeter_0_power": -15.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -15.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -18.0,
+            "nisg_1_power": -18.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 3,
+            "powermeter_0_power": -14.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -14.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -17.0,
+            "nisg_1_power": -17.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 4,
+            "powermeter_0_power": -13.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -13.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -16.0,
+            "nisg_1_power": -16.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 5,
+            "powermeter_0_power": -12.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -12.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -15.0,
+            "nisg_1_power": -15.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 6,
+            "powermeter_0_power": -10.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -10.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -13.0,
+            "nisg_1_power": -13.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 7,
+            "powermeter_0_power": -9.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -9.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -12.0,
+            "nisg_1_power": -12.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 8,
+            "powermeter_0_power": -8.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -8.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -11.0,
+            "nisg_1_power": -11.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 9,
+            "powermeter_0_power": -7.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -7.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -10.0,
+            "nisg_1_power": -10.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 10,
+            "powermeter_0_power": -6.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -6.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -9.0,
+            "nisg_1_power": -9.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 11,
+            "powermeter_0_power": -5.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -5.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -8.0,
+            "nisg_1_power": -8.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 12,
+            "powermeter_0_power": -5.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -5.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -8.0,
+            "nisg_1_power": -8.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 13,
+            "powermeter_0_power": -4.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -4.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -7.0,
+            "nisg_1_power": -7.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 14,
+            "powermeter_0_power": -3.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -3.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -6.0,
+            "nisg_1_power": -6.0,
+            "nisg_0_freq": 1702500000.0,
+            "nisg_1_freq": 2702499877.9222364
+          },
+          {
+            "index": 15,
+            "powermeter_0_power": -18.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -18.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -21.0,
+            "nisg_1_power": -21.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 16,
+            "powermeter_0_power": -17.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -17.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -20.0,
+            "nisg_1_power": -20.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 17,
+            "powermeter_0_power": -15.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -15.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -18.0,
+            "nisg_1_power": -18.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 18,
+            "powermeter_0_power": -14.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -14.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -17.0,
+            "nisg_1_power": -17.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 19,
+            "powermeter_0_power": -13.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -13.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -16.0,
+            "nisg_1_power": -16.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 20,
+            "powermeter_0_power": -12.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -12.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -15.0,
+            "nisg_1_power": -15.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 21,
+            "powermeter_0_power": -10.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -10.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -13.0,
+            "nisg_1_power": -13.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 22,
+            "powermeter_0_power": -9.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -9.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -12.0,
+            "nisg_1_power": -12.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 23,
+            "powermeter_0_power": -8.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -8.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -11.0,
+            "nisg_1_power": -11.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 24,
+            "powermeter_0_power": -7.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -7.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -10.0,
+            "nisg_1_power": -10.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 25,
+            "powermeter_0_power": -6.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -6.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -9.0,
+            "nisg_1_power": -9.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 26,
+            "powermeter_0_power": -5.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -5.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -8.0,
+            "nisg_1_power": -8.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 27,
+            "powermeter_0_power": -5.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -5.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -8.0,
+            "nisg_1_power": -8.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 28,
+            "powermeter_0_power": -4.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -4.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -7.0,
+            "nisg_1_power": -7.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          },
+          {
+            "index": 29,
+            "powermeter_0_power": -3.0,
+            "sdr0_center_freq": 701500000.0,
+            "sdr0_power": -3.0,
+            "sdr0_gain": 15.0,
+            "nisg_0_power": -6.0,
+            "nisg_1_power": -6.0,
+            "nisg_0_freq": 2702500000.0,
+            "nisg_1_freq": 2703500122.0777636
+          }
+        ]
+      }
+    },
+    "sdr0.json": {
+      "sha256": "596ef7cd6fc3b7a07086aef3bb0a8db13403ac44e4cf16ba0ad3d37618bdc391",
+      "content": {
+        "antenna": [
+          1,
+          "RX2"
+        ],
+        "bandwidth": [
+          0,
+          200000000.0
+        ],
+        "bb_gain": [
+          0,
+          -40.0
+        ],
+        "center_freq": [
+          0,
+          2695000000.0
+        ],
+        "clock_rate": [
+          0,
+          10000000.0
+        ],
+        "clock_source": [
+          0,
+          "internal"
+        ],
+        "dc_offset": [
+          0,
+          0
+        ],
+        "dc_offset_mode": [
+          0,
+          0
+        ],
+        "freq_corr": [
+          0,
+          0
+        ],
+        "gain": [
+          0,
+          -50.0
+        ],
+        "gain_mode": [
+          0,
+          false
+        ],
+        "if_gain": [
+          0,
+          -40.0
+        ],
+        "iq_balance": [
+          0,
+          "0+0j"
+        ],
+        "log_level": [
+          0,
+          "high"
+        ],
+        "max_output_buffer": [
+          0,
+          10
+        ],
+        "min_output_buffer": [
+          0,
+          1
+        ],
+        "sample_rate": [
+          1,
+          5000000.0
+        ],
+        "dwell_time": [
+          1,
+          1.0
+        ],
+        "buffer_period": [
+          1,
+          0.001
+        ],
+        "settling_time": [
+          1,
+          0.3
+        ]
+      }
+    }
+  },
+  "range_requests": 1,
+  "downloaded_bytes": 989643,
+  "rights": "NIST public data, NIST Open Access license",
+  "physics_claim": "NONE",
+  "sources": "PUBLIC_INDEPENDENT_NIST_MEASUREMENT_DATA_NOT_WORLDSHEPHERD_DATA"
+}
