@@ -86,30 +86,24 @@
     "status": "REVIEW_REQUIRED"
   },
   "safety_regression_tests": {
-    "passed": 64,
-    "total": 64,
-    "metadata": 5,
-    "published_data_benchmarks": 4,
-    "synthetic_rf_gate": 5,
-    "table_quality_and_design": 5,
-    "detuning_and_catalog": 8,
-    "coincidence": 4,
-    "power_balance": 5,
-    "receiver_attenuation": 8,
-    "phase_cycle": 8,
-    "zero_coupling_beat": 5,
-    "mosaic_reference_geometry": 7
+    "passed": 76,
+    "total": 76,
+    "previous": 64,
+    "measured_rf": 8,
+    "series_shunt_model": 4
   },
   "local_recovery_snapshot": {
     "device": "lenovo",
     "destination_partition": "/dev/mmcblk0p2",
-    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261109T160359Z.tar.gz",
-    "archive_bytes": 8059120,
-    "archive_sha256": "bbff00cbfd7797a6731816af166b72c766f17939545b327dd350e4dd48b4db17",
-    "file_count": 90,
+    "archive_path": "/var/tmp/worldshepherd-qgp-snapshots/qgp_corpus_20261123T030607Z.tar.gz",
+    "archive_bytes": 8706109,
+    "archive_sha256": "ebf57b4cb62f3f4b0f21d9a9b8385f44306197531ead9051dd57097c62ebc698",
+    "file_count": 110,
     "verified": true,
     "off_device_backup": false,
-    "private_prereg_excluded": true
+    "private_prereg_excluded": true,
+    "contains_local_restricted_redistribution_thirdparty_measured_data": true,
+    "archive_data_redistribution_policy": "PRIVATE LOCAL RECOVERY ONLY"
   },
   "followup_validation_2026_11_08": {
     "source_Zenodo_2026_baryon_models": {
@@ -181,7 +175,7 @@
     "scientific_claim": "PUBLISHED_BENCHMARK_REPRODUCED_NOT_NEW_PHYSICS"
   },
   "public_novel_physics_gate": "research/qgp_corpus_2008_2026/NOVEL_PHYSICS_EVIDENCE_GATE.md",
-  "new_physics_claim_status": "NOT DEMONSTRATED. MOSAIC published beam-state set lacks same-objective pairs at 10° tolerance; 2021 paper power margin aggregation reconciled. No original calibrated RF dataset identified in searched sources.",
+  "new_physics_claim_status": "NOT DEMONSTRATED. First verified third-party real GHz memristor S-parameter data ingested; expected switching contrast and a conventional series-element low-band relationship observed; high-band apparent passivity violations also in reference THRU. No new interaction established.",
   "followup_exploratory_novelty_screen_2026_11_08": {
     "classification": "RETROSPECTIVE_EXPLORATORY_NOT_ORIGINAL_NEW_PHYSICS",
     "centrality_points": 5,
@@ -473,5 +467,53 @@
     "includes_all_unmounted_archive_contents": false,
     "includes_all_repository_branches": false,
     "evidence_gap": "No inspected, independently calibrated original DUT complex S-parameters, IQ, raw spectral trace, instrument or certificate records identified"
+  },
+  "followup_external_real_RF_2026_11_22": {
+    "source": "https://doi.org/10.5281/zenodo.20186567",
+    "title": "S-parameter measurements of Memristors between 70kHz and 160 GHz",
+    "project": "TERRAMETA / CEA Leti / INESC TEC",
+    "archive_state": "RAW THIRD-PARTY DATA LOCAL ON LENOVO; NOT REPUBLISHED TO PUBLIC GITHUB",
+    "dataset_bytes": 1664424,
+    "source_file_count": 12,
+    "publisher_hashes_verified": 12,
+    "measured_frequency_samples_per_file": 800,
+    "frequency_spacing_MHz": 200.250225,
+    "lab_declared_calibration": "LRRM Anritsu ME7838G VectorStar VNA at 25C",
+    "license_from_machine_metadata": "not supplied; no public raw redistribution",
+    "source_device_states": "Two different memristive devices with HRS/LRS states plus 3 THRU references",
+    "source_state_interpolated_S21_LRS_minus_HRS_median_dB": {
+      "MEMR1_at_3_96993GHz": 2.617,
+      "MEMR1_at_9_53242GHz": 0.293,
+      "MEMR2_at_3_96993GHz": 8.959,
+      "MEMR2_at_9_53242GHz": 3.814
+    },
+    "physics_normality": {
+      "first_10GHz_ideal_series_identity_residual_over_two_thru_median_range": [
+        0.002414,
+        0.003783
+      ],
+      "first_10GHz_ideal_shunt_identity_residual_over_two_thru_median_range": [
+        0.088676,
+        1.665074
+      ],
+      "states_prefer_series_reference_diagnostic": 9,
+      "state_count": 9,
+      "high_frequency_passivity_flags_reproduced_in_on_substrate_thru": true,
+      "below_80GHz_any_2percent_singular_value_passivity_flags": false,
+      "higher_than_120GHz_flags_in_all_on_substrate_files": true,
+      "measured_IM3_or_cross_pair_energy_exchange": false,
+      "measured_2_56MHz_doublet": false,
+      "novel_fundamental_physics": false
+    },
+    "analysis_public_code": [
+      "fetch_terrameta_measured_rf.py",
+      "analyze_terrameta_measured_rf.py",
+      "rf_series_shunt_baseline.py",
+      "test_terrameta_measured_rf.py",
+      "test_rf_series_shunt_baseline.py"
+    ],
+    "public_summary": "TERRAMETA_EXTERNAL_MEASUREMENTS_FIRST_PASS_2026-11-22.md",
+    "scientific_scope": "Independent laboratory MEASURED linear two-port state comparison; original WorldShepherd laboratory RF measurement not established; no novel physics.",
+    "prereg_future": "Need physically distinct same-objective reconfigurable aperture configurations, actual modal current and two-tone nonlinear measurements, receiver artifact controls and independent replication."
   }
 }
